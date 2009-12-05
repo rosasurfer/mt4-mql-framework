@@ -5,7 +5,7 @@
 #property indicator_chart_window
 
 
-string labelBase = "Vertical Grid Line ";
+string labelBaseName = "Vertical Grid Line ";
 
 
 // User-Variablen
@@ -48,14 +48,14 @@ int start() {
 /**
  */
 int deinit() {
-   int length = StringLen(labelBase);
+   int length = StringLen(labelBaseName);
+   int count  = ObjectsTotal();
+   string label;
 
    // TODO: Label der zu löschenden Objekte anderweitig speichern, Iteration durch ObjectsTotal() ist Zeitverschwendung
-   int count = ObjectsTotal();
-
    for (int i=count-1; i >= 0; i--) {
-      string label = ObjectName(i);
-      if (StringSubstr(label, 0, length) == labelBase) {
+      label = ObjectName(i);
+      if (StringSubstr(label, 0, length) == labelBaseName) {
          ObjectDelete(label);
       }
    }
@@ -76,25 +76,32 @@ bool drawGrid() {
    if (Bars == 0)
       return(false);
 
-   // vertikales Grid zeichnen
-   // ------------------------
-   // Von den berechneten Zeitpunkten wird 1 Minute abgezogen, damit das Grid wirklich unter der jeweils letzten Bar 
-   // der Session gezeichnet wird (nach MetaTrader-Philosophie werden statt Close- überall Open-Zeiten verwendet).
-
-   // Time-Offset des Brokers bestimmen
+   // vertikales Grid
+   // ---------------
+   // GMT-Offset des Brokers ermitteln (mögliche Werte: -23 bis +23)
    int offset = BrokerGmtOffset();
-   Print("broker offset: "+ offset);
+   //Print("broker offset: "+ offset);
 
-   datetime from = StrToTime(TimeToStr(Time[Bars-1], TIME_DATE) +" 23:00") - 1*MINUTE;
-   datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" 23:00") - 1*MINUTE + 1*DAY;
-   //Print("from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
+   // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen: 
+   // Zeitpunkt = 22:00 GMT + BrokerOffset
+   int iHour = (22 + offset + 24) % 24;
+   string strHour = iHour +":00";
+   if (iHour < 10)
+      strHour = "0"+ strHour;
+   //Print("broker session break: "+ strHour);
+   
+   // Zeitpunkte der ersten und letzten senkrechten Linie des Grids berechen
+   datetime from = StrToTime(TimeToStr(Time[Bars-1], TIME_DATE) +" "+ strHour);
+   datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" "+ strHour) + 1*DAY;
+   Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
    string label;
    for (int time=from; time < to; time += 1*DAY) {
-      // Im Label des Grids erscheint die korrekte Zeit des Session-Endes
-      label = labelBase + TimeToStr(time + 1*MINUTE, TIME_DATE|TIME_MINUTES);
+      // Im Label der Line steht die korrekte Session-Endezeit, vom Zeitparameter der Line selbst wird 1 Minute abgezogen,
+      // damit sie unter der vorherigen Bar (letzte Bar der alten Session) erscheint (MetaTrader verwendet statt Close- Open-Zeiten).
+      label = labelBaseName + TimeToStr(time, TIME_DATE|TIME_MINUTES);
 
-      if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0)) {
+      if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
          if (error != ERR_OBJECT_ALREADY_EXISTS) 
             return(catch("init, ObjectCreate", error));
