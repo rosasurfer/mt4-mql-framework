@@ -41,7 +41,6 @@ int start() {
    if (!gridDrawn)
       gridDrawn = drawGrid();
 
-   return(0);
    return(catch("start"));
 }
 
