@@ -74,6 +74,9 @@ bool drawGrid() {
    if (gridDrawn)
       return(true);
 
+   if (Bars == 0)
+      return(false);
+
    // vertikales Grid zeichnen
    // ------------------------
    // Von den berechneten Zeitpunkten wird 1 Minute abgezogen, damit das Grid wirklich unter der jeweils letzten Bar 
@@ -103,7 +106,7 @@ bool drawGrid() {
       ObjectSet(label, OBJPROP_BACK , true     );
    }
 
-
+ 
    /*
    // waagerechtes Grid
    double level = 1.6512;
