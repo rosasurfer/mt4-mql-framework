@@ -93,10 +93,12 @@ bool drawGrid() {
    // Zeitpunkte der ersten und letzten senkrechten Linie des Grids berechen
    datetime from = StrToTime(TimeToStr(Time[Bars-1], TIME_DATE) +" "+ strHour);
    datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" "+ strHour) + 1*DAY;
+   if (from < Time[Bars-1])
+      from = from + 1*DAY;
    Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
    string label;
-   for (int time=from; time < to; time += 1*DAY) {
+   for (int time=from; time <= to; time += 1*DAY) {
       // Im Label der Line steht die korrekte Session-Endezeit, vom Zeitparameter der Line selbst wird 1 Minute abgezogen,
       // damit sie unter der vorherigen Bar (letzte Bar der alten Session) erscheint (MetaTrader verwendet statt Close- Open-Zeiten).
       label = labelBaseName + TimeToStr(time, TIME_DATE|TIME_MINUTES);
