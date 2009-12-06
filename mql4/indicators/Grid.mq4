@@ -23,12 +23,8 @@ bool gridDrawn = false;                      // Zeichenstatus
 /**
  */
 int init() {
-   // DataBox-Anzeige ausschalten
-   SetIndexLabel(0, NULL);
-   
-   // Grid zeichnen (ist hier immer wahr)
-   if (!gridDrawn)
-      gridDrawn = drawGrid();
+   SetIndexLabel(0, NULL);    // DataBox-Anzeige ausschalten 
+   gridDrawn = drawGrid();    // Grid zeichnen
 
    return(catch("init"));
 }
@@ -37,7 +33,7 @@ int init() {
 /**
  */
 int start() {
-   // Grid zeichnen, falls noch nicht geschehen (keine Verbindung etc.)
+   // Grid zeichnen, falls noch nicht geschehen
    if (!gridDrawn)
       gridDrawn = drawGrid();
 
@@ -114,9 +110,9 @@ bool drawGrid() {
       ObjectSet(label, OBJPROP_BACK , true     );
    }
 
- 
    /*
    // waagerechtes Grid
+   // -----------------
    double level = 1.6512;
    string label;
 
@@ -135,8 +131,8 @@ bool drawGrid() {
       ObjectSet(label, OBJPROP_BACK , true     );
    }
    */
-   catch("drawGrid");
 
+   catch("drawGrid");
    return(true);
 }
 
