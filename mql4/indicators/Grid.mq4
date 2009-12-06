@@ -95,7 +95,7 @@ bool drawGrid() {
    datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" "+ strHour) + 1*DAY;
    if (from < Time[Bars-1])
       from = from + 1*DAY;
-   Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
+   //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
    string label;
    for (int time=from; time <= to; time += 1*DAY) {
