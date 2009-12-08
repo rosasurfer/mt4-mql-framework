@@ -1,7 +1,7 @@
 /**
  * stdlib.mqh
  *
- * Ersatz für die originale stdlib.mqh.  Bindet lediglich die neuen Headerdateien ein.
+ * Ersatz für die originale stdlib.mqh, bindet lediglich die neuen Headerdateien ein.
  */
 
 
