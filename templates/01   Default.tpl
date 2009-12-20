@@ -969,7 +969,7 @@ y_distance=9
 <indicator>
 name=Custom Indicator
 <expert>
-name=QuoteLabel
+name=TradeInfos
 flags=347
 window_num=0
 <inputs>
