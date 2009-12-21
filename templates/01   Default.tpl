@@ -1,16 +1,16 @@
 <chart>
 symbol=GBPUSD
-period=60
-leftpos=3574
+period=15
+leftpos=3459
 digits=5
 scale=1
 graph=1
-fore=0
+fore=1
 grid=0
 volume=0
 scroll=0
 shift=1
-ohlc=1
+ohlc=0
 askline=0
 days=0
 descriptions=0
@@ -37,6 +37,36 @@ stops_color=17919
 height=100
 <indicator>
 name=main
+<object>
+type=23
+object_name=ChartInfo.Equity
+period_flags=0
+create_time=1261416027
+description=Equity:  273 943.00
+color=0
+font=Tahoma Fett
+fontsize=9
+angle=0
+background=0
+corner=2
+x_distance=18
+y_distance=12
+</object>
+<object>
+type=23
+object_name=ChartInfo.Quote
+period_flags=0
+create_time=1261416027
+description=1.6081'2
+color=0
+font=Microsoft Sans Serif
+fontsize=13
+angle=0
+background=0
+corner=1
+x_distance=11
+y_distance=9
+</object>
 <object>
 type=1
 object_name=Horizontal Line 10318
@@ -954,13 +984,11 @@ value_0=1.680000
 <indicator>
 name=Custom Indicator
 <expert>
-name=TradeInfos
+name=Grid
 flags=347
 window_num=0
 <inputs>
-font=Microsoft Sans Serif
-fontSize=13
-fontColor=0
+GridColor=13882323
 </inputs>
 </expert>
 shift_0=0
@@ -974,12 +1002,9 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Grid
+name=ChartInfo
 flags=347
 window_num=0
-<inputs>
-GridColor=13882323
-</inputs>
 </expert>
 shift_0=0
 draw_0=0
