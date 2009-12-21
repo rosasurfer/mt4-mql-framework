@@ -950,21 +950,6 @@ weight=1
 background=1
 value_0=1.680000
 </object>
-<object>
-type=23
-object_name=pw.Quote Label
-period_flags=0
-create_time=1259579856
-description=1.6473'9
-color=0
-font=Microsoft Sans Serif
-fontsize=13
-angle=0
-background=0
-corner=1
-x_distance=11
-y_distance=9
-</object>
 </indicator>
 <indicator>
 name=Custom Indicator
