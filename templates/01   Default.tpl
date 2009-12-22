@@ -53,21 +53,6 @@ x_distance=18
 y_distance=12
 </object>
 <object>
-type=23
-object_name=ChartInfo.Quote
-period_flags=0
-create_time=1261416027
-description=1.6081'2
-color=0
-font=Microsoft Sans Serif
-fontsize=13
-angle=0
-background=0
-corner=1
-x_distance=11
-y_distance=9
-</object>
-<object>
 type=1
 object_name=Horizontal Line 10318
 period_flags=0
