@@ -9,7 +9,7 @@ string labelBaseName = "Vertical Grid Line ";
 
 
 // User-Variablen
-extern color  GridColor      = LightGray;    // Grid-Farbe 
+extern color  GridColor      = LightGray;    // Grid-Farbe
 //extern int  GridBrightness = 5;            // Grid-Helligkeit
 
 
@@ -24,7 +24,7 @@ bool gridDrawn = false;                      // Zeichenstatus
  *
  */
 int init() {
-   SetIndexLabel(0, NULL);    // DataBox-Anzeige ausschalten 
+   SetIndexLabel(0, NULL);    // DataBox-Anzeige ausschalten
 
    gridDrawn = drawGrid();    // Grid zeichnen
 
@@ -62,14 +62,14 @@ bool drawGrid() {
    int offset = BrokerGmtOffset();
    //Print("broker offset: "+ offset);
 
-   // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen: 
+   // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen:
    // Zeitpunkt = 22:00 GMT + BrokerOffset
    int    iHour   = (22 + offset + 24) % 24;
    string strHour = iHour +":00";
    if (iHour < 10)
       strHour = "0"+ strHour;
    //Print("broker session break: "+ strHour);
-   
+
    // Zeitpunkte der ersten und letzten senkrechten Linie des Grids berechen
    datetime from = StrToTime(TimeToStr(Time[Bars-1], TIME_DATE) +" "+ strHour);
    datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" "+ strHour);
@@ -85,7 +85,7 @@ bool drawGrid() {
 
       if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
-         if (error != ERR_OBJECT_ALREADY_EXISTS) 
+         if (error != ERR_OBJECT_ALREADY_EXISTS)
             return(catch("drawGrid, ObjectCreate", error));
          ObjectSet(label, OBJPROP_TIME1, time);
       }
@@ -106,7 +106,7 @@ bool drawGrid() {
 
       if (!ObjectCreate(label, OBJ_HLINE, 0, 0, level)) {
          int error = GetLastError();
-         if (error != ERR_OBJECT_ALREADY_EXISTS) 
+         if (error != ERR_OBJECT_ALREADY_EXISTS)
             return(catch("drawGrid, ObjectCreate", error));
          ObjectSet(label, OBJPROP_PRICE1, level);
       }

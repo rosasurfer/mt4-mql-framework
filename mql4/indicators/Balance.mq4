@@ -49,7 +49,7 @@ int start() {
          firstBar = bar;
       Balance[bar] = values[i];
    }
-   
+
    // ... und Lücken ohne Balanceänderung füllen
    double lastBalance = values[0];
 
@@ -58,8 +58,6 @@ int start() {
          Balance[i] = lastBalance;
       lastBalance = Balance[i];
    }
-
-   
 
    return(catch("start()"));
 }
@@ -97,12 +95,12 @@ int GetBalanceData(datetime& times[], double& values[]) {
 
    // Rohdaten der Account-History holen
    string data[][21];
-   GetRawHistoryData(data);
+   GetRawHistory(data);
 
 
    double profits[][2], profit;
    int n=0, size=ArrayRange(data, 0);
-  
+
    // Profitdatensätze auslesen
    for (int i=0; i<size; i++) {
       if (StrToInteger(data[i][TYPENUM]) != OP_CREDIT) { // credit lines ignorieren
@@ -136,125 +134,6 @@ int GetBalanceData(datetime& times[], double& values[]) {
    }
 
    return(catch("GetBalanceData()"));
-}
-
-
-/**
- * Liest die Account-History aus dem Dateisystem in das übergebene Zielarray ein.  Alle gelesenen Werte werden als Strings (Rohdaten) zurückgegeben.
- *
- * @param string& data[][21] - Zeiger auf ein zweidimensionales Zielarray zur Aufnahme der gelesenen Daten
- *
- * @return int - 0 bei Erfolg, andererseits ein entsprechender Fehler-Code
- */
-int GetRawHistoryData(string& data[][]) {
-   if (ArrayRange(data, 1) != 21)
-      return(catch("GetRawHistoryData(), invalid array parameter: array["+ ArrayRange(data, 0) +"]["+ ArrayRange(data, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
-
-   int tick = GetTickCount();
-
-   string header[21] = { "Ticket","OpenTime","OpenTimestamp","Type","TypeNum","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","NetProfit","GrossProfit","ExpirationTime","ExpirationTimestamp","MagicNumber","Comment" };
-   int error;
-
-
-   // Datei öffnen
-   string filename = AccountNumber() +"/account history.csv";
-   int handle = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
-   if (handle < 0) {
-      //error = GetLastError(); if (error == ERR_CANNOT_OPEN_FILE) {}
-      return(catch("GetRawHistoryData(), FileOpen(filename="+ filename +")"));
-   }
-
-   string value;
-   bool   newLine=true, blankLine=false, lineEnd=true, comment=false;
-   int    lines=0, row=-2, col=-1;
-
-
-   // Daten auslesen
-   while (!FileIsEnding(handle)) {
-      newLine = false;
-
-      if (lineEnd) {             // Wenn im letzten Durchlauf das Zeilenende erreicht wurde,
-         newLine   = true;       // Flags auf Zeilenbeginn setzen.
-         lineEnd   = false;
-         comment   = false;
-         blankLine = false;
-         col = -1;               // Spaltenindex vor der ersten Spalte
-      }
-
-      value = FileReadString(handle);
-
-      if (FileIsLineEnding(handle) || FileIsEnding(handle)) {
-         lineEnd = true;
-
-         if (newLine && StringLen(value)==0) {
-            if (FileIsEnding(handle))     // Zeilenbeginn, Leervalue und Dateiende => keine Zeile (nichts), also Abbruch
-               break;
-
-            // Zeilenbeginn, Leervalue und Zeilenende => Leerzeile
-            blankLine = true;
-         }
-         lines++;
-      }
-
-      // Leerzeilen überspringen
-      if (blankLine)
-         continue;
-
-
-      value = StringTrimLeft(StringTrimRight(value));
-
-
-      // Kommentarzeilen überspringen
-      if (newLine) {
-         if (StringGetChar(value, 0) == 35)  // char code 35: #
-            comment = true;
-      }
-      if (comment)
-         continue;
-
-
-      // Zeilen- und Spaltenindex aktualisieren und Bereich überprüfen
-      col++;
-      if (lineEnd && col < 20 || col > 20) {
-         Alert("GetRawHistoryData(): Data format error in file \"", filename, "\", column count in line ", lines, " is not 21");
-         error = ERR_SOME_FILE_ERROR;
-         break;
-      }
-      if (newLine)
-         row++;
-
-      // Headerinformationen in der ersten Datenzeile überprüfen und Headerzeile überspringen
-      if (row == -1) {
-         if (value != header[col]) {
-            Alert("GetRawHistoryData(): Data format error in file \"", filename, "\", unexpected column header \"", value, "\"");
-            error = ERR_SOME_FILE_ERROR;
-            break;
-         }
-         continue;
-      }
-
-
-      // Datenarray vergrößern und Rohdaten speichern (alle als String)
-      if (newLine)
-         ArrayResize(data, row+1);
-      data[row][col] = value;
-   }
-
-   // END_OF_FILE Error zurücksetzen
-   error = GetLastError();
-   if (error != ERR_END_OF_FILE)
-      catch("GetRawHistoryData(1)", error);
-
-   // Datei schließen
-   FileClose(handle);
-
-
-   Print("Read history file, data rows: ", row+1, ", used time: ", GetTickCount()-tick, " ms");
-
-
-   if (error != ERR_NO_ERROR)
-      return(error);
-   return(catch("GetRawHistoryData(2)"));
 }
 
 
