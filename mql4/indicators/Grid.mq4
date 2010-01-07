@@ -65,7 +65,7 @@ bool drawGrid() {
    // vertikales Grid
    // ---------------
    // GMT-Offset des Brokers ermitteln (mögliche Werte: -23 bis +23)
-   int offset = BrokerGmtOffset();
+   int offset = GetBrokerGmtOffset();
    //Print("broker offset: "+ offset);
 
    // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen:
