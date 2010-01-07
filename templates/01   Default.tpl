@@ -38,21 +38,6 @@ height=100
 <indicator>
 name=main
 <object>
-type=23
-object_name=ChartInfo.Equity
-period_flags=0
-create_time=1261416027
-description=Equity:  273 943.00
-color=0
-font=Tahoma Fett
-fontsize=9
-angle=0
-background=0
-corner=2
-x_distance=18
-y_distance=12
-</object>
-<object>
 type=1
 object_name=Horizontal Line 10318
 period_flags=0
@@ -973,7 +958,8 @@ name=Grid
 flags=347
 window_num=0
 <inputs>
-GridColor=13882323
+Grid.Color=13882323
+Grid.Brightness=5
 </inputs>
 </expert>
 shift_0=0
@@ -990,6 +976,10 @@ name=Custom Indicator
 name=ChartInfo
 flags=347
 window_num=0
+<inputs>
+EquityInfo.Symbols=EURUSD,GBPUSD
+TradeInfo.Symbols=GBPUSD
+</inputs>
 </expert>
 shift_0=0
 draw_0=0
@@ -997,7 +987,7 @@ color_0=0
 style_0=0
 weight_0=0
 period_flags=0
-show_data=1
+show_data=0
 </indicator>
 </window>
 </chart>

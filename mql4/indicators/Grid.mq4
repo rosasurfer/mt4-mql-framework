@@ -5,28 +5,25 @@
 #property indicator_chart_window
 
 
-string labelBaseName = "Vertical Grid Line ";
-
-
 // User-Variablen
-extern color  GridColor      = LightGray;    // Grid-Farbe
-//extern int  GridBrightness = 5;            // Grid-Helligkeit
+extern color Grid.Color      = LightGray;    // Grid-Farbe
+extern int   Grid.Brightness = 5;            // Grid-Helligkeit
 
 
 // interne Variablen
-bool gridDrawn = false;                      // Zeichenstatus
-
-
-// -------------------------------------------------------------------------------------------------------
+bool   gridDrawn = false;  // Zeichenstatus
+string chartObjects[];     // Label der Chartobjekte
 
 
 /**
  *
  */
 int init() {
-   SetIndexLabel(0, NULL);    // DataBox-Anzeige ausschalten
+   // DataBox-Anzeige ausschalten
+   SetIndexLabel(0, NULL);
 
-   gridDrawn = drawGrid();    // Grid zeichnen
+   // Grid zeichnen
+   gridDrawn = drawGrid();
 
    return(catch("init"));
 }
@@ -36,11 +33,20 @@ int init() {
  *
  */
 int start() {
-   // Grid zeichnen, falls noch nicht geschehen
+   // (falls noch nicht geschehen) Grid zeichnen
    if (!gridDrawn)
       gridDrawn = drawGrid();
 
    return(catch("start"));
+}
+
+
+/**
+ *
+ */
+int deinit() {
+   RemoveChartObjects(chartObjects);
+   return(catch("deinit"));
 }
 
 
@@ -65,23 +71,24 @@ bool drawGrid() {
    // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen:
    // Zeitpunkt = 22:00 GMT + BrokerOffset
    int    iHour   = (22 + offset + 24) % 24;
-   string strHour = iHour +":00";
+   string strHour = StringConcatenate(iHour, ":00");
    if (iHour < 10)
-      strHour = "0"+ strHour;
+      strHour = StringConcatenate("0", strHour);
    //Print("broker session break: "+ strHour);
 
    // Zeitpunkte der ersten und letzten senkrechten Linie des Grids berechen
-   datetime from = StrToTime(TimeToStr(Time[Bars-1], TIME_DATE) +" "+ strHour);
-   datetime to   = StrToTime(TimeToStr(Time[     0], TIME_DATE) +" "+ strHour);
+   datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", strHour));
+   datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[     0], TIME_DATE), " ", strHour));
    if (from <  Time[Bars-1]) from = from + 1*DAY;
    if (to   <= Time[0     ]) to   = to   + 1*DAY;
    //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
    string label;
+
    for (int time=from; time <= to; time += 1*DAY) {
       // Im Label der Line steht die korrekte Session-Endezeit, vom Zeitparameter der Line selbst wird jedoch 1 Minute abgezogen,
       // damit sie unter der vorherigen Bar (letzte Bar der alten Session) erscheint (MetaTrader verwendet statt Close- Open-Zeiten).
-      label = labelBaseName + TimeToStr(time, TIME_DATE|TIME_MINUTES);
+      label = TimeToStr(time, TIME_DATE|TIME_MINUTES);
 
       if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
@@ -89,9 +96,10 @@ bool drawGrid() {
             return(catch("drawGrid, ObjectCreate", error));
          ObjectSet(label, OBJPROP_TIME1, time);
       }
-      ObjectSet(label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(label, OBJPROP_COLOR, GridColor);
-      ObjectSet(label, OBJPROP_BACK , true     );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
+      ObjectSet(label, OBJPROP_COLOR, Grid.Color);
+      ObjectSet(label, OBJPROP_BACK , true      );
+      RegisterChartObject(label, chartObjects);
    }
 
    /*
@@ -111,32 +119,12 @@ bool drawGrid() {
          ObjectSet(label, OBJPROP_PRICE1, level);
       }
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(label, OBJPROP_COLOR, Blue     );
-      ObjectSet(label, OBJPROP_BACK , true     );
+      ObjectSet(label, OBJPROP_COLOR, Blue);
+      ObjectSet(label, OBJPROP_BACK , true);
+      RegisterChartObject(label, chartObjects);
    }
    */
 
    catch("drawGrid");
    return(true);
 }
-
-
-/**
- *
- */
-int deinit() {
-   int length = StringLen(labelBaseName);
-   int count  = ObjectsTotal();
-   string label;
-
-   // TODO: Label der zu löschenden Objekte anderweitig speichern, Iteration durch ObjectsTotal() ist Zeitverschwendung
-   for (int i=count-1; i >= 0; i--) {
-      label = ObjectName(i);
-      if (StringSubstr(label, 0, length) == labelBaseName) {
-         ObjectDelete(label);
-      }
-   }
-
-   return(catch("deinit"));
-}
-
