@@ -83,13 +83,17 @@ bool drawGrid() {
    if (to   <= Time[0     ]) to   = to   + 1*DAY;
    //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
-   string label;
+   string label, day, dd, mm, yyyy;
 
    for (int time=from; time <= to; time += 1*DAY) {
-      // Im Label der Line steht die korrekte Session-Endezeit, vom Zeitparameter der Line selbst wird jedoch 1 Minute abgezogen,
-      // damit sie unter der vorherigen Bar (letzte Bar der alten Session) erscheint (MetaTrader verwendet statt Close- Open-Zeiten).
       label = TimeToStr(time, TIME_DATE|TIME_MINUTES);
+         day  = GetDayOfWeek(time, false);   // Kurzform des Wochentags
+         dd   = StringSubstr(label, 8, 2);
+         mm   = StringSubstr(label, 5, 2);
+         yyyy = StringSubstr(label, 0, 4);
+      label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy, StringSubstr(label, 10));
 
+      // Die Linie wird unter der letzten Bar der ablaufenden Session gezeichnet, im Label steht jedoch der Startzeitpunkt der neuen Session.
       if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
          if (error != ERR_OBJECT_ALREADY_EXISTS)
@@ -125,6 +129,6 @@ bool drawGrid() {
    }
    */
 
-   catch("drawGrid");
+   catch("drawGrid()");
    return(true);
 }
