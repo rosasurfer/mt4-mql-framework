@@ -9,7 +9,7 @@
 
 #property indicator_buffers 1
 #property indicator_color1  Blue
-#property indicator_width1  1
+#property indicator_width1  2
 
 
 double Balance[];
