@@ -1,5 +1,5 @@
 /**
- * Zeichnet den Balance-Verlauf des Accounts (als Vorstufe zum Equity-Indikator).
+ * Zeichnet den Balance-Verlauf eines Accounts (als Vorstufe zum Equity-Indikator).
  */
 
 #include <stdlib.mqh>
@@ -10,6 +10,10 @@
 #property indicator_buffers 1
 #property indicator_color1  Blue
 #property indicator_width1  2
+
+
+// Die Nummer des Accounts, dessen Balance angezeigt werden soll. Default: der aktuelle Account (0)
+extern int accountNumber = 0;
 
 
 double Balance[];
@@ -33,13 +37,16 @@ int init() {
  *
  */
 int start() {
+   if (accountNumber == 0)
+      accountNumber = AccountNumber();
+
    ArrayInitialize(Balance, EMPTY_VALUE);
 
    datetime times[];
    double   values[];
 
    // Datenreihen mit Balance-Werten holen
-   GetBalanceData(times, values);
+   GetBalanceData(accountNumber, times, values);
 
    int bar, firstBar, size=ArrayRange(times, 0);
 
