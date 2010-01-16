@@ -46,7 +46,7 @@ int start() {
    double   values[];
 
    // Datenreihen mit Balance-Werten holen
-   GetBalanceData(accountNumber, times, values);
+   GetBalanceHistory(accountNumber, times, values);
 
    int bar, firstBar, size=ArrayRange(times, 0);
 
