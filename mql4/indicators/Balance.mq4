@@ -70,10 +70,3 @@ int start() {
    return(catch("start()"));
 }
 
-
-/**
- *
- */
-int deinit() {
-   return(catch("deinit()"));
-}
