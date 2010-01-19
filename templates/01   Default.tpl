@@ -977,7 +977,6 @@ name=ChartInfo
 flags=347
 window_num=0
 <inputs>
-EquityInfo.Symbols=EURUSD,GBPUSD
 TradeInfo.Symbols=GBPUSD
 </inputs>
 </expert>
