@@ -43,8 +43,7 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
 
-
-   if (processedBars == 0) {                 // alle Werte neu berechnen
+   if (processedBars == 0) {                 // erster Aufruf oder nach Data-Pumping: alle Werte neu berechnen
       iBalanceSeries(account, Balance);
    }
    else {                                    // nur fehlende Werte neu berechnen
