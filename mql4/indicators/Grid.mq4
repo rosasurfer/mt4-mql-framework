@@ -60,7 +60,7 @@ int DrawGrid() {
    string strHour = StringConcatenate(iHour, ":00");
    if (iHour < 10)
       strHour = StringConcatenate("0", strHour);
-   //Print("broker session break: "+ strHour);
+   //Print("broker offset: ", GetBrokerGmtOffset(), " h    broker session break: ", strHour);
 
    
    // Zeitpunkte des ersten und letzten Separators berechen
@@ -77,12 +77,16 @@ int DrawGrid() {
    for (int time=from; time <= to; time += 1*DAY) {
       // TODO: die Separators fehlender Tage (Feiertage innerhalb der Woche) werden in den vorherigen Tag gezeichnet
    
-      label = TimeToStr(time + 1*DAY, TIME_DATE|TIME_MINUTES);    // im Label steht der beginnende, neue Tag (der nächste Tag)
-         day  = GetDayOfWeek(time + 1*DAY, false);                // Kurzform des Wochentags
+      label = TimeToStr(time + 2*HOURS, TIME_DATE|TIME_MINUTES);  // im Label steht der neue Handelstag: Sessionende (22:00 GMT) + 2 h = 00:00 GMT)
+         day  = GetDayOfWeek(time + 2*HOURS, false);              // Kurzform des Wochentags
          dd   = StringSubstr(label, 8, 2);
          mm   = StringSubstr(label, 5, 2);
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
+
+      if (time > D'2010.01.13 12:00' && time < D'2010.01.18 12:00') {
+         Print("draw separator \'"+ label +"\' at "+ GetDayOfWeek(time, false) +" "+ TimeToStr(time));
+      }
 
       // Wochenenden überspringen
       if (day!="Sat" && day!="Sun") {
