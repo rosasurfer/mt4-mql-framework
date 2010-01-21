@@ -84,10 +84,6 @@ int DrawGrid() {
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
-      if (time > D'2010.01.13 12:00' && time < D'2010.01.18 12:00') {
-         Print("draw separator \'"+ label +"\' at "+ GetDayOfWeek(time, false) +" "+ TimeToStr(time));
-      }
-
       // Wochenenden überspringen
       if (day!="Sat" && day!="Sun") {
          if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0)) {
