@@ -10,8 +10,6 @@ extern color Grid.Color      = LightGray;    // Grid-Farbe
 extern int   Grid.Brightness = 5;            // Grid-Helligkeit
 
 
-// interne Variablen
-bool   gridDrawn = false;  // Zeichenstatus
 string chartObjects[];     // Label der Chartobjekte
 
 
@@ -22,10 +20,7 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
-   // Grid zeichnen
-   gridDrawn = drawGrid();
-
-   return(catch("init"));
+   return(catch("init()"));
 }
 
 
@@ -33,11 +28,12 @@ int init() {
  *
  */
 int start() {
-   // (falls noch nicht geschehen) Grid zeichnen
-   if (!gridDrawn)
-      gridDrawn = drawGrid();
+   int processedBars = IndicatorCounted();
 
-   return(catch("start"));
+   if (processedBars == 0)    // 1. Aufruf oder nach Data-Pumping: neu zeichnen
+      DrawGrid();
+
+   return(catch("start()"));
 }
 
 
@@ -46,21 +42,18 @@ int start() {
  */
 int deinit() {
    RemoveChartObjects(chartObjects);
-   return(catch("deinit"));
+   return(catch("deinit()"));
 }
 
 
 /**
  * Zeichnet das Grid.
  *
- * @return bool - Erfolgsstatus
+ * @return int - Fehlerstatus
  */
-bool drawGrid() {
-   if (gridDrawn)
-      return(true);
-
+int DrawGrid() {
    if (Bars == 0)
-      return(false);
+      return(0);
 
    // vertikales Grid
    // ---------------
@@ -97,7 +90,7 @@ bool drawGrid() {
       if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
          if (error != ERR_OBJECT_ALREADY_EXISTS)
-            return(catch("drawGrid, ObjectCreate", error));
+            return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")", error));
          ObjectSet(label, OBJPROP_TIME1, time);
       }
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
@@ -129,6 +122,5 @@ bool drawGrid() {
    }
    */
 
-   catch("drawGrid()");
-   return(true);
+   return(catch("DrawGrid(2)"));
 }
