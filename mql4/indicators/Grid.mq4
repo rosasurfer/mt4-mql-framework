@@ -55,24 +55,22 @@ int DrawGrid() {
    if (Bars == 0)
       return(0);
 
-   // vertikales Grid
-   // GMT-Offset des Brokers ermitteln (mögliche Werte: -23 bis +23)
-   int offset = GetBrokerGmtOffset();
-   //Print("broker offset: "+ offset);
+   GetBrokerGmtOffset();
+   Print("Bars: "+ Bars +"   processedBars: "+ IndicatorCounted());
+   
 
-   // Session-Ende ist um 22:00 GMT, mit Hilfe des Broker-Offsets die Uhrzeit (Stunde) berechnen:
-   // Zeitpunkt = 22:00 GMT + BrokerOffset
-   int    iHour   = (22 + offset + 24) % 24;
+   // Stunde des Session-Endes des Brokers berechnen (22:00 GMT + Broker-Offset)
+   int iHour  = (22 + GetBrokerGmtOffset() + 24) % 24;   // offset: -23 bis +23
    string strHour = StringConcatenate(iHour, ":00");
    if (iHour < 10)
       strHour = StringConcatenate("0", strHour);
    //Print("broker session break: "+ strHour);
 
-   // Zeitpunkte der ersten und letzten senkrechten Linie des Grids berechen
+   // Zeitpunkte des ersten und letzten Separators berechen
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", strHour));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[     0], TIME_DATE), " ", strHour));
    if (from <  Time[Bars-1]) from = from + 1*DAY;
-   if (to   <= Time[0     ]) to   = to   + 1*DAY;
+   if (to   <= Time[0]     ) to   = to   + 1*DAY;
    //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
    string label, day, dd, mm, yyyy;
@@ -85,6 +83,10 @@ int DrawGrid() {
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy, StringSubstr(label, 10));
 
+      if (time > D'2010.01.15 12:00' && time < D'2010.01.18 12:00') {
+         Print("drawing separator '"+ label +"' at ", TimeToStr(time-1*MINUTE));
+      }
+
       // Die Linie wird unter der letzten Bar der ablaufenden Session gezeichnet, im Label steht jedoch der Startzeitpunkt der neuen Session.
       if (!ObjectCreate(label, OBJ_VLINE, 0, time - 1*MINUTE, 0)) {
          int error = GetLastError();
@@ -94,6 +96,9 @@ int DrawGrid() {
       }
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
       ObjectSet(label, OBJPROP_COLOR, Grid.Color);
+      if (time > D'2010.01.15 12:00' && time < D'2010.01.18 12:00') {
+         ObjectSet(label, OBJPROP_COLOR, Blue);
+      }
       ObjectSet(label, OBJPROP_BACK , true      );
       RegisterChartObject(label, chartObjects);
    }
