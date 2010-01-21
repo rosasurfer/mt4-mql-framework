@@ -30,7 +30,7 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
 
-   if (processedBars == 0)    // 1. Aufruf oder nach Data-Pumping: neu zeichnen
+   if (processedBars == 0)    // 1. Aufruf oder nach Data-Pumping: alles neu zeichnen
       DrawGrid();
 
    return(catch("start()"));
@@ -56,7 +56,6 @@ int DrawGrid() {
       return(0);
 
    // vertikales Grid
-   // ---------------
    // GMT-Offset des Brokers ermitteln (mögliche Werte: -23 bis +23)
    int offset = GetBrokerGmtOffset();
    //Print("broker offset: "+ offset);
@@ -98,29 +97,6 @@ int DrawGrid() {
       ObjectSet(label, OBJPROP_BACK , true      );
       RegisterChartObject(label, chartObjects);
    }
-
-   /*
-   // waagerechtes Grid
-   // -----------------
-   double level = 1.6512;
-   string label;
-
-   for (int i=0; i < 4; i++) {
-      level = level + 0.0050;
-      label = indicatorName +".hLine "+ DoubleToStr(level, 4);
-
-      if (!ObjectCreate(label, OBJ_HLINE, 0, 0, level)) {
-         int error = GetLastError();
-         if (error != ERR_OBJECT_ALREADY_EXISTS)
-            return(catch("drawGrid, ObjectCreate", error));
-         ObjectSet(label, OBJPROP_PRICE1, level);
-      }
-      ObjectSet(label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(label, OBJPROP_COLOR, Blue);
-      ObjectSet(label, OBJPROP_BACK , true);
-      RegisterChartObject(label, chartObjects);
-   }
-   */
 
    return(catch("DrawGrid(2)"));
 }
