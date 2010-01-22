@@ -29,6 +29,15 @@ int init() {
  */
 int start() {
    int processedBars = IndicatorCounted();
+   
+   /*
+   if (AccountNumber() == {account-no}) {
+      if (processedBars!=0 && Bars-1 > processedBars) {
+         Print("Bars-processedBars > 1:  ", Bars, "   ", processedBars, "      Time[1]: ", TimeToStr(Time[1], TIME_MINUTES|TIME_SECONDS), "      Time[0]: ", TimeToStr(Time[0], TIME_MINUTES|TIME_SECONDS), "      current time: ", TimeToStr(TimeCurrent(), TIME_MINUTES|TIME_SECONDS));
+         PlaySound("RFQ.wav");
+      }
+   }
+   */
 
    if (processedBars == 0)    // 1. Aufruf oder nach Data-Pumping: alles neu zeichnen
       DrawGrid();
