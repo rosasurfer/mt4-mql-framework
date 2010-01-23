@@ -47,9 +47,10 @@ int init() {
  */
 int start() {
    int processedBars = IndicatorCounted();
-
+   
    if (processedBars == 0) {                          // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
       iBalanceSeries(account, Balance);
+      Print("start()  Balance: "+ Balance[0]);
       return(catch("start(1)"));
    }
 
