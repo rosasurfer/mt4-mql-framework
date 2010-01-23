@@ -20,6 +20,11 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
+   // während der Entwicklung Arrays explizit zurücksetzen
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      ArrayResize(chartObjects, 0);
+   }
+
    return(catch("init()"));
 }
 
@@ -29,7 +34,7 @@ int init() {
  */
 int start() {
    int processedBars = IndicatorCounted();
-   
+
    /*
    if (AccountNumber() == {account-no}) {
       if (processedBars!=0 && Bars-1 > processedBars) {
@@ -71,7 +76,7 @@ int DrawGrid() {
       strHour = StringConcatenate("0", strHour);
    //Print("broker offset: ", GetBrokerGmtOffset(), " h    broker session break: ", strHour);
 
-   
+
    // Zeitpunkte des ersten und letzten Separators berechen
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", strHour));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", strHour));
@@ -81,11 +86,11 @@ int DrawGrid() {
 
 
    string label, day, dd, mm, yyyy;
-   
+
    // Separator zeichnen
    for (int time=from; time <= to; time += 1*DAY) {
       // TODO: die Separators fehlender Tage (Feiertage innerhalb der Woche) werden in den vorherigen Tag gezeichnet
-   
+
       label = TimeToStr(time + 2*HOURS, TIME_DATE|TIME_MINUTES);  // im Label steht der neue Handelstag: Sessionende (22:00 GMT) + 2 h = 00:00 GMT)
          day  = GetDayOfWeek(time + 2*HOURS, false);              // Kurzform des Wochentags
          dd   = StringSubstr(label, 8, 2);

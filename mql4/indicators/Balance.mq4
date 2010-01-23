@@ -30,6 +30,11 @@ int init() {
 
    IndicatorDigits(2);
 
+   // während der Entwicklung Puffer explizit zurücksetzen
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      ArrayInitialize(Balance, EMPTY_VALUE);
+   }
+
    if (account == 0)
       account = AccountNumber();
 
@@ -51,13 +56,13 @@ int start() {
    for (int i=Bars-processedBars-1; i >= 0; i--) {    // nur fehlende Werte neu berechnen
       iBalance(account, Balance, i);
    }
-   
+
    return(catch("start(2)"));
 }
 
 
 /**
- * Berechnet den vollständigen Verlauf der Balance für den aktuellen Chart und schreibt die Werte in den übergebenen 
+ * Berechnet den vollständigen Verlauf der Balance für den aktuellen Chart und schreibt die Werte in den übergebenen
  * Indikatorpuffer.  Diese Funktion ist vorzuziehen, wenn der Indikator vollständig neu berechnet werden soll.
  *
  * @param int     account - Account, für den der Indikator berechnet werden soll
