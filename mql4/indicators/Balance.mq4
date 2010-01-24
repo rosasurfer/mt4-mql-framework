@@ -48,68 +48,17 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
    
-   if (processedBars == 0) {                          // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
+   if (processedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
       iBalanceSeries(account, Balance);
-      Print("start()  Balance: "+ Balance[0]);
-      return(catch("start(1)"));
    }
-
-   for (int i=Bars-processedBars-1; i >= 0; i--) {    // nur fehlende Werte neu berechnen
-      iBalance(account, Balance, i);
-   }
-
-   return(catch("start(2)"));
-}
-
-
-/**
- * Berechnet den vollständigen Verlauf der Balance für den aktuellen Chart und schreibt die Werte in den übergebenen
- * Indikatorpuffer.  Diese Funktion ist vorzuziehen, wenn der Indikator vollständig neu berechnet werden soll.
- *
- * @param int     account - Account, für den der Indikator berechnet werden soll
- * @param double& iBuffer - Zeichenpuffer, muß dem aktuellen Chart entsprechend dimensioniert sein
- *
- * @return int - Fehlerstatus
- */
-int iBalanceSeries(int account, double& iBuffer[]) {
-
-   // Balance-History holen
-   datetime bTimes[];   ArrayResize(bTimes, 0);
-   double   bValues[];  ArrayResize(bValues, 0);
-
-   GetBalanceHistory(account, bTimes, bValues);
-
-   int n, lastN, z, size=ArraySize(bTimes);
-
-
-   // Balancewerte in Buffer übertragen (die History ist nach Zeit sortiert)
-   for (int i=0; i<size; i++) {
-      // Barindex des Zeitpunkts berechnen und nur Chartzeitraum berücksichtigen
-      n = iBarShift(NULL, 0, bTimes[i], true);
-      if (n == -1) {
-         if (bTimes[i] > Time[0])   // dieser und alle folgenden Werte sind zu neu für den Chart
-            break;
-         continue;                  // diese Werte sind zu alt für den Chart
+   else {
+      for (int i=Bars-processedBars-1; i >= 0; i--) {    // nur fehlende Werte neu berechnen
+         iBalance(account, Balance, i);
       }
-
-      // Indikatorlücken mit vorherigem Balancewert füllen
-      if (n < lastN-1) {
-         for (z=lastN-1; z > n; z--)
-            iBuffer[z] = iBuffer[lastN];
-      }
-
-      // Balancewert eintragen
-      iBuffer[n] = bValues[i];
-      lastN = n;
    }
 
-
-   // Indikator bis zur ersten Bar mit dem letzten bekannten Wert füllen
-   for (n=lastN-1; n >= 0; n--) {
-      iBuffer[n] = iBuffer[lastN];
-   }
-
-   return(catch("iBalanceSeries()"));
+   //Print("start()  Balance: "+ Balance[0]);
+   return(catch("start()"));
 }
 
 
