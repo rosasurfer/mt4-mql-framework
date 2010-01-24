@@ -74,8 +74,9 @@ int start() {
 int iBalanceSeries(int account, double& iBuffer[]) {
 
    // Balance-History holen
-   datetime bTimes[];
-   double   bValues[];
+   datetime bTimes[];   ArrayResize(bTimes, 0);
+   double   bValues[];  ArrayResize(bValues, 0);
+
    GetBalanceHistory(account, bTimes, bValues);
 
    int n, lastN, z, size=ArraySize(bTimes);
