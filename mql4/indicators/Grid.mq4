@@ -99,17 +99,19 @@ int DrawGrid() {
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
       // Wochenenden überspringen
-      if (day!="Sat" && day!="Sun") {
-         if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0)) {
-            int error = GetLastError();
-            if (error != ERR_OBJECT_ALREADY_EXISTS)
-               return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")", error));
-            ObjectSet(label, OBJPROP_TIME1, time);
+      if (day != "Sat") {
+         if (day != "Sun") {
+            if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0)) {
+               int error = GetLastError();
+               if (error != ERR_OBJECT_ALREADY_EXISTS)
+                  return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")", error));
+               ObjectSet(label, OBJPROP_TIME1, time);
+            }
+            ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
+            ObjectSet(label, OBJPROP_COLOR, Grid.Color);
+            ObjectSet(label, OBJPROP_BACK , true      );
+            RegisterChartObject(label, chartObjects);
          }
-         ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
-         ObjectSet(label, OBJPROP_COLOR, Grid.Color);
-         ObjectSet(label, OBJPROP_BACK , true      );
-         RegisterChartObject(label, chartObjects);
       }
    }
 
