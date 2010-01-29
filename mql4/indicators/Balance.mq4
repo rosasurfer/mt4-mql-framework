@@ -30,7 +30,7 @@ int init() {
 
    IndicatorDigits(2);
 
-   // während der Entwicklung Puffer explizit zurücksetzen
+   // während der Entwicklung Puffer jedesmal zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(Balance, EMPTY_VALUE);
    }
@@ -47,7 +47,7 @@ int init() {
  */
 int start() {
    int processedBars = IndicatorCounted();
-   
+
    if (processedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
       iBalanceSeries(account, Balance);
    }
