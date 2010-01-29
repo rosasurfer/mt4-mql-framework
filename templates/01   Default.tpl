@@ -958,8 +958,6 @@ name=Grid
 flags=347
 window_num=0
 <inputs>
-Grid.Color=13882323
-Grid.Brightness=5
 </inputs>
 </expert>
 shift_0=0
