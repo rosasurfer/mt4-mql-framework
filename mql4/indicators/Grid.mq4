@@ -67,9 +67,9 @@ int DrawGrid() {
 
 
    // Stunde des Session-Endes beim Broker berechnen (22:00 GMT + Broker-Offset)
-   int offset = GetBrokerGmtOffset();                 // -23 bis +23
-   int hour   = (22 + offset + 24) % 24;   
-   //Print("broker offset: ", GetBrokerGmtOffset(), " h    session ends: ", hour, ":00 broker time");
+   int offset = GetServerGMTOffset();                 // -23 bis +23
+   int hour   = (22 + offset + 24) % 24;
+   //Print("broker offset: ", GetServerGMTOffset(), " h    session ends: ", hour, ":00 broker time");
 
 
    // Zeitpunkte des ersten und letzten Separators berechen
