@@ -8,14 +8,14 @@
 #property indicator_chart_window
 
 
-//////////////////////// User Variablen //////////////////////////
+////////////////////////////////////////////////////////// User Variablen /////////////////////////////////////////////////////////
 
 extern color Grid.Color = LightGray;               // Grid-Farbe
 
-//////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string chartObjects[];  // Label der Chartobjekte
+string labels[];     // Separatorlabels
 
 
 /**
@@ -27,9 +27,8 @@ int init() {
 
    // während der Entwicklung Arrays jedesmal zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayResize(chartObjects, 0);
+      ArrayResize(labels,  0);
    }
-
    return(catch("init()"));
 }
 
@@ -51,7 +50,7 @@ int start() {
  *
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(labels);
    return(catch("deinit()"));
 }
 
@@ -75,8 +74,8 @@ int DrawGrid() {
    // Zeitpunkte des ersten und letzten Separators berechen
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
-   if (from <  Time[Bars-1]) from = from + 1*DAY;
-   if (to   <= Time[0]     ) to   = to   + 1*DAY;
+   if (from <  Time[Bars-1]) from += 1*DAY;
+   if (to   <= Time[0]     ) to   += 1*DAY;
    //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
 
@@ -91,6 +90,10 @@ int DrawGrid() {
          if (day=="Sat") continue;  // für MQL optimiert
          if (day=="Sun") continue;
       }
+      
+      // Tagesseparatoren bei Perioden größer H1 überspringen (nur Wochenseparatoren)
+      if (Period() > PERIOD_H1) if (day != "Mon")
+         continue;
 
       // Label des Separators (Datum des Handelstages) zusammenstellen (Servertime - Offset + 2 h = 00:00)
       label = TimeToStr(time - offset*HOURS + 2*HOURS, TIME_DATE|TIME_MINUTES);
@@ -98,7 +101,6 @@ int DrawGrid() {
          mm   = StringSubstr(label, 5, 2);
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
-
 
       // TODO: Separators von Feiertagen werden in den vorherigen Tag gezeichnet
       // TODO: Sa+So in Labels auf nächsten Wochentag shiften
@@ -111,7 +113,8 @@ int DrawGrid() {
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
       ObjectSet(label, OBJPROP_COLOR, Grid.Color);
       ObjectSet(label, OBJPROP_BACK , true      );
-      RegisterChartObject(label, chartObjects);
+      
+      RegisterChartObject(label, labels);
    }
 
    return(catch("DrawGrid(2)"));
