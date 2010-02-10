@@ -1032,7 +1032,7 @@ color_0=0
 style_0=0
 weight_0=0
 period_flags=0
-show_data=1
+show_data=0
 </indicator>
 <indicator>
 name=Custom Indicator
