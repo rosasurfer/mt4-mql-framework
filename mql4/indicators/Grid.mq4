@@ -30,7 +30,7 @@ int init() {
       ArrayResize(labels,  0);
    }
 
-   // nach Parameteränderung manuell start() aufrufen und Chart neuzeichnen (sonst wird auf den nächsten Tick gewartet)
+   // nach Parameteränderung manuell start() aufrufen und Chart neuzeichnen (statt auf den nächsten Tick zu warten)
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
       WindowRedraw();
