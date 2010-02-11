@@ -39,7 +39,7 @@ int init() {
       account = AccountNumber();
 
 
-   // nach Parameteränderung manuell start() aufrufen und Chart neuzeichnen (statt auf den nächsten Tick zu warten)
+   // nach Parameteränderung start() aufrufen (statt auf den nächsten Tick zu warten)
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
       WindowRedraw();
