@@ -29,6 +29,12 @@ int init() {
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayResize(labels,  0);
    }
+
+   // nach Parameteränderung manuell start() aufrufen und Chart neuzeichnen (sonst wird auf den nächsten Tick gewartet)
+   if (UninitializeReason() == REASON_PARAMETERS) {
+      start();
+      WindowRedraw();
+   }
    return(catch("init()"));
 }
 
