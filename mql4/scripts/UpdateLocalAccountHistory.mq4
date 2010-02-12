@@ -7,6 +7,7 @@
 
 /**
  *
+ *
  */
 int start() {
    int tick = GetTickCount();
@@ -283,7 +284,7 @@ int start() {
  */
 int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    if (ArrayRange(tickets, 1) != 3)
-      return(catch("SortTickets(1)  invalid array parameter: tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("SortTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    if (ArrayRange(tickets, 0) < 2)
       return(catch("SortTickets(2)"));
