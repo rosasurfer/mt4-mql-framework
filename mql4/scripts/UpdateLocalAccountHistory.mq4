@@ -58,24 +58,25 @@ int start() {
 
    // Hilfsvariablen
    int      n, ticket, type;
-   int      tickets[];      ArrayResize(tickets,      0); ArrayResize(tickets,      orders);
-   int      types[];        ArrayResize(types,        0); ArrayResize(types,        orders);
-   double   sizes[];        ArrayResize(sizes,        0); ArrayResize(sizes,        orders);
-   string   symbols[];      ArrayResize(symbols,      0); ArrayResize(symbols,      orders);
-   datetime openTimes[];    ArrayResize(openTimes,    0); ArrayResize(openTimes,    orders);
-   datetime closeTimes[];   ArrayResize(closeTimes,   0); ArrayResize(closeTimes,   orders);
-   double   openPrices[];   ArrayResize(openPrices,   0); ArrayResize(openPrices,   orders);
-   double   closePrices[];  ArrayResize(closePrices,  0); ArrayResize(closePrices,  orders);
-   double   stopLosses[];   ArrayResize(stopLosses,   0); ArrayResize(stopLosses,   orders);
-   double   takeProfits[];  ArrayResize(takeProfits,  0); ArrayResize(takeProfits,  orders);
-   double   commissions[];  ArrayResize(commissions,  0); ArrayResize(commissions,  orders);
-   double   swaps[];        ArrayResize(swaps,        0); ArrayResize(swaps,        orders);
-   double   netProfits[];   ArrayResize(netProfits,   0); ArrayResize(netProfits,   orders);
-   double   grossProfits[]; ArrayResize(grossProfits, 0); ArrayResize(grossProfits, orders);
-   double   balances[];     ArrayResize(balances,     0); ArrayResize(balances,     orders);
-   datetime expTimes[];     ArrayResize(expTimes,     0); ArrayResize(expTimes,     orders);
-   int      magicNumbers[]; ArrayResize(magicNumbers, 0); ArrayResize(magicNumbers, orders);
-   string   comments[];     ArrayResize(comments,     0); ArrayResize(comments,     orders);
+   int      tickets[];           ArrayResize(tickets,           0); ArrayResize(tickets,           orders);
+   int      types[];             ArrayResize(types,             0); ArrayResize(types,             orders);
+   double   sizes[];             ArrayResize(sizes,             0); ArrayResize(sizes,             orders);
+   string   symbols[];           ArrayResize(symbols,           0); ArrayResize(symbols,           orders);
+   datetime openTimes[];         ArrayResize(openTimes,         0); ArrayResize(openTimes,         orders);
+   datetime closeTimes[];        ArrayResize(closeTimes,        0); ArrayResize(closeTimes,        orders);
+   double   openPrices[];        ArrayResize(openPrices,        0); ArrayResize(openPrices,        orders);
+   double   closePrices[];       ArrayResize(closePrices,       0); ArrayResize(closePrices,       orders);
+   double   stopLosses[];        ArrayResize(stopLosses,        0); ArrayResize(stopLosses,        orders);
+   double   takeProfits[];       ArrayResize(takeProfits,       0); ArrayResize(takeProfits,       orders);
+   double   commissions[];       ArrayResize(commissions,       0); ArrayResize(commissions,       orders);
+   double   swaps[];             ArrayResize(swaps,             0); ArrayResize(swaps,             orders);
+   double   netProfits[];        ArrayResize(netProfits,        0); ArrayResize(netProfits,        orders);
+   double   grossProfits[];      ArrayResize(grossProfits,      0); ArrayResize(grossProfits,      orders);
+   double   normalizedProfits[]; ArrayResize(normalizedProfits, 0); ArrayResize(normalizedProfits, orders);
+   double   balances[];          ArrayResize(balances,          0); ArrayResize(balances,          orders);
+   datetime expTimes[];          ArrayResize(expTimes,          0); ArrayResize(expTimes,          orders);
+   int      magicNumbers[];      ArrayResize(magicNumbers,      0); ArrayResize(magicNumbers,      orders);
+   string   comments[];          ArrayResize(comments,          0); ArrayResize(comments,          orders);
 
 
    // History sortiert auslesen und zwischenspeichern (um gehedgte Positionen korrigieren zu können)
@@ -101,8 +102,8 @@ int start() {
       takeProfits [n] = OrderTakeProfit();
       commissions [n] = OrderCommission();
       swaps       [n] = OrderSwap();
-      netProfits  [n] = OrderProfit();       // GrossProfit und Balance können erst nach Korrektur gehedgter Positionen gesetzt werden
-      expTimes    [n] = OrderExpiration();
+      netProfits  [n] = OrderProfit();
+      expTimes    [n] = OrderExpiration();   // GrossProfit, NormalizedProfit und Balance werden später berechnet
       magicNumbers[n] = OrderMagicNumber();
       comments    [n] = OrderComment();
       n++;
@@ -111,24 +112,25 @@ int start() {
 
    // Arrays justieren
    if (n < orders) {
-      ArrayResize(tickets,      n);
-      ArrayResize(types,        n);
-      ArrayResize(sizes,        n);
-      ArrayResize(symbols,      n);
-      ArrayResize(openTimes,    n);
-      ArrayResize(closeTimes,   n);
-      ArrayResize(openPrices,   n);
-      ArrayResize(closePrices,  n);
-      ArrayResize(stopLosses,   n);
-      ArrayResize(takeProfits,  n);
-      ArrayResize(commissions,  n);
-      ArrayResize(swaps,        n);
-      ArrayResize(netProfits,   n);
-      ArrayResize(grossProfits, n);
-      ArrayResize(balances,     n);
-      ArrayResize(expTimes,     n);
-      ArrayResize(magicNumbers, n);
-      ArrayResize(comments,     n);
+      ArrayResize(tickets,           n);
+      ArrayResize(types,             n);
+      ArrayResize(sizes,             n);
+      ArrayResize(symbols,           n);
+      ArrayResize(openTimes,         n);
+      ArrayResize(closeTimes,        n);
+      ArrayResize(openPrices,        n);
+      ArrayResize(closePrices,       n);
+      ArrayResize(stopLosses,        n);
+      ArrayResize(takeProfits,       n);
+      ArrayResize(commissions,       n);
+      ArrayResize(swaps,             n);
+      ArrayResize(netProfits,        n);
+      ArrayResize(grossProfits,      n);
+      ArrayResize(normalizedProfits, n);
+      ArrayResize(balances,          n);
+      ArrayResize(expTimes,          n);
+      ArrayResize(magicNumbers,      n);
+      ArrayResize(comments,          n);
       orders = n;
    }
 
@@ -153,16 +155,16 @@ int start() {
          else if (openTimes[i] > openTimes[n]) { first = n; second = i; }
          else if (tickets[i]   < tickets[n]  ) { first = i; second = n; }  // beide zum selben Zeitpunkt eröffnet: unwahrscheinlich, doch nicht unmöglich
          else                                  { first = n; second = i; }
-         
+
          // Orderdaten korrigieren
-         sizes[i]       = sizes[n];                
+         sizes[i]       = sizes[n];
          closePrices[i] = openPrices[second];   // ClosePrice ist der OpenPrice der späteren Position (sie hedgt die frühere Position)
          closePrices[n] = openPrices[second];
-         
+
          commissions[first] = commissions[n];   // der gesamte Profit/Loss wird der gehedgten Postion zugerechnet
          swaps      [first] = swaps      [n];
          netProfits [first] = netProfits [n];
-         
+
          commissions[second] = 0;               // die hedgende Position verursacht keine Kosten
          swaps      [second] = 0;
          netProfits [second] = 0;
@@ -215,7 +217,7 @@ int start() {
          FileClose(handle);
          return(catch("start(11)  FileWrite()", error));
       }
-      if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
+      if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","NormalizedProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(handle);
          return(catch("start(9)  FileWrite()", error));
@@ -254,13 +256,14 @@ int start() {
       }
       string strMagicNumber = ""; if (magicNumbers[i] != 0) strMagicNumber = magicNumbers[i];
 
-      string strCommission  = DoubleToStr(commissions [i], 2);
-      string strSwap        = DoubleToStr(swaps       [i], 2);
-      string strNetProfit   = DoubleToStr(netProfits  [i], 2);
-      string strGrossProfit = DoubleToStr(grossProfits[i], 2);
-      string strBalance     = DoubleToStr(balances    [i], 2);
+      string strCommission       = DoubleToStr(commissions [i], 2);
+      string strSwap             = DoubleToStr(swaps       [i], 2);
+      string strNetProfit        = DoubleToStr(netProfits  [i], 2);
+      string strGrossProfit      = DoubleToStr(grossProfits[i], 2);
+      string strNormalizedProfit = "0.0";
+      string strBalance          = DoubleToStr(balances    [i], 2);
 
-      if (FileWrite(handle, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
+      if (FileWrite(handle, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strNormalizedProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(handle);
          return(catch("start(12)  FileWrite()", error));
