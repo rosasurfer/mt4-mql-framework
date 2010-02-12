@@ -1042,6 +1042,7 @@ flags=347
 window_num=0
 <inputs>
 TradeInfo.Symbols=GBPUSD
+Show.PerformanceDisplay=0
 </inputs>
 </expert>
 shift_0=0

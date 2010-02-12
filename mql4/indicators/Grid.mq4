@@ -96,7 +96,7 @@ int DrawGrid() {
          if (day=="Sat") continue;  // für MQL optimiert
          if (day=="Sun") continue;
       }
-      
+
       // Tagesseparatoren bei Perioden größer H1 überspringen (nur Wochenseparatoren)
       if (Period() > PERIOD_H1) if (day != "Mon")
          continue;
@@ -110,16 +110,13 @@ int DrawGrid() {
 
       // TODO: Separators von Feiertagen werden in den vorherigen Tag gezeichnet
       // TODO: Sa+So in Labels auf nächsten Wochentag shiften
-      if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0)) {
-         int error = GetLastError();
-         if (error != ERR_OBJECT_ALREADY_EXISTS)
-            return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")", error));
-         ObjectSet(label, OBJPROP_TIME1, time);
-      }
+      ObjectDelete(label); GetLastError();
+      if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0))
+         return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")"));
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
       ObjectSet(label, OBJPROP_COLOR, Grid.Color);
       ObjectSet(label, OBJPROP_BACK , true      );
-      
+
       RegisterChartObject(label, labels);
    }
 
