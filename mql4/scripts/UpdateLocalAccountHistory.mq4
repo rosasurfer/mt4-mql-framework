@@ -7,7 +7,6 @@
 
 /**
  *
- *
  */
 int start() {
    int tick = GetTickCount();
