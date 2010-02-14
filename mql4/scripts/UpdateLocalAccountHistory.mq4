@@ -21,7 +21,7 @@ int start() {
    // Sortierschlüssel aller Tickets aus Online-History auslesen und Tickets sortieren
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
-         return(catch("start(1)  OrderSelect(pos="+ i +")"));
+         break;
       ticketData[i][0] = OrderCloseTime();
       ticketData[i][1] = OrderOpenTime();
       ticketData[i][2] = OrderTicket();
@@ -41,7 +41,7 @@ int start() {
       lastBalance = StrToDouble (history[i-1][HC_BALANCE]);
    }
    if (orders == 0) if (lastBalance != AccountBalance())
-      return(catch("start(2)  more history data needed", ERR_RUNTIME_ERROR));
+      return(catch("start(1)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
 
 
    // Index des ersten ungespeicherten Tickets suchen
@@ -83,30 +83,29 @@ int start() {
    for (i=startIndex; i < orders; i++) {
       ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
-         return(catch("start(3)  OrderSelect(ticket="+ ticket +")"));
+         return(catch("start(2)  OrderSelect(ticket="+ ticket +")"));
 
-      // gestrichene Orders und Kreditlinien sind keine Transaktionen -> überspringen
+      // nur Trades und Ein-/Auszahlungen werden berücksichtigt (keine gecancelten Orders, keine Kreditlinien)
       type = OrderType();
-      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_MARGINCREDIT)
-         continue;
-
-      tickets     [n] = ticket;
-      types       [n] = type;
-      sizes       [n] = OrderLots();
-      symbols     [n] = OrderSymbol();
-      openTimes   [n] = OrderOpenTime();
-      closeTimes  [n] = OrderCloseTime();
-      openPrices  [n] = OrderOpenPrice();
-      closePrices [n] = OrderClosePrice();
-      stopLosses  [n] = OrderStopLoss();
-      takeProfits [n] = OrderTakeProfit();
-      commissions [n] = OrderCommission();
-      swaps       [n] = OrderSwap();
-      netProfits  [n] = OrderProfit();
-      expTimes    [n] = OrderExpiration();   // GrossProfit, NormalizedProfit und Balance werden später berechnet
-      magicNumbers[n] = OrderMagicNumber();
-      comments    [n] = OrderComment();
-      n++;
+      if (type==OP_BUY || type==OP_SELL || type==OP_BALANCE) {
+         tickets     [n] = ticket;
+         types       [n] = type;
+         sizes       [n] = OrderLots();
+         symbols     [n] = OrderSymbol();
+         openTimes   [n] = OrderOpenTime();
+         closeTimes  [n] = OrderCloseTime();
+         openPrices  [n] = OrderOpenPrice();
+         closePrices [n] = OrderClosePrice();
+         stopLosses  [n] = OrderStopLoss();
+         takeProfits [n] = OrderTakeProfit();
+         commissions [n] = OrderCommission();
+         swaps       [n] = OrderSwap();
+         netProfits  [n] = OrderProfit();
+         expTimes    [n] = OrderExpiration();   // GrossProfit, NormalizedProfit und Balance werden später berechnet
+         magicNumbers[n] = OrderMagicNumber();
+         comments    [n] = OrderComment();
+         n++;
+      }
    }
 
 
@@ -139,7 +138,7 @@ int start() {
    for (i=0; i < orders; i++) {
       if (sizes[i] == 0) {
          if (StringSubstr(comments[i], 0, 16) != "close hedge by #")
-            return(catch("start(4)  transaction "+ tickets[i] +" - unknown comment for hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(3)  transaction "+ tickets[i] +" - unknown comment for hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Position suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -147,9 +146,9 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(5)  cannot find counterpart position #"+ ticket +" for hedged position #"+ tickets[i], ERR_RUNTIME_ERROR));
+            return(catch("start(4)  cannot find counterpart position #"+ ticket +" for hedged position #"+ tickets[i], ERR_RUNTIME_ERROR));
 
-         // zeitliche Reihenfolge bestimmen
+         // zeitliche Reihenfolge der gehedgten Positionen bestimmen
          int first, second;
          if      (openTimes[i] < openTimes[n]) { first = i; second = n; }
          else if (openTimes[i] > openTimes[n]) { first = n; second = i; }
@@ -165,7 +164,7 @@ int start() {
          swaps      [first] = swaps      [n];
          netProfits [first] = netProfits [n];
 
-         commissions[second] = 0;               // die hedgende Position verursacht keine Kosten
+         commissions[second] = 0;               // die hedgende Position selbst verursacht keine Kosten
          swaps      [second] = 0;
          netProfits [second] = 0;
       }
@@ -176,31 +175,31 @@ int start() {
    for (i=0; i < orders; i++) {
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
-      lastBalance = balances[i];
+      lastBalance     = balances[i];
    }
    if (lastBalance != AccountBalance()) {
-      Print("start()  balance mismatch - calculated: "+ DoubleToStr(lastBalance, 2) +"   online: "+ DoubleToStr(AccountBalance(), 2));
-      return(catch("start(6)  more history data needed", ERR_RUNTIME_ERROR));
+      Print("start()  balance mismatch, calculated: "+ DoubleToStr(lastBalance, 2) +"   online: "+ DoubleToStr(AccountBalance(), 2));
+      return(catch("start(5)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
    }
 
 
    // Rückkehr, wenn lokale History aktuell ist
    if (orders == 0) {
       Print("start()  local history is up to date");
-      MessageBox("History up to date", "Script", MB_ICONINFORMATION | MB_OK);
-      return(catch("start(7)"));
+      MessageBox("History is up to date.", "Script", MB_ICONINFORMATION|MB_OK);
+      return(catch("start(6)"));
    }
 
 
    // Alle Daten ok: Datei schreiben
    int handle;
 
-   // Ist die Historydatei leer, wird sie neugeschrieben. Andererseits werden die neuen Daten am Ende angefügt.
+   // Ist die Historydatei leer, wird sie neugeschrieben. Anderenfalls werden die neuen Daten am Ende angefügt.
    if (ArrayRange(history, 0) == 0) {
       // Datei neu erzeugen (und ggf. löschen)
       handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_WRITE, '\t');
       if (handle < 0)
-         return(catch("start(8)  FileOpen()"));
+         return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
       int    iOffset   = GetServerGMTOffset();
@@ -220,18 +219,18 @@ int start() {
       if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","NormalizedProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(9)  FileWrite()", error));
+         return(catch("start(8)  FileWrite()", error));
       }
    }
    // Historydatei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (handle < 0)
-         return(catch("start(10)  FileOpen()"));
+         return(catch("start(9)  FileOpen()"));
       if (!FileSeek(handle, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(11)  FileSeek()", error));
+         return(catch("start(10)  FileSeek()", error));
       }
    }
 
@@ -266,15 +265,15 @@ int start() {
       if (FileWrite(handle, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strNormalizedProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(12)  FileWrite()", error));
+         return(catch("start(11)  FileWrite()", error));
       }
    }
    FileClose(handle);
 
 
    Print("start()  written history entries: ", orders, ", execution time: ", GetTickCount()-tick, " ms");
-   MessageBox("History successfully updated", "Script", MB_ICONINFORMATION | MB_OK);
-   return(catch("start(13)"));
+   MessageBox("History successfully updated.", "Script", MB_ICONINFORMATION|MB_OK);
+   return(catch("start(12)"));
 }
 
 
@@ -297,7 +296,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
 
 
    // Datensätze mit derselben CloseTime nach OpenTime sortieren
-   int sameClose[1][3]; ArrayResize(sameClose, 0); ArrayResize(sameClose, 1);    // {OpenTime, Ticket, index}
+   int sameClose[][3]; ArrayResize(sameClose, 0); ArrayResize(sameClose, 1);    // {OpenTime, Ticket, index}
    int count = ArrayRange(tickets, 0);
 
    for (int i=0; i < count; i++) {
@@ -311,7 +310,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
       }
       else if (n > 0) {
          // in sameClose gesammelte Werte neu sortieren
-         ResortSameCloseTickets(sameClose, tickets);
+         SortSameCloseTickets(sameClose, tickets);
          ArrayResize(sameClose, 1);
          n = 0;
       }
@@ -324,13 +323,13 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    }
    // im letzten Schleifendurchlauf in sameClose gesammelte Werte müssen extra sortiert werden
    if (n > 0) {
-      ResortSameCloseTickets(sameClose, tickets);
+      SortSameCloseTickets(sameClose, tickets);
       n = 0;
    }
 
 
    // Datensätze mit derselben Close- und OpenTime nach Ticket sortieren
-   int sameCloseOpen[1][2]; ArrayResize(sameCloseOpen, 0); ArrayResize(sameCloseOpen, 1); // {Ticket, index}
+   int sameCloseOpen[][2]; ArrayResize(sameCloseOpen, 0); ArrayResize(sameCloseOpen, 1); // {Ticket, index}
 
    for (i=0; i < count; i++) {
       close  = tickets[i][0];
@@ -343,7 +342,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
       }
       else if (n > 0) {
          // in sameCloseOpen gesammelte Werte neu sortieren
-         ResortSameCloseOpenTickets(sameCloseOpen, tickets);
+         SortSameCloseOpenTickets(sameCloseOpen, tickets);
          ArrayResize(sameCloseOpen, 1);
          n = 0;
       }
@@ -356,7 +355,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    }
    // im letzten Schleifendurchlauf in sameCloseOpen gesammelte Werte müssen extra sortiert werden
    if (n > 0)
-      ResortSameCloseOpenTickets(sameCloseOpen, tickets);
+      SortSameCloseOpenTickets(sameCloseOpen, tickets);
 
    return(catch("SortTickets(3)"));
 }
@@ -365,7 +364,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
 /**
  *
  */
-int ResortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
+int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    int open, ticket, i;
 
    int sameCloseCopy[][3]; ArrayResize(sameCloseCopy, 0);
@@ -382,14 +381,14 @@ int ResortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& 
       tickets[i][2] = ticket;
    }
 
-   return(catch("ResortSameCloseTickets()"));
+   return(catch("SortSameCloseTickets()"));
 }
 
 
 /**
  *
  */
-int ResortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& tickets[][/*{OpenTime, CloseTime, Ticket}*/]) {
+int SortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& tickets[][/*{OpenTime, CloseTime, Ticket}*/]) {
    int ticket=0, i=0;
 
    int sameCloseOpenCopy[][2]; ArrayResize(sameCloseOpenCopy, 0);
@@ -404,6 +403,6 @@ int ResortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& ti
       tickets[i][2] = ticket;                   // Original-Daten mit den sortierten Werten überschreiben
    }
 
-   return(catch("ResortSameCloseOpenTickets()"));
+   return(catch("SortSameCloseOpenTickets()"));
 }
 
