@@ -71,7 +71,7 @@ int init() {
    CreatePositionLabel();
    CreatePerformanceDisplay();
 
-   // nach Parameteränderung manuell start() aufrufen (statt auf den nächsten Tick zu warten)
+   // nach Parameteränderung start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
       WindowRedraw();
