@@ -87,7 +87,7 @@ int start() {
 
       // gestrichene Orders und Kreditlinien sind keine Transaktionen -> überspringen
       type = OrderType();
-      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
+      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_MARGINCREDIT)
          continue;
 
       tickets     [n] = ticket;
