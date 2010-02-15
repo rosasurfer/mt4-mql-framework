@@ -4,7 +4,6 @@
  * - oben links: das Symbol des Instruments
  * - oben rechts: den aktuellen Kurs (Bid oder Mittel Bid/Ask)
  * - unter dem Kurs: den Spread, wenn 'Show.Spread' TRUE oder das Symbol in 'TradeInfo.Symbols' eingetragen ist
- * - unten links: den Equitybetrag, wenn das Symbol in 'EquityInfo.Symbols' eingetragen ist
  * - unten Mitte: die Größe einer Unit, wenn das Symbol in 'TradeInfo.Symbols' eingetragen ist oder eine Position darin gehalten wird
  * - unten Mitte: die in diesem Instrument gehaltene Position
  * - unten rechts: die normalisierte Handelsperformance der letzten Wochen im Instrument
@@ -18,7 +17,6 @@
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern string EquityInfo.Symbols          = "";       // Instrumente, zu denen Equity-Infos angezeigt werden (Equity)
 extern string TradeInfo.Symbols           = "GBPUSD"; // Instrumente, zu denen Handelsinfos angezeigt werden (UnitSize, Position)
 extern bool   Show.Spread                 = false;    // ob der Spread angezeigt wird (default: nein; ja, wenn Instrument in TradeInfo.Symbols)
 extern bool   Spread.Including.Commission = false;    // ob der Spread nach Broker-Kommission angezeigt werden soll
@@ -31,7 +29,6 @@ string indicatorName = "ChartInfos";
 string instrumentLabel, priceLabel, spreadLabel, equityLabel, unitSizeLabel, positionLabel, performanceLabel;
 string objects[];
 
-bool Show.Equity   = false;
 bool Show.UnitSize = false;
 bool Show.Position = false;
 
@@ -51,11 +48,6 @@ int init() {
    unitSizeLabel    = StringConcatenate(indicatorName, ".UnitSize"   );
    positionLabel    = StringConcatenate(indicatorName, ".Position"   );
    performanceLabel = StringConcatenate(indicatorName, ".Performance");
-
-
-   // Flags setzen
-   if (StringFind(","+ EquityInfo.Symbols +",", ","+ Symbol() +",") != -1)
-      Show.Equity = true;
 
    if (StringFind(","+ TradeInfo.Symbols +",", ","+ Symbol() +",") != -1) {
       Show.UnitSize = true;
@@ -367,26 +359,6 @@ int CreateSpreadLabel() {
 
 
 /**
- * Erzeugt das Equitylabel.
- */
-int CreateEquityLabel() {
-   if (!Show.Equity)
-      return(0);
-
-   ObjectDelete(equityLabel); GetLastError();
-   if (!ObjectCreate(equityLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreateEquityLabel(1), ObjectCreate(label="+ equityLabel +")"));
-   RegisterChartObject(equityLabel, objects);
-   ObjectSet(equityLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
-   ObjectSet(equityLabel, OBJPROP_XDISTANCE, 16);
-   ObjectSet(equityLabel, OBJPROP_YDISTANCE, 11);
-   ObjectSetText(equityLabel, "", 1);
-
-   return(catch("CreateEquityLabel(2)"));
-}
-
-
-/**
  * Erzeugt das UnitSize-Label.
  */
 int CreateUnitSizeLabel() {
@@ -487,26 +459,6 @@ int UpdateSpreadLabel() {
    }
 
    return(catch("UpdateSpreadLabel(2)"));
-}
-
-
-/**
- * Aktualisiert das Equity-Label.
- */
-int UpdateEquityLabel() {
-   if (!Show.Equity)
-      return(0);
-
-   string text = StringConcatenate("Equity:  ", FormatMoney(AccountEquity()-AccountCredit()));
-
-   // Wert setzen
-   if (!ObjectSetText(equityLabel, text, 9, "Tahoma Fett", Black)) {
-      int error = GetLastError();
-      if (error != ERR_OBJECT_DOES_NOT_EXIST)      // bei geöffnetem Properties-Dialog oder bei Label::onDrag()
-         return(catch("UpdateEquityLabel(1), ObjectSetText(label="+ equityLabel +")", error));
-   }
-
-   return(catch("UpdateEquityLabel(2)"));
 }
 
 
