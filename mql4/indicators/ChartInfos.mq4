@@ -58,7 +58,6 @@ int init() {
    CreateInstrumentLabel();
    CreatePriceLabel();
    CreateSpreadLabel();
-   CreateEquityLabel();
    CreateUnitSizeLabel();
    CreatePositionLabel();
    CreatePerformanceDisplay();
@@ -79,7 +78,6 @@ int init() {
 int start() {
    UpdatePriceLabel();
    UpdateSpreadLabel();
-   UpdateEquityLabel();
    UpdateUnitSizeLabel();
    UpdatePositionLabel();
    UpdatePerformanceDisplay();
@@ -512,29 +510,6 @@ int UpdatePerformanceDisplay() {
       return(0);
 
    return(catch("UpdatePerformanceDisplay()"));
-}
-
-
-/**
- * Formatiert einen Währungsbetrag.
- *
- * @param double value - Betrag
- *
- * @return string
- */
-string FormatMoney(double value) {
-   string result = DoubleToStr(value, 0);
-
-   int len = StringLen(result);
-
-   if (len > 3) {
-      string major = StringSubstr(result, 0, len-3);
-      string minor = StringSubstr(result, len-3);
-      result = StringConcatenate(major, " ", minor, ".00");
-   }
-
-   catch("FormatMoney()");
-   return(result);
 }
 
 
