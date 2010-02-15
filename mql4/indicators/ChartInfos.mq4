@@ -18,11 +18,11 @@
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern string EquityInfo.Symbols        = "";         // Instrumente, zu denen Equity-Infos angezeigt werden (Equity)
-extern string TradeInfo.Symbols         = "GBPUSD";   // Instrumente, zu denen Handelsinfos angezeigt werden (UnitSize, Position)
-extern bool   Show.Spread               = false;      // ob der Spread angezeigt wird (default: nein; ja, wenn Instrument in TradeInfo.Symbols)
-extern bool   Spread.Include.Commission = false;      // ob der Spread nach Broker-Kommission angezeigt werden soll
-extern bool   Show.PerformanceDisplay   = true;       // ob das Performance-Display angezeigt werden soll
+extern string EquityInfo.Symbols          = "";       // Instrumente, zu denen Equity-Infos angezeigt werden (Equity)
+extern string TradeInfo.Symbols           = "GBPUSD"; // Instrumente, zu denen Handelsinfos angezeigt werden (UnitSize, Position)
+extern bool   Show.Spread                 = false;    // ob der Spread angezeigt wird (default: nein; ja, wenn Instrument in TradeInfo.Symbols)
+extern bool   Spread.Including.Commission = false;    // ob der Spread nach Broker-Kommission angezeigt werden soll
+extern bool   Show.PerformanceDisplay     = true;     // ob das Performance-Display angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -476,6 +476,9 @@ int UpdateSpreadLabel() {
       return(0);
 
    double spread = (Ask-Bid) * MathPow(10, Digits-1);
+
+   if (Spread.Including.Commission) if (AccountNumber() == {account-no})
+      spread += 0.8;
 
    if (!ObjectSetText(spreadLabel, DoubleToStr(spread, 1), 9, "Tahoma", SlateGray)) {
       int error = GetLastError();
