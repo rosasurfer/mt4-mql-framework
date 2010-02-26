@@ -45,7 +45,7 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
 
-   if (processedBars == 0)    // 1. Aufruf oder nach Data-Pumping: alles neu zeichnen
+   if (processedBars == 0)    // erster Aufruf oder nach Data-Pumping: alles neu zeichnen
       DrawGrid();
 
    return(catch("start()"));
