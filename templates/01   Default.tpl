@@ -1061,7 +1061,7 @@ flags=347
 window_num=0
 <inputs>
 Track.ComputerName=Sirius
-Track.MetaTraderDirectory=D:\Trading\MT4 Alpari 1 
+Track.MetaTraderDirectory=D:\Trading\MT4 Alpari 1
 Track.Symbols=GBPUSD
 SMS.Alerts=1
 SMS.Alerts.Gridsize=25
