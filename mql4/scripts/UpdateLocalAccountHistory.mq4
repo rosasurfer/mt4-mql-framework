@@ -1,5 +1,8 @@
 
+
 #include <stdlib.mqh>
+#include <win32api.mqh>
+
 
 //#property show_confirm
 //#property show_inputs
