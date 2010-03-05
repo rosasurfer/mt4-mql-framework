@@ -5,32 +5,35 @@
 
 #import "kernel32.dll"
 
-   int  GetComputerNameA(string lpName, int lpSize[]);
-   int  GetModuleFileNameA(int hModule, string lpFileName, int nSize);
+   int  GetComputerNameA(string lpBuffer, int lpBufferSize[]);
+   int  GetModuleFileNameA(int hModule, string lpBuffer, int nBufferSize);
+   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
    int  WinExec(string lpCmdLine, int nCmdShow);
 
 #import "user32.dll"
 
+   /**
+    *
    // messages
+   int  PostMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendNotifyMessageA(int hWnd, int Msg, int wParam, int lParam);
-   int  PostMessageA(int hWnd, int Msg, int wParam, int lParam);
    void keybd_event(int bVk, int bScan, int dwFlags, int dwExtraInfo);
    void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
 
    // windows
    int  FindWindowA(string lpClassName, string lpWindowName);
    int  SetWindowTextA(int hWnd, string lpString);
+   int  GetWindow(int hWnd, int uCmd);
    int  GetWindowTextA(int hWnd, string lpString, int nMaxCount);
    int  GetWindowTextLengthA(int hWnd);
-   int  GetWindow(int hWnd, int uCmd);
    int  UpdateWindow(int hWnd);
    int  EnableWindow(int hWnd, int bEnable);
    int  DestroyWindow(int hWnd);
    int  ShowWindow(int hWnd, int nCmdShow);
    int  SetActiveWindow(int hWnd);
    int  AnimateWindow(int hWnd, int dwTime, int dwFlags);
-   int  FlashWindow(int hWnd, int dwFlags /*bInvert*/);
+   int  FlashWindow(int hWnd, int dwFlags);
    int  CloseWindow(int hWnd);
    int  MoveWindow(int hWnd, int X, int Y, int nWidth, int nHeight, int bRepaint);
    int  SetWindowPos(int hWnd, int hWndInsertAfter, int X, int Y, int cx, int cy, int uFlags);
@@ -49,7 +52,8 @@
    int  GetSystemMetrics(int nIndex);
    int  ExitWindowsEx(int uFlags, int dwReserved);
    int  SwapMouseButton(int fSwap);
-
+   */
+   
 #import
 
 
