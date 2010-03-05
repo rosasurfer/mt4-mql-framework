@@ -205,7 +205,7 @@ int start() {
          return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
-      int    iOffset   = GetServerGMTOffset();
+      int    iOffset   = GetTradeServerGMTOffset();
       string strOffset = DoubleToStr(MathAbs(iOffset), 0);
 
       if (MathAbs(iOffset) < 10) strOffset = "0"+ strOffset;

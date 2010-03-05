@@ -916,25 +916,25 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
- * Gibt die Abweichung der Serverzeit von EET (Eastern European Time) zurück.
+ * Gibt die Abweichung der Tradeserverzeit von EET (Eastern European Time) zurück.
  *
  * @return int - Offset in Stunden
  */
-int GetServerEETOffset() {
-   return(GetServerGMTOffset() - 2);
+int GetTradeServerEETOffset() {
+   return(GetTradeServerGMTOffset() - 2);
 }
 
 
 /**
- * Gibt die Abweichung der Serverzeit von GMT (Greenwich Mean Time) zurück.
+ * Gibt die Abweichung der Tradeserverzeit von GMT (Greenwich Mean Time) zurück.
  *
  * @return int - Offset in Stunden
  */
-int GetServerGMTOffset() {
+int GetTradeServerGMTOffset() {
    /**
     * TODO: Haben verschiedene Server desselben Brokers evt. unterschiedliche Offsets?
     *       string server  = AccountServer();
-    *       Print("GetServerGMTOffset(): account company: "+ company +", account server: "+ server);
+    *       Print("GetTradeServerGMTOffset(): account company: "+ company +", account server: "+ server);
     *
     * TODO: Zeitverschiebungen von 30 Minuten integrieren (evt. Rückgabewert in Minuten)
     */
@@ -947,7 +947,7 @@ int GetServerGMTOffset() {
       if (company == "Forex Ltd."                         ) return( 0);
       if (company == "ATC Brokers - Main"                 ) return(-5);
       if (company == "ATC Brokers - $8 Commission"        ) return(-5);
-      catch("GetServerGMTOffset(1)  cannot resolve GMT trade server offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
+      catch("GetTradeServerGMTOffset(1)  cannot resolve trade server GMT offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
    }
    else {
       // TODO: Verwendung von TerminalCompany() ist Unfug
@@ -957,7 +957,7 @@ int GetServerGMTOffset() {
       if (company == "Cantor Fitzgerald Europe"           ) return( 0);
       if (company == "FOREX Ltd."                         ) return( 0);
       if (company == "Avail Trading Corp."                ) return(-5);
-      catch("GetServerGMTOffset(2)  cannot resolve GMT trade server offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
+      catch("GetTradeServerGMTOffset(2)  cannot resolve trade server GMT offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
    }
 
    return(EMPTY_VALUE);
@@ -975,7 +975,7 @@ datetime GetSessionStartTime(datetime time) {
    // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
-   int eetOffset     = GetServerEETOffset();
+   int eetOffset     = GetTradeServerEETOffset();
    datetime eetTime  = time - eetOffset * HOURS;
    datetime eetStart = eetTime - TimeHour(eetTime)*HOURS - TimeMinute(eetTime)*MINUTES - TimeSeconds(eetTime);
    datetime result   = eetStart + eetOffset * HOURS;
