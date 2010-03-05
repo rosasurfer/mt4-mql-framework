@@ -1060,12 +1060,6 @@ name=QuoteTracker
 flags=347
 window_num=0
 <inputs>
-Track.ComputerName=Sirius
-Track.MetaTraderDirectory=D:\Trading\MT4 Alpari 1
-Track.Symbols=GBPUSD
-SMS.Alerts=1
-SMS.Alerts.Gridsize=25
-SMS.Receiver=************
 </inputs>
 </expert>
 shift_0=0

@@ -7,6 +7,7 @@
 
    int  GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int nBufferSize);
+   int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);	
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
    int  WinExec(string lpCmdLine, int nCmdShow);
 

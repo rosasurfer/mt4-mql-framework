@@ -1387,19 +1387,15 @@ int RemoveChartObjects(string& objects[]) {
 
 
 /**
- * Vergleicht zwei Strings miteinander.
+ * Vergleicht zwei Strings ohne Berücksichtigung der Groß-/Kleinschreibung.
  *
  * @param string string1
  * @param string string2
- * @param bool   ignorCase - ob Groß-/Kleinschreibung ignoriert werden soll (default: TRUE)
  *
  * @return bool
  */
-bool StringCompare(string string1, string string2, bool ignoreCase=true) {
-   if (ignoreCase)
-      return(StringToUpper(string1) == StringToUpper(string2));
-
-   return(string1 == string2);
+bool StringICompare(string string1, string string2) {
+   return(StringToUpper(string1) == StringToUpper(string2));
 }
 
 
