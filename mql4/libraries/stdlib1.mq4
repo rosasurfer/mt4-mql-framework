@@ -945,8 +945,9 @@ int GetServerGMTOffset() {
       if (company == "Alpari (UK) Ltd."                   ) return( 1);
       if (company == "Cantor Fitzgerald"                  ) return( 0);
       if (company == "Forex Ltd."                         ) return( 0);
+      if (company == "ATC Brokers - Main"                 ) return(-5);
       if (company == "ATC Brokers - $8 Commission"        ) return(-5);
-      catch("GetServerGMTOffset() - cannot resolve GMT trade server offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
+      catch("GetServerGMTOffset(1)  cannot resolve GMT trade server offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
    }
    else {
       // TODO: Verwendung von TerminalCompany() ist Unfug
@@ -956,7 +957,7 @@ int GetServerGMTOffset() {
       if (company == "Cantor Fitzgerald Europe"           ) return( 0);
       if (company == "FOREX Ltd."                         ) return( 0);
       if (company == "Avail Trading Corp."                ) return(-5);
-      catch("GetServerGMTOffset() - cannot resolve GMT trade server offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
+      catch("GetServerGMTOffset(2)  cannot resolve GMT trade server offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
    }
 
    return(EMPTY_VALUE);

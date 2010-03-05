@@ -33,8 +33,8 @@
    string   GetOperationTypeDescription(int operationType);
    string   GetPeriodDescription(int period);
    string   GetPeriodFlagDescription(int flags);
-   int      GetServerEETOffset();
-   int      GetServerGMTOffset();
+   int      GetTradeServerEETOffset();
+   int      GetTradeServerGMTOffset();
    datetime GetSessionStartTime(datetime time);
    string   GetWinErrorDescription(int error);
    string   GetUninitReasonDescription(int reason);
