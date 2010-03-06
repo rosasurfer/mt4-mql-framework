@@ -15,7 +15,7 @@ int start() {
 
    int error = WinExec(lpCmdLine, SW_SHOWNORMAL);
    if (error < 32)
-      return(catch("start(1)  execution of command \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("start(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("start(2)"));
 }
