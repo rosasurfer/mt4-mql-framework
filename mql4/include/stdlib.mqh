@@ -36,7 +36,7 @@
    int      GetTradeServerEETOffset();
    int      GetTradeServerGMTOffset();
    datetime GetSessionStartTime(datetime time);
-   string   GetWinErrorDescription(int error);
+   string   GetWindowsErrorDescription(int error);
    string   GetUninitReasonDescription(int reason);
    int      iBalanceSeries(int account, double& iBuffer[]);
    int      iBarShiftNext(string symbol, int timeframe, datetime time);

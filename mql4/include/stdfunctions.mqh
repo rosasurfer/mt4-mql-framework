@@ -269,6 +269,7 @@
 #define ERR_OBJECT_COORDINATES_ERROR         4205
 #define ERR_NO_SPECIFIED_SUBWINDOW           4206
 #define ERR_SOME_OBJECT_ERROR                4207
+#define ERR_WINDOWS_ERROR                    5000  // Windows error
 
 
 /**
