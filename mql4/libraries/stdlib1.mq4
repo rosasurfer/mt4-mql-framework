@@ -26,6 +26,7 @@ bool CheckEvent(int event, int& results[], int flags=0) {
       case EVENT_ORDER_CANCEL   : return(CheckEvent.OrderCancel   (results, flags));
       case EVENT_POSITION_OPEN  : return(CheckEvent.PositionOpen  (results, flags));
       case EVENT_POSITION_CLOSE : return(CheckEvent.PositionClose (results, flags));
+      case EVENT_ACCOUNT_CHANGE : return(CheckEvent.AccountChange (results, flags));
       case EVENT_ACCOUNT_PAYMENT: return(CheckEvent.AccountPayment(results, flags));
       case EVENT_HISTORY_CHANGE : return(CheckEvent.HistoryChange (results, flags));
    }
@@ -187,6 +188,26 @@ bool CheckEvent.PositionClose(int& results[], int flags=0) {
 
 
 /**
+ * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool CheckEvent.AccountChange(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("CheckEvent.AccountChange()  eventStatus: "+ eventStatus);
+   catch("CheckEvent.AccountChange()");
+   return(eventStatus);
+}
+
+
+/**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
  * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
@@ -236,6 +257,30 @@ bool CheckEvent.HistoryChange(int& results[], int flags=0) {
  */
 bool CompareDoubles(double double1, double double2) {
    return(NormalizeDouble(double1 - double2, 8) == 0);
+}
+
+
+/**
+ * Gibt die hexadezimale Representation eines Integers zurück.
+ *
+ * @param int i - Integer
+ *
+ * @return string - hexadezimaler Wert
+ *
+ * TODO: kann keine negativen Zahlen verarbeiten (gibt 0 zurück)
+ */
+string DecimalToHex(int i) {
+   static string hexValues = "0123456789ABCDEF";
+   string result = "";
+
+   int a = i % 16;   // a = Rest
+   int b = i / 16;   // b = Vielfaches
+
+   if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
+   else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
+   
+   catch("DecimalToHex()");
+   return(result);
 }
 
 
@@ -744,7 +789,10 @@ string GetErrorDescription(int error) {
       case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                );
       case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                  );
       case ERR_SOME_OBJECT_ERROR          : return("object error"                                            );
+
+      // custom errors
       case ERR_WINDOWS_ERROR              : return("Windows error"                                           );
+      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                );
    }
    return("unknown error");
 }
@@ -1653,6 +1701,7 @@ string GetEventDescription(int event) {
       case EVENT_ORDER_CANCEL   : description = "OrderCancel"   ; break;
       case EVENT_POSITION_OPEN  : description = "PositionOpen"  ; break;
       case EVENT_POSITION_CLOSE : description = "PositionClose" ; break;
+      case EVENT_ACCOUNT_CHANGE : description = "AccountChange" ; break;
       case EVENT_ACCOUNT_PAYMENT: description = "AccountPayment"; break;
       case EVENT_HISTORY_CHANGE : description = "HistoryChange" ; break;
 
@@ -2025,64 +2074,72 @@ int IncreasePeriod(int period = 0) {
 /**
  *
  */
-int onAccountPayment(int details[]) {
-   return(catch("onAccountPayment()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onBarOpen(int details[]) {
+   return(catch("onBarOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onBarOpen(int details[]) {
-   return(catch("onBarOpen()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onOrderPlace(int details[]) {
+   return(catch("onOrderPlace()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onHistoryChange(int details[]) {
-   return(catch("onHistoryChange()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onOrderChange(int details[]) {
+   return(catch("onOrderChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onOrderPlace(int details[]) {
-   return(catch("onOrderPlace()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onOrderCancel(int details[]) {
+   return(catch("onOrderCancel()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onOrderChange(int details[]) {
-   return(catch("onOrderChange()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onPositionOpen(int details[]) {
+   return(catch("onPositionOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onOrderCancel(int details[]) {
-   return(catch("onOrderCancel()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onPositionClose(int details[]) {
+   return(catch("onPositionClose()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onPositionOpen(int details[]) {
-   return(catch("onPositionOpen()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onAccountChange(int details[]) {
+   return(catch("onAccountChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  */
-int onPositionClose(int details[]) {
-   return(catch("onPositionClose()    implementation not found", ERR_FUNCTION_NOT_CONFIRMED));
+/*abstract*/ int onAccountPayment(int details[]) {
+   return(catch("onAccountPayment()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ *
+ */
+/*abstract*/ int onHistoryChange(int details[]) {
+   return(catch("onHistoryChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -2259,6 +2316,38 @@ int RemoveChartObjects(string& objects[]) {
 
 
 /**
+ * Verschickt eine Nachricht an eine Mobilfunknummer.
+ *
+ * @param string receiver - Mobilfunknummer des Empfängers im internationalen Format (49123456789)
+ * @param string message  - zu verschickende Nachricht
+ *
+ * @return int - Fehlerstatus
+ */
+int SendSMS(string receiver, string message) {
+   // TODO: Gateway-Zugangsdaten auslagern
+
+   // TODO: Empfänger-Nr. überprüfen
+   //if (!StringIsDigit(receiver))
+   message = UrlEncode(message);
+   string url = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ message;
+
+   /*
+   string targetDir  = GetMetaTraderDirectory() +"\\experts\\files\\";
+   string targetFile = "sms.txt";
+   string logFile    = "sms.log";
+   string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\" -O \""+targetDir+targetFile+"\" -a \""+targetDir+logFile+"\"";
+   */
+   string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\"";
+
+   int error = WinExec(lpCmdLine, SW_HIDE); // SW_SHOWNORMAL | SW_HIDE
+   if (error < 32)
+      return(catch("SendSMS(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
+
+   return(catch("SendSMS(2)"));
+}
+
+
+/**
  * Vergleicht zwei Strings ohne Berücksichtigung der Groß-/Kleinschreibung.
  *
  * @param string string1
@@ -2352,6 +2441,33 @@ string StringTrim(string value) {
 }
 
 
+/**
+ * URL-kodiert einen String.  Leerzeichen werden als "+"-Zeichen kodiert.
+ *
+ * @param string value
+ *
+ * @return string - URL-kodierter String
+ */
+string UrlEncode(string value) {
+   int char, len=StringLen(value);
+   string charStr, result="";
+   
+   for (int i=0; i < len; i++) {
+      charStr = StringSubstr(value, i, 1);
+      char    = StringGetChar(charStr, 0);
+
+      if ((47 < char && char < 58) || (64 < char && char < 91) || (96 < char && char < 123)) 
+         result = StringConcatenate(result, charStr);
+      else if (char == 32)
+         result = StringConcatenate(result, "+");
+      else
+         result = StringConcatenate(result, "%", DecimalToHex(char));
+   }
+
+   catch("UrlEncode()");
+   return(result);
+}
+
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
@@ -2440,17 +2556,16 @@ string DoubleToStrMorePrecision(double number, int precision) {
 /**
  * convert integer to string contained input's hexadecimal notation
  */
-string IntegerToHexString(int integer_number) {
-   string hex_string = "00000000";
-   int    value, shift = 28;
-   // Print("Parameter for IntegerHexToString is ", integer_number);
+string IntegerToHexString(int integer) {
+   string result = "00000000";
+   int value, shift = 28;
 
-   for (int i=0; i<8; i++) {
-      value = (integer_number>>shift) & 0x0F;
-      if (value < 10) hex_string = StringSetChar(hex_string, i,  value     +'0');
-      else            hex_string = StringSetChar(hex_string, i, (value-10) +'A');
+   for (int i=0; i < 8; i++) {
+      value = (integer >> shift) & 0x0F;
+      if (value < 10) result = StringSetChar(result, i,  value     +'0');
+      else            result = StringSetChar(result, i, (value-10) +'A');
       shift -= 4;
    }
-   return(hex_string);
+   return(result);
 }
 

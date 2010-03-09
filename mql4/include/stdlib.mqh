@@ -14,9 +14,11 @@
    bool     CheckEvent.OrderCancel(int& results[], int flags);
    bool     CheckEvent.PositionOpen(int& results[], int flags);
    bool     CheckEvent.PositionClose(int& results[], int flags);
+   bool     CheckEvent.AccountChange(int& results[], int flags);
    bool     CheckEvent.AccountPayment(int& results[], int flags);
    bool     CheckEvent.HistoryChange(int& results[], int flags);
    bool     CompareDoubles(double double1, double double2);
+   string   DecimalToHex(int number);
    int      DecreasePeriod(int period);
    string   DoubleToStrTrim(double number);
    string   FormatMoney(double amount);
@@ -48,17 +50,20 @@
    int      onOrderCancel(int tickets[]);
    int      onPositionOpen(int tickets[]);
    int      onPositionClose(int tickets[]);
+   int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
    int      onHistoryChange(int tickets[]);
    bool     QuoteTracker.SMSLimits(string symbol, double& limits[2]);
    bool     QuoteTracker.SoundLimits(string symbol, double& limits[2]);
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
+   int      SendSMS(string receiver, string message);
    bool     StringICompare(string string1, string string2);
    int      StringFindR(string subject, string search);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
+   string   UrlEncode(string value);
 
 
    // ----------------------------------------------------------------------------------
@@ -68,6 +73,7 @@
    // ----------------------------------------------------------------------------------
    int    RGB(int red, int green, int blue);
    string DoubleToStrMorePrecision(double number, int precision);
-   string IntegerToHexString(int number);
+   string IntegerToHexString(int integer);
 
 #import
+

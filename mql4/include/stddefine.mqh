@@ -6,7 +6,8 @@
 
 
 // String maximaler Länge
-#define MAX_LEN_STRING "..............................................................................................................................................................................................................................................................."
+#define MAX_LEN_STRING         "..............................................................................................................................................................................................................................................................."
+#define MAX_STRING_LEN         255
 
 
 // Zeitkonstanten
@@ -91,8 +92,9 @@
 #define EVENT_ORDER_CANCEL       8
 #define EVENT_POSITION_OPEN     16
 #define EVENT_POSITION_CLOSE    32
-#define EVENT_ACCOUNT_PAYMENT   64     // Ein- oder Auszahlung
-#define EVENT_HISTORY_CHANGE   128     // EVENT_POSITION_CLOSE | EVENT_ACCOUNT_PAYMENT
+#define EVENT_ACCOUNT_CHANGE    64
+#define EVENT_ACCOUNT_PAYMENT  128     // Ein- oder Auszahlung
+#define EVENT_HISTORY_CHANGE   256     // EVENT_POSITION_CLOSE | EVENT_ACCOUNT_PAYMENT
 
 
 // Array-Identifier zum Zugriff auf Pivotlevel-Ergebnisse, siehe iPivotLevel()
@@ -269,7 +271,10 @@
 #define ERR_OBJECT_COORDINATES_ERROR         4205
 #define ERR_NO_SPECIFIED_SUBWINDOW           4206
 #define ERR_SOME_OBJECT_ERROR                4207
+
+// custom errors
 #define ERR_WINDOWS_ERROR                    5000  // Windows error
+#define ERR_FUNCTION_NOT_IMPLEMENTED         5001  // function not implemented
 
 
 /**
@@ -330,6 +335,7 @@ int HandleEvent(int event, int flags=0) {
       case EVENT_ORDER_CANCEL   : if (CheckEvent.OrderCancel   (results, flags)) onOrderCancel(results);    break;
       case EVENT_POSITION_OPEN  : if (CheckEvent.PositionOpen  (results, flags)) onPositionOpen(results);   break;
       case EVENT_POSITION_CLOSE : if (CheckEvent.PositionClose (results, flags)) onPositionClose(results);  break;
+      case EVENT_ACCOUNT_CHANGE : if (CheckEvent.AccountChange (results, flags)) onAccountChange(results);  break;
       case EVENT_ACCOUNT_PAYMENT: if (CheckEvent.AccountPayment(results, flags)) onAccountPayment(results); break;
       case EVENT_HISTORY_CHANGE : if (CheckEvent.HistoryChange (results, flags)) onHistoryChange(results);  break;
 
@@ -363,6 +369,7 @@ int HandleEvents(int events) {
    if (events & EVENT_ORDER_CANCEL    != 0) HandleEvent(EVENT_ORDER_CANCEL);
    if (events & EVENT_POSITION_OPEN   != 0) HandleEvent(EVENT_POSITION_OPEN);
    if (events & EVENT_POSITION_CLOSE  != 0) HandleEvent(EVENT_POSITION_CLOSE);
+   if (events & EVENT_ACCOUNT_CHANGE  != 0) HandleEvent(EVENT_ACCOUNT_CHANGE);
    if (events & EVENT_ACCOUNT_PAYMENT != 0) HandleEvent(EVENT_ACCOUNT_PAYMENT);
    if (events & EVENT_HISTORY_CHANGE  != 0) HandleEvent(EVENT_HISTORY_CHANGE);
 
