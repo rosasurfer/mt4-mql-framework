@@ -57,7 +57,7 @@
    bool     QuoteTracker.SoundLimits(string symbol, double& limits[2]);
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
-   int      SendSMS(string receiver, string message);
+   int      SendTextMessage(string receiver, string message);
    bool     StringICompare(string string1, string string2);
    int      StringFindR(string subject, string search);
    string   StringToLower(string value);

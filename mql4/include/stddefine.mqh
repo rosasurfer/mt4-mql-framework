@@ -312,50 +312,11 @@ int catch(string message="", int error=ERR_NO_ERROR) {
 
 
 /**
- * Prüft, ob ein einzelnes Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
- * Die Verwendung dieser Funktion ermöglicht die Angabe weiterer eventspezifischer Prüfungsflags.
- *
- * @param int event - Eventbezeichner
- * @param int flags - zusätzliche Flags (default: 0)
- *
- * @return int - Fehlerstatus
- *
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
- */
-int HandleEvent(int event, int flags=0) {
-   int results[]; // Zurücksetzen nicht notwendig, da CheckEvent() immer zurücksetzt
-
-   switch (event) {
-      case EVENT_BAR_OPEN       : if (CheckEvent.BarOpen       (results, flags)) onBarOpen(results);        break;
-      case EVENT_ORDER_PLACE    : if (CheckEvent.OrderPlace    (results, flags)) onOrderPlace(results);     break;
-      case EVENT_ORDER_CHANGE   : if (CheckEvent.OrderChange   (results, flags)) onOrderChange(results);    break;
-      case EVENT_ORDER_CANCEL   : if (CheckEvent.OrderCancel   (results, flags)) onOrderCancel(results);    break;
-      case EVENT_POSITION_OPEN  : if (CheckEvent.PositionOpen  (results, flags)) onPositionOpen(results);   break;
-      case EVENT_POSITION_CLOSE : if (CheckEvent.PositionClose (results, flags)) onPositionClose(results);  break;
-      case EVENT_ACCOUNT_CHANGE : if (CheckEvent.AccountChange (results, flags)) onAccountChange(results);  break;
-      case EVENT_ACCOUNT_PAYMENT: if (CheckEvent.AccountPayment(results, flags)) onAccountPayment(results); break;
-      case EVENT_HISTORY_CHANGE : if (CheckEvent.HistoryChange (results, flags)) onHistoryChange(results);  break;
-
-      default:
-         catch("HandleEvent() - unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
-   }
-
-   return(catch("HandleEvent()"));
-
-   // unreachable Code, unterdrückt Compilerwarungen über unreferenzierte Funktionen
-   HandleEvents(0);
-}
-
-
-/**
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
  *
  * @param int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
  *
- * @return int - Fehlerstatus
+ * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
  * NOTE:
@@ -363,16 +324,60 @@ int HandleEvent(int event, int flags=0) {
  * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  */
 int HandleEvents(int events) {
-   if (events & EVENT_BAR_OPEN        != 0) HandleEvent(EVENT_BAR_OPEN);
-   if (events & EVENT_ORDER_PLACE     != 0) HandleEvent(EVENT_ORDER_PLACE);
-   if (events & EVENT_ORDER_CHANGE    != 0) HandleEvent(EVENT_ORDER_CHANGE);
-   if (events & EVENT_ORDER_CANCEL    != 0) HandleEvent(EVENT_ORDER_CANCEL);
-   if (events & EVENT_POSITION_OPEN   != 0) HandleEvent(EVENT_POSITION_OPEN);
-   if (events & EVENT_POSITION_CLOSE  != 0) HandleEvent(EVENT_POSITION_CLOSE);
-   if (events & EVENT_ACCOUNT_CHANGE  != 0) HandleEvent(EVENT_ACCOUNT_CHANGE);
-   if (events & EVENT_ACCOUNT_PAYMENT != 0) HandleEvent(EVENT_ACCOUNT_PAYMENT);
-   if (events & EVENT_HISTORY_CHANGE  != 0) HandleEvent(EVENT_HISTORY_CHANGE);
+   int status = 0;
 
-   return(catch("HandleEvents()"));
+   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN);
+   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE);
+   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE);
+   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL);
+   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN);
+   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE);
+   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
+   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
+   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE);
+   
+   catch("HandleEvents()");
+   return(status != 0);
+}
+
+
+/**
+ * Prüft, ob ein einzelnes Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
+ * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
+ *
+ * @param int event - Eventbezeichner
+ * @param int flags - zusätzliche Flags (default: 0)
+ *
+ * @return bool - ob das Event aufgetreten ist oder nicht
+ *
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ */
+int HandleEvent(int event, int flags=0) {
+   bool status = false;
+   int  results[];      // zurücksetzen nicht notwendig, da CheckEvent() immer zurücksetzt
+
+   switch (event) {
+      case EVENT_BAR_OPEN       : if (CheckEvent.BarOpen       (results, flags)) { status = true; onBarOpen(results);        } break;
+      case EVENT_ORDER_PLACE    : if (CheckEvent.OrderPlace    (results, flags)) { status = true; onOrderPlace(results);     } break;
+      case EVENT_ORDER_CHANGE   : if (CheckEvent.OrderChange   (results, flags)) { status = true; onOrderChange(results);    } break;
+      case EVENT_ORDER_CANCEL   : if (CheckEvent.OrderCancel   (results, flags)) { status = true; onOrderCancel(results);    } break;
+      case EVENT_POSITION_OPEN  : if (CheckEvent.PositionOpen  (results, flags)) { status = true; onPositionOpen(results);   } break;
+      case EVENT_POSITION_CLOSE : if (CheckEvent.PositionClose (results, flags)) { status = true; onPositionClose(results);  } break;
+      case EVENT_ACCOUNT_CHANGE : if (CheckEvent.AccountChange (results, flags)) { status = true; onAccountChange(results);  } break;
+      case EVENT_ACCOUNT_PAYMENT: if (CheckEvent.AccountPayment(results, flags)) { status = true; onAccountPayment(results); } break;
+      case EVENT_HISTORY_CHANGE : if (CheckEvent.HistoryChange (results, flags)) { status = true; onHistoryChange(results);  } break;
+
+      default:
+         catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   }
+   
+   catch("HandleEvent()");
+   return(status);
+
+   // unreachable Code, unterdrückt Compilerwarungen über unreferenzierte Funktionen
+   HandleEvents(0);
 }
 

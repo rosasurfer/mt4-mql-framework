@@ -278,7 +278,7 @@ string DecimalToHex(int i) {
 
    if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
    else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
-   
+
    catch("DecimalToHex()");
    return(result);
 }
@@ -2323,7 +2323,7 @@ int RemoveChartObjects(string& objects[]) {
  *
  * @return int - Fehlerstatus
  */
-int SendSMS(string receiver, string message) {
+int SendTextMessage(string receiver, string message) {
    // TODO: Gateway-Zugangsdaten auslagern
 
    // TODO: Empfänger-Nr. überprüfen
@@ -2341,9 +2341,9 @@ int SendSMS(string receiver, string message) {
 
    int error = WinExec(lpCmdLine, SW_HIDE); // SW_SHOWNORMAL | SW_HIDE
    if (error < 32)
-      return(catch("SendSMS(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
 
-   return(catch("SendSMS(2)"));
+   return(catch("SendTextMessage(2)"));
 }
 
 
@@ -2451,12 +2451,12 @@ string StringTrim(string value) {
 string UrlEncode(string value) {
    int char, len=StringLen(value);
    string charStr, result="";
-   
+
    for (int i=0; i < len; i++) {
       charStr = StringSubstr(value, i, 1);
       char    = StringGetChar(charStr, 0);
 
-      if ((47 < char && char < 58) || (64 < char && char < 91) || (96 < char && char < 123)) 
+      if ((47 < char && char < 58) || (64 < char && char < 91) || (96 < char && char < 123))
          result = StringConcatenate(result, charStr);
       else if (char == 32)
          result = StringConcatenate(result, "+");
