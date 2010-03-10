@@ -10,244 +10,6 @@
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
- *
- * @param int  event     - Event
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent(int event, int& results[], int flags=0) {
-   switch (event) {
-      case EVENT_BAR_OPEN       : return(CheckEvent.BarOpen       (results, flags));
-      case EVENT_ORDER_PLACE    : return(CheckEvent.OrderPlace    (results, flags));
-      case EVENT_ORDER_CHANGE   : return(CheckEvent.OrderChange   (results, flags));
-      case EVENT_ORDER_CANCEL   : return(CheckEvent.OrderCancel   (results, flags));
-      case EVENT_POSITION_OPEN  : return(CheckEvent.PositionOpen  (results, flags));
-      case EVENT_POSITION_CLOSE : return(CheckEvent.PositionClose (results, flags));
-      case EVENT_ACCOUNT_CHANGE : return(CheckEvent.AccountChange (results, flags));
-      case EVENT_ACCOUNT_PAYMENT: return(CheckEvent.AccountPayment(results, flags));
-      case EVENT_HISTORY_CHANGE : return(CheckEvent.HistoryChange (results, flags));
-   }
-   catch("CheckEvent()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(false);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein BarOpen-Event aufgetreten ist.  Das Event bezieht sich immer auf den aktuellen Chart.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.BarOpen(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.BarOpen()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.BarOpen()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.OrderPlace(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.OrderPlace()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.OrderPlace()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.OrderChange(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.OrderChange()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.OrderChange()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.OrderCancel(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.OrderCancel()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.OrderCancel()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.PositionOpen(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.PositionOpen()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.PositionOpen()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.PositionClose(int& results[], int flags=0) {
-   // TODO:
-   // Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit dem letzten Start
-   // neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim Programmstart die Online-History
-   // einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte geschlossene Position gespeichert.
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   static bool firstRun = true;
-
-   bool eventStatus = false;
-
-   int  tickets[], n, positions=ArraySize(tickets);
-   // wenn eine der vorher offenen Positionen verschwindet, kann sie nur geschlossen sein
-   for (int i=0; i < positions; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET, MODE_TRADES)) {
-         eventStatus = true;
-         n++;
-         ArrayResize(results, n);
-         results[n-1] = tickets[i];    // Ticket im Ergebnisarray speichern
-      }
-   }
-   // offene Positionen für nächsten Aufruf speichern
-   ArrayResize(tickets, 0);
-   n = 0;
-   positions = OrdersTotal();
-
-   for (i=0; i < positions; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
-         break;   // OrdersTotal() hat sich während der Ausführung geändert
-
-      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         n++;
-         ArrayResize(tickets, n);
-         tickets[n-1] = OrderTicket(); // tickets[] ist statisch
-      }
-   }
-
-   //Print("CheckEvent.PositionClose()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.PositionClose()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.AccountChange(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.AccountChange()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.AccountChange()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.AccountPayment(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.AccountPayment()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.AccountPayment()");
-   return(eventStatus);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool CheckEvent.HistoryChange(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   //Print("CheckEvent.HistoryChange()  eventStatus: "+ eventStatus);
-   catch("CheckEvent.HistoryChange()");
-   return(eventStatus);
-}
-
-
-/**
  * Korrekter Vergleich zweier Doubles.
  *
  * @param double1 - erster Wert
@@ -339,6 +101,224 @@ string DoubleToStrTrim(double number) {
 
    //catch("DoubleToStrTrim()");
    return(result);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
+ *
+ * @param int  event     - Event
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener(int event, int& results[], int flags=0) {
+   switch (event) {
+      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (results, flags));
+      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (results, flags));
+      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (results, flags));
+      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (results, flags));
+      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (results, flags));
+      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (results, flags));
+      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (results, flags));
+      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(results, flags));
+      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
+   }
+   catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(false);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.OrderPlace(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.OrderPlace()  eventStatus: "+ eventStatus);
+   catch("EventListener.OrderPlace()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.OrderChange(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.OrderChange()  eventStatus: "+ eventStatus);
+   catch("EventListener.OrderChange()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.OrderCancel(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.OrderCancel()  eventStatus: "+ eventStatus);
+   catch("EventListener.OrderCancel()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.PositionOpen(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.PositionOpen()  eventStatus: "+ eventStatus);
+   catch("EventListener.PositionOpen()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.PositionClose(int& results[], int flags=0) {
+   // TODO:
+   // Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit dem letzten Start
+   // neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim Programmstart die Online-History
+   // einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte geschlossene Position gespeichert.
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   static bool firstRun = true;
+
+   bool eventStatus = false;
+
+   int  tickets[], n, positions=ArraySize(tickets);
+   // wenn eine der vorher offenen Positionen verschwindet, kann sie nur geschlossen sein
+   for (int i=0; i < positions; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET, MODE_TRADES)) {
+         eventStatus = true;
+         n++;
+         ArrayResize(results, n);
+         results[n-1] = tickets[i];    // Ticket im Ergebnisarray speichern
+      }
+   }
+   // offene Positionen für nächsten Aufruf speichern
+   ArrayResize(tickets, 0);
+   n = 0;
+   positions = OrdersTotal();
+
+   for (i=0; i < positions; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         break;   // OrdersTotal() hat sich während der Ausführung geändert
+
+      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+         n++;
+         ArrayResize(tickets, n);
+         tickets[n-1] = OrderTicket(); // tickets[] ist statisch
+      }
+   }
+
+   //Print("EventListener.PositionClose()  eventStatus: "+ eventStatus);
+   catch("EventListener.PositionClose()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.AccountChange(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.AccountChange()  eventStatus: "+ eventStatus);
+   catch("EventListener.AccountChange()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.AccountPayment(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.AccountPayment()  eventStatus: "+ eventStatus);
+   catch("EventListener.AccountPayment()");
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.HistoryChange(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   //Print("EventListener.HistoryChange()  eventStatus: "+ eventStatus);
+   catch("EventListener.HistoryChange()");
+   return(eventStatus);
 }
 
 
@@ -1776,6 +1756,33 @@ string GetOperationTypeDescription(int type) {
          catch("GetOperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
    return(description);
+}
+
+
+/**
+ * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ *
+ * @param int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ *
+ * @return int string - Timeframe-Flag
+ */
+int GetPeriodFlag(int period=0) {
+   if (period == 0)
+      period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return(PERIODFLAG_M1 );
+      case PERIOD_M5 : return(PERIODFLAG_M5 );
+      case PERIOD_M15: return(PERIODFLAG_M15);
+      case PERIOD_M30: return(PERIODFLAG_M30);
+      case PERIOD_H1 : return(PERIODFLAG_H1 );
+      case PERIOD_H4 : return(PERIODFLAG_H4 );
+      case PERIOD_D1 : return(PERIODFLAG_D1 );
+      case PERIOD_W1 : return(PERIODFLAG_W1 );
+      case PERIOD_MN1: return(PERIODFLAG_MN1);
+   }
+   catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(0);
 }
 
 

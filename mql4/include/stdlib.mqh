@@ -7,20 +7,19 @@
 
 #import "stdlib.ex4"
 
-   bool     CheckEvent(int event, int& results[], int flags);
-   bool     CheckEvent.BarOpen(int& results[], int flags);
-   bool     CheckEvent.OrderPlace(int& results[], int flags);
-   bool     CheckEvent.OrderChange(int& results[], int flags);
-   bool     CheckEvent.OrderCancel(int& results[], int flags);
-   bool     CheckEvent.PositionOpen(int& results[], int flags);
-   bool     CheckEvent.PositionClose(int& results[], int flags);
-   bool     CheckEvent.AccountChange(int& results[], int flags);
-   bool     CheckEvent.AccountPayment(int& results[], int flags);
-   bool     CheckEvent.HistoryChange(int& results[], int flags);
    bool     CompareDoubles(double double1, double double2);
    string   DecimalToHex(int number);
    int      DecreasePeriod(int period);
    string   DoubleToStrTrim(double number);
+   bool     EventListener(int event, int& results[], int flags);
+   bool     EventListener.OrderPlace(int& results[], int flags);
+   bool     EventListener.OrderChange(int& results[], int flags);
+   bool     EventListener.OrderCancel(int& results[], int flags);
+   bool     EventListener.PositionOpen(int& results[], int flags);
+   bool     EventListener.PositionClose(int& results[], int flags);
+   bool     EventListener.AccountChange(int& results[], int flags);
+   bool     EventListener.AccountPayment(int& results[], int flags);
+   bool     EventListener.HistoryChange(int& results[], int flags);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
@@ -34,6 +33,7 @@
    string   GetModuleDirectoryName();
    string   GetOperationTypeDescription(int operationType);
    string   GetPeriodDescription(int period);
+   int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
    int      GetTradeServerEETOffset();
    int      GetTradeServerGMTOffset();

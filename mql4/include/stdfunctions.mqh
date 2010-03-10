@@ -360,15 +360,15 @@ int HandleEvent(int event, int flags=0) {
    int  results[];      // zurücksetzen nicht notwendig, da CheckEvent() immer zurücksetzt
 
    switch (event) {
-      case EVENT_BAR_OPEN       : if (CheckEvent.BarOpen       (results, flags)) { status = true; onBarOpen(results);        } break;
-      case EVENT_ORDER_PLACE    : if (CheckEvent.OrderPlace    (results, flags)) { status = true; onOrderPlace(results);     } break;
-      case EVENT_ORDER_CHANGE   : if (CheckEvent.OrderChange   (results, flags)) { status = true; onOrderChange(results);    } break;
-      case EVENT_ORDER_CANCEL   : if (CheckEvent.OrderCancel   (results, flags)) { status = true; onOrderCancel(results);    } break;
-      case EVENT_POSITION_OPEN  : if (CheckEvent.PositionOpen  (results, flags)) { status = true; onPositionOpen(results);   } break;
-      case EVENT_POSITION_CLOSE : if (CheckEvent.PositionClose (results, flags)) { status = true; onPositionClose(results);  } break;
-      case EVENT_ACCOUNT_CHANGE : if (CheckEvent.AccountChange (results, flags)) { status = true; onAccountChange(results);  } break;
-      case EVENT_ACCOUNT_PAYMENT: if (CheckEvent.AccountPayment(results, flags)) { status = true; onAccountPayment(results); } break;
-      case EVENT_HISTORY_CHANGE : if (CheckEvent.HistoryChange (results, flags)) { status = true; onHistoryChange(results);  } break;
+      case EVENT_BAR_OPEN       : if (EventListener.BarOpen       (results, flags)) { status = true; onBarOpen       (results); } break;
+      case EVENT_ORDER_PLACE    : if (EventListener.OrderPlace    (results, flags)) { status = true; onOrderPlace    (results); } break;
+      case EVENT_ORDER_CHANGE   : if (EventListener.OrderChange   (results, flags)) { status = true; onOrderChange   (results); } break;
+      case EVENT_ORDER_CANCEL   : if (EventListener.OrderCancel   (results, flags)) { status = true; onOrderCancel   (results); } break;
+      case EVENT_POSITION_OPEN  : if (EventListener.PositionOpen  (results, flags)) { status = true; onPositionOpen  (results); } break;
+      case EVENT_POSITION_CLOSE : if (EventListener.PositionClose (results, flags)) { status = true; onPositionClose (results); } break;
+      case EVENT_ACCOUNT_CHANGE : if (EventListener.AccountChange (results, flags)) { status = true; onAccountChange (results); } break;
+      case EVENT_ACCOUNT_PAYMENT: if (EventListener.AccountPayment(results, flags)) { status = true; onAccountPayment(results); } break;
+      case EVENT_HISTORY_CHANGE : if (EventListener.HistoryChange (results, flags)) { status = true; onHistoryChange (results); } break;
 
       default:
          catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
@@ -379,5 +379,46 @@ int HandleEvent(int event, int flags=0) {
 
    // unreachable Code, unterdrückt Compilerwarungen über unreferenzierte Funktionen
    HandleEvents(0);
+}
+
+
+/**
+ * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick ein BarOpen-Event im angegebenen Zeitrahmen auslöst.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ *
+ * @return bool - Ergebnis
+ *
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei definiert, da IndicatorCounted() verwendet wird (gibt bei Verwendung in Libraries -1 zurück).
+ */
+bool EventListener.BarOpen(int& results[], int flags=0) {
+   ArrayResize(results, 1);
+   results[0] = 0;
+
+   if (flags == 0)
+      flags = GetPeriodFlag(Period());
+   
+   if (Bars-2 == IndicatorCounted()) {    // BarOpen(PERIOD_M1) muß immer auftreten und ist Bedingung für alle anderen Events
+      if (flags & PERIODFLAG_M1 != 0)
+         results[0] |= PERIODFLAG_M1;
+
+      if (false) {
+         if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
+         if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
+         if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
+         if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
+         if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
+         if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
+         if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
+         if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
+      }
+   }
+
+   catch("EventListener.BarOpen()");
+   return(results[0] != 0);
 }
 
