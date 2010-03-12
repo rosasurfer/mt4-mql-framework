@@ -12,6 +12,7 @@
    int      DecreasePeriod(int period);
    string   DoubleToStrTrim(double number);
    bool     EventListener(int event, int& results[], int flags);
+   bool     EventListener.BarOpen(int& results[], int flags);
    bool     EventListener.OrderPlace(int& results[], int flags);
    bool     EventListener.OrderChange(int& results[], int flags);
    bool     EventListener.OrderCancel(int& results[], int flags);

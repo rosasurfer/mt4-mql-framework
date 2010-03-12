@@ -35,8 +35,8 @@ string DecimalToHex(int i) {
    static string hexValues = "0123456789ABCDEF";
    string result = "";
 
-   int a = i % 16;   // a = Rest
-   int b = i / 16;   // b = Vielfaches
+   int a = i % 16;   // a = Divisionsrest
+   int b = i / 16;   // b = ganzes Vielfaches
 
    if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
    else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
@@ -127,6 +127,76 @@ bool EventListener(int event, int& results[], int flags=0) {
    }
    catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
+}
+
+
+/**
+ * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.BarOpen(int& results[], int flags=0) {
+   ArrayResize(results, 1);
+   results[0] = 0;
+
+   int currentPeriodFlag = GetPeriodFlag(Period());
+   if (flags == 0)
+      flags = currentPeriodFlag;
+   
+   // Die aktuelle Periode wird mit einem einfachen und schnelleren Algorythmus geprüft.
+   if (flags & currentPeriodFlag != 0) {
+      static datetime lastOpenTime = 0;
+      if (lastOpenTime != 0) if (lastOpenTime != Time[0])
+         results[0] |= currentPeriodFlag;
+      lastOpenTime = Time[0];
+   }
+
+   // Prüfungen für andere als die aktuelle Chartperiode
+   else {   
+      static datetime lastTick   = 0;
+      static int      lastMinute = 0;
+      
+      datetime tick = MarketInfo(Symbol(), MODE_TIME);      // nur Sekundenauflösung
+      int minute;
+
+      if (flags & PERIODFLAG_M1 != 0) {                    
+         if (lastTick == 0) {
+            lastTick   = tick;
+            lastMinute = TimeMinute(tick);
+            //Print("EventListener.BarOpen(M1)   initialisiert   lastTick: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")");
+         }
+         else if (lastTick != tick) {
+            minute = TimeMinute(tick);
+            if (lastMinute < minute)
+               results[0] |= PERIODFLAG_M1;                    
+            //Print("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
+            lastTick   = tick;
+            lastMinute = minute;
+         }
+         else {
+            // Print("EventListener.BarOpen(M1)   zwei gleiche Ticks");
+         }
+      }
+   }
+
+
+
+   if (false) {
+      if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
+      if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
+      if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
+      if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
+      if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
+      if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
+      if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
+      if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
+   }
+
+   catch("EventListener.BarOpen()");
+   return(results[0] != 0);
 }
 
 
@@ -1838,7 +1908,7 @@ string GetPeriodFlagDescription(int flags) {
    if (flags & PERIODFLAG_MN1 != 0) description = StringConcatenate(description, " | MN1");
 
    if (StringLen(description) > 0)
-      return(StringSubstr(description, 3));
+      description = StringSubstr(description, 3);
    return(description);
 }
 

@@ -376,49 +376,5 @@ int HandleEvent(int event, int flags=0) {
    
    catch("HandleEvent()");
    return(status);
-
-   // unreachable Code, unterdrückt Compilerwarungen über unreferenzierte Funktionen
-   HandleEvents(0);
-}
-
-
-/**
- * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick ein BarOpen-Event im angegebenen Zeitrahmen auslöst.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
- *
- * @return bool - Ergebnis
- *
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei definiert, da IndicatorCounted() verwendet wird (gibt bei Verwendung in Libraries -1 zurück).
- */
-bool EventListener.BarOpen(int& results[], int flags=0) {
-   ArrayResize(results, 1);
-   results[0] = 0;
-
-   if (flags == 0)
-      flags = GetPeriodFlag(Period());
-   
-   if (Bars-2 == IndicatorCounted()) {    // BarOpen(PERIOD_M1) muß immer auftreten und ist Bedingung für alle anderen Events
-      if (flags & PERIODFLAG_M1 != 0)
-         results[0] |= PERIODFLAG_M1;
-
-      if (false) {
-         if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
-         if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
-         if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
-         if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
-         if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
-         if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
-         if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
-         if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
-      }
-   }
-
-   catch("EventListener.BarOpen()");
-   return(results[0] != 0);
 }
 
