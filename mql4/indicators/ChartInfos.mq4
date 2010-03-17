@@ -316,9 +316,8 @@ int CreateInstrumentLabel() {
    ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
 
    // Instrumentnamen einlesen
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");             // !!! Zeigerproblematik
-   int bufferSize = StringLen(buffer[0]);
-   GetPrivateProfileStringA("Instruments", Symbol(), Symbol(), buffer[0], bufferSize, StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\Config.ini"));
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // Zeigerproblematik
+   GetPrivateProfileStringA("Instruments", Symbol(), Symbol(), buffer[0], MAX_STRING_LEN, StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\Config.ini"));
    string symbol = buffer[0];
 
    // Instrumentnamen setzen
