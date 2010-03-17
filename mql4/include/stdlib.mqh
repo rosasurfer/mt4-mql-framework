@@ -27,6 +27,9 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
+   string   GetConfigString(string section, string key, string defaultValue);
+   string   GetGlobalConfigString(string section, string key, string defaultValue);
+   string   GetLocalConfigString(string section, string key, string defaultValue);
    string   GetDayOfWeek(datetime time, bool format);
    string   GetErrorDescription(int error);
    string   GetEventDescription(int event);

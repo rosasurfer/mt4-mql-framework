@@ -10,7 +10,6 @@
  */
 
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 #property indicator_chart_window
@@ -315,12 +314,8 @@ int CreateInstrumentLabel() {
    ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
    ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
 
-   // Instrumentnamen einlesen
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // Zeigerproblematik
-   GetPrivateProfileStringA("Instruments", Symbol(), Symbol(), buffer[0], MAX_STRING_LEN, StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\Config.ini"));
-   string symbol = buffer[0];
-
-   // Instrumentnamen setzen
+   // Instrumentnamen einlesen und setzen
+   string symbol = GetConfigString("Instruments", Symbol(), Symbol());
    ObjectSetText(instrumentLabel, symbol, 9, "Tahoma Fett", Black);
 
    return(catch("CreateInstrumentLabel(2)"));

@@ -712,6 +712,81 @@ string GetComputerName() {
 
 
 /**
+ * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetConfigString(string section, string key, string defaultValue="") {
+   // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
+   static string localConfigFile="", globalConfigFile="";
+   if (localConfigFile == "") {
+      localConfigFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+   }
+   
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   
+   // zuerst globale, dann lokale Config auslesen
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, localConfigFile);
+   
+   catch("GetConfigString()");
+   return(buffer[0]);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als String zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetGlobalConfigString(string section, string key, string defaultValue="") {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+   
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
+   
+   catch("GetConfigString()");
+   return(buffer[0]);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als String zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetLocalConfigString(string section, string key, string defaultValue="") {
+   static string configFile = "";
+   if (configFile == "")
+      configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+   
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   
+   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, configFile);
+   
+   catch("GetConfigString()");
+   return(buffer[0]);
+}
+
+
+/**
  * Gibt den Wochentag des angegebenen Zeitpunkts zurück.
  *
  * @param datetime time - Zeitpunkt
