@@ -2900,8 +2900,6 @@ flags=347
 window_num=0
 <inputs>
 TradeInfo.Symbols=GBPUSD,USDCHF
-Show.Spread=0
-Spread.Including.Commission=0
 Show.PerformanceDisplay=0
 </inputs>
 </expert>
