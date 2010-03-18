@@ -2156,11 +2156,11 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    int bar = iBarShift(symbol, timeframe, time, true);   // evt. ERR_HISTORY_WILL_UPDATED
 
    if (bar == -1) {                                      // falls die Bar nicht existiert:
+      // TODO: Verwendung von Time und Bars ist Unfug
       if (time < Time[Bars-1])                           // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
          bar = Bars-1;
-      else if (time < Time[0]) {                         // Kurslücke, die nächste existierende Bar wird zurückgeben
-         bar = iBarShift(symbol, timeframe, time) + 1;
-      }
+      else if (time < Time[0])                           // Kurslücke, die nächste existierende Bar wird zurückgeben
+         bar = iBarShift(symbol, timeframe, time) - 1;
     //else: (time > Time[0]) -> bar = -1                 // Zeitpunkt ist zu neu für den Chart
    }
 
