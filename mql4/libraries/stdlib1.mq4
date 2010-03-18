@@ -2006,8 +2006,9 @@ int GetTradeServerEETOffset() {
 int GetTradeServerGMTOffset() {
    /**
     * TODO: Haben verschiedene Server desselben Brokers evt. unterschiedliche Offsets?
-    *       string server  = AccountServer();
-    *       Print("GetTradeServerGMTOffset(): account company: "+ company +", account server: "+ server);
+    *
+    * string server  = AccountServer();
+    * Print("GetTradeServerGMTOffset(): account company: "+ company +", account server: "+ server);
     *
     * TODO: Zeitverschiebungen von 30 Minuten integrieren (evt. Rückgabewert in Minuten)
     */
@@ -2038,7 +2039,7 @@ int GetTradeServerGMTOffset() {
 
 
 /**
- * Gibt die Startzeit der den angegebenen Zeitpunkt abdeckenden Handelssession.
+ * Gibt die Startzeit der den angegebenen Zeitpunkt abdeckenden Handelssession zurück.
  *
  * @param datetime time - Zeitpunkt (Serverzeit)
  *
