@@ -2044,9 +2044,28 @@ int GetTradeServerGMTOffset() {
  * @param datetime time - Zeitpunkt (Serverzeit)
  *
  * @return datetime - Zeitpunkt (Serverzeit)
+ *
+ *
+ * NOTE:
+ * ----
+ * Die Startzeit (daily open) ist um 17:00 New Yorker Zeit, egal ob Standard- (EST) oder Sommerzeit (EDT).
+ *
+ * Warum? 
+ *
+ * Die Endzeit einer Handelssession (daily close) fällt mit dem Ende des Handels in New York zusammen, da der volumenmäßig größte am Nachmittag und Abend offene 
+ * Markt schließt.  Nach Handelsschluß in New York öffnen die Märkte in Neuseeland (Datumsgrenze) und ein neuer Tag beginnt.  Auch die Handelswoche endet mit dem
+ * Schließen der Märkte in New York.  Handelsschluß der Geschäftsbanken in New York ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit. 
+ * Demzufolge beginnt um jeweils 17:00 New Yorker Ortszeit die nächste Handelssession.
+ *
+ * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für die Schlußzeit irrelevant, da sich obige Definition vom Forexvolumen ableitet und dafür 
+ * einzig die tatsächlichen Schlußzeiten in New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit 
+ * beider beteiligter Zeitzonen berücksichtigt werden (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen 
+ * Zeitzonen zu unterschiedlichen Zeitpunkten erfolgt, gibt es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
  */
 datetime GetSessionStartTime(datetime time) {
    // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
+   
+   // TODO: Falsch, die Handelssessions beginnen um 17:00 EST/EDT.
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
    int eetOffset     = GetTradeServerEETOffset();
