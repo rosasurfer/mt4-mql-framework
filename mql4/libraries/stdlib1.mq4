@@ -603,9 +603,10 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 double GetAverageSpread(string symbol) {
    double spread;
 
-   if      (symbol == "EURUSD") spread = 0.00015;
+   if      (symbol == "EURUSD") spread = 0.0001;
    else if (symbol == "GBPJPY") spread = 0.05;
-   else if (symbol == "GBPUSD") spread = 0.00025;
+   else if (symbol == "GBPUSD") spread = 0.00012;
+   else if (symbol == "USDCHF") spread = 0.0001;
    else {
       //spread = MarketInfo(symbol, MODE_POINT) * MarketInfo(symbol, MODE_SPREAD); // aktueller Spread in Points
       catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL);
@@ -2064,7 +2065,7 @@ int GetTradeServerGMTOffset() {
  */
 datetime GetSessionStartTime(datetime time) {
    // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
-   
+
    // TODO: Falsch, die Handelssessions beginnen um 17:00 EST/EDT.
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
