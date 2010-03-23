@@ -34,11 +34,11 @@ double LowerBand[];
  */
 int init() {
    SetIndexBuffer(0, UpperBand);
-   SetIndexLabel (0, "UpperBand");
+   SetIndexLabel (0, StringConcatenate("UpperBand(", BB.Period, ")"));
    SetIndexBuffer(1, MovingAvg);
-   SetIndexLabel (1, "MiddleBand");
+   SetIndexLabel (1, StringConcatenate("MiddleBand(", BB.Period, ")"));
    SetIndexBuffer(2, LowerBand);
-   SetIndexLabel (2, "LowerBand");
+   SetIndexLabel (2, StringConcatenate("LowerBand(", BB.Period, ")"));
 
    IndicatorDigits(Digits);
 
@@ -63,45 +63,51 @@ int init() {
  *
  */
 int start() {
-   if (Bars <= BB.Period) 
-      return(0);
+   //BB.Period = 4;
 
-   int processedBars = IndicatorCounted(),
-       bars          = Bars - processedBars,
+   int unprocessedBars,                            // unprocessedBars ist Anzahl der neu zu berechnenden Bars
+       processedBars = IndicatorCounted(),
+       iLastValidBar = Bars - BB.Period,           // iLastValidBar ist Index der letzten gültigen Bar
        i, k;
 
-   if (processedBars == 0) {
-      for (i=1; i <= BB.Period; i++) {
-         MovingAvg[Bars-i] = EMPTY_VALUE;
-         UpperBand[Bars-i] = EMPTY_VALUE;
-         LowerBand[Bars-i] = EMPTY_VALUE;
+   if (iLastValidBar < 0)                          // im Fall Bars < BB.Period
+      iLastValidBar = -1;
+
+   
+   // ggf. Schwanz mit 0 überschreiben...
+   if (processedBars == 0) {                       
+      for (i=iLastValidBar+1; i < Bars; i++) {
+         MovingAvg[i] = EMPTY_VALUE;
+         UpperBand[i] = EMPTY_VALUE;
+         LowerBand[i] = EMPTY_VALUE;
       }
+      unprocessedBars = iLastValidBar + 1;         //... und alle Bars neuberechnen
    }
    else {
-      bars++;
+      unprocessedBars = Bars - processedBars + 1;  // die vorherige Bar wird jedesmal neuberechnet
    }
+
+   if (iLastValidBar == -1)                        // im Fall Bars < BB.Period return erst nach Überschreiben des Schwanzes
+      return(catch("start(1)"));
 
 
    // MA berechnen
-   for (i=0; i < bars; i++) {
+   for (i=0; i < unprocessedBars; i++) {
       MovingAvg[i] = iMA(NULL, 0, BB.Period, 0, MODE_SMA, PRICE_MEDIAN, i);
    }
 
 
    // Bollinger-Bänder berechnen
-   i = Bars - BB.Period + 1;
-   if (processedBars > BB.Period-1)
-      i = Bars - processedBars - 1;
-
    double ma, diff, sum, deviation;
-   
+   i = unprocessedBars - 1;
+
    while (i >= 0) {
-      ma  = MovingAvg[i];
       sum = 0;
+      ma  = MovingAvg[i];
       k   = i + BB.Period - 1;
-      
+
       while (k >= i) {
-         diff = (High[k]+Low[k])/2 - ma;     // entspricht PRICE_MEDIAN
+         diff = (High[k]+Low[k])/2 - ma;           // PRICE_MEDIAN: (HL)/2 = 
          sum += diff * diff;
          k--;
       }
@@ -110,7 +116,8 @@ int start() {
       LowerBand[i] = ma - deviation;
       i--;
    }
+   //Print("start()   unprocessedBars: "+ unprocessedBars +"   loops: "+ ((unprocessedBars-1) * BB.Period));
 
-   return(catch("start()"));
+   return(catch("start(2)"));
 }
 
