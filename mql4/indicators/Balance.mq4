@@ -59,7 +59,7 @@ int start() {
       iBalanceSeries(account, Balance);
    }
    else {
-      for (int i=Bars-processedBars-1; i >= 0; i--) {    // nur fehlende Werte neu berechnen
+      for (int i=Bars-processedBars; i >= 0; i--) {      // nur fehlende Werte neu berechnen
          iBalance(account, Balance, i);
       }
    }
