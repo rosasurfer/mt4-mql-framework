@@ -20,16 +20,17 @@
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern string BB.Timeframe = "H1";        // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
-extern int    BB.Periods   = 75;          // Anzahl der zu verwendenden Perioden
-extern int    BB.MA.Method = MODE_SMA;    // MA-Methode (MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
-extern double BB.Deviation = 2.0;
+extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
+extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
+extern double Deviation      = 2.0;          // Standardabweichung
+extern int    MA.Method      = MODE_SMA;     // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
+extern string MA.Method.Help = "0: SMA, 1: EMA, 2: SMMA, 3: LWMA";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
-int    period;                                     // Period-ID zu BB.Timeframe
+int    period;                                     // Period-ID zu Timeframe
 
 int error = ERR_NO_ERROR;
 
@@ -39,32 +40,32 @@ int error = ERR_NO_ERROR;
  */
 int init() {
    // Parameter überprüfen
-   period = GetPeriod(BB.Timeframe);
+   period = GetPeriod(Timeframe);
    if (period == 0) {
-      error = catch("init()  Invalid input parameter BB.Timeframe: \'"+ BB.Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
+      error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
-   if (BB.Periods < 2) {
-      error = catch("init()  Invalid input parameter BB.Periods: "+ BB.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+   if (Periods < 2) {
+      error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
-   if (BB.MA.Method != MODE_SMA) if (BB.MA.Method != MODE_EMA) if (BB.MA.Method != MODE_SMMA) if (BB.MA.Method != MODE_LWMA) {
-      error = catch("init()  Invalid input parameter BB.MA.Method: "+ BB.MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
+   if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
+      error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
-   if (BB.Deviation < 0 || CompareDoubles(BB.Deviation, 0)) {
-      error = catch("init()  Invalid input parameter BB.Deviation: "+ BB.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+   if (MA.Method != MODE_SMA) if (MA.Method != MODE_EMA) if (MA.Method != MODE_SMMA) if (MA.Method != MODE_LWMA) {
+      error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
 
 
    // Puffer zuordnen
    SetIndexBuffer(0, UpperBand);
-   SetIndexLabel (0, StringConcatenate("UpperBand(", BB.Periods, ")"));
+   SetIndexLabel (0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
    SetIndexBuffer(1, MovingAvg);
-   SetIndexLabel (1, StringConcatenate("MiddleBand(", BB.Periods, ")"));
+   SetIndexLabel (1, StringConcatenate("MiddleBand(", Periods, "x", Timeframe, ")"));
    SetIndexBuffer(2, LowerBand);
-   SetIndexLabel (2, StringConcatenate("LowerBand(", BB.Periods, ")"));
+   SetIndexLabel (2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
    IndicatorDigits(Digits);
 
 
@@ -76,12 +77,18 @@ int init() {
    }
 
 
+   // Periodenparameter in aktuellen Zeitrahmen umrechnen
+   if (Period() != period) {
+      double minutes = period * Periods;           // Timeframe * Anzahl Bars = Range in Minuten
+      Periods = MathRound(minutes / Period());
+   }
+  
+
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
       WindowRedraw();
    }
-
    return(catch("init()"));
 }
 
@@ -90,17 +97,16 @@ int init() {
  *
  */
 int start() {
-   // Abbruch bei Parameterfehlern
-   if (error != ERR_NO_ERROR)
-      return(error);
-
+   if (error != ERR_NO_ERROR) return(error);    // Abbruch bei Parameterfehlern ...
+   if (Periods < 2)           return(0);        // und bei Periods < 2 (möglich bei Umschalten auf größeren Timeframe)
+     
 
    int processedBars = IndicatorCounted(),
-       iLastIndBar = Bars - BB.Periods,      // Index der letzten Indikator-Bar
-       bars,                                 // Anzahl der zu berechnenden Bars
+       iLastIndBar = Bars - Periods,            // Index der letzten Indikator-Bar
+       bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
 
-   if (iLastIndBar < 0)                      // im Falle Bars < BB.Period
+   if (iLastIndBar < 0)                         // im Falle Bars < Periods
       iLastIndBar = -1;
 
    if (iLastIndBar == -1)                        
@@ -109,9 +115,9 @@ int start() {
 
    // Anzahl der zu berechnenden Bars bestimmen
    if (processedBars == 0) {
-      bars = iLastIndBar + 1;                // alle
+      bars = iLastIndBar + 1;                   // alle
    }
-   else {                                    // nur fehlende Bars
+   else {                                       // nur die fehlenden Bars
       bars = Bars - processedBars;
       if (bars > iLastIndBar + 1)
          bars = iLastIndBar + 1;
@@ -120,7 +126,7 @@ int start() {
 
    // Moving Average berechnen
    for (i=0; i < bars; i++) {
-      MovingAvg[i] = iMA(NULL, 0, BB.Periods, 0, BB.MA.Method, PRICE_MEDIAN, i);
+      MovingAvg[i] = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
    }
 
 
@@ -131,7 +137,7 @@ int start() {
    while (i >= 0) {
       sum = 0;
       ma  = MovingAvg[i];
-      k   = i + BB.Periods - 1;
+      k   = i + Periods - 1;
 
       // TODO: Schleifenergebnisse zwischenspeichern (fast nur redundante Durchläufe)
       while (k >= i) {
@@ -139,7 +145,7 @@ int start() {
          sum += diff * diff;
          k--;
       }
-      deviation    = BB.Deviation * MathSqrt(sum/BB.Periods);
+      deviation    = Deviation * MathSqrt(sum/Periods);
       UpperBand[i] = ma + deviation;
       LowerBand[i] = ma - deviation;
       i--;
