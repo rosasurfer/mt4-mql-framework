@@ -2041,11 +2041,13 @@ int GetTradeServerGMTOffset() {
     */
    string company = AccountCompany();
 
+   // TODO: AccountCompany() ändert sich von IP zu IP
    if (company != "") {
       if (company == "Straighthold Investment Group, Inc.") return( 2);
       if (company == "Alpari (UK) Ltd."                   ) return( 1);
       if (company == "Cantor Fitzgerald"                  ) return( 0);
       if (company == "Forex Ltd."                         ) return( 0);
+      if (company == "ATC Brokers "                       ) return(-5);
       if (company == "ATC Brokers - Main"                 ) return(-5);
       if (company == "ATC Brokers - $8 Commission"        ) return(-5);
       catch("GetTradeServerGMTOffset(1)  cannot resolve trade server GMT offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
