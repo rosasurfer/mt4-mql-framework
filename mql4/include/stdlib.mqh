@@ -36,6 +36,7 @@
    string   GetMetaTraderDirectory();
    string   GetModuleDirectoryName();
    string   GetOperationTypeDescription(int operationType);
+   int      GetPeriod(string description);
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);

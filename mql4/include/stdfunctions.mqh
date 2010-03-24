@@ -76,6 +76,13 @@
 #define MODE_TIME                5     // bar open time
 
 
+// Moving average method identifiers, siehe iMA()
+#define MODE_SMA                 0     // simple moving average
+#define MODE_EMA                 1     // exponential moving average
+#define MODE_SMMA                2     // smoothed moving average
+#define MODE_LWMA                3     // linear weighted moving average
+
+
 // Rates array identifier, siehe ArrayCopyRates()
 #define RATE_TIME                0     // bar open time
 #define RATE_OPEN                1     // open price
@@ -275,6 +282,7 @@
 // custom errors
 #define ERR_WINDOWS_ERROR                    5000  // Windows error
 #define ERR_FUNCTION_NOT_IMPLEMENTED         5001  // function not implemented
+#define ERR_INVALID_INPUT_PARAMVALUE         5002  // invalid input parameter value
 
 
 /**
@@ -335,7 +343,7 @@ int HandleEvents(int events) {
    if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
    if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
    if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE);
-   
+
    catch("HandleEvents()");
    return(status != 0);
 }
@@ -373,7 +381,7 @@ int HandleEvent(int event, int flags=0) {
       default:
          catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   
+
    catch("HandleEvent()");
    return(status);
 }

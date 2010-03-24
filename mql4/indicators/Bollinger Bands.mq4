@@ -18,29 +18,55 @@
 #property indicator_style3 STYLE_SOLID
 
 
-// indicator parameters
-extern int    BB.Period    = 100;
+////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
+
+extern string BB.Timeframe = "H1";        // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
+extern int    BB.Periods   = 75;          // Anzahl der zu verwendenden Perioden
+extern int    BB.MA.Method = MODE_SMA;    // MA-Methode (MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
 extern double BB.Deviation = 2.0;
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// indicator buffers
-double UpperBand[];
-double MovingAvg[];
-double LowerBand[];
+
+double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
+int    period;                                     // Period-ID zu BB.Timeframe
+
+int error = ERR_NO_ERROR;
 
 
 /**
  *
  */
 int init() {
-   SetIndexBuffer(0, UpperBand);
-   SetIndexLabel (0, StringConcatenate("UpperBand(", BB.Period, ")"));
-   SetIndexBuffer(1, MovingAvg);
-   SetIndexLabel (1, StringConcatenate("MiddleBand(", BB.Period, ")"));
-   SetIndexBuffer(2, LowerBand);
-   SetIndexLabel (2, StringConcatenate("LowerBand(", BB.Period, ")"));
+   // Parameter überprüfen
+   period = GetPeriod(BB.Timeframe);
+   if (period == 0) {
+      error = catch("init()  Invalid input parameter BB.Timeframe: \'"+ BB.Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
+   }
+   if (BB.Periods < 2) {
+      error = catch("init()  Invalid input parameter BB.Periods: "+ BB.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
+   }
+   if (BB.MA.Method != MODE_SMA) if (BB.MA.Method != MODE_EMA) if (BB.MA.Method != MODE_SMMA) if (BB.MA.Method != MODE_LWMA) {
+      error = catch("init()  Invalid input parameter BB.MA.Method: "+ BB.MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
+   }
+   if (BB.Deviation < 0 || CompareDoubles(BB.Deviation, 0)) {
+      error = catch("init()  Invalid input parameter BB.Deviation: "+ BB.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
+   }
 
+
+   // Puffer zuordnen
+   SetIndexBuffer(0, UpperBand);
+   SetIndexLabel (0, StringConcatenate("UpperBand(", BB.Periods, ")"));
+   SetIndexBuffer(1, MovingAvg);
+   SetIndexLabel (1, StringConcatenate("MiddleBand(", BB.Periods, ")"));
+   SetIndexBuffer(2, LowerBand);
+   SetIndexLabel (2, StringConcatenate("LowerBand(", BB.Periods, ")"));
    IndicatorDigits(Digits);
+
 
    // während der Entwicklung Puffer jedesmal zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
@@ -48,6 +74,7 @@ int init() {
       ArrayInitialize(MovingAvg, EMPTY_VALUE);
       ArrayInitialize(LowerBand, EMPTY_VALUE);
    }
+
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -63,60 +90,60 @@ int init() {
  *
  */
 int start() {
-   //BB.Period = 4;
+   // Abbruch bei Parameterfehlern
+   if (error != ERR_NO_ERROR)
+      return(error);
 
-   int unprocessedBars,                            // unprocessedBars ist Anzahl der neu zu berechnenden Bars
-       processedBars = IndicatorCounted(),
-       iLastValidBar = Bars - BB.Period,           // iLastValidBar ist Index der letzten gültigen Bar
+
+   int processedBars = IndicatorCounted(),
+       iLastIndBar = Bars - BB.Periods,      // Index der letzten Indikator-Bar
+       bars,                                 // Anzahl der zu berechnenden Bars
        i, k;
 
-   if (iLastValidBar < 0)                          // im Fall Bars < BB.Period
-      iLastValidBar = -1;
+   if (iLastIndBar < 0)                      // im Falle Bars < BB.Period
+      iLastIndBar = -1;
 
-   
-   // ggf. Schwanz mit 0 überschreiben...
-   if (processedBars == 0) {                       
-      for (i=iLastValidBar+1; i < Bars; i++) {
-         MovingAvg[i] = EMPTY_VALUE;
-         UpperBand[i] = EMPTY_VALUE;
-         LowerBand[i] = EMPTY_VALUE;
-      }
-      unprocessedBars = iLastValidBar + 1;         //... und alle Bars neuberechnen
-   }
-   else {
-      unprocessedBars = Bars - processedBars + 1;  // die vorherige Bar wird jedesmal neuberechnet
-   }
-
-   if (iLastValidBar == -1)                        // im Fall Bars < BB.Period return erst nach Überschreiben des Schwanzes
+   if (iLastIndBar == -1)                        
       return(catch("start(1)"));
 
 
-   // MA berechnen
-   for (i=0; i < unprocessedBars; i++) {
-      MovingAvg[i] = iMA(NULL, 0, BB.Period, 0, MODE_SMA, PRICE_MEDIAN, i);
+   // Anzahl der zu berechnenden Bars bestimmen
+   if (processedBars == 0) {
+      bars = iLastIndBar + 1;                // alle
+   }
+   else {                                    // nur fehlende Bars
+      bars = Bars - processedBars;
+      if (bars > iLastIndBar + 1)
+         bars = iLastIndBar + 1;
    }
 
 
-   // Bollinger-Bänder berechnen
+   // Moving Average berechnen
+   for (i=0; i < bars; i++) {
+      MovingAvg[i] = iMA(NULL, 0, BB.Periods, 0, BB.MA.Method, PRICE_MEDIAN, i);
+   }
+
+
+   // Bänder berechnen
    double ma, diff, sum, deviation;
-   i = unprocessedBars - 1;
+   i = bars - 1;
 
    while (i >= 0) {
       sum = 0;
       ma  = MovingAvg[i];
-      k   = i + BB.Period - 1;
+      k   = i + BB.Periods - 1;
 
+      // TODO: Schleifenergebnisse zwischenspeichern (fast nur redundante Durchläufe)
       while (k >= i) {
-         diff = (High[k]+Low[k])/2 - ma;           // PRICE_MEDIAN: (HL)/2 = 
+         diff = (High[k]+Low[k])/2 - ma;        // PRICE_MEDIAN: (HL)/2 = 
          sum += diff * diff;
          k--;
       }
-      deviation    = BB.Deviation * MathSqrt(sum/BB.Period);
+      deviation    = BB.Deviation * MathSqrt(sum/BB.Periods);
       UpperBand[i] = ma + deviation;
       LowerBand[i] = ma - deviation;
       i--;
    }
-   //Print("start()   unprocessedBars: "+ unprocessedBars +"   loops: "+ ((unprocessedBars-1) * BB.Period));
 
    return(catch("start(2)"));
 }

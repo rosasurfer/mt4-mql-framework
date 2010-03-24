@@ -145,7 +145,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
    int currentPeriodFlag = GetPeriodFlag(Period());
    if (flags == 0)
       flags = currentPeriodFlag;
-   
+
    // Die aktuelle Periode wird mit einem einfachen und schnelleren Algorythmus geprüft.
    if (flags & currentPeriodFlag != 0) {
       static datetime lastOpenTime = 0;
@@ -155,14 +155,14 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
    }
 
    // Prüfungen für andere als die aktuelle Chartperiode
-   else {   
+   else {
       static datetime lastTick   = 0;
       static int      lastMinute = 0;
-      
+
       datetime tick = MarketInfo(Symbol(), MODE_TIME);      // nur Sekundenauflösung
       int minute;
 
-      if (flags & PERIODFLAG_M1 != 0) {                    
+      if (flags & PERIODFLAG_M1 != 0) {
          if (lastTick == 0) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
@@ -171,7 +171,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
-               results[0] |= PERIODFLAG_M1;                    
+               results[0] |= PERIODFLAG_M1;
             //Print("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
@@ -729,13 +729,13 @@ string GetConfigString(string section, string key, string defaultValue="") {
       localConfigFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
       globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
    }
-   
+
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
-   
+
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, localConfigFile);
-   
+
    catch("GetConfigString()");
    return(buffer[0]);
 }
@@ -754,11 +754,11 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
    static string configFile = "";
    if (configFile == "")
       configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
-   
+
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
-   
+
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
-   
+
    catch("GetConfigString()");
    return(buffer[0]);
 }
@@ -777,11 +777,11 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
    static string configFile = "";
    if (configFile == "")
       configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
-   
+
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
-   
+
    GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, configFile);
-   
+
    catch("GetConfigString()");
    return(buffer[0]);
 }
@@ -919,6 +919,7 @@ string GetErrorDescription(int error) {
       // custom errors
       case ERR_WINDOWS_ERROR              : return("Windows error"                                           );
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                );
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                           );
    }
    return("unknown error");
 }
@@ -1906,28 +1907,26 @@ string GetOperationTypeDescription(int type) {
 
 
 /**
- * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ * Gibt den Code einer Timeframe-Beschreibung zurück.
  *
- * @param int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ * @param string description - Timeframe-Beschreibung (M1, M5, M15, M30 etc.)
  *
- * @return int string - Timeframe-Flag
+ * @return int - Timeframe-Code
  */
-int GetPeriodFlag(int period=0) {
-   if (period == 0)
-      period = Period();
+int GetPeriod(string description) {
+   description = StringToUpper(description);
 
-   switch (period) {
-      case PERIOD_M1 : return(PERIODFLAG_M1 );
-      case PERIOD_M5 : return(PERIODFLAG_M5 );
-      case PERIOD_M15: return(PERIODFLAG_M15);
-      case PERIOD_M30: return(PERIODFLAG_M30);
-      case PERIOD_H1 : return(PERIODFLAG_H1 );
-      case PERIOD_H4 : return(PERIODFLAG_H4 );
-      case PERIOD_D1 : return(PERIODFLAG_D1 );
-      case PERIOD_W1 : return(PERIODFLAG_W1 );
-      case PERIOD_MN1: return(PERIODFLAG_MN1);
-   }
-   catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (description == "M1" ) return(PERIOD_M1 );      //     1  1 minute
+   if (description == "M5" ) return(PERIOD_M5 );      //     5  5 minutes
+   if (description == "M15") return(PERIOD_M15);      //    15  15 minutes
+   if (description == "M30") return(PERIOD_M30);      //    30  30 minutes
+   if (description == "H1" ) return(PERIOD_H1 );      //    60  1 hour
+   if (description == "H4" ) return(PERIOD_H4 );      //   240  4 hour
+   if (description == "D1" ) return(PERIOD_D1 );      //  1440  daily
+   if (description == "W1" ) return(PERIOD_W1 );      // 10080  weekly
+   if (description == "MN1") return(PERIOD_MN1);      // 43200  monthly
+
+   catch("GetPeriod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -1960,6 +1959,33 @@ string GetPeriodDescription(int period=0) {
          catch("GetPeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
    return(description);
+}
+
+
+/**
+ * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
+ *
+ * @param int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ *
+ * @return int string - Timeframe-Flag
+ */
+int GetPeriodFlag(int period=0) {
+   if (period == 0)
+      period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return(PERIODFLAG_M1 );
+      case PERIOD_M5 : return(PERIODFLAG_M5 );
+      case PERIOD_M15: return(PERIODFLAG_M15);
+      case PERIOD_M30: return(PERIODFLAG_M30);
+      case PERIOD_H1 : return(PERIODFLAG_H1 );
+      case PERIOD_H4 : return(PERIODFLAG_H4 );
+      case PERIOD_D1 : return(PERIODFLAG_D1 );
+      case PERIOD_W1 : return(PERIODFLAG_W1 );
+      case PERIOD_MN1: return(PERIODFLAG_MN1);
+   }
+   catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(0);
 }
 
 
@@ -2051,16 +2077,16 @@ int GetTradeServerGMTOffset() {
  * ----
  * Die Startzeit (daily open) ist um 17:00 New Yorker Zeit, egal ob Standard- (EST) oder Sommerzeit (EDT).
  *
- * Warum? 
+ * Warum?
  *
- * Die Endzeit einer Handelssession (daily close) fällt mit dem Ende des Handels in New York zusammen, da der volumenmäßig größte am Nachmittag und Abend offene 
+ * Die Endzeit einer Handelssession (daily close) fällt mit dem Ende des Handels in New York zusammen, da der volumenmäßig größte am Nachmittag und Abend offene
  * Markt schließt.  Nach Handelsschluß in New York öffnen die Märkte in Neuseeland (Datumsgrenze) und ein neuer Tag beginnt.  Auch die Handelswoche endet mit dem
- * Schließen der Märkte in New York.  Handelsschluß der Geschäftsbanken in New York ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit. 
+ * Schließen der Märkte in New York.  Handelsschluß der Geschäftsbanken in New York ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit.
  * Demzufolge beginnt um jeweils 17:00 New Yorker Ortszeit die nächste Handelssession.
  *
- * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für die Schlußzeit irrelevant, da sich obige Definition vom Forexvolumen ableitet und dafür 
- * einzig die tatsächlichen Schlußzeiten in New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit 
- * beider beteiligter Zeitzonen berücksichtigt werden (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen 
+ * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für die Schlußzeit irrelevant, da sich obige Definition vom Forexvolumen ableitet und dafür
+ * einzig die tatsächlichen Schlußzeiten in New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit
+ * beider beteiligter Zeitzonen berücksichtigt werden (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen
  * Zeitzonen zu unterschiedlichen Zeitpunkten erfolgt, gibt es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
  */
 datetime GetSessionStartTime(datetime time) {
