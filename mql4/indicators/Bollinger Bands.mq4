@@ -23,14 +23,14 @@
 extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
 extern double Deviation      = 2.0;          // Standardabweichung
-extern int    MA.Method      = MODE_SMA;     // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
-extern string MA.Method.Help = "0: SMA, 1: EMA, 2: SMMA, 3: LWMA";
+extern int    MA.Method      = 1;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
+extern string MA.Method.Help = "1: SMA, 2: EMA, 3: SMMA, 4: LWMA";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
-int    period;                                     // Period-ID zu Timeframe
+int    period;                                     // Period-Code zum angegebenen Timeframe
 
 int error = ERR_NO_ERROR;
 
@@ -53,9 +53,14 @@ int init() {
       error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
-   if (MA.Method != MODE_SMA) if (MA.Method != MODE_EMA) if (MA.Method != MODE_SMMA) if (MA.Method != MODE_LWMA) {
-      error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
+   switch (MA.Method) {
+      case 1: MA.Method = MODE_SMA ; break;
+      case 2: MA.Method = MODE_EMA ; break;
+      case 3: MA.Method = MODE_SMMA; break;
+      case 4: MA.Method = MODE_LWMA; break;
+      default: 
+         error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
+         return(error);
    }
 
 
@@ -102,7 +107,7 @@ int start() {
      
 
    int processedBars = IndicatorCounted(),
-       iLastIndBar = Bars - Periods,            // Index der letzten Indikator-Bar
+       iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar
        bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
 
@@ -133,6 +138,8 @@ int start() {
    // Bänder berechnen
    double ma, diff, sum, deviation;
    i = bars - 1;
+   
+   int n = 0;
 
    while (i >= 0) {
       sum = 0;
@@ -144,12 +151,14 @@ int start() {
          diff = (High[k]+Low[k])/2 - ma;        // PRICE_MEDIAN: (HL)/2 = 
          sum += diff * diff;
          k--;
+         n++;
       }
       deviation    = Deviation * MathSqrt(sum/Periods);
       UpperBand[i] = ma + deviation;
       LowerBand[i] = ma - deviation;
       i--;
    }
+   Print("start()   Schleifendurchläufe: "+ n);
 
    return(catch("start(2)"));
 }
