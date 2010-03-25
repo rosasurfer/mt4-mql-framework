@@ -607,7 +607,7 @@ int GetAccountNumber() {
       
       int pos = StringFind(title, ":");
       if (pos < 1) {
-         catch("GetAccountNumber()   account number separator not found in windows title \'"+ title +"\'", ERR_RUNTIME_ERROR);
+         catch("GetAccountNumber()   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
          return(0);
       }
       account = StrToInteger(StringSubstr(title, 0, pos));
