@@ -13,7 +13,7 @@
  */
 int start() {
    int tick = GetTickCount();
-   int error, account=AccountNumber(), orders=OrdersHistoryTotal();
+   int error, account=GetAccountNumber(), orders=OrdersHistoryTotal();
 
 
    // Sortierschlüssel: CloseTime, OpenTime, Ticket

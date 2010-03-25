@@ -36,7 +36,7 @@ int init() {
    }
 
    if (account == 0)
-      account = AccountNumber();
+      account = GetAccountNumber();
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten

@@ -320,36 +320,6 @@ int catch(string message="", int error=ERR_NO_ERROR) {
 
 
 /**
- * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
- *
- * @param int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
- *
- * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
- *
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
- */
-int HandleEvents(int events) {
-   int status = 0;
-
-   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN);
-   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE);
-   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE);
-   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL);
-   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN);
-   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE);
-   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
-   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
-   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE);
-
-   catch("HandleEvents()");
-   return(status != 0);
-}
-
-
-/**
  * Prüft, ob ein einzelnes Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
  * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
  *
@@ -384,5 +354,35 @@ int HandleEvent(int event, int flags=0) {
 
    catch("HandleEvent()");
    return(status);
+}
+
+
+/**
+ * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
+ *
+ * @param int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
+ *
+ * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
+ *
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ */
+int HandleEvents(int events) {
+   int status = 0;
+
+   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN);
+   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE);
+   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE);
+   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL);
+   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN);
+   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE);
+   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
+   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
+   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE);
+
+   catch("HandleEvents()");
+   return(status != 0);
 }
 

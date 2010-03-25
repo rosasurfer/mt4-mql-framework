@@ -67,7 +67,7 @@ int init() {
       start();
       WindowRedraw();
    }
-
+  
    return(catch("init()"));
 }
 
@@ -450,7 +450,7 @@ int UpdateSpreadLabel() {
 
    double spread = (Ask-Bid) * MathPow(10, Digits-1);
 
-   if (Spread.Including.Commission) if (AccountNumber() == {account-no})
+   if (Spread.Including.Commission) if (GetAccountNumber() == {account-no})
       spread += 0.8;
 
    if (!ObjectSetText(spreadLabel, DoubleToStr(spread, 1), 9, "Tahoma", SlateGray)) {

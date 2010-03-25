@@ -13,8 +13,11 @@
 
 #import "user32.dll"
 
-   /**
-    *
+   int  GetActiveWindow();
+   int  GetParent(int hWnd);
+   int  GetWindowTextA(int hWnd, string lpBuffer, int nBufferSize);
+
+   /*
    // messages
    int  PostMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
@@ -26,7 +29,6 @@
    int  FindWindowA(string lpClassName, string lpWindowName);
    int  SetWindowTextA(int hWnd, string lpString);
    int  GetWindow(int hWnd, int uCmd);
-   int  GetWindowTextA(int hWnd, string lpString, int nMaxCount);
    int  GetWindowTextLengthA(int hWnd);
    int  UpdateWindow(int hWnd);
    int  EnableWindow(int hWnd, int bEnable);
@@ -43,7 +45,6 @@
    int  IsZoomed(int hWnd);
    int  SetFocus(int hWnd);
    int  GetFocus();
-   int  GetActiveWindow();
    int  IsWindowEnabled(int hWnd);
 
    // miscellaneous

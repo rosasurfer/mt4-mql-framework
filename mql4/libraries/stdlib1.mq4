@@ -594,6 +594,32 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 
 
 /**
+ * Gibt die aktuelle Account-Nummer unabhängig davon, ob eine Connection zum Tradeserver steht, zurück.
+ *
+ * @return int - Account-Nummer
+ */
+int GetAccountNumber() {
+   int account = AccountNumber();
+   
+   if (account == 0) {     // ohne Connection wird die Titlebar des Hauptfensters ausgewertet
+      string title = GetWindowText(GetTopWindow());
+      //Print("GetAccountNumber()   top window title: "+ title);
+      
+      int pos = StringFind(title, ":");
+      if (pos < 1) {
+         catch("GetAccountNumber()   account number separator not found in windows title \'"+ title +"\'", ERR_RUNTIME_ERROR);
+         return(0);
+      }
+      account = StrToInteger(StringSubstr(title, 0, pos));
+   }
+
+   if (catch("GetAccountNumber()") != ERR_NO_ERROR)
+      return(0);
+   return(account);
+}
+
+
+/**
  * Gibt den durchschnittlichen Spread des angegebenen Instruments zurück.
  *
  * @param string symbol - Instrument
@@ -1865,7 +1891,7 @@ string GetModuleDirectoryName() {
       if (!GetModuleFileNameA(0, buffer[0], StringLen(buffer[0]))) {
          int error = GetLastError();
          if (error == ERR_NO_ERROR)
-            error = ERR_RUNTIME_ERROR;
+            error = ERR_WINDOWS_ERROR;
          catch("GetModuleDirectoryName()   kernel32.GetModuleFileNameA()  result: 0", error);
          return("");
       }
@@ -2110,6 +2136,25 @@ datetime GetSessionStartTime(datetime time) {
 
 
 /**
+ * Gibt das Handle des Hauptfensters des aktuellen MetaTrader-Prozesses zurück.
+ *
+ * @return int - Handle
+ */
+int GetTopWindow() {
+   int child, parent = WindowHandle(Symbol(), Period());
+
+   while (parent != 0) {
+      child  = parent;
+      parent = GetParent(child);
+   }
+
+   if (catch("GetTopWindow()") != ERR_NO_ERROR)
+      return(0);
+   return(child);
+}
+
+
+/**
  * Gibt die lesbare Version eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
  * @param int reason - Code
@@ -2131,6 +2176,25 @@ string GetUninitReasonDescription(int reason) {
          catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
    return(result);
+}
+
+
+/**
+ * Gibt den Titelbar-Text des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
+ * wird desen Text zurückgegeben.
+ *
+ * @param int hWnd - Handle des Fensters oder Controls
+ *
+ * @return string - Text
+ */
+string GetWindowText(int hWnd) {
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe Zeigerproblematik bei Strings
+
+   GetWindowTextA(hWnd, buffer[0], StringLen(buffer[0]));
+   
+   if (catch("GetWindowText()") != ERR_NO_ERROR)
+      return("");
+   return(buffer[0]);
 }
 
 

@@ -24,6 +24,7 @@
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
+   int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
@@ -43,7 +44,9 @@
    int      GetTradeServerEETOffset();
    int      GetTradeServerGMTOffset();
    datetime GetSessionStartTime(datetime time);
+   int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
+   string   GetWindowText(int hWnd);
    string   GetUninitReasonDescription(int reason);
    int      iBalanceSeries(int account, double& iBuffer[]);
    int      iBarShiftNext(string symbol, int timeframe, datetime time);
