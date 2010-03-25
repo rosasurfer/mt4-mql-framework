@@ -44,7 +44,7 @@
 #define PERIOD_MN1           43200     // monthly
 
 
-// Timeframe-Flags, können logisch kombiniert werden, siehe CheckEvent(EVENT_BAR_OPEN)
+// Timeframe-Flags, können logisch kombiniert werden, siehe EventListener.Baropen()
 #define PERIODFLAG_M1            1     // 1 minute
 #define PERIODFLAG_M5            2     // 5 minutes
 #define PERIODFLAG_M15           4     // 15 minutes
@@ -365,7 +365,7 @@ int HandleEvents(int events) {
  */
 int HandleEvent(int event, int flags=0) {
    bool status = false;
-   int  results[];      // zurücksetzen nicht notwendig, da CheckEvent() immer zurücksetzt
+   int  results[];      // zurücksetzen nicht notwendig, da EventListener() immer zurücksetzt
 
    switch (event) {
       case EVENT_BAR_OPEN       : if (EventListener.BarOpen       (results, flags)) { status = true; onBarOpen       (results); } break;
