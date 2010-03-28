@@ -28,8 +28,14 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
+   bool     GetConfigBool(string section, string key, bool defaultValue);
+   int      GetConfigInt(string section, string key, int defaultValue);
    string   GetConfigString(string section, string key, string defaultValue);
+   bool     GetGlobalConfigBool(string section, string key, bool defaultValue);
+   int      GetGlobalConfigInt(string section, string key, int defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
+   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
+   int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
    string   GetDayOfWeek(datetime time, bool format);
    string   GetErrorDescription(int error);

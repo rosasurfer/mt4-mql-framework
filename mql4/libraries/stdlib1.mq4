@@ -41,7 +41,8 @@ string DecimalToHex(int i) {
    if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
    else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
 
-   catch("DecimalToHex()");
+   if (catch("DecimalToHex()") != ERR_NO_ERROR)
+      return("");
    return(result);
 }
 
@@ -125,6 +126,7 @@ bool EventListener(int event, int& results[], int flags=0) {
       case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(results, flags));
       case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
    }
+
    catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
 }
@@ -182,8 +184,6 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
       }
    }
 
-
-
    if (false) {
       if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
       if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
@@ -195,7 +195,8 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
       if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
    }
 
-   catch("EventListener.BarOpen()");
+   if (catch("EventListener.BarOpen()") != ERR_NO_ERROR)
+      return(false);
    return(results[0] != 0);
 }
 
@@ -215,7 +216,9 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.OrderPlace()  eventStatus: "+ eventStatus);
-   catch("EventListener.OrderPlace()");
+
+   if (catch("EventListener.OrderPlace()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -235,7 +238,8 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.OrderChange()  eventStatus: "+ eventStatus);
-   catch("EventListener.OrderChange()");
+   if (catch("EventListener.OrderChange()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -255,7 +259,8 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.OrderCancel()  eventStatus: "+ eventStatus);
-   catch("EventListener.OrderCancel()");
+   if (catch("EventListener.OrderCancel()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -275,7 +280,8 @@ bool EventListener.PositionOpen(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.PositionOpen()  eventStatus: "+ eventStatus);
-   catch("EventListener.PositionOpen()");
+   if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -327,7 +333,8 @@ bool EventListener.PositionClose(int& results[], int flags=0) {
    }
 
    //Print("EventListener.PositionClose()  eventStatus: "+ eventStatus);
-   catch("EventListener.PositionClose()");
+   if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -347,7 +354,8 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.AccountChange()  eventStatus: "+ eventStatus);
-   catch("EventListener.AccountChange()");
+   if (catch("EventListener.AccountChange()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -367,7 +375,8 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.AccountPayment()  eventStatus: "+ eventStatus);
-   catch("EventListener.AccountPayment()");
+   if (catch("EventListener.AccountPayment()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -387,7 +396,8 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
       ArrayResize(results, 0);
 
    //Print("EventListener.HistoryChange()  eventStatus: "+ eventStatus);
-   catch("EventListener.HistoryChange()");
+   if (catch("EventListener.HistoryChange()") != ERR_NO_ERROR)
+      return(false);
    return(eventStatus);
 }
 
@@ -410,7 +420,8 @@ string FormatMoney(double value) {
       result = StringConcatenate(major, " ", minor, ".00");
    }
 
-   catch("FormatMoney()");
+   if (catch("FormatMoney()") != ERR_NO_ERROR)
+      return("");
    return(result);
 }
 
@@ -445,7 +456,8 @@ string FormatPrice(double price, int digits) {
       else                        strPrice = major;
    }
 
-   catch("FormatPrice()");
+   if (catch("FormatPrice()") != ERR_NO_ERROR)
+      return("");
    return(strPrice);
 }
 
@@ -721,8 +733,8 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
  * @return string - Name
  */
 string GetComputerName() {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Kopie von MAX_LEN_STRING erzeugen (siehe MetaTrader.doc: Zeigerproblematik)
-   int    lpSize[1]; lpSize[0] = StringLen(buffer[0]);
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   int    lpSize[1]; lpSize[0] = MAX_STRING_LEN;
 
    if (!GetComputerNameA(buffer[0], lpSize)) {
       int error = GetLastError();
@@ -733,8 +745,74 @@ string GetComputerName() {
    }
    //Print("GetComputerName()   GetComputerNameA()   result: 1   copied: "+ lpSize[0] +"   buffer: "+ buffer[0]);
 
-   catch("GetComputerName()");
+   if (catch("GetComputerName()") != ERR_NO_ERROR)
+      return("");
    return(buffer[0]);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert
+ */
+bool GetConfigBool(string section, string key, bool defaultValue=false) {
+   // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
+   static string localConfigFile="", globalConfigFile="";
+   if (localConfigFile == "") {
+      localConfigFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+   }
+
+   string strDefault = StringConcatenate("", defaultValue);
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   // zuerst globale, dann lokale Config auslesen
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LEN, localConfigFile);
+   
+   buffer[0]   = StringToLower(buffer[0]);
+   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+
+   if (catch("GetConfigBool()") != ERR_NO_ERROR)
+      return(false);
+   return(result);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return int - Konfigurationswert
+ */
+int GetConfigInt(string section, string key, int defaultValue=0) {
+   
+   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
+   // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
+
+   static string localConfigFile="", globalConfigFile="";
+   if (localConfigFile == "") {
+      localConfigFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+   }
+
+   // zuerst globale, dann lokale Config auslesen
+   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigFile);
+       result = GetPrivateProfileIntA(section, key, result      , localConfigFile);
+
+   if (catch("GetConfigInt()") != ERR_NO_ERROR)
+      return(0);
+   return(result);
 }
 
 
@@ -756,14 +834,67 @@ string GetConfigString(string section, string key, string defaultValue="") {
       globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
    }
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, localConfigFile);
 
-   catch("GetConfigString()");
+   if (catch("GetConfigString()") != ERR_NO_ERROR)
+      return("");
    return(buffer[0]);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Boolean zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert
+ */
+bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+
+   string strDefault = StringConcatenate("", defaultValue);
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
+   
+   buffer[0]   = StringToLower(buffer[0]);
+   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+
+   if (catch("GetGlobalConfigBool()") != ERR_NO_ERROR)
+      return(false);
+   return(result);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Integer zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return int - Konfigurationswert
+ */
+int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
+   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
+
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);
+
+   if (catch("GetGlobalConfigInt()") != ERR_NO_ERROR)
+      return(0);
+   return(result);
 }
 
 
@@ -781,12 +912,66 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
    if (configFile == "")
       configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
 
-   catch("GetConfigString()");
+   if (catch("GetGlobalConfigString()") != ERR_NO_ERROR)
+      return("");
    return(buffer[0]);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als Boolean zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert
+ */
+bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+
+   string strDefault = StringConcatenate("", defaultValue);
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
+   
+   buffer[0]   = StringToLower(buffer[0]);
+   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+
+   if (catch("GetLocalConfigBool()") != ERR_NO_ERROR)
+      return(false);
+   return(result);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als Integer zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return int - Konfigurationswert
+ */
+int GetLocalConfigInt(string section, string key, int defaultValue=0) {
+
+   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
+
+   static string configFile = "";
+   if (configFile == "")
+      configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);
+
+   if (catch("GetLocalConfigInt()") != ERR_NO_ERROR)
+      return(0);
+   return(result);
 }
 
 
@@ -804,11 +989,12 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
    if (configFile == "")
       configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, configFile);
 
-   catch("GetConfigString()");
+   if (catch("GetLocalConfigString()") != ERR_NO_ERROR)
+      return("");
    return(buffer[0]);
 }
 
@@ -960,7 +1146,7 @@ string GetErrorDescription(int error) {
  */
 string GetWindowsErrorDescription(int error) {
    switch (error) {
-      case NO_ERROR                                : return("The operation completed successfully."                                                                                                                                         );
+      case NO_ERROR                       : return("The operation completed successfully."                                                                                                                                         );
 
       // Windows Error Codes
       case ERROR_INVALID_FUNCTION         : return("Incorrect function."                                                                                                                                                           );
@@ -1886,9 +2072,9 @@ string GetModuleDirectoryName() {
 
    // Das Verzeichnis kann sich nicht ändern und wird zwischengespeichert.
    if (directory == "") {
-      string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // Kopie von MAX_LEN_STRING erzeugen (siehe MetaTrader.doc: Zeigerproblematik)
+      string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // siehe MetaTrader.doc: Zeigerproblematik
 
-      if (!GetModuleFileNameA(0, buffer[0], StringLen(buffer[0]))) {
+      if (!GetModuleFileNameA(0, buffer[0], MAX_STRING_LEN)) {
          int error = GetLastError();
          if (error == ERR_NO_ERROR)
             error = ERR_WINDOWS_ERROR;
@@ -1900,7 +2086,8 @@ string GetModuleDirectoryName() {
       //Print("GetModuleDirectoryName()   module filename: "+ buffer[0] +"   directory: "+ directory);
    }
 
-   catch("GetModuleDirectoryName()");
+   if (catch("GetModuleDirectoryName()") != ERR_NO_ERROR)
+      return("");
    return(directory);
 }
 
@@ -2188,9 +2375,9 @@ string GetUninitReasonDescription(int reason) {
  * @return string - Text
  */
 string GetWindowText(int hWnd) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe Zeigerproblematik bei Strings
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetWindowTextA(hWnd, buffer[0], StringLen(buffer[0]));
+   GetWindowTextA(hWnd, buffer[0], MAX_STRING_LEN);
    
    if (catch("GetWindowText()") != ERR_NO_ERROR)
       return("");
@@ -2468,7 +2655,8 @@ bool QuoteTracker.SoundLimits(string symbol, double& limits[]) {
       cache.limits[i][1] = limits[1];
    }
 
-   catch("QuoteTracker.SoundLimits(2)");
+   if (catch("QuoteTracker.SoundLimits(2)") != ERR_NO_ERROR)
+      return(false);
    return(true);
 }
 
@@ -2533,7 +2721,8 @@ bool QuoteTracker.SMSLimits(string symbol, double& limits[]) {
       cache.limits[i][1] = limits[1];
    }
 
-   catch("QuoteTracker.SMSLimits(2)");
+   if (catch("QuoteTracker.SMSLimits(2)") != ERR_NO_ERROR)
+      return(false);
    return(true);
 }
 
@@ -2550,7 +2739,6 @@ int RegisterChartObject(string label, string& objects[]) {
    int size = ArraySize(objects);
    ArrayResize(objects, size+1);
    objects[size] = label;
-
    return(0);
 }
 
@@ -2645,7 +2833,8 @@ int StringFindR(string subject, string search) {
       lastFound = result;
    }
 
-   catch("StringFindR()");
+   if (catch("StringFindR()") != ERR_NO_ERROR)
+      return(-1);
    return(lastFound);
 }
 
@@ -2667,7 +2856,8 @@ string StringToLower(string value) {
       if (191 < char) if (char < 224) result = StringSetChar(result, i, char+32);
    }
 
-   catch("StringToLower()");
+   if (catch("StringToLower()") != ERR_NO_ERROR)
+      return("");
    return(result);
 }
 
@@ -2689,7 +2879,8 @@ string StringToUpper(string value) {
       if (223 < char)                 result = StringSetChar(result, i, char-32);
    }
 
-   catch("StringToUpper()");
+   if (catch("StringToUpper()") != ERR_NO_ERROR)
+      return("");
    return(result);
 }
 
@@ -2729,7 +2920,8 @@ string UrlEncode(string value) {
          result = StringConcatenate(result, "%", DecimalToHex(char));
    }
 
-   catch("UrlEncode()");
+   if (catch("UrlEncode()") != ERR_NO_ERROR)
+      return("");
    return(result);
 }
 
