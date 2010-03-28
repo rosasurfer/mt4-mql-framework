@@ -67,8 +67,7 @@
    int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
    int      onHistoryChange(int tickets[]);
-   bool     QuoteTracker.SMSLimits(string symbol, double& limits[2]);
-   bool     QuoteTracker.SoundLimits(string symbol, double& limits[2]);
+   bool     QuoteTracker.Limits(string symbol, double& limits[2]);
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
