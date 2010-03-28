@@ -15,7 +15,7 @@ extern color Grid.Color = LightGray;               // Grid-Farbe
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string labels[];     // Separatorlabels
+string labels[];     // Object-Labels
 
 
 /**
@@ -27,7 +27,7 @@ int init() {
 
    // während der Entwicklung Arrays jedesmal zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayResize(labels,  0);
+      ArrayResize(labels, 0);
    }
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -85,17 +85,18 @@ int DrawGrid() {
    //Print("Grid from: "+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +", to: "+ TimeToStr(to, TIME_DATE|TIME_MINUTES));
 
 
-   string label, day, dd, mm, yyyy;
+   string day, dd, mm, yyyy, label, lastLabel;
+   int bar, lastBar;
 
    // Separator zeichnen
    for (int time=from; time <= to; time+=1*DAY) {
       day = GetDayOfWeek(time - offset*HOURS + 2*HOURS, false);
 
-      // Wochenenden in der Vergangenheit überspringen
-      if (time < Time[0]) {
-         if (day=="Sat") continue;  // für MQL optimiert
-         if (day=="Sun") continue;
-      }
+      // TODO: Labels mit Sa+So in der Zukunft auf nächsten Wochentag shiften
+
+      // Wochenenden überspringen
+      if (day=="Sat") continue;  // conditions für MQL optimiert
+      if (day=="Sun") continue;
 
       // Tagesseparatoren bei Perioden größer H1 überspringen (nur Wochenseparatoren)
       if (Period() > PERIOD_H1) if (day != "Mon")
@@ -108,16 +109,24 @@ int DrawGrid() {
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
-      // TODO: Separators von Feiertagen werden in den vorherigen Tag gezeichnet
-      // TODO: Sa+So in Labels auf nächsten Wochentag shiften
+      // Existiert zum Zeitpunkt time keine Bar, zeichnet MetaTrader den Separator fälschlicherweise in die vorhergehende Session.
+      // Daher muß für den time-Parameter des Separators der Zeitpunkt der ersten tatsächlichen Bar der betreffenden Session ermittelt werden.
+      bar = iBarShiftNext(NULL, 0, time);
+
+      if (lastBar == bar)           // mindestens eine komplette Session fehlt, am wahrscheinlichsten wegen eines Feiertags
+         ObjectDelete(lastLabel);   // Separator für die fehlende Session wieder löschen
+
       ObjectDelete(label); GetLastError();
-      if (!ObjectCreate(label, OBJ_VLINE, 0, time, 0))
+      if (!ObjectCreate(label, OBJ_VLINE, 0, Time[bar], 0))
          return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")"));
+
       ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
       ObjectSet(label, OBJPROP_COLOR, Grid.Color);
       ObjectSet(label, OBJPROP_BACK , true      );
-
       RegisterChartObject(label, labels);
+
+      lastLabel = label;   // letzte Separatordaten für Feiertagserkenung merken
+      lastBar   = bar;
    }
 
    return(catch("DrawGrid(2)"));
