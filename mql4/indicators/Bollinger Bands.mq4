@@ -68,7 +68,7 @@ int init() {
    SetIndexBuffer(0, UpperBand);
    SetIndexLabel (0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
    SetIndexBuffer(1, MovingAvg);
-   SetIndexLabel (1, StringConcatenate("MiddleBand(", Periods, "x", Timeframe, ")"));
+   SetIndexLabel (1, NULL);
    SetIndexBuffer(2, LowerBand);
    SetIndexLabel (2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
    IndicatorDigits(Digits);
