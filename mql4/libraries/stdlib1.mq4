@@ -2355,9 +2355,9 @@ string GetUninitReasonDescription(int reason) {
       case REASON_FINISHED   : result = "execution finished ";                    break;
       case REASON_REMOVE     : result = "expert or indicator removed from chart"; break;
       case REASON_RECOMPILE  : result = "expert or indicator recompiled";         break;
-      case REASON_CHARTCHANGE: result = "chart symbol or timeframe changed";      break;
+      case REASON_CHARTCHANGE: result = "symbol or timeframe changed";            break;
       case REASON_CHARTCLOSE : result = "chart closed";                           break;
-      case REASON_PARAMETERS : result = "input parameters changed by user";       break;
+      case REASON_PARAMETERS : result = "input parameters changed";               break;
       case REASON_ACCOUNT    : result = "account changed";                        break;
       default:
          catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);

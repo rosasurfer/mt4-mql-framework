@@ -22,7 +22,7 @@
 
 extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
-extern double Deviation      = 2.0;          // Standardabweichung
+extern double Deviation      = 1.4;          // Standardabweichung
 extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
 extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
 
@@ -39,6 +39,21 @@ int error = ERR_NO_ERROR;
  *
  */
 int init() {
+   // Puffer zuordnen
+   SetIndexBuffer(0, UpperBand);
+   SetIndexBuffer(1, MovingAvg);
+   SetIndexBuffer(2, LowerBand);
+   IndicatorDigits(Digits);
+
+
+   // während der Entwicklung Puffer jedesmal zurücksetzen
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      ArrayInitialize(UpperBand, EMPTY_VALUE);
+      ArrayInitialize(MovingAvg, EMPTY_VALUE);
+      ArrayInitialize(LowerBand, EMPTY_VALUE);
+   }
+
+
    // Parameter überprüfen
    period = GetPeriod(Timeframe);
    if (period == 0) {
@@ -64,30 +79,18 @@ int init() {
    }
 
 
-   // Puffer zuordnen
-   SetIndexBuffer(0, UpperBand);
+   // Indikatorlabel setzen
    SetIndexLabel (0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
-   SetIndexBuffer(1, MovingAvg);
    SetIndexLabel (1, NULL);
-   SetIndexBuffer(2, LowerBand);
    SetIndexLabel (2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
-   IndicatorDigits(Digits);
 
 
-   // während der Entwicklung Puffer jedesmal zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayInitialize(UpperBand, EMPTY_VALUE);
-      ArrayInitialize(MovingAvg, EMPTY_VALUE);
-      ArrayInitialize(LowerBand, EMPTY_VALUE);
-   }
-
-
-   // Periodenparameter in aktuellen Zeitrahmen umrechnen
+   // nach Setzen der Label Parameter auf aktuellen Zeitrahmen umrechnen
    if (Period() != period) {
       double minutes = period * Periods;           // Timeframe * Anzahl Bars = Range in Minuten
       Periods = MathRound(minutes/Period());
    }
-  
+
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -130,37 +133,36 @@ int start() {
    }
 
 
-   // MovingAverage(PRICE_MEDIAN) berechnen
-   for (i=0; i < bars; i++) {
-      MovingAvg[i] = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
-   }
+   //int tick = GetTickCount();
 
-
-   // Bänder berechnen
    double ma, diffH, diffL, sum, deviation;
-   i = bars - 1;
-   
-   while (i >= 0) {
+
+
+   // MovingAverage und Bänder berechnen
+   for (i=bars-1; i >= 0; i--) {
+      ma  = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
       sum = 0;
-      ma  = MovingAvg[i];
-      k   = i + Periods - 1;
-      // TODO: Schleifenergebnisse zwischenspeichern (mehr als 90% redundante Durchläufe)
-      while (k >= i) {
-         // Unabhängig von MA.Method wird die Std.-Abweichung vom High oder Low der Bar berechnet,
-         // denn dort werden im Handel Limite gesetzt und erfolgt ggf. der Einstieg.
-         diffH = High[k] - ma;               
-         diffL = Low [k] - ma;               // es wird der am weitesten vom MA entfernte Kurs verwendet
-         diffH *= diffH;                     
+
+      for (k=i+Periods-1; k >= i; k--) {
+         //diffH = Close[k] - ma;            // Verwendung von Close
+         //sum += diffH * diffH;
+
+         diffH = High[k] - ma;               // Verwendung von High oder Low (der am weitesten vom MA entfernte Wert)
+         diffL = Low [k] - ma;               
+         diffH *= diffH;
          diffL *= diffL;                     // Quad(a) + Quad(b) ist schneller als MathAbs(a) + MathAbs(b) + Quad(a|b)
          if (diffH > diffL) sum += diffH;    // (a > b) ist wesentlich schneller als MathMax(a, b)
-         else               sum += diffL;    
-         k--;
+         else               sum += diffL;
       }
+
       deviation    = Deviation * MathSqrt(sum/Periods);
       UpperBand[i] = ma + deviation;
+      MovingAvg[i] = ma;
       LowerBand[i] = ma - deviation;
-      i--;
    }
+   
+
+   //if (bars > 1) Print("start()   zu berechnende Bars: "+ bars +"    Zeit: "+ (GetTickCount()-tick) +" ms");
 
    return(catch("start(2)"));
 }
