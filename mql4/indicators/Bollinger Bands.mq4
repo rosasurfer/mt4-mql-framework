@@ -22,7 +22,7 @@
 
 extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
-extern double Deviation      = 1.4;          // Standardabweichung
+extern double Deviation      = 1.65;         // Standardabweichung
 extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
 extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
 extern int    Max.Values     = 1800;         // Anzahl der maximal zu berechnenden Werte (zur Performancesteigerung)
@@ -143,25 +143,46 @@ int start() {
    // Werte auf Max.Values begrenzen
    if (bars > Max.Values)
       bars = Max.Values;
+   
+
+   //int ticks = GetTickCount();
 
 
-   // MovingAverage und Bänder berechnen
-   double ma, diffH, diffL, sum, deviation;
+   /**
+    * MovingAverage und Bänder berechnen
+    *
+    * Folgenden Beobachtungen und Überlegungen gelten für alle MA-Methoden:
+    * ---------------------------------------------------------------------
+    * 1) Die Ergebnisse für appliedPrice=Close und appliedPrice=Median sind nahezu 100% identisch.
+    *
+    * 2) Die Ergebnisse für appliedPrice=Close und appliedPrice=High|Low lassen sich durch Anpassung von Deviation zu 90-95% identisch machen.
+    *    appliedPrice=Close mit Dev=1.65 entspricht nahezu appliedPrice=High|Low mit Dev=1.4 (andere Werte entsprechend).
+    *
+    * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, appliedPrice=Close ist immer am schnellsten.
+    *
+    * 4) Zur Performancesteigerung wird appliedPrice=Close verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
+    *    im Sinne dieses Indikators "exakt"?  Die konkreten berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird
+    *    ein weiteres Bollinger-Band auf SMA-Basis verwendet (dessen konkrete Werte ebenfalls keine tatsächliche Aussagekraft haben).
+    *    Beide Indikatoren zusammen dienen zur Orientierung im Trend, etwas "exakt messen" können sie nicht.
+    */
+   double ma, diff, diffH, diffL, sum, deviation;
 
    for (i=bars-1; i >= 0; i--) {
       ma  = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
       sum = 0;
 
       for (k=i+Periods-1; k >= i; k--) {
-         //diffH = Close[k] - ma;            // Verwendung von Close
-         //sum += diffH * diffH;
+         diff = Close[k] - ma;            // applied price: Close
+         sum += diff * diff;
 
-         diffH = High[k] - ma;               // Verwendung von High oder Low (der am weitesten vom MA entfernte Wert)
+         /*
+         diffH = High[k] - ma;            // applied price: High|Low (der am weitesten vom MA entfernte Wert)
          diffL = Low [k] - ma;               
          diffH *= diffH;
-         diffL *= diffL;                     // Quad(a) + Quad(b) ist schneller als MathAbs(a) + MathAbs(b) + Quad(a|b)
-         if (diffH > diffL) sum += diffH;    // (a > b) ist wesentlich schneller als MathMax(a, b)
+         diffL *= diffL;                  // Quad(a) + Quad(b) ist schneller als MathAbs(a) + MathAbs(b) + Quad(a|b)
+         if (diffH > diffL) sum += diffH; // (a > b) ist wesentlich schneller als MathMax(a, b)
          else               sum += diffL;
+         */
       }
 
       deviation    = Deviation * MathSqrt(sum/Periods);
@@ -169,6 +190,8 @@ int start() {
       MovingAvg[i] = ma;
       LowerBand[i] = ma - deviation;
    }
+
+   //if (bars > 1) Print("start()   Bars: "+ Bars +"   processedBars: "+ processedBars +"   calculated bars: "+ bars +"   used time: "+ (GetTickCount()-ticks) +" ms");
 
    return(catch("start(2)"));
 }
