@@ -2307,7 +2307,9 @@ int GetTradeServerGMTOffset() {
 datetime GetSessionStartTime(datetime time) {
    // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
 
-   // TODO: Falsch, die Handelssessions beginnen um 17:00 EST/EDT.
+   // TODO: Falsch, die Sessions beginnen um 17:00 EST/EDT.
+   // TODO: Fällt die Session auf einen Montag, muß statt 17:00 18:00 EST/EDT zurückgegeben werden. Die Retailplattformen öffnen montags 1 h später und
+   //       Kurse davor können als Vorbörse im Interbanken-Handel betrachtet werden (für Pivot-Level relevant).
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
    int eetOffset     = GetTradeServerEETOffset();
@@ -2482,12 +2484,12 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
  * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                              // MQL: NULL ist ein Integer
+   if (symbol == "0")                                    // MQL: NULL ist ein Integer
       symbol = Symbol();
 
-   int bar = iBarShift(symbol, timeframe, time);   // evt. ERR_HISTORY_WILL_UPDATED
+   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED
 
-   if (time < Time[Bars-1])                        // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
+   if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
       bar = -1;
 
    //catch("iBarShiftPrevious()");
