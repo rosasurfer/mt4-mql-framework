@@ -10,7 +10,7 @@
 #property indicator_buffers 3
 
 #property indicator_color1 C'102,135,232'
-#property indicator_color2 C'143,168,239'
+#property indicator_color2 C'163,183,241'
 #property indicator_color3 C'102,135,232'
 
 #property indicator_style1 STYLE_SOLID
