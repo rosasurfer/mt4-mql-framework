@@ -25,7 +25,7 @@ extern int    Periods        = 75;           // Anzahl der zu verwendenden Perio
 extern double Deviation      = 1.65;         // Standardabweichung
 extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
 extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
-extern int    Max.Values     = 1800;         // Anzahl der maximal zu berechnenden Werte (zur Performancesteigerung)
+extern int    Max.Values     = 2500;         // Anzahl der maximal zu berechnenden Werte (zur Performancesteigerung)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
