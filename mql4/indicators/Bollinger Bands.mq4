@@ -157,7 +157,7 @@ int start() {
     *
     * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, appliedPrice=Close ist immer am schnellsten.
     *
-    * 4) Zur Performancesteigerung wird appliedPrice=Close verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
+    * 4) Zur Performancesteigerung wird appliedPrice=Median verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
     *    im Sinne dieses Indikators "exakt"?  Die konkreten berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein 
     *    weiteres Bollinger-Band auf SMA-Basis verwendet (dessen konkrete Werte ebenfalls keine tatsächliche Aussagekraft haben).  Beide Indikatoren
     *    zusammen dienen zur Orientierung im Trend, "exakt messen" können beide nichts.
@@ -167,7 +167,7 @@ int start() {
 
    for (i=bars-1; i >= 0; i--) {
       ma  = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
-      dev = iStdDev(NULL, 0, Periods, 0, MA.Method, PRICE_CLOSE, i) * Deviation;
+      dev = iStdDev(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i) * Deviation;
       UpperBand[i] = ma + dev;
       MovingAvg[i] = ma;
       LowerBand[i] = ma - dev;
