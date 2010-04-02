@@ -2308,8 +2308,6 @@ datetime GetSessionStartTime(datetime time) {
    // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
 
    // TODO: Falsch, die Sessions beginnen um 17:00 EST/EDT.
-   // TODO: Fällt die Session auf einen Montag, muß statt 17:00 18:00 EST/EDT zurückgegeben werden. Die Retailplattformen öffnen montags 1 h später und
-   //       Kurse davor können als Vorbörse im Interbanken-Handel betrachtet werden (für Pivot-Level relevant).
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
    int eetOffset     = GetTradeServerEETOffset();
