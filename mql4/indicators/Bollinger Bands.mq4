@@ -113,20 +113,16 @@ int init() {
  *
  */
 int start() {
-   if (error != ERR_NO_ERROR) return(error);    // Abbruch bei Parameterfehlern ...
-   if (Periods < 2)           return(0);        // und bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-     
+   if (error != ERR_NO_ERROR) return(error);    // Abbruch bei Parameterfehlern
+   if (Periods < 2)           return(0);        // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
 
    int processedBars = IndicatorCounted(),
        iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar
        bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
 
-   if (iLastIndBar < 0)                         // im Falle Bars < Periods
-      iLastIndBar = -1;
-
-   if (iLastIndBar == -1)                        
-      return(catch("start(1)"));
+   if (iLastIndBar < 0)
+      return(0);                                // Abbruch im Falle Bars < Periods
 
 
    // Anzahl der zu berechnenden Bars bestimmen
@@ -140,7 +136,7 @@ int start() {
       // TODO: Eventhandler integrieren: Update nur bei onNewHigh|onNewLow
    }
 
-   // Werte auf Max.Values begrenzen
+   // zu berechnende Bars auf Max.Values begrenzen
    if (bars > Max.Values)
       bars = Max.Values;
    
@@ -148,17 +144,17 @@ int start() {
    /**
     * MovingAverage und Bänder berechnen
     *
-    * Folgenden Beobachtungen und Überlegungen gelten für alle MA-Methoden:
-    * ---------------------------------------------------------------------
-    * 1) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=Median) sind nahezu 100% identisch.
+    * Folgende Beobachtungen und Überlegungen können für alle MA-Methoden gemacht werden:
+    * -----------------------------------------------------------------------------------
+    * 1) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=Median) stimmen zu beinahe 100% überein.
     *
-    * 2) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=High|Low) lassen sich durch Anpassung des Faktors Deviation zu 90-95%
-    *    identisch machen.  1.65 * stdDev(appliedPrice=Close) entspricht nahezu 1.4 * stdDev(appliedPrice=High|Low).
+    * 2) Die Ergebnisse von stdDev(appliedPrice=Median) und stdDev(appliedPrice=High|Low) lassen sich durch Anpassung des Faktors Deviation zu 90-95%
+    *    in Übereinstimmung bringen.  Der Wert von stdDev(appliedPrice=Close)*1.65 entspricht nahezu dem Wert von stdDev(appliedPrice=High|Low)*1.4.
     *
-    * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, appliedPrice=Close ist immer am schnellsten.
+    * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, die von appliedPrice=Close am schnellsten.
     *
     * 4) Zur Performancesteigerung wird appliedPrice=Median verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
-    *    im Sinne dieses Indikators "exakt"?  Die konkreten berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein 
+    *    im Sinne dieses Indikators "exakt"?  Die konkreten, berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein 
     *    weiteres Bollinger-Band auf SMA-Basis verwendet (dessen konkrete Werte ebenfalls keine tatsächliche Aussagekraft haben).  Beide Indikatoren
     *    zusammen dienen zur Orientierung im Trend, "exakt messen" können beide nichts.
     */
@@ -175,6 +171,6 @@ int start() {
    
    //if (bars > 1) Print("start()   Bars: "+ Bars +"   processedBars: "+ processedBars +"   calculated bars: "+ bars +"   used time: "+ (GetTickCount()-ticks) +" ms");
 
-   return(catch("start(2)"));
+   return(catch("start()"));
 }
 
