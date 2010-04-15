@@ -606,14 +606,14 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 
 
 /**
- * Gibt die aktuelle Account-Nummer unabhängig davon, ob eine Connection zum Tradeserver steht, zurück.
+ * Gibt die aktuelle Account-Nummer zurück (unabhängig davon, ob eine Connection zum Tradeserver steht).
  *
  * @return int - Account-Nummer
  */
 int GetAccountNumber() {
    int account = AccountNumber();
    
-   if (account == 0) {     // ohne Connection wird die Titlebar des Hauptfensters ausgewertet
+   if (account == 0) {        // ohne Connection wird die Titlebar des Hauptfensters ausgewertet
       string title = GetWindowText(GetTopWindow());
       //Print("GetAccountNumber()   top window title: "+ title);
       
