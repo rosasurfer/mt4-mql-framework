@@ -72,6 +72,7 @@
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
    bool     StringICompare(string string1, string string2);
+   bool     StringIsDigit(string value);
    int      StringFindR(string subject, string search);
    string   StringToLower(string value);
    string   StringToUpper(string value);

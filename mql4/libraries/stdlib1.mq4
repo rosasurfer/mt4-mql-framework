@@ -606,7 +606,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 
 
 /**
- * Gibt die aktuelle Account-Nummer zurück (unabhängig davon, ob eine Connection zum Tradeserver steht).
+ * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
  *
  * @return int - Account-Nummer
  */
@@ -619,13 +619,19 @@ int GetAccountNumber() {
       
       int pos = StringFind(title, ":");
       if (pos < 1) {
-         catch("GetAccountNumber()   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
+         catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
          return(0);
       }
-      account = StrToInteger(StringSubstr(title, 0, pos));
+      string strAccount = StringSubstr(title, 0, pos);
+
+      if (!StringIsDigit(strAccount)) {
+         catch("GetAccountNumber(2)   account number contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
+         return(0);
+      }
+      account = StrToInteger(strAccount);
    }
 
-   if (catch("GetAccountNumber()") != ERR_NO_ERROR)
+   if (catch("GetAccountNumber(3)") != ERR_NO_ERROR)
       return(0);
    return(account);
 }
@@ -2359,6 +2365,7 @@ string GetUninitReasonDescription(int reason) {
       case REASON_CHARTCLOSE : result = "chart closed";                           break;
       case REASON_PARAMETERS : result = "input parameters changed";               break;
       case REASON_ACCOUNT    : result = "account changed";                        break;
+
       default:
          catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
@@ -2368,7 +2375,7 @@ string GetUninitReasonDescription(int reason) {
 
 /**
  * Gibt den Titelbar-Text des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
- * wird desen Text zurückgegeben.
+ * wird dessen Text zurückgegeben.
  *
  * @param int hWnd - Handle des Fensters oder Controls
  *
@@ -2596,8 +2603,8 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
- * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der aktuellen QuoteTracker-Limite
- * (Variablen bleiben nur in Libraries timeframe-übergreifend erhalten).
+ * Hilfsfunktion zur timeframe-übergreifenden Speicherung der aktuellen QuoteTracker-Limite
+ * (nur in Libraries bleiben Variablen timeframe-übergreifend erhalten).
  *
  * @param string  symbol    - Instrument, für das Limite verwaltet werden (default: NULL = das aktuelle Symbol)
  * @param double& limits[2] - Array mit den aktuellen Limiten (0: lower limit, 1: upper limit)
@@ -2711,10 +2718,11 @@ int RemoveChartObjects(string& objects[]) {
  * @return int - Fehlerstatus
  */
 int SendTextMessage(string receiver, string message) {
+   if (!StringIsDigit(receiver))
+      return(catch("SendTextMessage(1)   invalid parameter receiver: "+ receiver, ERR_INVALID_FUNCTION_PARAMVALUE));
+
    // TODO: Gateway-Zugangsdaten auslagern
 
-   // TODO: Empfänger-Nr. überprüfen
-   //if (!StringIsDigit(receiver))
    message = UrlEncode(message);
    string url = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ message;
 
@@ -2744,6 +2752,26 @@ int SendTextMessage(string receiver, string message) {
  */
 bool StringICompare(string string1, string string2) {
    return(StringToUpper(string1) == StringToUpper(string2));
+}
+
+
+/**
+ * Prüft, ob ein String nur numerische Zeichen enthält.
+ *
+ * @param string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsDigit(string value) {
+   int char;
+   
+   for (int i=StringLen(value)-1; i >= 0; i--) {
+      char = StringGetChar(value, i);
+      if (char < 48) return(false);
+      if (57 < char) return(false);    // Conditions für MQL optimiert
+   }
+   
+   return(true);
 }
 
 
