@@ -35,10 +35,6 @@ int init() {
       ArrayInitialize(Balance, EMPTY_VALUE);
    }
 
-   if (account == 0)
-      account = GetAccountNumber();
-
-
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
@@ -53,6 +49,14 @@ int init() {
  *
  */
 int start() {
+   if (account == 0)
+      account = GetAccountNumber();
+   if (account <= 0) {                                   // evt. ERR_TERMINAL_NOT_YET_READY
+      int error = MathAbs(account);
+      account = 0;
+      return(error);
+   }
+
    int processedBars = IndicatorCounted();
 
    if (processedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen

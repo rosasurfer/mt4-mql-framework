@@ -67,7 +67,7 @@ int init() {
       start();
       WindowRedraw();
    }
-  
+
    return(catch("init()"));
 }
 
@@ -315,7 +315,7 @@ int CreateInstrumentLabel() {
    ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
 
    // Instrumentnamen einlesen und setzen
-   string symbol = GetConfigString("Instruments", Symbol(), Symbol());
+   string symbol = GetConfigString("Instrument.LongNames", Symbol(), Symbol());
    ObjectSetText(instrumentLabel, symbol, 9, "Tahoma Fett", Black);
 
    return(catch("CreateInstrumentLabel(2)"));

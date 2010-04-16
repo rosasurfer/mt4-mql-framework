@@ -608,31 +608,31 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 /**
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
  *
- * @return int - Account-Nummer
+ * @return int - Account-Nummer (positiver Wert) oder Fehlercode (negativer Wert)
  */
 int GetAccountNumber() {
    int account = AccountNumber();
-   
-   if (account == 0) {        // ohne Connection wird die Titlebar des Hauptfensters ausgewertet
-      string title = GetWindowText(GetTopWindow());
-      //Print("GetAccountNumber()   top window title: "+ title);
-      
-      int pos = StringFind(title, ":");
-      if (pos < 1) {
-         catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
-         return(0);
-      }
-      string strAccount = StringSubstr(title, 0, pos);
 
-      if (!StringIsDigit(strAccount)) {
-         catch("GetAccountNumber(2)   account number contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
-         return(0);
-      }
+   if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
+      string title = GetWindowText(GetTopWindow());
+      if (title == "")
+         return(-ERR_TERMINAL_NOT_YET_READY);         // negativer Error-Code
+
+      int pos = StringFind(title, ":");
+      if (pos < 1)
+         return(-catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
+
+      string strAccount = StringSubstr(title, 0, pos);
+      if (!StringIsDigit(strAccount))
+         return(-catch("GetAccountNumber(2)   account number contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR));
+
       account = StrToInteger(strAccount);
    }
 
-   if (catch("GetAccountNumber(3)") != ERR_NO_ERROR)
-      return(0);
+   int error = catch("GetAccountNumber(3)");
+   if (error != ERR_NO_ERROR)
+      return(-error);
+
    return(account);
 }
 
@@ -781,7 +781,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LEN, localConfigFile);
-   
+
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -802,7 +802,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  * @return int - Konfigurationswert
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
-   
+
    // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
 
@@ -870,7 +870,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
-   
+
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -946,7 +946,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
-   
+
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -1138,6 +1138,7 @@ string GetErrorDescription(int error) {
       case ERR_WINDOWS_ERROR              : return("Windows error"                                           );
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                );
       case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                           );
+      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                  );
    }
    return("unknown error");
 }
@@ -2235,58 +2236,6 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
- * Gibt die Abweichung der Tradeserverzeit von EET (Eastern European Time) zurück.
- *
- * @return int - Offset in Stunden
- */
-int GetTradeServerEETOffset() {
-   return(GetTradeServerGMTOffset() - 2);
-}
-
-
-/**
- * Gibt die Abweichung der Tradeserverzeit von GMT (Greenwich Mean Time) zurück.
- *
- * @return int - Offset in Stunden
- */
-int GetTradeServerGMTOffset() {
-   /**
-    * TODO: Haben verschiedene Server desselben Brokers evt. unterschiedliche Offsets?
-    *
-    * string server  = AccountServer();
-    * Print("GetTradeServerGMTOffset(): account company: "+ company +", account server: "+ server);
-    *
-    * TODO: Zeitverschiebungen von 30 Minuten integrieren (evt. Rückgabewert in Minuten)
-    */
-   string company = AccountCompany();
-
-   // TODO: AccountCompany() ändert sich von IP zu IP
-   if (company != "") {
-      if (company == "Straighthold Investment Group, Inc.") return( 2);
-      if (company == "Alpari (UK) Ltd."                   ) return( 1);
-      if (company == "Cantor Fitzgerald"                  ) return( 0);
-      if (company == "Forex Ltd."                         ) return( 0);
-      if (company == "ATC Brokers "                       ) return(-5);
-      if (company == "ATC Brokers - Main"                 ) return(-5);
-      if (company == "ATC Brokers - $8 Commission"        ) return(-5);
-      catch("GetTradeServerGMTOffset(1)  cannot resolve trade server GMT offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
-   }
-   else {
-      // TODO: Verwendung von TerminalCompany() ist Unfug
-      company = TerminalCompany();
-      if (company == "Straighthold Investment Group, Inc.") return( 2);
-      if (company == "Alpari (UK) Ltd."                   ) return( 1);
-      if (company == "Cantor Fitzgerald Europe"           ) return( 0);
-      if (company == "FOREX Ltd."                         ) return( 0);
-      if (company == "Avail Trading Corp."                ) return(-5);
-      catch("GetTradeServerGMTOffset(2)  cannot resolve trade server GMT offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
-   }
-
-   return(EMPTY_VALUE);
-}
-
-
-/**
  * Gibt die Startzeit der den angegebenen Zeitpunkt abdeckenden Handelssession zurück.
  *
  * @param datetime time - Zeitpunkt (Serverzeit)
@@ -2316,7 +2265,7 @@ datetime GetSessionStartTime(datetime time) {
    // TODO: Falsch, die Sessions beginnen um 17:00 EST/EDT.
 
    // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
-   int eetOffset     = GetTradeServerEETOffset();
+   int eetOffset     = GetTradeServerTimeOffset() - 2;
    datetime eetTime  = time - eetOffset * HOURS;
    datetime eetStart = eetTime - TimeHour(eetTime)*HOURS - TimeMinute(eetTime)*MINUTES - TimeSeconds(eetTime);
    datetime result   = eetStart + eetOffset * HOURS;
@@ -2344,6 +2293,73 @@ int GetTopWindow() {
    if (catch("GetTopWindow()") != ERR_NO_ERROR)
       return(0);
    return(child);
+}
+
+
+/**
+ * Gibt die GMT-Abweichung der Tradeserverzeit zurück.
+ *
+ * @return int - Offset in Stunden
+ */
+int GetTradeServerTimeOffset() {
+   /**
+    * TODO: Haben verschiedene Server desselben Brokers evt. unterschiedliche Offsets?
+    *
+    * string server  = AccountServer();
+    * Print("GetTradeServerTimeOffset(): account company: "+ company +", account server: "+ server);
+    *
+    * TODO: Zeitverschiebungen von 30 Minuten integrieren (evt. Rückgabewert in Minuten)
+    */
+   string company = AccountCompany();
+
+   // TODO: AccountCompany() ändert sich von IP zu IP
+   if (company != "") {
+      if (company == "Straighthold Investment Group, Inc.") return( 2);
+      if (company == "Alpari (UK) Ltd."                   ) return( 1);
+      if (company == "Cantor Fitzgerald"                  ) return( 0);
+      if (company == "Forex Ltd."                         ) return( 0);
+      if (company == "ATC Brokers "                       ) return(-5);
+      if (company == "ATC Brokers - Main"                 ) return(-5);
+      if (company == "ATC Brokers - $8 Commission"        ) return(-5);
+      catch("GetTradeServerTimeOffset(1)  cannot resolve trade server GMT offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
+   }
+   else {
+      // TODO: Verwendung von TerminalCompany() ist Unfug
+      company = TerminalCompany();
+      if (company == "Straighthold Investment Group, Inc.") return( 2);
+      if (company == "Alpari (UK) Ltd."                   ) return( 1);
+      if (company == "Cantor Fitzgerald Europe"           ) return( 0);
+      if (company == "FOREX Ltd."                         ) return( 0);
+      if (company == "Avail Trading Corp."                ) return(-5);
+      catch("GetTradeServerTimeOffset(2)  cannot resolve trade server GMT offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
+   }
+
+   return(EMPTY_VALUE);
+}
+
+
+/**
+ * Gibt die Zeitzonen-ID des Tradeservers des aktuellen Accounts zurück.
+ *
+ * NOTE:
+ * -----
+ * Mit den Zugangsdaten eines Accounts kann man sich an mehreren Tradeservern anmelden.  Alle für einen Account gültigen Tradeserver sind an dieselbe Zeitzone gebunden.
+ * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver.
+ *
+ * @return string - Timezone-ID
+ */
+string GetTradeServerTimezone() {
+   int account = GetAccountNumber();
+   if (account <= 0)                      // evt. ERR_TERMINAL_NOT_YET_READY
+      return("");
+
+   string timezone = GetConfigString("Timezones", StringConcatenate("", account), "");
+   if (timezone == "") {
+      catch("GetTradeServerTimezone()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   return(timezone);
 }
 
 
@@ -2385,7 +2401,7 @@ string GetWindowText(int hWnd) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
    GetWindowTextA(hWnd, buffer[0], MAX_STRING_LEN);
-   
+
    if (catch("GetWindowText()") != ERR_NO_ERROR)
       return("");
    return(buffer[0]);
@@ -2764,13 +2780,13 @@ bool StringICompare(string string1, string string2) {
  */
 bool StringIsDigit(string value) {
    int char;
-   
+
    for (int i=StringLen(value)-1; i >= 0; i--) {
       char = StringGetChar(value, i);
       if (char < 48) return(false);
       if (57 < char) return(false);    // Conditions für MQL optimiert
    }
-   
+
    return(true);
 }
 

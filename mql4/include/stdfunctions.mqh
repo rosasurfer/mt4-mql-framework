@@ -283,6 +283,7 @@
 #define ERR_WINDOWS_ERROR                    5000  // Windows error
 #define ERR_FUNCTION_NOT_IMPLEMENTED         5001  // function not implemented
 #define ERR_INVALID_INPUT_PARAMVALUE         5002  // invalid input parameter value
+#define ERR_TERMINAL_NOT_YET_READY           5003  // terminal not yet ready
 
 
 /**
@@ -301,7 +302,7 @@
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error != ERR_NO_ERROR)
-      GetLastError();         // bei forciertem Fehler letzten tatsächlichen Fehler zurücksetzen
+      GetLastError();                     // bei forciertem Fehler letzten tatsächlichen Fehler zurücksetzen
    else
       error = GetLastError();
 
@@ -313,7 +314,7 @@ int catch(string message="", int error=ERR_NO_ERROR) {
 
    return(error);
 
-   // unreachable Code, unterdrückt Compilerwarungen über unreferenzierte Funktionen
+   // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
    HandleEvent(0);
    HandleEvents(0);
 }

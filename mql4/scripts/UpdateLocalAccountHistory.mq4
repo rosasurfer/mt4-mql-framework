@@ -12,8 +12,14 @@
  *
  */
 int start() {
-   int tick = GetTickCount();
-   int error, account=GetAccountNumber(), orders=OrdersHistoryTotal();
+   int error;
+
+   int account = GetAccountNumber();
+   if (account <= 0)                   // evt. ERR_TERMINAL_NOT_YET_READY
+      return(MathAbs(account));
+
+   int tick   = GetTickCount();
+   int orders = OrdersHistoryTotal();
 
 
    // Sortierschlüssel: CloseTime, OpenTime, Ticket
@@ -205,7 +211,7 @@ int start() {
          return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
-      int    iOffset   = GetTradeServerGMTOffset();
+      int    iOffset   = GetTradeServerTimeOffset();
       string strOffset = DoubleToStr(MathAbs(iOffset), 0);
 
       if (MathAbs(iOffset) < 10) strOffset = "0"+ strOffset;
