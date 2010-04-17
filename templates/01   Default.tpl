@@ -1299,7 +1299,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=QuoteTracker
+name=EventTracker
 flags=347
 window_num=0
 </expert>

@@ -76,32 +76,32 @@ int DecreasePeriod(int period = 0) {
 
 
 /**
- * Konvertiert einen Double in einen String ohne abschließende Nullstellen oder Dezimalpunkt.
+ * Konvertiert einen Double in einen String und trimmt abschließende Nullstellen.
  *
- * @param number - Double
+ * @param value - Double
  *
  * @return string
  */
-string DoubleToStrTrim(double number) {
-   string result = number;
-   int len = StringLen(result);
+string DoubleToStrTrim(double value) {
+   string strValue = value;
+   int len = StringLen(strValue);
 
-   bool alter = false;
+   bool trim = false;
 
-   while (StringSubstr(result, len-1, 1) == "0") {
+   while (StringGetChar(strValue, len-1) == 48) {  // char(48) = "0"
       len--;
-      alter = true;
+      trim = true;
    }
-   if (StringSubstr(result, len-1, 1) == ".") {
+   if (StringGetChar(strValue, len-1) == 46) {     // char(46) = "."
       len--;
-      alter = true;
+      trim = true;
    }
 
-   if (alter)
-      result = StringSubstr(result, 0, len);
+   if (trim)
+      strValue = StringSubstr(strValue, 0, len);
 
    //catch("DoubleToStrTrim()");
-   return(result);
+   return(strValue);
 }
 
 
@@ -215,7 +215,7 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.OrderPlace()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
 
    if (catch("EventListener.OrderPlace()") != ERR_NO_ERROR)
       return(false);
@@ -237,7 +237,8 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.OrderChange()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
+
    if (catch("EventListener.OrderChange()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -258,7 +259,8 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.OrderCancel()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
+
    if (catch("EventListener.OrderCancel()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -274,12 +276,13 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * @return bool - Ergebnis
  */
 bool EventListener.PositionOpen(int& results[], int flags=0) {
-   bool eventStatus = false;
-
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.PositionOpen()  eventStatus: "+ eventStatus);
+   bool eventStatus = false;
+
+   // TODO: implementieren
+
    if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -295,12 +298,17 @@ bool EventListener.PositionOpen(int& results[], int flags=0) {
  * @return bool - Ergebnis
  */
 bool EventListener.PositionClose(int& results[], int flags=0) {
-   // TODO:
-   // Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit dem letzten Start
-   // neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim Programmstart die Online-History
-   // einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte geschlossene Position gespeichert.
+   /**
+    * Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit
+    * dem letzten Programmende neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim 
+    * Programmstart die Online-History einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte
+    * geschlossene Position gespeichert.
+    */
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
+
+
+   // TODO: 17.04.2010: das ist doch hier alles Blödsinn !!!
 
    static bool firstRun = true;
 
@@ -332,7 +340,6 @@ bool EventListener.PositionClose(int& results[], int flags=0) {
       }
    }
 
-   //Print("EventListener.PositionClose()  eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -353,7 +360,8 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.AccountChange()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
+
    if (catch("EventListener.AccountChange()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -374,7 +382,8 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.AccountPayment()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
+
    if (catch("EventListener.AccountPayment()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -395,7 +404,8 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-   //Print("EventListener.HistoryChange()  eventStatus: "+ eventStatus);
+   // TODO: implementieren
+
    if (catch("EventListener.HistoryChange()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -2701,21 +2711,21 @@ int RegisterChartObject(string label, string& objects[]) {
 
 
 /**
- * Entfernt alle Objekte mit den im übergebenen Array gespeicherten Labels aus dem aktuellen Chart.
+ * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
  *
- * @param string& objects[] - Array mit gespeicherten Objektlabels
+ * @param string& labels[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects(string& objects[]) {
-   int size = ArraySize(objects);
+int RemoveChartObjects(string& labels[]) {
+   int size = ArraySize(labels);
    if (size == 0)
       return(0);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(objects[i]);
+      ObjectDelete(labels[i]);
    }
-   ArrayResize(objects, 0);
+   ArrayResize(labels, 0);
 
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);
