@@ -43,6 +43,7 @@
    string   GetEventDescription(int event);
    string   GetMetaTraderDirectory();
    string   GetModuleDirectoryName();
+   int      GetMovingAverageMethod(string description);
    string   GetOperationTypeDescription(int operationType);
    int      GetPeriod(string description);
    string   GetPeriodDescription(int period);

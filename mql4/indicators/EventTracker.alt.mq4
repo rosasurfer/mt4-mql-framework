@@ -13,17 +13,31 @@
 
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
 
-bool   Alerts          = false;        //
-int    Alerts.Gridsize = 25;           //
-string SMS.Receiver    = "";           // Telefon-Nr. für SMS-Benachrichtigungen (ohne führende Nullen)
+bool   Sound.Alerts    = true;
+string Sound.FileUp    = "alert3.wav";
+string Sound.FileDown  = "alert4.wav";
+
+bool   SMS.Alerts      = true;
+string SMS.Receiver    = "";
+
+bool   Track.QuoteChanges          = false;
+int    QuoteChanges.Gridsize       = 25;             
+
+bool   Track.BollingerBands        = false;
+int    BollingerBands.MA.Timeframe = 0;
+int    BollingerBands.MA.Periods   = 0;
+int    BollingerBands.MA.Method    = MODE_SMA;
+double BollingerBands.Deviation    = 2.0;
+
+bool   Track.PivotLevel            = false;
+bool   PivotLevel.PreviousDayRange = false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string soundFileUp   = "alert3.wav";
-string soundFileDown = "alert4.wav";
-
-string instrName, instrShortName;
+// sonstige Variablen
+string Instrument.Name, Instrument.ShortName;
+int    error;
 
 
 /**
@@ -34,20 +48,75 @@ int init() {
    SetIndexLabel(0, NULL);
 
 
-   // Konfiguration einlesen
-   Alerts = GetConfigBool("EventTracker", "Alerts", Alerts);
+   // Konfiguration auswerten
+   string symbols = GetConfigString("EventTracker", "Track.Symbols", "");
 
-   if (Alerts) {
-      SMS.Receiver    = GetConfigString("SMS"         , "Receiver"       , SMS.Receiver);
-      Alerts.Gridsize = GetConfigInt   ("EventTracker", "Alerts.Gridsize", Alerts.Gridsize);
-      string symbols  = GetConfigString("EventTracker", "Track.Symbols"  , "");
+   if (StringContains(","+symbols+",", ","+Symbol()+",")) {    // soll aktuelles Instrument überwacht werden?
+      // Instrumentnamen
+      Instrument.Name      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
+      Instrument.ShortName = GetConfigString("Instrument.ShortNames", Instrument.Name, Instrument.Name);
 
-      if (SMS.Receiver=="" || !StringContains(","+symbols+",", ","+Symbol()+","))
-         Alerts = false;
+      // Sound- und SMS-Einstellungen
+      Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
+      SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
+      if (SMS.Alerts) {
+         SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
+         if (!StringIsDigit(SMS.Receiver)) {
+            catch("init()  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
+            SMS.Alerts = false;
+         }
+      }
+
+      string section = "EventTracker."+ Symbol();
+
+      // Kursänderungen
+      Track.QuoteChanges = GetConfigBool(section, "QuoteChanges"  , Track.QuoteChanges);
+      if (Track.QuoteChanges) {
+         QuoteChanges.Gridsize = GetConfigInt(section, "QuoteChanges.Gridsize", QuoteChanges.Gridsize);
+         if (QuoteChanges.Gridsize < 1) {
+            catch("init()  invalid value QuoteChanges.Gridsize: "+ QuoteChanges.Gridsize, ERR_INVALID_INPUT_PARAMVALUE);
+            Track.QuoteChanges = false;
+         }
+      }
+
+      // Bollinger-Bänder
+      Track.BollingerBands = GetConfigBool(section, "BollingerBands", Track.BollingerBands);
+      if (Track.BollingerBands) {
+         string value = GetConfigString(section, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
+         BollingerBands.MA.Timeframe = GetPeriod(value);
+         if (BollingerBands.MA.Timeframe == 0) {
+            catch("init()  invalid value BollingerBands.MA.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+            Track.BollingerBands = false;
+         }
+      }
+      if (Track.BollingerBands) {
+         BollingerBands.MA.Periods = GetConfigInt(section, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
+         if (BollingerBands.MA.Periods < 2) {
+            catch("init()  invalid value BollingerBands.MA.Periods: "+ BollingerBands.MA.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+            Track.BollingerBands = false;
+         }
+      }
+      if (Track.BollingerBands) {
+         value = GetConfigString(section, "BollingerBands.MA.Method", BollingerBands.MA.Method);
+         BollingerBands.MA.Method = GetMovingAverageMethod(value);
+         if (BollingerBands.MA.Method < 0) {
+            catch("init()  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+            Track.BollingerBands = false;
+         }
+      }
+      if (Track.BollingerBands) {
+         BollingerBands.Deviation = GetConfigDouble(section, "BollingerBands.Deviation", BollingerBands.Deviation);
+         if (BollingerBands.Deviation <= 0) {
+            catch("init()  invalid value BollingerBands.Deviation: "+ BollingerBands.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+            Track.BollingerBands = false;
+         }
+      }
+
+      // Pivot-Level
+      Track.PivotLevel = GetConfigBool(section, "PivotLevel", Track.PivotLevel);
+      if (Track.PivotLevel) {
+      }
    }
-
-   instrName      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
-   instrShortName = GetConfigString("Instrument.ShortNames", instrName, instrName);
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -64,6 +133,9 @@ int init() {
  *
  */
 int start() {
+   if (error != ERR_NO_ERROR)
+      return(error);
+
    if (IsConnected()) {                               // nur bei Verbindung zum Tradeserver
       int processedBars = IndicatorCounted();
 
@@ -72,7 +144,7 @@ int start() {
          //Print("start()   not calling CheckLimits()  Bars: "+ Bars +"   processedBars: "+ processedBars +"   previousBar: "+ TimeToStr(Time[1]) +"   lastBar: "+ TimeToStr(Time[0]) +"   Bid: "+ FormatPrice(Bid, Digits));
       }
       else {
-         if (Alerts) {
+         if (Track.QuoteChanges) {
             //Print("start()   calling CheckLimits()  Bars: "+ Bars +"   processedBars: "+ processedBars +"   previousBar: "+ TimeToStr(Time[1]) +"   lastBar: "+ TimeToStr(Time[0]) +"   Bid: "+ FormatPrice(Bid, Digits));
             if (CheckLimits() == ERR_HISTORY_WILL_UPDATED)
                return(ERR_HISTORY_WILL_UPDATED);
@@ -88,12 +160,12 @@ int start() {
  * @return int - Fehlerstatus
  */
 int CheckLimits() {
-   if (!Alerts)
+   if (!Track.QuoteChanges)
       return(0);
 
    int error;
 
-   double gridSize = Alerts.Gridsize / 10000.0;
+   double gridSize = QuoteChanges.Gridsize / 10000.0;
    double limits[2];                                     // {lowerLimit, upperLimit}
 
    // aktuelle Limite ermitteln
@@ -113,11 +185,11 @@ int CheckLimits() {
 
    // Limite überprüfen
    if (Ask > upperLimit) {
-      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", instrShortName, " => ", DoubleToStr(limits[1], 4)));
+      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(limits[1], 4)));
       if (error != ERR_NO_ERROR)
          return(catch("CheckLimits(2)   error sending text message to "+ SMS.Receiver, error));
-      PlaySound(soundFileUp);
-      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrName, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
+      PlaySound(Sound.FileUp);
+      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
 
 
       limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
@@ -126,11 +198,11 @@ int CheckLimits() {
       Print("CheckLimits()   limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
    }
    else if (Bid < lowerLimit) {
-      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", instrShortName, " <= ", DoubleToStr(limits[0], 4)));
+      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(limits[0], 4)));
       if (error != ERR_NO_ERROR)
          return(catch("CheckSMSLimits(3)   error sending text message to "+ SMS.Receiver, error));
-      PlaySound(soundFileDown);
-      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrName, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
+      PlaySound(Sound.FileDown);
+      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
 
 
       limits[0] = NormalizeDouble(limits[0] - gridSize, 4);

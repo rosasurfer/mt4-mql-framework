@@ -2176,6 +2176,30 @@ string GetModuleDirectoryName() {
 
 
 /**
+ * Gibt den numerischen Code einer MovingAverage-Methode zurück.
+ *
+ * @param string description - MA-Methode (SMA, EMA, SMMA, LWMA, MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
+ *
+ * @return int - MA-Code
+ */
+int GetMovingAverageMethod(string description) {
+   description = StringToUpper(description);
+
+   if (description == "SMA"      ) return(MODE_SMA );
+   if (description == "MODE_SMA" ) return(MODE_SMA );
+   if (description == "EMA"      ) return(MODE_EMA );
+   if (description == "MODE_EMA" ) return(MODE_EMA );
+   if (description == "SMMA"     ) return(MODE_SMMA);
+   if (description == "MODE_SMMA") return(MODE_SMMA);
+   if (description == "LWMA"     ) return(MODE_LWMA);
+   if (description == "MODE_LWMA") return(MODE_LWMA);
+
+   catch("GetMovingAverageMethod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(-1);
+}
+
+
+/**
  * Gibt die lesbare Version eines Operation-Types zurück.
  *
  * @param int type - Operation-Type
