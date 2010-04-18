@@ -202,28 +202,6 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.OrderPlace(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   // TODO: implementieren
-
-   if (catch("EventListener.OrderPlace()") != ERR_NO_ERROR)
-      return(false);
-   return(eventStatus);
-}
-
-
-/**
  * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
  *
  * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
@@ -240,6 +218,28 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
    // TODO: implementieren
 
    if (catch("EventListener.OrderChange()") != ERR_NO_ERROR)
+      return(false);
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.OrderPlace(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   // TODO: implementieren
+
+   if (catch("EventListener.OrderPlace()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
 }
@@ -347,28 +347,6 @@ bool EventListener.PositionClose(int& results[], int flags=0) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.AccountChange(int& results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
-   // TODO: implementieren
-
-   if (catch("EventListener.AccountChange()") != ERR_NO_ERROR)
-      return(false);
-   return(eventStatus);
-}
-
-
-/**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
  * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
@@ -413,6 +391,28 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
 
 
 /**
+ * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ *
+ * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.AccountChange(int& results[], int flags=0) {
+   bool eventStatus = false;
+
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
+
+   // TODO: implementieren
+
+   if (catch("EventListener.AccountChange()") != ERR_NO_ERROR)
+      return(false);
+   return(eventStatus);
+}
+
+
+/**
  * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der aktuellen EventTracker-Limite
  * (nur in Libraries bleiben Variablen Timeframe-übergreifend erhalten).
  *
@@ -422,12 +422,12 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
  *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
  */
-bool EventTracker.Limits(string symbol, double& limits[]) {
+bool EventTracker.QuoteLimits(string symbol, double& limits[]) {
    if (symbol == "0")      // MQL: NULL ist ein Integer
       symbol = Symbol();
 
    if (ArraySize(limits) != 2) {
-      catch("EventTracker.Limits(1)   invalid parameter limits["+ ArraySize(limits) +"]", ERR_INCOMPATIBLE_ARRAYS);
+      catch("EventTracker.QuoteLimits(1)   invalid parameter limits["+ ArraySize(limits) +"]", ERR_INCOMPATIBLE_ARRAYS);
       return(false);
    }
 
@@ -472,7 +472,7 @@ bool EventTracker.Limits(string symbol, double& limits[]) {
       cache.limits[i][1] = limits[1];
    }
 
-   if (catch("EventTracker.Limits(2)") != ERR_NO_ERROR)
+   if (catch("EventTracker.QuoteLimits(2)") != ERR_NO_ERROR)
       return(false);
    return(true);
 }
@@ -857,12 +857,43 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LEN, localConfigFile);
-
-   buffer[0]   = StringToLower(buffer[0]);
+   
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
    if (catch("GetConfigBool()") != ERR_NO_ERROR)
       return(false);
+   return(result);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Double zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return double - Konfigurationswert
+ */
+double GetConfigDouble(string section, string key, double defaultValue=0) {
+   // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
+   static string localConfigFile="", globalConfigFile="";
+   if (localConfigFile == "") {
+      localConfigFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+   }
+
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   // zuerst globale, dann lokale Config auslesen
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LEN, localConfigFile);
+
+   double result = StrToDouble(buffer[0]);
+
+   if (catch("GetConfigDouble()") != ERR_NO_ERROR)
+      return(0);
    return(result);
 }
 
@@ -879,7 +910,6 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
 
-   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
 
    static string localConfigFile="", globalConfigFile="";
@@ -889,7 +919,7 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
    }
 
    // zuerst globale, dann lokale Config auslesen
-   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigFile);
+   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigFile);   // gibt auch negative Werte richtig zurück
        result = GetPrivateProfileIntA(section, key, result      , localConfigFile);
 
    if (catch("GetConfigInt()") != ERR_NO_ERROR)
@@ -957,6 +987,32 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 
 
 /**
+ * Gibt einen globalen Konfigurationswert als Double zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return double - Konfigurationswert
+ */
+double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
+
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
+
+   double result = StrToDouble(buffer[0]);
+
+   if (catch("GetGlobalConfigDouble()") != ERR_NO_ERROR)
+      return(0);
+   return(result);
+}
+
+
+/**
  * Gibt einen globalen Konfigurationswert als Integer zurück.
  *
  * @param string section      - Name des Konfigurationsabschnittes
@@ -966,13 +1022,11 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  * @return int - Konfigurationswert
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
-
    static string configFile = "";
    if (configFile == "")
       configFile = StringConcatenate(GetMetaTraderDirectory(), "\\..\\metatrader-global-config.ini");
 
-   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);
+   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
    if (catch("GetGlobalConfigInt()") != ERR_NO_ERROR)
       return(0);
@@ -1033,6 +1087,32 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 
 
 /**
+ * Gibt einen lokalen Konfigurationswert als Double zurück.
+ *
+ * @param string section      - Name des Konfigurationsabschnittes
+ * @param string key          - Konfigurationsschlüssel
+ * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return double - Konfigurationswert
+ */
+double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
+
+   double result = StrToDouble(buffer[0]);
+
+   if (catch("GetLocalConfigDouble()") != ERR_NO_ERROR)
+      return(0);
+   return(result);
+}
+
+
+/**
  * Gibt einen lokalen Konfigurationswert als Integer zurück.
  *
  * @param string section      - Name des Konfigurationsabschnittes
@@ -1042,14 +1122,11 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  * @return int - Konfigurationswert
  */
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-
-   // TODO: vorzeichenbehaftete Werte müssen verarbeitet werden können
-
    static string configFile = "";
    if (configFile == "")
       configFile  = StringConcatenate(GetMetaTraderDirectory(), "\\experts\\config\\metatrader-local-config.ini");
 
-   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);
+   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
    if (catch("GetLocalConfigInt()") != ERR_NO_ERROR)
       return(0);
@@ -1073,7 +1150,7 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LEN, configFile);
 
    if (catch("GetLocalConfigString()") != ERR_NO_ERROR)
       return("");

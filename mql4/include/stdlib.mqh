@@ -18,10 +18,10 @@
    bool     EventListener.OrderCancel(int& results[], int flags);
    bool     EventListener.PositionOpen(int& results[], int flags);
    bool     EventListener.PositionClose(int& results[], int flags);
-   bool     EventListener.AccountChange(int& results[], int flags);
    bool     EventListener.AccountPayment(int& results[], int flags);
    bool     EventListener.HistoryChange(int& results[], int flags);
-   bool     EventTracker.Limits(string symbol, double& limits[2]);
+   bool     EventListener.AccountChange(int& results[], int flags);
+   bool     EventTracker.QuoteLimits(string symbol, double& limits[2]);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
@@ -30,12 +30,15 @@
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
    bool     GetConfigBool(string section, string key, bool defaultValue);
+   double   GetConfigDouble(string section, string key, double defaultValue);
    int      GetConfigInt(string section, string key, int defaultValue);
    string   GetConfigString(string section, string key, string defaultValue);
    bool     GetGlobalConfigBool(string section, string key, bool defaultValue);
+   double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    int      GetGlobalConfigInt(string section, string key, int defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
    bool     GetLocalConfigBool(string section, string key, bool defaultValue);
+   double   GetLocalConfigDouble(string section, string key, double defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
    string   GetDayOfWeek(datetime time, bool format);
