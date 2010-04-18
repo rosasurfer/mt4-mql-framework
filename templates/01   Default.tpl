@@ -1284,7 +1284,7 @@ name=ChartInfos
 flags=347
 window_num=0
 <inputs>
-TradeInfo.Symbols=USDCHF
+TradeInfo.Symbols=EURUSD,GBPUSD,USDCHF
 Show.PerformanceDisplay=0
 </inputs>
 </expert>
