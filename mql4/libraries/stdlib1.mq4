@@ -300,7 +300,7 @@ bool EventListener.PositionOpen(int& results[], int flags=0) {
 bool EventListener.PositionClose(int& results[], int flags=0) {
    /**
     * Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit
-    * dem letzten Programmende neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim 
+    * dem letzten Programmende neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim
     * Programmstart die Online-History einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte
     * geschlossene Position gespeichert.
     */
@@ -409,6 +409,72 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
    if (catch("EventListener.HistoryChange()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
+}
+
+
+/**
+ * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der aktuellen EventTracker-Limite
+ * (nur in Libraries bleiben Variablen Timeframe-übergreifend erhalten).
+ *
+ * @param string  symbol    - Instrument, für das Limite verwaltet werden (default: NULL = das aktuelle Symbol)
+ * @param double& limits[2] - Array mit den aktuellen Limiten (0: lower limit, 1: upper limit)
+ *
+ * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
+ *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
+ */
+bool EventTracker.Limits(string symbol, double& limits[]) {
+   if (symbol == "0")      // MQL: NULL ist ein Integer
+      symbol = Symbol();
+
+   if (ArraySize(limits) != 2) {
+      catch("EventTracker.Limits(1)   invalid parameter limits["+ ArraySize(limits) +"]", ERR_INCOMPATIBLE_ARRAYS);
+      return(false);
+   }
+
+   string cache.symbols[];
+   double cache.limits[][2];
+
+   // Lese- oder Schreiboperation?
+   bool get=false, set=false;
+   if (limits[0]==0 || limits[1]==0) get = true;
+   else                              set = true;
+
+   // Index des Symbols ermitteln
+   for (int i=ArraySize(cache.symbols)-1; i >= 0; i--) {
+      if (cache.symbols[i] == symbol)
+         break;
+   }
+
+   // Lesen
+   if (get) {
+      limits[0] = 0;
+      limits[1] = 0;
+
+      if (i == -1)                        // Symbol nicht gefunden
+         return(false);
+
+      limits[0] = cache.limits[i][0];
+      limits[1] = cache.limits[i][1];
+
+      if (limits[0]==0 || limits[1]==0)   // nur theoretisch: Symbol gefunden, Limite sind aber nicht initialisiert
+         return(false);
+   }
+
+   // Schreiben
+   else {
+      if (i == -1) {
+         i = ArraySize(cache.symbols);
+         ArrayResize(cache.symbols, i + 1);
+         ArrayResize(cache.limits , i + 1);
+      }
+      cache.symbols[i]   = symbol;
+      cache.limits[i][0] = limits[0];
+      cache.limits[i][1] = limits[1];
+   }
+
+   if (catch("EventTracker.Limits(2)") != ERR_NO_ERROR)
+      return(false);
+   return(true);
 }
 
 
@@ -2629,72 +2695,6 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
- * Hilfsfunktion zur timeframe-übergreifenden Speicherung der aktuellen QuoteTracker-Limite
- * (nur in Libraries bleiben Variablen timeframe-übergreifend erhalten).
- *
- * @param string  symbol    - Instrument, für das Limite verwaltet werden (default: NULL = das aktuelle Symbol)
- * @param double& limits[2] - Array mit den aktuellen Limiten (0: lower limit, 1: upper limit)
- *
- * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
- *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
- */
-bool QuoteTracker.Limits(string symbol, double& limits[]) {
-   if (symbol == "0")      // MQL: NULL ist ein Integer
-      symbol = Symbol();
-
-   if (ArraySize(limits) != 2) {
-      catch("QuoteTracker.Limits(1)   invalid parameter limits["+ ArraySize(limits) +"]", ERR_INCOMPATIBLE_ARRAYS);
-      return(false);
-   }
-
-   string cache.symbols[];
-   double cache.limits[][2];
-
-   // Lese- oder Schreiboperation?
-   bool get=false, set=false;
-   if (limits[0]==0 || limits[1]==0) get = true;
-   else                              set = true;
-
-   // Index des Symbols ermitteln
-   for (int i=ArraySize(cache.symbols)-1; i >= 0; i--) {
-      if (cache.symbols[i] == symbol)
-         break;
-   }
-
-   // Lesen
-   if (get) {
-      limits[0] = 0;
-      limits[1] = 0;
-
-      if (i == -1)                        // Symbol nicht gefunden
-         return(false);
-
-      limits[0] = cache.limits[i][0];
-      limits[1] = cache.limits[i][1];
-
-      if (limits[0]==0 || limits[1]==0)   // nur theoretisch: Symbol gefunden, Limite sind aber nicht initialisiert
-         return(false);
-   }
-
-   // Schreiben
-   else {
-      if (i == -1) {
-         i = ArraySize(cache.symbols);
-         ArrayResize(cache.symbols, i + 1);
-         ArrayResize(cache.limits , i + 1);
-      }
-      cache.symbols[i]   = symbol;
-      cache.limits[i][0] = limits[0];
-      cache.limits[i][1] = limits[1];
-   }
-
-   if (catch("QuoteTracker.Limits(2)") != ERR_NO_ERROR)
-      return(false);
-   return(true);
-}
-
-
-/**
  * Fügt das angegebene Objektlabel den bereits gespeicherten Labels hinzu.
  *
  * @param string  label     - zu speicherndes Label
@@ -2765,6 +2765,34 @@ int SendTextMessage(string receiver, string message) {
       return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("SendTextMessage(2)"));
+}
+
+
+/**
+ * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param string object    - zu durchsuchender String
+ * @param string substring - zu suchender Substring
+ *
+ * @return bool
+ */
+bool StringContains(string object, string substring) {
+   return(StringFind(object, substring) != -1);
+}
+
+
+/**
+ * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param string object    - zu durchsuchender String
+ * @param string substring - zu suchender Substring
+ *
+ * @return bool
+ */
+bool StringIContains(string object, string substring) {
+   object    = StringToUpper(object);
+   substring = StringToUpper(substring);
+   return(StringFind(object, substring) != -1);
 }
 
 

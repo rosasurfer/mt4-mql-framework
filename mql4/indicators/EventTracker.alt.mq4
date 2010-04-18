@@ -1,7 +1,7 @@
 /**
  * EventTracker
  *
- * Überwacht ein oder mehrere Instrumente auf konfigurierbare Signale und benachrichtigt darüber optisch, akustisch und/oder per SMS.
+ * Überwacht ein Instrument auf verschiedene, konfigurierbare Signale und benachrichtigt darüber optisch, akustisch und/oder per SMS.
  */
 
 #include <stdlib.mqh>
@@ -11,14 +11,11 @@
 #property indicator_chart_window
 
 
-////////////////////////////////////////////////////////////////// Config Variablen ///////////////////////////////////////////////////////////////
-//
-// Default-Einstellungen (konkrete Konfiguration per lokaler Config-Datei):
+//////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
 
 bool   Alerts          = false;        //
 int    Alerts.Gridsize = 25;           //
-string Track.Symbols   = "";           // zu überwachende Instrumente
-string SMS.Receiver    = "";           // SMS-Empfänger-Telefon-Nr. ohne führende Nullen (z.B. 49177321456)
+string SMS.Receiver    = "";           // Telefon-Nr. für SMS-Benachrichtigungen (ohne führende Nullen)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +23,7 @@ string SMS.Receiver    = "";           // SMS-Empfänger-Telefon-Nr. ohne führend
 string soundFileUp   = "alert3.wav";
 string soundFileDown = "alert4.wav";
 
-string instrLongName, instrShortName;
+string instrName, instrShortName;
 
 
 /**
@@ -37,20 +34,20 @@ int init() {
    SetIndexLabel(0, NULL);
 
 
-   // Konfiguration einlesen und auswerten
-   Alerts = GetLocalConfigBool("QuoteTracker", "Alerts", Alerts);
+   // Konfiguration einlesen
+   Alerts = GetConfigBool("EventTracker", "Alerts", Alerts);
 
    if (Alerts) {
-      Alerts.Gridsize = GetLocalConfigInt   ("QuoteTracker", "Alerts.Gridsize", Alerts.Gridsize);
-      Track.Symbols   = GetLocalConfigString("QuoteTracker", "Track.Symbols"  , Track.Symbols);
-      SMS.Receiver    = GetConfigString     ("SMS"         , "Receiver"       , SMS.Receiver);
+      SMS.Receiver    = GetConfigString("SMS"         , "Receiver"       , SMS.Receiver);
+      Alerts.Gridsize = GetConfigInt   ("EventTracker", "Alerts.Gridsize", Alerts.Gridsize);
+      string symbols  = GetConfigString("EventTracker", "Track.Symbols"  , "");
 
-      if (SMS.Receiver=="" || Track.Symbols=="" || StringFind(StringConcatenate(",", Track.Symbols, ","), StringConcatenate(",", Symbol(), ","))==-1)
+      if (SMS.Receiver=="" || !StringContains(","+symbols+",", ","+Symbol()+","))
          Alerts = false;
    }
 
-   instrLongName  = GetConfigString("Instrument.LongNames", Symbol(), Symbol());
-   instrShortName = GetConfigString("Instrument.ShortNames", instrLongName, instrLongName);
+   instrName      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
+   instrShortName = GetConfigString("Instrument.ShortNames", instrName, instrName);
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -67,7 +64,7 @@ int init() {
  *
  */
 int start() {
-   if (IsConnected()) {                               // nur bei Verbindung zum Quoteserver
+   if (IsConnected()) {                               // nur bei Verbindung zum Tradeserver
       int processedBars = IndicatorCounted();
 
       if (processedBars == 0) {                       // nach Start oder Data-Pumping
@@ -101,11 +98,11 @@ int CheckLimits() {
 
    // aktuelle Limite ermitteln
    if (limits[0] == 0) {                                 // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
-      if (!QuoteTracker.Limits(NULL, limits) || UninitializeReason()==REASON_PARAMETERS) {
+      if (!EventTracker.Limits(NULL, limits) || UninitializeReason()==REASON_PARAMETERS) {
          if (GetCurrentLimits(limits, gridSize) == ERR_HISTORY_WILL_UPDATED)
             return(ERR_HISTORY_WILL_UPDATED);
 
-         QuoteTracker.Limits(NULL, limits);              // Limite in Library speichern
+         EventTracker.Limits(NULL, limits);              // Limite in Library speichern
          Print("CheckLimits()   limits initialized: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
          return(catch("CheckLimits(1)"));
       }
@@ -120,12 +117,12 @@ int CheckLimits() {
       if (error != ERR_NO_ERROR)
          return(catch("CheckLimits(2)   error sending text message to "+ SMS.Receiver, error));
       PlaySound(soundFileUp);
-      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrLongName, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
+      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrName, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
 
 
       limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
       limits[0] = NormalizeDouble(limits[1] - gridSize - gridSize, 4);     // Abstand: 2 x GridSize
-      QuoteTracker.Limits(NULL, limits);                                   // neue Limite in Library speichern
+      EventTracker.Limits(NULL, limits);                                   // neue Limite in Library speichern
       Print("CheckLimits()   limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
    }
    else if (Bid < lowerLimit) {
@@ -133,12 +130,12 @@ int CheckLimits() {
       if (error != ERR_NO_ERROR)
          return(catch("CheckSMSLimits(3)   error sending text message to "+ SMS.Receiver, error));
       PlaySound(soundFileDown);
-      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrLongName, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
+      Print("CheckLimits()   SMS alert sent to ", SMS.Receiver, ":  ", instrName, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
 
 
       limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
       limits[1] = NormalizeDouble(limits[0] + gridSize + gridSize, 4);     // Abstand: 2 x GridSize
-      QuoteTracker.Limits(NULL, limits);                                   // neue Limite in Library speichern
+      EventTracker.Limits(NULL, limits);                                   // neue Limite in Library speichern
       Print("CheckLimits()   limits adjusted: ", DoubleToStr(limits[0], 4), "  <=>  ", DoubleToStr(limits[1], 4));
    }
 

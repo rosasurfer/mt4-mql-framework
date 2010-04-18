@@ -21,6 +21,7 @@
    bool     EventListener.AccountChange(int& results[], int flags);
    bool     EventListener.AccountPayment(int& results[], int flags);
    bool     EventListener.HistoryChange(int& results[], int flags);
+   bool     EventTracker.Limits(string symbol, double& limits[2]);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
@@ -67,11 +68,12 @@
    int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
    int      onHistoryChange(int tickets[]);
-   bool     QuoteTracker.Limits(string symbol, double& limits[2]);
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
+   bool     StringContains(string object, string substring);
    bool     StringICompare(string string1, string string2);
+   bool     StringIContains(string object, string substring);
    bool     StringIsDigit(string value);
    int      StringFindR(string subject, string search);
    string   StringToLower(string value);
