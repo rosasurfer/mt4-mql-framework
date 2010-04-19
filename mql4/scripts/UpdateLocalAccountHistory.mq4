@@ -211,7 +211,16 @@ int start() {
          return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
-      int    iOffset   = GetTradeServerTimeOffset();
+      string timezone = GetTradeServerTimezone();
+      int iOffset;
+      if      (timezone == "EET" ) iOffset =  2;
+      else if (timezone == "EEST") iOffset =  2;
+      else if (timezone == "CET" ) iOffset =  1;
+      else if (timezone == "CEST") iOffset =  1;
+      else if (timezone == "GMT" ) iOffset =  0;
+      else if (timezone == "BST" ) iOffset =  0;
+      else if (timezone == "EST" ) iOffset = -5;
+      else if (timezone == "EDT" ) iOffset = -5;
       string strOffset = DoubleToStr(MathAbs(iOffset), 0);
 
       if (MathAbs(iOffset) < 10) strOffset = "0"+ strOffset;

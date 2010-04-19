@@ -8,11 +8,11 @@
 #property indicator_chart_window
 
 
-////////////////////////////////////////////////////////// User Variablen /////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
 
-extern color Grid.Color = LightGray;               // Grid-Farbe
+extern color Grid.Color = LightGray;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 string labels[];     // Object-Labels
@@ -35,6 +35,7 @@ int init() {
       start();
       WindowRedraw();
    }
+
    return(catch("init()"));
 }
 
@@ -70,19 +71,26 @@ int DrawGrid() {
    if (Bars == 0)
       return(0);
 
+   // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
+   string timezone = GetTradeServerTimezone();
+   //Print("DrawGrid()   timezone: "+ timezone);
 
-   // Stunde des Session-Endes beim Broker berechnen (22:00 GMT + Broker-Offset)
-   int offset = GetTradeServerTimeOffset();           // -23 bis +23
-   int hour   = (22 + offset + 24) % 24;
-   //Print("broker offset: ", GetTradeServerTimeOffset(), " h    session ends: ", hour, ":00 broker time");
+   int offset;
+   if      (timezone == "EET" ) offset =  2;
+   else if (timezone == "EEST") offset =  2;
+   else if (timezone == "CET" ) offset =  1;
+   else if (timezone == "CEST") offset =  1;
+   else if (timezone == "GMT" ) offset =  0;
+   else if (timezone == "BST" ) offset =  0;
+   else if (timezone == "EST" ) offset = -5;
+   else if (timezone == "EDT" ) offset = -5;
+   int hour = TimeHour(GetSessionStartTime(TimeCurrent()));
 
-
-   // Zeitpunkte des ersten und letzten Separators berechen
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
    if (from <  Time[Bars-1]) from += 1*DAY;
    if (to   <= Time[0]     ) to   += 1*DAY;
-   //Print("Grid from: "+ GetDayOfWeek(from, false) +" "+ TimeToStr(from) +"  to: "+ GetDayOfWeek(to, false) +" "+ TimeToStr(to));
+   //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(from, false) +" "+ TimeToStr(from) +"  to: "+ GetDayOfWeek(to, false) +" "+ TimeToStr(to));
 
 
    string day, dd, mm, yyyy, label, lastLabel;

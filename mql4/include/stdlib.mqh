@@ -52,7 +52,6 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
-   int      GetTradeServerTimeOffset();
    string   GetTradeServerTimezone();
    datetime GetSessionStartTime(datetime time);
    int      GetTopWindow();

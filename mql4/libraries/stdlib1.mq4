@@ -857,7 +857,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LEN, localConfigFile);
-   
+
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
    if (catch("GetConfigBool()") != ERR_NO_ERROR)
@@ -2422,35 +2422,50 @@ string GetPeriodFlagDescription(int flags) {
  *
  * NOTE:
  * ----
- * Die Startzeit (daily open) ist um 17:00 New Yorker Zeit, egal ob Standard- (EST) oder Sommerzeit (EDT).
+ * Die Startzeit (Daily Open) ist um 17:00 New Yorker Zeit, egal ob Standard- (EST) oder Sommerzeit (EDT).
  *
  * Warum?
  *
- * Die Endzeit einer Handelssession (daily close) fällt mit dem Ende des Handels in New York zusammen, da der volumenmäßig größte am Nachmittag und Abend offene
- * Markt schließt.  Nach Handelsschluß in New York öffnen die Märkte in Neuseeland (Datumsgrenze) und ein neuer Tag beginnt.  Auch die Handelswoche endet mit dem
- * Schließen der Märkte in New York.  Handelsschluß der Geschäftsbanken in New York ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit.
- * Demzufolge beginnt um jeweils 17:00 New Yorker Ortszeit die nächste Handelssession.
+ * Die Endzeit einer Handelssession (Daily Close) fällt mit dem Ende des Handels in New York zusammen, da dort der letzte und volumenmäßig größte am Abend offene Markt des Tages
+ * schließt.  Nach Handelsschluß in New York öffnen die Märkte in Neuseeland bereits an einem neuen Tag (Datumsgrenze). Handelsschluß der Geschäftsbanken am Wochenende in New York
+ * ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit. Demzufolge beginnt um 17:00 New Yorker Ortszeit die nächste (eine neue) Handelssession.
  *
- * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für die Schlußzeit irrelevant, da sich obige Definition vom Forexvolumen ableitet und dafür
- * einzig die tatsächlichen Schlußzeiten in New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit
- * beider beteiligter Zeitzonen berücksichtigt werden (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen
- * Zeitzonen zu unterschiedlichen Zeitpunkten erfolgt, gibt es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
+ * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für diese Schlußzeit irrelevant, da nach obiger Definition einzig die tatsächlichen Schlußzeiten in
+ * New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit beider beteiligter Zeitzonen berücksichtigt werden
+ * (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen Zeitzonen zu unterschiedlichen Zeitpunkten erfolgen kann, gibt
+ * es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
  */
 datetime GetSessionStartTime(datetime time) {
-   // Die Handelssessions beginnen um 00:00 EET (= 22:00 GMT).
+   // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
+   string timezone = GetTradeServerTimezone();
+   int tzOffset;
+   if      (timezone == "EET" ) tzOffset = 7;
+   else if (timezone == "EEST") tzOffset = 7;
+   else if (timezone == "CET" ) tzOffset = 6;
+   else if (timezone == "CEST") tzOffset = 6;
+   else if (timezone == "GMT" ) tzOffset = 5;
+   else if (timezone == "BST" ) tzOffset = 5;
+   else if (timezone == "EST" ) tzOffset = 0;   // New York Standard Time
+   else if (timezone == "EDT" ) tzOffset = 0;   // New York Daylight Daving Time
+   // TODO: unterschiedliche Zeitzonenwechsel von Sommer- zu Winterzeit berücksichtigen
+   datetime easternTime = time - tzOffset*HOURS;
 
-   // TODO: Falsch, die Sessions beginnen um 17:00 EST/EDT.
 
-   // Serverzeit in EET konvertieren, Tagesbeginn berechnen und zurück in Serverzeit konvertieren
-   int eetOffset     = GetTradeServerTimeOffset() - 2;
-   datetime eetTime  = time - eetOffset * HOURS;
-   datetime eetStart = eetTime - TimeHour(eetTime)*HOURS - TimeMinute(eetTime)*MINUTES - TimeSeconds(eetTime);
-   datetime result   = eetStart + eetOffset * HOURS;
+   // Sessionbeginn ermitteln (17:00 New York)
+   datetime sessionStart;
+   datetime midnight = easternTime - TimeHour(easternTime)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);
 
-   //Print("GetSessionStartTime()  time: "+ TimeToStr(time) +"   EET: "+ TimeToStr(eetTime) +"   eetStart: "+ TimeToStr(eetStart) +"   serverStart: "+ TimeToStr(result));
+   int hour = TimeHour(easternTime);
+   if (hour < 17) sessionStart = midnight -  7*HOURS;    // 00:00 -  7 Stunden => 17:00
+   else           sessionStart = midnight + 17*HOURS;    // 00:00 + 17 Stunden => 17:00
 
+
+   // Sessionbeginn in Tradeserverzeit umrechnen
+   sessionStart += tzOffset*HOURS;
+
+   //Print("GetSessionStartTime()  time: "+ TimeToStr(time) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStart));
    catch("GetSessionStartTime()");
-   return(result);
+   return(sessionStart);
 }
 
 
@@ -2474,48 +2489,6 @@ int GetTopWindow() {
 
 
 /**
- * Gibt die GMT-Abweichung der Tradeserverzeit zurück.
- *
- * @return int - Offset in Stunden
- */
-int GetTradeServerTimeOffset() {
-   /**
-    * TODO: Haben verschiedene Server desselben Brokers evt. unterschiedliche Offsets?
-    *
-    * string server  = AccountServer();
-    * Print("GetTradeServerTimeOffset(): account company: "+ company +", account server: "+ server);
-    *
-    * TODO: Zeitverschiebungen von 30 Minuten integrieren (evt. Rückgabewert in Minuten)
-    */
-   string company = AccountCompany();
-
-   // TODO: AccountCompany() ändert sich von IP zu IP
-   if (company != "") {
-      if (company == "Straighthold Investment Group, Inc.") return( 2);
-      if (company == "Alpari (UK) Ltd."                   ) return( 1);
-      if (company == "Cantor Fitzgerald"                  ) return( 0);
-      if (company == "Forex Ltd."                         ) return( 0);
-      if (company == "ATC Brokers "                       ) return(-5);
-      if (company == "ATC Brokers - Main"                 ) return(-5);
-      if (company == "ATC Brokers - $8 Commission"        ) return(-5);
-      catch("GetTradeServerTimeOffset(1)  cannot resolve trade server GMT offset for unknown account company \""+ company +"\"", ERR_RUNTIME_ERROR);
-   }
-   else {
-      // TODO: Verwendung von TerminalCompany() ist Unfug
-      company = TerminalCompany();
-      if (company == "Straighthold Investment Group, Inc.") return( 2);
-      if (company == "Alpari (UK) Ltd."                   ) return( 1);
-      if (company == "Cantor Fitzgerald Europe"           ) return( 0);
-      if (company == "FOREX Ltd."                         ) return( 0);
-      if (company == "Avail Trading Corp."                ) return(-5);
-      catch("GetTradeServerTimeOffset(2)  cannot resolve trade server GMT offset for unknown terminal company \""+ company +"\"", ERR_RUNTIME_ERROR);
-   }
-
-   return(EMPTY_VALUE);
-}
-
-
-/**
  * Gibt die Zeitzonen-ID des Tradeservers des aktuellen Accounts zurück.
  *
  * NOTE:
@@ -2531,6 +2504,7 @@ string GetTradeServerTimezone() {
       return("");
 
    string timezone = GetConfigString("Timezones", StringConcatenate("", account), "");
+
    if (timezone == "") {
       catch("GetTradeServerTimezone()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
