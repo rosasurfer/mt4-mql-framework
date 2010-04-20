@@ -20,6 +20,8 @@ string Sound.FileDown  = "alert4.wav";
 bool   SMS.Alerts      = true;
 string SMS.Receiver    = "";
 
+bool   Track.Positions              = false;
+
 bool   Track.QuoteChanges           = false;
 int    QuoteChanges.Gridsize        = 25;
 
@@ -45,12 +47,13 @@ string Instrument.Name, Instrument.ShortName;
 int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
-   
+
 
    // Konfiguration auswerten
    string symbols = GetConfigString("EventTracker", "Track.Symbols", "");
 
-   if (StringContains(","+symbols+",", ","+Symbol()+",")) {          // wenn aktuelles Instrument überwacht werden soll
+   // Soll das aktuelle Instrument überwacht werden?
+   if (StringContains(","+symbols+",", ","+Symbol()+",")) {          
       // Instrumentnamen
       Instrument.Name      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
       Instrument.ShortName = GetConfigString("Instrument.ShortNames", Instrument.Name, Instrument.Name);
@@ -61,10 +64,15 @@ int init() {
       if (SMS.Alerts) {
          SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
          if (!StringIsDigit(SMS.Receiver)) {
-            catch("init()  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(1)  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
             SMS.Alerts = false;
          }
       }
+
+      // Positionen
+      string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
+      if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
+         Track.Positions = true;
 
       string section = "EventTracker."+ Symbol();
 
@@ -73,7 +81,7 @@ int init() {
       if (Track.QuoteChanges) {
          QuoteChanges.Gridsize = GetConfigInt(section, "QuoteChanges.Gridsize", QuoteChanges.Gridsize);
          if (QuoteChanges.Gridsize < 1) {
-            catch("init()  invalid value QuoteChanges.Gridsize: "+ GetConfigString(section, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(2)  invalid value QuoteChanges.Gridsize: "+ GetConfigString(section, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
             Track.QuoteChanges = false;
          }
       }
@@ -84,14 +92,14 @@ int init() {
          string value = GetConfigString(section, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
          BollingerBands.MA.Timeframe = GetPeriod(value);
          if (BollingerBands.MA.Timeframe == 0) {
-            catch("init()  invalid value BollingerBands.MA.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(3)  invalid value BollingerBands.MA.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
             Track.BollingerBands = false;
          }
       }
       if (Track.BollingerBands) {
          BollingerBands.MA.Periods = GetConfigInt(section, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
          if (BollingerBands.MA.Periods < 2) {
-            catch("init()  invalid value BollingerBands.MA.Periods: "+ GetConfigString(section, "BollingerBands.MA.Periods", ""), ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(4)  invalid value BollingerBands.MA.Periods: "+ GetConfigString(section, "BollingerBands.MA.Periods", ""), ERR_INVALID_INPUT_PARAMVALUE);
             Track.BollingerBands = false;
          }
       }
@@ -99,23 +107,22 @@ int init() {
          value = GetConfigString(section, "BollingerBands.MA.Method", BollingerBands.MA.Method);
          BollingerBands.MA.Method = GetMovingAverageMethod(value);
          if (BollingerBands.MA.Method < 0) {
-            catch("init()  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(5)  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
             Track.BollingerBands = false;
          }
       }
       if (Track.BollingerBands) {
          BollingerBands.Deviation = GetConfigDouble(section, "BollingerBands.Deviation", BollingerBands.Deviation);
          if (BollingerBands.Deviation < 0 || CompareDoubles(BollingerBands.Deviation, 0)) {
-            catch("init()  invalid value BollingerBands.Deviation: "+ GetConfigString(section, "BollingerBands.Deviation", ""), ERR_INVALID_INPUT_PARAMVALUE);
+            catch("init(6)  invalid value BollingerBands.Deviation: "+ GetConfigString(section, "BollingerBands.Deviation", ""), ERR_INVALID_INPUT_PARAMVALUE);
             Track.BollingerBands = false;
          }
       }
 
       // Pivot-Level
       Track.PivotLevels = GetConfigBool(section, "PivotLevels", Track.PivotLevels);
-      if (Track.PivotLevels) {
+      if (Track.PivotLevels)
          PivotLevels.PreviousDayRange = GetConfigBool(section, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
-      }
    }
 
 
@@ -125,8 +132,8 @@ int init() {
       WindowRedraw();
    }
 
-   //Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
-   return(catch("init()"));
+   //Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
+   return(catch("init(7)"));
 }
 
 
@@ -141,15 +148,61 @@ int start() {
          // TODO: Limite neu initialisieren
       }
       else {
+         if (Track.Positions) {
+            HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+         }
+
          if (Track.QuoteChanges) {
-            //Print("start()   calling CheckQuoteChanges()  Bars: "+ Bars +"   processedBars: "+ processedBars +"   previousBar: "+ TimeToStr(Time[1]) +"   lastBar: "+ TimeToStr(Time[0]) +"   Bid: "+ FormatPrice(Bid, Digits));
             if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
                return(ERR_HISTORY_WILL_UPDATED);
+         }
+
+         if (Track.BollingerBands) {
+         }
+
+         if (Track.PivotLevels) {
          }
       }
    }
 
    return(catch("start()"));
+}
+
+
+/**
+ * Handler für PositionOpen-Events.
+ *
+ * @param int tickets[] - Tickets der neuen Positionen
+ *
+ * @return int - Fehlerstatus
+ */
+int onPositionOpen(int tickets[]) {
+   if (!Track.Positions)
+      return(0);
+
+   if (Sound.Alerts)
+      PlaySound(Sound.FileUp);
+
+   if (SMS.Alerts) {
+      int size = ArraySize(tickets);
+
+      for (int i=0; i < size; i++) {
+         if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // false: praktisch nahezu unmöglich
+            continue;
+         
+         string type  = GetOperationTypeDescription(OrderType());
+         string lots  = DoubleToStrTrim(OrderLots());
+         string price = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
+         
+         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", Instrument.ShortName, " @ ", price);
+         int error = SendTextMessage(SMS.Receiver, message);
+         if (error != ERR_NO_ERROR)
+            return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
+         Print("onPositionOpen()   SMS alert sent to ", SMS.Receiver, ":  ", message);
+      }
+   }
+
+   return(catch("onPositionOpen(2)"));
 }
 
 
@@ -182,12 +235,15 @@ int CheckQuoteChanges() {
 
    // Limite überprüfen
    if (Ask > upperLimit) {
-      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(limits[1], 4)));
-      if (error != ERR_NO_ERROR)
-         return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
-      PlaySound(Sound.FileUp);
-      Print("CheckQuoteChanges()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
+      if (Sound.Alerts)
+         PlaySound(Sound.FileUp);
 
+      if (SMS.Alerts) {
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(limits[1], 4)));
+         if (error != ERR_NO_ERROR)
+            return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
+         Print("CheckQuoteChanges()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " => ", DoubleToStr(limits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
+      }
 
       limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
       limits[0] = NormalizeDouble(limits[1] - gridSize - gridSize, 4);     // Abstand: 2 x GridSize
@@ -195,12 +251,15 @@ int CheckQuoteChanges() {
       Print("CheckQuoteChanges()   limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
    }
    else if (Bid < lowerLimit) {
-      error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(limits[0], 4)));
-      if (error != ERR_NO_ERROR)
-         return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
-      PlaySound(Sound.FileDown);
-      Print("CheckQuoteChanges()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
+      if (Sound.Alerts)
+         PlaySound(Sound.FileDown);
 
+      if (SMS.Alerts) {
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(limits[0], 4)));
+         if (error != ERR_NO_ERROR)
+            return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
+         Print("CheckQuoteChanges()   SMS alert sent to ", SMS.Receiver, ":  ", Instrument.Name, " <= ", DoubleToStr(limits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
+      }
 
       limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
       limits[1] = NormalizeDouble(limits[0] + gridSize + gridSize, 4);     // Abstand: 2 x GridSize

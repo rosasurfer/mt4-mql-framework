@@ -270,19 +270,65 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int& tickets[] - Zielarray für die Ticket-Nummern evt. geöffneter Positionen
  * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.PositionOpen(int& results[], int flags=0) {
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+bool EventListener.PositionOpen(int& tickets[], int flags=0) {
+   // NOTE: Parameter flags wird zur Zeit nicht verwendet
+   
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
+   int sizeOfTickets = 0;
 
    bool eventStatus = false;
 
-   // TODO: implementieren
+   int positions[], 
+       sizeOfPositions = ArraySize(positions),
+       orders          = OrdersTotal(); 
 
+   // beim 1. Aufruf sind alle Positionen neu => Zustand mit Extra-Flag abfangen
+   static bool firstRun = true;
+
+   // Prüfen, ob alle offenen Positionen bekannt (bereits gespeichert) sind
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // false: praktisch nahezu unmöglich
+         break;
+
+      // TODO: prüfen, ob nur Positionen eines bestimmten Instruments berücksichtigt werden sollen
+
+      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+         int ticket = OrderTicket();
+         
+         for (int n=0; n < sizeOfPositions; n++) {
+            if (positions[n] == ticket)      // bekannte Position
+               break;   
+         }
+         
+         if (firstRun) {
+            // 1. Aufruf: Ticket nur in positions speichern
+            sizeOfPositions++;
+            ArrayResize(positions, sizeOfPositions);
+            positions[sizeOfPositions-1] = ticket;
+         }
+         else if (n == sizeOfPositions) {
+            // neue Position: Ticket in positions und Ergebnisarray speichern und Event-Flag setzen
+            sizeOfPositions++;
+            ArrayResize(positions, sizeOfPositions);
+            positions[sizeOfPositions-1] = ticket;
+
+            sizeOfTickets++;
+            ArrayResize(tickets, sizeOfTickets);
+            tickets[sizeOfTickets-1] = ticket;
+            
+            eventStatus = true;
+         }
+      }
+   }   
+   firstRun = false;
+
+   //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
@@ -307,12 +353,11 @@ bool EventListener.PositionClose(int& results[], int flags=0) {
    if (ArraySize(results) > 0)
       ArrayResize(results, 0);
 
-
-   // TODO: 17.04.2010: das ist doch hier alles Blödsinn !!!
-
-   static bool firstRun = true;
-
    bool eventStatus = false;
+   
+   /*
+   // TODO: 17.04.2010: das ist doch hier alles Blödsinn !!!
+   static bool firstRun = true;
 
    int  tickets[], n, positions=ArraySize(tickets);
    // wenn eine der vorher offenen Positionen verschwindet, kann sie nur geschlossen sein
@@ -339,6 +384,9 @@ bool EventListener.PositionClose(int& results[], int flags=0) {
          tickets[n-1] = OrderTicket(); // tickets[] ist statisch
       }
    }
+   */
+
+   //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
       return(false);
@@ -2730,9 +2778,13 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
+ * Handler für PositionOpen-Events.
  *
+ * @param int tickets[] - Tickets der neuen Positionen
+ *
+ * @return int - Fehlerstatus
  */
-/*abstract*/ int onPositionOpen(int details[]) {
+/*abstract*/ int onPositionOpen(int tickets[]) {
    return(catch("onPositionOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
@@ -2811,7 +2863,7 @@ int RemoveChartObjects(string& labels[]) {
 
 
 /**
- * Verschickt eine Nachricht an eine Mobilfunknummer.
+ * Verschickt eine SMS-Nachricht an eine Mobilfunknummer.
  *
  * @param string receiver - Mobilfunknummer des Empfängers im internationalen Format (49123456789)
  * @param string message  - zu verschickende Nachricht
@@ -2835,7 +2887,7 @@ int SendTextMessage(string receiver, string message) {
    */
    string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\"";
 
-   int error = WinExec(lpCmdLine, SW_HIDE); // SW_SHOWNORMAL | SW_HIDE
+   int error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
       return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
 
