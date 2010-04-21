@@ -148,20 +148,19 @@ int start() {
          // TODO: Limite neu initialisieren
       }
       else {
-         if (Track.Positions) {
+         if (Track.Positions)
             HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
-         }
 
          if (Track.QuoteChanges) {
             if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
                return(ERR_HISTORY_WILL_UPDATED);
          }
 
-         if (Track.BollingerBands) {
-         }
+         if (Track.BollingerBands)
+            CheckBollingerBands();
 
-         if (Track.PivotLevels) {
-         }
+         if (Track.PivotLevels)
+            CheckPivotLevels();
       }
    }
 
@@ -190,11 +189,11 @@ int onPositionOpen(int tickets[]) {
          if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // false: praktisch nahezu unmöglich
             continue;
          
-         string type  = GetOperationTypeDescription(OrderType());
-         string lots  = DoubleToStrTrim(OrderLots());
-         string price = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
+         string type   = GetOperationTypeDescription(OrderType());
+         string lots   = DoubleToStrTrim(OrderLots());
+         string price  = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
          
-         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", Instrument.ShortName, " @ ", price);
+         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", OrderSymbol(), " @ ", price);
          int error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
@@ -233,7 +232,7 @@ int onPositionClose(int tickets[]) {
          string openPrice  = FormatPrice(OrderOpenPrice(), digits);
          string closePrice = FormatPrice(OrderClosePrice(), digits);
          
-         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", Instrument.ShortName, " @ ", openPrice, " -> ", closePrice);
+         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", OrderSymbol(), " @ ", openPrice, " -> ", closePrice);
          int error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
@@ -307,6 +306,28 @@ int CheckQuoteChanges() {
    }
 
    return(catch("CheckQuoteChanges(4)"));
+}
+
+
+/**
+ * @return int - Fehlerstatus
+ */
+int CheckBollingerBands() {
+   if (!Track.BollingerBands)
+      return(0);
+
+   return(catch("CheckBollingerBands()"));
+}
+
+
+/**
+ * @return int - Fehlerstatus
+ */
+int CheckPivotLevels() {
+   if (!Track.PivotLevels)
+      return(0);
+
+   return(catch("CheckPivotLevels()"));
 }
 
 
