@@ -315,8 +315,8 @@ int CreateInstrumentLabel() {
    ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
 
    // Instrumentnamen einlesen und setzen
-   string symbol = GetConfigString("Instrument.Names", Symbol(), Symbol());
-   ObjectSetText(instrumentLabel, symbol, 9, "Tahoma Fett", Black);
+   string instrument = GetConfigString("Instrument.Names", Symbol(), Symbol());
+   ObjectSetText(instrumentLabel, instrument, 9, "Tahoma Fett", Black);
 
    return(catch("CreateInstrumentLabel(2)"));
 }
