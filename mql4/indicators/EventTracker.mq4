@@ -5,7 +5,6 @@
  */
 
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 #property indicator_chart_window
@@ -13,12 +12,14 @@
 
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
 
-bool   Sound.Alerts    = true;
-string Sound.FileUp    = "alert3.wav";
-string Sound.FileDown  = "alert4.wav";
+bool   Sound.Alerts                 = true;
+string Sound.File.Up                = "alert3.wav";
+string Sound.File.Down              = "alert4.wav";
+string Sound.File.PositionOpen      = "market order.wav";
+string Sound.File.PositionClose     = "positionclosed.wav";
 
-bool   SMS.Alerts      = true;
-string SMS.Receiver    = "";
+bool   SMS.Alerts                   = true;
+string SMS.Receiver                 = "";
 
 bool   Track.Positions              = false;
 
@@ -54,7 +55,6 @@ int init() {
 
    // Soll das aktuelle Instrument überwacht werden?
    if (StringContains(","+symbols+",", ","+Symbol()+",")) {          
-      // Instrumentnamen
       Instrument.Name      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
       Instrument.ShortName = GetConfigString("Instrument.ShortNames", Instrument.Name, Instrument.Name);
 
@@ -69,7 +69,7 @@ int init() {
          }
       }
 
-      // Positionen
+      // offene Positionen
       string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
       if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
          Track.Positions = true;
@@ -181,7 +181,7 @@ int onPositionOpen(int tickets[]) {
       return(0);
 
    if (Sound.Alerts)
-      PlaySound(Sound.FileUp);
+      PlaySound(Sound.File.PositionOpen);
 
    if (SMS.Alerts) {
       int size = ArraySize(tickets);
@@ -203,6 +203,45 @@ int onPositionOpen(int tickets[]) {
    }
 
    return(catch("onPositionOpen(2)"));
+}
+
+
+/**
+ * Handler für PositionClose-Events.
+ *
+ * @param int tickets[] - Tickets der geschlossenen Positionen
+ *
+ * @return int - Fehlerstatus
+ */
+int onPositionClose(int tickets[]) {
+   if (!Track.Positions)
+      return(0);
+
+   if (Sound.Alerts)
+      PlaySound(Sound.File.PositionClose);
+
+   if (SMS.Alerts) {
+      int size = ArraySize(tickets);
+
+      for (int i=0; i < size; i++) {
+         if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // false: praktisch nahezu unmöglich
+            continue;
+         
+         string type       = GetOperationTypeDescription(OrderType());
+         string lots       = DoubleToStrTrim(OrderLots());
+         int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         string openPrice  = FormatPrice(OrderOpenPrice(), digits);
+         string closePrice = FormatPrice(OrderClosePrice(), digits);
+         
+         string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", Instrument.ShortName, " @ ", openPrice, " -> ", closePrice);
+         int error = SendTextMessage(SMS.Receiver, message);
+         if (error != ERR_NO_ERROR)
+            return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
+         Print("onPositionClose()   SMS alert sent to ", SMS.Receiver, ":  ", message);
+      }
+   }
+
+   return(catch("onPositionClose(2)"));
 }
 
 
@@ -236,7 +275,7 @@ int CheckQuoteChanges() {
    // Limite überprüfen
    if (Ask > upperLimit) {
       if (Sound.Alerts)
-         PlaySound(Sound.FileUp);
+         PlaySound(Sound.File.Up);
 
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(limits[1], 4)));
@@ -252,7 +291,7 @@ int CheckQuoteChanges() {
    }
    else if (Bid < lowerLimit) {
       if (Sound.Alerts)
-         PlaySound(Sound.FileDown);
+         PlaySound(Sound.File.Down);
 
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(limits[0], 4)));

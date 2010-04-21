@@ -270,13 +270,13 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
  *
- * @param int& tickets[] - Zielarray für die Ticket-Nummern evt. geöffneter Positionen
+ * @param int& tickets[] - Ergebnisarray für Ticket-Nummern geöffneter Positionen
  * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
-   // NOTE: Parameter flags wird zur Zeit nicht verwendet
+   // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
    
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
@@ -288,8 +288,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
        sizeOfPositions = ArraySize(positions),
        orders          = OrdersTotal(); 
 
-   // beim 1. Aufruf sind alle Positionen neu => Zustand mit Extra-Flag abfangen
-   static bool firstRun = true;
+   // beim 1. Aufruf sind alle Positionen unbekannt => Zustand mit Extra-Flag erkennen
+   static bool initialized = false;
 
    // Prüfen, ob alle offenen Positionen bekannt (bereits gespeichert) sind
    for (int i=0; i < orders; i++) {
@@ -302,12 +302,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          int ticket = OrderTicket();
          
          for (int n=0; n < sizeOfPositions; n++) {
-            if (positions[n] == ticket)      // bekannte Position
+            if (positions[n] == ticket)            // bekannte Position
                break;   
          }
          
-         if (firstRun) {
-            // 1. Aufruf: Ticket nur in positions speichern
+         if (!initialized) {
+            // 1. Aufruf: nur Tickets speichern
             sizeOfPositions++;
             ArrayResize(positions, sizeOfPositions);
             positions[sizeOfPositions-1] = ticket;
@@ -326,7 +326,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          }
       }
    }   
-   firstRun = false;
+   initialized = true;
 
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
@@ -338,56 +338,63 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int& tickets[] - Ergebnisarray für Ticket-Nummern geöffneter Positionen
  * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.PositionClose(int& results[], int flags=0) {
-   /**
-    * Tritt auf, wenn eine offene Position während der Programmausführung verschwindet.  Kann auch beim Programmstart auftreten, wenn seit
-    * dem letzten Programmende neue Positionen geöffnet UND geschlossen wurden.  Da die offenen Positionen in diesem Fall unbekannt waren, muß beim
-    * Programmstart die Online-History einmal auf neue geschlossene Positionen geprüft werden.  Programmstart-übergreifend wird dafür die letzte
-    * geschlossene Position gespeichert.
-    */
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.PositionClose(int& tickets[], int flags=0) {
+   // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
    bool eventStatus = false;
    
-   /*
-   // TODO: 17.04.2010: das ist doch hier alles Blödsinn !!!
-   static bool firstRun = true;
+   int positions[], sizeOfPositions = ArraySize(positions);
 
-   int  tickets[], n, positions=ArraySize(tickets);
-   // wenn eine der vorher offenen Positionen verschwindet, kann sie nur geschlossen sein
-   for (int i=0; i < positions; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET, MODE_TRADES)) {
-         eventStatus = true;
-         n++;
-         ArrayResize(results, n);
-         results[n-1] = tickets[i];    // Ticket im Ergebnisarray speichern
+   // beim 1. Aufruf sind noch keinerlei offene Positionen bekannt => Zustand mit Extra-Flag erkennen
+   static bool initialized = false;
+   
+   if (initialized) {
+      // bei wiederholtem Aufruf prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
+      for (int i=0; i < sizeOfPositions; i++) {
+         if (!OrderSelect(positions[i], SELECT_BY_TICKET)) {
+            int error = GetLastError(); if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
+            catch("EventListener.PositionClose()   error selecting ticket #"+ positions[i], error);
+            return(false);
+         }
+         if (OrderCloseTime() > 0) {
+            // Position geschlossen: Ticket ins Ergebnisarray schreiben und Event-Flag setzen
+            if (eventStatus == false) {      
+               if (ArraySize(tickets) > 0)   // vorm Speichern des ersten Tickets Ergebnisarray zurücksetzen
+                  ArrayResize(tickets, 0);
+               int sizeOfTickets = 0;
+            }
+            sizeOfTickets++;
+            ArrayResize(tickets, sizeOfTickets);
+            tickets[sizeOfTickets-1] = positions[i];
+
+            eventStatus = true;
+         }
       }
    }
-   // offene Positionen für nächsten Aufruf speichern
-   ArrayResize(tickets, 0);
-   n = 0;
-   positions = OrdersTotal();
 
-   for (i=0; i < positions; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
-         break;   // OrdersTotal() hat sich während der Ausführung geändert
-
+   if (sizeOfPositions > 0) {
+      ArrayResize(positions, 0); 
+      sizeOfPositions = 0;
+   }
+   
+   // offene Positionen jedes mal neu einlesen (löscht auch vorher gespeicherte jetzt ggf. geschlossene Positionen)
+   int orders = OrdersTotal(); 
+   for (i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // false: praktisch nahezu unmöglich
+         break;
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         n++;
-         ArrayResize(tickets, n);
-         tickets[n-1] = OrderTicket(); // tickets[] ist statisch
+         sizeOfPositions++;
+         ArrayResize(positions, sizeOfPositions);
+         positions[sizeOfPositions-1] = OrderTicket();
       }
-   }
-   */
-
+   }   
+   initialized = true;
+   
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
-
    if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
       return(false);
    return(eventStatus);
