@@ -519,7 +519,7 @@ int UpdatePerformanceDisplay() {
 /**
  * Gibt die momentane Unit-Größe des aktuellen Instruments zurück.
  *
- * @return double - Größe einer Unit in Lot
+ * @return double - Größe einer Handels-Unit in Lot
  */
 double GetCurrentUnitSize() {
    // TODO: Verwendung von Bid ist Unfug, funktioniert nur mit dem aktuellen Symbol
@@ -527,7 +527,10 @@ double GetCurrentUnitSize() {
    if (Bid == 0)     // ohne Connection würde Division durch 0 ausgelöst
       return(0);
 
-   double unitSize = (AccountEquity()-AccountCredit()) / Bid / 100000 * 7;
+   double unitSize = (AccountEquity()-AccountCredit()) / 1000 * 0.07;   // 7% der Equity
+
+   if (StringSubstr(Symbol(), 0, 3) != "USD")
+      unitSize /= Bid;
 
    if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
    else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
