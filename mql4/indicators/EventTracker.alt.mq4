@@ -54,7 +54,7 @@ int init() {
    string symbols = GetConfigString("EventTracker", "Track.Symbols", "");
 
    // Soll das aktuelle Instrument überwacht werden?
-   if (StringContains(","+symbols+",", ","+Symbol()+",")) {          
+   if (StringContains(","+symbols+",", ","+Symbol()+",")) {
       Instrument.Name      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
       Instrument.ShortName = GetConfigString("Instrument.ShortNames", Instrument.Name, Instrument.Name);
 
@@ -198,14 +198,14 @@ int onPositionOpen(int tickets[]) {
             string lots       = DoubleToStrTrim(OrderLots());
             string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
             string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
-      
+
             string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
             int error = SendTextMessage(SMS.Receiver, message);
             if (error != ERR_NO_ERROR)
                return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
-            Print("onPositionOpen()   SMS message sent to ", SMS.Receiver, ":  ", message);
+            Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
-      }         
+      }
    }
 
    return(catch("onPositionOpen(2)"));
@@ -244,14 +244,14 @@ int onPositionClose(int tickets[]) {
             int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
             string openPrice  = FormatPrice(OrderOpenPrice(), digits);
             string closePrice = FormatPrice(OrderClosePrice(), digits);
-         
+
             string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
             int error = SendTextMessage(SMS.Receiver, message);
             if (error != ERR_NO_ERROR)
                return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
-            Print("onPositionClose()   SMS message sent to ", SMS.Receiver, ":  ", message);
+            Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
-      }         
+      }
    }
 
    return(catch("onPositionClose(2)"));
@@ -269,7 +269,7 @@ int CheckQuoteChanges() {
 
    double gridSize = QuoteChanges.Gridsize / 10000.0;
    double limits[2];                                     // {lowerLimit, upperLimit}
-   string message; 
+   string message;
 
    // aktuelle Limite ermitteln
    if (limits[0] == 0) {                                 // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
@@ -296,7 +296,7 @@ int CheckQuoteChanges() {
          error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS message sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
 
       limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
@@ -313,7 +313,7 @@ int CheckQuoteChanges() {
          error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS message sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
 
       limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
