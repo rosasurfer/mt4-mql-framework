@@ -468,66 +468,70 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
 
 
 /**
- * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der aktuellen EventTracker-Limite
- * (nur in Libraries bleiben Variablen Timeframe-übergreifend erhalten).
+ * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der BollingerBand-Limite des aktuellen Symbols im EventTracker.
  *
- * @param string  symbol    - Instrument, für das Limite verwaltet werden (default: NULL = das aktuelle Symbol)
- * @param double& limits[2] - Array mit den aktuellen Limiten (0: lower limit, 1: upper limit)
+ * @param double& limits[3] - Array mit den aktuellen Limiten
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
  *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
  */
-bool EventTracker.QuoteLimits(string symbol, double& limits[]) {
-   if (symbol == "0")      // MQL: NULL ist ein Integer
-      symbol = Symbol();
-
-   if (ArraySize(limits) != 2) {
-      catch("EventTracker.QuoteLimits(1)   invalid parameter limits["+ ArraySize(limits) +"]", ERR_INCOMPATIBLE_ARRAYS);
-      return(false);
-   }
-
-   string cache.symbols[];
-   double cache.limits[][2];
+bool EventTracker.BandLimits(double& limits[]) {
+   double cache[3];
 
    // Lese- oder Schreiboperation?
-   bool get=false, set=false;
-   if (limits[0]==0 || limits[1]==0) get = true;
-   else                              set = true;
-
-   // Index des Symbols ermitteln
-   for (int i=ArraySize(cache.symbols)-1; i >= 0; i--) {
-      if (cache.symbols[i] == symbol)
-         break;
-   }
+   bool get = (limits[0]==0 || limits[1]==0 || limits[2]==0);
 
    // Lesen
    if (get) {
-      limits[0] = 0;
-      limits[1] = 0;
-
-      if (i == -1)                        // Symbol nicht gefunden
+      if (cache[0]==0 || cache[1]==0 || cache[2]==0)
          return(false);
-
-      limits[0] = cache.limits[i][0];
-      limits[1] = cache.limits[i][1];
-
-      if (limits[0]==0 || limits[1]==0)   // nur theoretisch: Symbol gefunden, Limite sind aber nicht initialisiert
-         return(false);
+      limits[0] = cache[0];
+      limits[1] = cache[1];
+      limits[2] = cache[2];
    }
 
    // Schreiben
    else {
-      if (i == -1) {
-         i = ArraySize(cache.symbols);
-         ArrayResize(cache.symbols, i + 1);
-         ArrayResize(cache.limits , i + 1);
-      }
-      cache.symbols[i]   = symbol;
-      cache.limits[i][0] = limits[0];
-      cache.limits[i][1] = limits[1];
+      cache[0] = limits[0];
+      cache[1] = limits[1];
+      cache[2] = limits[2];
    }
 
-   if (catch("EventTracker.QuoteLimits(2)") != ERR_NO_ERROR)
+   if (catch("EventTracker.BandLimits()") != ERR_NO_ERROR)
+      return(false);
+   return(true);
+}
+
+
+/**
+ * Hilfsfunktion zur Timeframe-übergreifenden Speicherung normaler Kurslimite des aktuellen Symbols im EventTracker.
+ *
+ * @param double& limits[2] - Array mit den aktuellen Limiten
+ *
+ * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
+ *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
+ */
+bool EventTracker.QuoteLimits(double& limits[]) {
+   double cache[2];
+
+   // Lese- oder Schreiboperation?
+   bool get = (limits[0]==0 || limits[1]==0);
+
+   // Lesen
+   if (get) {
+      if (cache[0]==0 || cache[1]==0)   // get, Limite sind aber nicht initialisiert
+         return(false);
+      limits[0] = cache[0];
+      limits[1] = cache[1];
+   }
+
+   // Schreiben
+   else {
+      cache[0] = limits[0];
+      cache[1] = limits[1];
+   }
+
+   if (catch("EventTracker.QuoteLimits()") != ERR_NO_ERROR)
       return(false);
    return(true);
 }

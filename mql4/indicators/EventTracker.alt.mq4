@@ -148,19 +148,23 @@ int start() {
          // TODO: Limite neu initialisieren
       }
       else {
-         if (Track.Positions)
+         if (Track.Positions) {
             HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+         }
 
          if (Track.QuoteChanges) {
             if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
                return(ERR_HISTORY_WILL_UPDATED);
          }
 
-         if (Track.BollingerBands)
-            CheckBollingerBands();
+         if (Track.BollingerBands) {
+            if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
+         }
 
-         if (Track.PivotLevels)
+         if (Track.PivotLevels) {
             CheckPivotLevels();
+         }
       }
    }
 
@@ -269,22 +273,22 @@ int CheckQuoteChanges() {
 
    double gridSize = QuoteChanges.Gridsize / 10000.0;
    double limits[2];                                     // {lowerLimit, upperLimit}
-   string message;
 
    // aktuelle Limite ermitteln
    if (limits[0] == 0) {                                 // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
-      if (!EventTracker.QuoteLimits(NULL, limits) || UninitializeReason()==REASON_PARAMETERS) {
-         if (GetCurrentQuoteLimits(limits, gridSize) == ERR_HISTORY_WILL_UPDATED)
+      if (!EventTracker.QuoteLimits(limits) || UninitializeReason()==REASON_PARAMETERS) {
+         if (CalculateQuoteLimits(gridSize, limits) == ERR_HISTORY_WILL_UPDATED)
             return(ERR_HISTORY_WILL_UPDATED);
 
-         EventTracker.QuoteLimits(NULL, limits);         // Limite in Library speichern
-         Print("CheckQuoteChanges()   limits initialized: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
+         EventTracker.QuoteLimits(limits);               // Limite in Library speichern
+         Print("CheckQuoteChanges()   quote limits initialized: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
          return(catch("CheckQuoteChanges(1)"));
       }
    }
 
    double upperLimit = limits[1]-0.000011,               // +- 1/10 pip, um Alert geringfügig früher auszulösen
           lowerLimit = limits[0]+0.000011;               // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
+   string message;
 
    // Limite überprüfen
    if (Ask > upperLimit) {
@@ -301,8 +305,8 @@ int CheckQuoteChanges() {
 
       limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
       limits[0] = NormalizeDouble(limits[1] - gridSize - gridSize, 4);     // Abstand: 2 x GridSize
-      EventTracker.QuoteLimits(NULL, limits);                              // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
+      EventTracker.QuoteLimits(limits);                                    // neue Limite in Library speichern
+      Print("CheckQuoteChanges()   quote limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
    }
    else if (Bid < lowerLimit) {
       if (Sound.Alerts)
@@ -318,8 +322,8 @@ int CheckQuoteChanges() {
 
       limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
       limits[1] = NormalizeDouble(limits[0] + gridSize + gridSize, 4);     // Abstand: 2 x GridSize
-      EventTracker.QuoteLimits(NULL, limits);                              // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   limits adjusted: ", DoubleToStr(limits[0], 4), "  <=>  ", DoubleToStr(limits[1], 4));
+      EventTracker.QuoteLimits(limits);                                    // neue Limite in Library speichern
+      Print("CheckQuoteChanges()   quote limits adjusted: ", DoubleToStr(limits[0], 4), "  <=>  ", DoubleToStr(limits[1], 4));
    }
 
    return(catch("CheckQuoteChanges(4)"));
@@ -333,7 +337,21 @@ int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(0);
 
-   return(catch("CheckBollingerBands()"));
+   double limits[3];                            // {upperBand, movingAvg, lowerBand}
+
+   // aktuelle Limite ermitteln
+   if (limits[0] == 0) {                        // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
+      if (!EventTracker.BandLimits(limits) || UninitializeReason()==REASON_PARAMETERS) {   // TODO: statt Parameteränderung Konfig-Änderung überwachen
+         if (CalculateBandLimits(limits) == ERR_HISTORY_WILL_UPDATED)
+            return(ERR_HISTORY_WILL_UPDATED);
+
+         EventTracker.BandLimits(limits);       // Limite in Library timeframe-übergreifend speichern
+         Print("CheckBollingerBands()   band limits initialized: "+ DoubleToStr(limits[2], 4) +"  <  "+ DoubleToStr(limits[1], 4) +"  >  "+ DoubleToStr(limits[0], 4));
+         return(catch("CheckBollingerBands(1)"));
+      }
+   }
+
+   return(catch("CheckBollingerBands(2)"));
 }
 
 
@@ -349,21 +367,21 @@ int CheckPivotLevels() {
 
 
 /**
- * Berechnet die aktuell gültigen Limite.
+ * Berechnet die aktuell gültigen normalen Kurslimite.
  *
- * @param double& results  - Array zum Speichern der errechneten Werte {lowerLimit, upperLimit}
- * @param double  gridSize - Schrittweite der Limite
+ * @param double  gridSize   - Schrittweite der Limite
+ * @param double& results[2] - Array zum Speichern der errechneten Werte {lowerLimit, upperLimit}
  *
  * @return int - Fehlerstatus
  */
-int GetCurrentQuoteLimits(double& limits[2], double gridSize) {
+int CalculateQuoteLimits(double gridSize, double& results[]) {
    int error;
 
    int faktor = MathFloor((Bid+Ask) / 2.0 / gridSize);
 
-   limits[0] = NormalizeDouble(gridSize * faktor, 4);
-   limits[1] = NormalizeDouble(gridSize * (faktor+1), 4);                  // Abstand: 1 x GridSize
-   //Print("GetCurrentQuoteLimits()   simple limits: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
+   results[0] = NormalizeDouble(gridSize * faktor, 4);
+   results[1] = NormalizeDouble(gridSize * (faktor+1), 4);                 // Abstand: 1 x GridSize
+   //Print("CalculateQuoteLimits()   simple quote limits: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
 
    // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    bool up=false, down=false;
@@ -372,12 +390,12 @@ int GetCurrentQuoteLimits(double& limits[2], double gridSize) {
    while (!up && !down) {
       for (int bar=0; bar <= Bars-1; bar++) {
          // TODO: Verwendung von Bars ist nicht sauber
-         if (iLow(NULL, period, bar)  < limits[0]+0.00001) down = true;    // nicht (double1 <= double2) verwenden (siehe CompareDoubles())
-         if (iHigh(NULL, period, bar) > limits[1]-0.00001) up   = true;
+         if (iLow (NULL, period, bar) < results[0]+0.00001) down = true;   // nicht (double1 <= double2) verwenden (siehe CompareDoubles())
+         if (iHigh(NULL, period, bar) > results[1]-0.00001) up   = true;
 
          error = GetLastError();
          if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
-         if (error != ERR_NO_ERROR            ) return(catch("GetCurrentQuoteLimits(1)", error));
+         if (error != ERR_NO_ERROR            ) return(catch("CalculateQuoteLimits(1)", error));
 
          if (up || down)
             break;
@@ -387,18 +405,56 @@ int GetCurrentQuoteLimits(double& limits[2], double gridSize) {
          if (period == PERIOD_M1)
             break;
          period = DecreasePeriod(period);                                  // Timeframe verringern
-         //Print("GetCurrentQuoteLimits()   period decreased to: "+ GetPeriodDescription(period));
+         //Print("CalculateQuoteLimits()   period decreased to: "+ GetPeriodDescription(period));
          up   = false;
          down = false;
       }
       else if (!up && !down) {
-         return(catch("GetCurrentQuoteLimits(2)   error calculating current limits", ERR_RUNTIME_ERROR));
+         return(catch("CalculateQuoteLimits(2)   error calculating quote limits", ERR_RUNTIME_ERROR));
       }
    }
-   if (down) limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
-   if (up  ) limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
+   if (down) results[0] = NormalizeDouble(results[0] - gridSize, 4);
+   if (up  ) results[1] = NormalizeDouble(results[1] + gridSize, 4);
 
-   //Print("GetCurrentQuoteLimits()   limits calculated: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
-   return(catch("GetCurrentQuoteLimits(3)"));
+   //Print("CalculateQuoteLimits()   quote limits calculated: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
+   return(catch("CalculateQuoteLimits(3)"));
+}
+
+
+/**
+ * Berechnet die aktuell gültigen BollingerBand-Limite.
+ *
+ * @param double& results[3] - Array zum Speichern der errechneten Werte {upperBand, movingAvg, lowerBand}
+ *
+ * @return int - Fehlerstatus
+ */
+int CalculateBandLimits(double& results[]) {
+   int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, results);
+   
+   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
+   if (error != ERR_NO_ERROR            ) return(catch("CalculateBandLimits(1)", error));
+
+   //Print("CalculateBandLimits()   band limits calculated: "+ DoubleToStr(results[2], 4) +"  <  "+ DoubleToStr(results[1], 4) +"  >  "+ DoubleToStr(results[0], 4));
+   return(catch("CalculateBandLimits(2)"));
+}
+
+
+/**
+ * @return int - Fehlerstatus
+ */
+int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& results[]) {
+   if (symbol == "0")      // MQL: NULL ist ein Integer
+      symbol = Symbol();
+
+   double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
+   double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
+   results[0] = ma + dev;
+   results[1] = ma;
+   results[2] = ma - dev;
+   
+   int error = GetLastError();
+   if (error == ERR_HISTORY_WILL_UPDATED)
+      return(ERR_HISTORY_WILL_UPDATED);
+   return(catch("iBollingerBands()", error));
 }
 

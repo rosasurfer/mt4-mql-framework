@@ -88,9 +88,9 @@ int init() {
 
 
    // Indikatorlabel setzen
-   SetIndexLabel (0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
-   SetIndexLabel (1, NULL);
-   SetIndexLabel (2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
+   SetIndexLabel(0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
+   SetIndexLabel(1, StringConcatenate("MovingAvg(", Periods, "x", Timeframe, ")"));
+   SetIndexLabel(2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
 
 
    // nach Setzen der Label Parameter auf aktuellen Zeitrahmen umrechnen
@@ -144,8 +144,8 @@ int start() {
    /**
     * MovingAverage und Bänder berechnen
     *
-    * Folgende Beobachtungen und Überlegungen können für alle MA-Methoden gemacht werden:
-    * -----------------------------------------------------------------------------------
+    * Folgende Beobachtungen und Überlegungen wurden für die verschiedenen MA-Methoden gemacht:
+    * -----------------------------------------------------------------------------------------
     * 1) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=Median) stimmen zu beinahe 100% überein.
     *
     * 2) Die Ergebnisse von stdDev(appliedPrice=Median) und stdDev(appliedPrice=High|Low) lassen sich durch Anpassung des Faktors Deviation zu 90-95%
@@ -159,18 +159,14 @@ int start() {
     *    zusammen dienen zur Orientierung im Trend, "exakt messen" können beide nichts.
     */
    double ma, dev;
-   //int ticks = GetTickCount();
 
    for (i=bars-1; i >= 0; i--) {
-      ma  = iMA(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
+      ma  = iMA    (NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
       dev = iStdDev(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i) * Deviation;
       UpperBand[i] = ma + dev;
       MovingAvg[i] = ma;
       LowerBand[i] = ma - dev;
    }
-   
-   //if (bars > 1) Print("start()   Bars: "+ Bars +"   processedBars: "+ processedBars +"   calculated bars: "+ bars +"   used time: "+ (GetTickCount()-ticks) +" ms");
 
    return(catch("start()"));
 }
-
