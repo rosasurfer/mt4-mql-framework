@@ -91,9 +91,9 @@
    //
    // Diese Funktionen stehen hier nur zur Dokumentation. Sie sind teilweise fehlerhaft.
    // ----------------------------------------------------------------------------------
-   int    RGB(int red, int green, int blue);
-   string DoubleToStrMorePrecision(double number, int precision);
-   string IntegerToHexString(int integer);
+   int      RGB(int red, int green, int blue);
+   string   DoubleToStrMorePrecision(double number, int precision);
+   string   IntegerToHexString(int integer);
 
 #import
 

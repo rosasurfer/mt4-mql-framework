@@ -47,7 +47,7 @@ int init() {
    IndicatorDigits(Digits);
 
 
-   // während der Entwicklung Puffer jedesmal zurücksetzen
+   // nach jeder Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(UpperBand, EMPTY_VALUE);
       ArrayInitialize(MovingAvg, EMPTY_VALUE);
@@ -74,7 +74,7 @@ int init() {
       case 2: MA.Method = MODE_EMA ; break;
       case 3: MA.Method = MODE_SMMA; break;
       case 4: MA.Method = MODE_LWMA; break;
-      default: 
+      default:
          error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
          return(error);
    }
@@ -139,7 +139,7 @@ int start() {
    // zu berechnende Bars auf Max.Values begrenzen
    if (bars > Max.Values)
       bars = Max.Values;
-   
+
 
    /**
     * MovingAverage und Bänder berechnen
@@ -154,7 +154,7 @@ int start() {
     * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, die von appliedPrice=Close am schnellsten.
     *
     * 4) Zur Performancesteigerung wird appliedPrice=Median verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
-    *    im Sinne dieses Indikators "exakt"?  Die konkreten, berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein 
+    *    im Sinne dieses Indikators "exakt"?  Die konkreten, berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein
     *    weiteres Bollinger-Band auf SMA-Basis verwendet (dessen konkrete Werte ebenfalls keine tatsächliche Aussagekraft haben).  Beide Indikatoren
     *    zusammen dienen zur Orientierung im Trend, "exakt messen" können beide nichts.
     */

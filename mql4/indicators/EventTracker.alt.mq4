@@ -41,6 +41,10 @@ bool   PivotLevels.PreviousDayRange = false;
 // sonstige Variablen
 string Instrument.Name, Instrument.ShortName;
 
+double quoteLimits[2];                       // {lowerLimit, upperLimit}
+double bandLimits [3];                       // {MODE_BASE, MODE_UPPER, MODE_LOWER}
+
+
 
 /**
  *
@@ -48,6 +52,13 @@ string Instrument.Name, Instrument.ShortName;
 int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
+
+
+   // nach jeder Recompilation statische Arrays zurücksetzen
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      ArrayInitialize(quoteLimits, 0);
+      ArrayInitialize(bandLimits , 0);
+   }
 
 
    // Konfiguration auswerten
@@ -141,30 +152,47 @@ int init() {
  *
  */
 int start() {
+   //Print("start()   IsConnected="+ IsConnected() +"   Bars: "+ Bars +"   processedBars: "+ IndicatorCounted());
+
    if (IsConnected()) {                               // nur bei Verbindung zum Quoteserver
       int processedBars = IndicatorCounted();
 
-      if (processedBars == 0) {                       // nach Start oder Data-Pumping
-         // TODO: Limite neu initialisieren
-      }
-      else {
-         if (Track.Positions) {
-            HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
-         }
+      if (processedBars == 0) {                       // Limite neu initialisieren
+         /*      
+         ArrayInitialize(quoteLimits, 0);
+         ArrayInitialize(bandLimits , 0);
 
          if (Track.QuoteChanges) {
-            if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
-               return(ERR_HISTORY_WILL_UPDATED);
+            //if (InitializeQuoteLimits(quoteLimits) == ERR_HISTORY_WILL_UPDATED)
+            //   return(ERR_HISTORY_WILL_UPDATED);
          }
 
          if (Track.BollingerBands) {
-            if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
-               return(ERR_HISTORY_WILL_UPDATED);
+            //if (InitializeBandLimits(bandLimits) == ERR_HISTORY_WILL_UPDATED)
+            //   return(ERR_HISTORY_WILL_UPDATED);
          }
 
          if (Track.PivotLevels) {
-            CheckPivotLevels();
+            //if (InitializePivotLimits() == ERR_HISTORY_WILL_UPDATED)
+            //   return(ERR_HISTORY_WILL_UPDATED);
          }
+         */
+      }
+      else {
+         if (Track.Positions)
+            HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+
+         if (Track.QuoteChanges)
+            if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
+
+         if (Track.BollingerBands)
+            if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
+
+         if (Track.PivotLevels)
+            if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
       }
    }
 
@@ -263,32 +291,31 @@ int onPositionClose(int tickets[]) {
 
 
 /**
+ * Prüft, ob die normalen Kurslimite verletzt wurden und benachrichtigt entsprechend.
+ *
  * @return int - Fehlerstatus
  */
 int CheckQuoteChanges() {
    if (!Track.QuoteChanges)
       return(0);
 
-   int error;
+   // TODO: nach Config-Änderung Limite zurücksetzen
 
-   double gridSize = QuoteChanges.Gridsize / 10000.0;
-   double limits[2];                                     // {lowerLimit, upperLimit}
+   // aktuelle Limite ermitteln (und ggf. neu berechnen)
+   if (quoteLimits[0] == 0) if (!EventTracker.QuoteLimits(quoteLimits)) {
+      if (InitializeQuoteLimits(quoteLimits) == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
 
-   // aktuelle Limite ermitteln
-   if (limits[0] == 0) {                                 // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
-      if (!EventTracker.QuoteLimits(limits) || UninitializeReason()==REASON_PARAMETERS) {
-         if (CalculateQuoteLimits(gridSize, limits) == ERR_HISTORY_WILL_UPDATED)
-            return(ERR_HISTORY_WILL_UPDATED);
-
-         EventTracker.QuoteLimits(limits);               // Limite in Library speichern
-         Print("CheckQuoteChanges()   quote limits initialized: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
-         return(catch("CheckQuoteChanges(1)"));
-      }
+      EventTracker.QuoteLimits(quoteLimits);             // Limite in Library speichern
+      return(catch("CheckQuoteChanges(1)"));
    }
 
-   double upperLimit = limits[1]-0.000011,               // +- 1/10 pip, um Alert geringfügig früher auszulösen
-          lowerLimit = limits[0]+0.000011;               // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
+
+   double gridSize   = QuoteChanges.Gridsize / 10000.0;
+   double upperLimit = quoteLimits[1]-0.000011,          // +-  1/10 pip, um Alert geringfügig früher auszulösen
+          lowerLimit = quoteLimits[0]+0.000011;          // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
    string message;
+   int    error;
 
    // Limite überprüfen
    if (Ask > upperLimit) {
@@ -296,34 +323,34 @@ int CheckQuoteChanges() {
          PlaySound(Sound.File.Up);
 
       if (SMS.Alerts) {
-         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(limits[1], 4));
+         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(quoteLimits[1], 4));
          error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
 
-      limits[1] = NormalizeDouble(limits[1] + gridSize, 4);
-      limits[0] = NormalizeDouble(limits[1] - gridSize - gridSize, 4);     // Abstand: 2 x GridSize
-      EventTracker.QuoteLimits(limits);                                    // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   quote limits adjusted: "+ DoubleToStr(limits[0], 4) +"  <=>  "+ DoubleToStr(limits[1], 4));
+      quoteLimits[1] = NormalizeDouble(quoteLimits[1] + gridSize, 4);
+      quoteLimits[0] = NormalizeDouble(quoteLimits[1] - gridSize - gridSize, 4);    // Abstand: 2 x GridSize
+      EventTracker.QuoteLimits(quoteLimits);                                        // neue Limite in Library speichern
+      Print("CheckQuoteChanges()   quote limits adjusted: "+ DoubleToStr(quoteLimits[0], 4) +"  <=>  "+ DoubleToStr(quoteLimits[1], 4));
    }
    else if (Bid < lowerLimit) {
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
 
       if (SMS.Alerts) {
-         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(limits[0], 4));
+         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(quoteLimits[0], 4));
          error = SendTextMessage(SMS.Receiver, message);
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
 
-      limits[0] = NormalizeDouble(limits[0] - gridSize, 4);
-      limits[1] = NormalizeDouble(limits[0] + gridSize + gridSize, 4);     // Abstand: 2 x GridSize
-      EventTracker.QuoteLimits(limits);                                    // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   quote limits adjusted: ", DoubleToStr(limits[0], 4), "  <=>  ", DoubleToStr(limits[1], 4));
+      quoteLimits[0] = NormalizeDouble(quoteLimits[0] - gridSize, 4);
+      quoteLimits[1] = NormalizeDouble(quoteLimits[0] + gridSize + gridSize, 4);    // Abstand: 2 x GridSize
+      EventTracker.QuoteLimits(quoteLimits);                                        // neue Limite in Library speichern
+      Print("CheckQuoteChanges()   quote limits adjusted: ", DoubleToStr(quoteLimits[0], 4), "  <=>  ", DoubleToStr(quoteLimits[1], 4));
    }
 
    return(catch("CheckQuoteChanges(4)"));
@@ -331,27 +358,24 @@ int CheckQuoteChanges() {
 
 
 /**
- * @return int - Fehlerstatus
+ * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
+ *
+ * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
  */
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(0);
 
-   double limits[3];                            // {upperBand, movingAvg, lowerBand}
+   // TODO: nach Config-Änderung Limite zurücksetzen
 
-   // aktuelle Limite ermitteln
-   if (limits[0] == 0) {                        // sind Limite nicht initialisiert oder wurden Parameter geändert => Limite neu berechnen
-      if (!EventTracker.BandLimits(limits) || UninitializeReason()==REASON_PARAMETERS) {   // TODO: statt Parameteränderung Konfig-Änderung überwachen
-         if (CalculateBandLimits(limits) == ERR_HISTORY_WILL_UPDATED)
-            return(ERR_HISTORY_WILL_UPDATED);
-
-         EventTracker.BandLimits(limits);       // Limite in Library timeframe-übergreifend speichern
-         Print("CheckBollingerBands()   band limits initialized: "+ DoubleToStr(limits[2], 4) +"  <  "+ DoubleToStr(limits[1], 4) +"  >  "+ DoubleToStr(limits[0], 4));
-         return(catch("CheckBollingerBands(1)"));
-      }
+   // aktuelle Limite ermitteln (und ggf. neu berechnen)
+   if (bandLimits[0] == 0) if (!EventTracker.BandLimits(bandLimits)) {
+      if (InitializeBandLimits(bandLimits) == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
+      EventTracker.BandLimits(bandLimits);               // Limite in Library timeframe-übergreifend speichern
    }
 
-   return(catch("CheckBollingerBands(2)"));
+   return(catch("CheckBollingerBands()"));
 }
 
 
@@ -367,25 +391,23 @@ int CheckPivotLevels() {
 
 
 /**
- * Berechnet die aktuell gültigen normalen Kurslimite.
+ * Initialisiert (berechnet und speichert) die aktuellen normalen Kurslimite.
  *
- * @param double  gridSize   - Schrittweite der Limite
  * @param double& results[2] - Array zum Speichern der errechneten Werte {lowerLimit, upperLimit}
  *
  * @return int - Fehlerstatus
  */
-int CalculateQuoteLimits(double gridSize, double& results[]) {
-   int error;
-
-   int faktor = MathFloor((Bid+Ask) / 2.0 / gridSize);
+int InitializeQuoteLimits(double& results[]) {
+   double gridSize = QuoteChanges.Gridsize / 10000.0;
+   int    faktor   = MathFloor((Bid+Ask) / 2.0 / gridSize);
 
    results[0] = NormalizeDouble(gridSize * faktor, 4);
    results[1] = NormalizeDouble(gridSize * (faktor+1), 4);                 // Abstand: 1 x GridSize
-   //Print("CalculateQuoteLimits()   simple quote limits: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
+   //Print("InitializeQuoteLimits()   simple quote limits: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
 
    // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    bool up=false, down=false;
-   int period = Period();                                                  // Ausgangsbasis ist der aktuelle Timeframe
+   int error, period=Period();                                             // Ausgangsbasis ist der aktuelle Timeframe
 
    while (!up && !down) {
       for (int bar=0; bar <= Bars-1; bar++) {
@@ -395,7 +417,7 @@ int CalculateQuoteLimits(double gridSize, double& results[]) {
 
          error = GetLastError();
          if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
-         if (error != ERR_NO_ERROR            ) return(catch("CalculateQuoteLimits(1)", error));
+         if (error != ERR_NO_ERROR            ) return(catch("InitializeQuoteLimits(1)", error));
 
          if (up || down)
             break;
@@ -405,42 +427,53 @@ int CalculateQuoteLimits(double gridSize, double& results[]) {
          if (period == PERIOD_M1)
             break;
          period = DecreasePeriod(period);                                  // Timeframe verringern
-         //Print("CalculateQuoteLimits()   period decreased to: "+ GetPeriodDescription(period));
          up   = false;
          down = false;
       }
       else if (!up && !down) {
-         return(catch("CalculateQuoteLimits(2)   error calculating quote limits", ERR_RUNTIME_ERROR));
+         return(catch("InitializeQuoteLimits(2)   error initializing quote limits", ERR_RUNTIME_ERROR));
       }
    }
    if (down) results[0] = NormalizeDouble(results[0] - gridSize, 4);
    if (up  ) results[1] = NormalizeDouble(results[1] + gridSize, 4);
 
-   //Print("CalculateQuoteLimits()   quote limits calculated: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
-   return(catch("CalculateQuoteLimits(3)"));
+   Print("InitializeQuoteLimits()   quote limits initialized: "+ DoubleToStr(results[0], 4) +"  <=>  "+ DoubleToStr(results[1], 4));
+   return(catch("InitializeQuoteLimits(3)"));
 }
 
 
 /**
- * Berechnet die aktuell gültigen BollingerBand-Limite.
+ * Initialisiert (berechnet und speichert) die aktuellen BollingerBand-Limite.
  *
- * @param double& results[3] - Array zum Speichern der errechneten Werte {upperBand, movingAvg, lowerBand}
+ * @param double& results[3] - Array zum Speichern der errechneten Werte
  *
- * @return int - Fehlerstatus
+ * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
  */
-int CalculateBandLimits(double& results[]) {
-   int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, results);
-   
-   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
-   if (error != ERR_NO_ERROR            ) return(catch("CalculateBandLimits(1)", error));
+int InitializeBandLimits(double& results[]) {
+   // für höhere Genauigkeit Timeframe möglichst auf M15 umrechnen
+   int timeframe = BollingerBands.MA.Timeframe;
+   int periods   = BollingerBands.MA.Periods;
 
-   //Print("CalculateBandLimits()   band limits calculated: "+ DoubleToStr(results[2], 4) +"  <  "+ DoubleToStr(results[1], 4) +"  >  "+ DoubleToStr(results[0], 4));
-   return(catch("CalculateBandLimits(2)"));
+   if (timeframe > PERIOD_M15) {
+      double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
+      timeframe = PERIOD_M15;
+      periods   = MathRound(minutes/PERIOD_M15);
+   }
+
+   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, results);
+
+   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
+   if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
+   
+   Print("InitializeBandLimits()   band limits initialized: "+ DoubleToStr(results[MODE_LOWER], 4) +"  <=  "+ DoubleToStr(results[MODE_BASE], 4) +"  =>  "+ DoubleToStr(results[MODE_UPPER], 4));
+   return(error);
 }
 
 
 /**
- * @return int - Fehlerstatus
+ * Berechnet die BollingerBand-Werte (lowerBand, movingAverage, upperband) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
+ *
+ * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
  */
 int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& results[]) {
    if (symbol == "0")      // MQL: NULL ist ein Integer
@@ -448,13 +481,15 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
 
    double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
    double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
-   results[0] = ma + dev;
-   results[1] = ma;
-   results[2] = ma - dev;
-   
+   results[MODE_UPPER] = ma + dev;
+   results[MODE_BASE ] = ma;
+   results[MODE_LOWER] = ma - dev;
+
    int error = GetLastError();
-   if (error == ERR_HISTORY_WILL_UPDATED)
-      return(ERR_HISTORY_WILL_UPDATED);
-   return(catch("iBollingerBands()", error));
+   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
+   if (error != ERR_NO_ERROR            ) return(catch("iBollingerBands()", error));
+   
+   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatPrice(results[MODE_LOWER], 5) +"  <=  "+ FormatPrice(results[MODE_BASE], 5) +"  =>  "+ FormatPrice(results[MODE_UPPER], 5));
+   return(error);
 }
 

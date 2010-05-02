@@ -25,7 +25,7 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
-   // während der Entwicklung Arrays jedesmal zurücksetzen
+   // nach jeder Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayResize(labels, 0);
    }

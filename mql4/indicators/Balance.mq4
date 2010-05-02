@@ -30,7 +30,7 @@ int init() {
 
    IndicatorDigits(2);
 
-   // während der Entwicklung Puffer jedesmal zurücksetzen
+   // nach jeder Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(Balance, EMPTY_VALUE);
    }

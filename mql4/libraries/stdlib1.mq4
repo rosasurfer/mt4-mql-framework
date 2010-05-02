@@ -473,31 +473,31 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
  * @param double& limits[3] - Array mit den aktuellen Limiten
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
- *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
+ *                               FALSE andererseits (Lese- oder Schreibversuch unvollständiger Daten)
  */
 bool EventTracker.BandLimits(double& limits[]) {
-   double cache[3];
+   double cache[3];                                               // {MODE_BASE, MODE_UPPER, MODE_LOWER}
 
    // Lese- oder Schreiboperation?
-   bool get = (limits[0]==0 || limits[1]==0 || limits[2]==0);
+   bool get = (limits[MODE_BASE]==0 || limits[MODE_UPPER]==0 || limits[MODE_LOWER]==0);
 
    // Lesen
-   if (get) {
-      if (cache[0]==0 || cache[1]==0 || cache[2]==0)
+   if (get) {                                                     // Leseversuch, aber keine Daten im Cache
+      if (cache[MODE_BASE]==0 || cache[MODE_UPPER]==0 || cache[MODE_LOWER]==0)
          return(false);
-      limits[0] = cache[0];
-      limits[1] = cache[1];
-      limits[2] = cache[2];
+      limits[MODE_BASE ] = cache[MODE_BASE ];
+      limits[MODE_UPPER] = cache[MODE_UPPER];
+      limits[MODE_LOWER] = cache[MODE_LOWER];
    }
 
    // Schreiben
    else {
-      cache[0] = limits[0];
-      cache[1] = limits[1];
-      cache[2] = limits[2];
+      cache[MODE_BASE ] = limits[MODE_BASE ];
+      cache[MODE_UPPER] = limits[MODE_UPPER];
+      cache[MODE_LOWER] = limits[MODE_UPPER];
    }
 
-   if (catch("EventTracker.BandLimits()") != ERR_NO_ERROR)
+   if (catch("EventTracker.BandLimits(3)") != ERR_NO_ERROR)
       return(false);
    return(true);
 }
