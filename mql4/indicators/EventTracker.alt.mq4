@@ -154,6 +154,8 @@ int init() {
 int start() {
    //Print("start()   IsConnected="+ IsConnected() +"   Bars: "+ Bars +"   processedBars: "+ IndicatorCounted());
 
+   // TODO: nach Config-Änderung Limite zurücksetzen
+
    if (IsConnected()) {                               // nur bei Verbindung zum Quoteserver
       int processedBars = IndicatorCounted();
 
@@ -163,13 +165,13 @@ int start() {
          ArrayInitialize(bandLimits , 0);
 
          if (Track.QuoteChanges) {
-            //if (InitializeQuoteLimits(quoteLimits) == ERR_HISTORY_WILL_UPDATED)
-            //   return(ERR_HISTORY_WILL_UPDATED);
+            if (InitializeQuoteLimits(quoteLimits) == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
          }
 
          if (Track.BollingerBands) {
-            //if (InitializeBandLimits(bandLimits) == ERR_HISTORY_WILL_UPDATED)
-            //   return(ERR_HISTORY_WILL_UPDATED);
+            if (InitializeBandLimits(bandLimits) == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
          }
 
          if (Track.PivotLevels) {
@@ -299,21 +301,19 @@ int CheckQuoteChanges() {
    if (!Track.QuoteChanges)
       return(0);
 
-   // TODO: nach Config-Änderung Limite zurücksetzen
-
    // aktuelle Limite ermitteln (und ggf. neu berechnen)
    if (quoteLimits[0] == 0) if (!EventTracker.QuoteLimits(quoteLimits)) {
       if (InitializeQuoteLimits(quoteLimits) == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
-      EventTracker.QuoteLimits(quoteLimits);             // Limite in Library speichern
+      EventTracker.QuoteLimits(quoteLimits);             // Limite in Library timeframe-übergreifend speichern
       return(catch("CheckQuoteChanges(1)"));
    }
 
 
    double gridSize   = QuoteChanges.Gridsize / 10000.0;
-   double upperLimit = quoteLimits[1]-0.000011,          // +-  1/10 pip, um Alert geringfügig früher auszulösen
-          lowerLimit = quoteLimits[0]+0.000011;          // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
+   double upperLimit = quoteLimits[1]-0.00001,           // +-  1/10 pip, um Alert geringfügig früher auszulösen
+          lowerLimit = quoteLimits[0]+0.00001;          
    string message;
    int    error;
 
@@ -366,16 +366,20 @@ int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(0);
 
-   // TODO: nach Config-Änderung Limite zurücksetzen
-
    // aktuelle Limite ermitteln (und ggf. neu berechnen)
    if (bandLimits[0] == 0) if (!EventTracker.BandLimits(bandLimits)) {
       if (InitializeBandLimits(bandLimits) == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
+      
       EventTracker.BandLimits(bandLimits);               // Limite in Library timeframe-übergreifend speichern
+      return(catch("CheckBollingerBands(1)"));
    }
 
-   return(catch("CheckBollingerBands()"));
+   double upperBand = bandLimits[MODE_UPPER]-0.000001,   // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
+          movingAvg = bandLimits[MODE_BASE ]+0.000001,
+          lowerBand = bandLimits[MODE_LOWER]+0.000001;
+
+   return(catch("CheckBollingerBands(2)"));
 }
 
 
@@ -412,8 +416,8 @@ int InitializeQuoteLimits(double& results[]) {
    while (!up && !down) {
       for (int bar=0; bar <= Bars-1; bar++) {
          // TODO: Verwendung von Bars ist nicht sauber
-         if (iLow (NULL, period, bar) < results[0]+0.00001) down = true;   // nicht (double1 <= double2) verwenden (siehe CompareDoubles())
-         if (iHigh(NULL, period, bar) > results[1]-0.00001) up   = true;
+         if (iLow (NULL, period, bar) < results[0]) down = true;
+         if (iHigh(NULL, period, bar) > results[1]) up   = true;
 
          error = GetLastError();
          if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
@@ -465,7 +469,7 @@ int InitializeBandLimits(double& results[]) {
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
    
-   Print("InitializeBandLimits()   band limits initialized: "+ DoubleToStr(results[MODE_LOWER], 4) +"  <=  "+ DoubleToStr(results[MODE_BASE], 4) +"  =>  "+ DoubleToStr(results[MODE_UPPER], 4));
+   Print("InitializeBandLimits()   band limits initialized: "+ FormatPrice(results[MODE_LOWER], 5) +"  <=  "+ FormatPrice(results[MODE_BASE], 5) +"  =>  "+ FormatPrice(results[MODE_UPPER], 5));
    return(error);
 }
 
