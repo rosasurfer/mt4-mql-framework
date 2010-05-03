@@ -135,7 +135,7 @@ bool EventListener(int event, int& results[], int flags=0) {
 /**
  * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param int& results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
  * @param int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
  *
  * @return bool - Ergebnis
@@ -164,6 +164,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
       datetime tick = MarketInfo(Symbol(), MODE_TIME);      // nur Sekundenauflösung
       int minute;
 
+      // PERIODFLAG_M1
       if (flags & PERIODFLAG_M1 != 0) {
          if (lastTick == 0) {
             lastTick   = tick;
@@ -178,12 +179,11 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
             lastTick   = tick;
             lastMinute = minute;
          }
-         else {
-            // Print("EventListener.BarOpen(M1)   zwei gleiche Ticks");
-         }
+         //else Print("EventListener.BarOpen(M1)   zwei Ticks in derselben Sekunde");
       }
    }
 
+   // TODO: verbleibende Timeframe-Flags verarbeiten
    if (false) {
       if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
       if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
@@ -467,37 +467,46 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
 }
 
 
+static double EventTracker.bandLimits[3];     // {MODE_BASE, MODE_UPPER, MODE_LOWER}
+
 /**
- * Hilfsfunktion zur Timeframe-übergreifenden Speicherung der BollingerBand-Limite des aktuellen Symbols im EventTracker.
+ * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * in der Library gespeichert.
+ *
+ * @param double& destination[3] - Zielarray für die aktuellen Limite
+ *
+ * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
+ *                               FALSE andererseits (nicht existierende Daten)
+ */
+bool EventTracker.GetBandLimits(double& destination[]) {
+   // falls keine Daten gespeichert sind ...
+   if (EventTracker.bandLimits[MODE_BASE]==0 || EventTracker.bandLimits[MODE_UPPER]==0 || EventTracker.bandLimits[MODE_LOWER]==0)
+      return(false);
+
+   destination[MODE_BASE ] = EventTracker.bandLimits[MODE_BASE ];
+   destination[MODE_UPPER] = EventTracker.bandLimits[MODE_UPPER];
+   destination[MODE_LOWER] = EventTracker.bandLimits[MODE_LOWER];
+
+   if (catch("EventTracker.GetBandLimits()") != ERR_NO_ERROR)
+      return(false);
+   return(true);
+}
+
+
+/**
+ * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * in der Library gespeichert.
  *
  * @param double& limits[3] - Array mit den aktuellen Limiten
  *
- * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
- *                               FALSE andererseits (Lese- oder Schreibversuch unvollständiger Daten)
+ * @return bool - Erfolgsstatus
  */
-bool EventTracker.BandLimits(double& limits[]) {
-   double cache[3];                                               // {MODE_BASE, MODE_UPPER, MODE_LOWER}
+bool EventTracker.SetBandLimits(double& limits[]) {
+   EventTracker.bandLimits[MODE_BASE ] = limits[MODE_BASE ];
+   EventTracker.bandLimits[MODE_UPPER] = limits[MODE_UPPER];
+   EventTracker.bandLimits[MODE_LOWER] = limits[MODE_UPPER];
 
-   // Lese- oder Schreiboperation?
-   bool get = (limits[MODE_BASE]==0 || limits[MODE_UPPER]==0 || limits[MODE_LOWER]==0);
-
-   // Lesen
-   if (get) {                                                     // Leseversuch, aber keine Daten im Cache
-      if (cache[MODE_BASE]==0 || cache[MODE_UPPER]==0 || cache[MODE_LOWER]==0)
-         return(false);
-      limits[MODE_BASE ] = cache[MODE_BASE ];
-      limits[MODE_UPPER] = cache[MODE_UPPER];
-      limits[MODE_LOWER] = cache[MODE_LOWER];
-   }
-
-   // Schreiben
-   else {
-      cache[MODE_BASE ] = limits[MODE_BASE ];
-      cache[MODE_UPPER] = limits[MODE_UPPER];
-      cache[MODE_LOWER] = limits[MODE_UPPER];
-   }
-
-   if (catch("EventTracker.BandLimits(3)") != ERR_NO_ERROR)
+   if (catch("EventTracker.SetBandLimits()") != ERR_NO_ERROR)
       return(false);
    return(true);
 }
