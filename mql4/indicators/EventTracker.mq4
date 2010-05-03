@@ -15,8 +15,8 @@
 bool   Sound.Alerts                 = true;
 string Sound.File.Up                = "alert3.wav";
 string Sound.File.Down              = "alert4.wav";
-string Sound.File.PositionOpen      = "market order.wav";
-string Sound.File.PositionClose     = "positionclosed.wav";
+string Sound.File.PositionOpen      = "OrderFilled.wav";
+string Sound.File.PositionClose     = "PositionClosed.wav";
 
 bool   SMS.Alerts                   = true;
 string SMS.Receiver                 = "";
@@ -213,20 +213,19 @@ int onPositionOpen(int tickets[]) {
    if (!Track.Positions)
       return(0);
 
-   bool soundPlayed = false;
+   // TODO: Sound und SMS nur bei ausgeführter Limit-Order und nicht bei manueller Market-Order auslösen
+   // TODO: Unterscheidung zwischen Remote- und Home-Terminal, um Accountmißbrauch zu erkennen
+   
+   bool playSound = false;
    int size = ArraySize(tickets);
 
    for (int i=0; i < size; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // false: praktisch nahezu unmöglich
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // FALSE ist praktisch nahezu unmöglich
          continue;
 
       // nur PositionOpen-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
-         if (Sound.Alerts) if (!soundPlayed) {        // max. 1 x Sound, auch bei mehreren Positionen
-            PlaySound(Sound.File.PositionOpen);
-            soundPlayed = true;
-         }
-
+         // 1. zuerst SMS abschicken ...
          if (SMS.Alerts) {
             string type       = GetOperationTypeDescription(OrderType());
             string lots       = DoubleToStrTrim(OrderLots());
@@ -239,8 +238,13 @@ int onPositionOpen(int tickets[]) {
                return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
+         playSound = true;    // Flag für Sound-Status setzen
       }
    }
+
+   // 2. ... danach ggf. Sound spielen
+   if (Sound.Alerts) if (playSound)          // max. 1 x Sound, auch bei mehreren neuen Positionen
+      PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
 }
@@ -257,7 +261,7 @@ int onPositionClose(int tickets[]) {
    if (!Track.Positions)
       return(0);
 
-   bool soundPlayed = false;
+   bool playSound = false;
    int size = ArraySize(tickets);
 
    for (int i=0; i < size; i++) {
@@ -266,11 +270,7 @@ int onPositionClose(int tickets[]) {
 
       // nur PositionClose-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
-         if (Sound.Alerts) if (!soundPlayed) {        // max. 1 x Sound, auch bei mehreren Positionen
-            PlaySound(Sound.File.PositionClose);
-            soundPlayed = true;
-         }
-
+         // 1. zuerst SMS abschicken ...
          if (SMS.Alerts) {
             string type       = GetOperationTypeDescription(OrderType());
             string lots       = DoubleToStrTrim(OrderLots());
@@ -285,8 +285,13 @@ int onPositionClose(int tickets[]) {
                return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
+         playSound = true;    // Flag für Sound-Status setzen
       }
    }
+
+   // 2. ... danach ggf. Sound spielen
+   if (Sound.Alerts) if (playSound)          // max. 1 x Sound, auch bei mehreren Positionen
+      PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(2)"));
 }
@@ -319,9 +324,7 @@ int CheckQuoteChanges() {
 
    // Limite überprüfen
    if (Ask > upperLimit) {
-      if (Sound.Alerts)
-         PlaySound(Sound.File.Up);
-
+      // erst SMS, dann Sound
       if (SMS.Alerts) {
          message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(quoteLimits[1], 4));
          error = SendTextMessage(SMS.Receiver, message);
@@ -329,6 +332,8 @@ int CheckQuoteChanges() {
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
+      if (Sound.Alerts)
+         PlaySound(Sound.File.Up);
 
       quoteLimits[1] = NormalizeDouble(quoteLimits[1] + gridSize, 4);
       quoteLimits[0] = NormalizeDouble(quoteLimits[1] - gridSize - gridSize, 4);    // Abstand: 2 x GridSize
@@ -336,9 +341,7 @@ int CheckQuoteChanges() {
       Print("CheckQuoteChanges()   quote limits adjusted: "+ DoubleToStr(quoteLimits[0], 4) +"  <=>  "+ DoubleToStr(quoteLimits[1], 4));
    }
    else if (Bid < lowerLimit) {
-      if (Sound.Alerts)
-         PlaySound(Sound.File.Down);
-
+      // erst SMS, dann Sound
       if (SMS.Alerts) {
          message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(quoteLimits[0], 4));
          error = SendTextMessage(SMS.Receiver, message);
@@ -346,6 +349,8 @@ int CheckQuoteChanges() {
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
+      if (Sound.Alerts)
+         PlaySound(Sound.File.Down);
 
       quoteLimits[0] = NormalizeDouble(quoteLimits[0] - gridSize, 4);
       quoteLimits[1] = NormalizeDouble(quoteLimits[0] + gridSize + gridSize, 4);    // Abstand: 2 x GridSize
