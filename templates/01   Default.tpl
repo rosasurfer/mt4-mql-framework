@@ -39,6 +39,28 @@ height=100
 name=main
 <object>
 type=1
+object_name=Horizontal Line 31080
+period_flags=0
+create_time=1273067880
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.280000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 31094
+period_flags=0
+create_time=1273067894
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.285000
+</object>
+<object>
+type=1
 object_name=Horizontal Line 10318
 period_flags=0
 create_time=1252403278
