@@ -39,6 +39,72 @@ height=100
 name=main
 <object>
 type=1
+object_name=Horizontal Line 10622
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.275000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 10639
+period_flags=0
+create_time=1273178511
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.270000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 10654
+period_flags=0
+create_time=1273178526
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.265000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 10669
+period_flags=0
+create_time=1273178541
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.260000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 10680
+period_flags=0
+create_time=1273178552
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.255000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 10694
+period_flags=0
+create_time=1273178566
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.250000
+</object>
+<object>
+type=1
 object_name=Horizontal Line 32453
 period_flags=0
 create_time=1273069253
