@@ -39,6 +39,105 @@ height=100
 name=main
 <object>
 type=1
+object_name=Horizontal Line 1.155
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.155000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.16
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.160000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.165
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.165000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.17
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.170000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.175
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.175000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.18
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.180000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.185
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.185000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.19
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.190000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 1.195
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=1.195000
+</object>
+<object>
+type=1
 object_name=Horizontal Line 1.125
 period_flags=0
 create_time=1273178494
