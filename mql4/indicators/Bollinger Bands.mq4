@@ -20,8 +20,8 @@
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
+extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern double Deviation      = 1.65;         // Standardabweichung
 extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
 extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
@@ -56,13 +56,13 @@ int init() {
 
 
    // Parameter überprüfen
+   if (Periods < 2) {
+      error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
+   }
    period = GetPeriod(Timeframe);
    if (period == 0) {
       error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
-   }
-   if (Periods < 2) {
-      error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
    if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
