@@ -356,6 +356,9 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       // bei wiederholtem Aufruf prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
       for (int i=0; i < sizeOfPositions; i++) {
          if (!OrderSelect(positions[i], SELECT_BY_TICKET)) {
+
+            // TODO: zusätzlich den Account der Positionen speichern, denn zwischen 2 Aufrufen kann der Account wechseln
+
             int error = GetLastError(); if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
             catch("EventListener.PositionClose()   error selecting ticket #"+ positions[i], error);
             return(false);

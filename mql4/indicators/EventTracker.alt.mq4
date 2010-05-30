@@ -225,12 +225,12 @@ int onPositionOpen(int tickets[]) {
                return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
-         playSound = true;    // Flag für Sound-Status setzen
+         playSound = true;                            // Flag für Sound-Status setzen
       }
    }
 
    // 2. ... danach ggf. Sound spielen
-   if (Sound.Alerts) if (playSound)          // max. 1 x Sound, auch bei mehreren neuen Positionen
+   if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren neuen Positionen
       PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
@@ -272,12 +272,12 @@ int onPositionClose(int tickets[]) {
                return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
-         playSound = true;    // Flag für Sound-Status setzen
+         playSound = true;                            // Flag für Sound-Status setzen
       }
    }
 
    // 2. ... danach ggf. Sound spielen
-   if (Sound.Alerts) if (playSound)          // max. 1 x Sound, auch bei mehreren Positionen
+   if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren Positionen
       PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(2)"));
