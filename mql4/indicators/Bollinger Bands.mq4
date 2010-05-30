@@ -65,10 +65,6 @@ int init() {
       error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
       return(error);
    }
-   if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
-      error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
-   }
    switch (MA.Method) {
       case 1: MA.Method = MODE_SMA ; break;
       case 2: MA.Method = MODE_EMA ; break;
@@ -77,6 +73,10 @@ int init() {
       default:
          error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
          return(error);
+   }
+   if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
+      error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+      return(error);
    }
    if (Max.Values < 0) {
       error = catch("init()  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE);
