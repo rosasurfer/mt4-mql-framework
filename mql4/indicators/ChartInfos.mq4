@@ -1,12 +1,12 @@
 /**
  * Zeigt im Chart verschiedene Informationen an:
  *
- * - oben links: das Symbol des Instruments
- * - oben rechts: den aktuellen Kurs (Bid oder Mittel Bid/Ask)
- * - unter dem Kurs: den Spread, wenn 'Show.Spread' TRUE oder das Symbol in 'TradeInfo.Symbols' eingetragen ist
- * - unten Mitte: die Größe einer Unit, wenn das Symbol in 'TradeInfo.Symbols' eingetragen ist oder eine Position darin gehalten wird
- * - unten Mitte: die in diesem Instrument gehaltene Position
- * - unten rechts: die normalisierte Handelsperformance der letzten Wochen im Instrument
+ * - oben links:     der Name des Instruments
+ * - oben rechts:    der aktuelle Kurs (Bid oder Mittel Bid/Ask)
+ * - unter dem Kurs: der Spread, wenn 'Show.Spread' TRUE ist
+ * - unten Mitte:    die Größe einer Handels-Unit
+ * - unten Mitte:    die im Moment gehaltene Position
+ * - unten rechts:   die normalisierte Handelsperformance der letzten Wochen
  */
 
 #include <stdlib.mqh>
@@ -17,10 +17,9 @@
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern string TradeInfo.Symbols           = "GBPUSD"; // Instrumente, zu denen Handelsinfos angezeigt werden (UnitSize, Position)
-extern bool   Show.Spread                 = false;    // ob der Spread angezeigt wird (default: nein; ja, wenn Instrument in TradeInfo.Symbols)
-extern bool   Spread.Including.Commission = false;    // ob der Spread nach Broker-Kommission angezeigt werden soll
-extern bool   Show.PerformanceDisplay     = true;     // ob das Performance-Display angezeigt werden soll
+extern bool Show.Spread                 = false;      // ob der Spread angezeigt wird (default: ja)
+extern bool Spread.Including.Commission = false;      // ob der Spread nach Commission angezeigt werden soll
+extern bool Show.PerformanceDisplay     = true;       // ob das Performance-Display angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,11 +48,10 @@ int init() {
    positionLabel    = StringConcatenate(indicatorName, ".Position"   );
    performanceLabel = StringConcatenate(indicatorName, ".Performance");
 
-   if (StringFind(","+ TradeInfo.Symbols +",", ","+ Symbol() +",") != -1) {
-      Show.UnitSize = true;
-      Show.Position = true;
-      Show.Spread   = true;
-   }
+   // TODO: UnitSize und Position bei Indizes, Aktien etc. ausblenden
+   Show.UnitSize = true;
+   Show.Position = true;
+   Show.Spread   = true;
 
    CreateInstrumentLabel();
    CreatePriceLabel();
