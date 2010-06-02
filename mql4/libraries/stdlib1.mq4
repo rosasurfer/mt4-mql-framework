@@ -2548,6 +2548,8 @@ datetime GetServerSessionStartTime(datetime time) {
 int GetTopWindow() {
    int child, parent = WindowHandle(Symbol(), Period());
 
+   // TODO: child statisch implementieren und nur ein Mal ermitteln
+
    while (parent != 0) {
       child  = parent;
       parent = GetParent(child);
@@ -2612,7 +2614,7 @@ string GetUninitReasonDescription(int reason) {
 
 
 /**
- * Gibt den Titelbar-Text des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
+ * Gibt den Text der Titelbar des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
  * wird dessen Text zurückgegeben.
  *
  * @param int hWnd - Handle des Fensters oder Controls
@@ -2915,6 +2917,28 @@ int SendTextMessage(string receiver, string message) {
       return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("SendTextMessage(2)"));
+}
+
+
+/**
+ * Setzt den Text der Titelbar des angegebenen Fensters (wenn es eine hat). Ist das agegebene Fenster ein Control, wird dessen Text geändert.
+ *
+ * @param int    hWnd - Handle des Fensters
+ * @param string text - Text
+ *
+ * @return int - Fehlerstatus
+ */
+int SetWindowText(int hWnd, string text) {
+
+   if (!SetWindowTextA(hWnd, text)) {
+      int error = GetLastError();
+      if (error == ERR_NO_ERROR)
+         error = ERR_WINDOWS_ERROR;
+      catch("GetModuleDirectoryName()   user32.SetWindowTextA(hWnd="+hWnd+", lpString=\""+text+"\")    result: 0", error);
+      return(ERR_WINDOWS_ERROR);
+   }
+
+   return(0);
 }
 
 

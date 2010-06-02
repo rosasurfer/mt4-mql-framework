@@ -16,6 +16,7 @@
    int  GetActiveWindow();
    int  GetParent(int hWnd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int nBufferSize);
+   int  SetWindowTextA(int hWnd, string lpString);
 
    /*
    // messages
@@ -27,7 +28,6 @@
 
    // windows
    int  FindWindowA(string lpClassName, string lpWindowName);
-   int  SetWindowTextA(int hWnd, string lpString);
    int  GetWindow(int hWnd, int uCmd);
    int  GetWindowTextLengthA(int hWnd);
    int  UpdateWindow(int hWnd);

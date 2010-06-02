@@ -76,6 +76,7 @@
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
+   int      SetWindowText(int hWnd, string text);
    bool     StringContains(string object, string substring);
    bool     StringICompare(string string1, string string2);
    bool     StringIContains(string object, string substring);
