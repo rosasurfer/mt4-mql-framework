@@ -277,16 +277,16 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
-   
+
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
    int sizeOfTickets = 0;
 
    bool eventStatus = false;
 
-   int positions[], 
+   int positions[],
        sizeOfPositions = ArraySize(positions),
-       orders          = OrdersTotal(); 
+       orders          = OrdersTotal();
 
    // beim 1. Aufruf sind alle Positionen unbekannt => Zustand mit Extra-Flag erkennen
    static bool initialized = false;
@@ -300,12 +300,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          int ticket = OrderTicket();
-         
+
          for (int n=0; n < sizeOfPositions; n++) {
             if (positions[n] == ticket)            // bekannte Position
-               break;   
+               break;
          }
-         
+
          if (!initialized) {
             // 1. Aufruf: nur Tickets speichern
             sizeOfPositions++;
@@ -321,11 +321,11 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             sizeOfTickets++;
             ArrayResize(tickets, sizeOfTickets);
             tickets[sizeOfTickets-1] = ticket;
-            
+
             eventStatus = true;
          }
       }
-   }   
+   }
    initialized = true;
 
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
@@ -346,12 +346,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 bool EventListener.PositionClose(int& tickets[], int flags=0) {
    // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
    bool eventStatus = false;
-   
+
    int positions[], sizeOfPositions = ArraySize(positions);
 
    // beim 1. Aufruf sind noch keinerlei offene Positionen bekannt => Zustand mit Extra-Flag erkennen
    static bool initialized = false;
-   
+
    if (initialized) {
       // bei wiederholtem Aufruf prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
       for (int i=0; i < sizeOfPositions; i++) {
@@ -365,7 +365,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          }
          if (OrderCloseTime() > 0) {
             // Position geschlossen: Ticket ins Ergebnisarray schreiben und Event-Flag setzen
-            if (eventStatus == false) {      
+            if (eventStatus == false) {
                if (ArraySize(tickets) > 0)   // vorm Speichern des ersten Tickets Ergebnisarray zurücksetzen
                   ArrayResize(tickets, 0);
                int sizeOfTickets = 0;
@@ -380,12 +380,12 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    }
 
    if (sizeOfPositions > 0) {
-      ArrayResize(positions, 0); 
+      ArrayResize(positions, 0);
       sizeOfPositions = 0;
    }
-   
+
    // offene Positionen jedes mal neu einlesen (löscht auch vorher gespeicherte jetzt ggf. geschlossene Positionen)
-   int orders = OrdersTotal(); 
+   int orders = OrdersTotal();
    for (i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // false: praktisch nahezu unmöglich
          break;
@@ -394,9 +394,9 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          ArrayResize(positions, sizeOfPositions);
          positions[sizeOfPositions-1] = OrderTicket();
       }
-   }   
+   }
    initialized = true;
-   
+
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
       return(false);
@@ -2506,7 +2506,7 @@ string GetPeriodFlagDescription(int flags) {
  * (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen Zeitzonen zu unterschiedlichen Zeitpunkten erfolgen kann, gibt
  * es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
  */
-datetime GetSessionStartTime(datetime time) {
+datetime GetServerSessionStartTime(datetime time) {
    // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
    string timezone = GetTradeServerTimezone();
    int tzOffset;
@@ -2534,8 +2534,8 @@ datetime GetSessionStartTime(datetime time) {
    // Sessionbeginn in Tradeserverzeit umrechnen
    sessionStart += tzOffset*HOURS;
 
-   //Print("GetSessionStartTime()  time: "+ TimeToStr(time) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStart));
-   catch("GetSessionStartTime()");
+   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(time) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStart));
+   catch("GetServerSessionStartTime()");
    return(sessionStart);
 }
 
@@ -2735,7 +2735,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
    if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
       bar = -1;
 
-   //catch("iBarShiftPrevious()");
+   catch("iBarShiftPrevious()");
    return(bar);
 }
 

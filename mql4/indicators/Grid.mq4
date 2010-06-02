@@ -84,7 +84,7 @@ int DrawGrid() {
    else if (timezone == "BST" ) offset =  0;
    else if (timezone == "EST" ) offset = -5;
    else if (timezone == "EDT" ) offset = -5;
-   int hour = TimeHour(GetSessionStartTime(TimeCurrent()));
+   int hour = TimeHour(GetServerSessionStartTime(TimeCurrent()));
 
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
