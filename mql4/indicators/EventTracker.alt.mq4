@@ -54,7 +54,7 @@ int init() {
    SetIndexLabel(0, NULL);
 
 
-   // nach jeder Recompilation statische Arrays zurücksetzen
+   // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(quoteLimits, 0);
       ArrayInitialize(bandLimits , 0);
@@ -202,7 +202,7 @@ int onPositionOpen(int tickets[]) {
 
    // TODO: Sound und SMS nur bei ausgeführter Limit-Order und nicht bei manueller Market-Order auslösen
    // TODO: Unterscheidung zwischen Remote- und Home-Terminal, um Accountmißbrauch zu erkennen
-   
+
    bool playSound = false;
    int size = ArraySize(tickets);
 
@@ -297,7 +297,7 @@ int onBarOpen(int timeframes[]) {
       ArrayInitialize(bandLimits, 0);
       EventTracker.SetBandLimits(bandLimits);   // auch in Library
    }
-   
+
    //Print("onBarOpen()   BarOpen event");
    return(catch("onBarOpen()"));
 }
@@ -324,7 +324,7 @@ int CheckQuoteChanges() {
 
    double gridSize   = QuoteChanges.Gridsize / 10000.0;
    double upperLimit = quoteLimits[1]-0.00001,           // +-  1/10 pip, um Alert geringfügig früher auszulösen
-          lowerLimit = quoteLimits[0]+0.00001;          
+          lowerLimit = quoteLimits[0]+0.00001;
    string message;
    int    error;
 
@@ -473,7 +473,7 @@ int InitializeBandLimits() {
 
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
-   
+
    //Print("InitializeBandLimits()   band limits calculated: "+ FormatPrice(bandLimits[MODE_LOWER], 5) +"  <=  "+ FormatPrice(bandLimits[MODE_BASE], 5) +"  =>  "+ FormatPrice(bandLimits[MODE_UPPER], 5));
    return(error);
 }
@@ -497,7 +497,7 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
    int error = GetLastError();
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("iBollingerBands()", error));
-   
+
    //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatPrice(results[MODE_LOWER], 5) +"  <=  "+ FormatPrice(results[MODE_BASE], 5) +"  =>  "+ FormatPrice(results[MODE_UPPER], 5));
    return(error);
 }

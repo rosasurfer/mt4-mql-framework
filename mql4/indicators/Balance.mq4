@@ -30,9 +30,10 @@ int init() {
 
    IndicatorDigits(2);
 
-   // nach jeder Recompilation statische Arrays zurücksetzen
+   // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayInitialize(Balance, EMPTY_VALUE);
+      if (Bars > 0)
+         ArrayInitialize(Balance, EMPTY_VALUE);
    }
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten

@@ -47,11 +47,13 @@ int init() {
    IndicatorDigits(Digits);
 
 
-   // nach jeder Recompilation statische Arrays zurücksetzen
+   // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayInitialize(UpperBand, EMPTY_VALUE);
-      ArrayInitialize(MovingAvg, EMPTY_VALUE);
-      ArrayInitialize(LowerBand, EMPTY_VALUE);
+      if (Bars > 0) {
+         ArrayInitialize(UpperBand, EMPTY_VALUE);
+         ArrayInitialize(MovingAvg, EMPTY_VALUE);
+         ArrayInitialize(LowerBand, EMPTY_VALUE);
+      }
    }
 
 
