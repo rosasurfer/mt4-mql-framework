@@ -796,7 +796,9 @@ double GetAverageSpread(string symbol) {
 
    if      (symbol == "EURUSD") spread = 0.0001;
    else if (symbol == "GBPJPY") spread = 0.05;
+   else if (symbol == "GBPCHF") spread = 0.0004;
    else if (symbol == "GBPUSD") spread = 0.00012;
+   else if (symbol == "USDCAD") spread = 0.0002;
    else if (symbol == "USDCHF") spread = 0.0001;
    else {
       //spread = MarketInfo(symbol, MODE_POINT) * MarketInfo(symbol, MODE_SPREAD); // aktueller Spread in Points
@@ -2737,7 +2739,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
    if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
       bar = -1;
 
-   catch("iBarShiftPrevious()");
+   //catch("iBarShiftPrevious()");
    return(bar);
 }
 
