@@ -27,10 +27,10 @@ bool   Track.QuoteChanges           = false;
 int    QuoteChanges.Gridsize        = 25;
 
 bool   Track.BollingerBands         = false;
-int    BollingerBands.MA.Timeframe  = 0;
-int    BollingerBands.MA.Periods    = 0;
-int    BollingerBands.MA.Method     = MODE_SMA;
-double BollingerBands.Deviation     = 2;
+int    BollingerBands.Periods       = 0;
+int    BollingerBands.Timeframe     = 0;
+int    BollingerBands.MA.Method     = -1;
+double BollingerBands.MA.Deviation  = 0;
 
 bool   Track.PivotLevels            = false;
 bool   PivotLevels.PreviousDayRange = false;
@@ -41,8 +41,8 @@ bool   PivotLevels.PreviousDayRange = false;
 // sonstige Variablen
 string Instrument.Name, Instrument.ShortName;
 
-double quoteLimits[2];                       // {lowerLimit, upperLimit}
-double bandLimits [3];                       // {MODE_BASE, MODE_UPPER, MODE_LOWER}
+double quoteLimits[2];                       // { lowerLimit, upperLimit }
+double bandLimits [3];                       // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
 
 
 
@@ -59,82 +59,78 @@ int init() {
       ArrayInitialize(quoteLimits, 0);
       ArrayInitialize(bandLimits , 0);
    }
-
+   
 
    // Konfiguration auswerten
-   string symbols = GetConfigString("EventTracker", "Track.Symbols", "");
+   string instrument    = GetConfigString("Instruments", Symbol(), Symbol());
+   string instrSection  = "EventTracker."+ instrument;
+   Instrument.Name      = GetConfigString("Instrument.Names"     , instrument, instrument);
+   Instrument.ShortName = GetConfigString("Instrument.ShortNames", instrument, Instrument.Name);
 
-   // Soll das aktuelle Instrument überwacht werden?
-   if (StringContains(","+symbols+",", ","+Symbol()+",")) {
-      Instrument.Name      = GetConfigString("Instrument.Names"     , Symbol() , Symbol());
-      Instrument.ShortName = GetConfigString("Instrument.ShortNames", Instrument.Name, Instrument.Name);
 
-      // Sound- und SMS-Einstellungen
-      Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
-      SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
-      if (SMS.Alerts) {
-         SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
-         if (!StringIsDigit(SMS.Receiver)) {
-            catch("init(1)  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
-            SMS.Alerts = false;
-         }
+   // Sound- und SMS-Einstellungen
+   Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
+   SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
+   if (SMS.Alerts) {
+      SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
+      if (!StringIsDigit(SMS.Receiver)) {
+         catch("init(1)  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
+         SMS.Alerts = false;
       }
-
-      // offene Positionen
-      string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
-      if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
-         Track.Positions = true;
-
-      string section = "EventTracker."+ Symbol();
-
-      // Kursänderungen
-      Track.QuoteChanges = GetConfigBool(section, "QuoteChanges"  , Track.QuoteChanges);
-      if (Track.QuoteChanges) {
-         QuoteChanges.Gridsize = GetConfigInt(section, "QuoteChanges.Gridsize", QuoteChanges.Gridsize);
-         if (QuoteChanges.Gridsize < 1) {
-            catch("init(2)  invalid value QuoteChanges.Gridsize: "+ GetConfigString(section, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
-            Track.QuoteChanges = false;
-         }
-      }
-
-      // Bollinger-Bänder
-      Track.BollingerBands = GetConfigBool(section, "BollingerBands", Track.BollingerBands);
-      if (Track.BollingerBands) {
-         string value = GetConfigString(section, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
-         BollingerBands.MA.Timeframe = GetPeriod(value);
-         if (BollingerBands.MA.Timeframe == 0) {
-            catch("init(3)  invalid value BollingerBands.MA.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
-            Track.BollingerBands = false;
-         }
-      }
-      if (Track.BollingerBands) {
-         BollingerBands.MA.Periods = GetConfigInt(section, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
-         if (BollingerBands.MA.Periods < 2) {
-            catch("init(4)  invalid value BollingerBands.MA.Periods: "+ GetConfigString(section, "BollingerBands.MA.Periods", ""), ERR_INVALID_INPUT_PARAMVALUE);
-            Track.BollingerBands = false;
-         }
-      }
-      if (Track.BollingerBands) {
-         value = GetConfigString(section, "BollingerBands.MA.Method", BollingerBands.MA.Method);
-         BollingerBands.MA.Method = GetMovingAverageMethod(value);
-         if (BollingerBands.MA.Method < 0) {
-            catch("init(5)  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
-            Track.BollingerBands = false;
-         }
-      }
-      if (Track.BollingerBands) {
-         BollingerBands.Deviation = GetConfigDouble(section, "BollingerBands.Deviation", BollingerBands.Deviation);
-         if (BollingerBands.Deviation < 0 || CompareDoubles(BollingerBands.Deviation, 0)) {
-            catch("init(6)  invalid value BollingerBands.Deviation: "+ GetConfigString(section, "BollingerBands.Deviation", ""), ERR_INVALID_INPUT_PARAMVALUE);
-            Track.BollingerBands = false;
-         }
-      }
-
-      // Pivot-Level
-      Track.PivotLevels = GetConfigBool(section, "PivotLevels", Track.PivotLevels);
-      if (Track.PivotLevels)
-         PivotLevels.PreviousDayRange = GetConfigBool(section, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
    }
+
+   // offene Positionen
+   string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
+   if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
+      Track.Positions = true;
+
+   // Kursänderungen
+   Track.QuoteChanges = GetConfigBool(instrSection, "QuoteChanges", Track.QuoteChanges);
+   if (Track.QuoteChanges) {
+      QuoteChanges.Gridsize = GetConfigInt(instrSection, "QuoteChanges.Gridsize", QuoteChanges.Gridsize);
+      if (QuoteChanges.Gridsize < 1) {
+         catch("init(2)  invalid value QuoteChanges.Gridsize: "+ GetConfigString(instrSection, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         Track.QuoteChanges = false;
+      }
+   }
+
+   // Bollinger-Bänder
+   Track.BollingerBands = GetConfigBool(instrSection, "BollingerBands", Track.BollingerBands);
+   if (Track.BollingerBands) {
+      BollingerBands.Periods = GetConfigInt(instrSection, "BollingerBands.Periods", BollingerBands.Periods);
+      if (BollingerBands.Periods < 2) {
+         catch("init(3)  invalid value BollingerBands.Periods: "+ GetConfigString(instrSection, "BollingerBands.Periods", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+   }
+   if (Track.BollingerBands) {
+      string value = GetConfigString(instrSection, "BollingerBands.Timeframe", BollingerBands.Timeframe);
+      BollingerBands.Timeframe = GetPeriod(value);
+      if (BollingerBands.Timeframe == 0) {
+         catch("init(4)  invalid value BollingerBands.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+   }
+   if (Track.BollingerBands) {
+      value = GetConfigString(instrSection, "BollingerBands.MA.Method", BollingerBands.MA.Method);
+      BollingerBands.MA.Method = GetMovingAverageMethod(value);
+      if (BollingerBands.MA.Method < 0) {
+         catch("init(5)  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+   }
+   if (Track.BollingerBands) {
+      BollingerBands.MA.Deviation = GetConfigDouble(instrSection, "BollingerBands.MA.Deviation", BollingerBands.MA.Deviation);
+      if (BollingerBands.MA.Deviation < 0 || CompareDoubles(BollingerBands.MA.Deviation, 0)) {
+         catch("init(6)  invalid value BollingerBands.MA.Deviation: "+ GetConfigString(instrSection, "BollingerBands.MA.Deviation", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+   }
+
+   // Pivot-Level
+   Track.PivotLevels = GetConfigBool(instrSection, "PivotLevels", Track.PivotLevels);
+   if (Track.PivotLevels)
+      PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -152,8 +148,6 @@ int init() {
  *
  */
 int start() {
-   //Print("start()   IsConnected="+ IsConnected() +"   Bars: "+ Bars +"   processedBars: "+ IndicatorCounted());
-
    // TODO: nach Config-Änderung Limite zurücksetzen
 
    if (IsConnected()) {                                           // nur bei Verbindung zum Quoteserver
@@ -161,8 +155,7 @@ int start() {
 
       if (processedBars == 0) {                                   // Chartänderung => alle Limite zurücksetzen
          ArrayInitialize(quoteLimits, 0);
-
-         ArrayInitialize(bandLimits, 0);
+         ArrayInitialize(bandLimits , 0);
          EventTracker.SetBandLimits(bandLimits);
       }
 
@@ -175,7 +168,7 @@ int start() {
             return(ERR_HISTORY_WILL_UPDATED);
 
       if (Track.BollingerBands) {
-         HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // Limite jede Minute aktualisieren
+         HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
          if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
             return(ERR_HISTORY_WILL_UPDATED);
       }
@@ -297,8 +290,6 @@ int onBarOpen(int timeframes[]) {
       ArrayInitialize(bandLimits, 0);
       EventTracker.SetBandLimits(bandLimits);   // auch in Library
    }
-
-   //Print("onBarOpen()   BarOpen event");
    return(catch("onBarOpen()"));
 }
 
@@ -371,7 +362,7 @@ int CheckQuoteChanges() {
 /**
  * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
+ * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kurse gerade aktualisiert werden)
  */
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
@@ -381,14 +372,16 @@ int CheckBollingerBands() {
    if (bandLimits[0] == 0) if (!EventTracker.GetBandLimits(bandLimits)) {
       if (InitializeBandLimits() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
-      EventTracker.SetBandLimits(bandLimits);               // Limite in Library timeframe-übergreifend speichern
+      EventTracker.SetBandLimits(bandLimits);                  // Limite in Library timeframe-übergreifend speichern
    }
 
-   double upperBand = bandLimits[MODE_UPPER]-0.000001,   // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
-          movingAvg = bandLimits[MODE_BASE ]+0.000001,
-          lowerBand = bandLimits[MODE_LOWER]+0.000001;
+   Print("CheckBollingerBands()   checking limits ...    "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
 
-   //Print("CheckBollingerBands()   band limits checked");
+   double upperBand = bandLimits[0]-0.000001,                  // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
+          movingAvg = bandLimits[1]+0.000001,
+          lowerBand = bandLimits[2]+0.000001;
+
+   //Print("CheckBollingerBands()   limits checked");
    return(catch("CheckBollingerBands(2)"));
 }
 
@@ -460,8 +453,8 @@ int InitializeQuoteLimits() {
  */
 int InitializeBandLimits() {
    // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
-   int timeframe = BollingerBands.MA.Timeframe;
-   int periods   = BollingerBands.MA.Periods;
+   int timeframe = BollingerBands.Timeframe;
+   int periods   = BollingerBands.Periods;
 
    if (timeframe > PERIOD_M5) {
       double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
@@ -469,18 +462,18 @@ int InitializeBandLimits() {
       periods   = MathRound(minutes/PERIOD_M5);
    }
 
-   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, bandLimits);
+   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.MA.Deviation, 0, bandLimits);
 
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
 
-   //Print("InitializeBandLimits()   band limits calculated: "+ FormatPrice(bandLimits[MODE_LOWER], 5) +"  <=  "+ FormatPrice(bandLimits[MODE_BASE], 5) +"  =>  "+ FormatPrice(bandLimits[MODE_UPPER], 5));
+   Print("InitializeBandLimits()   limits calculated: "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
    return(error);
 }
 
 
 /**
- * Berechnet die BollingerBand-Werte (lowerBand, movingAverage, upperband) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
+ * Berechnet die BollingerBand-Werte (UpperBand, MovingAverage, LowerBand) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
  *
  * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
  */
@@ -490,15 +483,15 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
 
    double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
    double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
-   results[MODE_UPPER] = ma + dev;
-   results[MODE_BASE ] = ma;
-   results[MODE_LOWER] = ma - dev;
+   results[0] = ma + dev;
+   results[1] = ma;
+   results[2] = ma - dev;
 
    int error = GetLastError();
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("iBollingerBands()", error));
 
-   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatPrice(results[MODE_LOWER], 5) +"  <=  "+ FormatPrice(results[MODE_BASE], 5) +"  =>  "+ FormatPrice(results[MODE_UPPER], 5));
+   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatPrice(results[2], 5) +"  <=  "+ FormatPrice(results[1], 5) +"  =>  "+ FormatPrice(results[1], 5));
    return(error);
 }
 

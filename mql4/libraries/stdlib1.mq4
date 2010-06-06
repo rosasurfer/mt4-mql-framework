@@ -470,25 +470,25 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
 }
 
 
-static double EventTracker.bandLimits[3];     // {MODE_BASE, MODE_UPPER, MODE_LOWER}
+static double EventTracker.bandLimits[3];
 
 /**
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& destination[3] - Zielarray für die aktuellen Limite
+ * @param double& destination[3] - Zielarray für die aktuellen Limite {UPPER_VALUE, MA_VALUE, LOWER_VALUE}
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
 bool EventTracker.GetBandLimits(double& destination[]) {
    // falls keine Daten gespeichert sind ...
-   if (EventTracker.bandLimits[MODE_BASE]==0 || EventTracker.bandLimits[MODE_UPPER]==0 || EventTracker.bandLimits[MODE_LOWER]==0)
+   if (EventTracker.bandLimits[0]==0 || EventTracker.bandLimits[1]==0 || EventTracker.bandLimits[2]==0)
       return(false);
 
-   destination[MODE_BASE ] = EventTracker.bandLimits[MODE_BASE ];
-   destination[MODE_UPPER] = EventTracker.bandLimits[MODE_UPPER];
-   destination[MODE_LOWER] = EventTracker.bandLimits[MODE_LOWER];
+   destination[0] = EventTracker.bandLimits[0];
+   destination[1] = EventTracker.bandLimits[1];
+   destination[2] = EventTracker.bandLimits[2];
 
    if (catch("EventTracker.GetBandLimits()") != ERR_NO_ERROR)
       return(false);
@@ -500,14 +500,14 @@ bool EventTracker.GetBandLimits(double& destination[]) {
  * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& limits[3] - Array mit den aktuellen Limiten
+ * @param double& limits[3] - Array mit den aktuellen Limiten {UPPER_VALUE, MA_VALUE, LOWER_VALUE}
  *
  * @return bool - Erfolgsstatus
  */
 bool EventTracker.SetBandLimits(double& limits[]) {
-   EventTracker.bandLimits[MODE_BASE ] = limits[MODE_BASE ];
-   EventTracker.bandLimits[MODE_UPPER] = limits[MODE_UPPER];
-   EventTracker.bandLimits[MODE_LOWER] = limits[MODE_UPPER];
+   EventTracker.bandLimits[0] = limits[0];
+   EventTracker.bandLimits[1] = limits[1];
+   EventTracker.bandLimits[2] = limits[2];
 
    if (catch("EventTracker.SetBandLimits()") != ERR_NO_ERROR)
       return(false);
