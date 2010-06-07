@@ -24,12 +24,12 @@ string SMS.Receiver                 = "";
 bool   Track.Positions              = false;
 
 bool   Track.QuoteChanges           = false;
-int    QuoteChanges.Gridsize        = 25;
+int    QuoteChanges.Gridsize        = 0;
 
 bool   Track.BollingerBands         = false;
 int    BollingerBands.Periods       = 0;
 int    BollingerBands.Timeframe     = 0;
-int    BollingerBands.MA.Method     = -1;
+int    BollingerBands.MA.Method     = MODE_EMA;
 double BollingerBands.MA.Deviation  = 0;
 
 bool   Track.PivotLevels            = false;
@@ -53,28 +53,25 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
-
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(quoteLimits, 0);
       ArrayInitialize(bandLimits , 0);
    }
    
-
    // Konfiguration auswerten
-   string instrument    = GetConfigString("Instruments", Symbol(), Symbol());
+   string instrument    = GetGlobalConfigString("Instruments", Symbol(), Symbol());
    string instrSection  = "EventTracker."+ instrument;
-   Instrument.Name      = GetConfigString("Instrument.Names"     , instrument, instrument);
-   Instrument.ShortName = GetConfigString("Instrument.ShortNames", instrument, Instrument.Name);
-
+   Instrument.Name      = GetGlobalConfigString("Instrument.Names"     , instrument, instrument);
+   Instrument.ShortName = GetGlobalConfigString("Instrument.ShortNames", instrument, Instrument.Name);
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
    SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
    if (SMS.Alerts) {
-      SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
+      SMS.Receiver = GetGlobalConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
-         catch("init(1)  invalid phone number SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(1)  Invalid input parameter SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
          SMS.Alerts = false;
       }
    }
@@ -89,7 +86,7 @@ int init() {
    if (Track.QuoteChanges) {
       QuoteChanges.Gridsize = GetConfigInt(instrSection, "QuoteChanges.Gridsize", QuoteChanges.Gridsize);
       if (QuoteChanges.Gridsize < 1) {
-         catch("init(2)  invalid value QuoteChanges.Gridsize: "+ GetConfigString(instrSection, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(2)  Invalid input parameter QuoteChanges.Gridsize: "+ GetConfigString(instrSection, "QuoteChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
          Track.QuoteChanges = false;
       }
    }
@@ -97,32 +94,30 @@ int init() {
    // Bollinger-Bänder
    Track.BollingerBands = GetConfigBool(instrSection, "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
-      BollingerBands.Periods = GetConfigInt(instrSection, "BollingerBands.Periods", BollingerBands.Periods);
+      BollingerBands.Periods = GetGlobalConfigInt("BollingerBands."+ instrument, "Slow.Periods", BollingerBands.Periods);
+      if (BollingerBands.Periods == 0)
+         BollingerBands.Periods = GetGlobalConfigInt("BollingerBands", "Slow.Periods", BollingerBands.Periods);
       if (BollingerBands.Periods < 2) {
-         catch("init(3)  invalid value BollingerBands.Periods: "+ GetConfigString(instrSection, "BollingerBands.Periods", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(3)  Invalid input parameter Slow.Periods: "+ GetGlobalConfigString("BollingerBands."+ instrument, "Slow.Periods", GetGlobalConfigString("BollingerBands", "Slow.Periods", "")), ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
-      string value = GetConfigString(instrSection, "BollingerBands.Timeframe", BollingerBands.Timeframe);
-      BollingerBands.Timeframe = GetPeriod(value);
+      string strValue = GetGlobalConfigString("BollingerBands."+ instrument, "Slow.Timeframe", "");
+      if (strValue == "")
+         strValue = GetGlobalConfigString("BollingerBands", "Slow.Timeframe", strValue);
+      BollingerBands.Timeframe = GetPeriod(strValue);
       if (BollingerBands.Timeframe == 0) {
-         catch("init(4)  invalid value BollingerBands.Timeframe: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(4)  Invalid input parameter value Slow.Timeframe: "+ strValue, ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
-      value = GetConfigString(instrSection, "BollingerBands.MA.Method", BollingerBands.MA.Method);
-      BollingerBands.MA.Method = GetMovingAverageMethod(value);
-      if (BollingerBands.MA.Method < 0) {
-         catch("init(5)  invalid value BollingerBands.MA.Method: "+ value, ERR_INVALID_INPUT_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
-   }
-   if (Track.BollingerBands) {
-      BollingerBands.MA.Deviation = GetConfigDouble(instrSection, "BollingerBands.MA.Deviation", BollingerBands.MA.Deviation);
+      BollingerBands.MA.Deviation = GetGlobalConfigDouble("BollingerBands."+ instrument, "Deviation.EMA", BollingerBands.MA.Deviation);
+      if (CompareDoubles(BollingerBands.MA.Deviation, 0))
+         BollingerBands.MA.Deviation = GetGlobalConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
       if (BollingerBands.MA.Deviation < 0 || CompareDoubles(BollingerBands.MA.Deviation, 0)) {
-         catch("init(6)  invalid value BollingerBands.MA.Deviation: "+ GetConfigString(instrSection, "BollingerBands.MA.Deviation", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(5)  Invalid input parameter Deviation.EMA: "+ BollingerBands.MA.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
@@ -139,8 +134,8 @@ int init() {
       WindowRedraw();
    }
 
-   //Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
-   return(catch("init(7)"));
+   Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
+   return(catch("init(6)"));
 }
 
 
@@ -375,7 +370,7 @@ int CheckBollingerBands() {
       EventTracker.SetBandLimits(bandLimits);                  // Limite in Library timeframe-übergreifend speichern
    }
 
-   Print("CheckBollingerBands()   checking limits ...    "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
+   Print("CheckBollingerBands()   checking bands ...    "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
 
    double upperBand = bandLimits[0]-0.000001,                  // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
           movingAvg = bandLimits[1]+0.000001,
@@ -467,7 +462,7 @@ int InitializeBandLimits() {
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
 
-   Print("InitializeBandLimits()   limits calculated: "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
+   Print("InitializeBandLimits()   band limits calculated: "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
    return(error);
 }
 
