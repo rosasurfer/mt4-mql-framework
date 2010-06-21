@@ -134,7 +134,7 @@ int init() {
       WindowRedraw();
    }
 
-   Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
+   //Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
    return(catch("init(6)"));
 }
 
@@ -195,29 +195,32 @@ int onPositionOpen(int tickets[]) {
    int size = ArraySize(tickets);
 
    for (int i=0; i < size; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // FALSE ist praktisch nahezu unmöglich
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET))
          continue;
 
-      // nur PositionOpen-Events des aktuellen Instruments berücksichtigen
+      // nur Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
+         string type       = GetOperationTypeDescription(OrderType());
+         string lots       = DoubleToStrTrim(OrderLots());
+         string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
+         string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
+         string message    = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
+
          // 1. zuerst SMS abschicken ...
          if (SMS.Alerts) {
-            string type       = GetOperationTypeDescription(OrderType());
-            string lots       = DoubleToStrTrim(OrderLots());
-            string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-            string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
-
-            string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
             int error = SendTextMessage(SMS.Receiver, message);
             if (error != ERR_NO_ERROR)
                return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
+         else {
+            Print("onPositionOpen()   ", message);
+         }
          playSound = true;                            // Flag für Sound-Status setzen
       }
    }
 
-   // 2. ... danach ggf. Sound spielen
+   // 2. ... dann Sound abspielen
    if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren neuen Positionen
       PlaySound(Sound.File.PositionOpen);
 
@@ -245,26 +248,29 @@ int onPositionClose(int tickets[]) {
 
       // nur PositionClose-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
+         string type       = GetOperationTypeDescription(OrderType());
+         string lots       = DoubleToStrTrim(OrderLots());
+         string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
+         int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         string openPrice  = FormatPrice(OrderOpenPrice(), digits);
+         string closePrice = FormatPrice(OrderClosePrice(), digits);
+         string message    = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
+
          // 1. zuerst SMS abschicken ...
          if (SMS.Alerts) {
-            string type       = GetOperationTypeDescription(OrderType());
-            string lots       = DoubleToStrTrim(OrderLots());
-            string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-            int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
-            string openPrice  = FormatPrice(OrderOpenPrice(), digits);
-            string closePrice = FormatPrice(OrderClosePrice(), digits);
-
-            string message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
             int error = SendTextMessage(SMS.Receiver, message);
             if (error != ERR_NO_ERROR)
                return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
          }
+         else {
+            Print("onPositionClose()   ", message);
+         }
          playSound = true;                            // Flag für Sound-Status setzen
       }
    }
 
-   // 2. ... danach ggf. Sound spielen
+   // 2. ... dann Sound abspielen
    if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren Positionen
       PlaySound(Sound.File.PositionClose);
 
