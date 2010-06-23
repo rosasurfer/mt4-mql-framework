@@ -39,7 +39,7 @@ bool   PivotLevels.PreviousDayRange = false;
 
 
 // sonstige Variablen
-string Instrument.Name, Instrument.ShortName;
+string Instrument.Name;
 
 double quoteLimits[2];                       // { lowerLimit, upperLimit }
 double bandLimits [3];                       // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
@@ -62,8 +62,7 @@ int init() {
    // Konfiguration auswerten
    string instrument    = GetGlobalConfigString("Instruments", Symbol(), Symbol());
    string instrSection  = "EventTracker."+ instrument;
-   Instrument.Name      = GetGlobalConfigString("Instrument.Names"     , instrument, instrument);
-   Instrument.ShortName = GetGlobalConfigString("Instrument.ShortNames", instrument, Instrument.Name);
+   Instrument.Name      = GetGlobalConfigString("Instrument.Names", instrument, instrument);
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
@@ -76,7 +75,8 @@ int init() {
       }
    }
 
-   // offene Positionen
+   // Positionen
+   // TODO: nach Neustart gibt GetAccountNumber() 0 zurück => Track.Positions ist immer FALSE
    string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
    if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
       Track.Positions = true;
@@ -128,13 +128,15 @@ int init() {
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
 
+   //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", QuoteChanges.Gridsize, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
+
+
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
       start();
       WindowRedraw();
    }
 
-   //Print("init()   Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions: "+ Track.Positions +"   Track.QuoteChanges="+ Track.QuoteChanges +"   Track.BollingerBands="+ Track.BollingerBands +"   Track.PivotLevels="+ Track.PivotLevels);
    return(catch("init(6)"));
 }
 
@@ -145,33 +147,31 @@ int init() {
 int start() {
    // TODO: nach Config-Änderung Limite zurücksetzen
 
-   if (IsConnected()) {                                           // nur bei Verbindung zum Quoteserver
-      int processedBars = IndicatorCounted();
+   int processedBars = IndicatorCounted();
 
-      if (processedBars == 0) {                                   // Chartänderung => alle Limite zurücksetzen
-         ArrayInitialize(quoteLimits, 0);
-         ArrayInitialize(bandLimits , 0);
-         EventTracker.SetBandLimits(bandLimits);
-      }
-
-      // Limite überprüfen
-      if (Track.Positions)
-         HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
-
-      if (Track.QuoteChanges)
-         if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
-            return(ERR_HISTORY_WILL_UPDATED);
-
-      if (Track.BollingerBands) {
-         HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
-         if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
-            return(ERR_HISTORY_WILL_UPDATED);
-      }
-
-      if (Track.PivotLevels)
-         if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
-            return(ERR_HISTORY_WILL_UPDATED);
+   if (processedBars == 0) {                                   // Chartänderung => alle Limite zurücksetzen
+      ArrayInitialize(quoteLimits, 0);
+      ArrayInitialize(bandLimits , 0);
+      EventTracker.SetBandLimits(bandLimits);
    }
+
+   // Limite überprüfen
+   if (Track.Positions)
+      HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+
+   if (Track.QuoteChanges)
+      if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
+
+   if (Track.BollingerBands) {
+      HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
+      if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
+   }
+
+   if (Track.PivotLevels)
+      if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
 
    return(catch("start()"));
 }
@@ -204,11 +204,11 @@ int onPositionOpen(int tickets[]) {
          string lots       = DoubleToStrTrim(OrderLots());
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
          string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
-         string message    = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
+         string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
-         // 1. zuerst SMS abschicken ...
+         // zuerst SMS, dann Sound
          if (SMS.Alerts) {
-            int error = SendTextMessage(SMS.Receiver, message);
+            int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
             if (error != ERR_NO_ERROR)
                return(catch("onPositionOpen(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
@@ -216,12 +216,12 @@ int onPositionOpen(int tickets[]) {
          else {
             Print("onPositionOpen()   ", message);
          }
-         playSound = true;                            // Flag für Sound-Status setzen
+         playSound = true;                            // Flag für Sound-Status
       }
    }
 
-   // 2. ... dann Sound abspielen
-   if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren neuen Positionen
+   // Sound abspielen
+   if (Sound.Alerts) if (playSound)                   // max. 1 Sound, auch bei mehreren neuen Positionen
       PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
@@ -254,11 +254,11 @@ int onPositionClose(int tickets[]) {
          int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
          string openPrice  = FormatPrice(OrderOpenPrice(), digits);
          string closePrice = FormatPrice(OrderClosePrice(), digits);
-         string message    = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
+         string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
          // 1. zuerst SMS abschicken ...
          if (SMS.Alerts) {
-            int error = SendTextMessage(SMS.Receiver, message);
+            int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
             if (error != ERR_NO_ERROR)
                return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
             Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
@@ -289,7 +289,7 @@ int onBarOpen(int timeframes[]) {
    // BollingerBand-Limite zurücksetzen
    if (Track.BollingerBands) {
       ArrayInitialize(bandLimits, 0);
-      EventTracker.SetBandLimits(bandLimits);   // auch in Library
+      EventTracker.SetBandLimits(bandLimits);            // auch in Library
    }
    return(catch("onBarOpen()"));
 }
@@ -304,31 +304,31 @@ int CheckQuoteChanges() {
    if (!Track.QuoteChanges)
       return(0);
 
-   // aktuelle Limite ermitteln (und ggf. neu berechnen)
+   // aktuelle Limite ermitteln, ggf. neu berechnen
    if (quoteLimits[0] == 0) if (!EventTracker.QuoteLimits(quoteLimits)) {
       if (InitializeQuoteLimits() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
       EventTracker.QuoteLimits(quoteLimits);             // Limite in Library timeframe-übergreifend speichern
-      return(catch("CheckQuoteChanges(1)"));             // nach Initialisierung ist Test der Limite überflüssig
+      return(catch("CheckQuoteChanges(1)"));             // nach Initialisierung ist Test überflüssig
    }
 
 
-   double gridSize   = QuoteChanges.Gridsize / 10000.0;
-   double upperLimit = quoteLimits[1]-0.00001,           // +-  1/10 pip, um Alert geringfügig früher auszulösen
-          lowerLimit = quoteLimits[0]+0.00001;
+   double gridSize = QuoteChanges.Gridsize / 10000.0;
    string message;
    int    error;
 
    // Limite überprüfen
-   if (Ask > upperLimit) {
-      // erst SMS, dann Sound
+   if (Ask > quoteLimits[1]) {
+      message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(quoteLimits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
       if (SMS.Alerts) {
-         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " => ", DoubleToStr(quoteLimits[1], 4));
-         error = SendTextMessage(SMS.Receiver, message);
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message);
+      }
+      else {
+         Print("CheckQuoteChanges()   ", message);
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
@@ -336,16 +336,19 @@ int CheckQuoteChanges() {
       quoteLimits[1] = NormalizeDouble(quoteLimits[1] + gridSize, 4);
       quoteLimits[0] = NormalizeDouble(quoteLimits[1] - gridSize - gridSize, 4);    // Abstand: 2 x GridSize
       EventTracker.QuoteLimits(quoteLimits);                                        // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   quote limits adjusted: "+ DoubleToStr(quoteLimits[0], 4) +"  <=>  "+ DoubleToStr(quoteLimits[1], 4));
+      Print("CheckQuoteChanges()   Quote limits adjusted: "+ DoubleToStr(quoteLimits[0], 4) +"  <=>  "+ DoubleToStr(quoteLimits[1], 4));
    }
-   else if (Bid < lowerLimit) {
-      // erst SMS, dann Sound
+
+   else if (Bid < quoteLimits[0]) {
+      message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(quoteLimits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
       if (SMS.Alerts) {
-         message = StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", Instrument.ShortName, " <= ", DoubleToStr(quoteLimits[0], 4));
-         error = SendTextMessage(SMS.Receiver, message);
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message);
+      }
+      else {
+         Print("CheckQuoteChanges()   ", message);
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
@@ -353,7 +356,7 @@ int CheckQuoteChanges() {
       quoteLimits[0] = NormalizeDouble(quoteLimits[0] - gridSize, 4);
       quoteLimits[1] = NormalizeDouble(quoteLimits[0] + gridSize + gridSize, 4);    // Abstand: 2 x GridSize
       EventTracker.QuoteLimits(quoteLimits);                                        // neue Limite in Library speichern
-      Print("CheckQuoteChanges()   quote limits adjusted: ", DoubleToStr(quoteLimits[0], 4), "  <=>  ", DoubleToStr(quoteLimits[1], 4));
+      Print("CheckQuoteChanges()   Quote limits adjusted: ", DoubleToStr(quoteLimits[0], 4), "  <=>  ", DoubleToStr(quoteLimits[1], 4));
    }
 
    return(catch("CheckQuoteChanges(4)"));

@@ -284,35 +284,37 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    bool eventStatus = false;
 
-   int knownPositions[],                                    // bekannte Positionen
-       sizeOfKnownPositions = ArraySize(knownPositions),
-       orders               = OrdersTotal();
+   static int knownPositions[];                             // bekannte Positionen
+          int sizeOfKnownPositions = ArraySize(knownPositions),
+              orders               = OrdersTotal();
 
-   // Extra-Flag für 1. Aufruf oder Accountwechsel
-   static int  account     = 0;
-   static bool initialized = false;
-   
+
+   // Statusflag für 1. Aufruf => Positionen einlesen statt prüfen (alle unbekannt)
+   static bool positionsInitialized[1];                     // FALSE
+
+   /*
+   //static int account = 0;
+   //Print("EventListener.PositionOpen()   account=", account, "   initialized=", initialized);
 
    // nach Accountwechsel bekannte Positionen zurücksetzen
    if (account != 0) if (account != AccountNumber()) {
+      Alert("EventListener.PositionOpen()   Account changed");
       ArrayResize(knownPositions, 0);
       sizeOfKnownPositions = 0;
       initialized = false;
    }
    account = AccountNumber();
+   */
 
-
-   // Prüfen, ob die offenen Positionen bereits bekannt sind
+   // offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          break;
 
-      // TODO: prüfen, ob nur bestimmte Instrumente berücksichtigt werden sollen
-
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          int ticket = OrderTicket();
 
-         if (!initialized) {                                // beim 1. Aufruf Tickets nur speichern
+         if (!positionsInitialized[0]) {                    // 1. Aufruf: Positionen einlesen statt zu prüfen
             sizeOfKnownPositions++;
             ArrayResize(knownPositions, sizeOfKnownPositions);
             knownPositions[sizeOfKnownPositions-1] = ticket;
@@ -336,7 +338,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          }
       }
    }
-   initialized = true;
+   positionsInitialized[0] = true;
 
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
@@ -357,29 +359,27 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
    bool eventStatus = false;
 
-   int positions[], 
-       sizeOfPositions = ArraySize(positions);
+   static int openPositions[];
+          int sizeOfOpenPositions = ArraySize(openPositions);
 
-   // Extra-Flag für 1. Aufruf oder Accountwechsel
-   static int  account     = 0;
-   static bool initialized = false;
+   // Statusflag für 1. Aufruf
+   static bool positionsInitialized[1];                  // FALSE
 
+   /*
    // nach Accountwechsel initialized-Status zurücksetzen
+   static int account = 0;
    if (account != 0) if (account != AccountNumber()) {
       initialized = false;
    }
    account = AccountNumber();
+   */
 
-
-   if (initialized) {
+   if (positionsInitialized[0]) {
       // bei wiederholtem Aufruf prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
-      for (int i=0; i < sizeOfPositions; i++) {
-         if (!OrderSelect(positions[i], SELECT_BY_TICKET)) {
-
-            // TODO: zusätzlich den Account der Positionen speichern, denn zwischen 2 Aufrufen kann der Account wechseln
-
+      for (int i=0; i < sizeOfOpenPositions; i++) {
+         if (!OrderSelect(openPositions[i], SELECT_BY_TICKET)) {
             int error = GetLastError(); if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
-            catch("EventListener.PositionClose()   error selecting ticket #"+ positions[i], error);
+            catch("EventListener.PositionClose()   error selecting ticket #"+ openPositions[i], error);
             return(false);
          }
          if (OrderCloseTime() > 0) {
@@ -391,16 +391,16 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             }
             sizeOfTickets++;
             ArrayResize(tickets, sizeOfTickets);
-            tickets[sizeOfTickets-1] = positions[i];
+            tickets[sizeOfTickets-1] = openPositions[i];
 
             eventStatus = true;
          }
       }
    }
 
-   if (sizeOfPositions > 0) {
-      ArrayResize(positions, 0);
-      sizeOfPositions = 0;
+   if (sizeOfOpenPositions > 0) {
+      ArrayResize(openPositions, 0);
+      sizeOfOpenPositions = 0;
    }
 
    // offene Positionen jedes mal neu einlesen (löscht auch vorher gespeicherte jetzt ggf. geschlossene Positionen)
@@ -409,12 +409,12 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          break;
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         sizeOfPositions++;
-         ArrayResize(positions, sizeOfPositions);
-         positions[sizeOfPositions-1] = OrderTicket();
+         sizeOfOpenPositions++;
+         ArrayResize(openPositions, sizeOfOpenPositions);
+         openPositions[sizeOfOpenPositions-1] = OrderTicket();
       }
    }
-   initialized = true;
+   positionsInitialized[0] = true;
 
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionClose()") != ERR_NO_ERROR)
