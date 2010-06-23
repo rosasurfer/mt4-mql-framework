@@ -320,12 +320,12 @@ int CheckQuoteChanges() {
 
    // Limite überprüfen
    if (Ask > quoteLimits[1]) {
-      message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(quoteLimits[1], 4), "   (Ask: ", FormatPrice(Ask, Digits), ")");
+      message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(quoteLimits[1], 4));
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message);
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
       else {
          Print("CheckQuoteChanges()   ", message);
@@ -340,12 +340,12 @@ int CheckQuoteChanges() {
    }
 
    else if (Bid < quoteLimits[0]) {
-      message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(quoteLimits[0], 4), "   (Bid: ", FormatPrice(Bid, Digits), ")");
+      message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(quoteLimits[0], 4));
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message);
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
       else {
          Print("CheckQuoteChanges()   ", message);

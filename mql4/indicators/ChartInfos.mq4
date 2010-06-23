@@ -84,6 +84,15 @@ int start() {
 
 
 /**
+ *
+ */
+int deinit() {
+   RemoveChartObjects(objects);
+   return(catch("deinit()"));
+}
+
+
+/**
  * Erzeugt das Performance-Display.
  */
 int CreatePerformanceDisplay() {
@@ -292,29 +301,22 @@ int CreatePerformanceDisplay() {
 
 
 /**
- *
- */
-int deinit() {
-   RemoveChartObjects(objects);
-   return(catch("deinit()"));
-}
-
-
-/**
  * Erzeugt das Instrument-Label.
  */
 int CreateInstrumentLabel() {
    ObjectDelete(instrumentLabel); GetLastError();
    if (!ObjectCreate(instrumentLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreateInstrumentLabel(1), ObjectCreate(label="+ instrumentLabel +")"));
-   RegisterChartObject(instrumentLabel, objects);
+      return(catch("CreateInstrumentLabel(1)   ObjectCreate(label="+ instrumentLabel +")"));
    ObjectSet(instrumentLabel, OBJPROP_CORNER   , CORNER_TOP_LEFT);
    ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
    ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
+   RegisterChartObject(instrumentLabel, objects);
 
    // Instrumentnamen einlesen und setzen
-   string instrument = GetConfigString("Instrument.Names", Symbol(), Symbol());
-   ObjectSetText(instrumentLabel, instrument, 9, "Tahoma Fett", Black);
+   string instrument = GetGlobalConfigString("Instruments"     , Symbol()  , Symbol()  );
+   string name       = GetGlobalConfigString("Instrument.Names", instrument, instrument);
+
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);
 
    return(catch("CreateInstrumentLabel(2)"));
 }
