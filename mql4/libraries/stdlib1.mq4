@@ -2587,7 +2587,7 @@ int GetTopWindow() {
  *
  * NOTE:
  * -----
- * Mit den Zugangsdaten eines Accounts kann man sich an mehreren Tradeservern anmelden.  Alle für einen Account gültigen Tradeserver sind an dieselbe Zeitzone gebunden.
+ * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
  * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver.
  *
  * @return string - Timezone-ID
