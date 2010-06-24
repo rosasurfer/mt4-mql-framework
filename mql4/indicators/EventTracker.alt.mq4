@@ -172,7 +172,8 @@ int start() {
 
    // Positionen
    if (Track.Positions) if (AccountNumber() != 0) {            // nur bei Verbindung zum Tradeserver
-         HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+      //HandleEvents(EVENT_POSITION_OPEN);
+      HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
    }
 
    // Kursänderungen

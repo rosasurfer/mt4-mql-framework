@@ -55,7 +55,7 @@ string DecimalToHex(int i) {
  *
  * @param int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
- * @return int - Nächstkleinere Periode oder der ursprüngliche Wert, wenn keine kleinere Periode existiert.
+ * @return int - nächstkleinere Periode oder der ursprüngliche Wert, wenn keine kleinere Periode existiert
  */
 int DecreasePeriod(int period = 0) {
    if (period == 0)
@@ -284,36 +284,28 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
-   bool eventStatus = false;
-
-   if (AccountNumber() == 0)                                // ohne Verbindung zum Tradeserver sofortige Rückkehr
-      return(eventStatus);
+   int accountNumber = AccountNumber();
+   if (accountNumber == 0)                                  // ohne Verbindung zum Tradeserver sofortige Rückkehr
+      return(false);
 
    static int knownPositions[];                             // bekannte Positionen
           int sizeOfKnownPositions = ArraySize(knownPositions),
               orders               = OrdersTotal();
 
-   // Statusflag für 1. Aufruf => Positionen einlesen statt prüfen
-   static bool positionsInitialized[1];                     // FALSE
+   bool eventStatus = false;
+
+   // Statusflag für 1. Aufruf => Positionen einlesen statt zu prüfen
+   static bool positionsInitialized[1];   // FALSE
 
 
-   /*
-   Print("EventListener.PositionOpen()   positionsInitialized=", positionsInitialized[0], "    knownPositions="+ sizeOfKnownPositions,
-         "    isConnected="+ IsConnected(), "   accountServer="+ AccountServer(), "   accountCompany="+ AccountCompany(),
-         "   accountNumber="+ AccountNumber(), "   accountName="+ AccountName()
-   );
-   //static int account = 0;
-   //Print("EventListener.PositionOpen()   account=", account, "   initialized=", initialized);
-
-   // nach Accountwechsel bekannte Positionen zurücksetzen
-   if (account != 0) if (account != AccountNumber()) {
-      Alert("EventListener.PositionOpen()   Account changed");
+   // bei Accountwechsel bekannte Positionen löschen und positionsInitialized zurücksetzen
+   static int currentAccount[1];          // 0
+   if (currentAccount[0] != 0) if (currentAccount[0] != accountNumber) {
       ArrayResize(knownPositions, 0);
       sizeOfKnownPositions = 0;
-      initialized = false;
+      positionsInitialized[0] = false;
    }
-   account = AccountNumber();
-   */
+   currentAccount[0] = accountNumber;
 
 
    // vorm Prüfen Ergebnisarray sicherheitshalber zurücksetzen
@@ -336,6 +328,9 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             knownPositions[sizeOfKnownPositions-1] = ticket;
          }
          else {
+            // TODO: Nach Accountwechsel werden Positionen und Accounthistory nur mit Verzögerung geladen.
+            // TODO: daher muß bei jeder neu erscheinenden Position geprüft werden, ob sie tatsächlich neu ist (OrderOpen() muß größer als der vorherige Tick sein)
+            // TODO: Dadurch wird das Flag positionsInitialized überflüssig.
             for (int n=0; n < sizeOfKnownPositions; n++) {
                if (knownPositions[n] == ticket)             // bekannte Position
                   break;
@@ -380,7 +375,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    bool eventStatus = false;
 
    if (AccountNumber() == 0)                                // ohne Verbindung zum Tradeserver sofortige Rückkehr
-      return(eventStatus);
+      return(false);
 
    static int openPositions[];
           int sizeOfOpenPositions = ArraySize(openPositions);
@@ -684,12 +679,12 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    ArrayResize(header, HISTORY_COLUMNS);
 
    // Datei öffnen
-   string filename = account +"/account history.csv";
+   string filename = StringConcatenate(account, "/account history.csv");
    int handle = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (handle < 0) {
       error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE) {
-         Print("GetAccountHistory()  cannot open file \""+ filename +"\" - does it exist?");
+         Print("GetAccountHistory()  cannot open file \"", filename, "\" - does it exist?");
          return(error);
       }
       return(catch("GetAccountHistory(3)  FileOpen(filename="+ filename +")", error));
@@ -1039,7 +1034,6 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
  * @return int - Konfigurationswert
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
-
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
 
    static string localConfigFile="", globalConfigFile="";
@@ -2978,7 +2972,7 @@ int SendTextMessage(string receiver, string message) {
    // TODO: Gateway-Zugangsdaten auslagern
 
    message = UrlEncode(message);
-   string url = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ message;
+   string url = StringConcatenate("https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to=", receiver, "&text=", message);
 
    /*
    string targetDir  = GetMetaTraderDirectory() +"\\experts\\files\\";
@@ -2986,7 +2980,7 @@ int SendTextMessage(string receiver, string message) {
    string logFile    = "sms.log";
    string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\" -O \""+targetDir+targetFile+"\" -a \""+targetDir+logFile+"\"";
    */
-   string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\"";
+   string lpCmdLine  = StringConcatenate("wget.exe -b --no-check-certificate \"", url, "\"");
 
    int error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
