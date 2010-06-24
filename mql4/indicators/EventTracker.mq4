@@ -45,11 +45,16 @@ double quoteLimits[2];                       // { lowerLimit, upperLimit }
 double bandLimits [3];                       // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
 
 
+// init-Errorcode: init() ruft GetAccountNumber() auf und kann daher u.U. beim ersten Aufruf nicht erfolgreich abgearbeitet werden
+int init_error = ERR_NO_ERROR;
+
 
 /**
  *
  */
 int init() {
+   init_error = ERR_NO_ERROR;
+
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -59,10 +64,11 @@ int init() {
       ArrayInitialize(bandLimits , 0);
    }
    
+
    // Konfiguration auswerten
-   string instrument    = GetGlobalConfigString("Instruments", Symbol(), Symbol());
-   string instrSection  = "EventTracker."+ instrument;
-   Instrument.Name      = GetGlobalConfigString("Instrument.Names", instrument, instrument);
+   string instrument   = GetGlobalConfigString("Instruments", Symbol(), Symbol());
+   string instrSection = "EventTracker."+ instrument;
+   Instrument.Name     = GetGlobalConfigString("Instrument.Names", instrument, instrument);
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
@@ -76,9 +82,13 @@ int init() {
    }
 
    // Positionen
-   // TODO: nach Neustart gibt GetAccountNumber() 0 zurück => Track.Positions ist immer FALSE
+   int account = GetAccountNumber();
+   if (account == 0) {
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
    string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
-   if (StringContains(","+accounts+",", ","+GetAccountNumber()+","))
+   if (StringContains(","+accounts+",", ","+account+","))
       Track.Positions = true;
 
    // Kursänderungen
@@ -127,8 +137,8 @@ int init() {
    if (Track.PivotLevels)
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
-
-   //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", QuoteChanges.Gridsize, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
+   
+   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", QuoteChanges.Gridsize, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -145,6 +155,11 @@ int init() {
  *
  */
 int start() {
+   if (init_error != ERR_NO_ERROR) {
+      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
+      if (init()     != ERR_NO_ERROR              ) return(0);
+   }
+
    // TODO: nach Config-Änderung Limite zurücksetzen
 
    int processedBars = IndicatorCounted();
@@ -156,8 +171,9 @@ int start() {
    }
 
    // Limite überprüfen
-   if (Track.Positions)
+   if (Track.Positions) {
       HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+   }
 
    if (Track.QuoteChanges)
       if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)

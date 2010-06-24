@@ -9,6 +9,9 @@
 #include <win32api.mqh>
 
 
+int last_library_error = ERR_NO_ERROR;
+
+
 /**
  * Korrekter Vergleich zweier Doubles.
  *
@@ -274,25 +277,31 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
+ *
+ *
+ * NOTE:
+ * -----
+ * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
-   if (ArraySize(tickets) > 0)
-      ArrayResize(tickets, 0);
-   int sizeOfTickets = 0;
-
-   // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
-
    bool eventStatus = false;
+
+   if (AccountNumber() == 0)                                // ohne Verbindung zum Tradeserver sofortige Rückkehr
+      return(eventStatus);
 
    static int knownPositions[];                             // bekannte Positionen
           int sizeOfKnownPositions = ArraySize(knownPositions),
               orders               = OrdersTotal();
 
-
-   // Statusflag für 1. Aufruf => Positionen einlesen statt prüfen (alle unbekannt)
+   // Statusflag für 1. Aufruf => Positionen einlesen statt prüfen
    static bool positionsInitialized[1];                     // FALSE
 
+
    /*
+   Print("EventListener.PositionOpen()   positionsInitialized=", positionsInitialized[0], "    knownPositions="+ sizeOfKnownPositions,
+         "    isConnected="+ IsConnected(), "   accountServer="+ AccountServer(), "   accountCompany="+ AccountCompany(), 
+         "   accountNumber="+ AccountNumber(), "   accountName="+ AccountName()
+   );
    //static int account = 0;
    //Print("EventListener.PositionOpen()   account=", account, "   initialized=", initialized);
 
@@ -305,6 +314,13 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    }
    account = AccountNumber();
    */
+
+
+   // vorm Prüfen Ergebnisarray sicherheitshalber zurücksetzen
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
+   int sizeOfTickets = 0;
+
 
    // offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
@@ -354,16 +370,23 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
  * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
+ *
+ *
+ * NOTE:
+ * -----
+ * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionClose(int& tickets[], int flags=0) {
-   // NOTE: Der Parameter flags wird zur Zeit nicht verwendet.
    bool eventStatus = false;
+
+   if (AccountNumber() == 0)                                // ohne Verbindung zum Tradeserver sofortige Rückkehr
+      return(eventStatus);
 
    static int openPositions[];
           int sizeOfOpenPositions = ArraySize(openPositions);
 
    // Statusflag für 1. Aufruf
-   static bool positionsInitialized[1];                  // FALSE
+   static bool positionsInitialized[1];                     // FALSE
 
    /*
    // nach Accountwechsel initialized-Status zurücksetzen
@@ -374,8 +397,15 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    account = AccountNumber();
    */
 
+
+   // vorm Prüfen Ergebnisarray sicherheitshalber zurücksetzen
+   if (ArraySize(tickets) > 0)   
+      ArrayResize(tickets, 0);
+   int sizeOfTickets = 0;
+
+
+   // prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
    if (positionsInitialized[0]) {
-      // bei wiederholtem Aufruf prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
       for (int i=0; i < sizeOfOpenPositions; i++) {
          if (!OrderSelect(openPositions[i], SELECT_BY_TICKET)) {
             int error = GetLastError(); if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
@@ -384,11 +414,6 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          }
          if (OrderCloseTime() > 0) {
             // Position geschlossen: Ticket ins Ergebnisarray schreiben und Event-Flag setzen
-            if (eventStatus == false) {
-               if (ArraySize(tickets) > 0)   // vorm Speichern des ersten Tickets Ergebnisarray zurücksetzen
-                  ArrayResize(tickets, 0);
-               int sizeOfTickets = 0;
-            }
             sizeOfTickets++;
             ArrayResize(tickets, sizeOfTickets);
             tickets[sizeOfTickets-1] = openPositions[i];
@@ -774,30 +799,45 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 /**
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
  *
- * @return int - Account-Nummer (positiver Wert) oder Fehlercode (negativer Wert)
+ * @return int - Account-Nummer (positiver Wert) oder 0, falls diese Information nicht ermittelt werden konnte.
+ *               Bei Rückgabe von 0 gibt GetLastLibraryError() den aufgetretenen Fehler zurück.
+ *
+ * NOTE:
+ * -----
+ * Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
  */
 int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTopWindow());
-      if (title == "")
-         return(-ERR_TERMINAL_NOT_YET_READY);         // negativer Error-Code
+      if (title == "") {
+         last_library_error = ERR_TERMINAL_NOT_YET_READY;
+         return(0);
+      }
 
       int pos = StringFind(title, ":");
-      if (pos < 1)
-         return(-catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
+      if (pos < 1) {
+         last_library_error = ERR_RUNTIME_ERROR;
+         catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", last_library_error);
+         return(0);
+      }
 
       string strAccount = StringSubstr(title, 0, pos);
-      if (!StringIsDigit(strAccount))
-         return(-catch("GetAccountNumber(2)   account number contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR));
+      if (!StringIsDigit(strAccount)) {
+         last_library_error = ERR_RUNTIME_ERROR;
+         catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, last_library_error);
+         return(0);
+      }
 
       account = StrToInteger(strAccount);
    }
 
    int error = catch("GetAccountNumber(3)");
-   if (error != ERR_NO_ERROR)
-      return(-error);
+   if (error != ERR_NO_ERROR) {
+      last_library_error = error;
+      return(0);
+   }
 
    return(account);
 }
@@ -1147,6 +1187,18 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
    if (catch("GetGlobalConfigString()") != ERR_NO_ERROR)
       return("");
    return(buffer[0]);
+}
+
+
+/**
+ * Gibt den letzten in dieser Library aufgetretenen Fehler zurück. Bei Rückkehr dieser Funktion ist der interne Fehlercode zurückgesetzt.
+ *
+ * @return int - Fehlercode
+ */
+int GetLastLibraryError() {
+   int error = last_library_error;
+   last_library_error = ERR_NO_ERROR;
+   return(error);
 }
 
 
@@ -2583,12 +2635,12 @@ int GetTopWindow() {
 
 
 /**
- * Gibt die Zeitzonen-ID des Tradeservers des aktuellen Accounts zurück.
+ * Gibt die Zeitzonen-ID des aktuellen Accounts zurück.
  *
  * NOTE:
  * -----
  * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
- * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver.
+ * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
  *
  * @return string - Timezone-ID
  */

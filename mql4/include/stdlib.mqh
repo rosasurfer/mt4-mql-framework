@@ -39,6 +39,7 @@
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    int      GetGlobalConfigInt(string section, string key, int defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
+   int      GetLastLibraryError();
    bool     GetLocalConfigBool(string section, string key, bool defaultValue);
    double   GetLocalConfigDouble(string section, string key, double defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
