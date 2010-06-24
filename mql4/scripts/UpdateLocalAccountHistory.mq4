@@ -15,8 +15,8 @@ int start() {
    int error;
 
    int account = GetAccountNumber();
-   if (account <= 0)                   // evt. ERR_TERMINAL_NOT_YET_READY
-      return(MathAbs(account));
+   if (account == 0)
+      return(catch("start()", GetLastLibraryError()));
 
    int tick   = GetTickCount();
    int orders = OrdersHistoryTotal();
@@ -211,7 +211,7 @@ int start() {
          return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
-      string timezone = GetTradeServerTimezone();
+      string timezone = GetAccountTimezone();
       int iOffset;
       if      (timezone == "EET" ) iOffset =  2;
       else if (timezone == "EEST") iOffset =  2;

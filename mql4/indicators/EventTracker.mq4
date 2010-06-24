@@ -170,21 +170,24 @@ int start() {
       EventTracker.SetBandLimits(bandLimits);
    }
 
-   // Limite überprüfen
-   if (Track.Positions) {
-      HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+   // Positionen
+   if (Track.Positions) if (AccountNumber() != 0) {            // nur bei Verbindung zum Tradeserver
+         HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
    }
 
+   // Kursänderungen
    if (Track.QuoteChanges)
       if (CheckQuoteChanges() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
+   // Bollinger-Bänder
    if (Track.BollingerBands) {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
       if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
    }
 
+   // Pivot-Level
    if (Track.PivotLevels)
       if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);

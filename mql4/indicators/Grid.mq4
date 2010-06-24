@@ -72,7 +72,7 @@ int DrawGrid() {
       return(0);
 
    // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
-   string timezone = GetTradeServerTimezone();
+   string timezone = GetAccountTimezone();
    //Print("DrawGrid()   timezone: "+ timezone);
 
    int offset;

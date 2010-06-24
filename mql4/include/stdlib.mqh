@@ -28,6 +28,7 @@
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
+   string   GetAccountTimezone();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
@@ -55,7 +56,6 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
-   string   GetTradeServerTimezone();
    datetime GetServerSessionStartTime(datetime time);
    int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
@@ -99,4 +99,3 @@
    string   IntegerToHexString(int integer);
 
 #import
-

@@ -299,7 +299,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    /*
    Print("EventListener.PositionOpen()   positionsInitialized=", positionsInitialized[0], "    knownPositions="+ sizeOfKnownPositions,
-         "    isConnected="+ IsConnected(), "   accountServer="+ AccountServer(), "   accountCompany="+ AccountCompany(), 
+         "    isConnected="+ IsConnected(), "   accountServer="+ AccountServer(), "   accountCompany="+ AccountCompany(),
          "   accountNumber="+ AccountNumber(), "   accountName="+ AccountName()
    );
    //static int account = 0;
@@ -399,7 +399,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
 
    // vorm Prüfen Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(tickets) > 0)   
+   if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
    int sizeOfTickets = 0;
 
@@ -818,15 +818,13 @@ int GetAccountNumber() {
 
       int pos = StringFind(title, ":");
       if (pos < 1) {
-         last_library_error = ERR_RUNTIME_ERROR;
-         catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", last_library_error);
+         last_library_error = catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
          return(0);
       }
 
       string strAccount = StringSubstr(title, 0, pos);
       if (!StringIsDigit(strAccount)) {
-         last_library_error = ERR_RUNTIME_ERROR;
-         catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, last_library_error);
+         last_library_error = catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
          return(0);
       }
 
@@ -2570,18 +2568,22 @@ string GetPeriodFlagDescription(int flags) {
  *
  * Warum?
  *
- * Die Endzeit einer Handelssession (Daily Close) fällt mit dem Ende des Handels in New York zusammen, da dort der letzte und volumenmäßig größte am Abend offene Markt des Tages
- * schließt.  Nach Handelsschluß in New York öffnen die Märkte in Neuseeland bereits an einem neuen Tag (Datumsgrenze). Handelsschluß der Geschäftsbanken am Wochenende in New York
- * ist um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit. Demzufolge beginnt um 17:00 New Yorker Ortszeit die nächste (eine neue) Handelssession.
+ * Die Endzeit einer Handelssession (Daily Close) fällt mit dem Ende des Handels in New York zusammen, da dort der letzte
+ * und volumenmäßig größte am Abend offene Markt des Tages schließt.  Nach Handelsschluß in New York öffnen die Märkte in
+ * Neuseeland bereits an einem neuen Tag (Datumsgrenze). Handelsschluß der Geschäftsbanken am Wochenende in New York ist
+ * um 16:00 Ortszeit, Wochenhandelsschluß im Interbankenmarkt um 17:00 Ortszeit. Demzufolge beginnt um 17:00 New Yorker
+ * Ortszeit die nächste (eine neue) Handelssession.
  *
- * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für diese Schlußzeit irrelevant, da nach obiger Definition einzig die tatsächlichen Schlußzeiten in
- * New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit beider beteiligter Zeitzonen berücksichtigt werden
- * (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen Zeitzonen zu unterschiedlichen Zeitpunkten erfolgen kann, gibt
- * es keinen festen Offset zwischen Sessionbeginn und MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
+ * Sommer- oder Winterzeit des MT4-Tradeservers oder anderer Handelsplätze sind für diese Schlußzeit irrelevant, da nach
+ * obiger Definition einzig die tatsächlichen Schlußzeiten in New York ausschlaggebend sind.  Beim Umrechnen lokaler Zeiten
+ * in MT4-Tradeserver-Zeiten müssen jedoch Sommer- und Winterzeit beider beteiligter Zeitzonen berücksichtigt werden
+ * (Event-Zeitzone und MT4-Tradeserver-Zeitzone).  Da die Umschaltung zwischen Sommer- und Winterzeit in den einzelnen
+ * Zeitzonen zu unterschiedlichen Zeitpunkten erfolgen kann, gibt es keinen festen Offset zwischen Sessionbeginn und
+ * MT4-Tradeserver-Zeit (außer für Tradeserver in New York).
  */
 datetime GetServerSessionStartTime(datetime time) {
    // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
-   string timezone = GetTradeServerTimezone();
+   string timezone = GetAccountTimezone();
    int tzOffset;
    if      (timezone == "EET" ) tzOffset = 7;
    else if (timezone == "EEST") tzOffset = 7;
@@ -2637,22 +2639,23 @@ int GetTopWindow() {
 /**
  * Gibt die Zeitzonen-ID des aktuellen Accounts zurück.
  *
+ * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat (Fehler kann mit GetLastLibraryError() abgefragt werden)
+ *
+ *
  * NOTE:
  * -----
  * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
  * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
- *
- * @return string - Timezone-ID
  */
-string GetTradeServerTimezone() {
-   int account = GetAccountNumber();
-   if (account <= 0)                      // evt. ERR_TERMINAL_NOT_YET_READY
+string GetAccountTimezone() {
+   int account = GetAccountNumber();         // evt. ERR_TERMINAL_NOT_YET_READY
+   if (account == 0)
       return("");
 
    string timezone = GetConfigString("Timezones", StringConcatenate("", account), "");
 
    if (timezone == "") {
-      catch("GetTradeServerTimezone()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      last_library_error = catch("GetAccountTimezone()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
    }
 
