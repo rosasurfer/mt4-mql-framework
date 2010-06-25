@@ -284,35 +284,44 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
-   int accountNumber = AccountNumber();
-   if (accountNumber == 0)                                  // ohne Verbindung zum Tradeserver sofortige Rückkehr
+   // Ergebnisarray sicherheitshalber zurücksetzen
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
+   int sizeOfTickets = 0;
+
+   bool eventStatus = false;
+
+   // ohne Verbindung zum Tradeserver sofortige Rückkehr
+   int account = AccountNumber();
+   if (account == 0)                                  
       return(false);
 
    static int knownPositions[];                             // bekannte Positionen
           int sizeOfKnownPositions = ArraySize(knownPositions),
               orders               = OrdersTotal();
 
-   bool eventStatus = false;
+   // NOTE:
+   // -----
+   // Die offenen Positionen stehen u.U. erst nach einigen Ticks zur Verfügung (z.B. nach Accountwechsel). Daher müssen
+   // neu identifizierte Positionen anhand ihres OrderOpen-Timestamps explizit auf ihren Status überprüft werden.
 
-   // Statusflag für 1. Aufruf => Positionen einlesen statt zu prüfen
-   static bool positionsInitialized[1];   // FALSE
+   static int      accountNumber[1];                        // default: 0
+   static datetime accountInitialized[1];                   // default: 0
+   
+   // TODO: statt TimeCurrent() TimeLocal() verwenden und in Serverzeit umrechnen (im Terminal wird veralteter Wert für TimeCurrent() gespeichert)
 
-
-   // bei Accountwechsel bekannte Positionen löschen und positionsInitialized zurücksetzen
-   static int currentAccount[1];          // 0
-   if (currentAccount[0] != 0) if (currentAccount[0] != accountNumber) {
+   if (accountNumber[0] == 0) {                             // 1. Aufruf
+      accountNumber[0]      = account;
+      accountInitialized[0] = TimeCurrent();                // Serverzeit
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach 1. Aufruf initialized: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   }
+   else if (accountNumber[0] != account) {                  // Accountwechsel während der Laufzeit: alle Positionen löschen
       ArrayResize(knownPositions, 0);
       sizeOfKnownPositions = 0;
-      positionsInitialized[0] = false;
+      accountNumber[0]      = account;
+      accountInitialized[0] = TimeCurrent();                // Serverzeit
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Wechsel initialized: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
-   currentAccount[0] = accountNumber;
-
-
-   // vorm Prüfen Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(tickets) > 0)
-      ArrayResize(tickets, 0);
-   int sizeOfTickets = 0;
-
 
    // offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
@@ -322,34 +331,25 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          int ticket = OrderTicket();
 
-         if (!positionsInitialized[0]) {                    // 1. Aufruf: Positionen einlesen statt zu prüfen
+         for (int n=0; n < sizeOfKnownPositions; n++) {
+            if (knownPositions[n] == ticket)                // bekannte Position
+               break;
+         }
+
+         // unbekannte Position: prüfen, ob neu
+         if (n == sizeOfKnownPositions) {
+            if (accountInitialized[0] <= OrderOpenTime()) { // neu: Ticket speichern und Event-Flag setzen
+               sizeOfTickets++;
+               ArrayResize(tickets, sizeOfTickets);
+               tickets[sizeOfTickets-1] = ticket;
+               eventStatus = true;
+            }
             sizeOfKnownPositions++;
             ArrayResize(knownPositions, sizeOfKnownPositions);
             knownPositions[sizeOfKnownPositions-1] = ticket;
          }
-         else {
-            // TODO: Nach Accountwechsel werden Positionen und Accounthistory nur mit Verzögerung geladen.
-            // TODO: daher muß bei jeder neu erscheinenden Position geprüft werden, ob sie tatsächlich neu ist (OrderOpen() muß größer als der vorherige Tick sein)
-            // TODO: Dadurch wird das Flag positionsInitialized überflüssig.
-            for (int n=0; n < sizeOfKnownPositions; n++) {
-               if (knownPositions[n] == ticket)             // bekannte Position
-                  break;
-            }
-            if (n == sizeOfKnownPositions) {                // neue Position: Ticket speichern und Event-Flag setzen
-               sizeOfKnownPositions++;
-               ArrayResize(knownPositions, sizeOfKnownPositions);
-               knownPositions[sizeOfKnownPositions-1] = ticket;
-
-               sizeOfTickets++;
-               ArrayResize(tickets, sizeOfTickets);
-               tickets[sizeOfTickets-1] = ticket;
-
-               eventStatus = true;
-            }
-         }
       }
    }
-   positionsInitialized[0] = true;
 
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
    if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
