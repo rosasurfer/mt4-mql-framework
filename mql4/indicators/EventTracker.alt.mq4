@@ -138,7 +138,7 @@ int init() {
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
    
-   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", QuoteChanges.Gridsize, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
+   //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", QuoteChanges.Gridsize, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -172,7 +172,6 @@ int start() {
 
    // Positionen
    if (Track.Positions) if (AccountNumber() != 0) {            // nur bei Verbindung zum Tradeserver
-      //HandleEvents(EVENT_POSITION_OPEN);
       HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
    }
 
