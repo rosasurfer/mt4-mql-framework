@@ -171,7 +171,7 @@ int start() {
    }
 
    // Positionen
-   if (Track.Positions) if (AccountNumber() != 0) {            // nur bei Verbindung zum Tradeserver
+   if (Track.Positions) {
       HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
    }
 
@@ -464,7 +464,7 @@ int InitializeQuoteLimits() {
    if (down) quoteLimits[0] = NormalizeDouble(quoteLimits[0] - gridSize, 4);
    if (up  ) quoteLimits[1] = NormalizeDouble(quoteLimits[1] + gridSize, 4);
 
-   Print("InitializeQuoteLimits()   quote limits initialized: "+ DoubleToStr(quoteLimits[0], 4) +"  <=>  "+ DoubleToStr(quoteLimits[1], 4));
+   Print("InitializeQuoteLimits()   Quote limits initialized: ", DoubleToStr(quoteLimits[0], 4), "  <=>  ", DoubleToStr(quoteLimits[1], 4));
    return(catch("InitializeQuoteLimits(3)"));
 }
 
@@ -487,10 +487,10 @@ int InitializeBandLimits() {
 
    int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.MA.Deviation, 0, bandLimits);
 
-   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
+   if (error == ERR_HISTORY_WILL_UPDATED) return(error);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
 
-   Print("InitializeBandLimits()   band limits calculated: "+ FormatPrice(bandLimits[2], Digits) +"  <=  "+ FormatPrice(bandLimits[1], Digits) +"  =>  "+ FormatPrice(bandLimits[0], Digits));
+   Print("InitializeBandLimits()   Bollinger band limits calculated: ", FormatPrice(bandLimits[2], Digits), "  <=  ", FormatPrice(bandLimits[1], Digits), "  =>  ", FormatPrice(bandLimits[0], Digits));
    return(error);
 }
 
