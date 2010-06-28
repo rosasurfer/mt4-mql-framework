@@ -239,8 +239,7 @@ int onPositionOpen(int tickets[]) {
       }
    }
 
-   // Sound abspielen
-   if (Sound.Alerts) if (playSound)                   // max. 1 Sound, auch bei mehreren neuen Positionen
+   if (Sound.Alerts) if (playSound)                   // max. ein Sound
       PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
@@ -275,7 +274,7 @@ int onPositionClose(int tickets[]) {
          string closePrice = FormatPrice(OrderClosePrice(), digits);
          string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
-         // 1. zuerst SMS abschicken ...
+         // zuerst SMS, dann Sound
          if (SMS.Alerts) {
             int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
             if (error != ERR_NO_ERROR)
@@ -289,8 +288,7 @@ int onPositionClose(int tickets[]) {
       }
    }
 
-   // 2. ... dann Sound abspielen
-   if (Sound.Alerts) if (playSound)                   // max. 1 x Sound, auch bei mehreren Positionen
+   if (Sound.Alerts) if (playSound)                   // max. ein Sound, auch bei mehreren Positionen
       PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(2)"));
@@ -334,20 +332,23 @@ int CheckQuoteChanges() {
 
 
    double gridSize = QuoteChanges.Gridsize / 10000.0;
-   string message;
+   string message, bid, ask;
    int    error;
 
    // Limite überprüfen
    if (Ask > quoteLimits[1]) {
       message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(quoteLimits[1], 4));
+      ask     = FormatPrice(Ask, Digits);
+
+      // zuerst SMS, dann Sound
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", ask, ")");
       }
       else {
-         Print("CheckQuoteChanges()   ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
+         Print("CheckQuoteChanges()   ", message, "   (Ask: ", ask, ")");
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
@@ -360,14 +361,17 @@ int CheckQuoteChanges() {
 
    else if (Bid < quoteLimits[0]) {
       message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(quoteLimits[0], 4));
+      bid     = FormatPrice(Bid, Digits);
+      
+      // zuerst SMS, dann Sound
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckQuoteChanges(3)   error sending text message to "+ SMS.Receiver, error));
-         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
+         Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", bid, ")");
       }
       else {
-         Print("CheckQuoteChanges()   ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
+         Print("CheckQuoteChanges()   ", message, "   (Bid: ", bid, ")");
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
