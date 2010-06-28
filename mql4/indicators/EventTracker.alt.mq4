@@ -347,7 +347,7 @@ int CheckQuoteChanges() {
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
       else {
-         Print("CheckQuoteChanges()   ", message);
+         Print("CheckQuoteChanges()   ", message, "   (Ask: ", FormatPrice(Ask, Digits), ")");
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
@@ -367,7 +367,7 @@ int CheckQuoteChanges() {
          Print("CheckQuoteChanges()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
       else {
-         Print("CheckQuoteChanges()   ", message);
+         Print("CheckQuoteChanges()   ", message, "   (Bid: ", FormatPrice(Bid, Digits), ")");
       }
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
