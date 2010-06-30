@@ -508,7 +508,7 @@ static double EventTracker.bandLimits[3];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& destination[3] - Zielarray für die aktuellen Limite {UPPER_VALUE, MA_VALUE, LOWER_VALUE}
+ * @param double& destination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
@@ -532,7 +532,7 @@ bool EventTracker.GetBandLimits(double& destination[]) {
  * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& limits[3] - Array mit den aktuellen Limiten {UPPER_VALUE, MA_VALUE, LOWER_VALUE}
+ * @param double& limits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
@@ -547,35 +547,44 @@ bool EventTracker.SetBandLimits(double& limits[]) {
 }
 
 
+static double EventTracker.gridLimits[2];
+
 /**
- * Hilfsfunktion zur Timeframe-übergreifenden Speicherung normaler Kurslimite des aktuellen Symbols im EventTracker.
+ * Gibt die aktuellen Grid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * in der Library gespeichert.
  *
- * @param double& limits[2] - Array mit den aktuellen Limiten
+ * @param double& destination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
  *
- * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen oder geschrieben wurden;
- *                               FALSE andererseits (z.B. Leseversuch nicht existierender Daten)
+ * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
+ *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.QuoteLimits(double& limits[]) {
-   double cache[2];
+bool EventTracker.GetGridLimits(double& destination[]) {
+   // falls keine Daten gespeichert sind ...
+   if (EventTracker.gridLimits[0]==0 || EventTracker.gridLimits[1]==0)
+      return(false);
 
-   // Lese- oder Schreiboperation?
-   bool get = (limits[0]==0 || limits[1]==0);
+   destination[0] = EventTracker.gridLimits[0];
+   destination[1] = EventTracker.gridLimits[1];
 
-   // Lesen
-   if (get) {
-      if (cache[0]==0 || cache[1]==0)   // get, Limite sind aber nicht initialisiert
-         return(false);
-      limits[0] = cache[0];
-      limits[1] = cache[1];
-   }
+   if (catch("EventTracker.GetGridLimits()") != ERR_NO_ERROR)
+      return(false);
+   return(true);
+}
 
-   // Schreiben
-   else {
-      cache[0] = limits[0];
-      cache[1] = limits[1];
-   }
 
-   if (catch("EventTracker.QuoteLimits()") != ERR_NO_ERROR)
+/**
+ * Setzt die aktuellen Grid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * in der Library gespeichert.
+ *
+ * @param double& limits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EventTracker.SetGridLimits(double& limits[]) {
+   EventTracker.gridLimits[0] = limits[0];
+   EventTracker.gridLimits[1] = limits[1];
+
+   if (catch("EventTracker.SetGridLimits()") != ERR_NO_ERROR)
       return(false);
    return(true);
 }

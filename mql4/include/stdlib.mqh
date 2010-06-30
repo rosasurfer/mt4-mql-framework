@@ -23,7 +23,8 @@
    bool     EventListener.AccountChange(int& results[], int flags);
    bool     EventTracker.GetBandLimits(double& limits[3]);
    bool     EventTracker.SetBandLimits(double& limits[3]);
-   bool     EventTracker.QuoteLimits(double& limits[2]);
+   bool     EventTracker.GetGridLimits(double& limits[2]);
+   bool     EventTracker.SetGridLimits(double& limits[2]);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
