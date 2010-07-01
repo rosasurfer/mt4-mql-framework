@@ -1,13 +1,16 @@
 /**
  * EventTracker
  *
- * Überwacht ein Instrument auf verschiedene, konfigurierbare Signale und benachrichtigt darüber optisch, akustisch und/oder per SMS.
+ * Überwacht ein Instrument auf verschiedene, konfigurierbare Signale und benachrichtigt optisch, akustisch und/oder per SMS.
  */
 
 #include <stdlib.mqh>
 
 
 #property indicator_chart_window
+
+
+int init_error = ERR_NO_ERROR;
 
 
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
@@ -45,15 +48,18 @@ double Grid.Limits[2];                       // { UPPER_VALUE, LOWER_VALUE }
 double Band.Limits[3];                       // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
 
 
-// init-Errorcode: init() ruft GetAccountNumber() auf und kann daher u.U. beim ersten Aufruf nicht erfolgreich abgearbeitet werden
-int init_error = ERR_NO_ERROR;
-
-
 /**
  *
  */
 int init() {
    init_error = ERR_NO_ERROR;
+
+   int account = GetAccountNumber();         // evt. ERR_TERMINAL_NOT_YET_READY
+   if (!account) {
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
+
 
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -82,11 +88,6 @@ int init() {
    }
 
    // Positionen
-   int account = GetAccountNumber();
-   if (account == 0) {
-      init_error = GetLastLibraryError();
-      return(init_error);
-   }
    string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
    if (StringContains(","+accounts+",", ","+account+","))
       Track.Positions = true;
@@ -155,10 +156,12 @@ int init() {
  *
  */
 int start() {
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder abbrechen (bei anderem Fehler)
    if (init_error != ERR_NO_ERROR) {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != ERR_NO_ERROR              ) return(0);
+      if (init()     != ERR_NO_ERROR)               return(0);
    }
+
 
    // TODO: nach Config-Änderung Limite zurücksetzen
 

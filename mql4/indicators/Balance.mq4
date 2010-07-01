@@ -13,8 +13,14 @@
 #property indicator_width1  2
 
 
-// Account, dessen Balance angezeigt werden soll (default: der aktuelle Account)
-extern int account = 0;
+int init_error = ERR_NO_ERROR;
+
+
+////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
+
+extern int account = 0;    // Account, dessen Balance angezeigt werden soll (default: der aktuelle Account)
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double Balance[];
@@ -24,6 +30,14 @@ double Balance[];
  *
  */
 int init() {
+   init_error = ERR_NO_ERROR;
+
+   if (!GetAccountNumber()) {                // evt. ERR_TERMINAL_NOT_YET_READY
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
+
+
    SetIndexBuffer(0, Balance);
    SetIndexLabel (0, "Balance");
    SetIndexStyle (0, DRAW_LINE);
@@ -50,10 +64,15 @@ int init() {
  *
  */
 int start() {
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder abbrechen (bei anderem Fehler)
+   if (init_error != ERR_NO_ERROR) {
+      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
+      if (init()     != ERR_NO_ERROR)               return(0);
+   }
+
+
    if (account == 0)
       account = GetAccountNumber();
-   if (account == 0)
-      return(GetLastLibraryError());
 
    int processedBars = IndicatorCounted();
 
