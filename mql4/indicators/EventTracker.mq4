@@ -15,13 +15,13 @@ int init_error = ERR_NO_ERROR;
 
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
 
-bool   Sound.Alerts                 = true;
+bool   Sound.Alerts                 = false;
 string Sound.File.Up                = "alert3.wav";
 string Sound.File.Down              = "alert4.wav";
 string Sound.File.PositionOpen      = "OrderFilled.wav";
 string Sound.File.PositionClose     = "PositionClosed.wav";
 
-bool   SMS.Alerts                   = true;
+bool   SMS.Alerts                   = false;
 string SMS.Receiver                 = "";
 
 bool   Track.Positions              = false;
@@ -168,9 +168,13 @@ int start() {
    int processedBars = IndicatorCounted();
 
    if (processedBars == 0) {                                   // Chartänderung => alle Limite zurücksetzen
-      ArrayInitialize(Grid.Limits, 0);
+
+      // TODO: processedBars ist bei jedem Timeframe-Wechsel 0, wir wollen processedBars==0 aber nur bei Chartänderungen detektieren
+
+      //ArrayInitialize(Grid.Limits, 0);
+      //EventTracker.SetGridLimits(Grid.Limits);
+
       ArrayInitialize(Band.Limits, 0);
-      EventTracker.SetGridLimits(Grid.Limits);
       EventTracker.SetBandLimits(Band.Limits);
    }
 
