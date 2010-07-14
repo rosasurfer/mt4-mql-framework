@@ -591,6 +591,55 @@ bool EventTracker.SetGridLimits(double& limits[]) {
 
 
 /**
+ * Zerlegt einen String in Teilstrings.
+ *
+ * @param string  subject   - zu zerlegender String
+ * @param string  separator - Trennstring
+ * @param string& results[] - Zielarray für die Teilstrings
+ *
+ * @return int - Fehlerstatus
+ */
+int Explode(string subject, string separator, string& results[]) {
+   int lenSubject   = StringLen(subject), 
+       lenSeparator = StringLen(separator);
+   
+   if (separator == "") {                 
+      // String in einzelne Zeichen zerlegen
+      ArrayResize(results, lenSubject);
+
+      for (int i=0; i < lenSubject; i++) {
+         results[i] = StringSubstr(subject, i, 1);
+      }
+   }
+   else {
+      // String in Substrings zerlegen
+      int size, pos;
+      i = 0;
+
+      while (i < lenSubject) {
+         ArrayResize(results, size+1);
+
+         pos = StringFind(subject, separator, i);
+         if (pos == -1) {
+            results[size] = StringSubstr(subject, i);
+            break;
+         }
+         else if (i == pos) {
+            results[size] = "";
+         }
+         else {
+            results[size] = StringSubstr(subject, i, pos-i);
+         }
+         size++;
+         i = pos + lenSeparator;
+      }
+   }
+
+   return(catch("Explode()"));
+}
+
+
+/**
  * Formatiert einen Währungsbetrag.
  *
  * @param double value - Betrag
@@ -2839,6 +2888,31 @@ int IncreasePeriod(int period = 0) {
 
    catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
+}
+
+
+/**
+ * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
+ *
+ * @param string  values[]  - Stringarray mit Ausgangswerten
+ * @param string  separator - zu verwendender Separator
+ *
+ * @return string - Gesamtstring
+ */
+string JoinStrings(string values[], string separator) {
+   string result = "";
+   
+   int size = ArraySize(values);
+   
+   for (int i=1; i < size; i++) {
+      result = StringConcatenate(result, separator, values[i]);
+   }
+   if (size > 0) {
+      result = StringConcatenate(values[0], result);
+   }
+
+   catch("JoinStrings()");
+   return(result);
 }
 
 

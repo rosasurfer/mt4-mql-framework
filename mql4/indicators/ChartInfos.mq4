@@ -19,7 +19,7 @@
 
 extern bool Show.Spread                 = false;      // ob der Spread angezeigt wird (default: ja)
 extern bool Spread.Including.Commission = false;      // ob der Spread nach Commission angezeigt werden soll
-extern bool Show.PerformanceDisplay     = true;       // ob das Performance-Display angezeigt werden soll
+extern bool Show.PerformanceDisplay     = false;      // ob das Performance-Display angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,6 +65,18 @@ int init() {
       start();
       WindowRedraw();
    }
+   
+
+   // ------------------------------------------------------------
+
+   /*
+   string value = GetConfigString("Timezones", "{account-no}", "- no value -");
+   string strings[];
+   Explode(value, ",", strings);
+   Print("init()    config value: ", value, "    joined values: ", JoinStrings(strings, "|"));
+   */
+
+   // ------------------------------------------------------------
 
    return(catch("init()"));
 }

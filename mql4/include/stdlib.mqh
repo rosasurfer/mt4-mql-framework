@@ -25,6 +25,7 @@
    bool     EventTracker.SetBandLimits(double& limits[3]);
    bool     EventTracker.GetGridLimits(double& limits[2]);
    bool     EventTracker.SetGridLimits(double& limits[2]);
+   int      Explode(string subject, string separator, string& results[]);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
@@ -66,6 +67,7 @@
    int      iBarShiftNext(string symbol, int timeframe, datetime time);
    int      iBarShiftPrevious(string symbol, int timeframe, datetime time);
    int      IncreasePeriod(int period);
+   string   JoinStrings(string values[], string separator);
    int      onBarOpen(int details[]);
    int      onOrderPlace(int tickets[]);
    int      onOrderChange(int tickets[]);
