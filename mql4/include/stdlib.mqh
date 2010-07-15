@@ -67,7 +67,10 @@
    int      iBarShiftNext(string symbol, int timeframe, datetime time);
    int      iBarShiftPrevious(string symbol, int timeframe, datetime time);
    int      IncreasePeriod(int period);
-   string   JoinStrings(string values[], string separator);
+   string   JoinBools(bool& values[], string separator);
+   string   JoinDoubles(double& values[], string separator);
+   string   JoinInts(int& values[], string separator);
+   string   JoinStrings(string& values[], string separator);
    int      onBarOpen(int details[]);
    int      onOrderPlace(int tickets[]);
    int      onOrderChange(int tickets[]);

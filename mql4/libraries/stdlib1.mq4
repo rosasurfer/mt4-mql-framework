@@ -79,9 +79,9 @@ int DecreasePeriod(int period = 0) {
 
 
 /**
- * Konvertiert einen Double in einen String und trimmt abschlieﬂende Nullstellen.
+ * Konvertiert einen Double in einen String und entfernt abschlieﬂende Nullstellen.
  *
- * @param value - Double
+ * @param double value - Double
  *
  * @return string
  */
@@ -96,8 +96,7 @@ string DoubleToStrTrim(double value) {
       trim = true;
    }
    if (StringGetChar(strValue, len-1) == 46) {     // char(46) = "."
-      len--;
-      trim = true;
+      len++;                                       // mindestens eine Dezimalstelle wird erhalten
    }
 
    if (trim)
@@ -2892,14 +2891,81 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
- * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
+ * Verbindet die Werte eines Boolean-Arrays unter Verwendung des angegebenen Separators.
  *
- * @param string  values[]  - Stringarray mit Ausgangswerten
- * @param string  separator - zu verwendender Separator
+ * @param bool   values[]  - Array mit Ausgangswerten
+ * @param string separator - zu verwendender Separator
  *
  * @return string - Gesamtstring
  */
-string JoinStrings(string values[], string separator) {
+string JoinBools(bool& values[], string separator) {        // der Zeiger dient nur der Performancesteigerung
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+   
+   for (int i=0; i < size; i++) {
+      if (values[i]) strings[i] = "true";
+      else           strings[i] = "false";
+   }
+
+   return(JoinStrings(strings, separator));
+}
+
+
+/**
+ * Verbindet die Werte eines Double-Arrays unter Verwendung des angegebenen Separators.
+ *
+ * @param double values[]  - Array mit Ausgangswerten
+ * @param string separator - zu verwendender Separator
+ *
+ * @return string - Gesamtstring
+ */
+string JoinDoubles(double& values[], string separator) {       // der Zeiger dient nur der Performancesteigerung
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+   
+   for (int i=0; i < size; i++) {
+      strings[i] = DoubleToStrTrim(values[i]);
+   }
+
+   return(JoinStrings(strings, separator));
+}
+
+
+/**
+ * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
+ *
+ * @param int    values[]  - Array mit Ausgangswerten
+ * @param string separator - zu verwendender Separator
+ *
+ * @return string - Gesamtstring
+ */
+string JoinInts(int& values[], string separator) {       // der Zeiger dient nur der Performancesteigerung
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+   
+   for (int i=0; i < size; i++) {
+      strings[i] = values[i];
+   }
+
+   return(JoinStrings(strings, separator));
+}
+
+
+/**
+ * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
+ *
+ * @param string values[]  - Array mit Ausgangswerten
+ * @param string separator - zu verwendender Separator
+ *
+ * @return string - Gesamtstring
+ */
+string JoinStrings(string& values[], string separator) {    // der Zeiger dient nur der Performancesteigerung
    string result = "";
    
    int size = ArraySize(values);
