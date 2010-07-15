@@ -44,8 +44,11 @@ string DecimalToHex(int i) {
    if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
    else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
 
-   if (catch("DecimalToHex()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("DecimalToHex()", error);
       return("");
+   }
    return(result);
 }
 
@@ -73,7 +76,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_MN1: return(PERIOD_W1 );
    }
 
-   catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   last_library_error = catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -102,7 +105,11 @@ string DoubleToStrTrim(double value) {
    if (trim)
       strValue = StringSubstr(strValue, 0, len);
 
-   //catch("DoubleToStrTrim()");
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("DoubleToStrTrim()", error);
+      return("");
+   }
    return(strValue);
 }
 
@@ -129,7 +136,7 @@ bool EventListener(int event, int& results[], int flags=0) {
       case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
    }
 
-   catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   last_library_error = catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
 }
 
@@ -197,8 +204,11 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
       if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
    }
 
-   if (catch("EventListener.BarOpen()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.BarOpen()", error);
       return(false);
+   }
    return(results[0] != 0);
 }
 
@@ -219,8 +229,11 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.OrderChange()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.OrderChange()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -241,8 +254,11 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.OrderPlace()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.OrderPlace()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -263,8 +279,11 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.OrderCancel()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.OrderCancel()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -292,7 +311,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
-   if (account == 0)                                  
+   if (account == 0)
       return(false);
 
    static int knownPositions[];                             // bekannte Positionen
@@ -306,7 +325,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    static int      accountNumber[1];                        // default: 0
    static datetime accountInitialized[1];                   // default: 0
-   
+
    // TODO: statt TimeCurrent() TimeLocal() verwenden und in Serverzeit umrechnen (im Terminal wird veralteter Wert für TimeCurrent() gespeichert)
 
    if (accountNumber[0] == 0) {                             // 1. Aufruf
@@ -351,8 +370,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    }
 
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
-   if (catch("EventListener.PositionOpen()") != ERR_NO_ERROR)
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.PositionOpen()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -371,6 +394,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
  * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionClose(int& tickets[], int flags=0) {
+   int error; 
+
    // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
@@ -380,20 +405,22 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
-   if (account == 0)                                  
+   if (account == 0)
       return(false);
 
    static int positions[];                                  // bekannte Positionen
           int sizeOfPositions = ArraySize(positions);
    static int accountNumber[1];                             // default: 0
-   
-   
+
+
    // prüfen, ob alle vorher gespeicherten Positionen weiterhin offen sind
    if (accountNumber[0] == account) {
       for (int i=0; i < sizeOfPositions; i++) {
          if (!OrderSelect(positions[i], SELECT_BY_TICKET)) {
-            int error = GetLastError(); if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
-            catch("EventListener.PositionClose(1)   error selecting ticket #"+ positions[i], error);
+            error = GetLastError(); 
+            if (error == ERR_NO_ERROR) 
+               error = ERR_RUNTIME_ERROR;
+            last_library_error = catch("EventListener.PositionClose(1)   error selecting ticket #"+ positions[i], error);
             return(false);
          }
          if (OrderCloseTime() > 0) {
@@ -429,8 +456,11 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
 
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
-   if (catch("EventListener.PositionClose(2)") != ERR_NO_ERROR)
+   error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.PositionClose(2)", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -451,8 +481,11 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.AccountPayment()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.AccountPayment()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -473,8 +506,11 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.HistoryChange()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.HistoryChange()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -495,8 +531,11 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
 
    // TODO: implementieren
 
-   if (catch("EventListener.AccountChange()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventListener.AccountChange()", error);
       return(false);
+   }
    return(eventStatus);
 }
 
@@ -521,8 +560,11 @@ bool EventTracker.GetBandLimits(double& destination[]) {
    destination[1] = EventTracker.bandLimits[1];
    destination[2] = EventTracker.bandLimits[2];
 
-   if (catch("EventTracker.GetBandLimits()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventTracker.GetBandLimits()", error);
       return(false);
+   }
    return(true);
 }
 
@@ -540,8 +582,11 @@ bool EventTracker.SetBandLimits(double& limits[]) {
    EventTracker.bandLimits[1] = limits[1];
    EventTracker.bandLimits[2] = limits[2];
 
-   if (catch("EventTracker.SetBandLimits()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventTracker.SetBandLimits()", error);
       return(false);
+   }
    return(true);
 }
 
@@ -565,8 +610,11 @@ bool EventTracker.GetGridLimits(double& destination[]) {
    destination[0] = EventTracker.gridLimits[0];
    destination[1] = EventTracker.gridLimits[1];
 
-   if (catch("EventTracker.GetGridLimits()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventTracker.GetGridLimits()", error);
       return(false);
+   }
    return(true);
 }
 
@@ -583,8 +631,11 @@ bool EventTracker.SetGridLimits(double& limits[]) {
    EventTracker.gridLimits[0] = limits[0];
    EventTracker.gridLimits[1] = limits[1];
 
-   if (catch("EventTracker.SetGridLimits()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EventTracker.SetGridLimits()", error);
       return(false);
+   }
    return(true);
 }
 
@@ -599,10 +650,10 @@ bool EventTracker.SetGridLimits(double& limits[]) {
  * @return int - Fehlerstatus
  */
 int Explode(string subject, string separator, string& results[]) {
-   int lenSubject   = StringLen(subject), 
+   int lenSubject   = StringLen(subject),
        lenSeparator = StringLen(separator);
-   
-   if (separator == "") {                 
+
+   if (separator == "") {
       // String in einzelne Zeichen zerlegen
       ArrayResize(results, lenSubject);
 
@@ -634,7 +685,10 @@ int Explode(string subject, string separator, string& results[]) {
       }
    }
 
-   return(catch("Explode()"));
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR)
+      last_library_error = catch("Explode()", error);
+   return(error);
 }
 
 
@@ -656,8 +710,11 @@ string FormatMoney(double value) {
       result = StringConcatenate(major, " ", minor, ".00");
    }
 
-   if (catch("FormatMoney()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("FormatMoney()", error);
       return("");
+   }
    return(result);
 }
 
@@ -692,8 +749,11 @@ string FormatPrice(double price, int digits) {
       else                        strPrice = major;
    }
 
-   if (catch("FormatPrice()") != ERR_NO_ERROR)
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("FormatPrice()", error);
       return("");
+   }
    return(strPrice);
 }
 
@@ -707,8 +767,12 @@ string FormatPrice(double price, int digits) {
  * @return int - Fehlerstatus
  */
 int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
-   if (ArrayRange(destination, 1) != HISTORY_COLUMNS)
-      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(destination, 0) +"]["+ ArrayRange(destination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   int error;
+
+   if (ArrayRange(destination, 1) != HISTORY_COLUMNS) {
+      last_library_error = catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(destination, 0) +"]["+ ArrayRange(destination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS);
+      return(last_library_error);
+   }
 
    int    cache.account[1];
    string cache[][HISTORY_COLUMNS];
@@ -718,13 +782,16 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
       if (ArrayRange(cache, 0) > 0) {
          ArrayCopy(destination, cache);
          //Print("GetAccountHistory()  delivering ", ArrayRange(destination, 0), " cached raw history entries for account "+ account);
-         return(catch("GetAccountHistory(2)"));
+         error = GetLastError();
+         if (error != ERR_NO_ERROR)
+            last_library_error = catch("GetAccountHistory(2)", error);
+         return(error);
       }
    }
 
 
    // Cache-Miss, History-Datei auslesen
-   int error, tick = GetTickCount();
+   int tick = GetTickCount();
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","NormalizedProfit","Balance","Comment" };
    ArrayResize(header, HISTORY_COLUMNS);
 
@@ -733,11 +800,12 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    int handle = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (handle < 0) {
       error = GetLastError();
-      if (error == ERR_CANNOT_OPEN_FILE) {
-         Print("GetAccountHistory()  cannot open file \"", filename, "\" - does it exist?");
-         return(error);
+      if (error != ERR_NO_ERROR) {
+         last_library_error = error;
+         if (error == ERR_CANNOT_OPEN_FILE) Print("GetAccountHistory()  cannot open file \"", filename, "\" - does it exist?");
+         else                               catch("GetAccountHistory(3)  FileOpen(filename="+ filename +")", error);
       }
-      return(catch("GetAccountHistory(3)  FileOpen(filename="+ filename +")", error));
+      return(error);
    }
 
    string value;
@@ -819,7 +887,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    // END_OF_FILE Error zurücksetzen
    error = GetLastError();
    if (error != ERR_END_OF_FILE)
-      catch("GetAccountHistory(6)", error);
+      last_library_error = catch("GetAccountHistory(6)", error);
 
    // Datei schließen
    FileClose(handle);
@@ -837,7 +905,11 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    cache.account[0] = account;
    //Print("GetAccountHistory()  cached ", ArrayRange(cache, 0), " raw history entries for account "+ account);
 
-   return(catch("GetAccountHistory(7)"));
+
+   error = GetLastError();
+   if (error != ERR_END_OF_FILE)
+      last_library_error = catch("GetAccountHistory(7)", error);
+   return(error);
 }
 
 
@@ -2896,14 +2968,14 @@ int IncreasePeriod(int period = 0) {
  * @param bool   values[]  - Array mit Ausgangswerten
  * @param string separator - zu verwendender Separator
  *
- * @return string - Gesamtstring
+ * @return string
  */
-string JoinBools(bool& values[], string separator) {        // der Zeiger dient nur der Performancesteigerung
+string JoinBools(bool values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
    ArrayResize(strings, size);
-   
+
    for (int i=0; i < size; i++) {
       if (values[i]) strings[i] = "true";
       else           strings[i] = "false";
@@ -2919,14 +2991,14 @@ string JoinBools(bool& values[], string separator) {        // der Zeiger dient 
  * @param double values[]  - Array mit Ausgangswerten
  * @param string separator - zu verwendender Separator
  *
- * @return string - Gesamtstring
+ * @return string
  */
-string JoinDoubles(double& values[], string separator) {       // der Zeiger dient nur der Performancesteigerung
+string JoinDoubles(double values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
    ArrayResize(strings, size);
-   
+
    for (int i=0; i < size; i++) {
       strings[i] = DoubleToStrTrim(values[i]);
    }
@@ -2941,14 +3013,14 @@ string JoinDoubles(double& values[], string separator) {       // der Zeiger die
  * @param int    values[]  - Array mit Ausgangswerten
  * @param string separator - zu verwendender Separator
  *
- * @return string - Gesamtstring
+ * @return string
  */
-string JoinInts(int& values[], string separator) {       // der Zeiger dient nur der Performancesteigerung
+string JoinInts(int values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
    ArrayResize(strings, size);
-   
+
    for (int i=0; i < size; i++) {
       strings[i] = values[i];
    }
@@ -2963,13 +3035,13 @@ string JoinInts(int& values[], string separator) {       // der Zeiger dient nur
  * @param string values[]  - Array mit Ausgangswerten
  * @param string separator - zu verwendender Separator
  *
- * @return string - Gesamtstring
+ * @return string
  */
-string JoinStrings(string& values[], string separator) {    // der Zeiger dient nur der Performancesteigerung
+string JoinStrings(string values[], string separator) {
    string result = "";
-   
+
    int size = ArraySize(values);
-   
+
    for (int i=1; i < size; i++) {
       result = StringConcatenate(result, separator, values[i]);
    }
@@ -2977,7 +3049,11 @@ string JoinStrings(string& values[], string separator) {    // der Zeiger dient 
       result = StringConcatenate(values[0], result);
    }
 
-   catch("JoinStrings()");
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("JoinStrings()", error);
+      return("");
+   }
    return(result);
 }
 
