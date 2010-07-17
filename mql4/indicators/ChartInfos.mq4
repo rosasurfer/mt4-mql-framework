@@ -15,6 +15,9 @@
 #property indicator_chart_window
 
 
+int init_error = ERR_NO_ERROR;
+
+
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
 extern bool Show.Spread                 = false;      // ob der Spread angezeigt wird (default: ja)
@@ -36,6 +39,15 @@ bool Show.Position = false;
  *
  */
 int init() {
+   init_error = ERR_NO_ERROR;
+
+   // ERR_TERMINAL_NOT_YET_READY abfangen
+   if (!GetAccountNumber()) {
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
+
+
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -65,18 +77,6 @@ int init() {
       start();
       WindowRedraw();
    }
-   
-
-   // ------------------------------------------------------------
-
-   /*
-   string value = GetConfigString("Timezones", "{account-no}", "- no value -");
-   string strings[];
-   Explode(value, ",", strings);
-   Print("init()    config value: ", value, "    joined values: ", JoinStrings(strings, "|"));
-   */
-
-   // ------------------------------------------------------------
 
    return(catch("init()"));
 }
@@ -86,6 +86,13 @@ int init() {
  *
  */
 int start() {
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   if (init_error != ERR_NO_ERROR) {
+      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
+      if (init()     != ERR_NO_ERROR)               return(0);
+   }
+
+
    UpdatePriceLabel();
    UpdateSpreadLabel();
    UpdateUnitSizeLabel();

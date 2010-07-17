@@ -54,8 +54,8 @@ double Band.Limits[3];                       // { UPPER_VALUE, MA_VALUE, LOWER_V
 int init() {
    init_error = ERR_NO_ERROR;
 
-   int account = GetAccountNumber();         // evt. ERR_TERMINAL_NOT_YET_READY
-   if (!account) {
+   // ERR_TERMINAL_NOT_YET_READY abfangen
+   if (!GetAccountNumber()) {
       init_error = GetLastLibraryError();
       return(init_error);
    }
@@ -88,6 +88,7 @@ int init() {
    }
 
    // Positionen
+   int    account  = GetAccountNumber();
    string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
    if (StringContains(","+accounts+",", ","+account+","))
       Track.Positions = true;
@@ -156,7 +157,7 @@ int init() {
  *
  */
 int start() {
-   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder abbrechen (bei anderem Fehler)
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
    if (init_error != ERR_NO_ERROR) {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);

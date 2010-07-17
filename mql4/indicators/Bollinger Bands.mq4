@@ -18,6 +18,9 @@
 #property indicator_style3 STYLE_SOLID
 
 
+int init_error = ERR_NO_ERROR;
+
+
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
@@ -33,13 +36,20 @@ extern int    Max.Values     = 0;            // Anzahl der maximal zu berechnend
 double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
 int    period;                                     // Period-Code zum angegebenen Timeframe
 
-int error = ERR_NO_ERROR;
-
 
 /**
  *
  */
 int init() {
+   init_error = ERR_NO_ERROR;
+
+   // ERR_TERMINAL_NOT_YET_READY abfangen
+   if (!GetAccountNumber()) {
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
+
+
    // Puffer zuordnen
    SetIndexBuffer(0, UpperBand);
    SetIndexBuffer(1, MovingAvg);
@@ -59,13 +69,13 @@ int init() {
 
    // Parameter überprüfen
    if (Periods < 2) {
-      error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
+      init_error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
+      return(init_error);
    }
    period = GetPeriod(Timeframe);
    if (period == 0) {
-      error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
+      init_error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
+      return(init_error);
    }
    switch (MA.Method) {
       case 1: MA.Method = MODE_SMA ; break;
@@ -73,16 +83,16 @@ int init() {
       case 3: MA.Method = MODE_SMMA; break;
       case 4: MA.Method = MODE_LWMA; break;
       default:
-         error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
-         return(error);
+         init_error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
+         return(init_error);
    }
    if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
-      error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
+      init_error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+      return(init_error);
    }
    if (Max.Values < 0) {
-      error = catch("init()  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE);
-      return(error);
+      init_error = catch("init()  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE);
+      return(init_error);
    }
    else if (Max.Values == 0) {
       Max.Values = Bars;
@@ -115,8 +125,15 @@ int init() {
  *
  */
 int start() {
-   if (error != ERR_NO_ERROR) return(error);    // Abbruch bei Parameterfehlern
-   if (Periods < 2)           return(0);        // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   if (init_error != ERR_NO_ERROR) {
+      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
+      if (init()     != ERR_NO_ERROR)               return(0);
+   }
+
+
+   if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)         
+      return(0);        
 
    int processedBars = IndicatorCounted(),
        iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar

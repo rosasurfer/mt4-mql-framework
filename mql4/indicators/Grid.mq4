@@ -8,6 +8,9 @@
 #property indicator_chart_window
 
 
+int init_error = ERR_NO_ERROR;
+
+
 //////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
 
 extern color Grid.Color = LightGray;
@@ -22,6 +25,15 @@ string labels[];     // Object-Labels
  *
  */
 int init() {
+   init_error = ERR_NO_ERROR;
+
+   // ERR_TERMINAL_NOT_YET_READY abfangen
+   if (!GetAccountNumber()) {
+      init_error = GetLastLibraryError();
+      return(init_error);
+   }
+
+
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -44,6 +56,13 @@ int init() {
  *
  */
 int start() {
+   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   if (init_error != ERR_NO_ERROR) {
+      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
+      if (init()     != ERR_NO_ERROR)               return(0);
+   }
+
+
    int processedBars = IndicatorCounted();
 
    if (processedBars == 0)    // erster Aufruf oder nach Data-Pumping: alles neu zeichnen
@@ -72,7 +91,7 @@ int DrawGrid() {
       return(0);
 
    // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
-   string timezone = GetAccountTimezone();
+   string timezone = GetTradeServerTimezone();
    //Print("DrawGrid()   timezone: "+ timezone);
 
    int offset;
@@ -84,7 +103,7 @@ int DrawGrid() {
    else if (timezone == "BST" ) offset =  0;
    else if (timezone == "EST" ) offset = -5;
    else if (timezone == "EDT" ) offset = -5;
-   int hour = TimeHour(GetServerSessionStartTime(TimeCurrent()));
+   int hour = TimeHour(GetTradeServerSessionStart(TimeCurrent()));
 
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));

@@ -213,8 +213,8 @@ int start() {
       // Header schreiben
       string timezone = GetAccountTimezone();
       int iOffset;
-      if      (timezone == "EET" ) iOffset =  2;
-      else if (timezone == "EEST") iOffset =  2;
+      if      (timezone == "EET" ) iOffset =  2;      // Hier sind evt. Fehler in der Timezone-Berechnung unkritisch,
+      else if (timezone == "EEST") iOffset =  2;      // denn das Ergebnis wird nur für den Header verwendet.
       else if (timezone == "CET" ) iOffset =  1;
       else if (timezone == "CEST") iOffset =  1;
       else if (timezone == "GMT" ) iOffset =  0;
