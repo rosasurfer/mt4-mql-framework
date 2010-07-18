@@ -1,5 +1,7 @@
 /**
  * Chart-Grid
+ *
+ * Die Separatoren sind auf der letzten Bar der jeweiligen Session positioniert und tragen das Datum der beginnenden, neuen Session im Label.
  */
 
 #include <stdlib.mqh>
@@ -56,17 +58,23 @@ int init() {
  *
  */
 int start() {
-   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   static bool redraw = false;
+   if (IndicatorCounted() == 0)     // nach Chartänderung Flag für Neuzeichnen setzen
+      redraw = true;
+
+
+   // falls init() Fehler zurückgegeben hat, abbrechen oder bei ERR_TERMINAL_NOT_YET_READY nochmal aufrufen
    if (init_error != ERR_NO_ERROR) {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
+   // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
-   int processedBars = IndicatorCounted();
-
-   if (processedBars == 0)    // erster Aufruf oder nach Data-Pumping: alles neu zeichnen
+   if (redraw) {                    // Grid neu zeichnen
       DrawGrid();
+      redraw = false;
+   }
 
    return(catch("start()"));
 }
@@ -103,6 +111,8 @@ int DrawGrid() {
    else if (timezone == "BST" ) offset =  0;
    else if (timezone == "EST" ) offset = -5;
    else if (timezone == "EDT" ) offset = -5;
+   //Print("DrawGrid()     timezone: "+ timezone +"      offset: "+ offset);
+
    int hour = TimeHour(GetTradeServerSessionStart(TimeCurrent()));
 
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
@@ -112,42 +122,54 @@ int DrawGrid() {
    //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(from, false) +" "+ TimeToStr(from) +"  to: "+ GetDayOfWeek(to, false) +" "+ TimeToStr(to));
 
 
-   string day, dd, mm, yyyy, label, lastLabel;
-   int bar, lastBar;
-   int time, chartTime;
+   datetime time, eetSessionStart, separatorTime, chartTime, serverTime = TimeCurrent();
+   string   day, dd, mm, yyyy, label, lastLabel;
+   int      bar, lastBar;
+   bool     weeklyDone;
 
    // Separator zeichnen
    for (time=from; time <= to; time+=1*DAY) {
-      day = GetDayOfWeek(time - offset*HOURS + 2*HOURS, false);
-
-      // TODO: Labels mit Sa+So in der Zukunft auf nächsten Wochentag shiften
+      eetSessionStart = time - offset*HOURS + 2*HOURS;   // GMT+0200 entspricht Datumsgrenze (Servertime - Offset + 2 h = 00:00)
+      day = GetDayOfWeek(eetSessionStart, false);
 
       // Wochenenden überspringen
-      if (day=="Sat") continue;  // conditions für MQL optimiert
-      if (day=="Sun") continue;
+      if (day == "Sat") {
+         time            += 2*DAY;
+         eetSessionStart += 2*DAY;
+         day              = "Mon";
+      }
 
-      // Tagesseparatoren bei Perioden größer H1 überspringen (nur Wochenseparatoren)
-      if (Period() > PERIOD_H1) if (day != "Mon")
-         continue;
+      // bei Perioden größer H1 nur den ersten Wochentag anzeigen (Wochenseparatoren)
+      if (Period() > PERIOD_H1) {
+         if (day == "Mon") {
+         }
+         else {
+            continue;      // TODO: Fehler, wenn Montag Feiertag ist
+         }
+      }
 
-      // Label des Separators (Datum des Handelstages) zusammenstellen (Servertime - Offset + 2 h = 00:00)
-      label = TimeToStr(time - offset*HOURS + 2*HOURS);
+      // Label des Separators (Datum des Handelstages) zusammenstellen
+      label = TimeToStr(eetSessionStart);
          dd   = StringSubstr(label, 8, 2);
          mm   = StringSubstr(label, 5, 2);
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
-      // Existiert zum Zeitpunkt time keine Bar, zeichnet MetaTrader den Separator fälschlicherweise in die vorhergehende Session.
-      // Daher muß für den time-Parameter des Separators der Zeitpunkt der ersten tatsächlichen Bar der betreffenden Session ermittelt werden.
-      bar = iBarShiftNext(NULL, 0, time);
-      if (bar == -1) {                 // Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
-         chartTime = time;
+      separatorTime = time-1*MINUTE;
+
+      if (separatorTime > serverTime) {      // Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
+         bar = -1;
+         chartTime = separatorTime;
+         if (day == "Mon")
+            chartTime -= 2*DAY;
       }
-      else {
-         if (lastBar == bar)           // mindestens eine komplette Session fehlt, am wahrscheinlichsten wegen eines Feiertags
-            ObjectDelete(lastLabel);   // Separator für die fehlende Session wieder löschen
-         chartTime = Time[bar];        // Separator liegt nicht in der Zukunft, die Zeit der ersten tatsächlichen Session-Bar wird verwendet
+      else {                                 // Separator liegt nicht in der Zukunft, die Zeit der letzten tatsächlichen Session-Bar wird verwendet
+         bar = iBarShift(NULL, 0, separatorTime, false);
+         chartTime = Time[bar];
       }
+
+      if (lastBar == bar)                    // mindestens eine komplette Session fehlt, am wahrscheinlichsten wegen eines Feiertags
+         ObjectDelete(lastLabel);            // Separator für die fehlende Session wieder löschen
 
       ObjectDelete(label); GetLastError();
       if (!ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0))
@@ -158,7 +180,7 @@ int DrawGrid() {
 
       RegisterChartObject(label, labels);
 
-      lastLabel = label;   // letzte Separatordaten für Feiertagserkenung merken
+      lastLabel = label;                     // letzte Separatordaten für Feiertagserkenung merken
       lastBar   = bar;
    }
 

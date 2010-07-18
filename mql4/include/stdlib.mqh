@@ -60,6 +60,7 @@
    string   GetPeriodFlagDescription(int flags);
    datetime GetTradeServerSessionStart(datetime time);
    string   GetTradeServerTimezone();
+   string   GetTradeServerTimezones();
    int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);

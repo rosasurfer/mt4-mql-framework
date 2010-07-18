@@ -125,15 +125,15 @@ int init() {
  *
  */
 int start() {
-   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   // falls init() Fehler zurückgegeben hat, abbrechen oder bei ERR_TERMINAL_NOT_YET_READY nochmal aufrufen
    if (init_error != ERR_NO_ERROR) {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
 
-   if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)         
-      return(0);        
+   if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+      return(0);
 
    int processedBars = IndicatorCounted(),
        iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar

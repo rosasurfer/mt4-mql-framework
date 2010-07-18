@@ -2168,6 +2168,7 @@ string GetWindowsErrorDescription(int error) {
       case ERROR_TIMEOUT                  : return("This operation returned because the timeout period expired."                                                                                                                   );
       case ERROR_INVALID_MONITOR_HANDLE   : return("Invalid monitor handle."                                                                                                                                                       );
 
+      /*
       // Eventlog Status Codes
       case ERROR_EVENTLOG_FILE_CORRUPT    : return("The event log file is corrupted."                                                                                                                                              );
       case ERROR_EVENTLOG_CANT_START      : return("No event log file could be opened, so the event logging service did not start."                                                                                                );
@@ -2503,6 +2504,7 @@ string GetWindowsErrorDescription(int error) {
       case ERROR_NO_USER_KEYS             : return("There are no EFS keys defined for the user."                                                                                                                                   );
       case ERROR_FILE_NOT_ENCRYPTED       : return("The specified file is not encrypted."                                                                                                                                          );
       case ERROR_NOT_EXPORT_FORMAT        : return("The specified file is not in the defined EFS export format."                                                                                                                   );
+      */      
    }
    return("unknown error");
 }
@@ -2815,9 +2817,9 @@ int GetTopWindow() {
 
 
 /**
- * Gibt die Zeitzonen-ID des aktuellen Tradeservers zurück.
+ * Gibt je nach Sommer- oder Winterzeit die aktuelle Zeitzonen-ID des Tradeservers zurück.
  *
- * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat (muß mit GetLastLibraryError() abgefragt werden)
+ * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat
  *
  *
  * NOTE:
@@ -2826,18 +2828,57 @@ int GetTopWindow() {
  * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
  */
 string GetTradeServerTimezone() {
+   string timezones = GetTradeServerTimezones();
+   if (timezones == "")
+      return("");
+
+   string ids[];
+   Explode(timezones, ",", ids);
+   
+   int size = ArraySize(ids);
+
+   if (size == 1)          // dieselbe Zone für Sommer und Winter
+      return(ids[0]);
+
+   if      (ids[1] == "EEST") {
+   }
+   else if (ids[1] == "CEST") {
+   }
+   else if (ids[1] == "EDT") {
+   }
+   else {
+      last_library_error = catch("GetTradeServerTimezone()  daylight saving algorythm not found for timezone "+ ids[1], ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   return(ids[0]);
+}
+
+
+/**
+ * Gibt die Zeitzonen-IDs des Tradeservers für Sommer- und Winterzeit zurück.
+ *
+ * @return string - Timezone-IDs oder Leerstring, falls ein Fehler auftrat
+ *
+ *
+ * NOTE:
+ * -----
+ * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
+ * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
+ */
+string GetTradeServerTimezones() {
    string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
    if (account == "0")
       return("");
 
-   string timezone = GetConfigString("Timezones", account, "");
+   string timezones = GetConfigString("Timezones", account, "");
 
-   if (timezone == "") {
-      last_library_error = catch("GetTradeServerTimezone()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+   if (timezones == "") {
+      last_library_error = catch("GetTradeServerTimezones()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
    }
 
-   return(timezone);
+   return(timezones);
 }
 
 

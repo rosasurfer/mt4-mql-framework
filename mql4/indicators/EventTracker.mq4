@@ -69,7 +69,7 @@ int init() {
       ArrayInitialize(Grid.Limits, 0);
       ArrayInitialize(Band.Limits, 0);
    }
-   
+
 
    // Konfiguration auswerten
    string instrument   = GetGlobalConfigString("Instruments", Symbol(), Symbol());
@@ -139,7 +139,7 @@ int init() {
    if (Track.PivotLevels)
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
-   
+
    //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", Grid.Size, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
 
 
@@ -157,7 +157,7 @@ int init() {
  *
  */
 int start() {
-   // falls init() ERR_TERMINAL_NOT_YET_READY zurückgegeben hat, nochmal aufrufen oder bei anderem Fehler abbrechen
+   // falls init() Fehler zurückgegeben hat, abbrechen oder bei ERR_TERMINAL_NOT_YET_READY nochmal aufrufen
    if (init_error != ERR_NO_ERROR) {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
@@ -371,7 +371,7 @@ int CheckGrid() {
    else if (Bid < Grid.Limits[0]) {
       message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(Grid.Limits[0], 4));
       bid     = FormatPrice(Bid, Digits);
-      
+
       // zuerst SMS, dann Sound
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));

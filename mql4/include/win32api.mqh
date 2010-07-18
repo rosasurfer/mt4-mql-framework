@@ -967,6 +967,7 @@
 #define ERROR_TIMEOUT                              1460
 #define ERROR_INVALID_MONITOR_HANDLE               1461
 
+/*
 // Eventlog Status Codes
 #define ERROR_EVENTLOG_FILE_CORRUPT                1500
 #define ERROR_EVENTLOG_CANT_START                  1501
@@ -1300,3 +1301,4 @@
 #define ERROR_NO_USER_KEYS                         6006
 #define ERROR_FILE_NOT_ENCRYPTED                   6007
 #define ERROR_NOT_EXPORT_FORMAT                    6008
+*/
