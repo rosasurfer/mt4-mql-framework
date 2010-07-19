@@ -122,7 +122,7 @@ int DrawGrid() {
    //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(from, false) +" "+ TimeToStr(from) +"  to: "+ GetDayOfWeek(to, false) +" "+ TimeToStr(to));
 
 
-   datetime time, eetSessionStart, separatorTime, chartTime, serverTime = TimeCurrent();
+   datetime time, eetSessionStart, chartTime, serverTime = TimeCurrent();
    string   day, dd, mm, yyyy, label, lastLabel;
    int      bar, lastBar;
    bool     weeklyDone;
@@ -155,16 +155,14 @@ int DrawGrid() {
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
-      separatorTime = time-1*MINUTE;
-
-      if (separatorTime > serverTime) {      // Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
+      if (time > serverTime) {               // aktuelle Session, Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
          bar = -1;
-         chartTime = separatorTime;
+         chartTime = time-1*MINUTE;
          if (day == "Mon")
             chartTime -= 2*DAY;
       }
       else {                                 // Separator liegt nicht in der Zukunft, die Zeit der letzten tatsächlichen Session-Bar wird verwendet
-         bar = iBarShift(NULL, 0, separatorTime, false);
+         bar = iBarShift(NULL, 0, time-1*MINUTE, false);
          chartTime = Time[bar];
       }
 
