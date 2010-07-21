@@ -442,9 +442,10 @@ int InitializeGrid() {
    double gridSize = Grid.Size / 10000.0;
    int    faktor   = MathFloor((Bid+Ask) / 2.0 / gridSize);
 
-   Grid.Limits[0] = NormalizeDouble(gridSize * faktor, 4);
+   Grid.Limits[0] = NormalizeDouble(gridSize * faktor    , 4);
    Grid.Limits[1] = NormalizeDouble(gridSize * (faktor+1), 4);             // Abstand: 1 x GridSize
 
+   /*
    // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    bool up=false, down=false;
    int error, period=Period();                                             // Ausgangsbasis ist der aktuelle Timeframe
@@ -476,6 +477,7 @@ int InitializeGrid() {
    }
    if (down) Grid.Limits[0] = NormalizeDouble(Grid.Limits[0] - gridSize, 4);
    if (up  ) Grid.Limits[1] = NormalizeDouble(Grid.Limits[1] + gridSize, 4);
+   */
 
    Print("InitializeGrid()   Grid initialized: ", DoubleToStr(Grid.Limits[0], 4), "  <=>  ", DoubleToStr(Grid.Limits[1], 4));
    return(catch("InitializeGrid(3)"));
