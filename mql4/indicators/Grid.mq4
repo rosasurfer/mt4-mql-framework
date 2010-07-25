@@ -58,8 +58,12 @@ int init() {
  *
  */
 int start() {
+   int processedBars = IndicatorCounted();
+   
+
+   // nach Chartänderung Flag für Neuzeichnen setzen
    static bool redraw = false;
-   if (IndicatorCounted() == 0)     // nach Chartänderung Flag für Neuzeichnen setzen
+   if (processedBars == 0)     
       redraw = true;
 
 
@@ -72,8 +76,8 @@ int start() {
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
    if (redraw) {                    // Grid neu zeichnen
-      DrawGrid();
       redraw = false;
+      DrawGrid();
    }
 
    return(catch("start()"));
