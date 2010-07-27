@@ -10,7 +10,8 @@
 #property indicator_chart_window
 
 
-int init_error = ERR_NO_ERROR;
+bool init       = false;
+int  init_error = ERR_NO_ERROR;
 
 
 //////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
@@ -27,6 +28,7 @@ string labels[];     // Object-Labels
  *
  */
 int init() {
+   init = true;
    init_error = ERR_NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
@@ -59,19 +61,23 @@ int init() {
  */
 int start() {
    int processedBars = IndicatorCounted();
-   
 
    // nach Chartänderung Flag für Neuzeichnen setzen
    static bool redraw = false;
-   if (processedBars == 0)     
+   if (processedBars == 0)
       redraw = true;
 
 
-   // falls init() Fehler zurückgegeben hat, abbrechen oder bei ERR_TERMINAL_NOT_YET_READY nochmal aufrufen
-   if (init_error != ERR_NO_ERROR) {
+   // init() nach Fehler ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init) {                                      // 1. Aufruf
+      init = false;
+      if (init_error != ERR_NO_ERROR)               return(0);
+   }
+   else if (init_error != ERR_NO_ERROR) {           // neuer Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
+
 
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 

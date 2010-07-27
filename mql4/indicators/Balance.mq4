@@ -13,7 +13,8 @@
 #property indicator_width1  2
 
 
-int init_error = ERR_NO_ERROR;
+bool init       = false;
+int  init_error = ERR_NO_ERROR;
 
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
@@ -30,6 +31,7 @@ double Balance[];
  *
  */
 int init() {
+   init = true;
    init_error = ERR_NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
@@ -65,8 +67,12 @@ int init() {
  *
  */
 int start() {
-   // falls init() Fehler zurückgegeben hat, abbrechen oder bei ERR_TERMINAL_NOT_YET_READY nochmal aufrufen
-   if (init_error != ERR_NO_ERROR) {
+   // init() nach Fehler ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init) {                                      // 1. Aufruf
+      init = false;
+      if (init_error != ERR_NO_ERROR)               return(0);
+   }
+   else if (init_error != ERR_NO_ERROR) {           // neuer Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
