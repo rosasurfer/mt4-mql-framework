@@ -1,7 +1,8 @@
 /**
  * Chart-Grid
  *
- * Die Separatoren sind auf der letzten Bar der jeweiligen Session positioniert und tragen das Datum der beginnenden, neuen Session im Label.
+ * Die vertikalen Separatoren sind auf der letzten Bar der jeweiligen Session positioniert und tragen im Label das Datum
+ * der neuen, beginnenden Session.
  */
 
 #include <stdlib.mqh>
@@ -109,22 +110,7 @@ int DrawGrid() {
       return(0);
 
    // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
-   string timezone = GetTradeServerTimezone();
-   //Print("DrawGrid()   timezone: "+ timezone);
-
-   int offset;
-   if      (timezone == "EET" ) offset =  2;
-   else if (timezone == "EEST") offset =  2;
-   else if (timezone == "CET" ) offset =  1;
-   else if (timezone == "CEST") offset =  1;
-   else if (timezone == "GMT" ) offset =  0;
-   else if (timezone == "BST" ) offset =  0;
-   else if (timezone == "EST" ) offset = -5;
-   else if (timezone == "EDT" ) offset = -5;
-   //Print("DrawGrid()     timezone: "+ timezone +"      offset: "+ offset);
-
-   int hour = TimeHour(GetTradeServerSessionStart(TimeCurrent()));
-
+   int      hour = TimeHour(GetTradeServerSessionStart(TimeCurrent()));
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
    if (from <  Time[Bars-1]) from += 1*DAY;
@@ -137,9 +123,21 @@ int DrawGrid() {
    int      bar, lastBar;
    bool     weeklyDone;
 
+   string timezone = GetTradeServerTimezone();
+   int offset;
+   if      (timezone == "EET" ) offset =  2;
+   else if (timezone == "EEST") offset =  2;
+   else if (timezone == "CET" ) offset =  1;
+   else if (timezone == "CEST") offset =  1;
+   else if (timezone == "GMT" ) offset =  0;
+   else if (timezone == "BST" ) offset =  0;
+   else if (timezone == "EST" ) offset = -5;
+   else if (timezone == "EDT" ) offset = -5;
+   //Print("DrawGrid()     timezone: "+ timezone +"      offset: "+ offset);
+
    // Separator zeichnen
    for (time=from; time <= to; time+=1*DAY) {
-      eetSessionStart = time - offset*HOURS + 2*HOURS;   // GMT+0200 entspricht Datumsgrenze (Servertime - Offset + 2 h = 00:00)
+      eetSessionStart = time - offset*HOURS + 2*HOURS;   // EET = GMT+0200 = Datumsgrenze
       day = GetDayOfWeek(eetSessionStart, false);
 
       // Wochenenden überspringen
@@ -150,13 +148,8 @@ int DrawGrid() {
       }
 
       // bei Perioden größer H1 nur den ersten Wochentag anzeigen (Wochenseparatoren)
-      if (Period() > PERIOD_H1) {
-         if (day == "Mon") {
-         }
-         else {
-            continue;      // TODO: Fehler, wenn Montag Feiertag ist
-         }
-      }
+      if (Period() > PERIOD_H1) if (day != "Mon")
+         continue;                                       // TODO: Fehler, wenn Montag Feiertag ist
 
       // Label des Separators (Datum des Handelstages) zusammenstellen
       label = TimeToStr(eetSessionStart);

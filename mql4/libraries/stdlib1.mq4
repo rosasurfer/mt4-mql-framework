@@ -2817,7 +2817,7 @@ int GetTopWindow() {
 
 
 /**
- * Gibt je nach Sommer- oder Winterzeit die aktuelle Zeitzonen-ID des Tradeservers zurück.
+ * Gibt die aktuelle Zeitzone des Tradeservers zurück.
  *
  * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat
  *
