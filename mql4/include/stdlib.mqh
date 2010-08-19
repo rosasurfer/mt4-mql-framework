@@ -53,6 +53,7 @@
    string   GetMetaTraderDirectory();
    string   GetModuleDirectoryName();
    int      GetMovingAverageMethod(string description);
+   datetime GetNewYorkTime(datetime serverTime);
    string   GetOperationTypeDescription(int operationType);
    int      GetPeriod(string description);
    string   GetPeriodDescription(int period);
@@ -60,7 +61,7 @@
    string   GetPeriodFlagDescription(int flags);
    datetime GetTradeServerSessionStart(datetime time);
    string   GetTradeServerTimezone();
-   string   GetTradeServerTimezones();
+   string   GetServerTimezones();
    int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);
