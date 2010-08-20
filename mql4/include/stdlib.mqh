@@ -30,7 +30,6 @@
    string   FormatPrice(double price, int digits);
    int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
-   string   GetAccountTimezone();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
@@ -58,9 +57,9 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
+   int      GetServerTimezones(string& zones[]);
    datetime GetTradeServerSessionStart(datetime time);
    string   GetTradeServerTimezone();
-   string   GetTradeServerTimezones();
    int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);
@@ -85,6 +84,7 @@
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
+   datetime ServerToEasternTime(datetime serverTime);
    int      SetWindowText(int hWnd, string text);
    bool     StringContains(string object, string substring);
    bool     StringICompare(string string1, string string2);

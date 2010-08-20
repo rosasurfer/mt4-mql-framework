@@ -15,8 +15,8 @@ int last_library_error = ERR_NO_ERROR;
 /**
  * Korrekter Vergleich zweier Doubles.
  *
- * @param double1 - erster Wert
- * @param double2 - zweiter Wert
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
  *
  * @return bool - TRUE, wenn die Werte gleich sind; FALSE andererseits
  */
@@ -28,7 +28,7 @@ bool CompareDoubles(double double1, double double2) {
 /**
  * Gibt die hexadezimale Representation eines Integers zurück.
  *
- * @param int i - Integer
+ * @param  int i - Integer
  *
  * @return string - hexadezimaler Wert
  *
@@ -56,7 +56,7 @@ string DecimalToHex(int i) {
 /**
  * Gibt die nächstkleinere Periode der angegebenen Periode zurück.
  *
- * @param int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
+ * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
  * @return int - nächstkleinere Periode oder der ursprüngliche Wert, wenn keine kleinere Periode existiert
  */
@@ -84,7 +84,7 @@ int DecreasePeriod(int period = 0) {
 /**
  * Konvertiert einen Double in einen String und entfernt abschließende Nullstellen.
  *
- * @param double value - Double
+ * @param  double value - Double
  *
  * @return string
  */
@@ -117,9 +117,9 @@ string DoubleToStrTrim(double value) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
  *
- * @param int  event     - Event
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int  event     - Event
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -144,8 +144,8 @@ bool EventListener(int event, int& results[], int flags=0) {
 /**
  * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
  *
- * @param int& results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ * @param  int& results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
  *
  * @return bool - Ergebnis
  */
@@ -216,8 +216,8 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -241,8 +241,8 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -266,8 +266,8 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -291,8 +291,8 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
  *
- * @param int& tickets[] - Resultarray für neu geöffnete Positionen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& tickets[] - Resultarray für neu geöffnete Positionen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  *
@@ -383,8 +383,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist.
  *
- * @param int& tickets[] - Resultarray für Ticket-Nummern geschlossener Positionen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& tickets[] - Resultarray für Ticket-Nummern geschlossener Positionen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  *
@@ -468,8 +468,8 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -493,8 +493,8 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -518,8 +518,8 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
  *
- * @param int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
@@ -546,7 +546,7 @@ static double EventTracker.bandLimits[3];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& destination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double& destination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
@@ -573,7 +573,7 @@ bool EventTracker.GetBandLimits(double& destination[]) {
  * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& limits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double& limits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
@@ -597,7 +597,7 @@ static double EventTracker.gridLimits[2];
  * Gibt die aktuellen Grid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& destination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
+ * @param  double& destination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
@@ -623,7 +623,7 @@ bool EventTracker.GetGridLimits(double& destination[]) {
  * Setzt die aktuellen Grid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param double& limits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
+ * @param  double& limits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
@@ -643,9 +643,9 @@ bool EventTracker.SetGridLimits(double& limits[]) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param string  subject   - zu zerlegender String
- * @param string  separator - Trennstring
- * @param string& results[] - Zielarray für die Teilstrings
+ * @param  string  subject   - zu zerlegender String
+ * @param  string  separator - Trennstring
+ * @param  string& results[] - Zielarray für die Teilstrings
  *
  * @return int - Fehlerstatus
  */
@@ -695,7 +695,7 @@ int Explode(string subject, string separator, string& results[]) {
 /**
  * Formatiert einen Währungsbetrag.
  *
- * @param double value - Betrag
+ * @param  double value - Betrag
  *
  * @return string
  */
@@ -761,8 +761,8 @@ string FormatPrice(double price, int digits) {
 /**
  * Liest die History eines Accounts aus dem Dateisystem in das übergebene Zielarray ein.  Die Datensätze werden als Strings (Rohdaten) zurückgegeben.
  *
- * @param int     account                        - Account-Nummer
- * @param string& destination[][HISTORY_COLUMNS] - Zeiger auf ein zweidimensionales Array
+ * @param  int     account                        - Account-Nummer
+ * @param  string& destination[][HISTORY_COLUMNS] - Zeiger auf ein zweidimensionales Array
  *
  * @return int - Fehlerstatus
  */
@@ -959,27 +959,9 @@ int GetAccountNumber() {
 
 
 /**
- * Alias für GetTradeServerTimezone()
- *
- * Gibt die Zeitzonen-ID des aktuellen Accounts zurück.
- *
- * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat (muß mit GetLastLibraryError() abgefragt werden)
- *
- *
- * NOTE:
- * -----
- * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
- * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
- */
-string GetAccountTimezone() {
-   return(GetTradeServerTimezone());
-}
-
-
-/**
  * Gibt den durchschnittlichen Spread des angegebenen Instruments zurück.
  *
- * @param string symbol - Instrument
+ * @param  string symbol - Instrument
  *
  * @return double - Spread
  */
@@ -1002,9 +984,9 @@ double GetAverageSpread(string symbol) {
 /**
  * Schreibt die Balance-History eines Accounts in die angegebenen Zielarrays. Die Werte sind aufsteigend nach Zeitpunkt sortiert.
  *
- * @param int       account  - Account-Nummer
- * @param datetime& times[]  - Zeiger auf ein Array zur Aufnahme der Zeitpunkte der Balanceänderung
- * @param double&   values[] - Zeiger auf ein Array zur Aufnahme der Balance zum jeweiligen Zeitpunkt
+ * @param  int       account  - Account-Nummer
+ * @param  datetime& times[]  - Zeiger auf ein Array zur Aufnahme der Zeitpunkte der Balanceänderung
+ * @param  double&   values[] - Zeiger auf ein Array zur Aufnahme der Balance zum jeweiligen Zeitpunkt
  *
  * @return int - Fehlerstatus
  */
@@ -1115,9 +1097,9 @@ string GetComputerName() {
  * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
  * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return bool - Konfigurationswert
  */
@@ -1151,9 +1133,9 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  * Gibt einen Konfigurationswert als Double zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
  * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return double - Konfigurationswert
  */
@@ -1186,9 +1168,9 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
  * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
  * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return int - Konfigurationswert
  */
@@ -1218,9 +1200,9 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
  * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return string - Konfigurationswert
  */
@@ -1250,9 +1232,9 @@ string GetConfigString(string section, string key, string defaultValue="") {
 /**
  * Gibt einen globalen Konfigurationswert als Boolean zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return bool - Konfigurationswert
  */
@@ -1281,9 +1263,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 /**
  * Gibt einen globalen Konfigurationswert als Double zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return double - Konfigurationswert
  */
@@ -1310,9 +1292,9 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 /**
  * Gibt einen globalen Konfigurationswert als Integer zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return int - Konfigurationswert
  */
@@ -1335,9 +1317,9 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 /**
  * Gibt einen globalen Konfigurationswert als String zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return string - Konfigurationswert
  */
@@ -1374,9 +1356,9 @@ int GetLastLibraryError() {
 /**
  * Gibt einen lokalen Konfigurationswert als Boolean zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return bool - Konfigurationswert
  */
@@ -1405,9 +1387,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 /**
  * Gibt einen lokalen Konfigurationswert als Double zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return double - Konfigurationswert
  */
@@ -1434,9 +1416,9 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 /**
  * Gibt einen lokalen Konfigurationswert als Integer zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return int - Konfigurationswert
  */
@@ -1459,9 +1441,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 /**
  * Gibt einen lokalen Konfigurationswert als String zurück.
  *
- * @param string section      - Name des Konfigurationsabschnittes
- * @param string key          - Konfigurationsschlüssel
- * @param string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return string - Konfigurationswert
  */
@@ -1486,9 +1468,9 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 /**
  * Gibt den Wochentag des angegebenen Zeitpunkts zurück.
  *
- * @param datetime time - Zeitpunkt
- * @param bool     long - TRUE, um die Langform zurückzugeben (default)
- *                        FALSE, um die Kurzform zurückzugeben
+ * @param  datetime time - Zeitpunkt
+ * @param  bool     long - TRUE, um die Langform zurückzugeben (default)
+ *                         FALSE, um die Kurzform zurückzugeben
  *
  * @return string - Wochentag
  */
@@ -1507,7 +1489,7 @@ string GetDayOfWeek(datetime time, bool long=true) {
 /**
  * Gibt eine lesbare Beschreibung eines MQL-Fehlercodes zurück.
  *
- * @param int error - MQL-Fehlercode
+ * @param  int error - MQL-Fehlercode
  *
  * @return string - lesbare Beschreibung
  */
@@ -1625,7 +1607,7 @@ string GetErrorDescription(int error) {
 /**
  * Gibt die lesbare Beschreibung eines Windows-Fehlercodes zurück.
  *
- * @param int error - Win32-Fehlercode
+ * @param  int error - Win32-Fehlercode
  *
  * @return string - lesbare Beschreibung
  */
@@ -2504,7 +2486,7 @@ string GetWindowsErrorDescription(int error) {
       case ERROR_NO_USER_KEYS             : return("There are no EFS keys defined for the user."                                                                                                                                   );
       case ERROR_FILE_NOT_ENCRYPTED       : return("The specified file is not encrypted."                                                                                                                                          );
       case ERROR_NOT_EXPORT_FORMAT        : return("The specified file is not in the defined EFS export format."                                                                                                                   );
-      */      
+      */
    }
    return("unknown error");
 }
@@ -2513,7 +2495,7 @@ string GetWindowsErrorDescription(int error) {
 /**
  * Gibt die lesbare Version eines Events zurück.
  *
- * @param int event - Event
+ * @param  int event - Event
  *
  * @return string - lesbare Version
  */
@@ -2583,7 +2565,7 @@ string GetModuleDirectoryName() {
 /**
  * Gibt den numerischen Code einer MovingAverage-Methode zurück.
  *
- * @param string description - MA-Methode (SMA, EMA, SMMA, LWMA, MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
+ * @param  string description - MA-Methode (SMA, EMA, SMMA, LWMA, MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
  *
  * @return int - MA-Code
  */
@@ -2607,7 +2589,7 @@ int GetMovingAverageMethod(string description) {
 /**
  * Gibt die lesbare Version eines Operation-Types zurück.
  *
- * @param int type - Operation-Type
+ * @param  int type - Operation-Type
  *
  * @return string - lesbare Version
  */
@@ -2631,7 +2613,7 @@ string GetOperationTypeDescription(int type) {
 /**
  * Gibt den Code einer Timeframe-Beschreibung zurück.
  *
- * @param string description - Timeframe-Beschreibung (M1, M5, M15, M30 etc.)
+ * @param  string description - Timeframe-Beschreibung (M1, M5, M15, M30 etc.)
  *
  * @return int - Timeframe-Code
  */
@@ -2656,7 +2638,7 @@ int GetPeriod(string description) {
 /**
  * Gibt die lesbare Version eines Timeframe-Codes zurück.
  *
- * @param int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: Periode des aktuellen Charts)
+ * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: Periode des aktuellen Charts)
  *
  * @return string - lesbare Version
  */
@@ -2684,7 +2666,7 @@ string GetPeriodDescription(int period=0) {
 /**
  * Gibt das Timeframe-Flag der angegebenen Chartperiode zurück.
  *
- * @param int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
+ * @param  int period - Timeframe-Identifier (default: Periode des aktuellen Charts)
  *
  * @return int - Timeframe-Flag
  */
@@ -2712,7 +2694,7 @@ int GetPeriodFlag(int period=0) {
 /**
  * Gibt die lesbare Version eines Timeframe-Flags zurück.
  *
- * @param int flags - binäre Kombination verschiedener Timeframe-Flags
+ * @param  int flags - binäre Kombination verschiedener Timeframe-Flags
  *
  * @return string - lesbare Version
  */
@@ -2736,21 +2718,87 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
+ * Liest die Zeitzoneninfos des Tradeservers in das angegebene Array ein.
+ *
+ * @param  string& zoneInfos[] - Zeiger auf ein Array mit zwei Elementen (Winterzeit-/Sommerzeit-Infos)
+ * @return int     Fehlerstatus
+ */
+int GetServerTimezones(string& zones[2]) {
+   if (ArrayRange(zones, 0) > 2) {
+      last_library_error = catch("GetServerTimezones(1)  invalid parameter zones["+ ArrayRange(zones, 0) +"]", ERR_INCOMPATIBLE_ARRAYS);
+      return(last_library_error);
+   }
+   if (ArrayRange(zones, 0) != 2)
+      ArrayResize(zones, 2);
+
+   string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
+   if (account == "0")
+      return(last_library_error);
+
+   string configValue = GetConfigString("Timezones", account, "");
+   if (configValue == "") {
+      last_library_error = catch("GetServerTimezones(2)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      return(last_library_error);
+   }
+
+   string ids[];
+   Explode(configValue, ",", ids);
+
+   int size = ArraySize(ids);
+   if (size > 2) {
+      last_library_error = catch("GetServerTimezones(3)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      return(last_library_error);
+   }
+   if (size == 2) if (ids[0] == ids[1]) {
+      ArrayResize(ids, 1);
+      size = 1;
+   }
+   string timezones = JoinStrings(ids, ",");
+
+   if      (timezones == "EET"     ) {}   // Eastern European Time                                    GMT+0200
+   else if (timezones == "EET,EEST") {}   // Eastern European Time, Eastern European Summer Time      GMT+0200,GMT+0300
+   else if (timezones == "CET"     ) {}   // Central European Time                                    GMT+0100
+   else if (timezones == "CET,CEST") {}   // Central European Time, Central European Summer Time      GMT+0100,GMT+0200
+   else if (timezones == "GMT"     ) {}   // Greenwich Mean Time                                      GMT+0000
+   else if (timezones == "GMT,BST" ) {}   // Greenwich Mean Time, British Summer Time                 GMT+0000,GMT+0100
+   else if (timezones == "EST"     ) {}   // Eastern Standard Time                                    GMT-0500
+   else if (timezones == "EST,EDT" ) {}   // Eastern Standard Time, Eastern Daylight Saving Time      GMT-0500,GMT-0400
+   else {
+      last_library_error = catch("GetServerTimezones(4)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      return(last_library_error);
+   }
+
+   if (size == 1) {        // dieselbe Zone für Sommer- und Winterzeit
+      zones[0] = ids[0];
+      zones[1] = ids[0];
+   }
+   else {
+      zones[0] = ids[0];
+      zones[1] = ids[1];
+   }
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR)
+      last_library_error = catch("GetServerTimezones(4)", error);
+   return(error);
+}
+
+
+/**
  * Gibt die Startzeit der Handelssession des angegebenen Zeitpunkts zurück.
  *
- * @param datetime time - Zeitpunkt (Tradeserverzeit)
+ * @param  datetime time - Zeitpunkt (Tradeserverzeit)
  *
  * @return datetime - Zeitpunkt (Tradeserverzeit) oder -1, wenn ein Fehler auftrat
  *
  *
  * NOTE:
  * ----
- * Handelssessions beginnen immer um 17:00 New Yorker Zeit. Dabei spielt es keine Rolle, ob dort gerade Standard- oder
- * Sommerzeit aktuell ist.  Handelsschluß der Geschäftsbanken am Wochenende ist um 16:00 New Yorker Zeit, Wochenhandels-
- * schluß im Interbankenmarkt um 17:00.
+ * Die Handelssessions beginnen immer um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit ist.
+ * Wochenhandelsschluß der Geschäftsbanken ist um 16:00 New Yorker Zeit, Wochenhandelsschluß im Interbankenmarkt um 17:00.
  *
- * Sommer- oder Winterzeiten des Tradeservers oder lokale Zeiten sind für den Sessionbeginn irrelevant, beim Umrechnen
- * müssen jedoch die verschiedenen Zeitpunkte des Wechsels von Normal- zu Sommerzeit berücksichtigt werden.
+ * Sommer- oder Winterzeiten des Tradeservers sind für den Sessionbeginn irrelevant, beim Umrechnen müssen jedoch die
+ * verschiedenen Zeitpunkte des Wechsels von Normal- zu Sommerzeit berücksichtigt werden.
  */
 datetime GetTradeServerSessionStart(datetime time) {
    // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
@@ -2820,72 +2868,21 @@ int GetTopWindow() {
  * Gibt die aktuelle Zeitzone des Tradeservers zurück.
  *
  * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat
- *
- *
- * NOTE:
- * -----
- * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
- * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
  */
 string GetTradeServerTimezone() {
-   string timezones = GetTradeServerTimezones();
-   if (timezones == "")
+   string zones[];
+
+   if (GetServerTimezones(zones) != ERR_NO_ERROR)
       return("");
 
-   string ids[];
-   Explode(timezones, ",", ids);
-   
-   int size = ArraySize(ids);
-
-   if (size == 1)          // dieselbe Zone für Sommer und Winter
-      return(ids[0]);
-
-   if      (ids[1] == "EEST") {
-   }
-   else if (ids[1] == "CEST") {
-   }
-   else if (ids[1] == "EDT") {
-   }
-   else {
-      last_library_error = catch("GetTradeServerTimezone()  daylight saving algorythm not found for timezone "+ ids[1], ERR_RUNTIME_ERROR);
-      return("");
-   }
-
-   return(ids[0]);
-}
-
-
-/**
- * Gibt die Zeitzonen-IDs des Tradeservers für Sommer- und Winterzeit zurück.
- *
- * @return string - Timezone-IDs oder Leerstring, falls ein Fehler auftrat
- *
- *
- * NOTE:
- * -----
- * Für einen Account können mehrere Tradeserver zur Verfügung stehen.  Alle Tradeserver eines Accounts sind für dieselbe Zeitzone konfiguriert.
- * Die Timezone-ID ist daher sowohl eine Eigenschaft des Accounts als auch eine Eigenschaft der Tradeserver dieses Accounts.
- */
-string GetTradeServerTimezones() {
-   string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
-   if (account == "0")
-      return("");
-
-   string timezones = GetConfigString("Timezones", account, "");
-
-   if (timezones == "") {
-      last_library_error = catch("GetTradeServerTimezones()  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
-      return("");
-   }
-
-   return(timezones);
+   return(zones[0]);
 }
 
 
 /**
  * Gibt die lesbare Version eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
- * @param int reason - Code
+ * @param  int reason - Code
  *
  * @return string - lesbare Version
  */
@@ -2909,7 +2906,7 @@ string GetUninitReasonDescription(int reason) {
  * Gibt den Text der Titelbar des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
  * wird dessen Text zurückgegeben.
  *
- * @param int hWnd - Handle des Fensters oder Controls
+ * @param  int hWnd - Handle des Fensters oder Controls
  *
  * @return string - Text
  */
@@ -2931,8 +2928,8 @@ string GetWindowText(int hWnd) {
  * Berechnet den vollständigen Verlauf der Balance für den aktuellen Chart und schreibt die Werte in das übergebene
  * Zielarray.  Diese Funktion ist vorzuziehen, wenn der Indikator vollständig neu berechnet werden soll.
  *
- * @param int     account - Account, für den der Indikator berechnet werden soll
- * @param double& iBuffer - Indikatorpuffer oder Array
+ * @param  int     account - Account, für den der Indikator berechnet werden soll
+ * @param  double& iBuffer - Indikatorpuffer oder Array
  *
  * @return int - Fehlerstatus
  */
@@ -2983,9 +2980,9 @@ int iBalanceSeries(int account, double& iBuffer[]) {
 /**
  * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param datetime time - Zeitpunkt
+ * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time - Zeitpunkt
  *
  * @return int - Bar-Index im Chart
  *
@@ -3020,9 +3017,9 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
 /**
  * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die vorherige existierende Bar zurück.
  *
- * @param string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param datetime time - Zeitpunkt
+ * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time - Zeitpunkt
  *
  * @return int - Bar-Index im Chart
  *
@@ -3051,7 +3048,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 /**
  * Gibt die nächstgrößere Periode der angegebenen Periode zurück.
  *
- * @param int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
+ * @param  int period - Timeframe-Periode (default: 0 - die aktuelle Periode)
  *
  * @return int - Nächstgrößere Periode oder der ursprüngliche Wert, wenn keine größere Periode existiert.
  */
@@ -3079,8 +3076,8 @@ int IncreasePeriod(int period = 0) {
 /**
  * Verbindet die Werte eines Boolean-Arrays unter Verwendung des angegebenen Separators.
  *
- * @param bool   values[]  - Array mit Ausgangswerten
- * @param string separator - zu verwendender Separator
+ * @param  bool   values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
  *
  * @return string
  */
@@ -3102,8 +3099,8 @@ string JoinBools(bool values[], string separator) {
 /**
  * Verbindet die Werte eines Double-Arrays unter Verwendung des angegebenen Separators.
  *
- * @param double values[]  - Array mit Ausgangswerten
- * @param string separator - zu verwendender Separator
+ * @param  double values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
  *
  * @return string
  */
@@ -3124,8 +3121,8 @@ string JoinDoubles(double values[], string separator) {
 /**
  * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
  *
- * @param int    values[]  - Array mit Ausgangswerten
- * @param string separator - zu verwendender Separator
+ * @param  int    values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
  *
  * @return string
  */
@@ -3146,8 +3143,8 @@ string JoinInts(int values[], string separator) {
 /**
  * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
  *
- * @param string values[]  - Array mit Ausgangswerten
- * @param string separator - zu verwendender Separator
+ * @param  string values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
  *
  * @return string
  */
@@ -3211,7 +3208,7 @@ string JoinStrings(string values[], string separator) {
 /**
  * Handler für PositionOpen-Events.
  *
- * @param int tickets[] - Tickets der neuen Positionen
+ * @param  int tickets[] - Tickets der neuen Positionen
  *
  * @return int - Fehlerstatus
  */
@@ -3260,8 +3257,8 @@ string JoinStrings(string values[], string separator) {
 /**
  * Fügt das angegebene Objektlabel den bereits gespeicherten Labels hinzu.
  *
- * @param string  label     - zu speicherndes Label
- * @param string& objects[] - Array mit bereits gespeicherten Labels
+ * @param  string  label     - zu speicherndes Label
+ * @param  string& objects[] - Array mit bereits gespeicherten Labels
  *
  * @return int - Fehlerstatus
  */
@@ -3276,7 +3273,7 @@ int RegisterChartObject(string label, string& objects[]) {
 /**
  * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
  *
- * @param string& labels[] - Array mit Objektlabels
+ * @param  string& labels[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
@@ -3301,8 +3298,8 @@ int RemoveChartObjects(string& labels[]) {
 /**
  * Verschickt eine SMS-Nachricht an eine Mobilfunknummer.
  *
- * @param string receiver - Mobilfunknummer des Empfängers im internationalen Format (49123456789)
- * @param string message  - zu verschickende Nachricht
+ * @param  string receiver - Mobilfunknummer des Empfängers im internationalen Format (49123456789)
+ * @param  string message  - zu verschickende Nachricht
  *
  * @return int - Fehlerstatus
  */
@@ -3341,10 +3338,69 @@ int SendTextMessage(string receiver, string message) {
 
 
 /**
+ * Konvertiert die angegebene Tradeserver-Zeit in New Yorker Zeit (Eastern Time).
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, wenn ein Fehler auftrat
+ */
+datetime ServerToEasternTime(datetime serverTime) {
+   datetime newYorkTime;
+
+   string zones[];
+   GetServerTimezones(zones);
+   Print("ServerToEasternTime()    timezones: "+ JoinStrings(zones, " | ") +"    current zone: "+ GetTradeServerTimezone());
+
+
+   // Offset des Tradeservers zu GMT ermitteln
+   // Offset von New York zu GMT ermitteln
+   // Serverzeit umrechnen
+   newYorkTime = serverTime;
+
+   return(newYorkTime);
+
+   /*
+   // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
+   string timezone = GetTradeServerTimezone();
+   int tzOffset;
+   if      (timezone == "EET" ) tzOffset = 7;
+   else if (timezone == "EEST") tzOffset = 7;
+   else if (timezone == "CET" ) tzOffset = 6;
+   else if (timezone == "CEST") tzOffset = 6;
+   else if (timezone == "GMT" ) tzOffset = 5;
+   else if (timezone == "BST" ) tzOffset = 5;
+   else if (timezone == "EST" ) tzOffset = 0;   // Eastern Standard Time
+   else if (timezone == "EDT" ) tzOffset = 0;   // Eastern Daylight Saving Time
+
+   // TODO: unterschiedliche Zeitzonenwechsel von Sommer- zu Winterzeit berücksichtigen
+   datetime easternTime = time - tzOffset*HOURS;
+
+   // Sessionbeginn ermitteln (17:00 New York)
+   datetime sessionStart;
+   datetime midnight = easternTime - TimeHour(easternTime)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);
+
+   int hour = TimeHour(easternTime);
+   if (hour < 17) sessionStart = midnight -  7*HOURS;    // 00:00 -  7 Stunden => 17:00
+   else           sessionStart = midnight + 17*HOURS;    // 00:00 + 17 Stunden => 17:00
+
+   // Sessionbeginn in Tradeserverzeit umrechnen
+   sessionStart += tzOffset*HOURS;
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetTradeServerSessionStart()", error);
+      return(-1);
+   }
+   return(sessionStart);
+   */
+}
+
+
+/**
  * Setzt den Text der Titelbar des angegebenen Fensters (wenn es eine hat). Ist das agegebene Fenster ein Control, wird dessen Text geändert.
  *
- * @param int    hWnd - Handle des Fensters
- * @param string text - Text
+ * @param  int    hWnd - Handle des Fensters
+ * @param  string text - Text
  *
  * @return int - Fehlerstatus
  */
@@ -3365,8 +3421,8 @@ int SetWindowText(int hWnd, string text) {
 /**
  * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird beachtet.
  *
- * @param string object    - zu durchsuchender String
- * @param string substring - zu suchender Substring
+ * @param  string object    - zu durchsuchender String
+ * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
@@ -3378,8 +3434,8 @@ bool StringContains(string object, string substring) {
 /**
  * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param string object    - zu durchsuchender String
- * @param string substring - zu suchender Substring
+ * @param  string object    - zu durchsuchender String
+ * @param  string substring - zu suchender Substring
  *
  * @return bool
  */
@@ -3393,8 +3449,8 @@ bool StringIContains(string object, string substring) {
 /**
  * Vergleicht zwei Strings ohne Berücksichtigung der Groß-/Kleinschreibung.
  *
- * @param string string1
- * @param string string2
+ * @param  string string1
+ * @param  string string2
  *
  * @return bool
  */
@@ -3406,7 +3462,7 @@ bool StringICompare(string string1, string string2) {
 /**
  * Prüft, ob ein String nur numerische Zeichen enthält.
  *
- * @param string value - zu prüfender String
+ * @param  string value - zu prüfender String
  *
  * @return bool
  */
@@ -3426,8 +3482,8 @@ bool StringIsDigit(string value) {
 /**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
- * @param string subject - zu durchsuchender String
- * @param string search  - zu suchender Substring
+ * @param  string subject - zu durchsuchender String
+ * @param  string search  - zu suchender Substring
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
@@ -3455,7 +3511,7 @@ int StringFindR(string subject, string search) {
 /**
  * Konvertiert einen String in Kleinschreibweise.
  *
- * @param string value
+ * @param  string value
  *
  * @return string
  */
@@ -3481,7 +3537,7 @@ string StringToLower(string value) {
 /**
  * Konvertiert einen String in Großschreibweise.
  *
- * @param string value
+ * @param  string value
  *
  * @return string
  */
@@ -3507,7 +3563,7 @@ string StringToUpper(string value) {
 /**
  * Trimmt einen String beidseitig.
  *
- * @param string value
+ * @param  string value
  *
  * @return string
  */
@@ -3519,7 +3575,7 @@ string StringTrim(string value) {
 /**
  * URL-kodiert einen String.  Leerzeichen werden als "+"-Zeichen kodiert.
  *
- * @param string value
+ * @param  string value
  *
  * @return string - URL-kodierter String
  */

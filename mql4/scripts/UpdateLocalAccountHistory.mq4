@@ -211,7 +211,7 @@ int start() {
          return(catch("start(7)  FileOpen()"));
 
       // Header schreiben
-      string timezone = GetAccountTimezone();
+      string timezone = GetTradeServerTimezone();
       int iOffset;
       if      (timezone == "EET" ) iOffset =  2;      // Hier sind evt. Fehler in der Timezone-Berechnung unkritisch,
       else if (timezone == "EEST") iOffset =  2;      // denn das Ergebnis wird nur für den Header verwendet.
