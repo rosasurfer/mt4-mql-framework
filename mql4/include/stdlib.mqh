@@ -57,7 +57,7 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
-   int      GetServerTimezones(string& zones[]);
+   string   GetServerTimezones();
    datetime GetTradeServerSessionStart(datetime time);
    string   GetTradeServerTimezone();
    int      GetTopWindow();

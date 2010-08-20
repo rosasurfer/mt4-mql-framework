@@ -2718,69 +2718,53 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
- * Liest die Zeitzoneninfos des Tradeservers in das angegebene Array ein.
+ * Gibt die Zeitzoneneinstellungen des Tradeservers zurück.
  *
- * @param  string& zoneInfos[] - Zeiger auf ein Array mit zwei Elementen (Winterzeit-/Sommerzeit-Infos)
- * @return int     Fehlerstatus
+ * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
+ *                  oder ein Leerstring, wenn ein Fehler auftrat
  */
-int GetServerTimezones(string& zones[2]) {
-   if (ArrayRange(zones, 0) > 2) {
-      last_library_error = catch("GetServerTimezones(1)  invalid parameter zones["+ ArrayRange(zones, 0) +"]", ERR_INCOMPATIBLE_ARRAYS);
-      return(last_library_error);
-   }
-   if (ArrayRange(zones, 0) != 2)
-      ArrayResize(zones, 2);
-
+string GetServerTimezones() {
    string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
    if (account == "0")
-      return(last_library_error);
+      return("");
 
    string configValue = GetConfigString("Timezones", account, "");
    if (configValue == "") {
-      last_library_error = catch("GetServerTimezones(2)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
-      return(last_library_error);
+      last_library_error = catch("GetServerTimezones(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      return("");
    }
 
-   string ids[];
-   Explode(configValue, ",", ids);
+   string values[];
+   Explode(configValue, ",", values);
+   string zones = JoinStrings(values, ",");
 
-   int size = ArraySize(ids);
-   if (size > 2) {
-      last_library_error = catch("GetServerTimezones(3)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
-      return(last_library_error);
-   }
-   if (size == 2) if (ids[0] == ids[1]) {
-      ArrayResize(ids, 1);
-      size = 1;
-   }
-   string timezones = JoinStrings(ids, ",");
+   if      (zones == "EET"     ) {} // Eastern European Time      GMT+0200[,GMT+0300] (Sofia)
+   else if (zones == "EET,EET" ) {  zones = "EET"; }
+   else if (zones == "EET,EEST") {}
+   
+   else if (zones == "CET"     ) {} // Central European Time      GMT+0100[,GMT+0200] (Berlin)
+   else if (zones == "CET,CET" ) {  zones = "CET"; }
+   else if (zones == "CET,CEST") {}           
+   
+   else if (zones == "GMT"     ) {} // Greenwich Mean Time        GMT+0000[,GMT+0100] (London)
+   else if (zones == "GMT,GMT" ) {  zones = "GMT"; }
+   else if (zones == "GMT,BST" ) {}
 
-   if      (timezones == "EET"     ) {}   // Eastern European Time                                    GMT+0200
-   else if (timezones == "EET,EEST") {}   // Eastern European Time, Eastern European Summer Time      GMT+0200,GMT+0300
-   else if (timezones == "CET"     ) {}   // Central European Time                                    GMT+0100
-   else if (timezones == "CET,CEST") {}   // Central European Time, Central European Summer Time      GMT+0100,GMT+0200
-   else if (timezones == "GMT"     ) {}   // Greenwich Mean Time                                      GMT+0000
-   else if (timezones == "GMT,BST" ) {}   // Greenwich Mean Time, British Summer Time                 GMT+0000,GMT+0100
-   else if (timezones == "EST"     ) {}   // Eastern Standard Time                                    GMT-0500
-   else if (timezones == "EST,EDT" ) {}   // Eastern Standard Time, Eastern Daylight Saving Time      GMT-0500,GMT-0400
+   else if (zones == "EST"     ) {} // Eastern Standard Time      GMT-0500[,GMT-0400] (New York)
+   else if (zones == "EST,EST" ) {  zones = "EST"; }
+   else if (zones == "EST,EDT" ) {}
+
    else {
-      last_library_error = catch("GetServerTimezones(4)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
-      return(last_library_error);
-   }
-
-   if (size == 1) {        // dieselbe Zone für Sommer- und Winterzeit
-      zones[0] = ids[0];
-      zones[1] = ids[0];
-   }
-   else {
-      zones[0] = ids[0];
-      zones[1] = ids[1];
+      last_library_error = catch("GetServerTimezones(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      return("");
    }
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR)
-      last_library_error = catch("GetServerTimezones(4)", error);
-   return(error);
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerTimezones(3)", error);
+      return("");
+   }
+   return(zones);
 }
 
 
@@ -2870,12 +2854,19 @@ int GetTopWindow() {
  * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat
  */
 string GetTradeServerTimezone() {
-   string zones[];
-
-   if (GetServerTimezones(zones) != ERR_NO_ERROR)
+   string zones = GetServerTimezones();
+   if (zones == "")
       return("");
+   
+   string values[];
+   Explode(zones, ",", values);
 
-   return(zones[0]);
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetTradeServerTimezone()", error);
+      return("");
+   }
+   return(values[0]);
 }
 
 
@@ -3347,9 +3338,7 @@ int SendTextMessage(string receiver, string message) {
 datetime ServerToEasternTime(datetime serverTime) {
    datetime newYorkTime;
 
-   string zones[];
-   GetServerTimezones(zones);
-   Print("ServerToEasternTime()    timezones: "+ JoinStrings(zones, " | ") +"    current zone: "+ GetTradeServerTimezone());
+   Print("ServerToEasternTime()    serverTime: "+ TimeToStr(serverTime) +"    server time zones: "+ GetServerTimezones());
 
 
    // Offset des Tradeservers zu GMT ermitteln
