@@ -58,10 +58,9 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
+   datetime GetServerSessionStartTime(datetime serverTime);
    int      GetServerTimeToGmtOffset(datetime serverTime);
-   string   GetServerTimezones();
-   datetime GetTradeServerSessionStart(datetime time);
-   string   GetTradeServerTimezone();
+   string   GetServerTimezone();
    int      GetTopWindow();
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);

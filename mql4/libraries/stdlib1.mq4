@@ -2983,7 +2983,7 @@ string GetPeriodFlagDescription(int flags) {
  * @see    http://en.wikipedia.org/wiki/Daylight_saving_time
  */
 int GetServerTimeToGmtOffset(datetime serverTime) {
-   string timezone = GetServerTimezones();
+   string timezone = GetServerTimezone();
    int offset, year = TimeYear(serverTime)-1970;
 
    // Athen                                         GMT+0200[,GMT+0300]
@@ -3036,21 +3036,25 @@ int GetServerTimeToGmtOffset(datetime serverTime) {
  * Gibt die Zeitzoneneinstellungen des Tradeservers zurück.
  *
  * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
- *                  oder ein Leerstring, wenn ein Fehler auftrat
+ *                  oder ein Leerstring, falls ein Fehler auftrat
  */
-string GetServerTimezones() {
+string GetServerTimezone() {
    string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
    if (account == "0")
       return("");
 
    string configValue = GetConfigString("Timezones", account, "");
    if (configValue == "") {
-      last_library_error = catch("GetServerTimezones(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      last_library_error = catch("GetServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
    }
 
    string values[];
    Explode(configValue, ",", values);
+   if (ArraySize(values) > 2) {
+      last_library_error = catch("GetServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
    string zones = JoinStrings(values, ",");
 
    if      (zones == "EET"     ) {} // Eastern European Time      GMT+0200[,GMT+0300] (Athen)
@@ -3070,13 +3074,13 @@ string GetServerTimezones() {
    else if (zones == "EST,EDT" ) {}
 
    else {
-      last_library_error = catch("GetServerTimezones(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      last_library_error = catch("GetServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetServerTimezones(3)", error);
+      last_library_error = catch("GetServerTimezone(4)", error);
       return("");
    }
    return(zones);
@@ -3086,56 +3090,38 @@ string GetServerTimezones() {
 /**
  * Gibt die Startzeit der Handelssession des angegebenen Zeitpunkts zurück.
  *
- * @param  datetime time - Zeitpunkt (Tradeserverzeit)
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Zeitpunkt (Tradeserverzeit) oder -1, wenn ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  *
  *
  * NOTE:
  * ----
- * Die Handelssessions beginnen immer um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit ist.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
  * Wochenhandelsschluß der Geschäftsbanken ist um 16:00 New Yorker Zeit, Wochenhandelsschluß im Interbankenmarkt um 17:00.
- *
- * Sommer- oder Winterzeiten des Tradeservers sind für den Sessionbeginn irrelevant, beim Umrechnen müssen jedoch die
- * verschiedenen Zeitpunkte des Wechsels von Normal- zu Sommerzeit berücksichtigt werden.
  */
-datetime GetTradeServerSessionStart(datetime time) {
-   // Offset zu New York ermitteln und Zeit in New Yorker Zeit umrechnen
-   string timezone = GetTradeServerTimezone();
-   int tzOffset;
-   if      (timezone == "EET" ) tzOffset = 7;
-   else if (timezone == "EEST") tzOffset = 7;
-   else if (timezone == "CET" ) tzOffset = 6;
-   else if (timezone == "CEST") tzOffset = 6;
-   else if (timezone == "GMT" ) tzOffset = 5;
-   else if (timezone == "BST" ) tzOffset = 5;
-   else if (timezone == "EST" ) tzOffset = 0;   // Eastern Standard Time
-   else if (timezone == "EDT" ) tzOffset = 0;   // Eastern Daylight Saving Time
+datetime GetServerSessionStartTime(datetime serverTime) {
+   // Serverzeit in New Yorker Zeit umrechnen
+   datetime easternTime = ServerToEasternTime(serverTime);
 
-   // TODO: unterschiedliche Zeitzonenwechsel von Sommer- zu Winterzeit berücksichtigen
-   datetime easternTime = time - tzOffset*HOURS;
-
-
-   // Sessionbeginn ermitteln (17:00 New York)
-   datetime sessionStart;
-   datetime midnight = easternTime - TimeHour(easternTime)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);
+   // Sessionbeginn New Yorker Zeit ermitteln (17:00)
+   datetime sessionStartNY;
+   datetime midnightNY = easternTime - TimeHour(easternTime)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);
 
    int hour = TimeHour(easternTime);
-   if (hour < 17) sessionStart = midnight -  7*HOURS;    // 00:00 -  7 Stunden => 17:00
-   else           sessionStart = midnight + 17*HOURS;    // 00:00 + 17 Stunden => 17:00
+   if (hour < 17) sessionStartNY = midnightNY -  7*HOURS;   // 00:00 -  7 Stunden => 17:00
+   else           sessionStartNY = midnightNY + 17*HOURS;   // 00:00 + 17 Stunden => 17:00
 
-
-   // Sessionbeginn in Tradeserverzeit umrechnen
-   sessionStart += tzOffset*HOURS;
-
-   //Print("GetTradeServerSessionStart()  time: "+ TimeToStr(time) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStart));
+   // Sessionbeginn in Tradeserverzeit umrechnen            // TODO: Fehler, falls zwischen sessionStartNY und easternTime ein DST-Wechsel liegt
+   datetime sessionStartTS = sessionStartNY + serverTime - easternTime; 
+   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStartTS));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetTradeServerSessionStart()", error);
+      last_library_error = catch("GetServerSessionStartTime()", error);
       return(-1);
    }
-   return(sessionStart);
+   return(sessionStartTS);
 }
 
 
@@ -3160,28 +3146,6 @@ int GetTopWindow() {
       return(0);
    }
    return(child);
-}
-
-
-/**
- * Gibt die aktuelle Zeitzone des Tradeservers zurück.
- *
- * @return string - Timezone-ID oder Leerstring, falls ein Fehler auftrat
- */
-string GetTradeServerTimezone() {
-   string zones = GetServerTimezones();
-   if (zones == "")
-      return("");
-
-   string values[];
-   Explode(zones, ",", values);
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetTradeServerTimezone()", error);
-      return("");
-   }
-   return(values[0]);
 }
 
 
@@ -3651,7 +3615,7 @@ int SendTextMessage(string receiver, string message) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
  */
 datetime ServerToEasternTime(datetime serverTime) {
-   string timezone = GetServerTimezones();
+   string timezone = GetServerTimezone();
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
    if (timezone == "EST,EDT")

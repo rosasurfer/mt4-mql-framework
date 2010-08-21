@@ -110,7 +110,7 @@ int DrawGrid() {
       return(0);
 
    // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
-   int      hour = TimeHour(GetTradeServerSessionStart(TimeCurrent()));
+   int      hour = TimeHour(GetServerSessionStartTime(TimeCurrent()));
    datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
    datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
    if (from <  Time[Bars-1]) from += 1*DAY;
@@ -123,16 +123,16 @@ int DrawGrid() {
    int      bar, lastBar;
    bool     weeklyDone;
 
-   string timezone = GetTradeServerTimezone();
+   string timezone = GetServerTimezone();
    int offset;
-   if      (timezone == "EET" ) offset =  2;
-   else if (timezone == "EEST") offset =  2;
-   else if (timezone == "CET" ) offset =  1;
-   else if (timezone == "CEST") offset =  1;
-   else if (timezone == "GMT" ) offset =  0;
-   else if (timezone == "BST" ) offset =  0;
-   else if (timezone == "EST" ) offset = -5;
-   else if (timezone == "EDT" ) offset = -5;
+   if      (timezone == "EET"     ) offset =  2;
+   else if (timezone == "EET,EEST") offset =  2;
+   else if (timezone == "CET"     ) offset =  1;
+   else if (timezone == "CET,CEST") offset =  1;
+   else if (timezone == "GMT"     ) offset =  0;
+   else if (timezone == "GMT,BST" ) offset =  0;
+   else if (timezone == "EST"     ) offset = -5;
+   else if (timezone == "EST,EDT" ) offset = -5;
    //Print("DrawGrid()     timezone: "+ timezone +"      offset: "+ offset);
 
    // Separator zeichnen
