@@ -41,6 +41,7 @@
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    int      GetGlobalConfigInt(string section, string key, int defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
+   int      GetGmtToEasternTimeOffset(datetime gmtTime);
    int      GetLastLibraryError();
    bool     GetLocalConfigBool(string section, string key, bool defaultValue);
    double   GetLocalConfigDouble(string section, string key, double defaultValue);
@@ -57,6 +58,7 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
+   int      GetServerTimeToGmtOffset(datetime serverTime);
    string   GetServerTimezones();
    datetime GetTradeServerSessionStart(datetime time);
    string   GetTradeServerTimezone();
