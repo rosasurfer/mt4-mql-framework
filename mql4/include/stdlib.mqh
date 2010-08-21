@@ -50,8 +50,6 @@
    string   GetDayOfWeek(datetime time, bool format);
    string   GetErrorDescription(int error);
    string   GetEventDescription(int event);
-   string   GetMetaTraderDirectory();
-   string   GetModuleDirectoryName();
    int      GetMovingAverageMethod(string description);
    string   GetOperationTypeDescription(int operationType);
    int      GetPeriod(string description);
@@ -61,7 +59,8 @@
    datetime GetServerSessionStartTime(datetime serverTime);
    int      GetServerTimeToGmtOffset(datetime serverTime);
    string   GetServerTimezone();
-   int      GetTopWindow();
+   string   GetTerminalDirectory();
+   int      GetTerminalTopWindow();
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);
    string   GetUninitReasonDescription(int reason);

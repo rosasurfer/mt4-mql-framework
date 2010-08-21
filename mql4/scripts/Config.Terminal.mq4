@@ -13,8 +13,8 @@
  *
  */
 int start() {
-   string globalConfigFile = "\""+ GetMetaTraderDirectory() +"\\..\\metatrader-global-config.ini\"";
-   string localConfigFile  = "\""+ GetMetaTraderDirectory() +"\\experts\\config\\metatrader-local-config.ini\"";
+   string globalConfigFile = "\""+ GetTerminalDirectory() +"\\..\\metatrader-global-config.ini\"";
+   string localConfigFile  = "\""+ GetTerminalDirectory() +"\\experts\\config\\metatrader-local-config.ini\"";
 
    string lpCmdLine = "notepad.exe "+ globalConfigFile +" "+ localConfigFile;      // um neue Instanz zu starten:  notepad.exe -m
 
