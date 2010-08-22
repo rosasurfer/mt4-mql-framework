@@ -1,8 +1,7 @@
 /**
  * Chart-Grid
  *
- * Die vertikalen Separatoren sind auf der letzten Bar der jeweiligen Session positioniert und tragen im Label das Datum
- * der neuen, beginnenden Session.
+ * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der neuen Session.
  */
 
 #include <stdlib.mqh>
@@ -37,7 +36,6 @@ int init() {
       init_error = GetLastLibraryError();
       return(init_error);
    }
-
 
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -79,7 +77,6 @@ int start() {
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
-
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
    if (redraw) {                    // Grid neu zeichnen
@@ -92,15 +89,6 @@ int start() {
 
 
 /**
- *
- */
-int deinit() {
-   RemoveChartObjects(labels);
-   return(catch("deinit()"));
-}
-
-
-/**
  * Zeichnet das Grid.
  *
  * @return int - Fehlerstatus
@@ -109,81 +97,81 @@ int DrawGrid() {
    if (Bars == 0)
       return(0);
 
-   // Stunde des Sessionwechsels ermitteln und Zeitpunkte des ersten und letzten Separators berechen
-   int      hour = TimeHour(GetServerSessionStartTime(TimeCurrent()));
-   datetime from = StrToTime(StringConcatenate(TimeToStr(Time[Bars-1], TIME_DATE), " ", hour, ":00"));
-   datetime to   = StrToTime(StringConcatenate(TimeToStr(Time[0],      TIME_DATE), " ", hour, ":00"));
-   if (from <  Time[Bars-1]) from += 1*DAY;
-   if (to   <= Time[0]     ) to   += 1*DAY;
-   //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(from, false) +" "+ TimeToStr(from) +"  to: "+ GetDayOfWeek(to, false) +" "+ TimeToStr(to));
+   int tick   = GetTickCount();
+
+   if (GetServerTimezone() == "")
+      return(ERR_RUNTIME_ERROR);
+
+   datetime easternTime, easternFrom, easternTo, serverTime, labelTime, chartTime, currentServerTime = TimeCurrent();
+   int      bar, lastBar, style;
+   string   label, lastLabel, day, dd, mm, yyyy;
+
+   // Zeitpunkte des ersten und letzten Separators in New Yorker Zeit berechen
+   easternFrom = GetEasternSessionStartTime(ServerToEasternTime(Time[Bars-1]));
+      if (EasternToServerTime(easternFrom) < Time[Bars-1])
+         easternFrom += 1*DAY;
+   easternTo   = GetEasternSessionStartTime(ServerToEasternTime(Time[0])) + 1*DAY;
+   //Print("DrawGrid()   Grid from: "+ TimeToStr(easternFrom) +"     to: "+ TimeToStr(easternTo));
 
 
-   datetime time, eetSessionStart, chartTime, serverTime = TimeCurrent();
-   string   day, dd, mm, yyyy, label, lastLabel;
-   int      bar, lastBar;
-   bool     weeklyDone;
-
-   string timezone = GetServerTimezone();
-   int offset;
-   if      (timezone == "EET"     ) offset =  2;
-   else if (timezone == "EET,EEST") offset =  2;
-   else if (timezone == "CET"     ) offset =  1;
-   else if (timezone == "CET,CEST") offset =  1;
-   else if (timezone == "GMT"     ) offset =  0;
-   else if (timezone == "GMT,BST" ) offset =  0;
-   else if (timezone == "EST"     ) offset = -5;
-   else if (timezone == "EST,EDT" ) offset = -5;
-   //Print("DrawGrid()     timezone: "+ timezone +"      offset: "+ offset);
-
-   // Separator zeichnen
-   for (time=from; time <= to; time+=1*DAY) {
-      eetSessionStart = time - offset*HOURS + 2*HOURS;   // EET = GMT+0200 = Datumsgrenze
-      day = GetDayOfWeek(eetSessionStart, false);
-
-      // Wochenenden überspringen
-      if (day == "Sat") {
-         time            += 2*DAY;
-         eetSessionStart += 2*DAY;
-         day              = "Mon";
-      }
-
+   // Separatoren zeichnen
+   for (easternTime=easternFrom; easternTime <= easternTo; easternTime+=1*DAY) {
       // bei Perioden größer H1 nur den ersten Wochentag anzeigen (Wochenseparatoren)
-      if (Period() > PERIOD_H1) if (day != "Mon")
-         continue;                                       // TODO: Fehler, wenn Montag Feiertag ist
+      if (Period() > PERIOD_H1) if (TimeDayOfWeek(easternTime) != SUNDAY)
+         continue;                                                         // TODO: Fehler, wenn Montag Feiertag ist
 
-      // Label des Separators (Datum des Handelstages) zusammenstellen
-      label = TimeToStr(eetSessionStart);
+      serverTime = EasternToServerTime(easternTime);
+
+      // Label des Separators zusammenstellen (Datum des Handelstages)
+      labelTime  = easternTime + 7*HOURS;
+      if (TimeDayOfWeek(labelTime) == SATURDAY)    // Wochenenden überspringen
+         labelTime += 2*DAYS;
+      label = TimeToStr(labelTime);
+         day  = GetDayOfWeek(labelTime, false);
          dd   = StringSubstr(label, 8, 2);
          mm   = StringSubstr(label, 5, 2);
          yyyy = StringSubstr(label, 0, 4);
       label = StringConcatenate(day, " ", dd, ".", mm, ".", yyyy);
 
-      if (time > serverTime) {               // aktuelle Session, Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
+      // Chart-Time des Separators ermitteln
+      if (serverTime > currentServerTime) {  // aktuelle Session, Separator liegt in der Zukunft, die berechnete Zeit wird verwendet
          bar = -1;
-         chartTime = time-1*MINUTE;
-         if (day == "Mon")
-            chartTime -= 2*DAY;
+         chartTime = serverTime;
       }
-      else {                                 // Separator liegt nicht in der Zukunft, die Zeit der letzten tatsächlichen Session-Bar wird verwendet
-         bar = iBarShift(NULL, 0, time-1*MINUTE, false);
+      else {                                 // Separator liegt nicht in der Zukunft, die Zeit der ersten existierenden Session-Bar wird verwendet
+         bar = iBarShiftNext(NULL, 0, serverTime);
          chartTime = Time[bar];
       }
 
-      if (lastBar == bar)                    // mindestens eine komplette Session fehlt, am wahrscheinlichsten wegen eines Feiertags
+      if (lastBar == bar)                    // eine Session fehlt, am wahrscheinlichsten wegen eines Feiertags
          ObjectDelete(lastLabel);            // Separator für die fehlende Session wieder löschen
-
+      
+      // Separator zeichnen
       ObjectDelete(label); GetLastError();
       if (!ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0))
          return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")"));
-      ObjectSet(label, OBJPROP_STYLE, STYLE_DOT );
+      if (day == "Mon") style = STYLE_DASHDOTDOT;
+      else              style = STYLE_DOT;
+      ObjectSet(label, OBJPROP_STYLE, style     );
       ObjectSet(label, OBJPROP_COLOR, Grid.Color);
       ObjectSet(label, OBJPROP_BACK , true      );
-
       RegisterChartObject(label, labels);
 
-      lastLabel = label;                     // letzte Separatordaten für Feiertagserkenung merken
+      lastLabel = label;                     // letzte Separatordaten für Erkennung fehlender Sessions merken
       lastBar   = bar;
    }
+   
+   //Print("DrawGrid()    execution time: ", GetTickCount()-tick, " ms");
 
    return(catch("DrawGrid(2)"));
 }
+
+
+/**
+ *
+ */
+int deinit() {
+   RemoveChartObjects(labels);
+   return(catch("deinit()"));
+}
+

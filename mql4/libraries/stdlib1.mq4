@@ -1520,6 +1520,43 @@ datetime EDT_schedule[50][4] = {
 
 
 /**
+ * Gibt die Startzeit der letzten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten, vorherigen
+ * Handelssession zurückgegeben.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
+ *
+ *
+ * NOTE:
+ * ----
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
+ */
+datetime GetEasternSessionStartTime(datetime easternTime) {
+   // Sessionbeginn in New York ermitteln (17:00)
+   datetime easternStart;
+   int hour = TimeHour(easternTime);
+   if (hour < 17) easternStart = easternTime - (hour+7) *HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);  // 00:00 -  7 Stunden => 17:00
+   else           easternStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);  // 00:00 + 17 Stunden => 17:00
+
+   // Wochenenden berücksichtigen
+   int dow = TimeDayOfWeek(easternStart);
+   if      (dow == FRIDAY  ) easternStart -= 1*DAY;
+   else if (dow == SATURDAY) easternStart -= 2*DAYS;
+
+   //Print("GetEasternSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   easternStart: "+ TimeToStr(easternStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternSessionStartTime()", error);
+      return(-1);
+   }
+   return(easternStart);
+}
+
+
+/**
  * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu GMT (Greenwich Mean Time) zurück.
  *
  * @param  datetime easternTime - New Yorker Zeitpunkt
@@ -1690,6 +1727,46 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
       return("");
    }
    return(buffer[0]);
+}
+
+
+/**
+ * Gibt die Startzeit der letzten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten,
+ * vorherigen Handelssession zurückgegeben.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
+ *
+ *
+ * NOTE:
+ * ----
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
+ */
+datetime GetGmtSessionStartTime(datetime gmtTime) {
+   // GMT in New Yorker Zeit umrechnen
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1)
+      return(-1);
+
+   // Sessionbeginn in New York ermitteln (17:00)
+   datetime easternStart = GetEasternSessionStartTime(easternTime);
+   if (easternStart == -1)
+      return(-1);
+
+   // New Yorker Zeit in GMT umrechnen
+   datetime gmtStart = EasternToGMT(easternStart);
+   if (gmtStart == -1)
+      return(-1);
+   //Print("GetGmtSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtStart: "+ TimeToStr(gmtStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtSessionStartTime()", error);
+      return(-1);
+   }
+   return(gmtStart);
 }
 
 
@@ -3303,7 +3380,9 @@ string GetServerTimezone() {
 
 
 /**
- * Gibt die Startzeit der Handelssession des angegebenen Zeitpunkts zurück.
+ * Gibt die Startzeit der letzten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten,
+ * vorherigen Handelssession zurückgegeben.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
@@ -3313,30 +3392,30 @@ string GetServerTimezone() {
  * NOTE:
  * ----
  * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
- * Wochenhandelsschluß der Geschäftsbanken ist um 16:00 New Yorker Zeit, Wochenhandelsschluß im Interbankenmarkt um 17:00.
  */
 datetime GetServerSessionStartTime(datetime serverTime) {
    // Serverzeit in New Yorker Zeit umrechnen
    datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1)
+      return(-1);
 
-   // Sessionbeginn New Yorker Zeit ermitteln (17:00)
-   datetime sessionStartNY;
-   datetime midnightNY = easternTime - TimeHour(easternTime)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);
+   // Sessionbeginn in New York ermitteln (17:00)
+   datetime easternStart = GetEasternSessionStartTime(easternTime);
+   if (easternStart == -1)
+      return(-1);
 
-   int hour = TimeHour(easternTime);
-   if (hour < 17) sessionStartNY = midnightNY -  7*HOURS;   // 00:00 -  7 Stunden => 17:00
-   else           sessionStartNY = midnightNY + 17*HOURS;   // 00:00 + 17 Stunden => 17:00
-
-   // Sessionbeginn in Tradeserverzeit umrechnen            // TODO: Fehler, falls zwischen sessionStartNY und easternTime ein DST-Wechsel liegt
-   datetime sessionStartTS = sessionStartNY + serverTime - easternTime;
-   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(sessionStartTS));
+   // New Yorker Zeit in Tradeserverzeit umrechnen
+   datetime serverStart = EasternToServerTime(easternStart);
+   if (serverStart == -1)
+      return(-1);
+   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
       last_library_error = catch("GetServerSessionStartTime()", error);
       return(-1);
    }
-   return(sessionStartTS);
+   return(serverStart);
 }
 
 
@@ -3521,7 +3600,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  *
  * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
  * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time - Zeitpunkt
+ * @param  datetime time      - Zeitpunkt
  *
  * @return int - Bar-Index im Chart
  *

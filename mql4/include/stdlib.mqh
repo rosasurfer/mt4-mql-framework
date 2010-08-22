@@ -40,6 +40,7 @@
    int      GetConfigInt(string section, string key, int defaultValue);
    string   GetConfigString(string section, string key, string defaultValue);
    string   GetDayOfWeek(datetime time, bool format);
+   datetime GetEasternSessionStartTime(datetime easternTime);
    int      GetEasternToGmtOffset(datetime easternTime);
    int      GetEasternToServerTimeOffset(datetime easternTime);
    string   GetErrorDescription(int error);
@@ -48,6 +49,7 @@
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    int      GetGlobalConfigInt(string section, string key, int defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
+   datetime GetGmtSessionStartTime(datetime gmtTime);
    int      GetGmtToEasternTimeOffset(datetime gmtTime);
    int      GetGmtToServerTimeOffset(datetime gmtTime);
    int      GetLastLibraryError();
