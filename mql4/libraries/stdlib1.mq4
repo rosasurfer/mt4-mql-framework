@@ -147,19 +147,29 @@ datetime EasternToGMT(datetime easternTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime EasternToServerTime(datetime easternTime) {
+   string zone = GetServerTimezone();
+   if (zone == "")
+      return(-1);
+
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetServerTimezone() == "EST,EDT") 
+   if (zone == "EST,EDT")
       return(easternTime);
 
-   datetime gmtTime = EasternToGMT(easternTime);
-   if (gmtTime == -1)
+   // Offset Eastern zu GMT
+   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
+   if (easternToGmtOffset == EMPTY_VALUE)
       return(-1);
 
-   datetime serverTime = GmtToServerTime(gmtTime);
-   if (serverTime == -1)
-      return(-1);
+   // Offset GMT zu Tradeserver
+   int gmtToServerTimeOffset = 0;
+   if (zone != "GMT") {
+      gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
+      if (gmtToServerTimeOffset == EMPTY_VALUE)
+         return(-1);
+   }
+   datetime serverTime = easternTime - easternToGmtOffset - gmtToServerTimeOffset;
 
-   //Print("EasternToServerTime()    ET: "+ TimeToStr(easternTime) +"     GMT: "+ TimeToStr(gmtTime) +"     server: "+ TimeToStr(serverTime));
+   //Print("EasternToServerTime()    ET: "+ TimeToStr(easternTime) +"     server: "+ TimeToStr(serverTime));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1534,6 +1544,44 @@ int GetEasternToGmtOffset(datetime easternTime) {
 
 
 /**
+ * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu Tradeserver-Zeit zurück.
+ *
+ * @param  datetime easternTime - New Yorker Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetEasternToServerTimeOffset(datetime easternTime) {
+   string zone = GetServerTimezone();
+   if (zone == "")
+      return(EMPTY_VALUE);
+
+   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
+   if (zone == "EST,EDT")
+      return(0);
+
+   // Offset Eastern zu GMT
+   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
+   if (easternToGmtOffset == EMPTY_VALUE)
+      return(EMPTY_VALUE);
+
+   // Offset GMT zu Tradeserver
+   int gmtToServerTimeOffset = 0;
+   if (zone != "GMT") {
+      gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
+      if (gmtToServerTimeOffset == EMPTY_VALUE)
+         return(EMPTY_VALUE);
+   }
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternToServerTimeOffset()", error);
+      return(EMPTY_VALUE);
+   }
+   return(easternToGmtOffset + gmtToServerTimeOffset);
+}
+
+
+/**
  * Gibt einen globalen Konfigurationswert als Boolean zurück.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
@@ -1683,9 +1731,6 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- *
- * @see    http://www.timeanddate.com/worldclock/
- * @see    http://en.wikipedia.org/wiki/Daylight_saving_time
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) {
    string timezone = GetServerTimezone();
@@ -3106,6 +3151,44 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
+ * Gibt den Offset der angegebenen Serverzeit zu New Yorker Zeit (Eastern Time) zurück.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetServerToEasternTimeOffset(datetime serverTime) {
+   string zone = GetServerTimezone();
+   if (zone == "")
+      return(EMPTY_VALUE);
+
+   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
+   if (zone == "EST,EDT")
+      return(0);
+
+   // Offset Server zu GMT
+   int serverToGmtOffset = 0;
+   if (zone != "GMT") {
+      serverToGmtOffset = GetServerToGmtOffset(serverTime);
+      if (serverToGmtOffset == EMPTY_VALUE)
+         return(EMPTY_VALUE);
+   }
+
+   // Offset GMT zu Eastern Time
+   int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(serverTime - serverToGmtOffset);
+   if (gmtToEasternTimeOffset == EMPTY_VALUE)
+      return(EMPTY_VALUE);
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerToEasternTimeOffset()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverToGmtOffset + gmtToEasternTimeOffset);
+}
+
+
+/**
  * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
@@ -3113,43 +3196,45 @@ string GetPeriodFlagDescription(int flags) {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToGmtOffset(datetime serverTime) {
-   string timezone = GetServerTimezone();
+   string zone = GetServerTimezone();
+   if (zone == "")
+      return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 
    // Athen                                         GMT+0200[,GMT+0300]
-   if      (timezone == "EET"     )                 offset = 2 * HOURS;
-   else if (timezone == "EET,EEST") {
+   if      (zone == "EET"     )                     offset = 2 * HOURS;
+   else if (zone == "EET,EEST") {
       if      (serverTime < EEST_schedule[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_schedule[year][1]) offset = 3 * HOURS;
       else                                          offset = 2 * HOURS;
    }
 
    // Berlin                                        GMT+0100[,GMT+0200]
-   else if (timezone == "CET"     )                 offset = 1 * HOUR;
-   else if (timezone == "CET,CEST") {
+   else if (zone == "CET"     )                     offset = 1 * HOUR;
+   else if (zone == "CET,CEST") {
       if      (serverTime < CEST_schedule[year][0]) offset = 1 * HOURS;
       else if (serverTime < CEST_schedule[year][1]) offset = 2 * HOURS;
       else                                          offset = 1 * HOURS;
    }
 
    // London                                        GMT+0000[,GMT+0100]
-   else if (timezone == "GMT"    )                  offset = 0;
-   else if (timezone == "GMT,BST") {
+   else if (zone == "GMT"    )                      offset = 0;
+   else if (zone == "GMT,BST") {
       if      (serverTime < BST_schedule[year][0])  offset = 0;
       else if (serverTime < BST_schedule[year][1])  offset = 1 * HOUR;
       else                                          offset = 0;
    }
 
    // New York                                      GMT-0500[,GMT-0400]
-   else if (timezone == "EST"    )                  offset = -5 * HOURS;
-   else if (timezone == "EST,EDT") {
+   else if (zone == "EST"    )                      offset = -5 * HOURS;
+   else if (zone == "EST,EDT") {
       if      (serverTime < EDT_schedule[year][0])  offset = -5 * HOURS;
       else if (serverTime < EDT_schedule[year][1])  offset = -4 * HOURS;
       else                                          offset = -5 * HOURS;
    }
 
    else {
-      last_library_error = catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      last_library_error = catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
@@ -3337,7 +3422,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
       return(-1);
 
    datetime easternTime = gmtTime - gmtToEasternTimeOffset;
-   
+
    //Print("GmtToEasternTime()    GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtToEasternTimeOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
 
    int error = GetLastError();
@@ -3358,7 +3443,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
  */
 datetime GmtToServerTime(datetime gmtTime) {
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetServerTimezone() == "GMT") 
+   if (GetServerTimezone() == "GMT")
       return(gmtTime);
 
    int gmtToServerTimeOffset = GetGmtToServerTimeOffset(gmtTime);
@@ -3800,7 +3885,7 @@ int SendTextMessage(string receiver, string message) {
  */
 datetime ServerToEasternTime(datetime serverTime) {
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetServerTimezone() == "EST,EDT") 
+   if (GetServerTimezone() == "EST,EDT")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
