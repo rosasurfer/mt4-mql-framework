@@ -115,6 +115,62 @@ string DoubleToStrTrim(double value) {
 
 
 /**
+ * Konvertiert die angegebene New Yorker Zeit nach GMT (UTC).
+ *
+ * @param  datetime easternTime - New Yorker Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
+ */
+datetime EasternToGMT(datetime easternTime) {
+   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
+   if (easternToGmtOffset == EMPTY_VALUE)
+      return(-1);
+
+   datetime gmtTime = easternTime - easternToGmtOffset;
+
+   //Print("EasternToGMT()    ET: "+ TimeToStr(easternTime) +"     GMT offset: "+ (easternToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EasternToGMT()", error);
+      return(-1);
+   }
+   return(gmtTime);
+}
+
+
+/**
+ * Konvertiert die angegebene New Yorker Zeit (Eastern Time) nach Tradeserver-Zeit.
+ *
+ * @param  datetime easternTime - New Yorker Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
+ */
+datetime EasternToServerTime(datetime easternTime) {
+   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
+   if (GetServerTimezone() == "EST,EDT") 
+      return(easternTime);
+
+   datetime gmtTime = EasternToGMT(easternTime);
+   if (gmtTime == -1)
+      return(-1);
+
+   datetime serverTime = GmtToServerTime(gmtTime);
+   if (serverTime == -1)
+      return(-1);
+
+   //Print("EasternToServerTime()    ET: "+ TimeToStr(easternTime) +"     GMT: "+ TimeToStr(gmtTime) +"     server: "+ TimeToStr(serverTime));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("EasternToServerTime()", error);
+      return(-1);
+   }
+   return(serverTime);
+}
+
+
+/**
  * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
  *
  * @param  int  event     - Event
@@ -1229,118 +1285,6 @@ string GetConfigString(string section, string key, string defaultValue="") {
 }
 
 
-/**
- * Gibt einen globalen Konfigurationswert als Boolean zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return bool - Konfigurationswert
- */
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
-   static string configFile = "";
-   if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
-
-   string strDefault = StringConcatenate("", defaultValue);
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
-
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
-
-   buffer[0]   = StringToLower(buffer[0]);
-   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGlobalConfigBool()", error);
-      return(false);
-   }
-   return(result);
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als Double zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return double - Konfigurationswert
- */
-double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-   static string configFile = "";
-   if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
-
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
-
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
-
-   double result = StrToDouble(buffer[0]);
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGlobalConfigDouble()", error);
-      return(0);
-   }
-   return(result);
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als Integer zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return int - Konfigurationswert
- */
-int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-   static string configFile = "";
-   if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
-
-   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGlobalConfigInt()", error);
-      return(0);
-   }
-   return(result);
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als String zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   static string configFile = "";
-   if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
-
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
-
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGlobalConfigString()", error);
-      return("");
-   }
-   return(buffer[0]);
-}
-
-
 // Sommerzeit-Umschaltzeiten für EET/EEST (Athen) GMT+0200,GMT+0300
 datetime EEST_schedule[50][4] = {
    // Umschaltzeiten in EET/EEST                      // Umschaltzeiten in GMT
@@ -1566,6 +1510,142 @@ datetime EDT_schedule[50][4] = {
 
 
 /**
+ * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu GMT (Greenwich Mean Time) zurück.
+ *
+ * @param  datetime easternTime - New Yorker Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetEasternToGmtOffset(datetime easternTime) {
+   int offset, year = TimeYear(easternTime)-1970;
+
+   // New York                                   GMT-0500,GMT-0400
+   if      (easternTime < EDT_schedule[year][0]) offset = -5 * HOURS;
+   else if (easternTime < EDT_schedule[year][1]) offset = -4 * HOURS;
+   else                                          offset = -5 * HOURS;
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternToGmtOffset()", error);
+      return(EMPTY_VALUE);
+   }
+   return(offset);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Boolean zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert
+ */
+bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+
+   string strDefault = StringConcatenate("", defaultValue);
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
+
+   buffer[0]   = StringToLower(buffer[0]);
+   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGlobalConfigBool()", error);
+      return(false);
+   }
+   return(result);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Double zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return double - Konfigurationswert
+ */
+double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
+
+   double result = StrToDouble(buffer[0]);
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGlobalConfigDouble()", error);
+      return(0);
+   }
+   return(result);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Integer zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return int - Konfigurationswert
+ */
+int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGlobalConfigInt()", error);
+      return(0);
+   }
+   return(result);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als String zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetGlobalConfigString(string section, string key, string defaultValue="") {
+   static string configFile = "";
+   if (configFile == "")
+      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGlobalConfigString()", error);
+      return("");
+   }
+   return(buffer[0]);
+}
+
+
+/**
  * Gibt den Offset der angegebenen GMT-Zeit zu New Yorker Zeit (Eastern Time) zurück.
  *
  * NOTE:
@@ -1575,9 +1655,6 @@ datetime EDT_schedule[50][4] = {
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- *
- * @see    http://www.timeanddate.com/worldclock/
- * @see    http://en.wikipedia.org/wiki/Daylight_saving_time
  */
 int GetGmtToEasternTimeOffset(datetime gmtTime) {
    int offset, year = TimeYear(gmtTime)-1970;
@@ -1590,6 +1667,72 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
       last_library_error = catch("GetGmtToEasternTimeOffset()", error);
+      return(EMPTY_VALUE);
+   }
+   return(offset);
+}
+
+
+/**
+ * Gibt den Offset der angegebenen GMT-Zeit zur Tradeserver-Zeit zurück.
+ *
+ * NOTE:
+ * -----
+ * Parameter ist ein GMT-Zeitpunkt, das Ergebnis ist daher der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ *
+ * @see    http://www.timeanddate.com/worldclock/
+ * @see    http://en.wikipedia.org/wiki/Daylight_saving_time
+ */
+int GetGmtToServerTimeOffset(datetime gmtTime) {
+   string timezone = GetServerTimezone();
+   if (timezone == "")
+      return(EMPTY_VALUE);
+   int offset, year = TimeYear(gmtTime)-1970;
+
+   // Athen                                      GMT+0200[,GMT+0300]
+   if      (timezone == "EET"     )              offset = -2 * HOURS;
+   else if (timezone == "EET,EEST") {
+      if      (gmtTime < EEST_schedule[year][2]) offset = -2 * HOURS;
+      else if (gmtTime < EEST_schedule[year][3]) offset = -3 * HOURS;
+      else                                       offset = -2 * HOURS;
+   }
+
+   // Berlin                                     GMT+0100[,GMT+0200]
+   else if (timezone == "CET"     )              offset = -1 * HOUR;
+   else if (timezone == "CET,CEST") {
+      if      (gmtTime < CEST_schedule[year][2]) offset = -1 * HOUR;
+      else if (gmtTime < CEST_schedule[year][3]) offset = -2 * HOURS;
+      else                                       offset = -1 * HOUR;
+   }
+
+   // London                                     GMT+0000[,GMT+0100]
+   else if (timezone == "GMT"    )               offset =  0;
+   else if (timezone == "GMT,BST") {
+      if      (gmtTime < BST_schedule[year][2])  offset =  0;
+      else if (gmtTime < BST_schedule[year][3])  offset = -1 * HOUR;
+      else                                       offset =  0;
+   }
+
+   // New York                                   GMT-0500[,GMT-0400]
+   else if (timezone == "EST"    )               offset = 5 * HOURS;
+   else if (timezone == "EST,EDT") {
+      if      (gmtTime < EDT_schedule[year][2])  offset = 5 * HOURS;
+      else if (gmtTime < EDT_schedule[year][3])  offset = 4 * HOURS;
+      else                                       offset = 5 * HOURS;
+   }
+
+   else {
+      last_library_error = catch("GetGmtToServerTimeOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      return(EMPTY_VALUE);
+   }
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtToServerTimeOffset(2)", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -2968,11 +3111,8 @@ string GetPeriodFlagDescription(int flags) {
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- *
- * @see    http://www.timeanddate.com/worldclock/
- * @see    http://en.wikipedia.org/wiki/Daylight_saving_time
  */
-int GetServerTimeToGmtOffset(datetime serverTime) {
+int GetServerToGmtOffset(datetime serverTime) {
    string timezone = GetServerTimezone();
    int offset, year = TimeYear(serverTime)-1970;
 
@@ -3009,13 +3149,13 @@ int GetServerTimeToGmtOffset(datetime serverTime) {
    }
 
    else {
-      last_library_error = catch("GetServerTimeToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      last_library_error = catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetServerTimeToGmtOffset(2)", error);
+      last_library_error = catch("GetServerToGmtOffset(2)", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -3045,23 +3185,23 @@ string GetServerTimezone() {
       last_library_error = catch("GetServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
-   string zones = JoinStrings(values, ",");
+   string zone = JoinStrings(values, ",");
 
-   if      (zones == "EET"     ) {} // Eastern European Time      GMT+0200[,GMT+0300] (Athen)
-   else if (zones == "EET,EET" ) {  zones = "EET"; }
-   else if (zones == "EET,EEST") {}
+   if      (zone == "EET"     ) {} // Eastern European Time      GMT+0200[,GMT+0300] (Athen)
+   else if (zone == "EET,EET" ) {  zone = "EET"; }
+   else if (zone == "EET,EEST") {}
 
-   else if (zones == "CET"     ) {} // Central European Time      GMT+0100[,GMT+0200] (Berlin)
-   else if (zones == "CET,CET" ) {  zones = "CET"; }
-   else if (zones == "CET,CEST") {}
+   else if (zone == "CET"     ) {} // Central European Time      GMT+0100[,GMT+0200] (Berlin)
+   else if (zone == "CET,CET" ) {  zone = "CET"; }
+   else if (zone == "CET,CEST") {}
 
-   else if (zones == "GMT"     ) {} // Greenwich Mean Time        GMT+0000[,GMT+0100] (London)
-   else if (zones == "GMT,GMT" ) {  zones = "GMT"; }
-   else if (zones == "GMT,BST" ) {}
+   else if (zone == "GMT"     ) {} // Greenwich Mean Time        GMT+0000[,GMT+0100] (London)
+   else if (zone == "GMT,GMT" ) {  zone = "GMT"; }
+   else if (zone == "GMT,BST" ) {}
 
-   else if (zones == "EST"     ) {} // Eastern Standard Time      GMT-0500[,GMT-0400] (New York)
-   else if (zones == "EST,EST" ) {  zones = "EST"; }
-   else if (zones == "EST,EDT" ) {}
+   else if (zone == "EST"     ) {} // Eastern Standard Time      GMT-0500[,GMT-0400] (New York)
+   else if (zone == "EST,EST" ) {  zone = "EST"; }
+   else if (zone == "EST,EDT" ) {}
 
    else {
       last_library_error = catch("GetServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
@@ -3073,7 +3213,7 @@ string GetServerTimezone() {
       last_library_error = catch("GetServerTimezone(4)", error);
       return("");
    }
-   return(zones);
+   return(zone);
 }
 
 
@@ -3181,6 +3321,60 @@ string GetWindowText(int hWnd) {
       return("");
    }
    return(buffer[0]);
+}
+
+
+/**
+ * Konvertiert die angegebene GMT-Zeit (UTC) nach Eastern Time (New Yorker Zeit).
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
+ */
+datetime GmtToEasternTime(datetime gmtTime) {
+   int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(gmtTime);  // Offset von GMT zu New Yorker Zeit
+   if (gmtToEasternTimeOffset == EMPTY_VALUE)
+      return(-1);
+
+   datetime easternTime = gmtTime - gmtToEasternTimeOffset;
+   
+   //Print("GmtToEasternTime()    GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtToEasternTimeOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GmtToEasternTime()", error);
+      return(-1);
+   }
+   return(easternTime);
+}
+
+
+/**
+ * Konvertiert die angegebene GMT-Zeit (UTC) nach Tradeserver-Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
+ */
+datetime GmtToServerTime(datetime gmtTime) {
+   // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
+   if (GetServerTimezone() == "GMT") 
+      return(gmtTime);
+
+   int gmtToServerTimeOffset = GetGmtToServerTimeOffset(gmtTime);
+   if (gmtToServerTimeOffset == EMPTY_VALUE)
+      return(-1);
+
+   datetime serverTime = gmtTime - gmtToServerTimeOffset;
+
+   //Print("GmtToServerTime()    GMT: "+ TimeToStr(gmtTime) +"     server offset: "+ (gmtToServerTimeOffset/HOURS) +"     server: "+ TimeToStr(serverTime));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GmtToServerTime()", error);
+      return(-1);
+   }
+   return(serverTime);
 }
 
 
@@ -3605,34 +3799,55 @@ int SendTextMessage(string receiver, string message) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
  */
 datetime ServerToEasternTime(datetime serverTime) {
-   string timezone = GetServerTimezone();
-
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (timezone == "EST,EDT")
+   if (GetServerTimezone() == "EST,EDT") 
       return(serverTime);
 
-   int serverGmtOffset;
-   if (timezone != "GMT") {
-      serverGmtOffset = GetServerTimeToGmtOffset(serverTime);  // Offset des Tradeservers zu GMT
-      if (serverGmtOffset == EMPTY_VALUE)
-         return(-1);
-   }
-
-   datetime gmtTime = serverTime - serverGmtOffset;            // GMT
-   int gmtEasternOffset = GetGmtToEasternTimeOffset(gmtTime);  // Offset von GMT zu New Yorker Zeit
-   if (gmtEasternOffset == EMPTY_VALUE)
+   datetime gmtTime = ServerToGMT(serverTime);
+   if (gmtTime == -1)
       return(-1);
 
-   datetime easternTime = gmtTime - gmtEasternOffset;          // Eastern Time
-   //Print("ServerToEasternTime()    server: "+ TimeToStr(serverTime) +"     timezone: "+ timezone +"     GMT offset: "+ (serverGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtEasternOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1)
+      return(-1);
+
+   //Print("ServerToEasternTime()    server: "+ TimeToStr(serverTime) +"     GMT: "+ TimeToStr(gmtTime) +"     ET: "+ TimeToStr(easternTime));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      //last_library_error = catch("ServerToEasternTime()", error);
-      catch("ServerToEasternTime()", error);
+      last_library_error = catch("ServerToEasternTime()", error);
       return(-1);
    }
    return(easternTime);
+}
+
+
+/**
+ * Konvertiert die angegebene Tradeserver-Zeit nach GMT (UTC).
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
+ */
+datetime ServerToGMT(datetime serverTime) {
+   // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
+   if (GetServerTimezone() == "GMT")
+      return(serverTime);
+
+   int serverToGmtOffset = GetServerToGmtOffset(serverTime);
+   if (serverToGmtOffset == EMPTY_VALUE)
+      return(-1);
+
+   datetime gmtTime = serverTime - serverToGmtOffset;
+
+   //Print("ServerToGMT()    server: "+ TimeToStr(serverTime) +"     GMT offset: "+ (serverToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("ServerToGMT()", error);
+      return(-1);
+   }
+   return(gmtTime);
 }
 
 
