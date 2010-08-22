@@ -1750,110 +1750,110 @@ string GetDayOfWeek(datetime time, bool long=true) {
  */
 string GetErrorDescription(int error) {
    switch (error) {
-      case ERR_NO_ERROR                   : return("no error"                                                );
+      case ERR_NO_ERROR                   : return("no error"                                                      ); //    0
 
       // trade server errors
-      case ERR_NO_RESULT                  : return("no result"                                               );
-      case ERR_COMMON_ERROR               : return("common error"                                            );
-      case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                );
-      case ERR_SERVER_BUSY                : return("trade server is busy"                                    );
-      case ERR_OLD_VERSION                : return("old version of client terminal"                          );
-      case ERR_NO_CONNECTION              : return("no connection to trade server"                           );
-      case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                       );
-      case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                   );
-      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation (never returned error)"    );
-      case ERR_ACCOUNT_DISABLED           : return("account disabled"                                        );
-      case ERR_INVALID_ACCOUNT            : return("invalid account"                                         );
-      case ERR_TRADE_TIMEOUT              : return("trade timeout"                                           );
-      case ERR_INVALID_PRICE              : return("invalid price"                                           );
-      case ERR_INVALID_STOPS              : return("invalid stop"                                            );
-      case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                    );
-      case ERR_MARKET_CLOSED              : return("market is closed"                                        );
-      case ERR_TRADE_DISABLED             : return("trading is disabled"                                     );
-      case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                        );
-      case ERR_PRICE_CHANGED              : return("price changed"                                           );
-      case ERR_OFF_QUOTES                 : return("off quotes"                                              );
-      case ERR_BROKER_BUSY                : return("broker is busy (never returned error)"                   );
-      case ERR_REQUOTE                    : return("requote"                                                 );
-      case ERR_ORDER_LOCKED               : return("order is locked"                                         );
-      case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                             );
-      case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                       );
-      case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"         );
-      case ERR_TRADE_CONTEXT_BUSY         : return("trade context is busy"                                   );
-      case ERR_TRADE_EXPIRATION_DENIED    : return("expiration settings denied by broker"                    );
-      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open and pending orders has reached the limit" );
-      case ERR_TRADE_HEDGE_PROHIBITED     : return("hedging prohibited"                                      );
-      case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                );
+      case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
+      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2
+      case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
+      case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
+      case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
+      case ERR_NO_CONNECTION              : return("no connection to trade server"                                 ); //    6
+      case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                             ); //    7
+      case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                         ); //    8
+      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation (never returned error)"          ); //    9
+      case ERR_ACCOUNT_DISABLED           : return("account disabled"                                              ); //   64
+      case ERR_INVALID_ACCOUNT            : return("invalid account"                                               ); //   65
+      case ERR_TRADE_TIMEOUT              : return("trade timeout"                                                 ); //  128
+      case ERR_INVALID_PRICE              : return("invalid price"                                                 ); //  129
+      case ERR_INVALID_STOPS              : return("invalid stop"                                                  ); //  130
+      case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                          ); //  131
+      case ERR_MARKET_CLOSED              : return("market is closed"                                              ); //  132
+      case ERR_TRADE_DISABLED             : return("trading is disabled"                                           ); //  133
+      case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                              ); //  134
+      case ERR_PRICE_CHANGED              : return("price changed"                                                 ); //  135
+      case ERR_OFF_QUOTES                 : return("off quotes"                                                    ); //  136
+      case ERR_BROKER_BUSY                : return("broker is busy (never returned error)"                         ); //  137
+      case ERR_REQUOTE                    : return("requote"                                                       ); //  138
+      case ERR_ORDER_LOCKED               : return("order is locked"                                               ); //  139
+      case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                                   ); //  140
+      case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                             ); //  141
+      case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"               ); //  145
+      case ERR_TRADE_CONTEXT_BUSY         : return("trade context is busy"                                         ); //  146
+      case ERR_TRADE_EXPIRATION_DENIED    : return("expiration settings denied by broker"                          ); //  147
+      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open and pending orders has reached the broker limit"); //  148
+      case ERR_TRADE_HEDGE_PROHIBITED     : return("hedging prohibited"                                            ); //  149
+      case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                      ); //  150
 
       // runtime errors
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                           );
-      case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                  );
-      case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                );
-      case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                       );
-      case ERR_RECURSIVE_STACK_OVERFLOW   : return("recursive stack overflow"                                );
-      case ERR_NOT_ENOUGH_STACK_FOR_PARAM : return("not enough stack for parameter"                          );
-      case ERR_NO_MEMORY_FOR_PARAM_STRING : return("no memory for parameter string"                          );
-      case ERR_NO_MEMORY_FOR_TEMP_STRING  : return("no memory for temp string"                               );
-      case ERR_NOT_INITIALIZED_STRING     : return("not initialized string"                                  );
-      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("not initialized string in array"                         );
-      case ERR_NO_MEMORY_FOR_ARRAYSTRING  : return("no memory for string in array"                           );
-      case ERR_TOO_LONG_STRING            : return("string too long"                                         );
-      case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("remainder from division by zero"                         );
-      case ERR_ZERO_DIVIDE                : return("division by zero"                                        );
-      case ERR_UNKNOWN_COMMAND            : return("unknown command"                                         );
-      case ERR_WRONG_JUMP                 : return("wrong jump (never generated error)"                      );
-      case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                   );
-      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls are not allowed"                               );
-      case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                     );
-      case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                    );
-      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                   );
-      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function");
-      case ERR_SYSTEM_BUSY                : return("system busy (never generated error)"                     );
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                        );
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                        );
-      case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                          );
-      case ERR_SOME_ARRAY_ERROR           : return("array error"                                             );
-      case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                            );
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                  );
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                     );
-      case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                       );
-      case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                               );
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                       );
-      case ERR_FUNCTION_NOT_CONFIRMED     : return("function not confirmed"                                  );
-      case ERR_SEND_MAIL_ERROR            : return("send mail error"                                         );
-      case ERR_STRING_PARAMETER_EXPECTED  : return("string parameter expected"                               );
-      case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                              );
-      case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                               );
-      case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                );
-      case ERR_HISTORY_WILL_UPDATED       : return("requested history data in update state"                  );
-      case ERR_TRADE_ERROR                : return("ERR_TRADE_ERROR"                                         ); // ???
-      case ERR_END_OF_FILE                : return("end of file"                                             );
-      case ERR_SOME_FILE_ERROR            : return("file error"                                              );
-      case ERR_WRONG_FILE_NAME            : return("wrong file name"                                         );
-      case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                   );
-      case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                        );
-      case ERR_INCOMPATIBLE_FILEACCESS    : return("incompatible file access"                                );
-      case ERR_NO_ORDER_SELECTED          : return("no order selected"                                       );
-      case ERR_UNKNOWN_SYMBOL             : return("unknown symbol"                                          );
-      case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"              );
-      case ERR_INVALID_TICKET             : return("invalid ticket"                                          );
-      case ERR_TRADE_NOT_ALLOWED          : return("trading is not allowed in expert properties"             );
-      case ERR_LONGS_NOT_ALLOWED          : return("long trades are not allowed in expert properties"        );
-      case ERR_SHORTS_NOT_ALLOWED         : return("short trades are not allowed in expert properties"       );
-      case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                   );
-      case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                 );
-      case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn\'t exist"                                   );
-      case ERR_UNKNOWN_OBJECT_TYPE        : return("unknown object type"                                     );
-      case ERR_NO_OBJECT_NAME             : return("no object name"                                          );
-      case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                );
-      case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                  );
-      case ERR_SOME_OBJECT_ERROR          : return("object error"                                            );
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000
+      case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                        ); // 4001
+      case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                      ); // 4002
+      case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                             ); // 4003
+      case ERR_RECURSIVE_STACK_OVERFLOW   : return("recursive stack overflow"                                      ); // 4004
+      case ERR_NOT_ENOUGH_STACK_FOR_PARAM : return("not enough stack for parameter"                                ); // 4005
+      case ERR_NO_MEMORY_FOR_PARAM_STRING : return("no memory for parameter string"                                ); // 4006
+      case ERR_NO_MEMORY_FOR_TEMP_STRING  : return("no memory for temp string"                                     ); // 4007
+      case ERR_NOT_INITIALIZED_STRING     : return("not initialized string"                                        ); // 4008
+      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("not initialized string in array"                               ); // 4009
+      case ERR_NO_MEMORY_FOR_ARRAYSTRING  : return("no memory for string in array"                                 ); // 4010
+      case ERR_TOO_LONG_STRING            : return("string too long"                                               ); // 4011
+      case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("remainder from division by zero"                               ); // 4012
+      case ERR_ZERO_DIVIDE                : return("division by zero"                                              ); // 4013
+      case ERR_UNKNOWN_COMMAND            : return("unknown command"                                               ); // 4014
+      case ERR_WRONG_JUMP                 : return("wrong jump (never generated error)"                            ); // 4015
+      case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                         ); // 4016
+      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls are not allowed"                                     ); // 4017
+      case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                           ); // 4018
+      case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
+      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
+      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
+      case ERR_SYSTEM_BUSY                : return("system busy (never generated error)"                           ); // 4022
+      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050
+      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051
+      case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
+      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053
+      case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                                  ); // 4054
+      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055
+      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056
+      case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
+      case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
+      case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                             ); // 4059
+      case ERR_FUNCTION_NOT_CONFIRMED     : return("function not confirmed"                                        ); // 4060
+      case ERR_SEND_MAIL_ERROR            : return("send mail error"                                               ); // 4061
+      case ERR_STRING_PARAMETER_EXPECTED  : return("string parameter expected"                                     ); // 4062
+      case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                    ); // 4063
+      case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                     ); // 4064
+      case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                      ); // 4065
+      case ERR_HISTORY_WILL_UPDATED       : return("requested history data in update state"                        ); // 4066
+      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067
+      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099
+      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100
+      case ERR_WRONG_FILE_NAME            : return("wrong file name"                                               ); // 4101
+      case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                         ); // 4102
+      case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                              ); // 4103
+      case ERR_INCOMPATIBLE_FILEACCESS    : return("incompatible file access"                                      ); // 4104
+      case ERR_NO_ORDER_SELECTED          : return("no order selected"                                             ); // 4105
+      case ERR_UNKNOWN_SYMBOL             : return("unknown symbol"                                                ); // 4106
+      case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"                    ); // 4107
+      case ERR_INVALID_TICKET             : return("invalid ticket"                                                ); // 4108
+      case ERR_TRADE_NOT_ALLOWED          : return("live trading is not enabled"                                   ); // 4109
+      case ERR_LONGS_NOT_ALLOWED          : return("long trades are not enabled"                                   ); // 4110
+      case ERR_SHORTS_NOT_ALLOWED         : return("short trades are not enabled"                                  ); // 4111
+      case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                         ); // 4200
+      case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                       ); // 4201
+      case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn\'t exist"                                         ); // 4202
+      case ERR_UNKNOWN_OBJECT_TYPE        : return("unknown object type"                                           ); // 4203
+      case ERR_NO_OBJECT_NAME             : return("no object name"                                                ); // 4204
+      case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                      ); // 4205
+      case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                        ); // 4206
+      case ERR_SOME_OBJECT_ERROR          : return("object error"                                                  ); // 4207
 
       // custom errors
-      case ERR_WINDOWS_ERROR              : return("Windows error"                                           );
-      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                );
-      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                           );
-      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                  );
+      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000
+      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002
+      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5003
    }
    return("unknown error");
 }
@@ -3761,8 +3761,19 @@ string StringToLower(string value) {
 
    for (int i=0; i < len; i++) {
       char = StringGetChar(value, i);
-      if ( 64 < char) if (char <  91) result = StringSetChar(result, i, char+32);   // Conditions für MQL optimiert
-      if (191 < char) if (char < 224) result = StringSetChar(result, i, char+32);
+      //logische Version
+      //if      (64 < char && char < 91)              result = StringSetChar(result, i, char+32);
+      //else if (char==138 || char==140 || char==142) result = StringSetChar(result, i, char+16);
+      //else if (char==159)                           result = StringSetChar(result, i,     255);  // Ÿ -> ÿ
+      //else if (191 < char && char < 223)            result = StringSetChar(result, i, char+32);
+
+      // für MQL optimierte Version
+      if      (char == 138)                 result = StringSetChar(result, i, char+16);
+      else if (char == 140)                 result = StringSetChar(result, i, char+16);
+      else if (char == 142)                 result = StringSetChar(result, i, char+16);
+      else if (char == 159)                 result = StringSetChar(result, i,     255);   // Ÿ -> ÿ
+      else if (char < 91) { if (char >  64) result = StringSetChar(result, i, char+32); }
+      else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
    }
 
    int error = GetLastError();
@@ -3787,8 +3798,19 @@ string StringToUpper(string value) {
 
    for (int i=0; i < len; i++) {
       char = StringGetChar(value, i);
-      if ( 96 < char) if (char < 123) result = StringSetChar(result, i, char-32);   // Conditions für MQL optimiert
-      if (223 < char)                 result = StringSetChar(result, i, char-32);
+      //logische Version
+      //if      (96 < char && char < 123)             result = StringSetChar(result, i, char-32);
+      //else if (char==154 || char==156 || char==158) result = StringSetChar(result, i, char-16);
+      //else if (char==255)                           result = StringSetChar(result, i,     159);  // ÿ -> Ÿ
+      //else if (char > 223)                          result = StringSetChar(result, i, char-32);
+
+      // für MQL optimierte Version
+      if      (char == 255)                 result = StringSetChar(result, i,     159);   // ÿ -> Ÿ
+      else if (char  > 223)                 result = StringSetChar(result, i, char-32);
+      else if (char == 158)                 result = StringSetChar(result, i, char-16);
+      else if (char == 156)                 result = StringSetChar(result, i, char-16);
+      else if (char == 154)                 result = StringSetChar(result, i, char-16);
+      else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
    }
 
    int error = GetLastError();
@@ -3844,12 +3866,12 @@ string UrlEncode(string value) {
 }
 
 
-
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 // Original-MetaQuotes Funktionen             !!! NICHT VERWENDEN !!!                 //
 //                                                                                    //
 // Diese Funktionen stehen hier nur zur Dokumentation. Sie sind teilweise fehlerhaft. //
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+
 
 /**
  * convert red, green and blue values to color
@@ -3944,3 +3966,775 @@ string IntegerToHexString(int integer) {
    return(result);
 }
 
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+//                                                                                    //
+// MQL Utility Funktionen                                                             //
+//                                                                                    //
+// @see http://www.forexfactory.com/showthread.php?p=2695655                          //
+//                                                                                    //
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+
+
+/**
+ * Returns the numeric value for an MQL4 color descriptor string
+ * Usage:   int x = StrToColor("Aqua")      returns x = 16776960
+ * or:      int x = StrToColor("0,255,255") returns x = 16776960
+ * i.e.             StrToColor("<red>,<green>,<blue>")
+ * or:      int x = StrToColor("0xFFFF00")  returns x = 16776960
+ * i.e.             StrToColor("0xbbggrr")
+ * or:      int x = StrToColor("r0g255b255")  returns x = 16776960
+ * i.e.             StrToColor("r<nnn>g<nnn>b<nnn>")
+ */
+int StrToColor(string str) {
+   str = StringToLower(str);
+
+   if (str == "aliceblue"        ) return(0xFFF8F0);
+   if (str == "antiquewhite"     ) return(0xD7EBFA);
+   if (str == "aqua"             ) return(0xFFFF00);
+   if (str == "aquamarine"       ) return(0xD4FF7F);
+   if (str == "beige"            ) return(0xDCF5F5);
+   if (str == "bisque"           ) return(0xC4E4FF);
+   if (str == "black"            ) return(0x000000);
+   if (str == "blanchedalmond"   ) return(0xCDEBFF);
+   if (str == "blue"             ) return(0xFF0000);
+   if (str == "blueviolet"       ) return(0xE22B8A);
+   if (str == "brown"            ) return(0x2A2AA5);
+   if (str == "burlywood"        ) return(0x87B8DE);
+   if (str == "cadetblue"        ) return(0xA09E5F);
+   if (str == "chartreuse"       ) return(0x00FF7F);
+   if (str == "chocolate"        ) return(0x1E69D2);
+   if (str == "coral"            ) return(0x507FFF);
+   if (str == "cornflowerblue"   ) return(0xED9564);
+   if (str == "cornsilk"         ) return(0xDCF8FF);
+   if (str == "crimson"          ) return(0x3C14DC);
+   if (str == "darkblue"         ) return(0x8B0000);
+   if (str == "darkgoldenrod"    ) return(0x0B86B8);
+   if (str == "darkgray"         ) return(0xA9A9A9);
+   if (str == "darkgreen"        ) return(0x006400);
+   if (str == "darkkhaki"        ) return(0x6BB7BD);
+   if (str == "darkolivegreen"   ) return(0x2F6B55);
+   if (str == "darkorange"       ) return(0x008CFF);
+   if (str == "darkorchid"       ) return(0xCC3299);
+   if (str == "darksalmon"       ) return(0x7A96E9);
+   if (str == "darkseagreen"     ) return(0x8BBC8F);
+   if (str == "darkslateblue"    ) return(0x8B3D48);
+   if (str == "darkslategray"    ) return(0x4F4F2F);
+   if (str == "darkturquoise"    ) return(0xD1CE00);
+   if (str == "darkviolet"       ) return(0xD30094);
+   if (str == "deeppink"         ) return(0x9314FF);
+   if (str == "deepskyblue"      ) return(0xFFBF00);
+   if (str == "dimgray"          ) return(0x696969);
+   if (str == "dodgerblue"       ) return(0xFF901E);
+   if (str == "firebrick"        ) return(0x2222B2);
+   if (str == "forestgreen"      ) return(0x228B22);
+   if (str == "gainsboro"        ) return(0xDCDCDC);
+   if (str == "gold"             ) return(0x00D7FF);
+   if (str == "goldenrod"        ) return(0x20A5DA);
+   if (str == "gray"             ) return(0x808080);
+   if (str == "green"            ) return(0x008000);
+   if (str == "greenyellow"      ) return(0x2FFFAD);
+   if (str == "honeydew"         ) return(0xF0FFF0);
+   if (str == "hotpink"          ) return(0xB469FF);
+   if (str == "indianred"        ) return(0x5C5CCD);
+   if (str == "indigo"           ) return(0x82004B);
+   if (str == "ivory"            ) return(0xF0FFFF);
+   if (str == "khaki"            ) return(0x8CE6F0);
+   if (str == "lavender"         ) return(0xFAE6E6);
+   if (str == "lavenderblush"    ) return(0xF5F0FF);
+   if (str == "lawngreen"        ) return(0x00FC7C);
+   if (str == "lemonchiffon"     ) return(0xCDFAFF);
+   if (str == "lightblue"        ) return(0xE6D8AD);
+   if (str == "lightcoral"       ) return(0x8080F0);
+   if (str == "lightcyan"        ) return(0xFFFFE0);
+   if (str == "lightgoldenrod"   ) return(0xD2FAFA);
+   if (str == "lightgray"        ) return(0xD3D3D3);
+   if (str == "lightgreen"       ) return(0x90EE90);
+   if (str == "lightpink"        ) return(0xC1B6FF);
+   if (str == "lightsalmon"      ) return(0x7AA0FF);
+   if (str == "lightseagreen"    ) return(0xAAB220);
+   if (str == "lightskyblue"     ) return(0xFACE87);
+   if (str == "lightslategray"   ) return(0x998877);
+   if (str == "lightsteelblue"   ) return(0xDEC4B0);
+   if (str == "lightyellow"      ) return(0xE0FFFF);
+   if (str == "lime"             ) return(0x00FF00);
+   if (str == "limegreen"        ) return(0x32CD32);
+   if (str == "linen"            ) return(0xE6F0FA);
+   if (str == "magenta"          ) return(0xFF00FF);
+   if (str == "maroon"           ) return(0x000080);
+   if (str == "mediumaquamarine" ) return(0xAACD66);
+   if (str == "mediumblue"       ) return(0xCD0000);
+   if (str == "mediumorchid"     ) return(0xD355BA);
+   if (str == "mediumpurple"     ) return(0xDB7093);
+   if (str == "mediumseagreen"   ) return(0x71B33C);
+   if (str == "mediumslateblue"  ) return(0xEE687B);
+   if (str == "mediumspringgreen") return(0x9AFA00);
+   if (str == "mediumturquoise"  ) return(0xCCD148);
+   if (str == "mediumvioletred"  ) return(0x8515C7);
+   if (str == "midnightblue"     ) return(0x701919);
+   if (str == "mintcream"        ) return(0xFAFFF5);
+   if (str == "mistyrose"        ) return(0xE1E4FF);
+   if (str == "moccasin"         ) return(0xB5E4FF);
+   if (str == "navajowhite"      ) return(0xADDEFF);
+   if (str == "navy"             ) return(0x800000);
+   if (str == "none"             ) return(C'0x00,0x00,0x00');
+   if (str == "oldlace"          ) return(0xE6F5FD);
+   if (str == "olive"            ) return(0x008080);
+   if (str == "olivedrab"        ) return(0x238E6B);
+   if (str == "orange"           ) return(0x00A5FF);
+   if (str == "orangered"        ) return(0x0045FF);
+   if (str == "orchid"           ) return(0xD670DA);
+   if (str == "palegoldenrod"    ) return(0xAAE8EE);
+   if (str == "palegreen"        ) return(0x98FB98);
+   if (str == "paleturquoise"    ) return(0xEEEEAF);
+   if (str == "palevioletred"    ) return(0x9370DB);
+   if (str == "papayawhip"       ) return(0xD5EFFF);
+   if (str == "peachpuff"        ) return(0xB9DAFF);
+   if (str == "peru"             ) return(0x3F85CD);
+   if (str == "pink"             ) return(0xCBC0FF);
+   if (str == "plum"             ) return(0xDDA0DD);
+   if (str == "powderblue"       ) return(0xE6E0B0);
+   if (str == "purple"           ) return(0x800080);
+   if (str == "red"              ) return(0x0000FF);
+   if (str == "rosybrown"        ) return(0x8F8FBC);
+   if (str == "royalblue"        ) return(0xE16941);
+   if (str == "saddlebrown"      ) return(0x13458B);
+   if (str == "salmon"           ) return(0x7280FA);
+   if (str == "sandybrown"       ) return(0x60A4F4);
+   if (str == "seagreen"         ) return(0x578B2E);
+   if (str == "seashell"         ) return(0xEEF5FF);
+   if (str == "sienna"           ) return(0x2D52A0);
+   if (str == "silver"           ) return(0xC0C0C0);
+   if (str == "skyblue"          ) return(0xEBCE87);
+   if (str == "slateblue"        ) return(0xCD5A6A);
+   if (str == "slategray"        ) return(0x908070);
+   if (str == "snow"             ) return(0xFAFAFF);
+   if (str == "springgreen"      ) return(0x7FFF00);
+   if (str == "steelblue"        ) return(0xB48246);
+   if (str == "tan"              ) return(0x8CB4D2);
+   if (str == "teal"             ) return(0x808000);
+   if (str == "thistle"          ) return(0xD8BFD8);
+   if (str == "tomato"           ) return(0x4763FF);
+   if (str == "turquoise"        ) return(0xD0E040);
+   if (str == "violet"           ) return(0xEE82EE);
+   if (str == "wheat"            ) return(0xB3DEF5);
+   if (str == "white"            ) return(0xFFFFFF);
+   if (str == "whitesmoke"       ) return(0xF5F5F5);
+   if (str == "yellow"           ) return(0x00FFFF);
+   if (str == "yellowgreen"      ) return(0x32CD9A);
+
+   int t1 = StringFind(str, ",", 0);
+   int t2 = StringFind(str, ",", t1+1);
+
+   if (t1>0 && t2>0) {
+      int red   = StrToInteger(StringSubstr(str, 0, t1));
+      int green = StrToInteger(StringSubstr(str, t1+1, t2-1));
+      int blue  = StrToInteger(StringSubstr(str, t2+1, StringLen(str)));
+      return(blue*256*256 + green*256 + red);
+   }
+
+   if (StringSubstr(str, 0, 2) == "0x") {
+      string cnvstr = "0123456789abcdef";
+      string seq    = "234567";
+      int    retval = 0;
+      for (int i=0; i < 6; i++) {
+         int pos = StrToInteger(StringSubstr(seq, i, 1));
+         int val = StringFind(cnvstr, StringSubstr(str, pos, 1), 0);
+         if (val < 0)
+            return(val);
+         retval = retval * 16 + val;
+      }
+      return(retval);
+   }
+
+   string cclr = "", tmp = "";
+   red   = 0;
+   blue  = 0;
+   green = 0;
+
+   if (StringFind("rgb", StringSubstr(str, 0, 1)) >= 0) {
+      for (i=0; i < StringLen(str); i++) {
+         tmp = StringSubstr(str, i, 1);
+         if (StringFind("rgb", tmp, 0) >= 0)
+            cclr = tmp;
+         else {
+            if (cclr == "b") blue  = blue  * 10 + StrToInteger(tmp);
+            if (cclr == "g") green = green * 10 + StrToInteger(tmp);
+            if (cclr == "r") red   = red   * 10 + StrToInteger(tmp);
+         }
+      }
+      return(blue*256*256 + green*256 + red);
+   }
+
+   return(0);
+}
+
+
+/**
+ *
+ */
+bool StrToBool(string str) {
+   str = StringToLower(StringSubstr(str, 0, 1));
+   return(str=="t" || str=="y" || str=="1");
+}
+
+
+/**
+ * Converts the boolean value true or false to the string "true" or "false"
+ */
+string BoolToStr(bool bval) {
+   if (bval)
+      return("true");
+   return("false");
+}
+
+
+/**
+ * Converts a timeframe string to its MT4-numeric value
+ * Usage:   int x=StrToTF("M15")   returns x=15
+ */
+int StrToTF(string str) {
+   str = StringToUpper(str);
+   if (str == "M1" ) return(    1);
+   if (str == "M5" ) return(    5);
+   if (str == "M15") return(   15);
+   if (str == "M30") return(   30);
+   if (str == "H1" ) return(   60);
+   if (str == "H4" ) return(  240);
+   if (str == "D1" ) return( 1440);
+   if (str == "W1" ) return(10080);
+   if (str == "MN" ) return(43200);
+   return(0);
+}
+
+
+/**
+ * Converts a MT4-numeric timeframe to its descriptor string
+ * Usage:   string s=TFToStr(15) returns s="M15"
+ */
+string TFToStr(int tf) {
+   switch (tf) {
+      case     1: return("M1" );
+      case     5: return("M5" );
+      case    15: return("M15");
+      case    30: return("M30");
+      case    60: return("H1" );
+      case   240: return("H4" );
+      case  1440: return("D1" );
+      case 10080: return("W1" );
+      case 43200: return("MN" );
+   }
+   return(0);
+}
+
+
+/**
+ * Returns the leftmost N characters of STR, if N is positive
+ * Usage:    string x=StringRepeat("ABCDEFG",2)  returns x = "AB"
+ *
+ * Returns all but the rightmost N characters of STR, if N is negative
+ * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "ABCDE"
+ */
+string StringLeft(string str, int n) {
+   if (n > 0) return(StringSubstr(str, 0, n));
+   if (n < 0) return(StringSubstr(str, 0, StringLen(str)+n));
+   return("");
+}
+
+
+/**
+ * Returns the rightmost N characters of STR, if N is positive
+ * Usage:    string x=StringRepeat("ABCDEFG",2)  returns x = "FG"
+ *
+ * Returns all but the leftmost N characters of STR, if N is negative
+ * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "CDEFG"
+ */
+string StringRight(string str, int n) {
+   if (n > 0) return(StringSubstr(str, StringLen(str)-n, n));
+   if (n < 0) return(StringSubstr(str, -n, StringLen(str)-n));
+   return("");
+}
+
+
+/**
+ * Prepends occurrences of the string STR2 to the string STR to make a string N characters long
+ * Usage:    string x=StringLeftPad("ABCDEFG",9," ")  returns x = "  ABCDEFG"
+ */
+string StringLeftPad(string str, int n, string str2) {
+   return(StringRepeat(str2, n-StringLen(str)) + str);
+}
+
+
+/**
+ * Appends occurrences of the string STR2 to the string STR to make a string N characters long
+ * Usage:    string x=StringRightPad("ABCDEFG",9," ")  returns x = "ABCDEFG  "
+ */
+string StringRightPad(string str, int n, string str2) {
+   return(str + StringRepeat(str2, n-StringLen(str)));
+}
+
+
+/**
+ *
+ */
+string StringReverse(string str) {
+   string outstr = "";
+   for (int i=StringLen(str)-1; i >= 0; i--) {
+      outstr = outstr + StringSubstr(str,i,1);
+   }
+   return(outstr);
+}
+
+
+/**
+ *
+ */
+string StringLeftExtract(string str, int n, string str2, int m) {
+   if (n > 0) {
+      int j = -1;
+      for (int i=1; i <= n; i++) {
+         j = StringFind(str, str2, j+1);
+      }
+      if (j > 0)
+         return(StringLeft(str, j+m));
+   }
+
+   if (n < 0) {
+      int c = 0;
+      j = 0;
+      for (i=StringLen(str)-1; i >= 0; i--) {
+         if (StringSubstr(str, i, StringLen(str2)) == str2) {
+            c++;
+            if (c == -n) {
+               j = i;
+               break;
+            }
+         }
+      }
+      if (j > 0)
+         return(StringLeft(str, j+m));
+   }
+   return("");
+}
+
+
+/**
+ *
+ */
+string StringRightExtract(string str, int n, string str2, int m) {
+   if (n > 0) {
+      int j = -1;
+      for (int i=1; i <= n; i++) {
+         j=StringFind(str,str2,j+1);
+      }
+      if (j > 0)
+         return(StringRight(str, StringLen(str)-j-1+m));
+   }
+
+   if (n < 0) {
+      int c = 0;
+      j = 0;
+      for (i=StringLen(str)-1; i >= 0; i--) {
+         if (StringSubstr(str, i, StringLen(str2)) == str2) {
+            c++;
+            if (c == -n) {
+               j = i;
+               break;
+            }
+         }
+      }
+      if (j > 0)
+         return(StringRight(str, StringLen(str)-j-1+m));
+   }
+   return("");
+}
+
+
+/**
+ * Returns the number of occurrences of STR2 in STR
+ * Usage:   int x = StringFindCount("ABCDEFGHIJKABACABB","AB")   returns x = 3
+ */
+int StringFindCount(string str, string str2) {
+   int c = 0;
+   for (int i=0; i < StringLen(str); i++) {
+      if (StringSubstr(str, i, StringLen(str2)) == str2)
+         c++;
+   }
+   return(c);
+}
+
+
+/**
+ *
+ */
+double MathInt(double n, int d) {
+   return(MathFloor(n*MathPow(10, d) + 0.000000000001) / MathPow(10, d));
+}
+
+
+/**
+ * This converts an MT4 date(/time) value to a formatted string, according to the instructions in the 'mask'.
+ *
+ *    - A "d" in the mask will cause a 1-2 digit day-of-the-month to be inserted in the output, at that point
+ *    - A "D" in the mask will cause a 2 digit day-of-the-month to be inserted in the output, at that point
+ *    - A "m" in the mask will cause a 1-2 digit month number to be inserted in the output, at that point
+ *    - A "M" in the mask will cause a 2 digit month number to be inserted in the output, at that point
+ *    - A "y" in the mask will cause a 2 digit year to be inserted in the output, at that point
+ *    - A "Y" in the mask will cause a 4 digit (Y2K compliant) year to be inserted in the output, at that point
+ *    - A "W" in the mask will cause a day-of-the week ("Monday", "Tuesday", etc) description to be inserted in the output, at that point
+ *    - A "w" in the mask will cause an abbreviated day-of-the week ("Mon", "Tue", etc) description to be inserted in the output, at that point
+ *    - A "N" in the mask will cause a month name ("January", "February", etc) to be inserted in the output, at that point
+ *    - A "n" in the mask will cause an abbreviated month name ("Jan", "Feb", etc) to be inserted in the output, at that point
+ *    - A "h" in the mask will cause the hour-of-the-day to be inserted in the output, as 1 or 2 digits, at that point
+ *    - A "H" in the mask will cause the hour-of-the-day to be inserted in the output, as 2 digits (with placeholding 0, if value < 10), at that point
+ *    - An "I" or "i" in the mask will cause the minutes to be inserted in the output, as 2 digits (with placeholding 0, if value < 10), at that point
+ *    - A "S" or "s" in the mask will cause the seconds to be inserted in the output, as 2 digits (with placeholding 0, if value < 10), at that point
+ *    - An "a" in the mask will cause a 12-hour version of the time to be displayed, with "am" or "pm" at that point
+ *    - An "A" in the mask will cause a 12-hour version of the time to be displayed, with "AM" or "PM" at that point
+ *    - A "T" in the mask will cause "st" "nd" rd" or "th" to be inserted at that point, depending on the day of the month e.g. 13th, 22nd, etc
+ *    - All other characters in the mask will be output, as is
+ *
+ * Examples: if date (a MT4 datetime variable) is June 04, 2009, then:
+ *
+ *    - DateToStr(date,"w m/d/Y") will output "Thu 6/4/2009"
+ *    - DateToStr(date,"Y-MD") will output "2009-0604"
+ *    - DateToStr(date,"d N, Y is a W") will output "4 June, 2009 is a Thursday"
+ *    - DateToStr(date,"W D`M`y = W") will output "Thursday 04`06`09 = Thursday"
+ */
+string DateToStr(datetime mt4date, string mask) {
+   int dd  = TimeDay(mt4date);
+   int mm  = TimeMonth(mt4date);
+   int yy  = TimeYear(mt4date);
+   int dw  = TimeDayOfWeek(mt4date);
+   int hr  = TimeHour(mt4date);
+   int min = TimeMinute(mt4date);
+   int sec = TimeSeconds(mt4date);
+   int h12 = 12;
+   if      (hr > 12) h12 = hr - 12;
+   else if (hr >  0) h12 = hr;
+
+   string ampm = "am";
+   if (hr > 12)
+      ampm = "pm";
+
+   switch (MathMod(dd, 10)) {
+      case 1: string d10 = "st"; break;
+      case 2:        d10 = "nd"; break;
+      case 3:        d10 = "rd"; break;
+      default:       d10 = "th";
+   }
+   if (dd > 10 && dd < 14)
+      d10 = "th";
+
+   string mth[12] = { "January","February","March","April","May","June","July","August","September","October","November","December" };
+   string dow[7]  = { "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday" };
+
+   string outdate = "";
+
+   for (int i=0; i < StringLen(mask); i++) {
+      string char = StringSubstr(mask, i, 1);
+      if      (char == "d")                outdate = outdate + StringTrim(NumberToStr(dd, "2"));
+      else if (char == "D")                outdate = outdate + StringTrim(NumberToStr(dd, "Z2"));
+      else if (char == "m")                outdate = outdate + StringTrim(NumberToStr(mm, "2"));
+      else if (char == "M")                outdate = outdate + StringTrim(NumberToStr(mm, "Z2"));
+      else if (char == "y")                outdate = outdate + StringTrim(NumberToStr(yy, "2"));
+      else if (char == "Y")                outdate = outdate + StringTrim(NumberToStr(yy, "4"));
+      else if (char == "n")                outdate = outdate + StringSubstr(mth[mm-1], 0, 3);
+      else if (char == "N")                outdate = outdate + mth[mm-1];
+      else if (char == "w")                outdate = outdate + StringSubstr(dow[dw], 0, 3);
+      else if (char == "W")                outdate = outdate + dow[dw];
+      else if (char == "h")                outdate = outdate + StringTrim(NumberToStr(h12, "2"));
+      else if (char == "H")                outdate = outdate + StringTrim(NumberToStr(hr, "Z2"));
+      else if (StringToUpper(char) == "I") outdate = outdate + StringTrim(NumberToStr(min, "Z2"));
+      else if (StringToUpper(char) == "S") outdate = outdate + StringTrim(NumberToStr(sec, "Z2"));
+      else if (char == "a")                outdate = outdate + ampm;
+      else if (char == "A")                outdate = outdate + StringToUpper(ampm);
+      else if (StringToUpper(char) == "T") outdate = outdate + d10;
+      else                                 outdate = outdate + char;
+   }
+   return(outdate);
+}
+
+
+/**
+ * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols, and so forth, according to the instructions provided in the 'mask'.
+ *
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left of the decimal point, and d the number to the right,
+ * e.g. NumberToStr(123.456,"5") will return "<space><space>123"
+ * e.g. NumberToStr(123.456,"5.2") will return "<space><space>123.45"
+ *
+ * Other characters that may be used in the mask:
+ *
+ *    - Including a "-" anywhere to the left of "n.d" will cause a floating minus symbol to be included to the left of the number, if the nunber is negative; no symbol if positive
+ *    - Including a "+" anywhere to the left of "n.d" will cause a floating plus or minus symbol to be included, to the left of the number
+ *    - Including a "-" anywhere to the right of "n.d" will cause a minus to be included at the right of the number, e.g. NumberToStr(-123.456,"3.2-") will return "123.46-"
+ *    - Including a "(" or ")" anywhere in the mask will cause any negative number to be enclosed in parentheses
+ *    - Including an "R" or "r" anywhere in the mask will cause rounding, e.g. NumberToStr(123.456,"R3.2") will return "123.46"; e.g. NumberToStr(123.7,"R3") will return "124"
+ *    - Including a "$", "€", "£" or "¥" anywhere in the mask will cause the designated floating currency symbol to be included, to the left of the number
+ *    - Including a "," anywhere in the mask will cause commas to be inserted between every 3 digits, to separate thousands, millions, etc at the left of the number, e.g. NumberToStr(123456.789,",6.3") will return "123,456.789"
+ *    - Including a "Z" or "z" anywhere in the mask will cause zeros (instead of spaces) to be used to fill any unused places at the left of the number, e.g. NumberToStr(123.456,"Z5.2") will return "00123.45"
+ *    - Including a "B" or "b" anywhere in the mask ("blank if zero") will cause the entire output to be blanks, if the value of the number is zero
+ *    - Including a "*" anywhere in the mask will cause an asterisk to be output, if overflow occurs (the value of n in "n.d" is too small to allow the number to be output in full)
+ *    - Including a "L" or "l" anywhere in the mask will cause the output to be left aligned in the output field, e.g. NumberToStr(123.456,"L5.2") will return "123.45<space><space>"
+ *    - Including a "T" or "t" anywhere in the mask will cause the output to be left aligned in the output field, and trailing spaces trimmed e.g. NumberToStr(123.456,"T5.2") will return "123.45"
+ *    - Including a ";" anywhere in the mask will cause decimal point and comma to be juxtaposed, e.g. NumberToStr(123456.789,";,6.3") will return "123.456,789"
+ *
+ * Any combination of the above can be used in the mask. Feel welcome to experiment.
+ *
+ * ==================================================================================================================================================================
+ *
+ * Formats a number using a mask, and returns the resulting string
+ * Usage:    string result = NumberToStr(number,mask)
+ *
+ * Mask parameters:
+ * n = number of digits to output, to the left of the decimal point
+ * n.d = output n digits to left of decimal point; d digits to the right
+ * -n.d = floating minus sign at left of output
+ * n.d- = minus sign at right of output
+ * +n.d = floating plus/minus sign at left of output
+ * ( or ) = enclose negative number in parentheses
+ * $ or £ or ¥ or € = include floating currency symbol at left of output
+ * % = include trailing % sign
+ * , = use commas to separate thousands
+ * Z or z = left fill with zeros instead of spaces
+ * R or r = round result in rightmost displayed digit
+ * B or b = blank entire field if number is 0
+ * * = show asterisk in leftmost position if overflow occurs
+ * ; = switch use of comma and period (European format)
+ * L or l = left align final string
+ * T ot t = trim end result
+ */
+string NumberToStr(double n, string mask) {
+   if (MathAbs(n) == 2147483647)
+      n = 0;
+
+   mask = StringToUpper(mask);
+   int dotadj = 0;
+   int dot    = StringFind(mask, ".", 0);
+   if (dot < 0) {
+      dot    = StringLen(mask);
+      dotadj = 1;
+   }
+
+   int nleft  = 0;
+   int nright = 0;
+
+   for (int i=0; i < dot; i++) {
+      string char = StringSubstr(mask, i, 1);
+      if (char >= "0" && char <= "9")
+         nleft = 10*nleft + StrToInteger(char);
+   }
+   if (dotadj == 0) {
+      for (i=dot+1; i <= StringLen(mask); i++) {
+         char = StringSubstr(mask, i, 1);
+         if (char >= "0" && char <= "9")
+            nright = 10*nright + StrToInteger(char);
+      }
+   }
+   nright = MathMin(nright, 7);
+
+   if (dotadj == 1) {
+      for (i=0; i < StringLen(mask); i++) {
+         char = StringSubstr(mask, i, 1);
+         if (char >= "0" && char <= "9") {
+            dot = i;
+            break;
+         }
+      }
+   }
+
+   string csym = "";
+   if (StringFind(mask, "$", 0) >= 0) csym = "$";
+   if (StringFind(mask, "£", 0) >= 0) csym = "£";
+   if (StringFind(mask, "€", 0) >= 0) csym = "€";
+   if (StringFind(mask, "¥", 0) >= 0) csym = "¥";
+
+   string leadsign  = "";
+   string trailsign = "";
+
+   if (StringFind(mask, "+", 0) >= 0 && StringFind(mask, "+", 0) < dot) {
+      leadsign = " ";
+      if (n > 0) leadsign = "+";
+      if (n < 0) leadsign = "-";
+   }
+   if (StringFind(mask, "-", 0) >= 0 && StringFind(mask, "-", 0) < dot) {
+      if (n < 0) leadsign = "-";
+      else       leadsign = " ";
+   }
+   if (StringFind(mask, "-", 0) >= 0 && StringFind(mask, "-", 0) > dot) {
+      if (n < 0) trailsign = "-";
+      else       trailsign = " ";
+   }
+   if (StringFind(mask, "(", 0) >= 0 || StringFind(mask, ")", 0) >= 0) {
+      leadsign  = " ";
+      trailsign = " ";
+      if (n < 0) {
+         leadsign  = "(";
+         trailsign = ")";
+      }
+   }
+   if (StringFind(mask, "%", 0) >= 0)
+      trailsign = "%" + trailsign;
+
+   bool comma = (StringFind(mask, ",", 0) >= 0);
+   bool zeros = (StringFind(mask, "Z", 0) >= 0);
+   bool blank = (StringFind(mask, "B", 0) >= 0);
+   bool round = (StringFind(mask, "R", 0) >= 0);
+   bool overf = (StringFind(mask, "*", 0) >= 0);
+   bool lftsh = (StringFind(mask, "L", 0) >= 0);
+   bool swtch = (StringFind(mask, ";", 0) >= 0);
+   bool trimf = (StringFind(mask, "T", 0) >= 0);
+
+   if (round)
+      n = MathFix(n, nright);
+   string outstr = n;
+
+   int dleft = 0;
+   for (i=0; i < StringLen(outstr); i++) {
+      char = StringSubstr(outstr, i, 1);
+      if (char >= "0" && char <= "9")
+         dleft++;
+      if (char == ".")
+         break;
+   }
+
+   // Insert fill characters.......
+   if (zeros) string fill = "0";
+   else              fill = " ";
+   if (n < 0) outstr = "-" + StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 1, StringLen(outstr)-1);
+   else       outstr = StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 0, StringLen(outstr));
+   outstr = StringSubstr(outstr, StringLen(outstr)-9-nleft, nleft+1+nright-dotadj);
+
+   // Insert the commas.......
+   if (comma) {
+      bool digflg = false;
+      bool stpflg = false;
+      string out1 = "";
+      string out2 = "";
+      for (i=0; i < StringLen(outstr); i++) {
+         char = StringSubstr(outstr, i, 1);
+         if (char == ".")
+            stpflg = true;
+         if (!stpflg && (nleft-i==3 || nleft-i==6 || nleft-i==9)) {
+            if (digflg) out1 = out1 +",";
+            else        out1 = out1 +" ";
+         }
+         out1 = out1 + char;
+         if (char >= "0" && char <= "9")
+            digflg = true;
+      }
+      outstr = out1;
+   }
+
+   // Add currency symbol and signs........
+   outstr = csym + leadsign + outstr + trailsign;
+
+   // 'Float' the currency symbol/sign.......
+   out1 = "";
+   out2 = "";
+   bool fltflg = true;
+   for (i=0; i < StringLen(outstr); i++) {
+      char = StringSubstr(outstr, i, 1);
+      if (char >= "0" && char <= "9")
+         fltflg = false;
+      if ((char==" " && fltflg) || (blank && n==0)) out1 = out1 + " ";
+      else                                          out2 = out2 + char;
+   }
+   outstr = out1 + out2;
+
+   // Overflow........
+   if (overf && dleft > nleft)
+      outstr = "*" + StringSubstr(outstr, 1, StringLen(outstr)-1);
+
+   // Left shift.......
+   if (lftsh) {
+      int len = StringLen(outstr);
+      outstr = StringTrimLeft(outstr);
+      outstr = outstr + StringRepeat(" ", len-StringLen(outstr));
+   }
+
+   // Switch period and comma.......
+   if (swtch) {
+      out1 = "";
+      for (i=0; i < StringLen(outstr); i++) {
+         char = StringSubstr(outstr, i, 1);
+         if      (char == ".") out1 = out1 +",";
+         else if (char == ",") out1 = out1 +".";
+         else                  out1 = out1 + char;
+      }
+      outstr = out1;
+   }
+
+   if (trimf)
+      outstr = StringTrim(outstr);
+   return(outstr);
+}
+
+
+/**
+ * Repeats the string STR N times
+ * Usage:    string x=StringRepeat("-",10)  returns x = "----------"
+ */
+string StringRepeat(string str, int n) {
+   string outstr = "";
+   for (int i=0; i < n; i++) {
+      outstr = outstr + str;
+   }
+   return(outstr);
+}
+
+
+/**
+ * Returns N rounded to D decimals - works around a precision bug in MQL4
+ */
+double MathFix(double n, int d) {
+   return(MathRound(n*MathPow(10, d) + 0.000000000001*MathSign(n)) / MathPow(10, d));
+}
+
+
+/**
+ * Returns the sign of a number (i.e. -1, 0, +1)
+ * Usage:   int x=MathSign(-25)   returns x=-1
+ */
+int MathSign(double n) {
+   if      (n > 0) return( 1);
+   else if (n < 0) return(-1);
+   else            return( 0);
+}
+
+
+/**
+ * Returns the base 10 version of a number in another base
+ * Usage:   int x=BaseToNumber("DC",16)   returns x=220
+ */
+int BaseToNumber(string str, int base) {
+   str = StringToUpper(str);
+   string cnvstr = "0123456789ABCDEF";
+   int    retval = 0;
+   for (int i=0; i < StringLen(str); i++) {
+      int val = StringFind(cnvstr, StringSubstr(str, i, 1), 0);
+      if (val < 0)
+         return(val);
+      retval = retval * base + val;
+   }
+   return(retval);
+}
+
+
+/**
+ * Converts a base 10 number to another base, left-padded with zeros
+ * Usage:   int x=BaseToNumber(220,16,4)   returns x="00DC"
+ */
+string NumberToBase(int n, int base, int pad) {
+   string cnvstr = "0123456789ABCDEF";
+   string outstr = "";
+   while (n > 0) {
+      int x = MathMod(n, base);
+      outstr = StringSubstr(cnvstr, x, 1) + outstr;
+      n /= base;
+   }
+   x = StringLen(outstr);
+   if (x < pad)
+      outstr = StringRepeat("0", pad-x) + outstr;
+   return(outstr);
+}

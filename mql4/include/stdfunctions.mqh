@@ -256,7 +256,7 @@
 #define ERR_DOUBLE_PARAMETER_EXPECTED        4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED      4065
 #define ERR_HISTORY_WILL_UPDATED             4066  // history in update state
-#define ERR_TRADE_ERROR                      4067  // ???
+#define ERR_TRADE_ERROR                      4067  // error in trading function
 #define ERR_END_OF_FILE                      4099  // end of file
 #define ERR_SOME_FILE_ERROR                  4100  // some file error
 #define ERR_WRONG_FILE_NAME                  4101
