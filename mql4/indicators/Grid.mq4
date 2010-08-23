@@ -103,7 +103,7 @@ int DrawGrid() {
       return(ERR_RUNTIME_ERROR);
 
    datetime easternTime, easternFrom, easternTo, serverTime, labelTime, chartTime, currentServerTime = TimeCurrent();
-   int      bar, lastBar, style;
+   int      bar, lastBar, sColor, sStyle;
    string   label, lastLabel, day, dd, mm, yyyy;
 
    // Zeitpunkte des ersten und letzten Separators in New Yorker Zeit berechen
@@ -150,11 +150,11 @@ int DrawGrid() {
       ObjectDelete(label); GetLastError();
       if (!ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0))
          return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")"));
-      if (day == "Mon") style = STYLE_DASHDOTDOT;
-      else              style = STYLE_DOT;
-      ObjectSet(label, OBJPROP_STYLE, style     );
-      ObjectSet(label, OBJPROP_COLOR, Grid.Color);
-      ObjectSet(label, OBJPROP_BACK , true      );
+         if (day == "Mon") { sColor = C'231,192,221'; sStyle = STYLE_DASHDOTDOT; }
+         else              { sColor = Grid.Color;     sStyle = STYLE_DOT;        }
+      ObjectSet(label, OBJPROP_STYLE, sStyle);
+      ObjectSet(label, OBJPROP_COLOR, sColor);
+      ObjectSet(label, OBJPROP_BACK , true  );
       RegisterChartObject(label, labels);
 
       lastLabel = label;                     // letzte Separatordaten für Erkennung fehlender Sessions merken
