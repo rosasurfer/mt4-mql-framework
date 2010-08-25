@@ -352,7 +352,7 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
  *
- * @param  int& tickets[] - Resultarray für neu geöffnete Positionen
+ * @param  int& tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
  * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
@@ -382,7 +382,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    // NOTE:
    // -----
    // Die offenen Positionen stehen u.U. erst nach einigen Ticks zur Verfügung (z.B. nach Accountwechsel). Daher müssen
-   // neu identifizierte Positionen anhand ihres OrderOpen-Timestamps explizit auf ihren Status überprüft werden.
+   // neu auftretende Positionen anhand ihres OrderOpen-Timestamps explizit auf ihren Status überprüft werden.
 
    static int      accountNumber[1];                        // default: 0
    static datetime accountInitialized[1];                   // default: 0
@@ -392,14 +392,14 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    if (accountNumber[0] == 0) {                             // 1. Aufruf
       accountNumber[0]      = account;
       accountInitialized[0] = TimeCurrent();                // Serverzeit
-      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach 1. Aufruf initialized: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach 1. Aufruf initialisiert, Serverzeit: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
    else if (accountNumber[0] != account) {                  // Accountwechsel während der Laufzeit: alle Positionen löschen
-      ArrayResize(knownPositions, 0);
-      sizeOfKnownPositions = 0;
       accountNumber[0]      = account;
       accountInitialized[0] = TimeCurrent();                // Serverzeit
-      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Wechsel initialized: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      ArrayResize(knownPositions, 0);
+      sizeOfKnownPositions = 0;
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Accountwechsel initialisiert, Serverzeit: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
    // offene Positionen überprüfen

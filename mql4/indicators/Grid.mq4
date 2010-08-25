@@ -31,6 +31,8 @@ int init() {
    init = true;
    init_error = ERR_NO_ERROR;
 
+   //Print("init()                                account: "+ GetAccountNumber());
+
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
       init_error = GetLastLibraryError();
@@ -78,6 +80,7 @@ int start() {
    }
 
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
+   //HandleEvents(EVENT_POSITION_OPEN);
 
    if (redraw) {                    // Grid neu zeichnen
       redraw = false;
