@@ -6,9 +6,12 @@
 #import "kernel32.dll"
 
    int  GetComputerNameA(string lpBuffer, int lpBufferSize[]);
+   void GetLocalTime(int lpSystemTime[]);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int nBufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
+   void GetSystemTime(int lpSystemTime[]);
+   int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    int  WinExec(string lpCmdLine, int nCmdShow);
 
 #import "user32.dll"
@@ -428,6 +431,12 @@
 #define IDHELP                                        9
 #define IDTRYAGAIN                                   10
 #define IDCONTINUE                                   11
+
+
+// Time zone constants
+#define TIME_ZONE_ID_UNKNOWN                          0
+#define TIME_ZONE_ID_STANDARD                         1
+#define TIME_ZONE_ID_DAYLIGHT                         2
 
 
 // Windows Error Codes

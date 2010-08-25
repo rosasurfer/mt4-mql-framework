@@ -3024,37 +3024,31 @@ string GetEventDescription(int event) {
 
 
 /**
- * Gibt das Installationsverzeichnis des Terminals zurück.
+ * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
  *
- * @return string - Verzeichnisname
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-string GetTerminalDirectory() {
-   int error;
+int GetLocalToGmtOffset() {
+   int tzInfos[43];
+   int type = GetTimeZoneInformation(tzInfos);
 
-   static string directory = "";
+   int offset = 0;
 
-   // Das Verzeichnis kann sich nicht ändern und wird zwischengespeichert.
-   if (directory == "") {
-      string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // siehe MetaTrader.doc: Zeigerproblematik
-
-      if (!GetModuleFileNameA(0, buffer[0], MAX_STRING_LEN)) {
-         error = GetLastError();
-         if (error == ERR_NO_ERROR)
-            error = ERR_WINDOWS_ERROR;
-         last_library_error = catch("GetTerminalDirectory(1)   kernel32.GetModuleFileNameA()  result: 0", error);
-         return("");
-      }
-
-      directory = StringSubstr(buffer[0], 0, StringFindR(buffer[0], "\\"));      // Pfadangabe extrahieren
-      //Print("GetTerminalDirectory()   module filename: "+ buffer[0] +"   directory: "+ directory);
+   if (type != TIME_ZONE_ID_UNKNOWN) {
+      offset = tzInfos[0];
+      if (type == TIME_ZONE_ID_DAYLIGHT)
+         offset += tzInfos[42];
    }
+   offset *= -1 * MINUTES;
 
-   error = GetLastError();
+   //Print("GetLocalToGmtOffset()   difference between your local time and GMT is: ", (offset/MINUTES), " minutes");
+
+   int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetTerminalDirectory(2)", error);
-      return("");
+      last_library_error = catch("GetLocalToGmtOffset()", error);
+      return(EMPTY_VALUE);
    }
-   return(directory);
+   return(offset);
 }
 
 
@@ -3393,6 +3387,41 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
    return(offset);
+}
+
+
+/**
+ * Gibt das Installationsverzeichnis des Terminals zurück.
+ *
+ * @return string - Verzeichnisname
+ */
+string GetTerminalDirectory() {
+   int error;
+
+   static string directory = "";
+
+   // Das Verzeichnis kann sich nicht ändern und wird zwischengespeichert.
+   if (directory == "") {
+      string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // siehe MetaTrader.doc: Zeigerproblematik
+
+      if (!GetModuleFileNameA(0, buffer[0], MAX_STRING_LEN)) {
+         error = GetLastError();
+         if (error == ERR_NO_ERROR)
+            error = ERR_WINDOWS_ERROR;
+         last_library_error = catch("GetTerminalDirectory(1)   kernel32.GetModuleFileNameA()  result: 0", error);
+         return("");
+      }
+
+      directory = StringSubstr(buffer[0], 0, StringFindR(buffer[0], "\\"));      // Pfadangabe extrahieren
+      //Print("GetTerminalDirectory()   module filename: "+ buffer[0] +"   directory: "+ directory);
+   }
+
+   error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetTerminalDirectory(2)", error);
+      return("");
+   }
+   return(directory);
 }
 
 

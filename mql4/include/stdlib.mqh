@@ -57,6 +57,7 @@
    double   GetLocalConfigDouble(string section, string key, double defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
+   int      GetLocalToGmtOffset();
    int      GetMovingAverageMethod(string description);
    string   GetOperationTypeDescription(int operationType);
    int      GetPeriod(string description);
