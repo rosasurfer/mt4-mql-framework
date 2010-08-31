@@ -62,7 +62,6 @@ int init() {
       return(init_error);
    }
 
-
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 

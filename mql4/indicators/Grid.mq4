@@ -33,7 +33,6 @@ int init() {
 
    //int gmtOffset = GetLocalToGmtOffset();
    //Print("init()        difference between your local time and GMT is: ", (gmtOffset/MINUTES), " minutes");
-   //Print("init()        account: "+ GetAccountNumber() +"        local: "+ TimeToStr(TimeLocal(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
