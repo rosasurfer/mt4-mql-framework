@@ -13,6 +13,485 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Gibt die Startzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerPrevSessionStartTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
+   datetime serverStart   = EasternToServerTime(previousStart);
+   //Print("GetServerPrevSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   previousStart: "+ TimeToStr(serverStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerPrevSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverStart);
+}
+
+
+/**
+ * Gibt die Endzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerPreviousSessionEndTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
+   datetime serverEnd   = EasternToServerTime(previousEnd);
+   //Print("GetServerPreviousSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   previousEnd: "+ TimeToStr(serverEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerPreviousSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerSessionStartTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1)  return(EMPTY_VALUE);
+
+   datetime easternStart = GetEasternSessionStartTime(easternTime);
+   if (easternStart == -1) return(-1);
+
+   datetime serverStart = EasternToServerTime(easternStart);
+    //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverStart: "+ TimeToStr(serverStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverStart);
+}
+
+
+/**
+ * Gibt die Endzeit der Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerSessionEndTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime easternEnd = GetEasternSessionEndTime(easternTime);
+   if (easternEnd == EMPTY_VALUE) return(EMPTY_VALUE);
+   if (easternEnd == -1)          return(-1);
+
+   datetime serverEnd = EasternToServerTime(easternEnd);
+    //Print("GetServerSessionEndTime()  time: "+ TimeToStr(serverTime) +"   serverEnd: "+ TimeToStr(serverEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der nächsten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerNextSessionStartTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime nextStart   = GetEasternNextSessionStartTime(easternTime);
+   datetime serverStart = EasternToServerTime(nextStart);
+   //Print("GetServerNextSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   nextStart: "+ TimeToStr(serverStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerNextSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverStart);
+}
+
+
+/**
+ * Gibt die Endzeit der nächsten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetServerNextSessionEndTime(datetime serverTime) {
+   datetime easternTime = ServerToEasternTime(serverTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime nextEnd   = GetEasternNextSessionEndTime(easternTime);
+   datetime serverEnd = EasternToServerTime(nextEnd);
+   //Print("GetServerNextSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   nextEnd: "+ TimeToStr(serverEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetServerNextSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(serverEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der vorherigen Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtPreviousSessionStartTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
+   datetime gmtStart      = EasternToGMT(previousStart);
+   //Print("GetGmtPreviousSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousStart: "+ TimeToStr(gmtStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtPreviousSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtStart);
+}
+
+
+/**
+ * Gibt die Endzeit der vorherigen Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtPreviousSessionEndTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
+   datetime gmtEnd      = EasternToGMT(previousEnd);
+   //Print("GetGmtPreviousSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousEnd: "+ TimeToStr(gmtEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtPreviousSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtSessionStartTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1)  return(EMPTY_VALUE);
+
+   datetime easternStart = GetEasternSessionStartTime(easternTime);
+   if (easternStart == -1) return(-1);
+
+   datetime gmtStart = EasternToGMT(easternStart);
+   //Print("GetGmtSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtStart: "+ TimeToStr(gmtStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtStart);
+}
+
+
+/**
+ * Gibt die Endzeit der Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtSessionEndTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime easternEnd = GetEasternSessionEndTime(easternTime);
+   if (easternEnd == -1)  return(-1);
+
+   datetime gmtEnd = EasternToGMT(easternEnd);
+   //Print("GetGmtSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtEnd: "+ TimeToStr(gmtEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der nächsten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtNextSessionStartTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime nextStart = GetEasternNextSessionStartTime(easternTime);
+   datetime gmtStart  = EasternToGMT(nextStart);
+   //Print("GetGmtNextSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextStart: "+ TimeToStr(gmtStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtNextSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtStart);
+}
+
+
+/**
+ * Gibt die Endzeit der nächsten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetGmtNextSessionEndTime(datetime gmtTime) {
+   datetime easternTime = GmtToEasternTime(gmtTime);
+   if (easternTime == -1) return(EMPTY_VALUE);
+
+   datetime nextEnd = GetEasternNextSessionEndTime(easternTime);
+   datetime gmtEnd  = EasternToGMT(nextEnd);
+   //Print("GetGmtNextSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextEnd: "+ TimeToStr(gmtEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetGmtNextSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(gmtEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der vorherigen Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternPrevSessionStartTime(datetime easternTime) {
+   // aktuellen Sessionbeginn ermitteln (17:00)
+   int hour = TimeHour(easternTime);
+   datetime currentStart = easternTime -(hour+7)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);    // Time -hours -7h => 17:00 am vorherigen Tag
+   if (hour >= 17)
+      currentStart += 1*DAY;
+   datetime previousStart = currentStart - 1*DAY;
+
+   // Wochenenden berücksichtigen
+   int dow = TimeDayOfWeek(previousStart);
+   if      (dow == FRIDAY  ) previousStart -= 1*DAY;
+   else if (dow == SATURDAY) previousStart -= 2*DAYS;
+   //Print("GetEasternPrevSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   previousStart: "+ TimeToStr(previousStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternPrevSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(previousStart);
+}
+
+
+/**
+ * Gibt die Endzeit der vorherigen Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternPrevSessionEndTime(datetime easternTime) {
+   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
+   if (previousStart == EMPTY_VALUE) return(EMPTY_VALUE);
+
+   datetime previousEnd = previousStart + 1*DAY;
+   //Print("GetEasternPrevSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   previousEnd: "+ TimeToStr(previousEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternPrevSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(previousEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternSessionStartTime(datetime easternTime) {
+   // aktuellen Sessionbeginn ermitteln (17:00)
+   int hour = TimeHour(easternTime);
+   datetime easternStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hour +17h => 17:00
+   if (hour < 17)
+      easternStart -= 1*DAY;
+
+   // Wochenenden berücksichtigen
+   int dow = TimeDayOfWeek(easternStart);
+   if (dow == FRIDAY  ) return(-1);
+   if (dow == SATURDAY) return(-1);
+   //Print("GetEasternSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(easternStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(easternStart);
+}
+
+
+/**
+ * Gibt die Endzeit der Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt geschlossen ist (Wochenende);
+ *                    EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternSessionEndTime(datetime easternTime) {
+   datetime easternStart = GetEasternSessionStartTime(easternTime);
+   if (easternStart == EMPTY_VALUE) return(EMPTY_VALUE);
+   if (easternStart == -1)          return(-1);
+
+   datetime easternEnd = easternStart + 1*DAY;
+   //Print("GetEasternSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionEnd: "+ TimeToStr(easternEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(easternEnd);
+}
+
+
+/**
+ * Gibt die Startzeit der nächsten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternNextSessionStartTime(datetime easternTime) {
+   // nächsten Sessionbeginn ermitteln (17:00)
+   int hour = TimeHour(easternTime);
+   datetime nextStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hours +17h => 17:00
+   if (hour >= 17)
+      nextStart += 1*DAY;
+
+   // Wochenenden berücksichtigen
+   int dow = TimeDayOfWeek(nextStart);
+   if      (dow == FRIDAY  ) nextStart += 2*DAYS;
+   else if (dow == SATURDAY) nextStart += 1*DAY;
+   //Print("GetEasternNextSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   nextStart: "+ TimeToStr(nextStart));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternNextSessionStartTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(nextStart);
+}
+
+
+/**
+ * Gibt die Endzeit der nächsten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
+ * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ *
+ * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ *
+ * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+datetime GetEasternNextSessionEndTime(datetime easternTime) {
+   datetime nextStart = GetEasternNextSessionStartTime(easternTime);
+   if (nextStart == EMPTY_VALUE) return(EMPTY_VALUE);
+
+   datetime nextEnd = nextStart + 1*DAY;
+   //Print("GetEasternNextSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   nextEnd: "+ TimeToStr(nextEnd));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("GetEasternNextSessionEndTime()", error);
+      return(EMPTY_VALUE);
+   }
+   return(nextEnd);
+}
+
+
+/**
  * Korrekter Vergleich zweier Doubles.
  *
  * @param  double1 - erster Wert
@@ -1515,43 +1994,6 @@ datetime EDT_schedule[50][4] = {
 
 
 /**
- * Gibt die Startzeit der letzten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten, vorherigen
- * Handelssession zurückgegeben.
- *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
- *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
- *
- *
- * NOTE:
- * ----
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
- */
-datetime GetEasternSessionStartTime(datetime easternTime) {
-   // Sessionbeginn in New York ermitteln (17:00)
-   datetime easternStart;
-   int hour = TimeHour(easternTime);
-   if (hour < 17) easternStart = easternTime - (hour+7) *HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);  // 00:00 -  7 Stunden => 17:00
-   else           easternStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);  // 00:00 + 17 Stunden => 17:00
-
-   // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(easternStart);
-   if      (dow == FRIDAY  ) easternStart -= 1*DAY;
-   else if (dow == SATURDAY) easternStart -= 2*DAYS;
-
-   //Print("GetEasternSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   easternStart: "+ TimeToStr(easternStart));
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetEasternSessionStartTime()", error);
-      return(-1);
-   }
-   return(easternStart);
-}
-
-
-/**
  * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu GMT (Greenwich Mean Time) zurück.
  *
  * @param  datetime easternTime - New Yorker Zeitpunkt
@@ -1717,42 +2159,6 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
       return("");
    }
    return(buffer[0]);
-}
-
-
-/**
- * Gibt die Startzeit der letzten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten,
- * vorherigen Handelssession zurückgegeben.
- *
- * @param  datetime gmtTime - GMT-Zeitpunkt
- *
- * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
- *
- * NOTE:
- * ----
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
- */
-datetime GetGmtSessionStartTime(datetime gmtTime) {
-   // GMT in New Yorker Zeit umrechnen
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1)
-      return(-1);
-
-   // Sessionbeginn in New York ermitteln (17:00)
-   datetime easternStart = GetEasternSessionStartTime(easternTime);
-
-   // New Yorker Zeit in GMT umrechnen
-   datetime gmtStart = EasternToGMT(easternStart);
-
-   //Print("GetGmtSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtStart: "+ TimeToStr(gmtStart));
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGmtSessionStartTime()", error);
-      return(-1);
-   }
-   return(gmtStart);
 }
 
 
@@ -3208,42 +3614,6 @@ string GetPeriodFlagDescription(int flags) {
 
 
 /**
- * Gibt die Startzeit der letzten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Liegt die Zeit nicht innerhalb einer Session (z.B. am Wochenende), wird der Beginn der letzten,
- * vorherigen Handelssession zurückgegeben.
- *
- * @param  datetime serverTime - Tradeserver-Zeitpunkt
- *
- * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
- *
- * NOTE:
- * ----
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit, egal ob dort gerade Winter- oder Sommerzeit herrscht.
- */
-datetime GetServerSessionStartTime(datetime serverTime) {
-   // Serverzeit in New Yorker Zeit umrechnen
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1)
-      return(-1);
-
-   // Sessionbeginn in New York ermitteln (17:00)
-   datetime easternStart = GetEasternSessionStartTime(easternTime);
-
-   // New Yorker Zeit in Tradeserverzeit umrechnen
-   datetime serverStart = EasternToServerTime(easternStart);
-
-   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverStart: "+ TimeToStr(serverStart));
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetServerSessionStartTime()", error);
-      return(-1);
-   }
-   return(serverStart);
-}
-
-
-/**
  * Gibt die Zeitzoneneinstellungen des Tradeservers zurück.
  *
  * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
@@ -3602,6 +3972,39 @@ int iBalanceSeries(int account, double& iBuffer[]) {
 
 
 /**
+ * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die vorherige existierende Bar zurück.
+ *
+ * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time      - Zeitpunkt
+ *
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
+ *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
+ *
+ * NOTE:
+ * ----
+ * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
+ */
+int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
+   if (symbol == "0")                                    // MQL: NULL ist ein Integer
+      symbol = Symbol();
+
+   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED
+
+   if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
+      bar = -1;
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      if (error == ERR_HISTORY_WILL_UPDATED) last_library_error = error;
+      else                                   last_library_error = catch("iBarShiftPrevious()", error);
+      return(EMPTY_VALUE);
+   }
+   return(bar);
+}
+
+
+/**
  * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
  * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
@@ -3633,39 +4036,6 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    if (error != ERR_NO_ERROR) {
       last_library_error = catch("iBarShiftNext()", error);
       return(-1);
-   }
-   return(bar);
-}
-
-
-/**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die vorherige existierende Bar zurück.
- *
- * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time      - Zeitpunkt
- *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
- *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
- *
- * NOTE:
- * ----
- * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
- */
-int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                                    // MQL: NULL ist ein Integer
-      symbol = Symbol();
-
-   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED
-
-   if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
-      bar = -1;
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      if (error == ERR_HISTORY_WILL_UPDATED) last_library_error = error;
-      else                                   last_library_error = catch("iBarShiftPrevious()", error);
-      return(EMPTY_VALUE);
    }
    return(bar);
 }

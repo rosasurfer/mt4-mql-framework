@@ -110,12 +110,9 @@ int DrawGrid() {
    string   label, lastLabel, day, dd, mm, yyyy;
 
    // Zeitpunkte des ersten und letzten Separators in New Yorker Zeit berechen
-   easternFrom = GetEasternSessionStartTime(ServerToEasternTime(Time[Bars-1]));
-      if (EasternToServerTime(easternFrom) < Time[Bars-1])
-         easternFrom += 1*DAY;
-   easternTo   = GetEasternSessionStartTime(ServerToEasternTime(Time[0])) + 1*DAY;
+   easternFrom = GetEasternNextSessionStartTime(ServerToEasternTime(Time[Bars-1] - 1*SECOND));
+   easternTo   = GetEasternNextSessionStartTime(ServerToEasternTime(Time[0]      - 1*SECOND));
    //Print("DrawGrid()   Grid from: "+ TimeToStr(easternFrom) +"     to: "+ TimeToStr(easternTo));
-
 
    // Separatoren zeichnen
    for (easternTime=easternFrom; easternTime <= easternTo; easternTime+=1*DAY) {
