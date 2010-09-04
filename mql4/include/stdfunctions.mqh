@@ -15,11 +15,13 @@
 #define MINUTE                  60
 #define HOUR                  3600
 #define DAY                  86400
+#define WEEK                604800
 
 #define SECONDS             SECOND
 #define MINUTES             MINUTE
 #define HOURS                 HOUR
 #define DAYS                   DAY
+#define WEEKS                 WEEK
 
 
 // Wochentage, siehe TimeDayOfWeek()
@@ -63,7 +65,7 @@
 #define OP_SELLLIMIT             3     // pending sell limit position
 #define OP_BUYSTOP               4     // pending stop buy position
 #define OP_SELLSTOP              5     // pending stop sell position
-#define OP_BALANCE               6     // account balance or withdrawel transaction
+#define OP_BALANCE               6     // account credit or withdrawel transaction
 #define OP_MARGINCREDIT          7     // margin credit facility (no transaction)
 
 
@@ -104,15 +106,14 @@
 #define EVENT_HISTORY_CHANGE   256     // EVENT_POSITION_CLOSE | EVENT_ACCOUNT_PAYMENT
 
 
-// Array-Identifier zum Zugriff auf Pivotlevel-Ergebnisse, siehe iPivotLevel()
+// Array-Identifier zum Zugriff auf verschiedne Pivotlevel, siehe iPivotLevel()
 #define PIVOT_R3                 0
 #define PIVOT_R2                 1
 #define PIVOT_R1                 2
-#define PIVOT_PP                 3     // daily pivots only: regular bank closing time (21:00 GMT)
+#define PIVOT_PP                 3
 #define PIVOT_S1                 4
 #define PIVOT_S2                 5
 #define PIVOT_S3                 6
-#define PIVOT_PP_IBC             7     // daily pivots only: interbank market closing time (22:00 GMT)
 
 
 // Konstanten zum Zugriff auf die Spalten der Account-History
@@ -298,7 +299,7 @@
  * NOTE:
  * -----
  * Ist in der Headerdatei definiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * (b) im Log möglichst das laufende Script als Auslöser angezeigt wird.
+ * (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error != ERR_NO_ERROR)

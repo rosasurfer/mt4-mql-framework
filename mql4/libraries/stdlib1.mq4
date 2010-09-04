@@ -3643,9 +3643,10 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
  *
  * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
  * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time - Zeitpunkt
+ * @param  datetime time      - Zeitpunkt
  *
- * @return int - Bar-Index im Chart
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
+ *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
  * NOTE:
  * ----
@@ -3662,8 +3663,9 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("iBarShiftPrevious()", error);
-      return(-1);
+      if (error == ERR_HISTORY_WILL_UPDATED) last_library_error = error;
+      else                                   last_library_error = catch("iBarShiftPrevious()", error);
+      return(EMPTY_VALUE);
    }
    return(bar);
 }

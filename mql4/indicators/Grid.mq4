@@ -34,7 +34,6 @@ int init() {
    //int gmtOffset = GetLocalToGmtOffset();
    //Print("init()        difference between your local time and GMT is: ", (gmtOffset/MINUTES), " minutes");
 
-
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
       init_error = GetLastLibraryError();
@@ -65,18 +64,17 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
 
-   // nach Chartänderung Flag für Neuzeichnen setzen
+   // Neuzeichnen übergreifend merken (falls ERR_HISTORY_WILL_UPDATED)
    static bool redraw = false;
-   if (processedBars == 0)
-      redraw = true;
+   if (processedBars == 0) {                    redraw =  true; }
+   else if (redraw)        { processedBars = 0; redraw = false; }
 
-
-   // init() nach Fehler ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                      // 1. Aufruf
+   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init) {                                      // Aufruf nach erstem init()
       init = false;
       if (init_error != ERR_NO_ERROR)               return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // neuer Tick
+   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
@@ -84,10 +82,10 @@ int start() {
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
    //HandleEvents(EVENT_POSITION_OPEN);
 
-   if (redraw) {                    // Grid neu zeichnen
-      redraw = false;
+
+   if (processedBars == 0)    // Grid neu zeichnen
       DrawGrid();
-   }
+
 
    return(catch("start()"));
 }
@@ -150,7 +148,7 @@ int DrawGrid() {
 
       if (lastBar == bar)                    // eine Session fehlt, am wahrscheinlichsten wegen eines Feiertags
          ObjectDelete(lastLabel);            // Separator für die fehlende Session wieder löschen
-      
+
       // Separator zeichnen
       ObjectDelete(label); GetLastError();
       if (!ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0))
@@ -165,7 +163,7 @@ int DrawGrid() {
       lastLabel = label;                     // letzte Separatordaten für Erkennung fehlender Sessions merken
       lastBar   = bar;
    }
-   
+
    //Print("DrawGrid()    execution time: ", GetTickCount()-tick, " ms");
 
    return(catch("DrawGrid(2)"));

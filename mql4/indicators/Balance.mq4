@@ -67,12 +67,12 @@ int init() {
  *
  */
 int start() {
-   // init() nach Fehler ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                      // 1. Aufruf
+   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init) {                                      // Aufruf nach erstem init()
       init = false;
       if (init_error != ERR_NO_ERROR)               return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // neuer Tick
+   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
