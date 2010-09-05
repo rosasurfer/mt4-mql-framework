@@ -149,13 +149,15 @@ int DrawGrid() {
       // Separator zeichnen
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0);
+      if (ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0)) {
          if (day == "Mon") { sColor = C'231,192,221'; sStyle = STYLE_DASHDOTDOT; }
          else              { sColor = Grid.Color;     sStyle = STYLE_DOT;        }
-      ObjectSet(label, OBJPROP_STYLE, sStyle);
-      ObjectSet(label, OBJPROP_COLOR, sColor);
-      ObjectSet(label, OBJPROP_BACK , true  );
-      RegisterChartObject(label, labels);
+         ObjectSet(label, OBJPROP_STYLE, sStyle);
+         ObjectSet(label, OBJPROP_COLOR, sColor);
+         ObjectSet(label, OBJPROP_BACK , true  );
+         RegisterChartObject(label, labels);
+      }
+      else GetLastError();
 
       lastLabel = label;                     // letzte Separatordaten für Erkennung fehlender Sessions merken
       lastBar   = bar;

@@ -141,12 +141,14 @@ int CreatePerformanceDisplay() {
    label = StringConcatenate(indicatorName, ".Graphic_0", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xCoord-3);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord-7);
-   ObjectSetText(label, "y", 20, "Wingdings 3", frameDarkerColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xCoord-3);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-7);
+      ObjectSetText(label, "y", 20, "Wingdings 3", frameDarkerColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    // Background
    int xOffsets[4];
@@ -160,12 +162,14 @@ int CreatePerformanceDisplay() {
       label = StringConcatenate(indicatorName, ".Graphic_a", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[i]);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 40, "Webdings", backgroundColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[i]);
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
+         ObjectSetText(label, "g", 40, "Webdings", backgroundColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
    }
 
    // Rahmen links
@@ -178,46 +182,54 @@ int CreatePerformanceDisplay() {
       label = StringConcatenate(indicatorName, ".Graphic_b", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
-      ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-1);
-      ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
+         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-1);
+         ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_b", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
-      ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
+         ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
 
    // Rahmen oben
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_b", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
-   ObjectSetText(label, "_________", 27, "Courier New", frameBrightColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
+      ObjectSetText(label, "_________", 27, "Courier New", frameBrightColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_b", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
-   ObjectSetText(label, "_", 27, "Courier New", frameBrightColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
+      ObjectSetText(label, "_", 27, "Courier New", frameBrightColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    // Rahmen rechts
    for (i=0; i < ArraySize(yOffsets); i++) {
@@ -225,103 +237,121 @@ int CreatePerformanceDisplay() {
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
-      ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-2);
-      ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
+         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-2);
+         ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
-      ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
+         ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
 
    for (i=0; i < ArraySize(yOffsets); i++) {
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
-      ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-3);
-      ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
+         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-3);
+         ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+29);
-      ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
-      RegisterChartObject(label, objects);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+29);
+         ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
+         RegisterChartObject(label, objects);
+      }
+      else GetLastError();
 
    // Rahmen unten
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-   ObjectSetText(label, "_________", 27, "Courier New", frameDarkColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
+      ObjectSetText(label, "_________", 27, "Courier New", frameDarkColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-   ObjectSetText(label, "_", 27, "Courier New", frameDarkColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
+      ObjectSetText(label, "_", 27, "Courier New", frameDarkColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
-   ObjectSetText(label, "_________", 27, "Courier New", frameDarkerColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
+      ObjectSetText(label, "_________", 27, "Courier New", frameDarkerColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+31);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
-   ObjectSetText(label, "_", 27, "Courier New", frameDarkerColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+31);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
+      ObjectSetText(label, "_", 27, "Courier New", frameDarkerColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    // Text
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_e", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]+11);
-   ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[1]-3);
-   ObjectSetText(label, "-100     +23     +41     -90     +35", 9, "Tahoma", fontColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]+11);
+      ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[1]-3);
+      ObjectSetText(label, "-100     +23     +41     -90     +35", 9, "Tahoma", fontColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
 
    /*
    // 2. Anfasser (klein, zur Visualisierung)
@@ -329,12 +359,14 @@ int CreatePerformanceDisplay() {
    label = StringConcatenate(indicatorName, ".Graphic_x", lc);
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xCoord-2);
-   ObjectSet(label, OBJPROP_YDISTANCE, yCoord-3);
-   ObjectSetText(label, "y", 9, "Wingdings 3", frameDarkerColor);
-   RegisterChartObject(label, objects);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(label, OBJPROP_XDISTANCE, xCoord-2);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-3);
+      ObjectSetText(label, "y", 9, "Wingdings 3", frameDarkerColor);
+      RegisterChartObject(label, objects);
+   }
+   else GetLastError();
    */
 
    return(catch("CreatePerformanceDisplay(1)"));
@@ -345,13 +377,15 @@ int CreatePerformanceDisplay() {
  * Erzeugt das Instrument-Label.
  */
 int CreateInstrumentLabel() {
-   ObjectDelete(instrumentLabel); GetLastError();
-   if (!ObjectCreate(instrumentLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreateInstrumentLabel(1)   ObjectCreate(label="+ instrumentLabel +")"));
-   ObjectSet(instrumentLabel, OBJPROP_CORNER   , CORNER_TOP_LEFT);
-   ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
-   ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
-   RegisterChartObject(instrumentLabel, objects);
+   if (ObjectFind(instrumentLabel) > -1)
+      ObjectDelete(instrumentLabel);
+   if (ObjectCreate(instrumentLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(instrumentLabel, OBJPROP_CORNER   , CORNER_TOP_LEFT);
+      ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
+      ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
+      RegisterChartObject(instrumentLabel, objects);
+   }
+   else GetLastError();
 
    // Instrumentnamen einlesen und setzen
    string instrument = GetGlobalConfigString("Instruments"     , Symbol()  , Symbol()  );
@@ -367,14 +401,16 @@ int CreateInstrumentLabel() {
  * Erzeugt das Kurslabel.
  */
 int CreatePriceLabel() {
-   ObjectDelete(priceLabel); GetLastError();
-   if (!ObjectCreate(priceLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreatePriceLabel(1), ObjectCreate(label="+ priceLabel +")"));
-   RegisterChartObject(priceLabel, objects);
-   ObjectSet(priceLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
-   ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
-   ObjectSet(priceLabel, OBJPROP_YDISTANCE,  9);
-   ObjectSetText(priceLabel, "", 1);
+   if (ObjectFind(priceLabel) > -1)
+      ObjectDelete(priceLabel);
+   if (ObjectCreate(priceLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(priceLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
+      ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
+      ObjectSet(priceLabel, OBJPROP_YDISTANCE,  9);
+      ObjectSetText(priceLabel, "", 1);
+      RegisterChartObject(priceLabel, objects);
+   }
+   else GetLastError();
 
    return(catch("CreatePriceLabel(2)"));
 }
@@ -387,14 +423,16 @@ int CreateSpreadLabel() {
    if (!Show.Spread)
       return(0);
 
-   ObjectDelete(spreadLabel); GetLastError();
-   if (!ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreateSpreadLabel(1), ObjectCreate(label="+ spreadLabel +")"));
-   RegisterChartObject(spreadLabel, objects);
-   ObjectSet(spreadLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
-   ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
-   ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 32);
-   ObjectSetText(spreadLabel, "", 1);
+   if (ObjectFind(spreadLabel) > -1)
+      ObjectDelete(spreadLabel);
+   if (ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(spreadLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
+      ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
+      ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 32);
+      ObjectSetText(spreadLabel, "", 1);
+      RegisterChartObject(spreadLabel, objects);
+   }
+   else GetLastError();
 
    return(catch("CreateSpreadLabel(2)"));
 }
@@ -407,14 +445,16 @@ int CreateUnitSizeLabel() {
    if (!Show.UnitSize)
       return(0);
 
-   ObjectDelete(unitSizeLabel); GetLastError();
-   if (!ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreateUnitSizeLabel(1), ObjectCreate(label="+ unitSizeLabel +")"));
-   RegisterChartObject(unitSizeLabel, objects);
-   ObjectSet(unitSizeLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
-   ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
-   ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE,  11);
-   ObjectSetText(unitSizeLabel, "", 1);
+   if (ObjectFind(unitSizeLabel) > -1)
+      ObjectDelete(unitSizeLabel);
+   if (ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(unitSizeLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
+      ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
+      ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE,  11);
+      ObjectSetText(unitSizeLabel, "", 1);
+      RegisterChartObject(unitSizeLabel, objects);
+   }
+   else GetLastError();
 
    return(catch("CreateUnitSizeLabel(2)"));
 }
@@ -427,14 +467,16 @@ int CreatePositionLabel() {
    if (!Show.Position)
       return(0);
 
-   ObjectDelete(positionLabel); GetLastError();
-   if (!ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0))
-      return(catch("CreatePositionLabel(1), ObjectCreate(label="+ positionLabel +")"));
-   RegisterChartObject(positionLabel, objects);
-   ObjectSet(positionLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
-   ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
-   ObjectSet(positionLabel, OBJPROP_YDISTANCE,  11);
-   ObjectSetText(positionLabel, "", 1);
+   if (ObjectFind(positionLabel) > -1)
+      ObjectDelete(positionLabel);
+   if (ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(positionLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
+      ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
+      ObjectSet(positionLabel, OBJPROP_YDISTANCE,  11);
+      ObjectSetText(positionLabel, "", 1);
+      RegisterChartObject(positionLabel, objects);
+   }
+   else GetLastError();
 
    return(catch("CreatePositionLabel(2)"));
 }
