@@ -61,10 +61,10 @@
 // weitere Operation-Types, siehe OrderSend() u. OrderType()
 #define OP_BUY                   0     // long position
 #define OP_SELL                  1     // short position
-#define OP_BUYLIMIT              2     // pending buy limit position
-#define OP_SELLLIMIT             3     // pending sell limit position
-#define OP_BUYSTOP               4     // pending stop buy position
-#define OP_SELLSTOP              5     // pending stop sell position
+#define OP_BUYLIMIT              2     // buy limit order
+#define OP_SELLLIMIT             3     // sell limit order
+#define OP_BUYSTOP               4     // stop buy order
+#define OP_SELLSTOP              5     // stop sell order
 #define OP_BALANCE               6     // account credit or withdrawel transaction
 #define OP_MARGINCREDIT          7     // margin credit facility (no transaction)
 

@@ -3988,7 +3988,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
    if (symbol == "0")                                    // MQL: NULL ist ein Integer
       symbol = Symbol();
 
-   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED
+   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED (nur bei exact=TRUE ????)
 
    if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
       bar = -1;
