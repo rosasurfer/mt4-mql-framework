@@ -139,7 +139,8 @@ int CreatePerformanceDisplay() {
    // 1. Anfasser (groß, fängt den Maus-Fokus)
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_0", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xCoord-3);
@@ -157,7 +158,8 @@ int CreatePerformanceDisplay() {
    for (int i=0; i < ArraySize(xOffsets); i++) {
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_a", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[i]);
@@ -174,7 +176,8 @@ int CreatePerformanceDisplay() {
    for (i=0; i < ArraySize(yOffsets); i++) {
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_b", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
@@ -184,7 +187,8 @@ int CreatePerformanceDisplay() {
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_b", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
@@ -195,7 +199,8 @@ int CreatePerformanceDisplay() {
    // Rahmen oben
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_b", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
@@ -205,7 +210,8 @@ int CreatePerformanceDisplay() {
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_b", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
@@ -217,7 +223,8 @@ int CreatePerformanceDisplay() {
    for (i=0; i < ArraySize(yOffsets); i++) {
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
@@ -227,7 +234,8 @@ int CreatePerformanceDisplay() {
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
@@ -238,7 +246,8 @@ int CreatePerformanceDisplay() {
    for (i=0; i < ArraySize(yOffsets); i++) {
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
@@ -248,7 +257,8 @@ int CreatePerformanceDisplay() {
    }
       lc++;
       label = StringConcatenate(indicatorName, ".Graphic_c", lc);
-      ObjectDelete(label); GetLastError();
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
@@ -259,7 +269,8 @@ int CreatePerformanceDisplay() {
    // Rahmen unten
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
@@ -269,7 +280,8 @@ int CreatePerformanceDisplay() {
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
@@ -279,7 +291,8 @@ int CreatePerformanceDisplay() {
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
@@ -289,7 +302,8 @@ int CreatePerformanceDisplay() {
 
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_d", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+31);
@@ -300,7 +314,8 @@ int CreatePerformanceDisplay() {
    // Text
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_e", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]+11);
@@ -312,7 +327,8 @@ int CreatePerformanceDisplay() {
    // 2. Anfasser (klein, zur Visualisierung)
    lc++;
    label = StringConcatenate(indicatorName, ".Graphic_x", lc);
-   ObjectDelete(label); GetLastError();
+   if (ObjectFind(label) > -1)
+      ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet(label, OBJPROP_XDISTANCE, xCoord-2);

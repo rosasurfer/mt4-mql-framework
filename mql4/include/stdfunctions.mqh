@@ -309,8 +309,8 @@ int catch(string message="", int error=ERR_NO_ERROR) {
 
    if (error != ERR_NO_ERROR) {
       if (message == "")
-         message = "?";
-      Alert(StringConcatenate("ERROR: ", message, "   [", error, " - ", GetErrorDescription(error), "]"));
+         message = "???";
+      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
    }
 
    return(error);

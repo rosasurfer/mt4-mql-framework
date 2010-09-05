@@ -147,9 +147,9 @@ int DrawGrid() {
          ObjectDelete(lastLabel);            // Separator für die fehlende Session wieder löschen
 
       // Separator zeichnen
-      ObjectDelete(label); GetLastError();
-      if (!ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0))
-         return(catch("DrawGrid(1)  ObjectCreate(label="+ label +")"));
+      if (ObjectFind(label) > -1)
+         ObjectDelete(label);
+      ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0);
          if (day == "Mon") { sColor = C'231,192,221'; sStyle = STYLE_DASHDOTDOT; }
          else              { sColor = Grid.Color;     sStyle = STYLE_DOT;        }
       ObjectSet(label, OBJPROP_STYLE, sStyle);
@@ -162,8 +162,7 @@ int DrawGrid() {
    }
 
    //Print("DrawGrid()    execution time: ", GetTickCount()-tick, " ms");
-
-   return(catch("DrawGrid(2)"));
+   return(catch("DrawGrid()"));
 }
 
 

@@ -1456,8 +1456,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 /**
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
  *
- * @return int - Account-Nummer (positiver Wert) oder 0, falls diese Information nicht ermittelt werden konnte.
- *               Bei Rückgabe von 0 gibt GetLastLibraryError() den aufgetretenen Fehler zurück.
+ * @return int - Account-Nummer (positiver Wert) oder 0, falls ein Fehler aufgetreten ist.
  *
  * NOTE:
  * -----
