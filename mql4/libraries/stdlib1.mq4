@@ -3943,8 +3943,8 @@ int iBalanceSeries(int account, double& iBuffer[]) {
    // Balancewerte in Zielarray übertragen (die History ist nach CloseTime sortiert)
    for (int i=0; i < size; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, 0, times[i]);
-      if (bar == -1)    // dieser und alle folgenden Werte sind zu neu für den Chart
+      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_WILL_UPDATED prüfen (return=EMPTY_VALUE)
+      if (bar == -1)                               // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
       // Indikatorlücken mit vorherigem Balancewert füllen
@@ -3988,15 +3988,17 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
    if (symbol == "0")                                    // MQL: NULL ist ein Integer
       symbol = Symbol();
 
-   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED (nur bei exact=TRUE ????)
+   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED (evt. nur bei exact=TRUE ????)
 
    if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
       bar = -1;
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      if (error == ERR_HISTORY_WILL_UPDATED) last_library_error = error;
-      else                                   last_library_error = catch("iBarShiftPrevious()", error);
+      last_library_error = error;
+      if (error != ERR_HISTORY_WILL_UPDATED) catch("iBarShiftPrevious()", error);
+      else
+         Alert("INFO:   "+ Symbol() +"   "+ WindowExpertName() +"::iBarShiftPrevious()   iBarShift(exact=FALSE) kann sehr wohl ERR_HISTORY_WILL_UPDATED auslösen");
       return(EMPTY_VALUE);
    }
    return(bar);
@@ -4010,7 +4012,8 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
  * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
  * @param  datetime time      - Zeitpunkt
  *
- * @return int - Bar-Index im Chart
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
+ *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
  * NOTE:
  * ----
@@ -4028,13 +4031,14 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
          bar = Bars-1;
       else if (time < Time[0])                           // Kurslücke, die nächste existierende Bar wird zurückgeben
          bar = iBarShift(symbol, timeframe, time) - 1;
-    //else: (time > Time[0]) -> bar = -1                 // Zeitpunkt ist zu neu für den Chart
+    //else: (time > Time[0]) => bar=-1                   // Zeitpunkt ist zu neu für den Chart
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("iBarShiftNext()", error);
-      return(-1);
+      last_library_error = error;
+      if (error != ERR_HISTORY_WILL_UPDATED) catch("iBarShiftNext()", error);
+      return(EMPTY_VALUE);
    }
    return(bar);
 }
