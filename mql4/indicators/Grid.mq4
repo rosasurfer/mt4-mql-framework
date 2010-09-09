@@ -113,18 +113,31 @@ int DrawGrid() {
       return(ERR_RUNTIME_ERROR);
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();
-   int      bar, sColor, sStyle;
+   int      easternDow, bar, sColor, sStyle;
    string   label, lastLabel, day, dd, mm, yyyy;
+
 
    // Zeitpunkte des ersten und letzten Separators in New Yorker Zeit berechen
    easternFrom = GetEasternNextSessionStartTime(ServerToEasternTime(Time[Bars-1]) - 1*SECOND);
    easternTo   = GetEasternNextSessionStartTime(ServerToEasternTime(currentServerTime));
-   //Print("DrawGrid()   Grid from: "+ TimeToStr(easternFrom) +"     to: "+ TimeToStr(easternTo));
+      if (Period()==PERIOD_H4) {                               // Wochenseparatoren
+         easternDow = TimeDayOfWeek(easternTo);                // => easternTo ist der nächste Sonntag
+         if (easternDow != SUNDAY) easternTo += (7-easternDow)*DAYS;
+      }
+      else if (Period()==PERIOD_D1 || Period() == PERIOD_W1) { // Monatsseparatoren
+         int YYYY = TimeYear(easternTo);                       // => easternTo ist der 1. Handelstag des nächsten Monats
+         int MM   = TimeMonth(easternTo);
+         easternTo = GetEasternNextSessionStartTime(StrToTime(YYYY +"."+ (MM+1) +".01 00:00:00") - 8*HOURS);
+      }
+      else if (Period() == PERIOD_MN1) {                       // Quartalsseparatoren
+      }                                                        // => easternTo ist der 1. Handelstag des nächsten Quartals
+   //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(easternFrom, false) +" "+ TimeToStr(easternFrom) +"     to: "+ GetDayOfWeek(easternTo, false) +" "+ TimeToStr(easternTo));
+
 
    // Separatoren zeichnen
    for (easternTime=easternFrom; easternTime <= easternTo; easternTime+=1*DAY) {
       // Wochenenden überspringen
-      int easternDow = TimeDayOfWeek(easternTime);
+      easternDow = TimeDayOfWeek(easternTime);
       if (easternDow == FRIDAY  ) continue;
       if (easternDow == SATURDAY) continue;
 
