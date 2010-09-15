@@ -1,5 +1,5 @@
 /**
- * Global Config.mq4
+ * Config.mq4
  *
  * Lädt die globale und die lokale Konfigurationsdatei der laufenden Instanz in den Texteditor.
  */

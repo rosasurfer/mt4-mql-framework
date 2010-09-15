@@ -21,7 +21,7 @@ extern color Grid.Color = LightGray;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string labels[];     // Object-Labels
+string labels[];
 
 
 /**
@@ -50,7 +50,6 @@ int init() {
       start();
       WindowRedraw();
    }
-
    return(catch("init()"));
 }
 
