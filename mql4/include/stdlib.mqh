@@ -95,12 +95,20 @@
    bool     EventTracker.GetGridLimits(double& limits[2]);
    bool     EventTracker.SetGridLimits(double& limits[2]);
 
+
+   // Math
+   double   MathRoundFix(double number, int decimals);
+   int      MathSign(double number);
+
+
    // Numbers
    bool     CompareDoubles(double double1, double double2);
    string   DecimalToHex(int number);
    string   DoubleToStrTrim(double number);
    string   FormatMoney(double amount);
    string   FormatPrice(double price, int digits);
+   string   NumberToStr(double number, string mask);
+
 
    // Strings
    bool     StringContains(string object, string substring);
@@ -108,6 +116,7 @@
    int      StringFindR(string subject, string search);
    bool     StringICompare(string string1, string string2);
    bool     StringIsDigit(string value);
+   string   StringRepeat(string input, int times);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);

@@ -1,5 +1,5 @@
 /**
- * Bollinger-Bands-Indikator gfshsgfhfgdshg
+ * Bollinger-Bands-Indikator
  */
 
 #include <stdlib.mqh>
