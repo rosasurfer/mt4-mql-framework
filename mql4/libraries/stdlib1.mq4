@@ -4737,6 +4737,416 @@ string IntegerToHexString(int integer) {
 
 
 /**
+ * Returns a numeric value rounded to the specified number of decimals - works around a precision bug in MQL4.
+ *
+ * @param  double number
+ * @param  int    decimals
+ *
+ * @return double - rounded value
+ */
+double MathRoundFix(double number, int decimals) {
+   // TODO: Verarbeitung negativer decimals prüfen
+
+   double operand = MathPow(10, decimals);
+   return(MathRound(number * operand + 0.000000000001*MathSign(number)) / operand);
+}
+
+
+/**
+ * Returns the sign of a number.
+ *
+ * @param  double number
+ *
+ * @return int - sign (-1, 0, +1)
+ */
+int MathSign(double number) {
+   if      (number > 0) return( 1);
+   else if (number < 0) return(-1);
+   return(0);
+}
+
+
+/**
+ * Repeats a string.
+ *
+ * @param  string input - The string to be repeated.
+ * @param  int    times - Number of times the input string should be repeated.
+ *
+ * @return string - the repeated string
+ */
+string StringRepeat(string input, int times) {
+   if (times < 0) {
+      last_library_error = catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+   
+   if (input == "") return("");
+   if (times ==  0) return("");
+
+   string output = input;
+   for (int i=1; i < times; i++) {
+      output = StringConcatenate(output, input);
+   }
+   return(output);
+}
+
+
+/**
+ * Formats a number using a mask, and returns the resulting string.
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
+ *
+ * Mask parameters:
+ *
+ *   n      = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
+ *   n.d    = number of digits to the left and the right of the decimal point, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *  +n.d    = left-side plus sign for positive values
+ * ( or )   = enclose negative values in parentheses
+ *    %     = trailing % sign
+ *    R     = round result in the last displayed digit, e.g. NumberToStr(123.456, "R3.2") => "123.46", e.g. NumberToStr(123.7, "R3") => "124"
+ *    ,     = separate thousands by comma, e.g. NumberToStr(123456.789, ",6.3") => "123,456.789"
+ *    ;     = switch thousands and decimal point separator (European format), e.g. NumberToStr(123456.789, ",;6.3") => "123.456,789"
+ *    *     = suppress the asterisk in leftmost position if n is too small to allow the value to be output in full
+ *    B     = use blanks for entire output if value is zero
+ */
+string NumberToStr(double number, string mask) {
+   if (number == EMPTY_VALUE)
+      number = 0;
+
+   // === Beginn Parameter mask parsen ===
+   int len = StringLen(mask);
+
+   // Position des Dezimalpunktes
+   int  dotPos   = StringFind(mask, ".");
+   bool dotGiven = (dotPos > -1);
+   if (!dotGiven)
+      dotPos = len;
+
+   // Anzahl der linken und rechten Stellen
+   int char, nLeft=0, nRight=0;
+   bool nDigit;
+   for (int i=0; i < dotPos; i++) {
+      char = StringGetChar(mask, i);
+      if ('0' <= char) if (char <= '9') {
+         nLeft = 10*nLeft + char - '0';
+         nDigit = true;
+      }
+   }
+   if (!nDigit)
+      nLeft = StringLen(StringConcatenate("", EMPTY_VALUE));
+
+   if (dotGiven) {
+      for (i=dotPos+1; i < len; i++) {
+         char = StringGetChar(mask, i);
+         if ('0' <= char) if (char <= '9')
+            nRight = 10*nRight + char - '0';
+      }
+      nRight = MathMin(nRight, 7);
+   }
+   else {
+      for (i=0; i < len; i++) {
+         char = StringGetChar(mask, i);
+         if ('0' <= char) if (char <= '9') {
+            dotPos = i; // die erste Ziffer ist für Vorzeichenbestimmung ausreichend
+            break;
+         }
+      }
+   }
+
+   // Vorzeichen etc.
+   string leadSign="", trailSign="";
+   if (number < 0) {
+      if (StringFind(mask, "(") > -1 || StringFind(mask, ")") > -1) {
+         leadSign  = "(";
+         trailSign = ")";
+      }
+      else {
+         leadSign = "-";
+      }
+   }
+   else if (number > 0) if (StringFind(mask, "+") > -1) {
+      leadSign = "+";
+   }
+
+   // Prozentzeichen
+   if (StringFind(mask, "%") > -1)
+      trailSign = StringConcatenate("%", trailSign);
+
+   // übrige Modifier
+   bool round          = (StringFind(mask, "R")  > -1);
+   bool separators     = (StringFind(mask, ",")  > -1);
+   bool swapSeparators = (StringFind(mask, ";")  > -1);
+   bool markOverflow   = (StringFind(mask, "*") == -1);
+   // === Ende Parameter mask parsen ===
+
+
+   // === Beginn Wertverarbeitung ===
+   // runden
+   if (round)
+      number = MathRoundFix(number, nRight);
+   string outStr = number;
+   
+   // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
+   if (number < 0)
+      outStr = StringSubstr(outStr, 1);
+
+   // auf angegebene Länge kürzen
+   int dLeft    = StringFind(outStr, ".");
+   int dVisible = MathMin(nLeft, dLeft);
+   outStr = StringSubstr(outStr, StringLen(outStr)-9-dVisible, dVisible+1+nRight-(!dotGiven));
+
+   // Dezimal-Separator tauschen
+   if (swapSeparators)
+      outStr = StringSetChar(outStr, dVisible, ',');
+
+   // 1000er-Separatoren einfügen
+   if (separators) {
+      if (swapSeparators) string separator = ".";
+      else                       separator = ",";
+      string out1;
+      i = dVisible;
+      while (i > 3) {
+         out1 = StringSubstr(outStr, 0, i-3);
+         if (StringGetChar(out1, i-4) == ' ')
+            break;
+         outStr = StringConcatenate(out1, separator, StringSubstr(outStr, i-3));
+         i -= 3;
+      }
+   }
+   
+   // Vorzeichen etc. anfügen
+   outStr = StringConcatenate(leadSign, outStr, trailSign);
+
+   // Overflow
+   if (nLeft < dLeft) if (markOverflow)
+      outStr = StringSetChar(outStr, 0, '*');
+   
+   //Print("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +") = \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft);
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      catch("NumberToStr()", error);
+      return("");
+   }
+   return(outStr);
+}
+
+
+/**
+ * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols, and so forth, according to the instructions provided in the 'mask'.
+ *
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left of the decimal point, and d the number to the right,
+ * e.g. NumberToStr(123.456,"5") will return "<space><space>123"
+ * e.g. NumberToStr(123.456,"5.2") will return "<space><space>123.45"
+ *
+ * Other characters that may be used in the mask:
+ *
+ *    - Including a "-" anywhere to the left of "n.d" will cause a floating minus symbol to be included to the left of the number, if the nunber is negative; no symbol if positive
+ *    - Including a "+" anywhere to the left of "n.d" will cause a floating plus or minus symbol to be included, to the left of the number
+ *    - Including a "-" anywhere to the right of "n.d" will cause a minus to be included at the right of the number, e.g. NumberToStr(-123.456,"3.2-") will return "123.46-"
+ *    - Including a "(" or ")" anywhere in the mask will cause any negative number to be enclosed in parentheses
+ *    - Including an "R" or "r" anywhere in the mask will cause rounding, e.g. NumberToStr(123.456,"R3.2") will return "123.46"; e.g. NumberToStr(123.7,"R3") will return "124"
+ *    - Including a "$", "€", "£" or "¥" anywhere in the mask will cause the designated floating currency symbol to be included, to the left of the number
+ *    - Including a "," anywhere in the mask will cause commas to be inserted between every 3 digits, to separate thousands, millions, etc at the left of the number, e.g. NumberToStr(123456.789,",6.3") will return "123,456.789"
+ *    - Including a "Z" or "z" anywhere in the mask will cause zeros (instead of spaces) to be used to fill any unused places at the left of the number, e.g. NumberToStr(123.456,"Z5.2") will return "00123.45"
+ *    - Including a "B" or "b" anywhere in the mask ("blank if zero") will cause the entire output to be blanks, if the value of the number is zero
+ *    - Including a "*" anywhere in the mask will cause an asterisk to be output, if overflow occurs (the value of n in "n.d" is too small to allow the number to be output in full)
+ *    - Including a "L" or "l" anywhere in the mask will cause the output to be left aligned in the output field, e.g. NumberToStr(123.456,"L5.2") will return "123.45<space><space>"
+ *    - Including a "T" or "t" anywhere in the mask will cause the output to be left aligned in the output field, and trailing spaces trimmed e.g. NumberToStr(123.456,"T5.2") will return "123.45"
+ *    - Including a ";" anywhere in the mask will cause decimal point and comma to be juxtaposed, e.g. NumberToStr(123456.789,";,6.3") will return "123.456,789"
+ *
+ * ==================================================================================================================================================================
+ *
+ * Formats a number using a mask, and returns the resulting string
+ *
+ * Mask parameters:
+ * n = number of digits to output, to the left of the decimal point
+ * n.d = output n digits to left of decimal point; d digits to the right
+ * -n.d = floating minus sign at left of output
+ * n.d- = minus sign at right of output
+ * +n.d = floating plus/minus sign at left of output
+ * ( or ) = enclose negative number in parentheses
+ * $ or £ or ¥ or € = include floating currency symbol at left of output
+ * % = include trailing % sign
+ * , = use commas to separate thousands
+ * Z or z = left fill with zeros instead of spaces
+ * R or r = round result in rightmost displayed digit
+ * B or b = blank entire field if number is 0
+ * * = show asterisk in leftmost position if overflow occurs
+ * ; = switch use of comma and period (European format)
+ * L or l = left align final string
+ * T ot t = trim end result
+ */
+string NumberToStr_orig(double n, string mask) {
+   if (MathAbs(n) == EMPTY_VALUE)
+      n = 0;
+
+   mask = StringToUpper(mask);
+   int dotadj = 0;
+   int dot    = StringFind(mask, ".");
+   if (dot < 0) {
+      dot    = StringLen(mask);
+      dotadj = 1;
+   }
+
+   int nleft  = 0;
+   int nright = 0;
+
+   for (int i=0; i < dot; i++) {
+      string char = StringSubstr(mask, i, 1);
+      if (char >= "0" && char <= "9")
+         nleft = 10*nleft + StrToInteger(char);
+   }
+   if (dotadj == 0) {
+      for (i=dot+1; i <= StringLen(mask); i++) {
+         char = StringSubstr(mask, i, 1);
+         if (char >= "0" && char <= "9")
+            nright = 10*nright + StrToInteger(char);
+      }
+   }
+   nright = MathMin(nright, 7);
+
+   if (dotadj == 1) {
+      for (i=0; i < StringLen(mask); i++) {
+         char = StringSubstr(mask, i, 1);
+         if (char >= "0" && char <= "9") {
+            dot = i;
+            break;
+         }
+      }
+   }
+
+   string csym = "";
+   if (StringFind(mask, "$") > -1) csym = "$";
+   if (StringFind(mask, "£") > -1) csym = "£";
+   if (StringFind(mask, "€") > -1) csym = "€";
+   if (StringFind(mask, "¥") > -1) csym = "¥";
+
+   string leadsign  = "";
+   string trailsign = "";
+
+   if (StringFind(mask, "+") > -1 && StringFind(mask, "+") < dot) {
+      leadsign = " ";
+      if (n > 0) leadsign = "+";
+      if (n < 0) leadsign = "-";
+   }
+   if (StringFind(mask, "-") > -1 && StringFind(mask, "-") < dot) {
+      if (n < 0) leadsign = "-";
+      else       leadsign = " ";
+   }
+   if (StringFind(mask, "-") > -1 && StringFind(mask, "-") > dot) {
+      if (n < 0) trailsign = "-";
+      else       trailsign = " ";
+   }
+   if (StringFind(mask, "(") > -1 || StringFind(mask, ")") > -1) {
+      leadsign  = " ";
+      trailsign = " ";
+      if (n < 0) {
+         leadsign  = "(";
+         trailsign = ")";
+      }
+   }
+   if (StringFind(mask, "%") > -1)
+      trailsign = "%" + trailsign;
+
+   bool comma = (StringFind(mask, ",") > -1);
+   bool zeros = (StringFind(mask, "Z") > -1);
+   bool blank = (StringFind(mask, "B") > -1);
+   bool round = (StringFind(mask, "R") > -1);
+   bool overf = (StringFind(mask, "*") > -1);
+   bool lftsh = (StringFind(mask, "L") > -1);
+   bool swtch = (StringFind(mask, ";") > -1);
+   bool trimf = (StringFind(mask, "T") > -1);
+
+   if (round)
+      n = MathRoundFix(n, nright);
+   string outstr = n;
+
+   int dleft = 0;
+   for (i=0; i < StringLen(outstr); i++) {
+      char = StringSubstr(outstr, i, 1);
+      if (char >= "0" && char <= "9")
+         dleft++;
+      if (char == ".")
+         break;
+   }
+
+   // Insert fill characters.......
+   if (zeros) string fill = "0";
+   else              fill = " ";
+   if (n < 0) outstr = "-" + StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 1);
+   else       outstr = StringRepeat(fill, nleft-dleft) + outstr;
+   outstr = StringSubstr(outstr, StringLen(outstr)-9-nleft, nleft+1+nright-dotadj);
+
+   // Insert the commas.......
+   if (comma) {
+      bool digflg = false;
+      bool stpflg = false;
+      string out1 = "";
+      string out2 = "";
+      for (i=0; i < StringLen(outstr); i++) {
+         char = StringSubstr(outstr, i, 1);
+         if (char == ".")
+            stpflg = true;
+         if (!stpflg && (nleft-i==3 || nleft-i==6 || nleft-i==9)) {
+            if (digflg) out1 = out1 +",";
+            else        out1 = out1 +" ";
+         }
+         out1 = out1 + char;
+         if (char >= "0" && char <= "9")
+            digflg = true;
+      }
+      outstr = out1;
+   }
+
+   // Add currency symbol and signs........
+   outstr = csym + leadsign + outstr + trailsign;
+
+   // 'Float' the currency symbol/sign.......
+   out1 = "";
+   out2 = "";
+   bool fltflg = true;
+   for (i=0; i < StringLen(outstr); i++) {
+      char = StringSubstr(outstr, i, 1);
+      if (char >= "0" && char <= "9")
+         fltflg = false;
+      if ((char==" " && fltflg) || (blank && n==0)) out1 = out1 + " ";
+      else                                          out2 = out2 + char;
+   }
+   outstr = out1 + out2;
+
+   // Overflow........
+   if (overf && dleft > nleft)
+      outstr = "*" + StringSubstr(outstr, 1);
+
+   // Left shift.......
+   if (lftsh) {
+      int len = StringLen(outstr);
+      outstr = StringTrimLeft(outstr);
+      outstr = outstr + StringRepeat(" ", len-StringLen(outstr));
+   }
+
+   // Switch period and comma.......
+   if (swtch) {
+      out1 = "";
+      for (i=0; i < StringLen(outstr); i++) {
+         char = StringSubstr(outstr, i, 1);
+         if      (char == ".") out1 = out1 +",";
+         else if (char == ",") out1 = out1 +".";
+         else                  out1 = out1 + char;
+      }
+      outstr = out1;
+   }
+
+   if (trimf)
+      outstr = StringTrim(outstr);
+   return(outstr);
+}
+
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+
+
+/**
  * Returns the numeric value for an MQL4 color descriptor string
  * Usage:   int x = StrToColor("Aqua")      returns x = 16776960
  * or:      int x = StrToColor("0,255,255") returns x = 16776960
@@ -5133,7 +5543,7 @@ double MathInt(double n, int d) {
 
 
 /**
- * This converts an MT4 date(/time) value to a formatted string, according to the instructions in the 'mask'.
+ * Converts a datetime value to a formatted string, according to the instructions in the 'mask'.
  *
  *    - A "d" in the mask will cause a 1-2 digit day-of-the-month to be inserted in the output, at that point
  *    - A "D" in the mask will cause a 2 digit day-of-the-month to be inserted in the output, at that point
@@ -5154,12 +5564,12 @@ double MathInt(double n, int d) {
  *    - A "T" in the mask will cause "st" "nd" rd" or "th" to be inserted at that point, depending on the day of the month e.g. 13th, 22nd, etc
  *    - All other characters in the mask will be output, as is
  *
- * Examples: if date (a MT4 datetime variable) is June 04, 2009, then:
+ * Examples: if date is June 04, 2009, then:
  *
- *    - DateToStr(date,"w m/d/Y") will output "Thu 6/4/2009"
- *    - DateToStr(date,"Y-MD") will output "2009-0604"
- *    - DateToStr(date,"d N, Y is a W") will output "4 June, 2009 is a Thursday"
- *    - DateToStr(date,"W D`M`y = W") will output "Thursday 04`06`09 = Thursday"
+ *    - DateToStr(date, "w m/d/Y") will output "Thu 6/4/2009"
+ *    - DateToStr(date, "Y-MD") will output "2009-0604"
+ *    - DateToStr(date, "d N, Y is a W") will output "4 June, 2009 is a Thursday"
+ *    - DateToStr(date, "W D`M`y = W") will output "Thursday 04`06`09 = Thursday"
  */
 string DateToStr(datetime mt4date, string mask) {
    int dd  = TimeDay(mt4date);
@@ -5213,253 +5623,6 @@ string DateToStr(datetime mt4date, string mask) {
       else                                 outdate = outdate + char;
    }
    return(outdate);
-}
-
-
-/**
- * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols, and so forth, according to the instructions provided in the 'mask'.
- *
- * The basic mask is "n" or "n.d" where n is the number of digits to the left of the decimal point, and d the number to the right,
- * e.g. NumberToStr(123.456,"5") will return "<space><space>123"
- * e.g. NumberToStr(123.456,"5.2") will return "<space><space>123.45"
- *
- * Other characters that may be used in the mask:
- *
- *    - Including a "-" anywhere to the left of "n.d" will cause a floating minus symbol to be included to the left of the number, if the nunber is negative; no symbol if positive
- *    - Including a "+" anywhere to the left of "n.d" will cause a floating plus or minus symbol to be included, to the left of the number
- *    - Including a "-" anywhere to the right of "n.d" will cause a minus to be included at the right of the number, e.g. NumberToStr(-123.456,"3.2-") will return "123.46-"
- *    - Including a "(" or ")" anywhere in the mask will cause any negative number to be enclosed in parentheses
- *    - Including an "R" or "r" anywhere in the mask will cause rounding, e.g. NumberToStr(123.456,"R3.2") will return "123.46"; e.g. NumberToStr(123.7,"R3") will return "124"
- *    - Including a "$", "€", "£" or "¥" anywhere in the mask will cause the designated floating currency symbol to be included, to the left of the number
- *    - Including a "," anywhere in the mask will cause commas to be inserted between every 3 digits, to separate thousands, millions, etc at the left of the number, e.g. NumberToStr(123456.789,",6.3") will return "123,456.789"
- *    - Including a "Z" or "z" anywhere in the mask will cause zeros (instead of spaces) to be used to fill any unused places at the left of the number, e.g. NumberToStr(123.456,"Z5.2") will return "00123.45"
- *    - Including a "B" or "b" anywhere in the mask ("blank if zero") will cause the entire output to be blanks, if the value of the number is zero
- *    - Including a "*" anywhere in the mask will cause an asterisk to be output, if overflow occurs (the value of n in "n.d" is too small to allow the number to be output in full)
- *    - Including a "L" or "l" anywhere in the mask will cause the output to be left aligned in the output field, e.g. NumberToStr(123.456,"L5.2") will return "123.45<space><space>"
- *    - Including a "T" or "t" anywhere in the mask will cause the output to be left aligned in the output field, and trailing spaces trimmed e.g. NumberToStr(123.456,"T5.2") will return "123.45"
- *    - Including a ";" anywhere in the mask will cause decimal point and comma to be juxtaposed, e.g. NumberToStr(123456.789,";,6.3") will return "123.456,789"
- *
- * Any combination of the above can be used in the mask. Feel welcome to experiment.
- *
- * ==================================================================================================================================================================
- *
- * Formats a number using a mask, and returns the resulting string
- * Usage:    string result = NumberToStr(number,mask)
- *
- * Mask parameters:
- * n = number of digits to output, to the left of the decimal point
- * n.d = output n digits to left of decimal point; d digits to the right
- * -n.d = floating minus sign at left of output
- * n.d- = minus sign at right of output
- * +n.d = floating plus/minus sign at left of output
- * ( or ) = enclose negative number in parentheses
- * $ or £ or ¥ or € = include floating currency symbol at left of output
- * % = include trailing % sign
- * , = use commas to separate thousands
- * Z or z = left fill with zeros instead of spaces
- * R or r = round result in rightmost displayed digit
- * B or b = blank entire field if number is 0
- * * = show asterisk in leftmost position if overflow occurs
- * ; = switch use of comma and period (European format)
- * L or l = left align final string
- * T ot t = trim end result
- */
-string NumberToStr(double n, string mask) {
-   if (MathAbs(n) == 2147483647)
-      n = 0;
-
-   mask = StringToUpper(mask);
-   int dotadj = 0;
-   int dot    = StringFind(mask, ".", 0);
-   if (dot < 0) {
-      dot    = StringLen(mask);
-      dotadj = 1;
-   }
-
-   int nleft  = 0;
-   int nright = 0;
-
-   for (int i=0; i < dot; i++) {
-      string char = StringSubstr(mask, i, 1);
-      if (char >= "0" && char <= "9")
-         nleft = 10*nleft + StrToInteger(char);
-   }
-   if (dotadj == 0) {
-      for (i=dot+1; i <= StringLen(mask); i++) {
-         char = StringSubstr(mask, i, 1);
-         if (char >= "0" && char <= "9")
-            nright = 10*nright + StrToInteger(char);
-      }
-   }
-   nright = MathMin(nright, 7);
-
-   if (dotadj == 1) {
-      for (i=0; i < StringLen(mask); i++) {
-         char = StringSubstr(mask, i, 1);
-         if (char >= "0" && char <= "9") {
-            dot = i;
-            break;
-         }
-      }
-   }
-
-   string csym = "";
-   if (StringFind(mask, "$", 0) >= 0) csym = "$";
-   if (StringFind(mask, "£", 0) >= 0) csym = "£";
-   if (StringFind(mask, "€", 0) >= 0) csym = "€";
-   if (StringFind(mask, "¥", 0) >= 0) csym = "¥";
-
-   string leadsign  = "";
-   string trailsign = "";
-
-   if (StringFind(mask, "+", 0) >= 0 && StringFind(mask, "+", 0) < dot) {
-      leadsign = " ";
-      if (n > 0) leadsign = "+";
-      if (n < 0) leadsign = "-";
-   }
-   if (StringFind(mask, "-", 0) >= 0 && StringFind(mask, "-", 0) < dot) {
-      if (n < 0) leadsign = "-";
-      else       leadsign = " ";
-   }
-   if (StringFind(mask, "-", 0) >= 0 && StringFind(mask, "-", 0) > dot) {
-      if (n < 0) trailsign = "-";
-      else       trailsign = " ";
-   }
-   if (StringFind(mask, "(", 0) >= 0 || StringFind(mask, ")", 0) >= 0) {
-      leadsign  = " ";
-      trailsign = " ";
-      if (n < 0) {
-         leadsign  = "(";
-         trailsign = ")";
-      }
-   }
-   if (StringFind(mask, "%", 0) >= 0)
-      trailsign = "%" + trailsign;
-
-   bool comma = (StringFind(mask, ",", 0) >= 0);
-   bool zeros = (StringFind(mask, "Z", 0) >= 0);
-   bool blank = (StringFind(mask, "B", 0) >= 0);
-   bool round = (StringFind(mask, "R", 0) >= 0);
-   bool overf = (StringFind(mask, "*", 0) >= 0);
-   bool lftsh = (StringFind(mask, "L", 0) >= 0);
-   bool swtch = (StringFind(mask, ";", 0) >= 0);
-   bool trimf = (StringFind(mask, "T", 0) >= 0);
-
-   if (round)
-      n = MathFix(n, nright);
-   string outstr = n;
-
-   int dleft = 0;
-   for (i=0; i < StringLen(outstr); i++) {
-      char = StringSubstr(outstr, i, 1);
-      if (char >= "0" && char <= "9")
-         dleft++;
-      if (char == ".")
-         break;
-   }
-
-   // Insert fill characters.......
-   if (zeros) string fill = "0";
-   else              fill = " ";
-   if (n < 0) outstr = "-" + StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 1, StringLen(outstr)-1);
-   else       outstr = StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 0, StringLen(outstr));
-   outstr = StringSubstr(outstr, StringLen(outstr)-9-nleft, nleft+1+nright-dotadj);
-
-   // Insert the commas.......
-   if (comma) {
-      bool digflg = false;
-      bool stpflg = false;
-      string out1 = "";
-      string out2 = "";
-      for (i=0; i < StringLen(outstr); i++) {
-         char = StringSubstr(outstr, i, 1);
-         if (char == ".")
-            stpflg = true;
-         if (!stpflg && (nleft-i==3 || nleft-i==6 || nleft-i==9)) {
-            if (digflg) out1 = out1 +",";
-            else        out1 = out1 +" ";
-         }
-         out1 = out1 + char;
-         if (char >= "0" && char <= "9")
-            digflg = true;
-      }
-      outstr = out1;
-   }
-
-   // Add currency symbol and signs........
-   outstr = csym + leadsign + outstr + trailsign;
-
-   // 'Float' the currency symbol/sign.......
-   out1 = "";
-   out2 = "";
-   bool fltflg = true;
-   for (i=0; i < StringLen(outstr); i++) {
-      char = StringSubstr(outstr, i, 1);
-      if (char >= "0" && char <= "9")
-         fltflg = false;
-      if ((char==" " && fltflg) || (blank && n==0)) out1 = out1 + " ";
-      else                                          out2 = out2 + char;
-   }
-   outstr = out1 + out2;
-
-   // Overflow........
-   if (overf && dleft > nleft)
-      outstr = "*" + StringSubstr(outstr, 1, StringLen(outstr)-1);
-
-   // Left shift.......
-   if (lftsh) {
-      int len = StringLen(outstr);
-      outstr = StringTrimLeft(outstr);
-      outstr = outstr + StringRepeat(" ", len-StringLen(outstr));
-   }
-
-   // Switch period and comma.......
-   if (swtch) {
-      out1 = "";
-      for (i=0; i < StringLen(outstr); i++) {
-         char = StringSubstr(outstr, i, 1);
-         if      (char == ".") out1 = out1 +",";
-         else if (char == ",") out1 = out1 +".";
-         else                  out1 = out1 + char;
-      }
-      outstr = out1;
-   }
-
-   if (trimf)
-      outstr = StringTrim(outstr);
-   return(outstr);
-}
-
-
-/**
- * Repeats the string STR N times
- * Usage:    string x=StringRepeat("-",10)  returns x = "----------"
- */
-string StringRepeat(string str, int n) {
-   string outstr = "";
-   for (int i=0; i < n; i++) {
-      outstr = outstr + str;
-   }
-   return(outstr);
-}
-
-
-/**
- * Returns N rounded to D decimals - works around a precision bug in MQL4
- */
-double MathFix(double n, int d) {
-   return(MathRound(n*MathPow(10, d) + 0.000000000001*MathSign(n)) / MathPow(10, d));
-}
-
-
-/**
- * Returns the sign of a number (i.e. -1, 0, +1)
- * Usage:   int x=MathSign(-25)   returns x=-1
- */
-int MathSign(double n) {
-   if      (n > 0) return( 1);
-   else if (n < 0) return(-1);
-   else            return( 0);
 }
 
 
