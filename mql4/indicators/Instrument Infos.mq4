@@ -21,17 +21,17 @@ extern color  Background.Color = C'212,208,200';   // C'212,208,200'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string names[] = { "TRADEALLOWED","DIGITS","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION" };
+string names[] = { "TRADEALLOWED","DIGITS","POINT","TICKSIZE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","TICKVALUE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION" };
 
 #define TRADEALLOWED       0
 #define DIGITS             1
 #define POINT              2
 #define TICKSIZE           3
-#define TICKVALUE          4
-#define SPREAD             5
-#define STOPLEVEL          6
-#define FREEZELEVEL        7
-#define LOTSIZE            8
+#define SPREAD             4
+#define STOPLEVEL          5
+#define FREEZELEVEL        6
+#define LOTSIZE            7
+#define TICKVALUE          8
 #define MINLOT             9
 #define MAXLOT            10
 #define LOTSTEP           11
@@ -150,9 +150,8 @@ int UpdateInfos() {
    string symbol = Symbol();
 
    bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);           ObjectSetText(names[TRADEALLOWED     ], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
-   double point        = Point;                                           ObjectSetText(names[POINT            ], StringConcatenate("1 point: ", DoubleToStrTrim(point)), Font.Size, Font.Name, Font.Color);
+   double point        = Point;                                           ObjectSetText(names[POINT            ], StringConcatenate("Point size: ", DoubleToStrTrim(point)), Font.Size, Font.Name, Font.Color);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);               ObjectSetText(names[TICKSIZE         ], StringConcatenate("Tick size: ", DoubleToStrTrim(tickSize)), Font.Size, Font.Name, Font.Color);
-   double tickValue    = MarketInfo(symbol, MODE_TICKVALUE);              ObjectSetText(names[TICKVALUE        ], StringConcatenate("Tick value: ", DoubleToStrTrim(tickValue), " ", AccountCurrency()), Font.Size, Font.Name, Font.Color);
 
    int    spread       = MarketInfo(symbol, MODE_SPREAD); 
    int    stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL);
@@ -167,9 +166,15 @@ int UpdateInfos() {
       ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: ", strStopLevel, " pip"), Font.Size, Font.Name, Font.Color);      
       ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
-   double lotSize           = MarketInfo(symbol, MODE_LOTSIZE          );
-   int    iLotSize          = lotSize;                                    ObjectSetText(names[LOTSIZE          ], StringConcatenate("Lot size: ", FormatPrice(iLotSize, 0), " units"), Font.Size, Font.Name, Font.Color);
+   double lotSize  = MarketInfo(symbol, MODE_LOTSIZE);
+   int    iLotSize = lotSize;                                             ObjectSetText(names[LOTSIZE          ], StringConcatenate("Lot size: ", FormatPrice(iLotSize, 0), " units"), Font.Size, Font.Name, Font.Color);
       if (iLotSize != lotSize) return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_LOTSIZE): "+ DoubleToStrTrim(lotSize), ERR_RUNTIME_ERROR));
+
+   double pipValue = MarketInfo(symbol, MODE_TICKVALUE);         
+      if (Digits==3 || Digits==5)
+         pipValue *= 10;
+      ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", DoubleToStrTrim(pipValue), " ", AccountCurrency()), Font.Size, Font.Name, Font.Color);
+
    double minLot            = MarketInfo(symbol, MODE_MINLOT           ); ObjectSetText(names[MINLOT           ], StringConcatenate("Min lot: ", DoubleToStrTrim(minLot)), Font.Size, Font.Name, Font.Color);
    double maxLot            = MarketInfo(symbol, MODE_MAXLOT           );
    int    iMaxLot           = maxLot;                                     ObjectSetText(names[MAXLOT           ], StringConcatenate("Max lot: ", FormatPrice(iMaxLot, 0)), Font.Size, Font.Name, Font.Color);
@@ -203,13 +208,13 @@ MODE_DIGITS             Count of digits after decimal point in the symbol prices
 
 MODE_POINT              Point size in the quote currency. For the current symbol, it is stored in the predefined variable Point
 MODE_TICKSIZE           Tick size in the quote currency.
-MODE_TICKVALUE          Tick value in the deposit currency.
 
 MODE_SPREAD             Spread value in points.
 MODE_STOPLEVEL          Stop level in points.
 MODE_FREEZELEVEL        Order freeze level in points. If the execution price lies within the range defined by the freeze level, the order cannot be modified, cancelled or closed.
 
 MODE_LOTSIZE            Lot size in the base currency.
+MODE_TICKVALUE          Tick value in the deposit currency.
 MODE_MINLOT             Minimum permitted amount of a lot.
 MODE_MAXLOT             Maximum permitted amount of a lot.
 MODE_LOTSTEP            Step for changing lots.
