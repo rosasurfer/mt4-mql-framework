@@ -129,9 +129,8 @@ int CreateInstrumentLabel() {
    else GetLastError();
 
    // Instrumentnamen einlesen und setzen
-   string instrument = GetGlobalConfigString("Instruments"     , Symbol()  , Symbol()  );
+   string instrument = GetGlobalConfigString("Instruments", Symbol(), Symbol());
    string name       = GetGlobalConfigString("Instrument.Names", instrument, instrument);
-
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);
 
    return(catch("CreateInstrumentLabel()"));
@@ -148,7 +147,7 @@ int CreatePriceLabel() {
       ObjectSet(priceLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
       ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
       ObjectSet(priceLabel, OBJPROP_YDISTANCE,  9);
-      ObjectSetText(priceLabel, "", 1);
+      ObjectSetText(priceLabel, " ", 1);
       RegisterChartObject(priceLabel, labels);
    }
    else GetLastError();
@@ -170,7 +169,7 @@ int CreateSpreadLabel() {
       ObjectSet(spreadLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
       ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
       ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 32);
-      ObjectSetText(spreadLabel, "", 1);
+      ObjectSetText(spreadLabel, " ", 1);
       RegisterChartObject(spreadLabel, labels);
    }
    else GetLastError();
@@ -192,7 +191,7 @@ int CreateUnitSizeLabel() {
       ObjectSet(unitSizeLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
       ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
       ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE,  11);
-      ObjectSetText(unitSizeLabel, "", 1);
+      ObjectSetText(unitSizeLabel, " ", 1);
       RegisterChartObject(unitSizeLabel, labels);
    }
    else GetLastError();
@@ -214,7 +213,7 @@ int CreatePositionLabel() {
       ObjectSet(positionLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
       ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
       ObjectSet(positionLabel, OBJPROP_YDISTANCE,  11);
-      ObjectSetText(positionLabel, "", 1);
+      ObjectSetText(positionLabel, " ", 1);
       RegisterChartObject(positionLabel, labels);
    }
    else GetLastError();
@@ -526,12 +525,14 @@ int UpdateSpreadLabel() {
    if (!Show.Spread)
       return(0);
 
-   double spread = (Ask-Bid) * MathPow(10, Digits-1);
+   int spread = MarketInfo(Symbol(), MODE_SPREAD); 
+   if (Spread.Including.Commission) if (AccountNumber() == {account-no})
+      spread += 8;
 
-   if (Spread.Including.Commission) if (GetAccountNumber() == {account-no})
-      spread += 0.8;
+   if (Digits==3 || Digits==5) string strSpread = NumberToStr(spread/10.0, ".1");   // TODO: Aufruf von NumberToStr() optimieren
+   else                               strSpread = spread; 
 
-   ObjectSetText(spreadLabel, DoubleToStr(spread, 1), 9, "Tahoma", SlateGray);
+   ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
