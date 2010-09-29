@@ -525,14 +525,15 @@ int UpdateSpreadLabel() {
    if (!Show.Spread)
       return(0);
 
-   int spread = MarketInfo(Symbol(), MODE_SPREAD); 
+   double spread = MarketInfo(Symbol(), MODE_SPREAD); 
+
    if (Spread.Including.Commission) if (AccountNumber() == {account-no})
       spread += 8;
 
-   if (Digits==3 || Digits==5) string strSpread = NumberToStr(spread/10.0, ".1");   // TODO: Aufruf von NumberToStr() optimieren
-   else                               strSpread = spread; 
-
-   ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
+   if (Digits==3 || Digits==5) 
+      spread /= 10;
+                                                                  // TODO: Aufruf von NumberToStr() wegoptimieren
+   ObjectSetText(spreadLabel, NumberToStr(spread, ".1"), 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
