@@ -65,8 +65,8 @@
 #define OP_SELLLIMIT             3     // sell limit order
 #define OP_BUYSTOP               4     // stop buy order
 #define OP_SELLSTOP              5     // stop sell order
-#define OP_BALANCE               6     // account credit or withdrawel transaction
-#define OP_MARGINCREDIT          7     // margin credit facility (no transaction)
+#define OP_BALANCE               6     // account credit or withdrawel transaction (undocumented)
+#define OP_MARGINCREDIT          7     // margin credit facility, no transaction (undocumented)
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
@@ -143,6 +143,14 @@
 #define HC_COMMENT              22
 
 
+// Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
+#define MCM_FOREX                0
+#define MCM_CFD                  1
+#define MCM_CFDFUTURES           2
+#define MCM_CFDINDEX             3
+#define MCM_CFDLEVERAGE          4     // erst ab MT5 dokumentiert
+
+
 // Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE)
 #define SCM_POINTS               0
 #define SCM_BASE_CURRENCY        1
@@ -154,13 +162,6 @@
 #define PCM_FOREX                0
 #define PCM_CFD                  1
 #define PCM_FUTURES              2
-
-
-// Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
-#define MCM_FOREX                0
-#define MCM_CFD                  1
-#define MCM_FUTURES              2
-#define MCM_INDICES              3
 
 
 // Flags zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)

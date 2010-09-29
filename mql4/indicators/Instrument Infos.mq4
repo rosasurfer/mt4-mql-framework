@@ -96,8 +96,8 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 167);
-      ObjectSetText(label, "g", 140, "Webdings", Background.Color);
+      ObjectSet(label, OBJPROP_YDISTANCE, 166);
+      ObjectSetText(label, "g", 168, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
    else GetLastError();
@@ -109,8 +109,8 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 167 + 186);
-      ObjectSetText(label, "g", 140, "Webdings", Background.Color);
+      ObjectSet(label, OBJPROP_YDISTANCE, 316);
+      ObjectSetText(label, "g", 168, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
    else GetLastError();
@@ -145,13 +145,14 @@ int CreateLabels() {
  */
 int UpdateInfos() {
    string strBool[] = { "no","yes" };
-   string strMCM[]  = { "Forex","CFD","Futures","CFD for Indices" };                         // margin calculation modes
+   string strMCM[]  = { "Forex","CFD","CFD Futures","CFD Index","CFD Leverage" };            // margin calculation modes
    string strPCM[]  = { "Forex","CFD","Futures" };                                           // profit calculation modes
    string strSCM[]  = { "in points","in base currency","by interest","in margin currency" }; // swap calculation modes
 
    string symbol = Symbol();
 
    bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);           ObjectSetText(names[TRADEALLOWED     ], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
+
    double point        = Point;                                           ObjectSetText(names[POINT            ], StringConcatenate("Point size: ", DoubleToStrTrim(point)), Font.Size, Font.Name, Font.Color);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);               ObjectSetText(names[TICKSIZE         ], StringConcatenate("Tick size: ", DoubleToStrTrim(tickSize)), Font.Size, Font.Name, Font.Color);
 
@@ -164,8 +165,8 @@ int UpdateInfos() {
          strStopLevel   = NumberToStr(stopLevel  /10.0, ".1");
          strFreezeLevel = NumberToStr(freezeLevel/10.0, ".1");
       }
-      ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: ", strSpread, " pip"), Font.Size, Font.Name, Font.Color);
-      ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: ", strStopLevel, " pip"), Font.Size, Font.Name, Font.Color);
+      ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: "      , strSpread     , " pip"), Font.Size, Font.Name, Font.Color);
+      ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
    double lotSize  = MarketInfo(symbol, MODE_LOTSIZE);
@@ -199,7 +200,7 @@ int UpdateInfos() {
    double expires           = MarketInfo(symbol, MODE_EXPIRATION       ); if (expires > 0) ObjectSetText(names[EXPIRATION], StringConcatenate("Future expires: ", TimeToStr(expires)), Font.Size, Font.Name, Font.Color);
 
    int error = GetLastError();
-   if (error==ERR_NO_ERROR /*|| error==ERR_OBJECT_DOES_NOT_EXIST*/)
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(ERR_NO_ERROR);
    return(catch("UpdateInfos()", error));
 }
