@@ -21,31 +21,30 @@ extern color  Background.Color = C'212,208,200';   // C'212,208,200'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string names[] = { "TRADEALLOWED","DIGITS","POINT","TICKSIZE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","TICKVALUE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION" };
+string names[] = { "TRADEALLOWED","POINT","TICKSIZE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","TICKVALUE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION" };
 
 #define TRADEALLOWED       0
-#define DIGITS             1
-#define POINT              2
-#define TICKSIZE           3
-#define SPREAD             4
-#define STOPLEVEL          5
-#define FREEZELEVEL        6
-#define LOTSIZE            7
-#define TICKVALUE          8
-#define MINLOT             9
-#define MAXLOT            10
-#define LOTSTEP           11
-#define MARGINCALCMODE    12
-#define MARGINREQUIRED    13
-#define MARGININIT        14
-#define MARGINMAINTENANCE 15
-#define MARGINHEDGED      16
-#define SWAPTYPE          17
-#define SWAPLONG          18
-#define SWAPSHORT         19
-#define PROFITCALCMODE    20
-#define STARTING          21
-#define EXPIRATION        22
+#define POINT              1
+#define TICKSIZE           2
+#define SPREAD             3
+#define STOPLEVEL          4
+#define FREEZELEVEL        5
+#define LOTSIZE            6
+#define TICKVALUE          7
+#define MINLOT             8
+#define MAXLOT             9
+#define LOTSTEP           10
+#define MARGINCALCMODE    11
+#define MARGINREQUIRED    12
+#define MARGININIT        13
+#define MARGINMAINTENANCE 14
+#define MARGINHEDGED      15
+#define SWAPTYPE          16
+#define SWAPLONG          17
+#define SWAPSHORT         18
+#define PROFITCALCMODE    19
+#define STARTING          20
+#define EXPIRATION        21
 
 
 string labels[];
@@ -88,7 +87,7 @@ int deinit() {
 int CreateLabels() {
    string expertName = WindowExpertName();
    int c = 10;
-   
+
    // Background
    c++;
    string label = StringConcatenate(expertName, ".", c, ".Background");
@@ -97,7 +96,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 166);
+      ObjectSet(label, OBJPROP_YDISTANCE, 167);
       ObjectSetText(label, "g", 140, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
@@ -110,13 +109,14 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 164 + 158);
+      ObjectSet(label, OBJPROP_YDISTANCE, 167 + 186);
       ObjectSetText(label, "g", 140, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
    else GetLastError();
 
    // Textlabel
+   int yCoord = 170;
    for (int i=0; i < ArraySize(names); i++) {
       c++;
       label = StringConcatenate(expertName, ".", c, ".", names[i]);
@@ -125,7 +125,9 @@ int CreateLabels() {
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(label, OBJPROP_XDISTANCE,  20);
-         ObjectSet(label, OBJPROP_YDISTANCE, 170 + i*16);
+            if (i == POINT || i==SPREAD || i==LOTSIZE || i==MARGINCALCMODE || i==SWAPTYPE || i==PROFITCALCMODE)
+               yCoord += 8;
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", Font.Size, Font.Name, Font.Color);
          RegisterChartObject(label, labels);
          names[i] = label;
@@ -153,24 +155,24 @@ int UpdateInfos() {
    double point        = Point;                                           ObjectSetText(names[POINT            ], StringConcatenate("Point size: ", DoubleToStrTrim(point)), Font.Size, Font.Name, Font.Color);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);               ObjectSetText(names[TICKSIZE         ], StringConcatenate("Tick size: ", DoubleToStrTrim(tickSize)), Font.Size, Font.Name, Font.Color);
 
-   int    spread       = MarketInfo(symbol, MODE_SPREAD); 
+   int    spread       = MarketInfo(symbol, MODE_SPREAD);
    int    stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL);
    int    freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL);
-      string strSpread=spread, strStopLevel=stopLevel, strFreezeLevel=freezeLevel; 
+      string strSpread=spread, strStopLevel=stopLevel, strFreezeLevel=freezeLevel;
       if (Digits==3 || Digits==5) {
-         strSpread      = NumberToStr(spread     /10.0, ".1");                  
-         strStopLevel   = NumberToStr(stopLevel  /10.0, ".1");            
-         strFreezeLevel = NumberToStr(freezeLevel/10.0, ".1");        
+         strSpread      = NumberToStr(spread     /10.0, ".1");
+         strStopLevel   = NumberToStr(stopLevel  /10.0, ".1");
+         strFreezeLevel = NumberToStr(freezeLevel/10.0, ".1");
       }
       ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: ", strSpread, " pip"), Font.Size, Font.Name, Font.Color);
-      ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: ", strStopLevel, " pip"), Font.Size, Font.Name, Font.Color);      
+      ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: ", strStopLevel, " pip"), Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
    double lotSize  = MarketInfo(symbol, MODE_LOTSIZE);
    int    iLotSize = lotSize;                                             ObjectSetText(names[LOTSIZE          ], StringConcatenate("Lot size: ", FormatPrice(iLotSize, 0), " units"), Font.Size, Font.Name, Font.Color);
       if (iLotSize != lotSize) return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_LOTSIZE): "+ DoubleToStrTrim(lotSize), ERR_RUNTIME_ERROR));
 
-   double pipValue = MarketInfo(symbol, MODE_TICKVALUE);         
+   double pipValue = MarketInfo(symbol, MODE_TICKVALUE);
       if (Digits==3 || Digits==5)
          pipValue *= 10;
       ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", DoubleToStrTrim(pipValue), " ", AccountCurrency()), Font.Size, Font.Name, Font.Color);
