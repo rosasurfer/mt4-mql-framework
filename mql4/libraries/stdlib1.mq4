@@ -4748,7 +4748,7 @@ double MathRoundFix(double number, int decimals) {
    // TODO: Verarbeitung negativer decimals prüfen
 
    double operand = MathPow(10, decimals);
-   return(MathRound(number * operand + 0.000000000001*MathSign(number)) / operand);
+   return(MathRound(number*operand + MathSign(number)*0.000000000001) / operand);
 }
 
 
@@ -4799,20 +4799,23 @@ string StringRepeat(string input, int times) {
  *
  *   n      = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
  *   n.d    = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
- *  +n.d    = left-side plus sign for positive values
+ *   n.     = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
+ *    .d    = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
+ *    .d+   = all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
+ *  +n.d    = plus sign for positive values
+ *  ±n.d    = plus sign for positive and ± sign for zero values
  * ( or )   = enclose negative values in parentheses
  *    %     = trailing % sign
+ *    ‰     = trailing ‰ sign
  *    R     = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
  *    ,     = separate thousands by comma, e.g. FormatNumber(123456.789, ",6.3") => "123,456.789"
  *    ;     = switch thousands and decimal point separator (European format), e.g. FormatNumber(123456.789, ",;6.3") => "123.456,789"
- *    *     = suppress the asterisk in leftmost position if n is too small to allow the value to be output in full
- *    B     = use blanks for entire output if value is zero
  */
 string FormatNumber(double number, string mask) {
    if (number == EMPTY_VALUE)
       number = 0;
 
-   // === Beginn Parameter mask parsen ===
+   // === Beginn Maske parsen ===
    int len = StringLen(mask);
 
    // Position des Dezimalpunktes
@@ -4821,62 +4824,71 @@ string FormatNumber(double number, string mask) {
    if (!dotGiven)
       dotPos = len;
 
-   // Anzahl der linken und rechten Stellen
-   int char, nLeft=0, nRight=0;
+   // Anzahl der linken Stellen
+   int char, nLeft;
    bool nDigit;
    for (int i=0; i < dotPos; i++) {
       char = StringGetChar(mask, i);
-      if ('0' <= char) if (char <= '9') {
-         nLeft = 10*nLeft + char - '0';
+      if ('0' <= char) if (char <= '9') {    // (0 <= char && char <= 9)
+         nLeft = 10*nLeft + char-'0';
          nDigit = true;
       }
    }
-   if (!nDigit)
-      nLeft = StringLen(StringConcatenate("", EMPTY_VALUE));
+   if (!nDigit) nLeft = StringLen(StringConcatenate("", EMPTY_VALUE));
 
+   // Anzahl der rechten Stellen
+   int nRight;
    if (dotGiven) {
+      nDigit = false;
       for (i=dotPos+1; i < len; i++) {
          char = StringGetChar(mask, i);
-         if ('0' <= char) if (char <= '9')
-            nRight = 10*nRight + char - '0';
-      }
-      nRight = MathMin(nRight, 7);
-   }
-   else {
-      for (i=0; i < len; i++) {
-         char = StringGetChar(mask, i);
-         if ('0' <= char) if (char <= '9') {
-            dotPos = i; // die erste Ziffer ist für Vorzeichenbestimmung ausreichend
-            break;
+         if ('0' <= char) if (char <= '9') { // (0 <= char && char <= 9)
+            nRight = 10*nRight + char-'0';
+            nDigit = true;
          }
       }
+      if (nDigit) {
+         nRight = MathMin(nRight, 8);
+      }
+      else {
+         string tmp = number;
+         dotPos = StringFind(tmp, ".");
+         for (i=StringLen(tmp)-1; i > dotPos; i--) {
+            if (StringGetChar(tmp, i) != '0')
+               break;
+         }
+         nRight = i - dotPos;
+      }
+      if (nRight == 0)
+         dotGiven = false;
    }
 
    // Vorzeichen etc.
    string leadSign="", trailSign="";
    if (number < 0) {
       if (StringFind(mask, "(") > -1 || StringFind(mask, ")") > -1) {
-         leadSign  = "(";
-         trailSign = ")";
+         leadSign = "("; trailSign = ")";
       }
-      else {
-         leadSign = "-";
-      }
+      else leadSign = "-";
    }
-   else if (number > 0) if (StringFind(mask, "+") > -1) {
+   else if (number == 0) {
+      if (StringFind(mask, "±") > -1)
+         leadSign = "±";
+   }
+   else if (StringFind(mask, "+") > -1 || StringFind(mask, "±") > -1) {
       leadSign = "+";
    }
 
-   // Prozentzeichen
-   if (StringFind(mask, "%") > -1)
-      trailSign = StringConcatenate("%", trailSign);
+   // Prozent- oder Promillezeichen
+   if      (StringFind(mask, "%") > -1) trailSign = StringConcatenate("%", trailSign);
+   else if (StringFind(mask, "‰") > -1) trailSign = StringConcatenate("‰", trailSign);
 
    // übrige Modifier
    bool round          = (StringFind(mask, "R")  > -1);
    bool separators     = (StringFind(mask, ",")  > -1);
    bool swapSeparators = (StringFind(mask, ";")  > -1);
-   bool markOverflow   = (StringFind(mask, "*") == -1);
-   // === Ende Parameter mask parsen ===
+   //
+   // === Ende Maske parsen ===
 
 
    // === Beginn Wertverarbeitung ===
@@ -4915,12 +4927,9 @@ string FormatNumber(double number, string mask) {
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr, trailSign);
-
-   // Overflow
-   if (nLeft < dLeft) if (markOverflow)
-      outStr = StringSetChar(outStr, 0, '*');
-
-   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +") = \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft);
+   //
+   // === Ende Wertverarbeitung ===
+   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -4976,7 +4985,7 @@ string FormatNumber(double number, string mask) {
  * L or l = left align final string
  * T ot t = trim end result
  */
-string NumberToStr_orig(double n, string mask) {
+string NumberToStr(double n, string mask) {
    if (MathAbs(n) == EMPTY_VALUE)
       n = 0;
 
@@ -5603,20 +5612,20 @@ string DateToStr(datetime mt4date, string mask) {
 
    for (int i=0; i < StringLen(mask); i++) {
       string char = StringSubstr(mask, i, 1);
-      if      (char == "d")                outdate = outdate + StringTrim(NumberToStr_orig(dd, "2"));
-      else if (char == "D")                outdate = outdate + StringTrim(NumberToStr_orig(dd, "Z2"));
-      else if (char == "m")                outdate = outdate + StringTrim(NumberToStr_orig(mm, "2"));
-      else if (char == "M")                outdate = outdate + StringTrim(NumberToStr_orig(mm, "Z2"));
-      else if (char == "y")                outdate = outdate + StringTrim(NumberToStr_orig(yy, "2"));
-      else if (char == "Y")                outdate = outdate + StringTrim(NumberToStr_orig(yy, "4"));
+      if      (char == "d")                outdate = outdate + StringTrim(NumberToStr(dd, "2"));
+      else if (char == "D")                outdate = outdate + StringTrim(NumberToStr(dd, "Z2"));
+      else if (char == "m")                outdate = outdate + StringTrim(NumberToStr(mm, "2"));
+      else if (char == "M")                outdate = outdate + StringTrim(NumberToStr(mm, "Z2"));
+      else if (char == "y")                outdate = outdate + StringTrim(NumberToStr(yy, "2"));
+      else if (char == "Y")                outdate = outdate + StringTrim(NumberToStr(yy, "4"));
       else if (char == "n")                outdate = outdate + StringSubstr(mth[mm-1], 0, 3);
       else if (char == "N")                outdate = outdate + mth[mm-1];
       else if (char == "w")                outdate = outdate + StringSubstr(dow[dw], 0, 3);
       else if (char == "W")                outdate = outdate + dow[dw];
-      else if (char == "h")                outdate = outdate + StringTrim(NumberToStr_orig(h12, "2"));
-      else if (char == "H")                outdate = outdate + StringTrim(NumberToStr_orig(hr, "Z2"));
-      else if (StringToUpper(char) == "I") outdate = outdate + StringTrim(NumberToStr_orig(min, "Z2"));
-      else if (StringToUpper(char) == "S") outdate = outdate + StringTrim(NumberToStr_orig(sec, "Z2"));
+      else if (char == "h")                outdate = outdate + StringTrim(NumberToStr(h12, "2"));
+      else if (char == "H")                outdate = outdate + StringTrim(NumberToStr(hr, "Z2"));
+      else if (StringToUpper(char) == "I") outdate = outdate + StringTrim(NumberToStr(min, "Z2"));
+      else if (StringToUpper(char) == "S") outdate = outdate + StringTrim(NumberToStr(sec, "Z2"));
       else if (char == "a")                outdate = outdate + ampm;
       else if (char == "A")                outdate = outdate + StringToUpper(ampm);
       else if (StringToUpper(char) == "T") outdate = outdate + d10;
