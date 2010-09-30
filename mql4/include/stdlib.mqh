@@ -106,8 +106,8 @@
    string   DecimalToHex(int number);
    string   DoubleToStrTrim(double number);
    string   FormatMoney(double amount);
+   string   FormatNumber(double number, string mask);
    string   FormatPrice(double price, int digits);
-   string   NumberToStr(double number, string mask);
 
 
    // Strings

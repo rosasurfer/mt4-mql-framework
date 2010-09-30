@@ -4779,7 +4779,7 @@ string StringRepeat(string input, int times) {
       last_library_error = catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
-   
+
    if (input == "") return("");
    if (times ==  0) return("");
 
@@ -4797,18 +4797,18 @@ string StringRepeat(string input, int times) {
  *
  * Mask parameters:
  *
- *   n      = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
- *   n.d    = number of digits to the left and the right of the decimal point, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *   n      = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
+ *   n.d    = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
  *  +n.d    = left-side plus sign for positive values
  * ( or )   = enclose negative values in parentheses
  *    %     = trailing % sign
- *    R     = round result in the last displayed digit, e.g. NumberToStr(123.456, "R3.2") => "123.46", e.g. NumberToStr(123.7, "R3") => "124"
- *    ,     = separate thousands by comma, e.g. NumberToStr(123456.789, ",6.3") => "123,456.789"
- *    ;     = switch thousands and decimal point separator (European format), e.g. NumberToStr(123456.789, ",;6.3") => "123.456,789"
+ *    R     = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
+ *    ,     = separate thousands by comma, e.g. FormatNumber(123456.789, ",6.3") => "123,456.789"
+ *    ;     = switch thousands and decimal point separator (European format), e.g. FormatNumber(123456.789, ",;6.3") => "123.456,789"
  *    *     = suppress the asterisk in leftmost position if n is too small to allow the value to be output in full
  *    B     = use blanks for entire output if value is zero
  */
-string NumberToStr(double number, string mask) {
+string FormatNumber(double number, string mask) {
    if (number == EMPTY_VALUE)
       number = 0;
 
@@ -4884,7 +4884,7 @@ string NumberToStr(double number, string mask) {
    if (round)
       number = MathRoundFix(number, nRight);
    string outStr = number;
-   
+
    // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
    if (number < 0)
       outStr = StringSubstr(outStr, 1);
@@ -4912,19 +4912,19 @@ string NumberToStr(double number, string mask) {
          i -= 3;
       }
    }
-   
+
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr, trailSign);
 
    // Overflow
    if (nLeft < dLeft) if (markOverflow)
       outStr = StringSetChar(outStr, 0, '*');
-   
-   //Print("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +") = \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft);
+
+   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +") = \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("NumberToStr()", error);
+      catch("FormatNumber()", error);
       return("");
    }
    return(outStr);
@@ -5603,20 +5603,20 @@ string DateToStr(datetime mt4date, string mask) {
 
    for (int i=0; i < StringLen(mask); i++) {
       string char = StringSubstr(mask, i, 1);
-      if      (char == "d")                outdate = outdate + StringTrim(NumberToStr(dd, "2"));
-      else if (char == "D")                outdate = outdate + StringTrim(NumberToStr(dd, "Z2"));
-      else if (char == "m")                outdate = outdate + StringTrim(NumberToStr(mm, "2"));
-      else if (char == "M")                outdate = outdate + StringTrim(NumberToStr(mm, "Z2"));
-      else if (char == "y")                outdate = outdate + StringTrim(NumberToStr(yy, "2"));
-      else if (char == "Y")                outdate = outdate + StringTrim(NumberToStr(yy, "4"));
+      if      (char == "d")                outdate = outdate + StringTrim(NumberToStr_orig(dd, "2"));
+      else if (char == "D")                outdate = outdate + StringTrim(NumberToStr_orig(dd, "Z2"));
+      else if (char == "m")                outdate = outdate + StringTrim(NumberToStr_orig(mm, "2"));
+      else if (char == "M")                outdate = outdate + StringTrim(NumberToStr_orig(mm, "Z2"));
+      else if (char == "y")                outdate = outdate + StringTrim(NumberToStr_orig(yy, "2"));
+      else if (char == "Y")                outdate = outdate + StringTrim(NumberToStr_orig(yy, "4"));
       else if (char == "n")                outdate = outdate + StringSubstr(mth[mm-1], 0, 3);
       else if (char == "N")                outdate = outdate + mth[mm-1];
       else if (char == "w")                outdate = outdate + StringSubstr(dow[dw], 0, 3);
       else if (char == "W")                outdate = outdate + dow[dw];
-      else if (char == "h")                outdate = outdate + StringTrim(NumberToStr(h12, "2"));
-      else if (char == "H")                outdate = outdate + StringTrim(NumberToStr(hr, "Z2"));
-      else if (StringToUpper(char) == "I") outdate = outdate + StringTrim(NumberToStr(min, "Z2"));
-      else if (StringToUpper(char) == "S") outdate = outdate + StringTrim(NumberToStr(sec, "Z2"));
+      else if (char == "h")                outdate = outdate + StringTrim(NumberToStr_orig(h12, "2"));
+      else if (char == "H")                outdate = outdate + StringTrim(NumberToStr_orig(hr, "Z2"));
+      else if (StringToUpper(char) == "I") outdate = outdate + StringTrim(NumberToStr_orig(min, "Z2"));
+      else if (StringToUpper(char) == "S") outdate = outdate + StringTrim(NumberToStr_orig(sec, "Z2"));
       else if (char == "a")                outdate = outdate + ampm;
       else if (char == "A")                outdate = outdate + StringToUpper(ampm);
       else if (StringToUpper(char) == "T") outdate = outdate + d10;

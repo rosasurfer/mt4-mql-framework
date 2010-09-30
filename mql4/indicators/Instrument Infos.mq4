@@ -149,45 +149,42 @@ int UpdateInfos() {
    string strPCM[]  = { "Forex","CFD","Futures" };                                           // profit calculation modes
    string strSCM[]  = { "in points","in base currency","by interest","in margin currency" }; // swap calculation modes
 
-   string symbol = Symbol();
+   string symbol          = Symbol();
+   string accountCurrency = AccountCurrency();
 
-   bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);           ObjectSetText(names[TRADEALLOWED     ], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
-
-   double point        = Point;                                           ObjectSetText(names[POINT            ], StringConcatenate("Point size: ", DoubleToStrTrim(point)), Font.Size, Font.Name, Font.Color);
-   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);               ObjectSetText(names[TICKSIZE         ], StringConcatenate("Tick size: ", DoubleToStrTrim(tickSize)), Font.Size, Font.Name, Font.Color);
+   bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED); ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
+   double point        = Point;                                 ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", DoubleToStr(point, Digits)), Font.Size, Font.Name, Font.Color);
+   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);     ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", DoubleToStr(tickSize, Digits)), Font.Size, Font.Name, Font.Color);
 
    int    spread       = MarketInfo(symbol, MODE_SPREAD);
    int    stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL);
    int    freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL);
       string strSpread=spread, strStopLevel=stopLevel, strFreezeLevel=freezeLevel;
       if (Digits==3 || Digits==5) {
-         strSpread      = NumberToStr(spread     /10.0, ".1");
-         strStopLevel   = NumberToStr(stopLevel  /10.0, ".1");
-         strFreezeLevel = NumberToStr(freezeLevel/10.0, ".1");
+         strSpread      = DoubleToStr(spread     /10.0, 1); 
+         strStopLevel   = DoubleToStr(stopLevel  /10.0, 1);
+         strFreezeLevel = DoubleToStr(freezeLevel/10.0, 1);
       }
       ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: "      , strSpread     , " pip"), Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
-   double lotSize  = MarketInfo(symbol, MODE_LOTSIZE);
-   int    iLotSize = lotSize;                                             ObjectSetText(names[LOTSIZE          ], StringConcatenate("Lot size: ", FormatPrice(iLotSize, 0), " units"), Font.Size, Font.Name, Font.Color);
-      if (iLotSize != lotSize) return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_LOTSIZE): "+ DoubleToStrTrim(lotSize), ERR_RUNTIME_ERROR));
+   double lotSize  = MarketInfo(symbol, MODE_LOTSIZE); ObjectSetText(names[LOTSIZE], StringConcatenate("Lot size: ", FormatPrice(lotSize, 0), " units"), Font.Size, Font.Name, Font.Color);
+      if (MathRound(lotSize) != lotSize) return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_LOTSIZE): "+ lotSize, ERR_RUNTIME_ERROR));
 
    double pipValue = MarketInfo(symbol, MODE_TICKVALUE);
       if (Digits==3 || Digits==5)
-         pipValue *= 10;
-      ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", DoubleToStrTrim(pipValue), " ", AccountCurrency()), Font.Size, Font.Name, Font.Color);
+         pipValue *= 10;                               ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", DoubleToStrTrim(pipValue), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
 
    double minLot            = MarketInfo(symbol, MODE_MINLOT           ); ObjectSetText(names[MINLOT           ], StringConcatenate("Min lot: ", DoubleToStrTrim(minLot)), Font.Size, Font.Name, Font.Color);
-   double maxLot            = MarketInfo(symbol, MODE_MAXLOT           );
-   int    iMaxLot           = maxLot;                                     ObjectSetText(names[MAXLOT           ], StringConcatenate("Max lot: ", FormatPrice(iMaxLot, 0)), Font.Size, Font.Name, Font.Color);
-      if (iMaxLot != maxLot)   return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_MAXLOT): "+ DoubleToStrTrim(maxLot), ERR_RUNTIME_ERROR));
+   double maxLot            = MarketInfo(symbol, MODE_MAXLOT           ); ObjectSetText(names[MAXLOT           ], StringConcatenate("Max lot: ", FormatPrice(maxLot, 0)), Font.Size, Font.Name, Font.Color);
+      if (MathRound(maxLot) != maxLot) return(catch("UpdateInfos()    got odd value for MarketInfo(MODE_MAXLOT): "+ maxLot, ERR_RUNTIME_ERROR));
    double lotStep           = MarketInfo(symbol, MODE_LOTSTEP          ); ObjectSetText(names[LOTSTEP          ], StringConcatenate("Lot step: ", DoubleToStrTrim(lotStep)), Font.Size, Font.Name, Font.Color);
 
    int    marginCalcMode    = MarketInfo(symbol, MODE_MARGINCALCMODE   ); ObjectSetText(names[MARGINCALCMODE   ], StringConcatenate("Margin calculation mode: ", strMCM[marginCalcMode]), Font.Size, Font.Name, Font.Color);
-   double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   ); ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", DoubleToStrTrim(marginRequired)), Font.Size, Font.Name, Font.Color);
-   double marginInit        = MarketInfo(symbol, MODE_MARGININIT       ); ObjectSetText(names[MARGININIT       ], StringConcatenate("Margin init: ", DoubleToStrTrim(marginInit)), Font.Size, Font.Name, Font.Color);
-   double marginMaintenance = MarketInfo(symbol, MODE_MARGINMAINTENANCE); ObjectSetText(names[MARGINMAINTENANCE], StringConcatenate("Margin maintenance: ", DoubleToStrTrim(marginMaintenance)), Font.Size, Font.Name, Font.Color);
+   double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   ); ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", DoubleToStrTrim(marginRequired), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
+   double marginInit        = MarketInfo(symbol, MODE_MARGININIT       ); ObjectSetText(names[MARGININIT       ], StringConcatenate("Margin init: ", DoubleToStrTrim(marginInit), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
+   double marginMaintenance = MarketInfo(symbol, MODE_MARGINMAINTENANCE); ObjectSetText(names[MARGINMAINTENANCE], StringConcatenate("Margin maintenance: ", DoubleToStrTrim(marginMaintenance), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED     ); ObjectSetText(names[MARGINHEDGED     ], StringConcatenate("Margin hedged: ", DoubleToStrTrim(marginHedged)), Font.Size, Font.Name, Font.Color);
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE         ); ObjectSetText(names[SWAPTYPE         ], StringConcatenate("Swap calculation: ", strSCM[swapType]), Font.Size, Font.Name, Font.Color);
