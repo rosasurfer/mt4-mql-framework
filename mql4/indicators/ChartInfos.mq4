@@ -529,8 +529,8 @@ int UpdateSpreadLabel() {
 
    if (Spread.Including.Commission) if (AccountNumber() == {account-no})
       spread += 8;
-                                                                  // TODO: Aufruf von DoubleToStrTrim() wegoptimieren
-   if (Digits==3 || Digits==5) string strSpread = DoubleToStrTrim(spread/10.0);
+
+   if (Digits==3 || Digits==5) string strSpread = DoubleToStr(spread/10.0, 1);
    else                               strSpread = spread;
                                                                   
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
