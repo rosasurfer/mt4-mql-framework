@@ -13,6 +13,43 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (arbeitet nicht rekursiv).
+ *
+ * @param  string subject - Ausgangsstring
+ * @param  string search  - Suchstring
+ * @param  string replace - Ersatzstring
+ *
+ * @return string
+ */
+string StringReplace(string subject, string search, string replace) {
+   if (StringLen(subject) == 0) return(subject);
+   if (StringLen(search)  == 0) return(subject);
+
+   int startPos = 0;
+   int foundPos = StringFind(subject, search, startPos);
+   if (foundPos == -1) return(subject);
+
+   string result = "";
+   while (foundPos > -1) {
+      // MQL kann mit StringSubstr(subject, start, length=0) nicht umgehen
+      if (foundPos == startPos) result = StringConcatenate(result,                                                     replace);
+      else                      result = StringConcatenate(result, StringSubstr(subject, startPos, foundPos-startPos), replace);
+
+      startPos = foundPos + StringLen(search);
+      foundPos = StringFind(subject, search, startPos);
+   }
+   result = StringConcatenate(result, StringSubstr(subject, startPos));
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("StringReplace()", error);
+      return("");
+   }
+   return(result);
+}
+
+
+/**
  * Gibt die Startzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
  * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
@@ -573,11 +610,11 @@ string DoubleToStrTrim(double value) {
 
    bool trim = false;
 
-   while (StringGetChar(strValue, len-1) == 48) {  // char(48) = "0"
+   while (StringGetChar(strValue, len-1) == '0') {
       len--;
       trim = true;
    }
-   if (StringGetChar(strValue, len-1) == 46) {     // char(46) = "."
+   if (StringGetChar(strValue, len-1) == '.') {
       len++;                                       // mindestens eine Dezimalstelle wird erhalten
    }
 
@@ -1386,7 +1423,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
       if (blankLine)
          continue;
 
-      value = StringTrimLeft(StringTrimRight(value));
+      value = StringTrim(value);
 
       // Kommentarzeilen überspringen
       if (newLine) {
@@ -4780,8 +4817,8 @@ string StringRepeat(string input, int times) {
       return("");
    }
 
-   if (input == "") return("");
-   if (times ==  0) return("");
+   if (StringLen(input) == 0) return("");
+   if (times ==  0)           return("");
 
    string output = input;
    for (int i=1; i < times; i++) {

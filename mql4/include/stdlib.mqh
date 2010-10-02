@@ -117,6 +117,7 @@
    bool     StringICompare(string string1, string string2);
    bool     StringIsDigit(string value);
    string   StringRepeat(string input, int times);
+   string   StringReplace(string subject, string search, string replace);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
