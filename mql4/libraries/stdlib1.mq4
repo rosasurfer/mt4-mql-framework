@@ -13,46 +13,94 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
- * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
+ * If N is positive StringLeft() returns the leftmost N characters of the string,
+ * e.g.  StringLeft("ABCDEFG",  2)  =>  "AB".
  *
- * @param  string subject
- * @param  int    start
- * @param  int    length
+ * If N is negative StringLeft() returns all but the rightmost N characters of the string,
+ * e.g.  StringLeft("ABCDEFG", -2)  =>  "ABCDE".
+ *
+ * @param  string object
+ * @param  int    n
  *
  * @return string
  */
-string StringSubstrFix(string subject, int start, int length) {
+string StringLeft(string object, int n) {
+   if (n > 0) return(StringSubstr(object, 0, n));
+   if (n < 0) return(StringSubstrFix(object, 0, StringLen(object)+n));
+   return("");
+}
+
+
+/**
+ * If N is positive StringRight() returns the rightmost N characters of the string,
+ * e.g.  StringRight("ABCDEFG",  2)  =>  "FG".
+ *
+ * If N is negative StringRight() returns all but the leftmost N characters of the string,
+ * e.g.  StringRight("ABCDEFG", -2)  =>  "CDEFG".
+ *
+ * @param  string object
+ * @param  int    n
+ *
+ * @return string
+ */
+string StringRight(string object, int n) {
+   if (n > 0) return(StringSubstr(object, StringLen(object)-n));
+   if (n < 0) return(StringSubstr(object, -n));
+   return("");
+}
+
+
+/**
+ * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
+ * Ermöglicht die Angabe negativer Werte für start und length
+ *
+ * @param  string object
+ * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
+ * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
+ *
+ * @return string
+ */
+string StringSubstrFix(string object, int start, int length=EMPTY_VALUE) {
    if (length == 0)
       return("");
-   return(StringSubstr(subject, start, length));
+
+   if (start < 0)
+      start = MathMax(0, start + StringLen(object));
+
+   if (length < 0) {
+      start += 1 + length;
+      length = MathAbs(length);
+   }
+
+   return(StringSubstr(object, start, length));
 }
 
 
 /**
  * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (arbeitet nicht rekursiv).
  *
- * @param  string subject - Ausgangsstring
+ * @param  string object  - Ausgangsstring
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
  * @return string
  */
-string StringReplace(string subject, string search, string replace) {
-   if (StringLen(subject) == 0) return(subject);
-   if (StringLen(search)  == 0) return(subject);
+string StringReplace(string object, string search, string replace) {
+   if (StringLen(object) == 0) return(object);
+   if (StringLen(search) == 0) return(object);
 
    int startPos = 0;
-   int foundPos = StringFind(subject, search, startPos);
-   if (foundPos == -1) return(subject);
+   int foundPos = StringFind(object, search, startPos);
+   if (foundPos == -1) return(object);
 
    string result = "";
 
    while (foundPos > -1) {
-      result   = StringConcatenate(result, StringSubstrFix(subject, startPos, foundPos-startPos), replace);
+      result   = StringConcatenate(result, StringSubstrFix(object, startPos, foundPos-startPos), replace);
       startPos = foundPos + StringLen(search);
-      foundPos = StringFind(subject, search, startPos);
+      foundPos = StringFind(object, search, startPos);
    }
-   result = StringConcatenate(result, StringSubstr(subject, startPos));
+   result = StringConcatenate(result, StringSubstr(object, startPos));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1234,22 +1282,22 @@ bool EventTracker.SetGridLimits(double& limits[]) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string  subject   - zu zerlegender String
+ * @param  string  object    - zu zerlegender String
  * @param  string  separator - Trennstring
  * @param  string& results[] - Zielarray für die Teilstrings
  *
  * @return int - Fehlerstatus
  */
-int Explode(string subject, string separator, string& results[]) {
-   int lenSubject   = StringLen(subject),
+int Explode(string object, string separator, string& results[]) {
+   int lenObject    = StringLen(object),
        lenSeparator = StringLen(separator);
 
    if (separator == "") {
       // String in einzelne Zeichen zerlegen
-      ArrayResize(results, lenSubject);
+      ArrayResize(results, lenObject);
 
-      for (int i=0; i < lenSubject; i++) {
-         results[i] = StringSubstr(subject, i, 1);
+      for (int i=0; i < lenObject; i++) {
+         results[i] = StringSubstr(object, i, 1);
       }
    }
    else {
@@ -1257,19 +1305,19 @@ int Explode(string subject, string separator, string& results[]) {
       int size, pos;
       i = 0;
 
-      while (i < lenSubject) {
+      while (i < lenObject) {
          ArrayResize(results, size+1);
 
-         pos = StringFind(subject, separator, i);
+         pos = StringFind(object, separator, i);
          if (pos == -1) {
-            results[size] = StringSubstr(subject, i);
+            results[size] = StringSubstr(object, i);
             break;
          }
          else if (i == pos) {
             results[size] = "";
          }
          else {
-            results[size] = StringSubstrFix(subject, i, pos-i);
+            results[size] = StringSubstrFix(object, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
@@ -4533,18 +4581,18 @@ bool StringIsDigit(string value) {
 /**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
- * @param  string subject - zu durchsuchender String
- * @param  string search  - zu suchender Substring
+ * @param  string object - zu durchsuchender String
+ * @param  string search - zu suchender Substring
  *
  * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
  */
-int StringFindR(string subject, string search) {
-   int lenSubject = StringLen(subject),
+int StringFindR(string object, string search) {
+   int lenObject = StringLen(object),
        lastFound  = -1,
        result     =  0;
 
-   for (int i=0; i < lenSubject; i++) {
-      result = StringFind(subject, search, i);
+   for (int i=0; i < lenObject; i++) {
+      result = StringFind(object, search, i);
       if (result == -1)
          break;
       lastFound = result;
@@ -4991,6 +5039,9 @@ string FormatNumber(double number, string mask) {
 }
 
 
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+
+
 /**
  * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols, and so forth, according to the instructions provided in the 'mask'.
  *
@@ -5201,9 +5252,6 @@ string NumberToStr(double n, string mask) {
       outstr = StringTrim(outstr);
    return(outstr);
 }
-
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 
 
 /**
@@ -5455,34 +5503,6 @@ string TFToStr(int tf) {
       case 43200: return("MN" );
    }
    return(0);
-}
-
-
-/**
- * Returns the leftmost N characters of STR, if N is positive
- * Usage:    string x=StringRepeat("ABCDEFG",2)  returns x = "AB"
- *
- * Returns all but the rightmost N characters of STR, if N is negative
- * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "ABCDE"
- */
-string StringLeft(string str, int n) {
-   if (n > 0) return(StringSubstrFix(str, 0, n));
-   if (n < 0) return(StringSubstrFix(str, 0, StringLen(str)+n));
-   return("");
-}
-
-
-/**
- * Returns the rightmost N characters of STR, if N is positive
- * Usage:    string x=StringRepeat("ABCDEFG",2)  returns x = "FG"
- *
- * Returns all but the leftmost N characters of STR, if N is negative
- * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "CDEFG"
- */
-string StringRight(string str, int n) {
-   if (n > 0) return(StringSubstrFix(str, StringLen(str)-n, n));
-   if (n < 0) return(StringSubstrFix(str, -n, StringLen(str)-n));
-   return("");
 }
 
 

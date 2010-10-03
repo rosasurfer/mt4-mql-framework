@@ -113,16 +113,18 @@
    // Strings
    bool     StringContains(string object, string substring);
    bool     StringIContains(string object, string substring);
-   int      StringFindR(string subject, string search);
+   int      StringFindR(string object, string search);
    bool     StringICompare(string string1, string string2);
    bool     StringIsDigit(string value);
+   string   StringLeft(string object, int n);
+   string   StringRight(string object, int n);
    string   StringRepeat(string input, int times);
-   string   StringReplace(string subject, string search, string replace);
-   string   StringSubstrFix(string subject, int start, int length);
+   string   StringReplace(string object, string search, string replace);
+   string   StringSubstrFix(string object, int start, int length);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
-   int      Explode(string subject, string separator, string& results[]);
+   int      Explode(string object, string separator, string& results[]);
    string   UrlEncode(string value);
 
    // sonstiges
