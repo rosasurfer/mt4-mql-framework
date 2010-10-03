@@ -103,6 +103,7 @@
 
    // Numbers
    bool     CompareDoubles(double double1, double double2);
+   int      CountDecimals(double number);
    string   DecimalToHex(int number);
    string   DoubleToStrTrim(double number);
    string   FormatMoney(double amount);

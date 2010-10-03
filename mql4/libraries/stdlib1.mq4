@@ -13,6 +13,25 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
+ *
+ * @param  double number
+ *
+ * @return int
+ */
+int CountDecimals(double number) {
+   string str = number;
+   int dot    = StringFind(str, ".");
+
+   for (int i=StringLen(str)-1; i > dot; i--) {
+      if (StringGetChar(str, i) != '0')
+         break;
+   }
+   return(i - dot);
+}
+
+
+/**
  * If N is positive StringLeft() returns the leftmost N characters of the string,
  * e.g.  StringLeft("ABCDEFG",  2)  =>  "AB".
  *
@@ -71,7 +90,6 @@ string StringSubstrFix(string object, int start, int length=EMPTY_VALUE) {
       start += 1 + length;
       length = MathAbs(length);
    }
-
    return(StringSubstr(object, start, length));
 }
 
@@ -4891,37 +4909,59 @@ string StringRepeat(string input, int times) {
 
 
 /**
- * Formats a number using a mask, and returns the resulting string.
+ * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierneden String zurück.
  * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
  *
  * Mask parameters:
  *
- *   n      = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
- *   n.d    = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
- *   n.     = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
- *    .d    = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
- *    .d+   = all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
- *  +n.d    = plus sign for positive values
- *  ±n.d    = plus sign for positive and ± sign for zero values
- * ( or )   = enclose negative values in parentheses
- *    %     = trailing % sign
- *    ‰     = trailing ‰ sign
- *    R     = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
- *    ,     = separate thousands by comma, e.g. FormatNumber(123456.789, ",6.3") => "123,456.789"
- *    ;     = switch thousands and decimal point separator (European format), e.g. FormatNumber(123456.789, ",;6.3") => "123.456,789"
+ *   n        = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
+ *   n.d      = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
+ *   n.       = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
+ *    .d      = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
+ *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
+ *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
+ *    R       = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
+ *    ;       = Separatoren tauschen (Europäisches Format), e.g. FormatNumber(123456.789, "6.2;") => "123456,78"
+ *    ,       = Tausender-Separatoren einfügen, e.g. FormatNumber(123456.789, "6.2,") => "123,456.78"
+ *              ein dem Komma folgendes Zeichen wird als User-spezifischer Separator interpretiert, siehe ,<char>
+ *    ,<char> = Tausender-Separator auf <char> setzen, e.g. FormatNumber(123456.789, ", 6.2") => "123 456.78",
+ *
+ * @param  double number
+ * @param  string mask
+ *
+ * @return string - formatierter String
  */
 string FormatNumber(double number, string mask) {
    if (number == EMPTY_VALUE)
       number = 0;
 
    // === Beginn Maske parsen ===
-   int len = StringLen(mask);
+   int maskLen = StringLen(mask);
+
+   // zu allererst User-spezifische Separatoren erkennen
+   bool swapSeparators = (StringFind(mask, ";")  > -1);
+      string sepThousand=",", sepDecimal=".";
+      if (swapSeparators) {
+         sepThousand = ".";
+         sepDecimal  = ",";
+      }
+      int sepPos = StringFind(mask, ",");
+
+   bool separators = (sepPos  > -1);
+      if (separators) if (sepPos+1 < maskLen) {
+         sepThousand = StringSubstr(mask, sepPos+1, 1);
+         mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
+      }
+
+   // white space entfernen
+   mask    = StringReplace(mask, " ", "");
+   maskLen = StringLen(mask);
 
    // Position des Dezimalpunktes
    int  dotPos   = StringFind(mask, ".");
    bool dotGiven = (dotPos > -1);
    if (!dotGiven)
-      dotPos = len;
+      dotPos = maskLen;
 
    // Anzahl der linken Stellen
    int char, nLeft;
@@ -4933,62 +4973,43 @@ string FormatNumber(double number, string mask) {
          nDigit = true;
       }
    }
-   if (!nDigit) nLeft = StringLen(StringConcatenate("", EMPTY_VALUE));
+   if (!nDigit) nLeft = -1;
 
    // Anzahl der rechten Stellen
    int nRight;
    if (dotGiven) {
       nDigit = false;
-      for (i=dotPos+1; i < len; i++) {
+      for (i=dotPos+1; i < maskLen; i++) {
          char = StringGetChar(mask, i);
-         if ('0' <= char) if (char <= '9') { // (0 <= char && char <= 9)
+         if ('0' <= char && char <= '9') {   // (0 <= char && char <= 9)
             nRight = 10*nRight + char-'0';
             nDigit = true;
          }
-      }
-      if (nDigit) {
-         nRight = MathMin(nRight, 8);
-      }
-      else {
-         string tmp = number;
-         dotPos = StringFind(tmp, ".");
-         for (i=StringLen(tmp)-1; i > dotPos; i--) {
-            if (StringGetChar(tmp, i) != '0')
-               break;
+         else {
+            if (char == '+')  nRight = MathMax(nRight, CountDecimals(number));
+            else if (!nDigit) nRight = CountDecimals(number);
+            break;
          }
-         nRight = i - dotPos;
       }
-      if (nRight == 0)
-         dotGiven = false;
+      if (nDigit)
+         nRight = MathMin(nRight, 8);
    }
 
-   // Vorzeichen etc.
-   string leadSign="", trailSign="";
+   // Vorzeichen
+   string leadSign = "";
    if (number < 0) {
-      if (StringFind(mask, "(") > -1 || StringFind(mask, ")") > -1) {
-         leadSign = "("; trailSign = ")";
-      }
-      else leadSign = "-";
+      leadSign = "-";
    }
-   else if (number == 0) {
-      if (StringFind(mask, "±") > -1)
-         leadSign = "±";
+   else if (number > 0) {
+      int pos = StringFind(mask, "+");
+      if (-1 < pos) if (pos < dotPos)        // (-1 < pos && pos < dotPos)
+         leadSign = "+";
    }
-   else if (StringFind(mask, "+") > -1 || StringFind(mask, "±") > -1) {
-      leadSign = "+";
-   }
-
-   // Prozent- oder Promillezeichen
-   if      (StringFind(mask, "%") > -1) trailSign = StringConcatenate("%", trailSign);
-   else if (StringFind(mask, "‰") > -1) trailSign = StringConcatenate("‰", trailSign);
 
    // übrige Modifier
-   bool round          = (StringFind(mask, "R")  > -1);
-   bool separators     = (StringFind(mask, ",")  > -1);
-   bool swapSeparators = (StringFind(mask, ";")  > -1);
+   bool round = (StringFind(mask, "R")  > -1);
    //
    // === Ende Maske parsen ===
-
 
    // === Beginn Wertverarbeitung ===
    // runden
@@ -5001,38 +5022,36 @@ string FormatNumber(double number, string mask) {
       outStr = StringSubstr(outStr, 1);
 
    // auf angegebene Länge kürzen
-   int dLeft    = StringFind(outStr, ".");
-   int dVisible = MathMin(nLeft, dLeft);
-   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-dVisible, dVisible+1+nRight-(!dotGiven));
+   int dLeft = StringFind(outStr, ".");
+   if (nLeft == -1) nLeft = dLeft;
+   else             nLeft = MathMin(nLeft, dLeft);
+   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
 
-   // Dezimal-Separator tauschen
+   // Dezimal-Separator anpassen
    if (swapSeparators)
-      outStr = StringSetChar(outStr, dVisible, ',');
+      outStr = StringSetChar(outStr, nLeft, StringGetChar(sepDecimal, 0));
 
    // 1000er-Separatoren einfügen
    if (separators) {
-      if (swapSeparators) string separator = ".";
-      else                       separator = ",";
       string out1;
-      i = dVisible;
+      i = nLeft;
       while (i > 3) {
          out1 = StringSubstrFix(outStr, 0, i-3);
          if (StringGetChar(out1, i-4) == ' ')
             break;
-         outStr = StringConcatenate(out1, separator, StringSubstr(outStr, i-3));
+         outStr = StringConcatenate(out1, sepThousand, StringSubstr(outStr, i-3));
          i -= 3;
       }
    }
 
    // Vorzeichen etc. anfügen
-   outStr = StringConcatenate(leadSign, outStr, trailSign);
-   //
-   // === Ende Wertverarbeitung ===
-   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    \""+ outStr +"\"    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight);
+   outStr = StringConcatenate(leadSign, outStr);
+
+   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    outStr=\""+ outStr +"\"");
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("FormatNumber()", error);
+      last_library_error = catch("FormatNumber()", error);
       return("");
    }
    return(outStr);
