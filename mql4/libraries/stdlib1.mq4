@@ -13,6 +13,22 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
+ *
+ * @param  string subject
+ * @param  int    start
+ * @param  int    length
+ *
+ * @return string
+ */
+string StringSubstrFix(string subject, int start, int length) {
+   if (length == 0)
+      return("");
+   return(StringSubstr(subject, start, length));
+}
+
+
+/**
  * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (arbeitet nicht rekursiv).
  *
  * @param  string subject - Ausgangsstring
@@ -30,11 +46,9 @@ string StringReplace(string subject, string search, string replace) {
    if (foundPos == -1) return(subject);
 
    string result = "";
-   while (foundPos > -1) {
-      // MQL kann mit StringSubstr(subject, start, length=0) nicht umgehen
-      if (foundPos == startPos) result = StringConcatenate(result,                                                     replace);
-      else                      result = StringConcatenate(result, StringSubstr(subject, startPos, foundPos-startPos), replace);
 
+   while (foundPos > -1) {
+      result   = StringConcatenate(result, StringSubstrFix(subject, startPos, foundPos-startPos), replace);
       startPos = foundPos + StringLen(search);
       foundPos = StringFind(subject, search, startPos);
    }
@@ -619,7 +633,7 @@ string DoubleToStrTrim(double value) {
    }
 
    if (trim)
-      strValue = StringSubstr(strValue, 0, len);
+      strValue = StringSubstrFix(strValue, 0, len);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1255,7 +1269,7 @@ int Explode(string subject, string separator, string& results[]) {
             results[size] = "";
          }
          else {
-            results[size] = StringSubstr(subject, i, pos-i);
+            results[size] = StringSubstrFix(subject, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
@@ -1282,7 +1296,7 @@ string FormatMoney(double value) {
    int len = StringLen(result);
 
    if (len > 3) {
-      string major = StringSubstr(result, 0, len-3);
+      string major = StringSubstrFix(result, 0, len-3);
       string minor = StringSubstr(result, len-3);
       result = StringConcatenate(major, " ", minor, ".00");
    }
@@ -1307,7 +1321,7 @@ string FormatPrice(double price, int digits) {
       // Subticks
       if (digits==3 || digits==5) {
          int pos = StringFind(strPrice, ".");
-         major = StringSubstr(strPrice, 0, pos);
+         major = StringSubstrFix(strPrice, 0, pos);
          minor = StringSubstr(strPrice, pos+1);
          if    (digits == 3)  minor = StringConcatenate(StringSubstr(minor, 0, 2), "\'", StringSubstr(minor, 2));
          else /*digits == 5*/ minor = StringConcatenate(StringSubstr(minor, 0, 4), "\'", StringSubstr(minor, 4));
@@ -1319,7 +1333,7 @@ string FormatPrice(double price, int digits) {
       // Tausender-Stellen
       int len = StringLen(major);
       if (len > 3)
-         major = StringConcatenate(StringSubstr(major, 0, len-3), ",", StringSubstr(major, len-3));
+         major = StringConcatenate(StringSubstrFix(major, 0, len-3), ",", StringSubstr(major, len-3));
 
       // Vor- und Nachkommastellen zu Gesamtwert zusammensetzen
       if (digits==3 || digits==5) strPrice = StringConcatenate(major, ".", minor);
@@ -1515,7 +1529,7 @@ int GetAccountNumber() {
          return(0);
       }
 
-      string strAccount = StringSubstr(title, 0, pos);
+      string strAccount = StringSubstrFix(title, 0, pos);
       if (!StringIsDigit(strAccount)) {
          last_library_error = catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
          return(0);
@@ -3818,7 +3832,7 @@ string GetTerminalDirectory() {
          return("");
       }
 
-      directory = StringSubstr(buffer[0], 0, StringFindR(buffer[0], "\\"));      // Pfadangabe extrahieren
+      directory = StringSubstrFix(buffer[0], 0, StringFindR(buffer[0], "\\"));   // Pfadangabe extrahieren
       //Print("GetTerminalDirectory()   module filename: "+ buffer[0] +"   directory: "+ directory);
    }
 
@@ -4941,7 +4955,7 @@ string FormatNumber(double number, string mask) {
    // auf angegebene Länge kürzen
    int dLeft    = StringFind(outStr, ".");
    int dVisible = MathMin(nLeft, dLeft);
-   outStr = StringSubstr(outStr, StringLen(outStr)-9-dVisible, dVisible+1+nRight-(!dotGiven));
+   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-dVisible, dVisible+1+nRight-(!dotGiven));
 
    // Dezimal-Separator tauschen
    if (swapSeparators)
@@ -4954,7 +4968,7 @@ string FormatNumber(double number, string mask) {
       string out1;
       i = dVisible;
       while (i > 3) {
-         out1 = StringSubstr(outStr, 0, i-3);
+         out1 = StringSubstrFix(outStr, 0, i-3);
          if (StringGetChar(out1, i-4) == ' ')
             break;
          outStr = StringConcatenate(out1, separator, StringSubstr(outStr, i-3));
@@ -5121,7 +5135,7 @@ string NumberToStr(double n, string mask) {
    else              fill = " ";
    if (n < 0) outstr = "-" + StringRepeat(fill, nleft-dleft) + StringSubstr(outstr, 1);
    else       outstr = StringRepeat(fill, nleft-dleft) + outstr;
-   outstr = StringSubstr(outstr, StringLen(outstr)-9-nleft, nleft+1+nright-dotadj);
+   outstr = StringSubstrFix(outstr, StringLen(outstr)-9-nleft, nleft+1+nright-dotadj);
 
    // Insert the commas.......
    if (comma) {
@@ -5343,9 +5357,9 @@ int StrToColor(string str) {
    int t2 = StringFind(str, ",", t1+1);
 
    if (t1>0 && t2>0) {
-      int red   = StrToInteger(StringSubstr(str, 0, t1));
-      int green = StrToInteger(StringSubstr(str, t1+1, t2-1));
-      int blue  = StrToInteger(StringSubstr(str, t2+1, StringLen(str)));
+      int red   = StrToInteger(StringSubstrFix(str, 0, t1));
+      int green = StrToInteger(StringSubstrFix(str, t1+1, t2-1));
+      int blue  = StrToInteger(StringSubstr(str, t2+1));
       return(blue*256*256 + green*256 + red);
    }
 
@@ -5452,8 +5466,8 @@ string TFToStr(int tf) {
  * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "ABCDE"
  */
 string StringLeft(string str, int n) {
-   if (n > 0) return(StringSubstr(str, 0, n));
-   if (n < 0) return(StringSubstr(str, 0, StringLen(str)+n));
+   if (n > 0) return(StringSubstrFix(str, 0, n));
+   if (n < 0) return(StringSubstrFix(str, 0, StringLen(str)+n));
    return("");
 }
 
@@ -5466,8 +5480,8 @@ string StringLeft(string str, int n) {
  * Usage:    string x=StringRepeat("ABCDEFG",-2)  returns x = "CDEFG"
  */
 string StringRight(string str, int n) {
-   if (n > 0) return(StringSubstr(str, StringLen(str)-n, n));
-   if (n < 0) return(StringSubstr(str, -n, StringLen(str)-n));
+   if (n > 0) return(StringSubstrFix(str, StringLen(str)-n, n));
+   if (n < 0) return(StringSubstrFix(str, -n, StringLen(str)-n));
    return("");
 }
 
@@ -5519,7 +5533,7 @@ string StringLeftExtract(string str, int n, string str2, int m) {
       int c = 0;
       j = 0;
       for (i=StringLen(str)-1; i >= 0; i--) {
-         if (StringSubstr(str, i, StringLen(str2)) == str2) {
+         if (StringSubstrFix(str, i, StringLen(str2)) == str2) {
             c++;
             if (c == -n) {
                j = i;
@@ -5551,7 +5565,7 @@ string StringRightExtract(string str, int n, string str2, int m) {
       int c = 0;
       j = 0;
       for (i=StringLen(str)-1; i >= 0; i--) {
-         if (StringSubstr(str, i, StringLen(str2)) == str2) {
+         if (StringSubstrFix(str, i, StringLen(str2)) == str2) {
             c++;
             if (c == -n) {
                j = i;
@@ -5573,7 +5587,7 @@ string StringRightExtract(string str, int n, string str2, int m) {
 int StringFindCount(string str, string str2) {
    int c = 0;
    for (int i=0; i < StringLen(str); i++) {
-      if (StringSubstr(str, i, StringLen(str2)) == str2)
+      if (StringSubstrFix(str, i, StringLen(str2)) == str2)
          c++;
    }
    return(c);

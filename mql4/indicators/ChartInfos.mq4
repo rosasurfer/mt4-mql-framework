@@ -42,6 +42,11 @@ int init() {
    init = true;
    init_error = ERR_NO_ERROR;
 
+
+   //double number = 123.456789;
+   //Print("init()   number="+ number + "    formatted=\""+ FormatNumber(number, "2.3") +"\"");
+
+
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
       init_error = GetLastLibraryError();
@@ -79,6 +84,154 @@ int init() {
    }
 
    return(catch("init()"));
+
+   FormatNumber(1, "");
+}
+
+
+/**
+ * Formats a number using a mask, and returns the resulting string.
+ * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
+ *
+ * Mask parameters:
+ *
+ *   n      = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
+ *   n.d    = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
+ *   n.     = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
+ *    .d    = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
+ *    .d+   = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
+ *  +n.d    = + anywhere left of n. in mask: plus sign for positive values
+ * ( or )   = enclose negative values in parentheses
+ *    %     = trailing % sign
+ *    ‰     = trailing ‰ sign
+ *    R     = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
+ *    ,     = separate thousands by comma, e.g. FormatNumber(123456.789, ",6.3") => "123,456.789"
+ *    ;     = switch thousands and decimal point separator (European format), e.g. FormatNumber(123456.789, ",;6.3") => "123.456,789"
+ */
+string FormatNumber(double number, string mask) {
+   if (number == EMPTY_VALUE)
+      number = 0;
+
+   // === Beginn Maske parsen ===
+   mask = StringReplace(mask, " ", "");
+   int len = StringLen(mask);
+
+   // Position des Dezimalpunktes
+   int  dotPos   = StringFind(mask, ".");
+   bool dotGiven = (dotPos > -1);
+   if (!dotGiven)
+      dotPos = len;
+
+   // Anzahl der linken Stellen
+   int char, nLeft;
+   bool nDigit;
+   for (int i=0; i < dotPos; i++) {
+      char = StringGetChar(mask, i);
+      if ('0' <= char) if (char <= '9') {    // (0 <= char && char <= 9)
+         nLeft = 10*nLeft + char-'0';
+         nDigit = true;
+      }
+   }
+   if (!nDigit) nLeft = StringLen(StringConcatenate("", EMPTY_VALUE));
+
+   // Anzahl der rechten Stellen
+   int nRight;
+   if (dotGiven) {
+      nDigit = false;
+      for (i=dotPos+1; i < len; i++) {
+         char = StringGetChar(mask, i);
+         if ('0' <= char) if (char <= '9') { // (0 <= char && char <= 9)
+            nRight = 10*nRight + char-'0';
+            nDigit = true;
+         }
+      }
+      if (nDigit) {
+         nRight = MathMin(nRight, 8);
+      }
+      else {
+         string tmp = number;
+         dotPos = StringFind(tmp, ".");
+         for (i=StringLen(tmp)-1; i > dotPos; i--) {
+            if (StringGetChar(tmp, i) != '0')
+               break;
+         }
+         nRight = i - dotPos;
+      }
+      if (nRight == 0)
+         dotGiven = false;
+   }
+
+   // Vorzeichen etc.
+   string leadSign="", trailSign="";
+   if (number < 0) {
+      if (StringFind(mask, "(") > -1 || StringFind(mask, ")") > -1) {
+         leadSign = "("; trailSign = ")";
+      }
+      else leadSign = "-";
+   }
+   else if (number > 0) if (StringFind(mask, "+") > -1) {
+      leadSign = "+";
+   }
+
+   // Prozent- oder Promillezeichen
+   if      (StringFind(mask, "%") > -1) trailSign = StringConcatenate("%", trailSign);
+   else if (StringFind(mask, "‰") > -1) trailSign = StringConcatenate("‰", trailSign);
+
+   // übrige Modifier
+   bool round          = (StringFind(mask, "R")  > -1);
+   bool separators     = (StringFind(mask, ",")  > -1);
+   bool swapSeparators = (StringFind(mask, ";")  > -1);
+   //
+   // === Ende Maske parsen ===
+
+
+   // === Beginn Wertverarbeitung ===
+   // runden
+   if (round)
+      number = MathRoundFix(number, nRight);
+   string outStr = number;
+
+   // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
+   if (number < 0)
+      outStr = StringSubstr(outStr, 1);
+
+   // auf angegebene Länge kürzen
+   int dLeft    = StringFind(outStr, ".");
+   int dVisible = MathMin(nLeft, dLeft);
+   outStr = StringSubstrFix(outStr, StringLen(outStr)-9-dVisible, dVisible+1+nRight-(!dotGiven));
+
+   // Dezimal-Separator tauschen
+   if (swapSeparators)
+      outStr = StringSetChar(outStr, dVisible, ',');
+
+   // 1000er-Separatoren einfügen
+   if (separators) {
+      if (swapSeparators) string separator = ".";
+      else                       separator = ",";
+      string out1;
+      i = dVisible;
+      while (i > 3) {
+         out1 = StringSubstrFix(outStr, 0, i-3);
+         if (StringGetChar(out1, i-4) == ' ')
+            break;
+         outStr = StringConcatenate(out1, separator, StringSubstr(outStr, i-3));
+         i -= 3;
+      }
+   }
+
+   // Vorzeichen etc. anfügen
+   outStr = StringConcatenate(leadSign, outStr, trailSign);
+   //
+   // === Ende Wertverarbeitung ===
+
+   Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    outStr=\""+ outStr +"\"");
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      catch("FormatNumber()", error);
+      return("");
+   }
+   return(outStr);
 }
 
 
@@ -490,7 +643,7 @@ int UpdatePriceLabel() {
       // Nachkommastellen formatieren
       if (Digits > 0) {
          int pos = StringFind(strPrice, ".");
-         major = StringSubstr(strPrice, 0, pos);
+         major = StringSubstrFix(strPrice, 0, pos);
          minor = StringSubstr(strPrice, pos+1);
          if      (Digits == 3) minor = StringConcatenate(StringSubstr(minor, 0, 2), "\'", StringSubstr(minor, 2));
          else if (Digits == 5) minor = StringConcatenate(StringSubstr(minor, 0, 4), "\'", StringSubstr(minor, 4));
@@ -502,7 +655,7 @@ int UpdatePriceLabel() {
       // Vorkommastellen formatieren
       int len = StringLen(major);
       if (len > 3)
-         major = StringConcatenate(StringSubstr(major, 0, len-3), ",", StringSubstr(major, len-3));
+         major = StringConcatenate(StringSubstrFix(major, 0, len-3), ",", StringSubstr(major, len-3));
 
       // Vor- und Nachkommastellen zu Gesamtwert zusammensetzen
       if (Digits > 0) strPrice = StringConcatenate(major, ".", minor);
@@ -510,7 +663,7 @@ int UpdatePriceLabel() {
    }
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
-   
+
    int error = GetLastError();
    if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
    if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);  // bei offenem Properties-Dialog oder Label::onDrag()
@@ -525,14 +678,14 @@ int UpdateSpreadLabel() {
    if (!Show.Spread)
       return(0);
 
-   int spread = MarketInfo(Symbol(), MODE_SPREAD); 
+   int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
    if (Spread.Including.Commission) if (AccountNumber() == {account-no})
       spread += 8;
 
    if (Digits==3 || Digits==5) string strSpread = DoubleToStr(spread/10.0, 1);
    else                               strSpread = spread;
-                                                                  
+
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -643,4 +796,3 @@ double GetCurrentPosition() {
    catch("GetCurrentPosition(2)");
    return(position);
 }
-

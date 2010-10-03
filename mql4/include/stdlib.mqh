@@ -118,6 +118,7 @@
    bool     StringIsDigit(string value);
    string   StringRepeat(string input, int times);
    string   StringReplace(string subject, string search, string replace);
+   string   StringSubstrFix(string subject, int start, int length);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
