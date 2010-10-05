@@ -42,9 +42,18 @@ int init() {
    init = true;
    init_error = ERR_NO_ERROR;
 
+   double number = 1234567.0;
+   string result;
 
-   //double number = 1234567.1;
-   //Print("init()   number="+ number + "    formatted=\""+ FormatNumber(number, ", .+") +"\"");
+   int start = GetTickCount();
+   int loops = 1;
+
+   for (int i=0; i < loops; i++) {
+      result = FormatNumber(number, ".+");
+   }
+   int end = GetTickCount();
+   Print("init()   FormatNumber("+ number +")=\""+ result +"\"    runs="+ i +"    used time: ", end-start, " ms");
+
 
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
@@ -554,7 +563,7 @@ int UpdateUnitSizeLabel() {
    if (!Show.UnitSize)
       return(0);
 
-   string strUnitSize = StringConcatenate("UnitSize:  ", DoubleToStrTrim(GetCurrentUnitSize()), " Lot");
+   string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(GetCurrentUnitSize(), ".+"), " Lot");
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
@@ -573,10 +582,9 @@ int UpdatePositionLabel() {
       return(0);
 
    double position = GetCurrentPosition();
-   string strPosition = "";
 
-   if      (position < 0) strPosition = StringConcatenate("Position:  " , DoubleToStrTrim(position), " Lot");
-   else if (position > 0) strPosition = StringConcatenate("Position:  +", DoubleToStrTrim(position), " Lot");
+   if (position == 0) string strPosition = " ";
+   else                      strPosition = StringConcatenate("Position:  ", FormatNumber(position, "+.+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 

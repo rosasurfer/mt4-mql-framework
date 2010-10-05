@@ -234,7 +234,7 @@ int onPositionOpen(int tickets[]) {
       // nur Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
          string type       = GetOperationTypeDescription(OrderType());
-         string lots       = DoubleToStrTrim(OrderLots());
+         string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
          string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
          string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
@@ -281,7 +281,7 @@ int onPositionClose(int tickets[]) {
       // nur PositionClose-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
          string type       = GetOperationTypeDescription(OrderType());
-         string lots       = DoubleToStrTrim(OrderLots());
+         string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
          int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
          string openPrice  = FormatPrice(OrderOpenPrice(), digits);

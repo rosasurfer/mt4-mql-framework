@@ -105,7 +105,6 @@
    bool     CompareDoubles(double double1, double double2);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
-   string   DoubleToStrTrim(double number);
    string   FormatMoney(double amount);
    string   FormatNumber(double number, string mask);
    string   FormatPrice(double price, int digits);
@@ -117,8 +116,8 @@
    int      StringFindR(string object, string search);
    bool     StringICompare(string string1, string string2);
    bool     StringIsDigit(string value);
-   string   StringLeft(string object, int n);
-   string   StringRight(string object, int n);
+   string   StringLeft(string value, int n);
+   string   StringRight(string value, int n);
    string   StringRepeat(string input, int times);
    string   StringReplace(string object, string search, string replace);
    string   StringSubstrFix(string object, int start, int length);

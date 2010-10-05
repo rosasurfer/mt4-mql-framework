@@ -38,14 +38,14 @@ int CountDecimals(double number) {
  * If N is negative StringLeft() returns all but the rightmost N characters of the string,
  * e.g.  StringLeft("ABCDEFG", -2)  =>  "ABCDE".
  *
- * @param  string object
+ * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringLeft(string object, int n) {
-   if (n > 0) return(StringSubstr(object, 0, n));
-   if (n < 0) return(StringSubstrFix(object, 0, StringLen(object)+n));
+string StringLeft(string value, int n) {
+   if (n > 0) return(StringSubstr(value, 0, n));
+   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
 }
 
@@ -57,14 +57,14 @@ string StringLeft(string object, int n) {
  * If N is negative StringRight() returns all but the leftmost N characters of the string,
  * e.g.  StringRight("ABCDEFG", -2)  =>  "CDEFG".
  *
- * @param  string object
+ * @param  string value
  * @param  int    n
  *
  * @return string
  */
-string StringRight(string object, int n) {
-   if (n > 0) return(StringSubstr(object, StringLen(object)-n));
-   if (n < 0) return(StringSubstr(object, -n));
+string StringRight(string value, int n) {
+   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
+   if (n < 0) return(StringSubstr(value, -n));
    return("");
 }
 
@@ -685,28 +685,14 @@ int DecreasePeriod(int period = 0) {
  * @return string
  */
 string DoubleToStrTrim(double value) {
-   string strValue = value;
-   int len = StringLen(strValue);
+   string result = value;
 
-   bool trim = false;
+   int digits = MathMax(1, CountDecimals(value));  // mindestens eine Dezimalstelle wird erhalten
 
-   while (StringGetChar(strValue, len-1) == '0') {
-      len--;
-      trim = true;
-   }
-   if (StringGetChar(strValue, len-1) == '.') {
-      len++;                                       // mindestens eine Dezimalstelle wird erhalten
-   }
+   if (digits < 8)
+      result = StringLeft(result, digits-8);
 
-   if (trim)
-      strValue = StringSubstrFix(strValue, 0, len);
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("DoubleToStrTrim()", error);
-      return("");
-   }
-   return(strValue);
+   return(result);
 }
 
 
@@ -4227,7 +4213,7 @@ string JoinDoubles(double values[], string separator) {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStrTrim(values[i]);
+      strings[i] = FormatNumber(values[i], ".1+");
    }
 
    return(JoinStrings(strings, separator));
