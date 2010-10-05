@@ -105,9 +105,7 @@
    bool     CompareDoubles(double double1, double double2);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
-   string   FormatMoney(double amount);
    string   FormatNumber(double number, string mask);
-   string   FormatPrice(double price, int digits);
 
 
    // Strings

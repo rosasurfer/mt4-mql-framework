@@ -1336,72 +1336,6 @@ int Explode(string object, string separator, string& results[]) {
 
 
 /**
- * Formatiert einen Währungsbetrag.
- *
- * @param  double value - Betrag
- *
- * @return string
- */
-string FormatMoney(double value) {
-   string result = DoubleToStr(value, 0);
-
-   int len = StringLen(result);
-
-   if (len > 3) {
-      string major = StringSubstrFix(result, 0, len-3);
-      string minor = StringSubstr(result, len-3);
-      result = StringConcatenate(major, " ", minor, ".00");
-   }
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("FormatMoney()", error);
-      return("");
-   }
-   return(result);
-}
-
-
-/**
- * TODO: Tausender-Stellen und Subticks müssen in getrennten if-Abfragen formatiert werden (Bug z.B. bei FormatPrice(1100.23, 2))
- */
-string FormatPrice(double price, int digits) {
-   string major="", minor="", strPrice = DoubleToStr(price, digits);
-
-   // wenn Tausender-Stellen oder Subticks, dann reformatieren
-   if (price >= 1000.0 || digits==3 || digits==5) {
-      // Subticks
-      if (digits==3 || digits==5) {
-         int pos = StringFind(strPrice, ".");
-         major = StringSubstrFix(strPrice, 0, pos);
-         minor = StringSubstr(strPrice, pos+1);
-         if    (digits == 3)  minor = StringConcatenate(StringSubstr(minor, 0, 2), "\'", StringSubstr(minor, 2));
-         else /*digits == 5*/ minor = StringConcatenate(StringSubstr(minor, 0, 4), "\'", StringSubstr(minor, 4));
-      }
-      else {
-         major = strPrice;
-      }
-
-      // Tausender-Stellen
-      int len = StringLen(major);
-      if (len > 3)
-         major = StringConcatenate(StringSubstrFix(major, 0, len-3), ",", StringSubstr(major, len-3));
-
-      // Vor- und Nachkommastellen zu Gesamtwert zusammensetzen
-      if (digits==3 || digits==5) strPrice = StringConcatenate(major, ".", minor);
-      else                        strPrice = major;
-   }
-
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("FormatPrice()", error);
-      return("");
-   }
-   return(strPrice);
-}
-
-
-/**
  * Liest die History eines Accounts aus dem Dateisystem in das übergebene Zielarray ein.  Die Datensätze werden als Strings (Rohdaten) zurückgegeben.
  *
  * @param  int     account                        - Account-Nummer
@@ -4901,9 +4835,10 @@ string StringRepeat(string input, int times) {
  * Mask parameters:
  *
  *   n        = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
- *   n.d      = number of digits to the left and the right of the decimal point, e.g. FormatNumber(123.456, "5.2") => "123.45"
+ *   n.d      = number of left and right digits, e.g. FormatNumber(123.456, "5.2") => "123.45"
  *   n.       = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
  *    .d      = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
+ *    .d'     = all left and number of right digits plus 1 additional subpip digit, e.g. FormatNumber(123.45678, ".4'") => "123.4567'8"
  *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
  *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
  *    R       = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
@@ -4924,7 +4859,7 @@ string FormatNumber(double number, string mask) {
    // === Beginn Maske parsen ===
    int maskLen = StringLen(mask);
 
-   // zu allererst User-spezifische Separatoren erkennen
+   // zu allererst Separatorenformat erkennen
    bool swapSeparators = (StringFind(mask, ";")  > -1);
       string sepThousand=",", sepDecimal=".";
       if (swapSeparators) {
@@ -4932,10 +4867,9 @@ string FormatNumber(double number, string mask) {
          sepDecimal  = ",";
       }
       int sepPos = StringFind(mask, ",");
-
    bool separators = (sepPos  > -1);
       if (separators) if (sepPos+1 < maskLen) {
-         sepThousand = StringSubstr(mask, sepPos+1, 1);
+         sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
          mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
       }
 
@@ -4962,7 +4896,7 @@ string FormatNumber(double number, string mask) {
    if (!nDigit) nLeft = -1;
 
    // Anzahl der rechten Stellen
-   int nRight;
+   int nRight, nSubpip;
    if (dotGiven) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
@@ -4971,14 +4905,21 @@ string FormatNumber(double number, string mask) {
             nRight = 10*nRight + char-'0';
             nDigit = true;
          }
+         else if (nDigit && char == 39) {    // 39 => '
+            nSubpip = nRight;
+            continue;
+         }
          else {
-            if (char == '+')  nRight = MathMax(nRight, CountDecimals(number));
+            if  (char == '+') nRight = MathMax(nRight+(nSubpip > 0), CountDecimals(number));
             else if (!nDigit) nRight = CountDecimals(number);
             break;
          }
       }
-      if (nDigit)
+      if (nDigit) {
+         if (nSubpip >  0) nRight++;
+         if (nSubpip == 8) nSubpip = 0;
          nRight = MathMin(nRight, 8);
+      }
    }
 
    // Vorzeichen
@@ -5030,10 +4971,14 @@ string FormatNumber(double number, string mask) {
       }
    }
 
+   // Subpip-Separator einfügen
+   if (nSubpip > 0)
+      outStr = StringConcatenate(StringLeft(outStr, nSubpip-nRight), "'", StringRight(outStr, nRight-nSubpip));
+
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    outStr=\""+ outStr +"\"");
+   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {

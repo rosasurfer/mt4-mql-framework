@@ -236,7 +236,7 @@ int onPositionOpen(int tickets[]) {
          string type       = GetOperationTypeDescription(OrderType());
          string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         string price      = FormatPrice(OrderOpenPrice(), MarketInfo(OrderSymbol(), MODE_DIGITS));
+         string price      = FormatNumber(OrderOpenPrice(), StringConcatenate(".", MarketInfo(OrderSymbol(), MODE_DIGITS)));
          string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
          // zuerst SMS, dann Sound
@@ -283,9 +283,9 @@ int onPositionClose(int tickets[]) {
          string type       = GetOperationTypeDescription(OrderType());
          string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         int    digits     = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         string openPrice  = FormatPrice(OrderOpenPrice(), digits);
-         string closePrice = FormatPrice(OrderClosePrice(), digits);
+         string mask       = StringConcatenate(".", MarketInfo(OrderSymbol(), MODE_DIGITS));
+         string openPrice  = FormatNumber(OrderOpenPrice(), mask);
+         string closePrice = FormatNumber(OrderClosePrice(), mask);
          string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
          // zuerst SMS, dann Sound
@@ -352,7 +352,7 @@ int CheckGrid() {
    // Limite überprüfen
    if (Ask > Grid.Limits[1]) {
       message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(Grid.Limits[1], 4));
-      ask     = FormatPrice(Ask, Digits);
+      ask     = FormatNumber(Ask, StringConcatenate(".", Digits));
 
       // zuerst SMS, dann Sound
       if (SMS.Alerts) {
@@ -375,7 +375,7 @@ int CheckGrid() {
 
    else if (Bid < Grid.Limits[0]) {
       message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(Grid.Limits[0], 4));
-      bid     = FormatPrice(Bid, Digits);
+      bid     = FormatNumber(Bid, StringConcatenate(".", Digits));
 
       // zuerst SMS, dann Sound
       if (SMS.Alerts) {
@@ -416,7 +416,8 @@ int CheckBollingerBands() {
       EventTracker.SetBandLimits(Band.Limits);                 // Limite in Library timeframe-übergreifend speichern
    }
 
-   Print("CheckBollingerBands()   checking bands ...    ", FormatPrice(Band.Limits[2], Digits), "  <=  ", FormatPrice(Band.Limits[1], Digits), "  =>  ", FormatPrice(Band.Limits[0], Digits));
+   string mask = StringConcatenate(".", Digits);
+   Print("CheckBollingerBands()   checking bands ...    ", FormatNumber(Band.Limits[2], mask), "  <=  ", FormatNumber(Band.Limits[1], mask), "  =>  ", FormatNumber(Band.Limits[0], mask));
 
    double upperBand = Band.Limits[0]-0.000001,                 // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
           movingAvg = Band.Limits[1]+0.000001,
@@ -510,7 +511,8 @@ int InitializeBandLimits() {
    if (error == ERR_HISTORY_WILL_UPDATED) return(error);
    if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
 
-   Print("InitializeBandLimits()   Bollinger band limits calculated: ", FormatPrice(Band.Limits[2], Digits), "  <=  ", FormatPrice(Band.Limits[1], Digits), "  =>  ", FormatPrice(Band.Limits[0], Digits));
+   string mask = StringConcatenate(".", Digits);
+   Print("InitializeBandLimits()   Bollinger band limits calculated: ", FormatNumber(Band.Limits[2], mask), "  <=  ", FormatNumber(Band.Limits[1], mask), "  =>  ", FormatNumber(Band.Limits[0], mask));
    return(error);
 }
 
@@ -534,7 +536,7 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
    if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
    if (error != ERR_NO_ERROR            ) return(catch("iBollingerBands()", error));
 
-   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatPrice(results[2], 5) +"  <=  "+ FormatPrice(results[1], 5) +"  =>  "+ FormatPrice(results[1], 5));
+   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatNumber(results[2], ".5") +"  <=  "+ FormatNumber(results[1], ".5") +"  =>  "+ FormatNumber(results[1], ".5"));
    return(error);
 }
 

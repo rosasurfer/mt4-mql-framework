@@ -42,20 +42,6 @@ int init() {
    init = true;
    init_error = ERR_NO_ERROR;
 
-   double number = 1234567.0;
-   string result;
-
-   int start = GetTickCount();
-   int loops = 1;
-
-   for (int i=0; i < loops; i++) {
-      result = FormatNumber(number, ".+");
-   }
-   int end = GetTickCount();
-   Print("init()   FormatNumber("+ number +")=\""+ result +"\"    runs="+ i +"    used time: ", end-start, " ms");
-
-
-
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
       init_error = GetLastLibraryError();
@@ -497,31 +483,9 @@ int CreatePerformanceDisplay() {
  */
 int UpdatePriceLabel() {
    double price = (Bid + Ask) / 2;
-   string major="", minor="", strPrice = DoubleToStr(price, Digits);
 
-   // Kurs ggf. formatieren
-   if (MathFloor(price) > 999 || Digits==3 || Digits==5) {
-      // Nachkommastellen formatieren
-      if (Digits > 0) {
-         int pos = StringFind(strPrice, ".");
-         major = StringSubstrFix(strPrice, 0, pos);
-         minor = StringSubstr(strPrice, pos+1);
-         if      (Digits == 3) minor = StringConcatenate(StringSubstr(minor, 0, 2), "\'", StringSubstr(minor, 2));
-         else if (Digits == 5) minor = StringConcatenate(StringSubstr(minor, 0, 4), "\'", StringSubstr(minor, 4));
-      }
-      else {
-         major = strPrice;
-      }
-
-      // Vorkommastellen formatieren
-      int len = StringLen(major);
-      if (len > 3)
-         major = StringConcatenate(StringSubstrFix(major, 0, len-3), ",", StringSubstr(major, len-3));
-
-      // Vor- und Nachkommastellen zu Gesamtwert zusammensetzen
-      if (Digits > 0) strPrice = StringConcatenate(major, ".", minor);
-      else            strPrice = major;
-   }
+   if (Digits==3 || Digits==5) string strPrice = FormatNumber(price, StringConcatenate(", .", Digits-1, "'"));
+   else                               strPrice = FormatNumber(price, StringConcatenate(", .", Digits));
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
