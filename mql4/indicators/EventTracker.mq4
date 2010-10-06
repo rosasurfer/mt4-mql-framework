@@ -445,11 +445,14 @@ int CheckPivotLevels() {
  * @return int - Fehlerstatus
  */
 int InitializeGrid() {
-   double gridSize = Grid.Size / 10000.0;
-   int    faktor   = MathFloor((Bid+Ask) / 2.0 / gridSize);
+   if (Digits==3 || Digits==5) int digits = Digits-1;
+   else                            digits = Digits;
 
-   Grid.Limits[0] = NormalizeDouble(gridSize * faktor    , 4);
-   Grid.Limits[1] = NormalizeDouble(gridSize * (faktor+1), 4);             // Abstand: 1 x GridSize
+   double gridSize = Grid.Size / 10000.0;
+   int    faktor   = MathFloor((Bid+Ask) / 2 / gridSize);
+
+   Grid.Limits[0] = NormalizeDouble(gridSize * faktor    , digits);
+   Grid.Limits[1] = NormalizeDouble(gridSize * (faktor+1), digits);        // Abstand: 1 x GridSize
 
    /*
    // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
@@ -481,11 +484,11 @@ int InitializeGrid() {
          return(catch("InitializeGrid(2)   error initializing grid limits", ERR_RUNTIME_ERROR));
       }
    }
-   if (down) Grid.Limits[0] = NormalizeDouble(Grid.Limits[0] - gridSize, 4);
-   if (up  ) Grid.Limits[1] = NormalizeDouble(Grid.Limits[1] + gridSize, 4);
+   if (down) Grid.Limits[0] = NormalizeDouble(Grid.Limits[0] - gridSize, digits);
+   if (up  ) Grid.Limits[1] = NormalizeDouble(Grid.Limits[1] + gridSize, digits);
    */
-
-   Print("InitializeGrid()   Grid initialized: ", DoubleToStr(Grid.Limits[0], 4), "  <=>  ", DoubleToStr(Grid.Limits[1], 4));
+   
+   Print("InitializeGrid()   Grid initialized: ", DoubleToStr(Grid.Limits[0], digits), "  <=>  ", DoubleToStr(Grid.Limits[1], digits));
    return(catch("InitializeGrid(3)"));
 }
 
