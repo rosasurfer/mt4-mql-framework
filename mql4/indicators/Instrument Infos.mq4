@@ -185,7 +185,7 @@ int UpdateInfos() {
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   ); ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", FormatNumber(marginRequired, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
    double marginInit        = MarketInfo(symbol, MODE_MARGININIT       ); ObjectSetText(names[MARGININIT       ], StringConcatenate("Margin init: ", FormatNumber(marginInit, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
    double marginMaintenance = MarketInfo(symbol, MODE_MARGINMAINTENANCE); ObjectSetText(names[MARGINMAINTENANCE], StringConcatenate("Margin maintenance: ", FormatNumber(marginMaintenance, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
-   double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED     ); ObjectSetText(names[MARGINHEDGED     ], StringConcatenate("Margin hedged: ", FormatNumber(marginHedged, ".+")), Font.Size, Font.Name, Font.Color);
+   double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED     ); ObjectSetText(names[MARGINHEDGED     ], StringConcatenate("Margin hedged: ", FormatNumber(marginHedged, ", .+"), " units"), Font.Size, Font.Name, Font.Color);
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE         ); ObjectSetText(names[SWAPTYPE         ], StringConcatenate("Swap calculation: ", strSCM[swapType]), Font.Size, Font.Name, Font.Color);
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG         ); ObjectSetText(names[SWAPLONG         ], StringConcatenate("Swap long: ", FormatNumber(swapLong, ".+")), Font.Size, Font.Name, Font.Color);
