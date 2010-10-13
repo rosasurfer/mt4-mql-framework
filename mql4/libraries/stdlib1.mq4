@@ -3483,7 +3483,7 @@ int GetLocalToGmtOffset() {
    }
    offset *= -1 * MINUTES;
 
-   //Print("GetLocalToGmtOffset()   difference between your local time and GMT is: ", (offset/MINUTES), " minutes");
+   //Print("GetLocalToGmtOffset()   difference between local and GMT is: ", (offset/MINUTES), " minutes");
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
