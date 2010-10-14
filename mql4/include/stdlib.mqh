@@ -29,19 +29,30 @@
 
    // Date/Time
    datetime EasternToGMT(datetime easternTime);
+ //datetime EasternToLocalTime(datetime easternTime);
    datetime EasternToServerTime(datetime easternTime);
    datetime GmtToEasternTime(datetime gmtTime);
+ //datetime GmtToLocalTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
+ //datetime LocalToEasternTime(datetime localTime);
+ //datetime LocalToGMT(datetime localTime);
+ //datetime LocalToServerTime(datetime localTime);
    datetime ServerToEasternTime(datetime serverTime);
+ //datetime ServerToLocalTime(datetime serverTime);
    datetime ServerToGMT(datetime serverTime);
 
    int      GetEasternToGmtOffset(datetime easternTime);
+ //int      GetEasternToLocalTimeOffset(datetime easternTime);
    int      GetEasternToServerTimeOffset(datetime easternTime);
    int      GetGmtToEasternTimeOffset(datetime gmtTime);
+ //int      GetGmtToLocalTimeOffset(datetime gmtTime);
    int      GetGmtToServerTimeOffset(datetime gmtTime);
-   int      GetLocalToGmtOffset();
+ //int      GetLocalToEasternTimeOffset();
+   int      GetLocalToGmtOffset(datetime localTime);
+ //int      GetLocalToServerTimeOffset();
    int      GetServerToEasternTimeOffset(datetime serverTime);
    int      GetServerToGmtOffset(datetime serverTime);
+ //int      GetServerToLocalTimeOffset(datetime serverTime);
 
    datetime GetEasternPrevSessionStartTime(datetime easternTime);
    datetime GetEasternPrevSessionEndTime(datetime easternTime);
@@ -56,6 +67,13 @@
    datetime GetGmtSessionEndTime(datetime gmtTime);
    datetime GetGmtNextSessionStartTime(datetime gtmTime);
    datetime GetGmtNextSessionEndTime(datetime gtmTime);
+
+ //datetime GetLocalPrevSessionStartTime(datetime localTime);
+ //datetime GetLocalPrevSessionEndTime(datetime localTime);
+ //datetime GetLocalSessionStartTime(datetime localTime);
+ //datetime GetLocalSessionEndTime(datetime localTime);
+ //datetime GetLocalNextSessionStartTime(datetime localTime);
+ //datetime GetLocalNextSessionEndTime(datetime localTime);
 
    datetime GetServerPrevSessionStartTime(datetime serverTime);
    datetime GetServerPreviousSessionEndTime(datetime serverTime);

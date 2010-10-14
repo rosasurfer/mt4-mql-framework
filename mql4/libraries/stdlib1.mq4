@@ -945,44 +945,40 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
-   // Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(tickets) > 0)
-      ArrayResize(tickets, 0);
-   int sizeOfTickets = 0;
-
-   bool eventStatus = false;
-
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
       return(false);
 
-   static int knownPositions[];                             // bekannte Positionen
-          int sizeOfKnownPositions = ArraySize(knownPositions),
-              orders               = OrdersTotal();
+   bool eventStatus = false;
+
+   // Ergebnisarray sicherheitshalber zurücksetzen
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
 
    // NOTE:
    // -----
-   // Die offenen Positionen stehen u.U. erst nach einigen Ticks zur Verfügung (z.B. nach Accountwechsel). Daher müssen
-   // neu auftretende Positionen anhand ihres OrderOpen-Timestamps explizit auf ihren Status überprüft werden.
+   // Die offenen Positionen stehen u.U. (z.B. nach Accountwechsel) erst nach einigen Ticks zur Verfügung. Daher müssen
+   // neu auftretende Positionen anhand ihres OrderOpen-Timestamps auf ihren Status überprüft werden.
 
-   static int      accountNumber[1];                        // default: 0
-   static datetime accountInitialized[1];                   // default: 0
-
-   // TODO: statt TimeCurrent() TimeLocal() verwenden und in Serverzeit umrechnen (im Terminal wird veralteter Wert für TimeCurrent() gespeichert)
+   static int      accountNumber[1];
+   static datetime accountInitTime[1];                      // GMT-Zeit
+   static int      knownTickets[];                          // alle bekannten Positionen
 
    if (accountNumber[0] == 0) {                             // 1. Aufruf
-      accountNumber[0]      = account;
-      accountInitialized[0] = TimeCurrent();                // Serverzeit
-      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach 1. Aufruf initialisiert, Serverzeit: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      accountNumber[0]   = account;
+      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset(-1);
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach 1. Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
-   else if (accountNumber[0] != account) {                  // Accountwechsel während der Laufzeit: alle Positionen löschen
-      accountNumber[0]      = account;
-      accountInitialized[0] = TimeCurrent();                // Serverzeit
-      ArrayResize(knownPositions, 0);
-      sizeOfKnownPositions = 0;
-      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Accountwechsel initialisiert, Serverzeit: "+ TimeToStr(accountInitialized[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
+      accountNumber[0]   = account;
+      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset(-1);
+      ArrayResize(knownTickets, 0);
+      //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
+
+   int orders           = OrdersTotal();
+   int noOfKnownTickets = ArraySize(knownTickets);
 
    // offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
@@ -992,22 +988,20 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          int ticket = OrderTicket();
 
-         for (int n=0; n < sizeOfKnownPositions; n++) {
-            if (knownPositions[n] == ticket)                // bekannte Position
+         for (int n=0; n < noOfKnownTickets; n++) {
+            if (knownTickets[n] == ticket)                  // bekannte Position
                break;
          }
 
-         // unbekannte Position: prüfen, ob neu
-         if (n == sizeOfKnownPositions) {
-            if (accountInitialized[0] <= OrderOpenTime()) { // neu: Ticket speichern und Event-Flag setzen
-               sizeOfTickets++;
-               ArrayResize(tickets, sizeOfTickets);
-               tickets[sizeOfTickets-1] = ticket;
+         if (n == noOfKnownTickets) {                       // unbekannte Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde
+            if (accountInitTime[0] <= ServerToGMT(OrderOpenTime())) {
+               ArrayResize(tickets, ArraySize(tickets)+1);  // neue Position: Ticket speichern und Event-Flag setzen
+               tickets[ArraySize(tickets)-1] = ticket;
                eventStatus = true;
             }
-            sizeOfKnownPositions++;
-            ArrayResize(knownPositions, sizeOfKnownPositions);
-            knownPositions[sizeOfKnownPositions-1] = ticket;
+            noOfKnownTickets++;
+            ArrayResize(knownTickets, noOfKnownTickets);
+            knownTickets[noOfKnownTickets-1] = ticket;
          }
       }
    }
@@ -3466,11 +3460,18 @@ string GetEventDescription(int event) {
 
 
 /**
- * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
+ * Gibt den Offset der angegebenen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
+ *
+ * @param  datetime localTime - Zeitpunkt lokaler Zeit (default: aktuelle Zeit)
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetLocalToGmtOffset() {
+int GetLocalToGmtOffset(datetime localTime=-1) {
+   if (localTime != -1) {
+      last_library_error = catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_RUNTIME_ERROR);
+      return(EMPTY_VALUE);
+   }
+
    int tzInfos[43];
    int type = GetTimeZoneInformation(tzInfos);
 
