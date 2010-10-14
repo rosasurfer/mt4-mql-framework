@@ -69,6 +69,13 @@
 #define OP_MARGINCREDIT          7     // margin credit facility, no transaction (undocumented)
 
 
+// OrderType-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
+#define OTFLAG_BUY               1     // long order
+#define OTFLAG_SELL              2     // short order
+#define OTFLAG_MARKETORDER       4     // market order
+#define OTFLAG_PENDINGORDER      8     // pending order (Limit- oder Stop-Order)
+
+
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
 #define MODE_OPEN                0     // open price
 #define MODE_LOW                 1     // low price
@@ -361,7 +368,7 @@ int HandleEvents(int events) {
  * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
  *
  * @param int event - Eventbezeichner
- * @param int flags - zusätzliche Flags (default: 0)
+ * @param int flags - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - ob das Event aufgetreten ist oder nicht
  *
@@ -372,7 +379,7 @@ int HandleEvents(int events) {
  */
 int HandleEvent(int event, int flags=0) {
    bool status = false;
-   int  results[];      // zurücksetzen nicht notwendig, da EventListener() immer zurücksetzt
+   int  results[];      // zurücksetzen hier nicht nötig, da EventListener.*() Array immer zurücksetzt
 
    switch (event) {
       case EVENT_BAR_OPEN       : if (EventListener.BarOpen       (results, flags)) { status = true; onBarOpen       (results); } break;

@@ -932,17 +932,13 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
+ * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
  * @param  int& tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
- *
+ * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OTFLAG_BUY, OTFLAG_SELL, OTFLAG_MARKETORDER, OTFLAG_PENDINGORDER
+ *                          (default: 0)
  * @return bool - Ergebnis
- *
- *
- * NOTE:
- * -----
- * Der Parameter flags wird zur Zeit nicht verwendet.
  */
 bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
@@ -950,20 +946,14 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    if (account == 0)
       return(false);
 
-   bool eventStatus = false;
-
    // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
 
-   // NOTE:
-   // -----
-   // Die offenen Positionen stehen u.U. (z.B. nach Accountwechsel) erst nach einigen Ticks zur Verfügung. Daher müssen
-   // neu auftretende Positionen anhand ihres OrderOpen-Timestamps auf ihren Status überprüft werden.
-
    static int      accountNumber[1];
    static datetime accountInitTime[1];                      // GMT-Zeit
-   static int      knownTickets[];                          // alle bekannten Positionen
+   static int      knownPendings[][2];                      // die bekannten pending Orders und ihr Typ
+   static int      knownPositions[];                        // die bekannten Positionen
 
    if (accountNumber[0] == 0) {                             // 1. Aufruf
       accountNumber[0]   = account;
@@ -973,39 +963,80 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset(-1);
-      ArrayResize(knownTickets, 0);
+      ArrayResize(knownPendings, 0);
+      ArrayResize(knownPositions, 0);
       //Print("EventListener.PositionOpen()   Account "+ accountNumber[0] +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
-   int orders           = OrdersTotal();
-   int noOfKnownTickets = ArraySize(knownTickets);
+   int orders = OrdersTotal();
 
-   // offene Positionen überprüfen
+   // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
          break;
 
-      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         int ticket = OrderTicket();
-
-         for (int n=0; n < noOfKnownTickets; n++) {
-            if (knownTickets[n] == ticket)                  // bekannte Position
+      int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
+      
+      // pending Orders überprüfen und ggf. aktualisieren
+      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP) {
+         pendings = ArrayRange(knownPendings, 0);
+         for (n=0; n < pendings; n++)
+            if (knownPendings[n][0] == ticket)              // bekannte pending Order
                break;
+         if (n < pendings) continue;
+         
+         ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
+         knownPendings[pendings][0] = ticket;
+         knownPendings[pendings][1] = type;
+         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", GetOperationTypeDescription(type));
+      }
+
+      // offene Positionen überprüfen und ggf. aktualisieren
+      else if (type==OP_BUY || type==OP_SELL) {
+         positions = ArraySize(knownPositions);
+         for (n=0; n < positions; n++)
+            if (knownPositions[n] == ticket)                // bekannte Position
+               break;
+         if (n < positions) continue;
+         
+         // Die offenen Positionen stehen u.U. (z.B. nach Accountwechsel) erst nach einigen Ticks zur Verfügung. Daher müssen
+         // neue Positionen zusätzlich anhand ihres OrderOpen-Timestamps auf ihren jeweiligen Status überprüft werden.
+
+         // neue (unbekannte) Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde (= wirklich neu ist)
+         if (accountInitTime[0] <= ServerToGMT(OrderOpenTime())) {   
+            // ja, in flags angegebene Orderkriterien überprüfen
+            int event = 1;
+            pendings = ArrayRange(knownPendings, 0);
+
+            if (flags & OTFLAG_BUY          != 0)   event &= (type==OP_BUY )+0;  // MQL kann Booleans für Binärops. nicht automatisch casten
+            if (flags & OTFLAG_SELL         != 0)   event &= (type==OP_SELL)+0;
+            if (flags & OTFLAG_MARKETORDER  != 0) {
+               for (int z=0; z < pendings; z++)
+                  if (knownPendings[z][0] == ticket)  // Order war pending
+                     break;
+               event &= (z==pendings)+0; 
+            }
+            if (flags & OTFLAG_PENDINGORDER != 0) {
+               for (z=0; z < pendings; z++)
+                  if (knownPendings[z][0] == ticket)  // Order war pending
+                     break;
+               event &= (z<pendings)+0;
+            }
+            
+            // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
+            if (event == 1) {
+               ArrayResize(tickets, ArraySize(tickets)+1);     
+               tickets[ArraySize(tickets)-1] = ticket;
+            }
          }
 
-         if (n == noOfKnownTickets) {                       // unbekannte Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde
-            if (accountInitTime[0] <= ServerToGMT(OrderOpenTime())) {
-               ArrayResize(tickets, ArraySize(tickets)+1);  // neue Position: Ticket speichern und Event-Flag setzen
-               tickets[ArraySize(tickets)-1] = ticket;
-               eventStatus = true;
-            }
-            noOfKnownTickets++;
-            ArrayResize(knownTickets, noOfKnownTickets);
-            knownTickets[noOfKnownTickets-1] = ticket;
-         }
+         ArrayResize(knownPositions, positions+1);
+         knownPositions[positions] = ticket;
+         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", GetOperationTypeDescription(type));
       }
    }
 
+   bool eventStatus = (ArraySize(tickets) > 0);
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();

@@ -140,9 +140,7 @@ int init() {
    if (Track.PivotLevels)
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
-
    //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions: ", Track.Positions, "   Track.QuoteChanges=", Track.QuoteChanges, " (", Grid.Size, ")   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
-
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -186,7 +184,8 @@ int start() {
 
    // Positionen
    if (Track.Positions) {
-      HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE);
+      HandleEvent(EVENT_POSITION_OPEN, OTFLAG_PENDINGORDER);   // nur pending Orders tracken, manuelle Market-Orders nicht
+      HandleEvent(EVENT_POSITION_CLOSE);
    }
 
    // Kursänderungen
@@ -221,17 +220,18 @@ int onPositionOpen(int tickets[]) {
    if (!Track.Positions)
       return(0);
 
-   // TODO: Sound und SMS nur bei ausgeführter Limit-Order und nicht bei manueller Market-Order auslösen
-
    bool playSound = false;
-   int size = ArraySize(tickets);
+   int  positions = ArraySize(tickets);
 
-   for (int i=0; i < size; i++) {
+   for (int i=0; i < positions; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET))
          continue;
 
       // nur Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
+         // die Unterscheidung zwischen ausgeführten Limit- und Market-Orders ist hier nicht mehr möglich
+         playSound = true;                // Flag für Sound-Status
+
          int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
          if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
          else                               priceFormat = StringConcatenate(".", digits);
@@ -242,7 +242,7 @@ int onPositionOpen(int tickets[]) {
          string price      = FormatNumber(OrderOpenPrice(), priceFormat);
          string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
-         // zuerst SMS, dann Sound
+         // ggf. SMS verschicken
          if (SMS.Alerts) {
             int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
             if (error != ERR_NO_ERROR)
@@ -252,11 +252,11 @@ int onPositionOpen(int tickets[]) {
          else {
             Print("onPositionOpen()   ", message);
          }
-         playSound = true;                            // Flag für Sound-Status
       }
    }
 
-   if (Sound.Alerts) if (playSound)                   // max. ein Sound
+   // ggf. Sound abspielen (max. einmal)
+   if (Sound.Alerts) if (playSound)
       PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
@@ -275,11 +275,13 @@ int onPositionClose(int tickets[]) {
       return(0);
 
    bool playSound = false;
-   int size = ArraySize(tickets);
+   int  positions = ArraySize(tickets);
 
-   for (int i=0; i < size; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) // false: praktisch nahezu unmöglich
+   for (int i=0; i < positions; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         // TODO: Meldung ausgeben, daß Filter im History-Tab aktuelle Orders nicht anzeigt
          continue;
+      }
 
       // nur PositionClose-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
@@ -308,7 +310,7 @@ int onPositionClose(int tickets[]) {
       }
    }
 
-   if (Sound.Alerts) if (playSound)                   // max. ein Sound, auch bei mehreren Positionen
+   if (Sound.Alerts) if (playSound)                   // max. ein Sound, auch bei mehreren geschlossenen Positionen
       PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(2)"));
