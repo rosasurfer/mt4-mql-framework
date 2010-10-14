@@ -222,7 +222,6 @@ int onPositionOpen(int tickets[]) {
       return(0);
 
    // TODO: Sound und SMS nur bei ausgeführter Limit-Order und nicht bei manueller Market-Order auslösen
-   // TODO: Unterscheidung zwischen Remote- und Home-Terminal, um Accountmißbrauch zu erkennen
 
    bool playSound = false;
    int size = ArraySize(tickets);
@@ -233,10 +232,14 @@ int onPositionOpen(int tickets[]) {
 
       // nur Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
+         int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
+         else                               priceFormat = StringConcatenate(".", digits);
+
          string type       = GetOperationTypeDescription(OrderType());
          string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         string price      = FormatNumber(OrderOpenPrice(), StringConcatenate(".", MarketInfo(OrderSymbol(), MODE_DIGITS)));
+         string price      = FormatNumber(OrderOpenPrice(), priceFormat);
          string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
          // zuerst SMS, dann Sound
@@ -280,12 +283,15 @@ int onPositionClose(int tickets[]) {
 
       // nur PositionClose-Events des aktuellen Instruments berücksichtigen
       if (Symbol() == OrderSymbol()) {
+         int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
+         else                               priceFormat = StringConcatenate(".", digits);
+
          string type       = GetOperationTypeDescription(OrderType());
          string lots       = FormatNumber(OrderLots(), ".+");
          string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         string mask       = StringConcatenate(".", MarketInfo(OrderSymbol(), MODE_DIGITS));
-         string openPrice  = FormatNumber(OrderOpenPrice(), mask);
-         string closePrice = FormatNumber(OrderClosePrice(), mask);
+         string openPrice  = FormatNumber(OrderOpenPrice(), priceFormat);
+         string closePrice = FormatNumber(OrderClosePrice(), priceFormat);
          string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
          // zuerst SMS, dann Sound
