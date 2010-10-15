@@ -333,6 +333,8 @@ int catch(string message="", int error=ERR_NO_ERROR) {
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
  *
  * @param int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
+ * @param int flags  - zusätzliche eventspezifische Flags (default: 0), bei verknüpften Eventbezeichnern nur sinnvoll, wenn die Flags
+ *                     für alle Events zutreffend sind
  *
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
@@ -341,18 +343,18 @@ int catch(string message="", int error=ERR_NO_ERROR) {
  * -----
  * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  */
-int HandleEvents(int events) {
+int HandleEvents(int events, int flags=0) {
    int status = 0;
 
-   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN       );
-   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    );
-   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   );
-   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   );
-   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN  );
-   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE );
-   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE );
-   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
-   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE );
+   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN       , flags);
+   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    , flags);
+   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   , flags);
+   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   , flags);
+   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN  , flags);
+   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE , flags);
+   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE , flags);
+   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT, flags);
+   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE , flags);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {

@@ -90,7 +90,7 @@
    string   GetDayOfWeek(datetime time, bool format);
    string   GetServerTimezone();
 
-   // Events
+   // Eventlistener
    bool     EventListener(int event, int& results[], int flags);
    bool     EventListener.AccountChange(int& results[], int flags);
    bool     EventListener.AccountPayment(int& results[], int flags);
@@ -102,6 +102,7 @@
    bool     EventListener.PositionOpen(int& results[], int flags);
    bool     EventListener.PositionClose(int& results[], int flags);
 
+   // Eventhandler
    int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
    int      onBarOpen(int details[]);
