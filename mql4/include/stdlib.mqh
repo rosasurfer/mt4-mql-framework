@@ -110,8 +110,8 @@
    // EventTracker (Indikator)
    bool     EventTracker.GetBandLimits(double& limits[3]);
    bool     EventTracker.SetBandLimits(double& limits[3]);
-   bool     EventTracker.GetGridLimits(double& limits[2]);
-   bool     EventTracker.SetGridLimits(double& limits[2]);
+   bool     EventTracker.GetRateGridLimits(double& limits[2]);
+   bool     EventTracker.SetRateGridLimits(double& limits[2]);
 
 
    // Math

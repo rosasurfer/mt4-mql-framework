@@ -180,8 +180,8 @@
 
 // weiterer deinit()-Reason, siehe UninitializeReason()
 #define REASON_FINISHED          0   // execution finished
-#define REASON_REMOVE            1   // expert or indicator removed from chart
-#define REASON_RECOMPILE         2   // expert or indicator recompiled
+#define REASON_REMOVE            1   // program removed from chart
+#define REASON_RECOMPILE         2   // program recompiled
 #define REASON_CHARTCHANGE       3   // chart symbol or timeframe changed
 #define REASON_CHARTCLOSE        4   // chart closed
 #define REASON_PARAMETERS        5   // input parameters changed by user

@@ -976,7 +976,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
-      
+
       // pending Orders überprüfen und ggf. aktualisieren
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP) {
          pendings = ArrayRange(knownPendings, 0);
@@ -984,7 +984,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             if (knownPendings[n][0] == ticket)              // bekannte pending Order
                break;
          if (n < pendings) continue;
-         
+
          ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
@@ -998,12 +998,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             if (knownPositions[n] == ticket)                // bekannte Position
                break;
          if (n < positions) continue;
-         
+
          // Die offenen Positionen stehen u.U. (z.B. nach Accountwechsel) erst nach einigen Ticks zur Verfügung. Daher müssen
          // neue Positionen zusätzlich anhand ihres OrderOpen-Timestamps auf ihren jeweiligen Status überprüft werden.
 
          // neue (unbekannte) Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde (= wirklich neu ist)
-         if (accountInitTime[0] <= ServerToGMT(OrderOpenTime())) {   
+         if (accountInitTime[0] <= ServerToGMT(OrderOpenTime())) {
             // ja, in flags angegebene Orderkriterien überprüfen
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
@@ -1014,7 +1014,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
                for (int z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)  // Order war pending
                      break;
-               event &= (z==pendings)+0; 
+               event &= (z==pendings)+0;
             }
             if (flags & OTFLAG_PENDINGORDER != 0) {
                for (z=0; z < pendings; z++)
@@ -1022,10 +1022,10 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
                      break;
                event &= (z<pendings)+0;
             }
-            
+
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
-               ArrayResize(tickets, ArraySize(tickets)+1);     
+               ArrayResize(tickets, ArraySize(tickets)+1);
                tickets[ArraySize(tickets)-1] = ticket;
             }
          }
@@ -1259,10 +1259,10 @@ bool EventTracker.SetBandLimits(double& limits[]) {
 }
 
 
-static double EventTracker.gridLimits[2];
+static double EventTracker.rateGridLimits[2];
 
 /**
- * Gibt die aktuellen Grid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
  * @param  double& destination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
@@ -1270,17 +1270,17 @@ static double EventTracker.gridLimits[2];
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.GetGridLimits(double& destination[]) {
+bool EventTracker.GetRateGridLimits(double& destination[]) {
    // falls keine Daten gespeichert sind ...
-   if (EventTracker.gridLimits[0]==0 || EventTracker.gridLimits[1]==0)
+   if (EventTracker.rateGridLimits[0]==0 || EventTracker.rateGridLimits[1]==0)
       return(false);
 
-   destination[0] = EventTracker.gridLimits[0];
-   destination[1] = EventTracker.gridLimits[1];
+   destination[0] = EventTracker.rateGridLimits[0];
+   destination[1] = EventTracker.rateGridLimits[1];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("EventTracker.GetGridLimits()", error);
+      last_library_error = catch("EventTracker.GetRateGridLimits()", error);
       return(false);
    }
    return(true);
@@ -1288,20 +1288,20 @@ bool EventTracker.GetGridLimits(double& destination[]) {
 
 
 /**
- * Setzt die aktuellen Grid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
+ * Setzt die aktuellen RateGrid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
  * @param  double& limits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
-bool EventTracker.SetGridLimits(double& limits[]) {
-   EventTracker.gridLimits[0] = limits[0];
-   EventTracker.gridLimits[1] = limits[1];
+bool EventTracker.SetRateGridLimits(double& limits[]) {
+   EventTracker.rateGridLimits[0] = limits[0];
+   EventTracker.rateGridLimits[1] = limits[1];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("EventTracker.SetGridLimits()", error);
+      last_library_error = catch("EventTracker.SetRateGridLimits()", error);
       return(false);
    }
    return(true);
