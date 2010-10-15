@@ -13,6 +13,54 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Inlinded conditional statement für Strings.
+ *
+ * @param  bool   condition
+ * @param  string strThen
+ * @param  string strElse
+ *
+ * @return string
+ */
+string IfString(bool condition, string strThen, string strElse) {
+   if (condition) 
+      return(strThen);
+   return(strElse);
+}
+
+
+/**
+ * Inlinded conditional statement für Integers.
+ *
+ * @param  bool condition
+ * @param  int  iThen
+ * @param  int  iElse
+ *
+ * @return int
+ */
+string IfInt(bool condition, int iThen, int iElse) {
+   if (condition) 
+      return(iThen);
+   return(iElse);
+}
+
+
+/**
+ * Inlinded conditional statement für Doubles.
+ *
+ * @param  bool   condition
+ * @param  double dThen
+ * @param  double dElse
+ *
+ * @return double
+ */
+string IfDouble(bool condition, double dThen, double dElse) {
+   if (condition) 
+      return(dThen);
+   return(dElse);
+}
+
+
+/**
  * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
  *
  * @param  double number

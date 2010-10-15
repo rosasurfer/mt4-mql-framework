@@ -13,6 +13,11 @@
    string   JoinInts(int& values[], string separator);
    string   JoinStrings(string& values[], string separator);
 
+   // conditional Statements
+   string IfDouble(bool condition, double dThen, double dElse);
+   string IfInt(bool condition, int iThen, int iElse);
+   string IfString(bool condition, string strThen, string strElse);
+
    // Config
    bool     GetConfigBool(string section, string key, bool defaultValue);
    double   GetConfigDouble(string section, string key, double defaultValue);
@@ -113,18 +118,15 @@
    bool     EventTracker.GetRateGridLimits(double& limits[2]);
    bool     EventTracker.SetRateGridLimits(double& limits[2]);
 
-
    // Math
    double   MathRoundFix(double number, int decimals);
    int      MathSign(double number);
-
 
    // Numbers
    bool     CompareDoubles(double double1, double double2);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
    string   FormatNumber(double number, string mask);
-
 
    // Strings
    bool     StringContains(string object, string substring);
