@@ -546,7 +546,7 @@ int UpdatePositionLabel() {
       return(0);
 
    bool   inMarket;
-   double position;
+   double long, short, position;
 
    int orders = OrdersTotal();
 
@@ -556,14 +556,16 @@ int UpdatePositionLabel() {
 
       if (OrderSymbol() == Symbol()) {
          inMarket = true;
-         if      (OrderType() == OP_BUY ) position += OrderLots();
-         else if (OrderType() == OP_SELL) position -= OrderLots();
+         if      (OrderType() == OP_BUY ) long  += OrderLots();
+         else if (OrderType() == OP_SELL) short += OrderLots();
       }
    }
-   position = NormalizeDouble(position, 8);     // Floating-Point-Fehler bereinigen
+   long     = NormalizeDouble(long , 8);        // Floating-Point-Fehler bereinigen
+   short    = NormalizeDouble(short, 8);
+   position = NormalizeDouble(long - short, 8);
    
    if      (!inMarket)     string strPosition = " ";
-   else if (position == 0)        strPosition = "Position:  flat";
+   else if (position == 0)        strPosition = StringConcatenate("Position:  ±", FormatNumber(long, ".+"), " Lot (fully hedged)");
    else                           strPosition = StringConcatenate("Position:  ", FormatNumber(position, "+.+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
