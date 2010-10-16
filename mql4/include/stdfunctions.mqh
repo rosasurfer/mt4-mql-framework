@@ -310,10 +310,8 @@
  * (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
-   if (error != ERR_NO_ERROR)
-      GetLastError();                     // bei forciertem Fehler letzten tatsächlichen Fehler zurücksetzen
-   else
-      error = GetLastError();
+   if (error == ERR_NO_ERROR) error = GetLastError();
+   else                               GetLastError(); // Parameter error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
    if (error != ERR_NO_ERROR) {
       if (message == "")

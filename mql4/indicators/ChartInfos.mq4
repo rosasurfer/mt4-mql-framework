@@ -545,10 +545,26 @@ int UpdatePositionLabel() {
    if (!Show.Position)
       return(0);
 
-   double position = GetCurrentPosition();
+   bool   inMarket;
+   double position;
 
-   if (position == 0) string strPosition = " ";
-   else                      strPosition = StringConcatenate("Position:  ", FormatNumber(position, "+.+"), " Lot");
+   int orders = OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         break;
+
+      if (OrderSymbol() == Symbol()) {
+         inMarket = true;
+         if      (OrderType() == OP_BUY ) position += OrderLots();
+         else if (OrderType() == OP_SELL) position -= OrderLots();
+      }
+   }
+   position = NormalizeDouble(position, 8);     // Floating-Point-Fehler bereinigen
+   
+   if      (!inMarket)     string strPosition = " ";
+   else if (position == 0)        strPosition = "Position:  flat";
+   else                           strPosition = StringConcatenate("Position:  ", FormatNumber(position, "+.+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
@@ -594,29 +610,3 @@ double GetCurrentUnitSize() {
    return(unitSize);
 }
 
-
-/**
- * Gibt die momentan im aktuellen Instrument gehaltene Position zurück.
- *
- * @return double - Größe der gehaltenen Position in Lot
- */
-double GetCurrentPosition() {
-   int    type;
-   double position = 0.0;
-
-   // über offene Orders iterieren
-   for (int i=0; i < OrdersTotal(); i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
-         return(catch("GetCurrentPosition(1), OrderSelect(pos="+ i +")"));
-
-      // nur offene Orders des angegebenen Instruments berücksichtigen
-      if (Symbol() == OrderSymbol()) {
-         type = OrderType();
-         if      (type == OP_BUY ) position += OrderLots();
-         else if (type == OP_SELL) position -= OrderLots();
-      }
-   }
-
-   catch("GetCurrentPosition(2)");
-   return(position);
-}
