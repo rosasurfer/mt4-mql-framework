@@ -22,7 +22,7 @@ int last_library_error = ERR_NO_ERROR;
  * @return string
  */
 string IfString(bool condition, string strThen, string strElse) {
-   if (condition) 
+   if (condition)
       return(strThen);
    return(strElse);
 }
@@ -38,7 +38,7 @@ string IfString(bool condition, string strThen, string strElse) {
  * @return int
  */
 string IfInt(bool condition, int iThen, int iElse) {
-   if (condition) 
+   if (condition)
       return(iThen);
    return(iElse);
 }
@@ -54,7 +54,7 @@ string IfInt(bool condition, int iThen, int iElse) {
  * @return double
  */
 string IfDouble(bool condition, double dThen, double dElse) {
-   if (condition) 
+   if (condition)
       return(dThen);
    return(dElse);
 }
@@ -984,7 +984,7 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
  * @param  int& tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
- * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OTFLAG_BUY, OTFLAG_SELL, OTFLAG_MARKETORDER, OTFLAG_PENDINGORDER
+ * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
  *                          (default: 0)
  * @return bool - Ergebnis
  */
@@ -1056,15 +1056,16 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
 
-            if (flags & OTFLAG_BUY          != 0)   event &= (type==OP_BUY )+0;  // MQL kann Booleans für Binärops. nicht automatisch casten
-            if (flags & OTFLAG_SELL         != 0)   event &= (type==OP_SELL)+0;
-            if (flags & OTFLAG_MARKETORDER  != 0) {
+            if (flags & OFLAG_CURRENTSYMBOL != 0)   event &= (OrderSymbol()==Symbol())+0;    // MQL kann Booleans für Binärops. nicht casten
+            if (flags & OFLAG_BUY           != 0)   event &= (type==OP_BUY )+0;   
+            if (flags & OFLAG_SELL          != 0)   event &= (type==OP_SELL)+0;
+            if (flags & OFLAG_MARKETORDER   != 0) {
                for (int z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)  // Order war pending
                      break;
                event &= (z==pendings)+0;
             }
-            if (flags & OTFLAG_PENDINGORDER != 0) {
+            if (flags & OFLAG_PENDINGORDER  != 0) {
                for (z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)  // Order war pending
                      break;
@@ -1101,7 +1102,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
  * @param  int& tickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
- * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OTFLAG_BUY, OTFLAG_SELL, OTFLAG_MARKETORDER, OTFLAG_PENDINGORDER
+ * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
  *                          (default: 0)
  * @return bool - Ergebnis
  */
@@ -1144,10 +1145,11 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             int  event=1, type=OrderType();
             bool pending = (OrderStopLoss() == OrderClosePrice() || OrderTakeProfit() == OrderClosePrice());
 
-            if (flags & OTFLAG_BUY          != 0) event &= (type==OP_BUY )+0;  // MQL kann Booleans für Binärops. nicht automatisch casten
-            if (flags & OTFLAG_SELL         != 0) event &= (type==OP_SELL)+0;
-            if (flags & OTFLAG_MARKETORDER  != 0) event &= (!pending)+0;
-            if (flags & OTFLAG_PENDINGORDER != 0) event &= ( pending)+0;
+            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
+            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )+0;    
+            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL)+0;
+            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending)+0;
+            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending)+0;
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {

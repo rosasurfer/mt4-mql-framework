@@ -69,11 +69,12 @@
 #define OP_MARGINCREDIT          7     // margin credit facility, no transaction (undocumented)
 
 
-// OrderType-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
-#define OTFLAG_BUY               1     // long order
-#define OTFLAG_SELL              2     // short order
-#define OTFLAG_MARKETORDER       4     // market order
-#define OTFLAG_PENDINGORDER      8     // pending order (Limit- oder Stop-Order)
+// Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
+#define OFLAG_CURRENTSYMBOL      1     // order of current symbol (active chart)
+#define OFLAG_BUY                2     // long order
+#define OFLAG_SELL               4     // short order
+#define OFLAG_MARKETORDER        8     // market order
+#define OFLAG_PENDINGORDER      16     // pending order (Limit- oder Stop-Order)
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()

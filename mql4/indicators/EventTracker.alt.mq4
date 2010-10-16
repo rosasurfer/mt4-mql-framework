@@ -183,8 +183,9 @@ int start() {
    }
 
    // Positionen
-   if (Track.Positions) {                                      // nur pending Orders tracken, manuelle Market-Orders nicht
-      HandleEvents(EVENT_POSITION_OPEN | EVENT_POSITION_CLOSE, OTFLAG_PENDINGORDER);  
+   if (Track.Positions) {                                      // pending Orders des aktuellen Instruments tracken (manuelle Orders nicht)
+      HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
+      HandleEvent(EVENT_POSITION_OPEN , OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
    }
 
    // Kursänderungen
@@ -209,7 +210,7 @@ int start() {
 
 
 /**
- * Handler für PositionOpen-Events.
+ * Handler für PositionOpen-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
  *
  * @param int tickets[] - Tickets der neuen Positionen
  *
@@ -219,46 +220,40 @@ int onPositionOpen(int tickets[]) {
    if (!Track.Positions)
       return(0);
 
-   bool playSound = false;
-   int  positions = ArraySize(tickets);
+   int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
          if (error == ERR_NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         return(catch("onPositionOpen(1)   error selecting opened position with ticket #"+ tickets[i], error));
+         return(catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error));
       }
 
-      // nur Events des aktuellen Instruments berücksichtigen
-      if (OrderSymbol() == Symbol()) {    // Unterscheidung von Limit- und Market-Orders ist hier nicht möglich und erfolgt im EventListener
-         playSound = true;                // Flag für Sound-Status
+      int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
+      else                               priceFormat = StringConcatenate(".", digits);
 
-         int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
-         else                               priceFormat = StringConcatenate(".", digits);
+      string type       = GetOperationTypeDescription(OrderType());
+      string lots       = FormatNumber(OrderLots(), ".+");
+      string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
+      string price      = FormatNumber(OrderOpenPrice(), priceFormat);
+      string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
-         string type       = GetOperationTypeDescription(OrderType());
-         string lots       = FormatNumber(OrderLots(), ".+");
-         string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         string price      = FormatNumber(OrderOpenPrice(), priceFormat);
-         string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
-
-         // ggf. SMS verschicken
-         if (SMS.Alerts) {
-            error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-            if (error != ERR_NO_ERROR)
-               return(catch("onPositionOpen(2)   error sending text message to "+ SMS.Receiver, error));
-            Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
-         }
-         else {
-            Print("onPositionOpen()   ", message);
-         }
+      // ggf. SMS verschicken
+      if (SMS.Alerts) {
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         if (error != ERR_NO_ERROR)
+            return(catch("onPositionOpen(2)   error sending text message to "+ SMS.Receiver, error));
+         Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
+      }
+      else {
+         Print("onPositionOpen()   ", message);
       }
    }
 
-   // ggf. Sound abspielen (max. einmal)
-   if (Sound.Alerts) if (playSound)
+   // ggf. Sound abspielen
+   if (Sound.Alerts)
       PlaySound(Sound.File.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
@@ -266,7 +261,7 @@ int onPositionOpen(int tickets[]) {
 
 
 /**
- * Handler für PositionClose-Events.
+ * Handler für PositionClose-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
  *
  * @param int tickets[] - Tickets der geschlossenen Positionen
  *
@@ -276,43 +271,37 @@ int onPositionClose(int tickets[]) {
    if (!Track.Positions)
       return(0);
 
-   bool playSound = false;
-   int  positions = ArraySize(tickets);
+   int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET))
-         continue;                        // TODO: Meldung ausgeben, daß der Filter im History-Tab aktuelle Transaktionen ausfiltert
+         continue;                        // TODO: Meldung ausgeben, daß der History-Tab-Filter aktuelle Transaktionen ausfiltert
 
-      // nur Events des aktuellen Instruments berücksichtigen
-      if (OrderSymbol() == Symbol()) {    // Unterscheidung von Limit- und Market-Orders erfolgt im EventListener
-         playSound = true;                // Flag für Sound-Status
+      int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
+      else                               priceFormat = StringConcatenate(".", digits);
 
-         int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
-         else                               priceFormat = StringConcatenate(".", digits);
+      string type       = GetOperationTypeDescription(OrderType());
+      string lots       = FormatNumber(OrderLots(), ".+");
+      string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
+      string openPrice  = FormatNumber(OrderOpenPrice(), priceFormat);
+      string closePrice = FormatNumber(OrderClosePrice(), priceFormat);
+      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
-         string type       = GetOperationTypeDescription(OrderType());
-         string lots       = FormatNumber(OrderLots(), ".+");
-         string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-         string openPrice  = FormatNumber(OrderOpenPrice(), priceFormat);
-         string closePrice = FormatNumber(OrderClosePrice(), priceFormat);
-         string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
-
-         // ggf. SMS verschicken
-         if (SMS.Alerts) {
-            int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-            if (error != ERR_NO_ERROR)
-               return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
-            Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
-         }
-         else {
-            Print("onPositionClose()   ", message);
-         }
+      // ggf. SMS verschicken
+      if (SMS.Alerts) {
+         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         if (error != ERR_NO_ERROR)
+            return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
+         Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
+      }
+      else {
+         Print("onPositionClose()   ", message);
       }
    }
 
-   // ggf. Sound abspielen (max. einmal)
-   if (Sound.Alerts) if (playSound)
+   // ggf. Sound abspielen
+   if (Sound.Alerts)
       PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(2)"));
