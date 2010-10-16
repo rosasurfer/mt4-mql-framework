@@ -14,9 +14,9 @@
    string   JoinStrings(string& values[], string separator);
 
    // conditional Statements
-   string IfDouble(bool condition, double dThen, double dElse);
-   string IfInt(bool condition, int iThen, int iElse);
-   string IfString(bool condition, string strThen, string strElse);
+   double   ifDouble(bool condition, double dThen, double dElse);
+   int      ifInt(bool condition, int iThen, int iElse);
+   string   ifString(bool condition, string strThen, string strElse);
 
    // Config
    bool     GetConfigBool(string section, string key, bool defaultValue);

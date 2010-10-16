@@ -21,7 +21,7 @@ int last_library_error = ERR_NO_ERROR;
  *
  * @return string
  */
-string IfString(bool condition, string strThen, string strElse) {
+string ifString(bool condition, string strThen, string strElse) {
    if (condition)
       return(strThen);
    return(strElse);
@@ -37,7 +37,7 @@ string IfString(bool condition, string strThen, string strElse) {
  *
  * @return int
  */
-string IfInt(bool condition, int iThen, int iElse) {
+int ifInt(bool condition, int iThen, int iElse) {
    if (condition)
       return(iThen);
    return(iElse);
@@ -53,7 +53,7 @@ string IfInt(bool condition, int iThen, int iElse) {
  *
  * @return double
  */
-string IfDouble(bool condition, double dThen, double dElse) {
+double ifDouble(bool condition, double dThen, double dElse) {
    if (condition)
       return(dThen);
    return(dElse);
@@ -1005,12 +1005,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    if (accountNumber[0] == 0) {                             // 1. Aufruf
       accountNumber[0]   = account;
-      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset(-1);
-      //Print("EventListener.PositionOpen()   Account "+ account +" nach 1. Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset();
+      //Print("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
    else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
-      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset(-1);
+      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset();
       ArrayResize(knownPendings, 0);
       ArrayResize(knownPositions, 0);
       //Print("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
@@ -1057,19 +1057,17 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             pendings = ArrayRange(knownPendings, 0);
 
             if (flags & OFLAG_CURRENTSYMBOL != 0)   event &= (OrderSymbol()==Symbol())+0;    // MQL kann Booleans für Binärops. nicht casten
-            if (flags & OFLAG_BUY           != 0)   event &= (type==OP_BUY )+0;   
+            if (flags & OFLAG_BUY           != 0)   event &= (type==OP_BUY )+0;
             if (flags & OFLAG_SELL          != 0)   event &= (type==OP_SELL)+0;
             if (flags & OFLAG_MARKETORDER   != 0) {
                for (int z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)  // Order war pending
-                     break;
-               event &= (z==pendings)+0;
+                  if (knownPendings[z][0] == ticket)                                         // Order war pending
+                     break;                         event &= (z==pendings)+0;
             }
             if (flags & OFLAG_PENDINGORDER  != 0) {
                for (z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)  // Order war pending
-                     break;
-               event &= (z<pendings)+0;
+                  if (knownPendings[z][0] == ticket)                                         // Order war pending
+                     break;                         event &= (z<pendings)+0;
             }
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
@@ -1123,7 +1121,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    if (accountNumber[0] == 0) {
       accountNumber[0] = account;
-      //Print("EventListener.PositionClose()   Account "+ account +" nach 1. Aufruf initialisiert");
+      //Print("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
    }
    else if (accountNumber[0] != account) {
       accountNumber[0] = account;
@@ -1146,7 +1144,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             bool pending = (OrderStopLoss() == OrderClosePrice() || OrderTakeProfit() == OrderClosePrice());
 
             if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
-            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )+0;    
+            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )+0;
             if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL)+0;
             if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending)+0;
             if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending)+0;

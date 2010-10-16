@@ -28,7 +28,7 @@ string SMS.Receiver                 = "";
 bool   Track.Positions              = false;
 
 bool   Track.RateChanges            = false;
-int    RateGrid.Size                = 0;
+int    RateGrid.Size                = 0;           // GridSize in Pip
 
 bool   Track.BollingerBands         = false;
 int    BollingerBands.Periods       = 0;
@@ -45,8 +45,12 @@ bool   PivotLevels.PreviousDayRange = false;
 // sonstige Variablen
 string Instrument.Name;
 
-double RateGrid.Limits[2];                   // { UPPER_VALUE, LOWER_VALUE }
-double Band.Limits[3];                       // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+double RateGrid.Limits[2];                         // { UPPER_VALUE, LOWER_VALUE }
+double Band.Limits[3];                             // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+
+int    gridDigits;
+double gridSize;
+
 
 
 /**
@@ -102,6 +106,8 @@ int init() {
          catch("init(2)  Invalid input parameter RateGrid.Size: "+ GetConfigString(instrSection, "RateChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
          Track.RateChanges = false;
       }
+      gridDigits = Digits - ifInt(Digits==3 || Digits==5, 1, 0);
+      gridSize   = NormalizeDouble(RateGrid.Size * Point  * ifDouble(Digits==3 || Digits==5, 10, 1), gridDigits);
    }
 
    // Bollinger-Bänder
@@ -140,7 +146,7 @@ int init() {
    if (Track.PivotLevels)
       PivotLevels.PreviousDayRange = GetConfigBool(instrSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
-   //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, IfString(Track.RateChanges, " (Grid: "+RateGrid.Size+")", ""), "   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
+   //Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, ifString(Track.RateChanges, " (Grid: "+RateGrid.Size+")", ""), "   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -167,41 +173,66 @@ int start() {
    }
 
 
-   // TODO: nach Config-Änderung Limite zurücksetzen
+   // Accountwechsel erkennen
+   int account = AccountNumber();
 
-   int processedBars = IndicatorCounted();
+   static int      accountNumber[1];
+   static datetime accountInitTime[1];                      // aktuelle, tatsächliche Server-Zeit (nicht die des letzten Ticks)
 
-   if (processedBars == 0) {                                   // Chartänderung => alle Limite zurücksetzen
-
-      // TODO: processedBars ist bei jedem Timeframe-Wechsel 0, wir wollen processedBars==0 aber nur bei Chartänderungen detektieren
-
-      //ArrayInitialize(RateGrid.Limits, 0);
-      //EventTracker.SetRateGridLimits(RateGrid.Limits);
-
-      ArrayInitialize(Band.Limits, 0);
-      EventTracker.SetBandLimits(Band.Limits);
+   if (accountNumber[0] == 0) {                             // 1. Lib-Aufruf
+      accountNumber[0]   = account;
+      accountInitTime[0] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset(-1));
+      //Print("start()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      return(catch("start(1)"));
+   }
+   else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit
+      accountNumber[0]   = account;
+      accountInitTime[0] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset(-1));
+      //Print("start()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      return(catch("start(2)"));
+   }
+   else if (TimeCurrent() < accountInitTime[0]) {           // alte Ticks abfangen (Data-Pumping etc.)
+      //Print("start()   Account "+ account +"    alter Tick="+ FormatNumber(Close[0], ".4'"));
+      return(catch("start(3)"));
    }
 
+
+   // sämtliche Events werden nur nach einem neuen Tick überprüft
+   //Print("start()   Account "+ account +"    neuer Tick="+ FormatNumber(Bid, ".4'"));
+
    // Positionen
-   if (Track.Positions) {                                      // pending Orders des aktuellen Instruments tracken (manuelle Orders nicht)
+   if (Track.Positions) {                                   // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
       HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
       HandleEvent(EVENT_POSITION_OPEN , OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
    }
 
    // Kursänderungen
-   if (Track.RateChanges)
+   if (Track.RateChanges)                                   // TODO: nach Config-Änderungen Limite zurücksetzen
       if (CheckRateGrid() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
+
+
+
+   int processedBars = IndicatorCounted();
+
+   if (processedBars == 0) { // TODO: processedBars ist bei jedem Timeframe-Wechsel 0, wir wollen processedBars==0 aber nur bei Chartänderungen detektieren
+      //ArrayInitialize(RateGrid.Limits, 0);
+      //EventTracker.SetRateGridLimits(RateGrid.Limits);
+      //ArrayInitialize(Band.Limits, 0);
+      //EventTracker.SetBandLimits(Band.Limits);
+   }
+
+
    // Bollinger-Bänder
-   if (Track.BollingerBands) {
+   if (false && Track.BollingerBands) {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
       if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
    }
 
    // Pivot-Level
-   if (Track.PivotLevels)
+   if (false && Track.PivotLevels)
       if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
@@ -230,9 +261,9 @@ int onPositionOpen(int tickets[]) {
          return(catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error));
       }
 
-      int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
-      else                               priceFormat = StringConcatenate(".", digits);
+      // alle Positionen sind im aktuellen Instrument
+      if (Digits==3 || Digits==5) string priceFormat = StringConcatenate(".", Digits-1, "'");
+      else                               priceFormat = StringConcatenate(".", Digits);
 
       string type       = GetOperationTypeDescription(OrderType());
       string lots       = FormatNumber(OrderLots(), ".+");
@@ -277,9 +308,9 @@ int onPositionClose(int tickets[]) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET))
          continue;                        // TODO: Meldung ausgeben, daß der History-Tab-Filter aktuelle Transaktionen ausfiltert
 
-      int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      if (digits==3 || digits==5) string priceFormat = StringConcatenate(".", digits-1, "'");
-      else                               priceFormat = StringConcatenate(".", digits);
+      // alle Positionen sind im aktuellen Instrument
+      if (Digits==3 || Digits==5) string priceFormat = StringConcatenate(".", Digits-1, "'");
+      else                               priceFormat = StringConcatenate(".", Digits);
 
       string type       = GetOperationTypeDescription(OrderType());
       string lots       = FormatNumber(OrderLots(), ".+");
@@ -343,19 +374,14 @@ int CheckRateGrid() {
       return(catch("CheckRateGrid(1)"));                 // nach Initialisierung ist Test überflüssig
    }
 
-
-   double gridSize = RateGrid.Size / 10000.0;
-   string message, bid, ask;
-   int    error;
-
    // Limite überprüfen
    if (Ask > RateGrid.Limits[1]) {
-      message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(RateGrid.Limits[1], 4));
-      ask     = FormatNumber(Ask, StringConcatenate(".", Digits));
+      string message = StringConcatenate(Instrument.Name, " => ", DoubleToStr(RateGrid.Limits[1], gridDigits));
+      string ask     = FormatNumber(Ask, StringConcatenate(".", gridDigits, ifString(gridDigits==Digits, "", "'")));
 
       // zuerst SMS, dann Sound
       if (SMS.Alerts) {
-         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != ERR_NO_ERROR)
             return(catch("CheckRateGrid(2)   error sending text message to "+ SMS.Receiver, error));
          Print("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", ask, ")");
@@ -366,15 +392,17 @@ int CheckRateGrid() {
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
 
-      RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[1] + gridSize, 4);
-      RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[1] - gridSize - gridSize, 4);  // Abstand: 2 x GridSize
-      EventTracker.SetRateGridLimits(RateGrid.Limits);                                    // neue Limite in Library speichern
-      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], 4), "  <=>  ", DoubleToStr(RateGrid.Limits[1], 4));
+      while (Ask > RateGrid.Limits[1]) {
+         RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[1] + gridSize, gridDigits);
+      }
+      RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[1] - gridSize - gridSize, gridDigits);
+      EventTracker.SetRateGridLimits(RateGrid.Limits);
+      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
 
    else if (Bid < RateGrid.Limits[0]) {
-      message = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(RateGrid.Limits[0], 4));
-      bid     = FormatNumber(Bid, StringConcatenate(".", Digits));
+      message    = StringConcatenate(Instrument.Name, " <= ", DoubleToStr(RateGrid.Limits[0], gridDigits));
+      string bid = FormatNumber(Bid, StringConcatenate(".", gridDigits, ifString(gridDigits==Digits, "", "'")));
 
       // zuerst SMS, dann Sound
       if (SMS.Alerts) {
@@ -389,10 +417,12 @@ int CheckRateGrid() {
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
 
-      RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[0] - gridSize, 4);
-      RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[0] + gridSize + gridSize, 4);  // Abstand: 2 x GridSize
-      EventTracker.SetRateGridLimits(RateGrid.Limits);                                    // neue Limite in Library speichern
-      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], 4), "  <=>  ", DoubleToStr(RateGrid.Limits[1], 4));
+      while (Bid < RateGrid.Limits[0]) {
+         RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[0] - gridSize, gridDigits);
+      }
+      RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[0] + gridSize + gridSize, gridDigits);
+      EventTracker.SetRateGridLimits(RateGrid.Limits);
+      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
 
    return(catch("CheckRateGrid(4)"));
