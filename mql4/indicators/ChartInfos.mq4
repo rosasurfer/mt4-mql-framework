@@ -527,7 +527,16 @@ int UpdateUnitSizeLabel() {
    if (!Show.UnitSize)
       return(0);
 
-   string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(GetCurrentUnitSize(), ".+"), " Lot");
+   double unitSize = (AccountEquity()-AccountCredit()) / 1000 * 0.07;   // 7% der Equity
+
+   if (StringSubstr(Symbol(), 0, 3) != "USD")
+      unitSize /= Close[0];
+
+   if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
+   else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
+   else                     unitSize = NormalizeDouble(unitSize, 0);
+
+   string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ".+"), " Lot");
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
@@ -585,30 +594,5 @@ int UpdatePerformanceDisplay() {
       return(0);
 
    return(catch("UpdatePerformanceDisplay()"));
-}
-
-
-/**
- * Gibt die momentane Unit-Größe des aktuellen Instruments zurück.
- *
- * @return double - Größe einer Handels-Unit in Lot
- */
-double GetCurrentUnitSize() {
-   // TODO: Verwendung von Bid ist Unfug, funktioniert nur mit dem aktuellen Symbol
-
-   if (Bid == 0)     // ohne Connection würde Division durch 0 ausgelöst
-      return(0);
-
-   double unitSize = (AccountEquity()-AccountCredit()) / 1000 * 0.07;   // 7% der Equity
-
-   if (StringSubstr(Symbol(), 0, 3) != "USD")
-      unitSize /= Bid;
-
-   if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
-   else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
-   else                     unitSize = NormalizeDouble(unitSize, 0);
-
-   catch("GetCurrentUnitSize()");
-   return(unitSize);
 }
 
