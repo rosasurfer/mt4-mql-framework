@@ -490,8 +490,8 @@ int UpdatePriceLabel() {
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
-   if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);  // bei offenem Properties-Dialog oder Label::onDrag()
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
+      return(ERR_NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
 }
 
@@ -514,8 +514,8 @@ int UpdateSpreadLabel() {
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
-   if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);  // bei offenem Properties-Dialog oder Label::onDrag()
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
+      return(ERR_NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
 }
 
@@ -531,18 +531,20 @@ int UpdateUnitSizeLabel() {
 
    if (StringSubstr(Symbol(), 0, 3) != "USD")
       unitSize /= Close[0];
-
+   
    if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
    else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
    else                     unitSize = NormalizeDouble(unitSize, 0);
+
+   //Print("UpdateUnitSizeLabel()    unitSize="+ FormatNumber(unitSize, ".+"));
 
    string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ".+"), " Lot");
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
-   if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);  // bei offenem Properties-Dialog oder Label::onDrag()
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
+      return(ERR_NO_ERROR);
    return(catch("UpdateUnitSizeLabel()", error));
 }
 
@@ -575,13 +577,13 @@ int UpdatePositionLabel() {
    
    if      (!inMarket)     string strPosition = " ";
    else if (position == 0)        strPosition = StringConcatenate("Position:  ±", FormatNumber(long, ".+"), " Lot (fully hedged)");
-   else                           strPosition = StringConcatenate("Position:  ", FormatNumber(position, "+.+"), " Lot");
+   else                           strPosition = StringConcatenate("Position:  " , FormatNumber(position, "+.+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error == ERR_NO_ERROR             ) return(ERR_NO_ERROR);
-   if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);  // bei offenem Properties-Dialog oder Label::onDrag()
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
+      return(ERR_NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
 }
 
