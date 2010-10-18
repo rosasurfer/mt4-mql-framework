@@ -163,42 +163,28 @@ int init() {
  */
 int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                      // Aufruf nach erstem init()
+   if (init) {                                        // Aufruf nach erstem init()
       init = false;
       if (init_error != ERR_NO_ERROR)               return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
+   else if (init_error != ERR_NO_ERROR) {             // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
 
-   // Accountwechsel erkennen
-   int account = AccountNumber();
+   // aktuelle Accountdaten holen
+   static int accountData[3];                               // { last_account_number, current_account_number, current_account_init_servertime }
+   EventListener.AccountChange(accountData, 0);             // Eventlistener gibt unabhängig vom Auftreten des Events immer die aktuellen Daten zurück
 
-   static int      accountNumber[1];
-   static datetime accountInitTime[1];                      // aktuelle, tatsächliche Server-Zeit (nicht die des letzten Ticks)
 
-   if (accountNumber[0] == 0) {                             // 1. Lib-Aufruf
-      accountNumber[0]   = account;
-      accountInitTime[0] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset(-1));
-      //Print("start()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   // alte Ticks abfangen, alle Events werden nur nach neuem Tick überprüft
+   if (TimeCurrent() < accountData[2]) {
+      //Print("start()   Account "+ accountData[1] +"    alter Tick="+ FormatNumber(Close[0], ".4'"));
       return(catch("start(1)"));
    }
-   else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit
-      accountNumber[0]   = account;
-      accountInitTime[0] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset(-1));
-      //Print("start()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      return(catch("start(2)"));
-   }
-   else if (TimeCurrent() < accountInitTime[0]) {           // alte Ticks abfangen (Data-Pumping etc.)
-      //Print("start()   Account "+ account +"    alter Tick="+ FormatNumber(Close[0], ".4'"));
-      return(catch("start(3)"));
-   }
-
-
-   // sämtliche Events werden nur nach einem neuen Tick überprüft
-   //Print("start()   Account "+ account +"    neuer Tick="+ FormatNumber(Bid, ".4'"));
+   //Print("start()   Account "+ accountData[1] +"    neuer Tick="+ FormatNumber(Bid, ".4'"));
+   
 
    // Positionen
    if (Track.Positions) {                                   // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
@@ -207,9 +193,10 @@ int start() {
    }
 
    // Kursänderungen
-   if (Track.RateChanges)                                   // TODO: nach Config-Änderungen Limite zurücksetzen
+   if (Track.RateChanges) {                                 // TODO: Limite nach Config-Änderungen reinitialisieren
       if (CheckRateGrid() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
+   }                                   
 
 
 
@@ -236,7 +223,7 @@ int start() {
       if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
 
-   return(catch("start()"));
+   return(catch("start(2)"));
 }
 
 
