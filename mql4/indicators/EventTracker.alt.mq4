@@ -154,6 +154,12 @@ int init() {
       WindowRedraw();
    }
 
+   bool defaultValue = false;
+   
+   string strDefault = StringConcatenate("", defaultValue);
+   
+   Print("init()    strDefault="+ strDefault);
+
    return(catch("init(6)"));
 }
 
