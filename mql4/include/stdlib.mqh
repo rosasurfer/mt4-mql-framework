@@ -163,7 +163,6 @@
    string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
    string   GetPeriodFlagDescription(int flags);
-   string   GetTerminalDirectory();
    int      GetTerminalTopWindow();
    string   GetUninitReasonDescription(int reason);
    string   GetWindowsErrorDescription(int error);

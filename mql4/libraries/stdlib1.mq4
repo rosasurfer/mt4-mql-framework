@@ -1825,8 +1825,8 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
    static string localConfigFile="", globalConfigFile="";
    if (localConfigFile == "") {
-      localConfigFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
-      globalConfigFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    }
 
    string strDefault = StringConcatenate("", defaultValue);
@@ -1861,8 +1861,8 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
    static string localConfigFile="", globalConfigFile="";
    if (localConfigFile == "") {
-      localConfigFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
-      globalConfigFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    }
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
@@ -1897,8 +1897,8 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
 
    static string localConfigFile="", globalConfigFile="";
    if (localConfigFile == "") {
-      localConfigFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
-      globalConfigFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    }
 
    // zuerst globale, dann lokale Config auslesen
@@ -1928,8 +1928,8 @@ string GetConfigString(string section, string key, string defaultValue="") {
    // TODO: localConfigFile + globalConfigFile timeframeübergreifend statisch machen
    static string localConfigFile="", globalConfigFile="";
    if (localConfigFile == "") {
-      localConfigFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
-      globalConfigFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
+      globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    }
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
@@ -2240,7 +2240,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    static string configFile = "";
    if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
    string strDefault = StringConcatenate("", defaultValue);
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
@@ -2271,7 +2271,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    static string configFile = "";
    if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
@@ -2300,7 +2300,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
    static string configFile = "";
    if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
    int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
@@ -2325,7 +2325,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
    static string configFile = "";
    if (configFile == "")
-      configFile = StringConcatenate(GetTerminalDirectory(), "\\..\\metatrader-global-config.ini");
+      configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
@@ -2455,7 +2455,7 @@ int GetLastLibraryError() {
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    static string configFile = "";
    if (configFile == "")
-      configFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      configFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
    string strDefault = StringConcatenate("", defaultValue);
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
@@ -2486,7 +2486,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    static string configFile = "";
    if (configFile == "")
-      configFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      configFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
@@ -2515,7 +2515,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
    static string configFile = "";
    if (configFile == "")
-      configFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      configFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
    int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
@@ -2540,7 +2540,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 string GetLocalConfigString(string section, string key, string defaultValue="") {
    static string configFile = "";
    if (configFile == "")
-      configFile  = StringConcatenate(GetTerminalDirectory(), "\\experts\\config\\metatrader-local-config.ini");
+      configFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
 
@@ -3946,41 +3946,6 @@ int GetServerToGmtOffset(datetime serverTime) {
 
 
 /**
- * Gibt das Installationsverzeichnis des Terminals zurück.
- *
- * @return string - Verzeichnisname
- */
-string GetTerminalDirectory() {
-   int error;
-
-   static string directory = "";
-
-   // Das Verzeichnis kann sich nicht ändern und wird zwischengespeichert.
-   if (directory == "") {
-      string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");       // siehe MetaTrader.doc: Zeigerproblematik
-
-      if (!GetModuleFileNameA(0, buffer[0], MAX_STRING_LEN)) {
-         error = GetLastError();
-         if (error == ERR_NO_ERROR)
-            error = ERR_WINDOWS_ERROR;
-         last_library_error = catch("GetTerminalDirectory(1)   kernel32.GetModuleFileNameA()  result: 0", error);
-         return("");
-      }
-
-      directory = StringSubstrFix(buffer[0], 0, StringFindR(buffer[0], "\\"));   // Pfadangabe extrahieren
-      //Print("GetTerminalDirectory()   module filename: "+ buffer[0] +"   directory: "+ directory);
-   }
-
-   error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetTerminalDirectory(2)", error);
-      return("");
-   }
-   return(directory);
-}
-
-
-/**
  * Gibt das Handle des Hauptfensters des MetaTrader-Terminals zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
@@ -4502,7 +4467,7 @@ int SendTextMessage(string receiver, string message) {
    string url = StringConcatenate("https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to=", receiver, "&text=", message);
 
    /*
-   string targetDir  = GetTerminalDirectory() +"\\experts\\files\\";
+   string targetDir  = TerminalPath() +"\\experts\\files\\";
    string targetFile = "sms.txt";
    string logFile    = "sms.log";
    string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\" -O \""+targetDir+targetFile+"\" -a \""+targetDir+logFile+"\"";

@@ -427,10 +427,10 @@ int CheckRateGrid() {
  * @return int - Fehlerstatus
  */
 int InitializeRateGrid() {
-   int faktor = MathFloor((Bid+Ask)/2 / gridSize);
+   int cells = MathFloor((Bid+Ask)/2 / gridSize);
 
-   RateGrid.Limits[0] = NormalizeDouble(gridSize *  faktor   , gridDigits);
-   RateGrid.Limits[1] = NormalizeDouble(gridSize * (faktor+1), gridDigits);   // Abstand: 1 x GridSize
+   RateGrid.Limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
+   RateGrid.Limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
 
    // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    bool up, down;
