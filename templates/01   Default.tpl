@@ -1,7 +1,7 @@
 <chart>
 symbol=GBPUSD
 period=60
-leftpos=13621
+leftpos=9229
 digits=5
 scale=1
 graph=1
@@ -18,8 +18,8 @@ shift_size=50
 fixed_pos=750
 window_left=0
 window_top=0
-window_right=1304
-window_bottom=1032
+window_right=1292
+window_bottom=812
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -149,7 +149,7 @@ value_0=0.995
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.155
+object_name=Horizontal Line 1.15'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -171,7 +171,7 @@ value_0=1.160000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.165
+object_name=Horizontal Line 1.16'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -193,7 +193,7 @@ value_0=1.170000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.175
+object_name=Horizontal Line 1.17'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -215,7 +215,7 @@ value_0=1.180000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.185
+object_name=Horizontal Line 1.18'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -237,7 +237,7 @@ value_0=1.190000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.195
+object_name=Horizontal Line 1.19'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -248,7 +248,7 @@ value_0=1.195000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.125
+object_name=Horizontal Line 1.12'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -270,7 +270,7 @@ value_0=1.130000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.135
+object_name=Horizontal Line 1.13'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -292,7 +292,7 @@ value_0=1.140000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.145
+object_name=Horizontal Line 1.14'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -325,7 +325,7 @@ value_0=1.250000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.245
+object_name=Horizontal Line 1.24'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -347,7 +347,7 @@ value_0=1.240000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.235
+object_name=Horizontal Line 1.23'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -369,7 +369,7 @@ value_0=1.230000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.225
+object_name=Horizontal Line 1.22'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -391,7 +391,7 @@ value_0=1.220000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.215
+object_name=Horizontal Line 1.21'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -413,7 +413,7 @@ value_0=1.210000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 1.205
+object_name=Horizontal Line 1.20'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -435,7 +435,7 @@ value_0=1.200000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10622
+object_name=Horizontal Line 1.27'5
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -446,7 +446,7 @@ value_0=1.275000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10639
+object_name=Horizontal Line 1.27
 period_flags=0
 create_time=1273178511
 color=13882323
@@ -457,7 +457,7 @@ value_0=1.270000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10654
+object_name=Horizontal Line 1.26'5
 period_flags=0
 create_time=1273178526
 color=13882323
@@ -468,7 +468,7 @@ value_0=1.265000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10669
+object_name=Horizontal Line 1.26
 period_flags=0
 create_time=1273178541
 color=13882323
@@ -479,7 +479,7 @@ value_0=1.260000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10680
+object_name=Horizontal Line 1.25'5
 period_flags=0
 create_time=1273178552
 color=13882323
@@ -490,7 +490,7 @@ value_0=1.255000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10694
+object_name=Horizontal Line 1.25
 period_flags=0
 create_time=1273178566
 color=13882323
@@ -501,7 +501,7 @@ value_0=1.250000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 32453
+object_name=Horizontal Line 1.11
 period_flags=0
 create_time=1273069253
 color=13882323
@@ -512,7 +512,7 @@ value_0=1.110000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 32489
+object_name=Horizontal Line 1.11'5
 period_flags=0
 create_time=1273069289
 color=13882323
@@ -523,7 +523,7 @@ value_0=1.115000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 32507
+object_name=Horizontal Line 1.12
 period_flags=0
 create_time=1273069307
 color=13882323
@@ -534,7 +534,7 @@ value_0=1.120000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 31080
+object_name=Horizontal Line 1.28
 period_flags=0
 create_time=1273067880
 color=13882323
@@ -545,7 +545,7 @@ value_0=1.280000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 31094
+object_name=Horizontal Line 1.28'5
 period_flags=0
 create_time=1273067894
 color=13882323
@@ -556,7 +556,7 @@ value_0=1.285000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.05'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -567,7 +567,7 @@ value_0=1.055000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.06'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -578,7 +578,7 @@ value_0=1.065000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.04'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -589,7 +589,7 @@ value_0=1.045000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.03'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -600,7 +600,7 @@ value_0=1.035000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.02'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -611,7 +611,7 @@ value_0=1.025000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.01'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -622,7 +622,7 @@ value_0=1.015000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.00'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -633,7 +633,7 @@ value_0=1.005000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.07'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -644,7 +644,7 @@ value_0=1.075000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.08'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -655,7 +655,7 @@ value_0=1.085000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.09'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -666,7 +666,7 @@ value_0=1.095000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.10'5
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -677,7 +677,7 @@ value_0=1.105000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.07
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -688,7 +688,7 @@ value_0=1.070000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.08
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -699,7 +699,7 @@ value_0=1.080000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.09
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -710,7 +710,7 @@ value_0=1.090000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.10
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -721,7 +721,7 @@ value_0=1.100000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.00
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -732,7 +732,7 @@ value_0=1.000000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.01
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -743,7 +743,7 @@ value_0=1.010000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.02
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -754,7 +754,7 @@ value_0=1.020000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.03
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -765,7 +765,7 @@ value_0=1.030000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.04
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -776,7 +776,7 @@ value_0=1.040000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.05
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -787,7 +787,7 @@ value_0=1.050000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.06
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -798,7 +798,7 @@ value_0=1.060000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10318
+object_name=Horizontal Line 1.45
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -809,7 +809,7 @@ value_0=1.450000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10371
+object_name=Horizontal Line 1.46
 period_flags=0
 create_time=1252403331
 color=13882323
@@ -820,7 +820,7 @@ value_0=1.460000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 10388
+object_name=Horizontal Line 1.45'5
 period_flags=0
 create_time=1252403348
 color=13882323
@@ -831,7 +831,7 @@ value_0=1.455000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 133
+object_name=Horizontal Line 1.60'5
 period_flags=0
 create_time=1246953605
 color=13882323
@@ -842,7 +842,7 @@ value_0=1.605000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 15536
+object_name=Horizontal Line 1.57'5
 period_flags=0
 create_time=1255357616
 color=13882323
@@ -853,7 +853,7 @@ value_0=1.575000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 15575
+object_name=Horizontal Line 1.57
 period_flags=0
 create_time=1255357655
 color=13882323
@@ -864,7 +864,7 @@ value_0=1.570000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 15579
+object_name=Horizontal Line 1.56'5
 period_flags=0
 create_time=1255357659
 color=13882323
@@ -875,7 +875,7 @@ value_0=1.565000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 15585
+object_name=Horizontal Line 1.56
 period_flags=0
 create_time=1255357665
 color=13882323
@@ -886,7 +886,7 @@ value_0=1.560000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16333
+object_name=Horizontal Line 1.60
 period_flags=0
 create_time=1247100877
 color=13882323
@@ -897,7 +897,7 @@ value_0=1.600000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16373
+object_name=Horizontal Line 1.59'5
 period_flags=0
 create_time=1247100917
 color=13882323
@@ -908,7 +908,7 @@ value_0=1.595000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16517
+object_name=Horizontal Line 1.40'5
 period_flags=0
 create_time=1244283013
 color=13882323
@@ -919,7 +919,7 @@ value_0=1.405000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16584
+object_name=Horizontal Line 1.41'5
 period_flags=0
 create_time=1244283080
 color=13882323
@@ -930,7 +930,7 @@ value_0=1.415000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16608
+object_name=Horizontal Line 1.42
 period_flags=0
 create_time=1244283104
 color=13882323
@@ -941,7 +941,7 @@ value_0=1.420000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16622
+object_name=Horizontal Line 1.42'5
 period_flags=0
 create_time=1244283118
 color=13882323
@@ -952,7 +952,7 @@ value_0=1.425000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16667
+object_name=Horizontal Line 1.43
 period_flags=0
 create_time=1244283163
 color=13882323
@@ -963,7 +963,7 @@ value_0=1.430000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 16724
+object_name=Horizontal Line 1.43'5
 period_flags=0
 create_time=1244283220
 color=13882323
@@ -974,7 +974,7 @@ value_0=1.435000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 18056
+object_name=Horizontal Line 1.40
 period_flags=0
 create_time=1245660808
 color=13882323
@@ -985,7 +985,7 @@ value_0=1.400000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 18353
+object_name=Horizontal Line 1.39
 period_flags=0
 create_time=1245661105
 color=13882323
@@ -996,7 +996,7 @@ value_0=1.390000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 19472
+object_name=Horizontal Line 1.65
 period_flags=0
 create_time=1245662224
 color=13882323
@@ -1007,7 +1007,7 @@ value_0=1.650000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 19486
+object_name=Horizontal Line 1.64'5
 period_flags=0
 create_time=1245662238
 color=13882323
@@ -1018,7 +1018,7 @@ value_0=1.645000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24076
+object_name=Horizontal Line 1.39'5
 period_flags=0
 create_time=1243438604
 color=13882323
@@ -1029,7 +1029,7 @@ value_0=1.395000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24834
+object_name=Horizontal Line 1.50'5
 period_flags=0
 create_time=1256153346
 color=13882323
@@ -1040,7 +1040,7 @@ value_0=1.505000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24838
+object_name=Horizontal Line 1.51
 period_flags=0
 create_time=1256153350
 color=13882323
@@ -1051,7 +1051,7 @@ value_0=1.510000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24843
+object_name=Horizontal Line 1.51'5
 period_flags=0
 create_time=1256153355
 color=13882323
@@ -1062,7 +1062,7 @@ value_0=1.515000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24845
+object_name=Horizontal Line 1.52
 period_flags=0
 create_time=1256153357
 color=13882323
@@ -1073,7 +1073,7 @@ value_0=1.520000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 24848
+object_name=Horizontal Line 1.52'5
 period_flags=0
 create_time=1256153360
 color=13882323
@@ -1084,7 +1084,7 @@ value_0=1.525000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 30968
+object_name=Horizontal Line 1.65'5
 period_flags=0
 create_time=1245673720
 color=13882323
@@ -1095,7 +1095,7 @@ value_0=1.655000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 30991
+object_name=Horizontal Line 1.64
 period_flags=0
 create_time=1245673743
 color=13882323
@@ -1106,7 +1106,7 @@ value_0=1.640000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 3261
+object_name=Horizontal Line 1.69'5
 period_flags=0
 create_time=1249316029
 color=13882323
@@ -1117,7 +1117,7 @@ value_0=1.695000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 3275
+object_name=Horizontal Line 1.70
 period_flags=0
 create_time=1249316043
 color=13882323
@@ -1128,7 +1128,7 @@ value_0=1.700000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 33582
+object_name=Horizontal Line 1.63'5
 period_flags=0
 create_time=1245676334
 color=13882323
@@ -1139,7 +1139,7 @@ value_0=1.635000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 33933
+object_name=Horizontal Line 1.62'5
 period_flags=0
 create_time=1245742221
 color=13882323
@@ -1150,7 +1150,7 @@ value_0=1.625000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 3504
+object_name=Horizontal Line 1.70'5
 period_flags=0
 create_time=1249316272
 color=13882323
@@ -1161,7 +1161,7 @@ value_0=1.705000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 3591
+object_name=Horizontal Line 1.44'5
 period_flags=0
 create_time=1249316359
 color=13882323
@@ -1172,7 +1172,7 @@ value_0=1.445000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 36859
+object_name=Horizontal Line 1.62
 period_flags=0
 create_time=1245745147
 color=13882323
@@ -1183,7 +1183,7 @@ value_0=1.620000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 37
+object_name=Horizontal Line 1.61'5
 period_flags=0
 create_time=1246953509
 color=13882323
@@ -1194,7 +1194,7 @@ value_0=1.615000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 39831
+object_name=Horizontal Line 1.71
 period_flags=0
 create_time=1253612439
 color=13882323
@@ -1205,7 +1205,7 @@ value_0=1.710000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 39877
+object_name=Horizontal Line 1.71'5
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -1216,7 +1216,7 @@ value_0=1.715000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 39879
+object_name=Horizontal Line 1.72
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -1227,7 +1227,7 @@ value_0=1.720000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 39881
+object_name=Horizontal Line 1.72'5
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -1238,7 +1238,7 @@ value_0=1.725000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 39884
+object_name=Horizontal Line 1.73
 period_flags=0
 create_time=1253612492
 color=13882323
@@ -1249,7 +1249,7 @@ value_0=1.730000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 41649
+object_name=Horizontal Line 1.68'5
 period_flags=0
 create_time=1249288881
 color=13882323
@@ -1260,7 +1260,7 @@ value_0=1.685000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 4241
+object_name=Horizontal Line 1.66
 period_flags=0
 create_time=1245843601
 color=13882323
@@ -1271,7 +1271,7 @@ value_0=1.660000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 4293
+object_name=Horizontal Line 1.66'5
 period_flags=0
 create_time=1245843653
 color=13882323
@@ -1282,7 +1282,7 @@ value_0=1.665000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 43849
+object_name=Horizontal Line 1.63
 period_flags=0
 create_time=1245686601
 color=13882323
@@ -1293,7 +1293,7 @@ value_0=1.630000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 44563
+object_name=Horizontal Line 1.69
 period_flags=0
 create_time=1249291795
 color=13882323
@@ -1304,7 +1304,7 @@ value_0=1.690000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46201
+object_name=Horizontal Line 1.41
 period_flags=0
 create_time=1244574841
 color=13882323
@@ -1315,7 +1315,7 @@ value_0=1.410000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46739
+object_name=Horizontal Line 1.38'5
 period_flags=0
 create_time=1243461267
 color=13882323
@@ -1326,7 +1326,7 @@ value_0=1.385000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46758
+object_name=Horizontal Line 1.38
 period_flags=0
 create_time=1243461286
 color=13882323
@@ -1337,7 +1337,7 @@ value_0=1.380000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46771
+object_name=Horizontal Line 1.59
 period_flags=0
 create_time=1253881523
 color=13882323
@@ -1348,7 +1348,7 @@ value_0=1.590000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46817
+object_name=Horizontal Line 1.58'5
 period_flags=0
 create_time=1253881569
 color=13882323
@@ -1359,7 +1359,7 @@ value_0=1.585000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46833
+object_name=Horizontal Line 1.58
 period_flags=0
 create_time=1253881585
 color=13882323
@@ -1370,7 +1370,7 @@ value_0=1.580000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 46940
+object_name=Horizontal Line 1.37'5
 period_flags=0
 create_time=1243461468
 color=13882323
@@ -1381,7 +1381,7 @@ value_0=1.375000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 56295
+object_name=Horizontal Line 1.67
 period_flags=0
 create_time=1246354407
 color=13882323
@@ -1392,7 +1392,7 @@ value_0=1.670000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 56318
+object_name=Horizontal Line 1.67'5
 period_flags=0
 create_time=1246354430
 color=13882323
@@ -1403,7 +1403,7 @@ value_0=1.675000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5878
+object_name=Horizontal Line 1.46'5
 period_flags=0
 create_time=1252660982
 color=13882323
@@ -1414,7 +1414,7 @@ value_0=1.465000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5901
+object_name=Horizontal Line 1.47
 period_flags=0
 create_time=1252661005
 color=13882323
@@ -1425,7 +1425,7 @@ value_0=1.470000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5904
+object_name=Horizontal Line 1.47'5
 period_flags=0
 create_time=1252661008
 color=13882323
@@ -1436,7 +1436,7 @@ value_0=1.475000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5906
+object_name=Horizontal Line 1.48
 period_flags=0
 create_time=1252661010
 color=13882323
@@ -1447,7 +1447,7 @@ value_0=1.480000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5939
+object_name=Horizontal Line 1.48'5
 period_flags=0
 create_time=1252661043
 color=13882323
@@ -1458,7 +1458,7 @@ value_0=1.485000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5941
+object_name=Horizontal Line 1.49
 period_flags=0
 create_time=1252661045
 color=13882323
@@ -1469,7 +1469,7 @@ value_0=1.490000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5943
+object_name=Horizontal Line 1.49'5
 period_flags=0
 create_time=1252661047
 color=13882323
@@ -1480,7 +1480,7 @@ value_0=1.495000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 5945
+object_name=Horizontal Line 1.50
 period_flags=0
 create_time=1252661049
 color=13882323
@@ -1491,7 +1491,7 @@ value_0=1.500000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 62488
+object_name=Horizontal Line 1.44
 period_flags=0
 create_time=1249309720
 color=13882323
@@ -1502,7 +1502,7 @@ value_0=1.440000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7418
+object_name=Horizontal Line 1.55'5
 period_flags=0
 create_time=1265704186
 color=13882323
@@ -1513,7 +1513,7 @@ value_0=1.555000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7441
+object_name=Horizontal Line 1.55
 period_flags=0
 create_time=1265704209
 color=13882323
@@ -1524,7 +1524,7 @@ value_0=1.550000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7443
+object_name=Horizontal Line 1.54'5
 period_flags=0
 create_time=1265704211
 color=13882323
@@ -1535,7 +1535,7 @@ value_0=1.545000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7444
+object_name=Horizontal Line 1.54
 period_flags=0
 create_time=1265704212
 color=13882323
@@ -1546,7 +1546,7 @@ value_0=1.540000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7506
+object_name=Horizontal Line 1.53'5
 period_flags=0
 create_time=1265704274
 color=13882323
@@ -1557,7 +1557,7 @@ value_0=1.535000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7509
+object_name=Horizontal Line 1.53
 period_flags=0
 create_time=1265704277
 color=13882323
@@ -1568,7 +1568,7 @@ value_0=1.530000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7663
+object_name=Horizontal Line 1.37
 period_flags=0
 create_time=1245912559
 color=13882323
@@ -1579,7 +1579,7 @@ value_0=1.370000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7691
+object_name=Horizontal Line 1.36'5
 period_flags=0
 create_time=1245912587
 color=13882323
@@ -1590,7 +1590,7 @@ value_0=1.365000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7718
+object_name=Horizontal Line 1.36
 period_flags=0
 create_time=1245912614
 color=13882323
@@ -1601,7 +1601,7 @@ value_0=1.360000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7745
+object_name=Horizontal Line 1.35'5
 period_flags=0
 create_time=1245912641
 color=13882323
@@ -1612,7 +1612,7 @@ value_0=1.355000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7780
+object_name=Horizontal Line 1.35
 period_flags=0
 create_time=1245912676
 color=13882323
@@ -1623,7 +1623,7 @@ value_0=1.350000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7816
+object_name=Horizontal Line 1.34'5
 period_flags=0
 create_time=1245912712
 color=13882323
@@ -1634,7 +1634,7 @@ value_0=1.345000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 7975
+object_name=Horizontal Line 1.34
 period_flags=0
 create_time=1245912871
 color=13882323
@@ -1645,7 +1645,7 @@ value_0=1.340000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8012
+object_name=Horizontal Line 1.33'5
 period_flags=0
 create_time=1245912908
 color=13882323
@@ -1656,7 +1656,7 @@ value_0=1.335000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8033
+object_name=Horizontal Line 1.33
 period_flags=0
 create_time=1245912929
 color=13882323
@@ -1667,7 +1667,7 @@ value_0=1.330000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8059
+object_name=Horizontal Line 1.32'5
 period_flags=0
 create_time=1245912955
 color=13882323
@@ -1678,7 +1678,7 @@ value_0=1.325000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8125
+object_name=Horizontal Line 1.32
 period_flags=0
 create_time=1245913021
 color=13882323
@@ -1689,7 +1689,7 @@ value_0=1.320000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8164
+object_name=Horizontal Line 1.31'5
 period_flags=0
 create_time=1245913060
 color=13882323
@@ -1700,7 +1700,7 @@ value_0=1.315000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8188
+object_name=Horizontal Line 1.31
 period_flags=0
 create_time=1245913084
 color=13882323
@@ -1711,7 +1711,7 @@ value_0=1.310000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8205
+object_name=Horizontal Line 1.30'5
 period_flags=0
 create_time=1245913101
 color=13882323
@@ -1722,7 +1722,7 @@ value_0=1.305000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8243
+object_name=Horizontal Line 1.30
 period_flags=0
 create_time=1245913139
 color=13882323
@@ -1733,7 +1733,7 @@ value_0=1.300000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8284
+object_name=Horizontal Line 1.29'5
 period_flags=0
 create_time=1245913180
 color=13882323
@@ -1744,7 +1744,7 @@ value_0=1.295000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 8332
+object_name=Horizontal Line 1.29
 period_flags=0
 create_time=1245913228
 color=13882323
@@ -1755,7 +1755,7 @@ value_0=1.290000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 85
+object_name=Horizontal Line 1.61
 period_flags=0
 create_time=1246953557
 color=13882323
@@ -1766,7 +1766,7 @@ value_0=1.610000
 </object>
 <object>
 type=1
-object_name=Horizontal Line 952
+object_name=Horizontal Line 1.68
 period_flags=0
 create_time=1249248184
 color=13882323
@@ -1817,6 +1817,56 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Pivot Level
+flags=347
+window_num=0
+<inputs>
+PivotType=D
+PivotPeriods=0
+Mark.TradingRanges=1
+</inputs>
+</expert>
+shift_0=0
+draw_0=0
+color_0=255
+style_0=0
+weight_0=0
+shift_1=0
+draw_1=0
+color_1=255
+style_1=0
+weight_1=0
+shift_2=0
+draw_2=0
+color_2=255
+style_2=0
+weight_2=0
+shift_3=0
+draw_3=0
+color_3=32768
+style_3=0
+weight_3=2
+shift_4=0
+draw_4=0
+color_4=16711680
+style_4=0
+weight_4=0
+shift_5=0
+draw_5=0
+color_5=16711680
+style_5=0
+weight_5=0
+shift_6=0
+draw_6=0
+color_6=16711680
+style_6=0
+weight_6=0
+period_flags=0
+show_data=0
+</indicator>
+<indicator>
+name=Custom Indicator
+<expert>
 name=EventTracker
 flags=347
 window_num=0
@@ -1831,4 +1881,3 @@ show_data=0
 </indicator>
 </window>
 </chart>
-
