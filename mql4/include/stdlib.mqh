@@ -89,6 +89,7 @@
 
    string   GetDayOfWeek(datetime time, bool format);
    string   GetServerTimezone();
+   datetime TimeGMT();
 
    // Eventlistener
    bool     EventListener(int event, int& results[], int flags);

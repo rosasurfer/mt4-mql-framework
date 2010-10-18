@@ -13,6 +13,49 @@ int last_library_error = ERR_NO_ERROR;
 
 
 /**
+ * Gibt die aktuelle Zeit in GMT (Greenwich Mean Time) zurück (entspricht UTC).
+ *
+ * @return datetime
+ */
+datetime TimeGMT() {
+   int SYSTEMTIME[4];
+   /**
+    *   typedef struct _SYSTEMTIME {   // see Win32-API
+    *       WORD wYear;
+    *       WORD wMonth;
+    *       WORD wDayOfWeek;
+    *       WORD wDay;
+    *       WORD wHour;
+    *       WORD wMinute;
+    *       WORD wSecond;
+    *       WORD wMilliseconds;
+    *   } SYSTEMTIME;
+    */
+   GetSystemTime(SYSTEMTIME);
+
+   int nYear     = SYSTEMTIME[0] & 0x0000FFFF;
+   int nMonth    = SYSTEMTIME[0] >> 16;
+   int nDay      = SYSTEMTIME[1] >> 16;
+   int nHour     = SYSTEMTIME[2] & 0x0000FFFF;
+   int nMin      = SYSTEMTIME[2] >> 16;
+   int nSec      = SYSTEMTIME[3] & 0x0000FFFF;
+   int nMilliSec = SYSTEMTIME[3] >> 16;
+
+   string strTime = StringConcatenate(nYear, ".", nMonth, ".", nDay, " ", nHour, ":", nMin, ":", nSec);
+   datetime time  = StrToTime(strTime);
+
+   //Print("TimeGMT()   strTime="+ strTime);
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) {
+      last_library_error = catch("TimeGMT()", error);
+      return(-1);
+   }
+   return(time);
+}
+
+
+/**
  * Inlinded conditional statement für Strings.
  *
  * @param  bool   condition
@@ -1005,12 +1048,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    if (accountNumber[0] == 0) {                             // 1. Aufruf
       accountNumber[0]   = account;
-      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset();
+      accountInitTime[0] = TimeGMT();
       //Print("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
    else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
-      accountInitTime[0] = TimeLocal() - GetLocalToGmtOffset();
+      accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
       ArrayResize(knownPositions, 0);
       //Print("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
@@ -1256,14 +1299,14 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
    if (accountData[1] == 0) {                      // 1. Lib-Aufruf
       accountData[0] = 0;
       accountData[1] = account;
-      accountData[2] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset());
-      Print("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      accountData[2] = GmtToServerTime(TimeGMT());
+      //Print("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
    else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
       accountData[0] = accountData[1];
       accountData[1] = account;
-      accountData[2] = GmtToServerTime(TimeLocal() - GetLocalToGmtOffset());
-      Print("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      accountData[2] = GmtToServerTime(TimeGMT());
+      //Print("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
       if (ArraySize(results) != 3)
          ArrayResize(results, 3);
@@ -1271,6 +1314,7 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
       ArrayCopy(results, accountData);
       eventStatus = true;
    }
+   //Print("EventListener.AccountChange()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
