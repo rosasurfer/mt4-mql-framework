@@ -45,7 +45,7 @@ datetime TimeGMT() {
    string strTime = StringConcatenate(nYear, ".", nMonth, ".", nDay, " ", nHour, ":", nMin, ":", nSec);
    datetime time  = StrToTime(strTime);
 
-   //Print("TimeGMT()   strTime="+ strTime);
+   //Print("TimeGMT()   strTime="+ strTime +"    StrToTime(strTime)="+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
