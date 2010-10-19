@@ -131,8 +131,12 @@
    string   FormatNumber(double number, string mask);
 
    // Strings
+   bool     StringStartsWith(string object, string prefix);
+   bool     StringIStartsWith(string object, string prefix);
    bool     StringContains(string object, string substring);
    bool     StringIContains(string object, string substring);
+   bool     StringEndsWith(string object, string postfix);
+   bool     StringIEndsWith(string object, string postfix);
    int      StringFindR(string object, string search);
    bool     StringICompare(string string1, string string2);
    bool     StringIsDigit(string value);

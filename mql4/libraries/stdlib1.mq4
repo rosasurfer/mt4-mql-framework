@@ -18,30 +18,18 @@ int last_library_error = ERR_NO_ERROR;
  * @return datetime
  */
 datetime TimeGMT() {
-
-   // typedef struct _SYSTEMTIME {   // see Win32-API
-   //     WORD wYear;
-   //     WORD wMonth;
-   //     WORD wDayOfWeek;
-   //     WORD wDay;
-   //     WORD wHour;
-   //     WORD wMinute;
-   //     WORD wSecond;
-   //     WORD wMilliseconds;
-   // } SYSTEMTIME;
-
-   /*struct*/ int SYSTEMTIME[4];
-
+   int SYSTEMTIME[4];
    GetSystemTime(SYSTEMTIME);
-
-   int nYear     = SYSTEMTIME[0] &  0x0000FFFF;
-   int nMonth    = SYSTEMTIME[0] >> 16;
-   int nDay      = SYSTEMTIME[1] >> 16;
-   int nHour     = SYSTEMTIME[2] &  0x0000FFFF;
-   int nMin      = SYSTEMTIME[2] >> 16;
-   int nSec      = SYSTEMTIME[3] &  0x0000FFFF;
-   int nMilliSec = SYSTEMTIME[3] >> 16;
-
+                                                      // typedef struct _SYSTEMTIME {   // see Win32-API
+   int nYear     = SYSTEMTIME[0] &  0x0000FFFF;       //     WORD wYear;
+   int nMonth    = SYSTEMTIME[0] >> 16;               //     WORD wMonth;
+   int nDoW      = SYSTEMTIME[1] &  0x0000FFFF;       //     WORD wDayOfWeek;
+   int nDay      = SYSTEMTIME[1] >> 16;               //     WORD wDay;
+   int nHour     = SYSTEMTIME[2] &  0x0000FFFF;       //     WORD wHour;
+   int nMin      = SYSTEMTIME[2] >> 16;               //     WORD wMinute;
+   int nSec      = SYSTEMTIME[3] &  0x0000FFFF;       //     WORD wSecond;
+   int nMilliSec = SYSTEMTIME[3] >> 16;               //     WORD wMilliseconds;
+                                                      // } SYSTEMTIME;
    string strTime = StringConcatenate(nYear, ".", nMonth, ".", nDay, " ", nHour, ":", nMin, ":", nSec);
    datetime time  = StrToTime(strTime);
 
@@ -124,6 +112,62 @@ int CountDecimals(double number) {
 
 
 /**
+ * Ob ein String mit einem angegebenen Substring beginnt. Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param  string object - zu prüfender String
+ * @param  string prefix - Substring
+ *
+ * @return bool
+ */
+bool StringStartsWith(string object, string prefix) {
+   return(StringLeft(object, StringLen(prefix)) == prefix);
+}
+
+
+/**
+ * Ob ein String mit einem angegebenen Substring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string object - zu prüfender String
+ * @param  string prefix - Substring
+ *
+ * @return bool
+ */
+bool StringIStartsWith(string object, string prefix) {
+   object = StringToLower(object);
+   prefix = StringToLower(prefix);
+   return(StringLeft(object, StringLen(prefix)) == prefix);
+}
+
+
+/**
+ * Ob ein String mit einem angegebenen Substring endet. Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param  string object  - zu prüfender String
+ * @param  string postfix - Substring
+ *
+ * @return bool
+ */
+bool StringEndsWith(string object, string postfix) {
+   return(StringRight(object, StringLen(postfix)) == postfix);
+}
+
+
+/**
+ * Ob ein String mit einem angegebenen Substring endet. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string object  - zu prüfender String
+ * @param  string postfix - Substring
+ *
+ * @return bool
+ */
+bool StringIEndsWith(string object, string postfix) {
+   object  = StringToLower(object);
+   postfix = StringToLower(postfix);
+   return(StringRight(object, StringLen(postfix)) == postfix);
+}
+
+
+/**
  * If N is positive StringLeft() returns the leftmost N characters of the string,
  * e.g.  StringLeft("ABCDEFG",  2)  =>  "AB".
  *
@@ -136,8 +180,8 @@ int CountDecimals(double number) {
  * @return string
  */
 string StringLeft(string value, int n) {
-   if (n > 0) return(StringSubstr(value, 0, n));
-   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
+   if      (n > 0) return(StringSubstr(value, 0, n));
+   else if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
 }
 
@@ -155,8 +199,8 @@ string StringLeft(string value, int n) {
  * @return string
  */
 string StringRight(string value, int n) {
-   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
-   if (n < 0) return(StringSubstr(value, -n));
+   if      (n > 0) return(StringSubstr(value, StringLen(value)-n));
+   else if (n < 0) return(StringSubstr(value, -n));
    return("");
 }
 
@@ -1162,7 +1206,6 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    static int knownPositions[];                                  // bekannte Positionen
           int noOfKnownPositions = ArraySize(knownPositions);
 
-
    if (accountNumber[0] == 0) {
       accountNumber[0] = account;
       //Print("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
@@ -1179,13 +1222,15 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             int error = GetLastError();
             if (error == ERR_NO_ERROR)
                error = ERR_RUNTIME_ERROR;
-            last_library_error = catch("EventListener.PositionClose(1)   error selecting position with ticket #"+ knownPositions[i] +", check your History tab filter settings", error);
+            last_library_error = catch("EventListener.PositionClose(1)   error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
             return(false);
          }
 
          if (OrderCloseTime() > 0) {   // Position geschlossen, in flags angegebene Orderkriterien prüfen
             int  event=1, type=OrderType();
             bool pending = (OrderStopLoss() == OrderClosePrice() || OrderTakeProfit() == OrderClosePrice());
+            if (OrderProfit() < 0) if (StringStartsWith(OrderComment(), "so:"))              // Broker Stopouts (Margin Calls) erkennen und vorerst als pending behandeln
+               pending = true;
 
             if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
             if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )+0;

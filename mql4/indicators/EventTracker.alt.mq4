@@ -154,12 +154,6 @@ int init() {
       WindowRedraw();
    }
 
-   bool defaultValue = false;
-   
-   string strDefault = StringConcatenate("", defaultValue);
-   
-   Print("init()    strDefault="+ strDefault);
-
    return(catch("init(6)"));
 }
 
@@ -383,8 +377,8 @@ int CheckRateGrid() {
          PlaySound(Sound.File.Up);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ instrument +".RateChange.Limit", RateGrid.Limits[1]);
-      GlobalVariableSet("EventTracker."+ instrument +".RateChange.Time" , ServerToGMT(TimeCurrent()));
+      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastSignal", RateGrid.Limits[1]);
+      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Ask > RateGrid.Limits[1]) {
@@ -411,8 +405,8 @@ int CheckRateGrid() {
          PlaySound(Sound.File.Down);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ instrument +".RateChange.Limit", RateGrid.Limits[0]);
-      GlobalVariableSet("EventTracker."+ instrument +".RateChange.Time" , ServerToGMT(TimeCurrent()));
+      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastSignal", RateGrid.Limits[0]);
+      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Bid < RateGrid.Limits[0]) {
