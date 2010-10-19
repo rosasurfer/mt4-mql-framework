@@ -432,33 +432,67 @@ int InitializeRateGrid() {
    RateGrid.Limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
    RateGrid.Limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
 
-   // letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    bool up, down;
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
 
-   while (!up && !down) {
-      for (int bar=0; bar <= Bars-1; bar++) {                                 // TODO: Verwendung von Bars reicht nicht aus, da Ask ignoriert wird
-         down = (iLow (NULL, period, bar) < RateGrid.Limits[0]);
-         up   = (iHigh(NULL, period, bar) > RateGrid.Limits[1]);
+   // wenn vorhanden, letztes Signal auslesen
+   string varLastSignalValue = "EventTracker."+ instrument +".RateGrid.LastSignal", 
+          varLastSignalTime  = "EventTracker."+ instrument +".RateGrid.LastTime";
 
-         int error = GetLastError();
+   bool     lastSignal;
+   double   lastSignalValue = GlobalVariableGet(varLastSignalValue);
+   datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime );
+   int      lastSignalBar   = -1;
+
+   int error = GetLastError();
+   if (error != ERR_NO_ERROR) if (error != ERR_GLOBAL_VARIABLE_NOT_FOUND)
+      return(catch("InitializeRateGrid(1)", error));
+
+   if (lastSignalValue > 0) if (lastSignalTime > 0) {
+      lastSignal     = true;
+      lastSignalTime = GmtToServerTime(lastSignalTime);
+   }
+
+   // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
+   while (!up && !down) {
+      if (lastSignal) {
+         lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
+         if (lastSignalBar == EMPTY_VALUE) {
+            if (GetLastLibraryError() == ERR_HISTORY_WILL_UPDATED)
+               return(ERR_HISTORY_WILL_UPDATED);
+            return(ERR_RUNTIME_ERROR);
+         }
+      }
+      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +"    lastSignalBar="+ lastSignalBar);
+      
+      for (int bar=0; bar <= Bars-1; bar++) {
+         if (bar == lastSignalBar) {
+            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= RateGrid.Limits[0]);
+            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= RateGrid.Limits[1]);
+         }
+         else {
+            down = (iLow (NULL, period, bar) <= RateGrid.Limits[0]);
+            up   = (iHigh(NULL, period, bar) >= RateGrid.Limits[1]);
+         }
+
+         error = GetLastError();
          if (error == ERR_HISTORY_WILL_UPDATED) return(error);
-         if (error != ERR_NO_ERROR            ) return(catch("InitializeRateGrid(1)", error));
+         if (error != ERR_NO_ERROR            ) return(catch("InitializeRateGrid(2)", error));
 
          if (up || down)
             break;
       }
+      if (!up && !down)                                                       // Grid ist zu groß: Limite bleiben bei Abstand = 1 x GridSize
+         break;   
 
       if (up && down) {                                                       // Bar hat beide Limite berührt
+         //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits");
          if (period == PERIOD_M1)
             break;
          period = DecreasePeriod(period);                                     // Timeframe verringern
-         up   = false;
-         down = false;
+         up = false; down = false;
       }
-      else if (!up && !down) {
-         return(catch("InitializeRateGrid(2)   error initializing rate grid limits", ERR_RUNTIME_ERROR));
-      }
+      //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit: "+ DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
    if (down) RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[0] - gridSize, gridDigits);
    if (up  ) RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[1] + gridSize, gridDigits);

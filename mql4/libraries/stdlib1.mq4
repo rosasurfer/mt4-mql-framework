@@ -4136,7 +4136,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
 
 
 /**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die vorherige existierende Bar zurück.
+ * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
  *
  * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
  * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
@@ -4150,20 +4150,17 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                                    // MQL: NULL ist ein Integer
+   if (symbol == "0")            // MQL: NULL ist ein Integer
       symbol = Symbol();
 
-   int bar = iBarShift(symbol, timeframe, time, false);  // evt. ERR_HISTORY_WILL_UPDATED (evt. nur bei exact=TRUE ????)
-
-   if (time < Time[Bars-1])                              // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
-      bar = -1;
+   if (time < Time[Bars-1]) int bar = -1;                                           // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
+   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_WILL_UPDATED (auch bei exact=FALSE)
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
       last_library_error = error;
-      if (error != ERR_HISTORY_WILL_UPDATED) catch("iBarShiftPrevious()", error);
-      else
-         Alert("INFO:   "+ Symbol() +"   "+ WindowExpertName() +"::iBarShiftPrevious()   iBarShift(exact=FALSE) kann sehr wohl ERR_HISTORY_WILL_UPDATED auslösen");
+      if (error != ERR_HISTORY_WILL_UPDATED)
+         catch("iBarShiftPrevious()", error);
       return(EMPTY_VALUE);
    }
    return(bar);
