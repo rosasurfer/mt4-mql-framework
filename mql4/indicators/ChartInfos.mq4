@@ -566,7 +566,6 @@ int UpdatePositionLabel() {
          break;
 
       if (OrderSymbol() == Symbol()) {
-         inMarket = true;
          if      (OrderType() == OP_BUY ) long  += OrderLots();
          else if (OrderType() == OP_SELL) short += OrderLots();
       }
@@ -574,6 +573,7 @@ int UpdatePositionLabel() {
    long     = NormalizeDouble(long , 8);        // Floating-Point-Fehler bereinigen
    short    = NormalizeDouble(short, 8);
    position = NormalizeDouble(long - short, 8);
+   inMarket = (long > 0 || short > 0);
    
    if      (!inMarket)     string strPosition = " ";
    else if (position == 0)        strPosition = StringConcatenate("Position:  ±", FormatNumber(long, ".+"), " Lot (fully hedged)");
