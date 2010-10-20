@@ -482,6 +482,9 @@ int CreatePerformanceDisplay() {
  * Aktualisiert das Kurslabel.
  */
 int UpdatePriceLabel() {
+   if (Bid==0 || Ask==0)               // bei Start oder Accountwechsel
+      return(0);
+
    double price = (Bid + Ask) / 2;
 
    if (Digits==3 || Digits==5) string strPrice = FormatNumber(price, StringConcatenate(", .", Digits-1, "'"));
@@ -505,6 +508,10 @@ int UpdateSpreadLabel() {
 
    int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
+   int error = GetLastError();
+   if (error == ERR_UNKNOWN_SYMBOL)    // bei Start oder Accountwechsel
+      return(ERR_NO_ERROR);
+
    if (Spread.Including.Commission) if (AccountNumber() == {account-no})
       spread += 8;
 
@@ -513,7 +520,7 @@ int UpdateSpreadLabel() {
 
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
       return(ERR_NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
