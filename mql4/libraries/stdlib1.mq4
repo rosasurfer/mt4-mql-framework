@@ -1329,38 +1329,40 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ * Beim Start des Terminals und während eines Accountwechsels treten in der Initialiserungsphase "Ticks" mit AccountNumber() == 0 auf. Diese fehlerhaften Aufrufe des Terminals
+ * werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int& results[] - eventspezifische Detailinfos: { 0=>last_account_number, 1=>current_account_number, 2=>current_account_init_servertime }
+ * @param  int& results[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
  * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
 bool EventListener.AccountChange(int& results[], int flags=0) {
+   static int accountData[3];                         // { last_account_number, current_account_number, current_account_init_servertime }
+
    bool eventStatus = false;
+   int  account = AccountNumber();
 
-   int account = AccountNumber();
-
-   static int accountData[3];       // { last_account_number, current_account_number, current_account_init_servertime }
-
-   if (accountData[1] == 0) {                      // 1. Lib-Aufruf
-      accountData[0] = 0;
-      accountData[1] = account;
-      accountData[2] = GmtToServerTime(TimeGMT());
-      //Print("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-   }
-   else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
-      accountData[0] = accountData[1];
-      accountData[1] = account;
-      accountData[2] = GmtToServerTime(TimeGMT());
-      //Print("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-
-      if (ArraySize(results) != 3)
-         ArrayResize(results, 3);
-
-      ArrayCopy(results, accountData);
-      eventStatus = true;
+   if (account != 0) {                                // AccountNumber() == 0 ignorieren
+      if (accountData[1] == 0) {                      // 1. Lib-Aufruf
+         accountData[0] = 0;
+         accountData[1] = account;
+         accountData[2] = GmtToServerTime(TimeGMT());
+         //Print("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      }
+      else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
+         accountData[0] = accountData[1];
+         accountData[1] = account;
+         accountData[2] = GmtToServerTime(TimeGMT());
+         //Print("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+         eventStatus = true;
+      }
    }
    //Print("EventListener.AccountChange()   eventStatus: "+ eventStatus);
+
+   if (ArraySize(results) != 3)
+      ArrayResize(results, 3);
+   ArrayCopy(results, accountData);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {

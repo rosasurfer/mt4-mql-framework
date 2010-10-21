@@ -172,6 +172,9 @@ int start() {
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
+   int  account = AccountNumber();
+   if (account == 0)
+      return(ERR_NO_CONNECTION);
 
    // aktuelle Accountdaten holen
    static int accountData[3];                               // { last_account_number, current_account_number, current_account_init_servertime }
@@ -183,6 +186,7 @@ int start() {
       //Print("start()   Account "+ accountData[1] +"    alter Tick="+ FormatNumber(Close[0], ".4'"));
       return(catch("start(1)"));
    }
+   //Print("start()   Account "+ accountData[1] +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    neuer Tick="+ FormatNumber(Close[0], ".4'"));
 
 
    // Positionen
@@ -427,16 +431,19 @@ int CheckRateGrid() {
  * @return int - Fehlerstatus
  */
 int InitializeRateGrid() {
+   Print("InitializeRateGrid()   bars="+ Bars +"    processedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
+
    int cells = MathFloor((Bid+Ask)/2 / gridSize);
 
    RateGrid.Limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
    RateGrid.Limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
+   Print("InitializeRateGrid()   grid cells initialized: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
 
    bool up, down;
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
 
    // wenn vorhanden, letztes Signal auslesen
-   string varLastSignalValue = "EventTracker."+ instrument +".RateGrid.LastSignal", 
+   string varLastSignalValue = "EventTracker."+ instrument +".RateGrid.LastSignal",
           varLastSignalTime  = "EventTracker."+ instrument +".RateGrid.LastTime";
 
    bool     lastSignal;
@@ -451,6 +458,7 @@ int InitializeRateGrid() {
    if (lastSignalValue > 0) if (lastSignalTime > 0) {
       lastSignal     = true;
       lastSignalTime = GmtToServerTime(lastSignalTime);
+      Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at "+ TimeToStr(lastSignalTime));
    }
 
    // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
@@ -463,8 +471,8 @@ int InitializeRateGrid() {
             return(ERR_RUNTIME_ERROR);
          }
       }
-      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +"    lastSignalBar="+ lastSignalBar);
-      
+      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +"    lastSignalBar="+ lastSignalBar);
+
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
             down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= RateGrid.Limits[0]);
@@ -479,21 +487,26 @@ int InitializeRateGrid() {
          if (error == ERR_HISTORY_WILL_UPDATED) return(error);
          if (error != ERR_NO_ERROR            ) return(catch("InitializeRateGrid(2)", error));
 
-         if (up || down)
+         if (up || down) {
+            Print("InitializeRateGrid()    last signal found in timeframe "+ GetPeriodDescription(period) +" at bar="+ bar);
             break;
+         }
       }
       if (!up && !down)                                                       // Grid ist zu groß: Limite bleiben bei Abstand = 1 x GridSize
-         break;   
+         break;
 
       if (up && down) {                                                       // Bar hat beide Limite berührt
-         //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits");
          if (period == PERIOD_M1)
             break;
+         Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits, decreasing timeframe");
          period = DecreasePeriod(period);                                     // Timeframe verringern
          up = false; down = false;
       }
-      //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit: "+ DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
+   if      ( up &&  down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits");
+   else if (!up || !down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit");
+   else                   Print("InitializeRateGrid()    no bar ever touched a limit");
+
    if (down) RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[0] - gridSize, gridDigits);
    if (up  ) RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[1] + gridSize, gridDigits);
 
