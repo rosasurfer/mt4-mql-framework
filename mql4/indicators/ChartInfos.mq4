@@ -7,7 +7,6 @@
  * - unten Mitte:    die Größe einer Handels-Unit
  * - unten Mitte:    die im Moment gehaltene Position
  */
-// - unten rechts:   die normalisierte Handelsperformance der letzten Wochen
 
 #include <stdlib.mqh>
 
@@ -21,8 +20,8 @@ int  init_error = ERR_NO_ERROR;
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool Show.Spread                 = false;      // ob der Spread angezeigt wird (default: ja)
-extern bool Spread.Including.Commission = false;      // ob der Spread inklusive einer evt. Kommission angezeigt werden soll
+extern bool Show.Spread                 = false;         // ob der Spread angezeigt wird (default: ja)
+extern bool Spread.Including.Commission = false;         // ob der Spread inklusive einer evt. Commission angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +31,6 @@ string labels[];
 
 bool Show.UnitSize           = false;
 bool Show.Position           = false;
-bool Show.PerformanceDisplay = false;
 
 
 /**
@@ -58,7 +56,6 @@ int init() {
    equityLabel      = StringConcatenate(WindowExpertName(), ".Equity"     );
    unitSizeLabel    = StringConcatenate(WindowExpertName(), ".UnitSize"   );
    positionLabel    = StringConcatenate(WindowExpertName(), ".Position"   );
-   performanceLabel = StringConcatenate(WindowExpertName(), ".Performance");
 
    // TODO: UnitSize und Position bei Indizes, Aktien etc. ausblenden
    Show.UnitSize = true;
@@ -70,7 +67,6 @@ int init() {
    CreateSpreadLabel();
    CreateUnitSizeLabel();
    CreatePositionLabel();
-   CreatePerformanceDisplay();
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -100,7 +96,6 @@ int start() {
    UpdateSpreadLabel();
    UpdateUnitSizeLabel();
    UpdatePositionLabel();
-   UpdatePerformanceDisplay();
    return(catch("start()"));
 }
 
@@ -223,262 +218,6 @@ int CreatePositionLabel() {
 
 
 /**
- * Erzeugt das Performance-Display.
- */
-int CreatePerformanceDisplay() {
-   if (!Show.PerformanceDisplay)
-      return(0);
-
-   int xCoord = 250;
-   int yCoord = 150;
-
-   color backgroundColor  = C'212,208,200';  // DarkKhaki | Lavender | 213,208,159
-   color frameBrightColor = White;           // SlateGray | 90,104,116
-   color frameDarkColor   = C'128,128,128';  // SlateGray | 90,104,116
-   color frameDarkerColor = C'64,64,64';     // SlateGray | 90,104,116
-   color fontColor        = Black;           // SlateGray | 90,104,116
-
-   string label;
-   int lc;
-
-   // 1. Anfasser (groß, fängt den Maus-Fokus)
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_0", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xCoord-3);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-7);
-      ObjectSetText(label, "y", 20, "Wingdings 3", frameDarkerColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   // Background
-   int xOffsets[4];
-   xOffsets[0] = xCoord + 0*53;
-   xOffsets[1] = xCoord + 1*53;
-   xOffsets[2] = xCoord + 2*53;
-   xOffsets[3] = xCoord + 3*53;
-
-   for (int i=0; i < ArraySize(xOffsets); i++) {
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_a", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[i]);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-         ObjectSetText(label, "g", 40, "Webdings", backgroundColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-   }
-
-   // Rahmen links
-   int yOffsets[2];
-   yOffsets[0] = yCoord;
-   yOffsets[1] = yCoord+22;
-
-   for (i=0; i < ArraySize(yOffsets); i++) {
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_b", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
-         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-1);
-         ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-   }
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_b", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+40);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
-         ObjectSetText(label, "|", 17, "Webdings", frameBrightColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-
-   // Rahmen oben
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_b", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
-      ObjectSetText(label, "_________", 27, "Courier New", frameBrightColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_b", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord+51);
-      ObjectSetText(label, "_", 27, "Courier New", frameBrightColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   // Rahmen rechts
-   for (i=0; i < ArraySize(yOffsets); i++) {
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_c", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
-         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-2);
-         ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-   }
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_c", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-11);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+28);
-         ObjectSetText(label, "|", 17, "Webdings", frameDarkColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-
-   for (i=0; i < ArraySize(yOffsets); i++) {
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_c", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
-         ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[i]-3);
-         ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-   }
-      lc++;
-      label = StringConcatenate(WindowExpertName(), ".Graphic_c", lc);
-      if (ObjectFind(label) > -1)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]-12);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord+29);
-         ObjectSetText(label, "|", 17, "Webdings", frameDarkerColor);
-         RegisterChartObject(label, labels);
-      }
-      else GetLastError();
-
-   // Rahmen unten
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_d", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "_________", 27, "Courier New", frameDarkColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_d", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+30);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "_", 27, "Courier New", frameDarkColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_d", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
-      ObjectSetText(label, "_________", 27, "Courier New", frameDarkerColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_d", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[3]+31);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-1);
-      ObjectSetText(label, "_", 27, "Courier New", frameDarkerColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   // Text
-   lc++;
-   label = StringConcatenate(WindowExpertName(), ".Graphic_e", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xOffsets[0]+11);
-      ObjectSet(label, OBJPROP_YDISTANCE, yOffsets[1]-3);
-      ObjectSetText(label, "-100     +23     +41     -90     +35", 9, "Tahoma", fontColor);
-      RegisterChartObject(label, labels);
-   }
-   else GetLastError();
-
-   /*
-   // 2. Anfasser (klein, zur Visualisierung)
-   lc++;
-   label = StringConcatenate(indicatorName, ".Graphic_x", lc);
-   if (ObjectFind(label) > -1)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, xCoord-2);
-      ObjectSet(label, OBJPROP_YDISTANCE, yCoord-3);
-      ObjectSetText(label, "y", 9, "Wingdings 3", frameDarkerColor);
-      RegisterChartObject(label, objects);
-   }
-   else GetLastError();
-   */
-
-   return(catch("CreatePerformanceDisplay()"));
-}
-
-
-/**
  * Aktualisiert das Kurslabel.
  */
 int UpdatePriceLabel() {
@@ -539,11 +278,21 @@ int UpdateUnitSizeLabel() {
    if (StringSubstr(Symbol(), 0, 3) != "USD")
       unitSize /= Close[0];
    
+   //unitSize = 176.6;
+
+   /*
+   if      (unitSize <=  7) {
+   }
+   else if (unitSize <=  20) unitSize = NormalizeDouble(unitSize, 0);                        //   7-20: ganze Zahl (7,8,9,...)
+   else if (unitSize <=  40) unitSize = NormalizeDouble(MathRound(unitSize/ 2) *  2, 0);     //  20-40: gerade Zahl (20,22,24,...)
+   else if (unitSize <=  70) unitSize = NormalizeDouble(MathRound(unitSize/ 5) *  5, 0);     //  40-70: durch 5 teilbare Zahl (40,45,50,...)
+   else if (unitSize <= 200) unitSize = NormalizeDouble(MathRound(unitSize/10) * 10, 0);     // 70-200: durch 10 teilbare Zahl (70,80,90,...)
+   */
+
+
    if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
    else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
    else                     unitSize = NormalizeDouble(unitSize, 0);
-
-   //Print("UpdateUnitSizeLabel()    unitSize="+ FormatNumber(unitSize, ".+"));
 
    string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ".+"), " Lot");
 
@@ -592,16 +341,5 @@ int UpdatePositionLabel() {
    if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
       return(ERR_NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
-}
-
-
-/**
- * Aktualisiert das Performance-Display.
- */
-int UpdatePerformanceDisplay() {
-   if (!Show.PerformanceDisplay)
-      return(0);
-
-   return(catch("UpdatePerformanceDisplay()"));
 }
 
