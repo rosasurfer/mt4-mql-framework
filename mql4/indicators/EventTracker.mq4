@@ -458,14 +458,19 @@ int InitializeRateGrid() {
       return(catch("InitializeRateGrid(1)", error));
 
    if (lastSignalValue > 0) if (lastSignalTime > 0) {
-      lastSignal     = true;
-      lastSignalTime = GmtToServerTime(lastSignalTime);
-      Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at "+ TimeToStr(lastSignalTime));
+      if (lastSignalValue <= limits[0] || lastSignalValue >= limits[1]) {
+         Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" is ignored (not inside of cells)");
+      }
+      else {
+         lastSignal     = true;
+         lastSignalTime = GmtToServerTime(lastSignalTime);
+         Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at ServerTime="+ TimeToStr(lastSignalTime));
+      }
    }
 
    // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    while (!up && !down) {
-      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period));
+      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" and lastSignal="+ lastSignal);
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
@@ -478,7 +483,7 @@ int InitializeRateGrid() {
             return(catch("InitializeRateGrid(2)", error));
          }
       }
-      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +"    lastSignalBar="+ lastSignalBar);
+      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" with lastSignalBar="+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
