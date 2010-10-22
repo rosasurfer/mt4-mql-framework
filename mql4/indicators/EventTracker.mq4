@@ -435,9 +435,11 @@ int InitializeRateGrid() {
 
    int cells = MathFloor((Bid+Ask)/2 / gridSize);
 
-   RateGrid.Limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
-   RateGrid.Limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
-   Print("InitializeRateGrid()   grid cells initialized: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
+   static double limits[2];
+   limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
+   limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
+
+   Print("InitializeRateGrid()   grid cells initialized: ", DoubleToStr(limits[0], gridDigits), "  <=>  ", DoubleToStr(limits[1], gridDigits));
 
    bool up, down;
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
@@ -463,24 +465,26 @@ int InitializeRateGrid() {
 
    // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    while (!up && !down) {
+      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period));
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
-            if (GetLastLibraryError() == ERR_HISTORY_WILL_UPDATED)
-               return(ERR_HISTORY_WILL_UPDATED);
-            return(ERR_RUNTIME_ERROR);
+            error = GetLastLibraryError();
+            if (error == ERR_HISTORY_WILL_UPDATED) return(error);
+            if (error == ERR_NO_ERROR            ) error = ERR_RUNTIME_ERROR;
+            return(catch("InitializeRateGrid(2)", error));
          }
       }
       Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +"    lastSignalBar="+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
-            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= RateGrid.Limits[0]);
-            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= RateGrid.Limits[1]);
+            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= limits[0]);
+            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= limits[1]);
          }
          else {
-            down = (iLow (NULL, period, bar) <= RateGrid.Limits[0]);
-            up   = (iHigh(NULL, period, bar) >= RateGrid.Limits[1]);
+            down = (iLow (NULL, period, bar) <= limits[0]);
+            up   = (iHigh(NULL, period, bar) >= limits[1]);
          }
 
          error = GetLastError();
@@ -507,8 +511,11 @@ int InitializeRateGrid() {
    else if (!up || !down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit");
    else                   Print("InitializeRateGrid()    no bar ever touched a limit");
 
-   if (down) RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[0] - gridSize, gridDigits);
-   if (up  ) RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[1] + gridSize, gridDigits);
+   if (down) limits[0] = NormalizeDouble(limits[0] - gridSize, gridDigits);
+   if (up  ) limits[1] = NormalizeDouble(limits[1] + gridSize, gridDigits);
+
+   RateGrid.Limits[0] = limits[0];
+   RateGrid.Limits[1] = limits[1];
 
    Print("InitializeRateGrid()   Grid initialized: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    return(catch("InitializeRateGrid(3)"));
