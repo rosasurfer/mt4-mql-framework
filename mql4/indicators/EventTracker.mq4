@@ -470,8 +470,11 @@ int InitializeRateGrid() {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
             error = GetLastLibraryError();
-            if (error == ERR_HISTORY_WILL_UPDATED) return(error);
-            if (error == ERR_NO_ERROR            ) error = ERR_RUNTIME_ERROR;
+            if (error == ERR_HISTORY_WILL_UPDATED) {
+               Print("InitializeRateGrid()    timeframe "+ GetPeriodDescription(period) +" in update status");
+               return(error);
+            }
+            if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
             return(catch("InitializeRateGrid(2)", error));
          }
       }
