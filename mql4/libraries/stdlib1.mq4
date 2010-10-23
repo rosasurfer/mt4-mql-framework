@@ -5430,7 +5430,7 @@ int StrToColor(string str) {
    if (str == "moccasin"         ) return(0xB5E4FF);
    if (str == "navajowhite"      ) return(0xADDEFF);
    if (str == "navy"             ) return(0x800000);
-   if (str == "none"             ) return(C'0x00,0x00,0x00');
+   if (str == "none"             ) return(      -1);
    if (str == "oldlace"          ) return(0xE6F5FD);
    if (str == "olive"            ) return(0x008080);
    if (str == "olivedrab"        ) return(0x238E6B);

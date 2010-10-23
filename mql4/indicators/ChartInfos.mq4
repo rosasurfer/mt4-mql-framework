@@ -20,7 +20,6 @@ int  init_error = ERR_NO_ERROR;
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool Show.Spread                 = true;          // ob der Spread angezeigt wird (default: ja)
 extern bool Spread.Including.Commission = false;         // ob der Spread inklusive einer evt. Commission angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,9 +27,6 @@ extern bool Spread.Including.Commission = false;         // ob der Spread inklus
 
 string instrumentLabel, priceLabel, spreadLabel, equityLabel, unitSizeLabel, positionLabel, performanceLabel;
 string labels[];
-
-bool Show.UnitSize = false;
-bool Show.Position = false;
 
 
 /**
@@ -57,11 +53,6 @@ int init() {
    unitSizeLabel    = StringConcatenate(WindowExpertName(), ".UnitSize"   );
    positionLabel    = StringConcatenate(WindowExpertName(), ".Position"   );
 
-   // TODO: UnitSize und Position bei Indizes, Aktien etc. ausblenden
-   Show.UnitSize = true;
-   Show.Position = true;
-   Show.Spread   = true;
-
    CreateInstrumentLabel();
    CreatePriceLabel();
    CreateSpreadLabel();
@@ -73,7 +64,7 @@ int init() {
       start();
       WindowRedraw();
    }
-
+   
    return(catch("init()"));
 }
 
@@ -155,9 +146,6 @@ int CreatePriceLabel() {
  * Erzeugt das Spreadlabel.
  */
 int CreateSpreadLabel() {
-   if (!Show.Spread)
-      return(0);
-
    if (ObjectFind(spreadLabel) > -1)
       ObjectDelete(spreadLabel);
    if (ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0)) {
@@ -177,9 +165,6 @@ int CreateSpreadLabel() {
  * Erzeugt das UnitSize-Label.
  */
 int CreateUnitSizeLabel() {
-   if (!Show.UnitSize)
-      return(0);
-
    if (ObjectFind(unitSizeLabel) > -1)
       ObjectDelete(unitSizeLabel);
    if (ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0)) {
@@ -199,9 +184,6 @@ int CreateUnitSizeLabel() {
  * Erzeugt das Positionlabel.
  */
 int CreatePositionLabel() {
-   if (!Show.Position)
-      return(0);
-
    if (ObjectFind(positionLabel) > -1)
       ObjectDelete(positionLabel);
    if (ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0)) {
@@ -242,9 +224,6 @@ int UpdatePriceLabel() {
  * Aktualisiert das Spreadlabel.
  */
 int UpdateSpreadLabel() {
-   if (!Show.Spread)
-      return(0);
-
    int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
    int error = GetLastError();
@@ -270,19 +249,17 @@ int UpdateSpreadLabel() {
  * Aktualisiert das UnitSize-Label.
  */
 int UpdateUnitSizeLabel() {
-   if (!Show.UnitSize)
-      return(0);
+   bool   tradeAllowed = MarketInfo(Symbol(), MODE_TRADEALLOWED);
+   double tickSize     = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE);
       
+   int error = GetLastError();
+   if (!tradeAllowed || error==ERR_UNKNOWN_SYMBOL)    // bei Start oder Accountwechsel evt. ERR_UNKNOWN_SYMBOL
+      return(ERR_NO_ERROR);
+
    double equity = AccountEquity() - AccountCredit();
    if (equity < 0)
       equity = 0;
-
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-
-   int error = GetLastError();
-   if (error == ERR_UNKNOWN_SYMBOL)       // bei Start oder Accountwechsel
-      return(ERR_NO_ERROR);
 
    if (Bid==0 || tickSize==0 || tickValue==0)
       return(0);
@@ -325,9 +302,6 @@ int UpdateUnitSizeLabel() {
  * Aktualisiert das Position-Label.
  */
 int UpdatePositionLabel() {
-   if (!Show.Position)
-      return(0);
-
    bool   inMarket;
    double long, short, position;
 

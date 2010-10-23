@@ -86,7 +86,7 @@
 #define MODE_TIME                5     // bar open time
 
 
-// Moving average method identifiers, siehe iMA()
+// MA method identifiers, siehe iMA()
 #define MODE_SMA                 0     // simple moving average
 #define MODE_EMA                 1     // exponential moving average
 #define MODE_SMMA                2     // smoothed moving average
@@ -170,6 +170,11 @@
 #define PCM_FOREX                0
 #define PCM_CFD                  1
 #define PCM_FUTURES              2
+
+
+// Account stopout modes, siehe AccountStopoutMode()
+#define ASM_PERCENT              0
+#define ASM_ABSOLUTE             1
 
 
 // Flags zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
@@ -348,7 +353,7 @@ int log(string message="", int error=-1) {
 
    if (error == -1) Print(StringConcatenate(WindowExpertName(), "::", message));
    else             Print(StringConcatenate(WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
-   
+
    return(ERR_NO_ERROR);
 }
 
