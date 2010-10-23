@@ -1801,9 +1801,6 @@ name=ChartInfos
 flags=347
 window_num=0
 <inputs>
-TradeInfo.Symbols=GBPUSD,USDCHF,EURUSD
-Show.Spread=1
-Show.PerformanceDisplay=0
 </inputs>
 </expert>
 shift_0=0

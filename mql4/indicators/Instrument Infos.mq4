@@ -13,12 +13,14 @@
 
 //////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
 
-       string Font.Name        = "Tahoma";
+extern string Font.Name        = "Tahoma";
 extern int    Font.Size        = 9;
-extern color  Font.Color       = Blue;
-extern color  Background.Color = C'212,208,200';   // C'212,208,200'
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+color  Background.Color    = C'212,208,200';   // C'212,208,200'
+color  Font.Color.Active   = Blue;
+color  Font.Color.Inactive = Blue;
 
 
 string names[] = { "TRADEALLOWED","POINT","TICKSIZE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","TICKVALUE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION" };
@@ -55,6 +57,9 @@ string labels[];
  */
 int init() {
    CreateLabels();
+   
+   Print("init()    Black="+ Black +"    None="+ C'0x00,0x00,0x00');
+   
    return(catch("init()"));
 }
 
@@ -128,7 +133,7 @@ int CreateLabels() {
             if (i == POINT || i==SPREAD || i==LOTSIZE || i==MARGINCALCMODE || i==SWAPTYPE || i==PROFITCALCMODE)
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
-         ObjectSetText(label, " ", Font.Size, Font.Name, Font.Color);
+         ObjectSetText(label, " ", Font.Size, Font.Name, Font.Color.Inactive);
          RegisterChartObject(label, labels);
          names[i] = label;
       }
@@ -152,7 +157,10 @@ int UpdateInfos() {
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
 
-   bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED); ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
+   bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED); 
+   color  Font.Color = ifInt(tradeAllowed, Font.Color.Active, Font.Color.Inactive);
+
+                                                                ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
    double point        = Point;                                 ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", DoubleToStr(point, Digits)), Font.Size, Font.Name, Font.Color);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);     ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", DoubleToStr(tickSize, Digits)), Font.Size, Font.Name, Font.Color);
 

@@ -5332,14 +5332,12 @@ string NumberToStr(double n, string mask) {
 
 
 /**
- * Returns the numeric value for an MQL4 color descriptor string
- * Usage:   int x = StrToColor("Aqua")      returns x = 16776960
- * or:      int x = StrToColor("0,255,255") returns x = 16776960
- * i.e.             StrToColor("<red>,<green>,<blue>")
- * or:      int x = StrToColor("0xFFFF00")  returns x = 16776960
- * i.e.             StrToColor("0xbbggrr")
- * or:      int x = StrToColor("r0g255b255")  returns x = 16776960
- * i.e.             StrToColor("r<nnn>g<nnn>b<nnn>")
+ * Returns the numeric value for an MQL4 color descriptor string.
+ *
+ *  Usage: StrToColor("Aqua")       => 16776960
+ *  or:    StrToColor("0,255,255")  => 16776960  i.e. StrToColor("<red>,<green>,<blue>")
+ *  or:    StrToColor("r0g255b255") => 16776960  i.e. StrToColor("r<nnn>g<nnn>b<nnn>")
+ *  or:    StrToColor("0xFFFF00")   => 16776960  i.e. StrToColor("0xbbggrr")
  */
 int StrToColor(string str) {
    str = StringToLower(str);

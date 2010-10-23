@@ -20,7 +20,7 @@ int  init_error = ERR_NO_ERROR;
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool Show.Spread                 = false;         // ob der Spread angezeigt wird (default: ja)
+extern bool Show.Spread                 = true;          // ob der Spread angezeigt wird (default: ja)
 extern bool Spread.Including.Commission = false;         // ob der Spread inklusive einer evt. Commission angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,8 +29,8 @@ extern bool Spread.Including.Commission = false;         // ob der Spread inklus
 string instrumentLabel, priceLabel, spreadLabel, equityLabel, unitSizeLabel, positionLabel, performanceLabel;
 string labels[];
 
-bool Show.UnitSize           = false;
-bool Show.Position           = false;
+bool Show.UnitSize = false;
+bool Show.Position = false;
 
 
 /**
