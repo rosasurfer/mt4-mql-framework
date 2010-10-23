@@ -277,22 +277,23 @@ int UpdateUnitSizeLabel() {
 
    if (StringSubstr(Symbol(), 0, 3) != "USD")
       unitSize /= Close[0];
-   
-   //unitSize = 176.6;
 
-   /*
-   if      (unitSize <=  7) {
-   }
-   else if (unitSize <=  20) unitSize = NormalizeDouble(unitSize, 0);                        //   7-20: ganze Zahl (7,8,9,...)
-   else if (unitSize <=  40) unitSize = NormalizeDouble(MathRound(unitSize/ 2) *  2, 0);     //  20-40: gerade Zahl (20,22,24,...)
-   else if (unitSize <=  70) unitSize = NormalizeDouble(MathRound(unitSize/ 5) *  5, 0);     //  40-70: durch 5 teilbare Zahl (40,45,50,...)
-   else if (unitSize <= 200) unitSize = NormalizeDouble(MathRound(unitSize/10) * 10, 0);     // 70-200: durch 10 teilbare Zahl (70,80,90,...)
-   */
-
-
-   if      (unitSize < 0.9) unitSize = NormalizeDouble(unitSize, 2);
-   else if (unitSize <   9) unitSize = NormalizeDouble(unitSize, 1);
-   else                     unitSize = NormalizeDouble(unitSize, 0);
+   if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001 (0.007,0.008,0.009,...)
+   else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002 (0.02,0.022,0.024,...)
+   else if (unitSize <=    0.07) unitSize = NormalizeDouble(MathRound(unitSize/  0.005) *   0.005, 3);   //  0.04-0.07: Vielfache von   0.005 (0.04,0.045,0.05,...)
+   else if (unitSize <=    0.2 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.01 ) *   0.01 , 2);   //   0.07-0.2: Vielfache von   0.01  (0.07,0.08,0.09,...)
+   else if (unitSize <=    0.4 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.02 ) *   0.02 , 2);   //    0.2-0.4: Vielfache von   0.02  (0.2,0.22,0.24,...)
+   else if (unitSize <=    0.7 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.05 ) *   0.05 , 2);   //    0.4-0.7: Vielfache von   0.05  (0.4,0.45,0.5,...)
+   else if (unitSize <=    2   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfache von   0.1   (0.7,0.8,0.9,...)
+   else if (unitSize <=    4   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfache von   0.2   (2,2.2,2.4,...)
+   else if (unitSize <=    7   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfache von   0.5   (4,4.5,5,...)
+   else if (unitSize <=   20   ) unitSize = NormalizeDouble(MathRound(unitSize/  1    ) *   1    , 0);   //       7-20: Vielfache von   1     (7,8,9,...)
+   else if (unitSize <=   40   ) unitSize = NormalizeDouble(MathRound(unitSize/  2    ) *   2    , 0);   //      20-40: Vielfache von   2     (20,22,24,...)
+   else if (unitSize <=   70   ) unitSize = NormalizeDouble(MathRound(unitSize/  5    ) *   5    , 0);   //      40-70: Vielfache von   5     (40,45,50,...)
+   else if (unitSize <=  200   ) unitSize = NormalizeDouble(MathRound(unitSize/ 10    ) *  10    , 0);   //     70-200: Vielfache von  10     (70,80,90,...)
+   else if (unitSize <=  400   ) unitSize = NormalizeDouble(MathRound(unitSize/ 20    ) *  20    , 0);   //    200-400: Vielfache von  20     (200,220,240,...)
+   else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50     (400,450,500,...)
+   else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100     (700,800,900,...)
 
    string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ".+"), " Lot");
 
@@ -330,7 +331,7 @@ int UpdatePositionLabel() {
    short    = NormalizeDouble(short, 8);
    position = NormalizeDouble(long - short, 8);
    inMarket = (long > 0 || short > 0);
-   
+
    if      (!inMarket)     string strPosition = " ";
    else if (position == 0)        strPosition = StringConcatenate("Position:  ±", FormatNumber(long, ".+"), " Lot (fully hedged)");
    else                           strPosition = StringConcatenate("Position:  " , FormatNumber(position, "+.+"), " Lot");
