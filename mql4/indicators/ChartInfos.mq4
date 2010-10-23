@@ -273,6 +273,10 @@ int UpdateUnitSizeLabel() {
    if (!Show.UnitSize)
       return(0);
       
+   double equity = AccountEquity() - AccountCredit();
+   if (equity < 0)
+      return(0);
+
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
 
@@ -285,9 +289,7 @@ int UpdateUnitSizeLabel() {
 
 
    // AccountEquity wird mit realem Hebel 7 gehebelt (= 7% der Equity mit Hebel 1:100)
-   double equity   = AccountEquity() - AccountCredit();
    double leverage = 7;
-
    double lotValue = Bid / tickSize * tickValue;
    double unitSize = equity * leverage / lotValue;
 
