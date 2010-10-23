@@ -248,7 +248,7 @@ int UpdateSpreadLabel() {
    int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
    int error = GetLastError();
-   if (error == ERR_UNKNOWN_SYMBOL)    // bei Start oder Accountwechsel
+   if (error == ERR_UNKNOWN_SYMBOL)       // bei Start oder Accountwechsel
       return(ERR_NO_ERROR);
 
    if (Spread.Including.Commission) if (AccountNumber() == {account-no})
@@ -272,11 +272,24 @@ int UpdateSpreadLabel() {
 int UpdateUnitSizeLabel() {
    if (!Show.UnitSize)
       return(0);
+      
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
 
-   double unitSize = (AccountEquity()-AccountCredit()) / 1000 * 0.07;   // 7% der Equity
+   int error = GetLastError();
+   if (error == ERR_UNKNOWN_SYMBOL)       // bei Start oder Accountwechsel
+      return(ERR_NO_ERROR);
 
-   if (StringSubstr(Symbol(), 0, 3) != "USD")
-      unitSize /= Close[0];
+   if (Bid==0 || tickSize==0 || tickValue==0)
+      return(0);
+
+
+   // AccountEquity wird mit realem Hebel 7 gehebelt (= 7% der Equity mit Hebel 1:100)
+   double equity   = AccountEquity() - AccountCredit();
+   double leverage = 7;
+
+   double lotValue = Bid / tickSize * tickValue;
+   double unitSize = equity * leverage / lotValue;
 
    if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001 (0.007,0.008,0.009,...)
    else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002 (0.02,0.022,0.024,...)
@@ -295,11 +308,11 @@ int UpdateUnitSizeLabel() {
    else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50     (400,450,500,...)
    else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100     (700,800,900,...)
 
-   string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ".+"), " Lot");
+   string strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ", .+"), " Lot");
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Label::onDrag()
       return(ERR_NO_ERROR);
    return(catch("UpdateUnitSizeLabel()", error));

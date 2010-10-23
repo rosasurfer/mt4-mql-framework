@@ -175,6 +175,7 @@ int UpdateInfos() {
    double tickValue = MarketInfo(symbol, MODE_TICKVALUE);
    double pipValue  = tickValue * ifInt(Digits==3 || Digits==5, 10, 1);
          ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", FormatNumber(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
+   double lotValue  = Bid / tickSize * tickValue;
 
    double minLot            = MarketInfo(symbol, MODE_MINLOT           ); ObjectSetText(names[MINLOT           ], StringConcatenate("Min lot: ", FormatNumber(minLot, ", .+")), Font.Size, Font.Name, Font.Color);
    double maxLot            = MarketInfo(symbol, MODE_MAXLOT           ); ObjectSetText(names[MAXLOT           ], StringConcatenate("Max lot: ", FormatNumber(maxLot, ", .+")), Font.Size, Font.Name, Font.Color);
@@ -183,7 +184,6 @@ int UpdateInfos() {
 
    int    marginCalcMode    = MarketInfo(symbol, MODE_MARGINCALCMODE   ); ObjectSetText(names[MARGINCALCMODE   ], StringConcatenate("Margin calculation mode: ", strMCM[marginCalcMode]), Font.Size, Font.Name, Font.Color);
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   ); 
-      double lotValue       = Bid / tickSize * tickValue;
       double marginLeverage = lotValue / marginRequired;                  ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", FormatNumber(marginRequired, ", .2+"), " ", accountCurrency, " (1:", DoubleToStr(marginLeverage, 0), ")"), Font.Size, Font.Name, Font.Color);
 
    double marginInit        = MarketInfo(symbol, MODE_MARGININIT       ); ObjectSetText(names[MARGININIT       ], StringConcatenate("Margin init: ", FormatNumber(marginInit, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
