@@ -275,7 +275,7 @@ int UpdateUnitSizeLabel() {
       
    double equity = AccountEquity() - AccountCredit();
    if (equity < 0)
-      return(0);
+      equity = 0;
 
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
