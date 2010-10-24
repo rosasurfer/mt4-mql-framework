@@ -172,13 +172,15 @@ int start() {
       if (init()     != ERR_NO_ERROR)               return(0);
    }
 
-   int  account = AccountNumber();
-   if (account == 0)
+
+   // Accountinitialiserung abfangen (bei Start und Accountwechsel)
+   if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
+
 
    // aktuelle Accountdaten holen
    static int accountData[3];                               // { last_account_number, current_account_number, current_account_init_servertime }
-   EventListener.AccountChange(accountData, 0);             // Eventlistener gibt unabhängig vom Auftreten des Events immer die aktuellen Daten zurück
+   EventListener.AccountChange(accountData, 0);             // der Eventlistener gibt unabhängig vom Auftreten des Events immer die aktuellen Accountdaten zurück
 
 
    // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
