@@ -349,6 +349,10 @@ int CheckPosition() {
    if (position.Checked)
       return(ERR_NO_ERROR);
 
+   position.Long  = 0;
+   position.Short = 0;
+   position.Total = 0;
+
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
