@@ -406,7 +406,7 @@ int UpdatePositionLabel() {
 int UpdateMarginLevels() {
    if (!position.Checked)
       CheckPosition();
-
+   
 
    if (position.Total == 0) {                // keine Position im Markt: evt. vorhandene Marker löschen
       ObjectDelete(freezeLevelLabel);
@@ -420,7 +420,7 @@ int UpdateMarginLevels() {
       int    stopoutMode  = AccountStopoutMode();
       int    stopoutLevel = AccountStopoutLevel();
       double tickSize     = MarketInfo(Symbol(), MODE_TICKSIZE);
-      double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE) * position.Total;
+      double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(position.Total);
 
       int error = GetLastError();
       if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)  // bei Start oder Accountwechsel
@@ -446,10 +446,13 @@ int UpdateMarginLevels() {
          quoteStopoutLevel = NormalizeDouble(Ask + quoteStopoutDiff, Digits);
       }
       /*
-      Print("UpdateMarginLevels()    equity(100%)="+ FormatNumber(usedMargin, ", .2") +" ("+ FormatNumber(quoteFreezeLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
-                               +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ FormatNumber(equityStopoutLevel, ", .2") +" ("+ FormatNumber(quoteStopoutLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
+      Print("UpdateMarginLevels()"
+                                  +"    equity="+ FormatNumber(equity, ", .2")
+                            +"    equity(100%)="+ FormatNumber(usedMargin, ", .2") +" ("+ FormatNumber(equity-usedMargin, "+, .2") +" => "+ FormatNumber(quoteFreezeLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
+                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ FormatNumber(equityStopoutLevel, ", .2") +" ("+ FormatNumber(equity-equityStopoutLevel, "+, .2") +" => "+ FormatNumber(quoteStopoutLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
       );
       */
+
 
       // FreezeLevel anzeigen
       if (markFreezeLevel) {
