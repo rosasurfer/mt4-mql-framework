@@ -332,7 +332,7 @@ datetime GetServerSessionStartTime(datetime serverTime) {
    if (easternStart == -1) return(-1);
 
    datetime serverStart = EasternToServerTime(easternStart);
-    //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverStart: "+ TimeToStr(serverStart));
+   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverSessionStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
