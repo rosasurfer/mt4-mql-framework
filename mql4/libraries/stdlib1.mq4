@@ -45,50 +45,50 @@ datetime TimeGMT() {
 
 
 /**
- * Inlinded conditional statement für Strings.
+ * Inlined conditional statement für Strings.
  *
  * @param  bool   condition
- * @param  string strThen
- * @param  string strElse
+ * @param  string thenValue
+ * @param  string elseValue
  *
  * @return string
  */
-string ifString(bool condition, string strThen, string strElse) {
+string ifString(bool condition, string thenValue, string elseValue) {
    if (condition)
-      return(strThen);
-   return(strElse);
+      return(thenValue);
+   return(elseValue);
 }
 
 
 /**
- * Inlinded conditional statement für Integers.
+ * Inlined conditional statement für Integers.
  *
  * @param  bool condition
- * @param  int  iThen
- * @param  int  iElse
+ * @param  int  thenValue
+ * @param  int  elseValue
  *
  * @return int
  */
-int ifInt(bool condition, int iThen, int iElse) {
+int ifInt(bool condition, int thenValue, int elseValue) {
    if (condition)
-      return(iThen);
-   return(iElse);
+      return(thenValue);
+   return(elseValue);
 }
 
 
 /**
- * Inlinded conditional statement für Doubles.
+ * Inlined conditional statement für Doubles.
  *
  * @param  bool   condition
- * @param  double dThen
- * @param  double dElse
+ * @param  double thenValue
+ * @param  double elseValue
  *
  * @return double
  */
-double ifDouble(bool condition, double dThen, double dElse) {
+double ifDouble(bool condition, double thenValue, double elseValue) {
    if (condition)
-      return(dThen);
-   return(dElse);
+      return(thenValue);
+   return(elseValue);
 }
 
 
