@@ -75,7 +75,7 @@ int init() {
 
 
 /**
- * Tick
+ * Main-Funktion
  *
  * @return int - Fehlerstatus
  */

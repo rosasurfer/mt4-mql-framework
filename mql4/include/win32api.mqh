@@ -21,7 +21,10 @@
    int  GetWindowTextA(int hWnd, string lpBuffer, int nBufferSize);
    int  SetWindowTextA(int hWnd, string lpString);
 
-   /*
+
+   //
+   // von hier MQ code (noch nicht selbst überprüft)
+   //
    // messages
    int  PostMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
@@ -57,7 +60,6 @@
    int  GetSystemMetrics(int nIndex);
    int  ExitWindowsEx(int uFlags, int dwReserved);
    int  SwapMouseButton(int fSwap);
-   */
 
 #import
 
@@ -371,10 +373,10 @@
 // ShowWindow() commands
 #define SW_HIDE                                       0
 #define SW_SHOWNORMAL                                 1
-#define SW_NORMAL                                     SW_SHOWNORMAL
+#define SW_NORMAL                         SW_SHOWNORMAL
 #define SW_SHOWMINIMIZED                              2
 #define SW_SHOWMAXIMIZED                              3
-#define SW_MAXIMIZE                                   SW_SHOWMAXIMIZED
+#define SW_MAXIMIZE                    SW_SHOWMAXIMIZED
 #define SW_SHOWNOACTIVATE                             4
 #define SW_SHOW                                       5
 #define SW_MINIMIZE                                   6
@@ -383,7 +385,7 @@
 #define SW_RESTORE                                    9
 #define SW_SHOWDEFAULT                               10
 #define SW_FORCEMINIMIZE                             11
-#define SW_MAX                                       SW_FORCEMINIMIZE
+#define SW_MAX                         SW_FORCEMINIMIZE
 
 
 // MessageBox() flags
@@ -399,10 +401,10 @@
 #define MB_ICONEXCLAMATION                   0x00000030
 #define MB_ICONASTERISK                      0x00000040
 #define MB_USERICON                          0x00000080
-#define MB_ICONWARNING                       MB_ICONEXCLAMATION
-#define MB_ICONERROR                         MB_ICONHAND
-#define MB_ICONINFORMATION                   MB_ICONASTERISK
-#define MB_ICONSTOP                          MB_ICONHAND
+#define MB_ICONWARNING               MB_ICONEXCLAMATION
+#define MB_ICONERROR                        MB_ICONHAND
+#define MB_ICONINFORMATION              MB_ICONASTERISK
+#define MB_ICONSTOP                         MB_ICONHAND
 #define MB_DEFBUTTON1                        0x00000000
 #define MB_DEFBUTTON2                        0x00000100
 #define MB_DEFBUTTON3                        0x00000200
@@ -441,7 +443,7 @@
 
 // Windows Error Codes
 #define ERROR_SUCCESS                                 0
-#define NO_ERROR                                      ERROR_SUCCESS
+#define NO_ERROR                          ERROR_SUCCESS
 #define ERROR_INVALID_FUNCTION                        1
 #define ERROR_FILE_NOT_FOUND                          2
 #define ERROR_PATH_NOT_FOUND                          3
@@ -976,7 +978,6 @@
 #define ERROR_TIMEOUT                              1460
 #define ERROR_INVALID_MONITOR_HANDLE               1461
 
-/*
 // Eventlog Status Codes
 #define ERROR_EVENTLOG_FILE_CORRUPT                1500
 #define ERROR_EVENTLOG_CANT_START                  1501
@@ -1310,4 +1311,3 @@
 #define ERROR_NO_USER_KEYS                         6006
 #define ERROR_FILE_NOT_ENCRYPTED                   6007
 #define ERROR_NOT_EXPORT_FORMAT                    6008
-*/
