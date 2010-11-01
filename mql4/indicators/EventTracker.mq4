@@ -30,14 +30,14 @@ bool   Track.Positions              = false;
 bool   Track.RateChanges            = false;
 int    RateGrid.Size                = 0;           // GridSize in Pip
 
+bool   Track.PivotLevels            = false;
+bool   PivotLevels.PreviousDayRange = false;
+
 bool   Track.BollingerBands         = false;
 int    BollingerBands.Periods       = 0;
 int    BollingerBands.Timeframe     = 0;
 int    BollingerBands.MA.Method     = MODE_EMA;
 double BollingerBands.MA.Deviation  = 0;
-
-bool   Track.PivotLevels            = false;
-bool   PivotLevels.PreviousDayRange = false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -94,7 +94,7 @@ int init() {
 
    // Positionen
    int    account  = GetAccountNumber();
-   string accounts = GetConfigString("EventTracker", "Track.Accounts", "");
+   string accounts = GetConfigString("EventTracker", "Track.Positions.Accounts", "");
    if (StringContains(","+accounts+",", ","+account+","))
       Track.Positions = true;
 
@@ -109,6 +109,11 @@ int init() {
       gridDigits = Digits - ifInt(Digits==3 || Digits==5, 1, 0);
       gridSize   = NormalizeDouble(RateGrid.Size * Point  * ifDouble(Digits==3 || Digits==5, 10, 1), gridDigits);
    }
+
+   // Pivot-Level
+   Track.PivotLevels = GetConfigBool(instrument.Section, "PivotLevels", Track.PivotLevels);
+   if (Track.PivotLevels)
+      PivotLevels.PreviousDayRange = GetConfigBool(instrument.Section, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
    // Bollinger-Bänder
    Track.BollingerBands = GetConfigBool(instrument.Section, "BollingerBands", Track.BollingerBands);
@@ -141,12 +146,7 @@ int init() {
       }
    }
 
-   // Pivot-Level
-   Track.PivotLevels = GetConfigBool(instrument.Section, "PivotLevels", Track.PivotLevels);
-   if (Track.PivotLevels)
-      PivotLevels.PreviousDayRange = GetConfigBool(instrument.Section, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
-
-   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, ifString(Track.RateChanges, " (Grid: "+RateGrid.Size+")", ""), "   Track.BollingerBands=", Track.BollingerBands, "   Track.PivotLevels=", Track.PivotLevels);
+   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, ifString(Track.RateChanges, " (Grid: "+RateGrid.Size+")", ""), "   Track.PivotLevels=", Track.PivotLevels, "   Track.BollingerBands=", Track.BollingerBands);
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -216,17 +216,17 @@ int start() {
    }
 
 
+   // Pivot-Level
+   if (false && Track.PivotLevels)
+      if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
+         return(ERR_HISTORY_WILL_UPDATED);
+
    // Bollinger-Bänder
    if (false && Track.BollingerBands) {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
       if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
          return(ERR_HISTORY_WILL_UPDATED);
    }
-
-   // Pivot-Level
-   if (false && Track.PivotLevels)
-      if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
 
    return(catch("start(2)"));
 }
@@ -433,15 +433,14 @@ int CheckRateGrid() {
  * @return int - Fehlerstatus
  */
 int InitializeRateGrid() {
-   Print("InitializeRateGrid()   bars="+ Bars +"    processedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
+   //Print("InitializeRateGrid()   bars="+ Bars +"    processedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
 
    int cells = MathFloor((Bid+Ask)/2 / gridSize);
 
    static double limits[2];
    limits[0] = NormalizeDouble(gridSize *  cells   , gridDigits);
    limits[1] = NormalizeDouble(gridSize * (cells+1), gridDigits);    // Abstand: 1 x GridSize
-
-   Print("InitializeRateGrid()   grid cells initialized: ", DoubleToStr(limits[0], gridDigits), "  <=>  ", DoubleToStr(limits[1], gridDigits));
+   //Print("InitializeRateGrid()   grid cells initialized: ", DoubleToStr(limits[0], gridDigits), "  <=>  ", DoubleToStr(limits[1], gridDigits));
 
    bool up, down;
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
@@ -461,31 +460,31 @@ int InitializeRateGrid() {
 
    if (lastSignalValue > 0) if (lastSignalTime > 0) {
       if (lastSignalValue <= limits[0] || lastSignalValue >= limits[1]) {
-         Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" is ignored (not inside of cells)");
+         //Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" is ignored (not inside of cells)");
       }
       else {
          lastSignal     = true;
          lastSignalTime = GmtToServerTime(lastSignalTime);
-         Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at ServerTime="+ TimeToStr(lastSignalTime));
+         //Print("InitializeRateGrid()    last stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at ServerTime="+ TimeToStr(lastSignalTime));
       }
    }
 
    // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    while (!up && !down) {
-      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" and lastSignal="+ lastSignal);
+      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" and lastSignal="+ lastSignal);
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
             error = GetLastLibraryError();
             if (error == ERR_HISTORY_WILL_UPDATED) {
-               Print("InitializeRateGrid()    timeframe "+ GetPeriodDescription(period) +" in update status");
+               //Print("InitializeRateGrid()    timeframe "+ GetPeriodDescription(period) +" in update status");
                return(error);
             }
             if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
             return(catch("InitializeRateGrid(2)", error));
          }
       }
-      Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" with lastSignalBar="+ lastSignalBar);
+      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" with lastSignalBar="+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
@@ -502,7 +501,7 @@ int InitializeRateGrid() {
          if (error != ERR_NO_ERROR            ) return(catch("InitializeRateGrid(2)", error));
 
          if (up || down) {
-            Print("InitializeRateGrid()    last signal found in timeframe "+ GetPeriodDescription(period) +" at bar="+ bar);
+            //Print("InitializeRateGrid()    last signal found in timeframe "+ GetPeriodDescription(period) +" at bar="+ bar);
             break;
          }
       }
@@ -512,14 +511,16 @@ int InitializeRateGrid() {
       if (up && down) {                                                       // Bar hat beide Limite berührt
          if (period == PERIOD_M1)
             break;
-         Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits, decreasing timeframe");
+         //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits, decreasing timeframe");
          period = DecreasePeriod(period);                                     // Timeframe verringern
          up = false; down = false;
       }
    }
+   /*
    if      ( up &&  down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits");
    else if (!up || !down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit");
    else                   Print("InitializeRateGrid()    no bar ever touched a limit");
+   */
 
    if (down) limits[0] = NormalizeDouble(limits[0] - gridSize, gridDigits);
    if (up  ) limits[1] = NormalizeDouble(limits[1] + gridSize, gridDigits);
@@ -529,6 +530,17 @@ int InitializeRateGrid() {
 
    Print("InitializeRateGrid()   Grid initialized: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    return(catch("InitializeRateGrid(3)"));
+}
+
+
+/**
+ * @return int - Fehlerstatus
+ */
+int CheckPivotLevels() {
+   if (!Track.PivotLevels)
+      return(0);
+
+   return(catch("CheckPivotLevels()"));
 }
 
 
@@ -557,17 +569,6 @@ int CheckBollingerBands() {
 
    //Print("CheckBollingerBands()   limits checked");
    return(catch("CheckBollingerBands(2)"));
-}
-
-
-/**
- * @return int - Fehlerstatus
- */
-int CheckPivotLevels() {
-   if (!Track.PivotLevels)
-      return(0);
-
-   return(catch("CheckPivotLevels()"));
 }
 
 
