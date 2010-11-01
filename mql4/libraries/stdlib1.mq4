@@ -1222,7 +1222,8 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             int error = GetLastError();
             if (error == ERR_NO_ERROR)
                error = ERR_RUNTIME_ERROR;
-            last_library_error = catch("EventListener.PositionClose(1)   error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
+            last_library_error = catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
+            // TODO: bei offenen Orders in einem Account und dem ersten Login in einen neuen Account crasht alles (erster Login dauert länger)
             return(false);
          }
 
