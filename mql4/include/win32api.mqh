@@ -22,11 +22,11 @@
    int  SetWindowTextA(int hWnd, string lpString);
 
 
-   //
-   // von hier MQ code (noch nicht selbst überprüft)
+   // Von hier an MetaQuest code (nicht überprüft)
    //
    // messages
    int  PostMessageA(int hWnd, int Msg, int wParam, int lParam);
+   /*
    int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendNotifyMessageA(int hWnd, int Msg, int wParam, int lParam);
    void keybd_event(int bVk, int bScan, int dwFlags, int dwExtraInfo);
@@ -60,6 +60,7 @@
    int  GetSystemMetrics(int nIndex);
    int  ExitWindowsEx(int uFlags, int dwReserved);
    int  SwapMouseButton(int fSwap);
+   */
 
 #import
 
