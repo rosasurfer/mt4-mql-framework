@@ -298,17 +298,17 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-datetime GetServerPreviousSessionEndTime(datetime serverTime) {
+datetime GetServerPrevSessionEndTime(datetime serverTime) {
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
    datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
    datetime serverEnd   = EasternToServerTime(previousEnd);
-   //Print("GetServerPreviousSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   previousEnd: "+ TimeToStr(serverEnd));
+   //Print("GetServerPrevSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   previousEnd: "+ TimeToStr(serverEnd));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetServerPreviousSessionEndTime()", error);
+      last_library_error = catch("GetServerPrevSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -430,17 +430,17 @@ datetime GetServerNextSessionEndTime(datetime serverTime) {
  *
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-datetime GetGmtPreviousSessionStartTime(datetime gmtTime) {
+datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
    datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
    datetime gmtStart      = EasternToGMT(previousStart);
-   //Print("GetGmtPreviousSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousStart: "+ TimeToStr(gmtStart));
+   //Print("GetGmtPrevSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousStart: "+ TimeToStr(gmtStart));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGmtPreviousSessionStartTime()", error);
+      last_library_error = catch("GetGmtPrevSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -455,17 +455,17 @@ datetime GetGmtPreviousSessionStartTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-datetime GetGmtPreviousSessionEndTime(datetime gmtTime) {
+datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
    datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
    datetime gmtEnd      = EasternToGMT(previousEnd);
-   //Print("GetGmtPreviousSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousEnd: "+ TimeToStr(gmtEnd));
+   //Print("GetGmtPrevSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousEnd: "+ TimeToStr(gmtEnd));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGmtPreviousSessionEndTime()", error);
+      last_library_error = catch("GetGmtPrevSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);

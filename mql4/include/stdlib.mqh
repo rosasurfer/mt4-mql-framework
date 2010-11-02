@@ -66,8 +66,8 @@
    datetime GetEasternNextSessionStartTime(datetime easternTime);
    datetime GetEasternNextSessionEndTime(datetime easternTime);
 
-   datetime GetGmtPreviousSessionStartTime(datetime gtmTime);
-   datetime GetGmtPreviousSessionEndTime(datetime gtmTime);
+   datetime GetGmtPrevSessionStartTime(datetime gtmTime);
+   datetime GetGmtPrevSessionEndTime(datetime gtmTime);
    datetime GetGmtSessionStartTime(datetime gmtTime);
    datetime GetGmtSessionEndTime(datetime gmtTime);
    datetime GetGmtNextSessionStartTime(datetime gtmTime);
@@ -81,7 +81,7 @@
  //datetime GetLocalNextSessionEndTime(datetime localTime);
 
    datetime GetServerPrevSessionStartTime(datetime serverTime);
-   datetime GetServerPreviousSessionEndTime(datetime serverTime);
+   datetime GetServerPrevSessionEndTime(datetime serverTime);
    datetime GetServerSessionStartTime(datetime serverTime);
    datetime GetServerSessionEndTime(datetime serverTime);
    datetime GetServerNextSessionStartTime(datetime serverTime);
