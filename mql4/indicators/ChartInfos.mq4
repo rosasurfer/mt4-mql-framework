@@ -307,6 +307,8 @@ int UpdateUnitSizeLabel() {
       double leverage = 7.0;
       double lotValue = Bid / tickSize * tickValue;
       double unitSize = equity * leverage / lotValue;
+      
+      // TODO: max(stdDeviation(100xH1|120xH1)) (4-5 Tage) als Volatilitätsmaß berücksichtigen
 
       if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
       else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002
