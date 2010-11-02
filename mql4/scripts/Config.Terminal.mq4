@@ -13,6 +13,8 @@
  *
  */
 int start() {
+   // TODO: mit ShellExecute() implementieren
+
    string globalConfigFile = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
    string localConfigFile  = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
 
