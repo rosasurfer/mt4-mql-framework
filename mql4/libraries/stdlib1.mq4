@@ -20,7 +20,7 @@ int last_library_error = ERR_NO_ERROR;
 datetime TimeGMT() {
    int SYSTEMTIME[4];
    GetSystemTime(SYSTEMTIME);
-                                                      // typedef struct _SYSTEMTIME {   // see Win32-API
+                                                      // typedef struct SYSTEMTIME {   // see Win32-API
    int nYear     = SYSTEMTIME[0] &  0x0000FFFF;       //     WORD wYear;
    int nMonth    = SYSTEMTIME[0] >> 16;               //     WORD wMonth;
    int nDoW      = SYSTEMTIME[1] &  0x0000FFFF;       //     WORD wDayOfWeek;
@@ -321,7 +321,7 @@ datetime GetServerPreviousSessionEndTime(datetime serverTime) {
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerSessionStartTime(datetime serverTime) {
@@ -349,7 +349,7 @@ datetime GetServerSessionStartTime(datetime serverTime) {
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerSessionEndTime(datetime serverTime) {
@@ -478,7 +478,7 @@ datetime GetGmtPreviousSessionEndTime(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtSessionStartTime(datetime gmtTime) {
@@ -506,7 +506,7 @@ datetime GetGmtSessionStartTime(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtSessionEndTime(datetime gmtTime) {
@@ -639,7 +639,7 @@ datetime GetEasternPrevSessionEndTime(datetime easternTime) {
  *
  * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternSessionStartTime(datetime easternTime) {
@@ -670,7 +670,7 @@ datetime GetEasternSessionStartTime(datetime easternTime) {
  *
  * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt geschlossen ist (Wochenende);
+ * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternSessionEndTime(datetime easternTime) {
@@ -1230,7 +1230,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          if (OrderCloseTime() > 0) {   // Position geschlossen, in flags angegebene Orderkriterien prüfen
             int  event=1, type=OrderType();
             bool pending;
-            
+
             if      (StringStartsWith(OrderComment(), "so:" )) pending = true;                                       // Margin Stopouts, wie pending behandeln
             else if (StringStartsWith(OrderComment(), "[tp]")) pending = true;
             else if (StringStartsWith(OrderComment(), "[sl]")) pending = true;
