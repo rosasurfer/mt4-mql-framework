@@ -2390,7 +2390,7 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      last_library_error = catch("GetGmtToEasternTimeOffset()", error);
+      last_library_error = catch("GetGmtToEasternTimeOffset(gmtTime="+ gmtTime +"="+ TimeToStr(gmtTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +")", error);
       return(EMPTY_VALUE);
    }
    return(offset);
