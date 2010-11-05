@@ -199,8 +199,8 @@ int start() {
 
    // Kursänderungen
    if (Track.RateChanges) {                                 // TODO: Limite nach Config-Änderungen reinitialisieren
-      if (CheckRateGrid() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
+      if (CheckRateGrid() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
    }
 
 
@@ -218,14 +218,14 @@ int start() {
 
    // Pivot-Level
    if (false && Track.PivotLevels)
-      if (CheckPivotLevels() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
+      if (CheckPivotLevels() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
 
    // Bollinger-Bänder
    if (false && Track.BollingerBands) {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
-      if (CheckBollingerBands() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
+      if (CheckBollingerBands() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
    }
 
    return(catch("start(2)"));
@@ -359,8 +359,8 @@ int CheckRateGrid() {
 
    // aktuelle Limite ermitteln, ggf. neu berechnen
    if (RateGrid.Limits[0] == 0) if (!EventTracker.GetRateGridLimits(RateGrid.Limits)) {
-      if (InitializeRateGrid() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
+      if (InitializeRateGrid() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
 
       EventTracker.SetRateGridLimits(RateGrid.Limits);   // Limite in Library timeframe-übergreifend speichern
       return(catch("CheckRateGrid(1)"));                 // nach Initialisierung ist Test überflüssig
@@ -473,10 +473,10 @@ int InitializeRateGrid() {
    while (!up && !down) {
       //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" and lastSignal="+ lastSignal);
       if (lastSignal) {
-         lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_WILL_UPDATED auslösen (return=EMPTY_VALUE)
+         lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_UPDATE auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
             error = GetLastLibraryError();
-            if (error == ERR_HISTORY_WILL_UPDATED) {
+            if (error == ERR_HISTORY_UPDATE) {
                //Print("InitializeRateGrid()    timeframe "+ GetPeriodDescription(period) +" in update status");
                return(error);
             }
@@ -497,8 +497,8 @@ int InitializeRateGrid() {
          }
 
          error = GetLastError();
-         if (error == ERR_HISTORY_WILL_UPDATED) return(error);
-         if (error != ERR_NO_ERROR            ) return(catch("InitializeRateGrid(2)", error));
+         if (error == ERR_HISTORY_UPDATE) return(error);
+         if (error != ERR_NO_ERROR      ) return(catch("InitializeRateGrid(2)", error));
 
          if (up || down) {
             //Print("InitializeRateGrid()    last signal found in timeframe "+ GetPeriodDescription(period) +" at bar="+ bar);
@@ -547,7 +547,7 @@ int CheckPivotLevels() {
 /**
  * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kurse gerade aktualisiert werden)
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kurse gerade aktualisiert werden)
  */
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
@@ -555,8 +555,8 @@ int CheckBollingerBands() {
 
    // Limite ggf. initialisieren
    if (Band.Limits[0] == 0) if (!EventTracker.GetBandLimits(Band.Limits)) {
-      if (InitializeBandLimits() == ERR_HISTORY_WILL_UPDATED)
-         return(ERR_HISTORY_WILL_UPDATED);
+      if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
       EventTracker.SetBandLimits(Band.Limits);                 // Limite in Library timeframe-übergreifend speichern
    }
 
@@ -575,7 +575,7 @@ int CheckBollingerBands() {
 /**
  * Initialisiert (berechnet und speichert) die aktuellen BollingerBand-Limite.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
  */
 int InitializeBandLimits() {
    // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
@@ -590,8 +590,8 @@ int InitializeBandLimits() {
 
    int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.MA.Deviation, 0, Band.Limits);
 
-   if (error == ERR_HISTORY_WILL_UPDATED) return(error);
-   if (error != ERR_NO_ERROR            ) return(catch("InitializeBandLimits()", error));
+   if (error == ERR_HISTORY_UPDATE) return(error);
+   if (error != ERR_NO_ERROR      ) return(catch("InitializeBandLimits()", error));
 
    string mask = StringConcatenate(".", Digits);
    Print("InitializeBandLimits()   Bollinger band limits calculated: ", FormatNumber(Band.Limits[2], mask), "  <=  ", FormatNumber(Band.Limits[1], mask), "  =>  ", FormatNumber(Band.Limits[0], mask));
@@ -602,7 +602,7 @@ int InitializeBandLimits() {
 /**
  * Berechnet die BollingerBand-Werte (UpperBand, MovingAverage, LowerBand) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_WILL_UPDATED, falls die Kursreihe gerade aktualisiert wird)
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
  */
 int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& results[]) {
    if (symbol == "0")      // MQL: NULL ist ein Integer
@@ -615,8 +615,8 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
    results[2] = ma - dev;
 
    int error = GetLastError();
-   if (error == ERR_HISTORY_WILL_UPDATED) return(ERR_HISTORY_WILL_UPDATED);
-   if (error != ERR_NO_ERROR            ) return(catch("iBollingerBands()", error));
+   if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
+   if (error != ERR_NO_ERROR      ) return(catch("iBollingerBands()", error));
 
    //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatNumber(results[2], ".5") +"  <=  "+ FormatNumber(results[1], ".5") +"  =>  "+ FormatNumber(results[1], ".5"));
    return(error);

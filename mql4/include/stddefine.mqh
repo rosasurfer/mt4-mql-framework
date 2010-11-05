@@ -195,110 +195,111 @@
 
 
 // MQL-Fehlercodes (Win32-Fehlercodes siehe win32api.mqh)
-#define ERR_NO_ERROR                            0
+#define ERR_NO_ERROR                                    0
 
 // trade server errors
-#define ERR_NO_RESULT                           1
-#define ERR_COMMON_ERROR                        2
-#define ERR_INVALID_TRADE_PARAMETERS            3
-#define ERR_SERVER_BUSY                         4
-#define ERR_OLD_VERSION                         5
-#define ERR_NO_CONNECTION                       6
-#define ERR_NOT_ENOUGH_RIGHTS                   7
-#define ERR_TOO_FREQUENT_REQUESTS               8
-#define ERR_MALFUNCTIONAL_TRADE                 9
-#define ERR_ACCOUNT_DISABLED                   64
-#define ERR_INVALID_ACCOUNT                    65
-#define ERR_TRADE_TIMEOUT                     128
-#define ERR_INVALID_PRICE                     129
-#define ERR_INVALID_STOPS                     130
-#define ERR_INVALID_TRADE_VOLUME              131
-#define ERR_MARKET_CLOSED                     132
-#define ERR_TRADE_DISABLED                    133
-#define ERR_NOT_ENOUGH_MONEY                  134
-#define ERR_PRICE_CHANGED                     135
-#define ERR_OFF_QUOTES                        136
-#define ERR_BROKER_BUSY                       137
-#define ERR_REQUOTE                           138
-#define ERR_ORDER_LOCKED                      139
-#define ERR_LONG_POSITIONS_ONLY_ALLOWED       140
-#define ERR_TOO_MANY_REQUESTS                 141
-#define ERR_TRADE_MODIFY_DENIED               145
-#define ERR_TRADE_CONTEXT_BUSY                146
-#define ERR_TRADE_EXPIRATION_DENIED           147
-#define ERR_TRADE_TOO_MANY_ORDERS             148
-#define ERR_TRADE_HEDGE_PROHIBITED            149
-#define ERR_TRADE_PROHIBITED_BY_FIFO          150
+#define ERR_NO_RESULT                                   1
+#define ERR_COMMON_ERROR                                2
+#define ERR_INVALID_TRADE_PARAMETERS                    3
+#define ERR_SERVER_BUSY                                 4
+#define ERR_OLD_VERSION                                 5
+#define ERR_NO_CONNECTION                               6
+#define ERR_NOT_ENOUGH_RIGHTS                           7
+#define ERR_TOO_FREQUENT_REQUESTS                       8
+#define ERR_MALFUNCTIONAL_TRADE                         9
+#define ERR_ACCOUNT_DISABLED                           64
+#define ERR_INVALID_ACCOUNT                            65
+#define ERR_TRADE_TIMEOUT                             128
+#define ERR_INVALID_PRICE                             129
+#define ERR_INVALID_STOPS                             130
+#define ERR_INVALID_TRADE_VOLUME                      131
+#define ERR_MARKET_CLOSED                             132
+#define ERR_TRADE_DISABLED                            133
+#define ERR_NOT_ENOUGH_MONEY                          134
+#define ERR_PRICE_CHANGED                             135
+#define ERR_OFF_QUOTES                                136
+#define ERR_BROKER_BUSY                               137
+#define ERR_REQUOTE                                   138
+#define ERR_ORDER_LOCKED                              139
+#define ERR_LONG_POSITIONS_ONLY_ALLOWED               140
+#define ERR_TOO_MANY_REQUESTS                         141
+#define ERR_TRADE_MODIFY_DENIED                       145
+#define ERR_TRADE_CONTEXT_BUSY                        146
+#define ERR_TRADE_EXPIRATION_DENIED                   147
+#define ERR_TRADE_TOO_MANY_ORDERS                     148
+#define ERR_TRADE_HEDGE_PROHIBITED                    149
+#define ERR_TRADE_PROHIBITED_BY_FIFO                  150
 
 // runtime errors
-#define ERR_RUNTIME_ERROR                    4000  // common runtime error (no mql error)
-#define ERR_WRONG_FUNCTION_POINTER           4001
-#define ERR_ARRAY_INDEX_OUT_OF_RANGE         4002
-#define ERR_NO_MEMORY_FOR_CALL_STACK         4003
-#define ERR_RECURSIVE_STACK_OVERFLOW         4004
-#define ERR_NOT_ENOUGH_STACK_FOR_PARAM       4005
-#define ERR_NO_MEMORY_FOR_PARAM_STRING       4006
-#define ERR_NO_MEMORY_FOR_TEMP_STRING        4007
-#define ERR_NOT_INITIALIZED_STRING           4008
-#define ERR_NOT_INITIALIZED_ARRAYSTRING      4009
-#define ERR_NO_MEMORY_FOR_ARRAYSTRING        4010
-#define ERR_TOO_LONG_STRING                  4011
-#define ERR_REMAINDER_FROM_ZERO_DIVIDE       4012
-#define ERR_ZERO_DIVIDE                      4013
-#define ERR_UNKNOWN_COMMAND                  4014
-#define ERR_WRONG_JUMP                       4015
-#define ERR_NOT_INITIALIZED_ARRAY            4016
-#define ERR_DLL_CALLS_NOT_ALLOWED            4017
-#define ERR_CANNOT_LOAD_LIBRARY              4018
-#define ERR_CANNOT_CALL_FUNCTION             4019
-#define ERR_EXTERNAL_CALLS_NOT_ALLOWED       4020
-#define ERR_NO_MEMORY_FOR_RETURNED_STR       4021
-#define ERR_SYSTEM_BUSY                      4022
-#define ERR_INVALID_FUNCTION_PARAMSCNT       4050  // invalid parameters count
-#define ERR_INVALID_FUNCTION_PARAMVALUE      4051  // invalid parameter value
-#define ERR_STRING_FUNCTION_INTERNAL         4052
-#define ERR_SOME_ARRAY_ERROR                 4053  // some array error
-#define ERR_INCORRECT_SERIESARRAY_USING      4054
-#define ERR_CUSTOM_INDICATOR_ERROR           4055  // custom indicator error
-#define ERR_INCOMPATIBLE_ARRAYS              4056  // incompatible arrays
-#define ERR_GLOBAL_VARIABLES_PROCESSING      4057
-#define ERR_GLOBAL_VARIABLE_NOT_FOUND        4058
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTING      4059
-#define ERR_FUNCTION_NOT_CONFIRMED           4060
-#define ERR_SEND_MAIL_ERROR                  4061
-#define ERR_STRING_PARAMETER_EXPECTED        4062
-#define ERR_INTEGER_PARAMETER_EXPECTED       4063
-#define ERR_DOUBLE_PARAMETER_EXPECTED        4064
-#define ERR_ARRAY_AS_PARAMETER_EXPECTED      4065
-#define ERR_HISTORY_WILL_UPDATED             4066  // history in update state
-#define ERR_TRADE_ERROR                      4067  // error in trading function
-#define ERR_END_OF_FILE                      4099  // end of file
-#define ERR_SOME_FILE_ERROR                  4100  // some file error
-#define ERR_WRONG_FILE_NAME                  4101
-#define ERR_TOO_MANY_OPENED_FILES            4102
-#define ERR_CANNOT_OPEN_FILE                 4103
-#define ERR_INCOMPATIBLE_FILEACCESS          4104
-#define ERR_NO_ORDER_SELECTED                4105
-#define ERR_UNKNOWN_SYMBOL                   4106
-#define ERR_INVALID_PRICE_PARAM              4107
-#define ERR_INVALID_TICKET                   4108
-#define ERR_TRADE_NOT_ALLOWED                4109
-#define ERR_LONGS_NOT_ALLOWED                4110
-#define ERR_SHORTS_NOT_ALLOWED               4111
-#define ERR_OBJECT_ALREADY_EXISTS            4200
-#define ERR_UNKNOWN_OBJECT_PROPERTY          4201
-#define ERR_OBJECT_DOES_NOT_EXIST            4202
-#define ERR_UNKNOWN_OBJECT_TYPE              4203
-#define ERR_NO_OBJECT_NAME                   4204
-#define ERR_OBJECT_COORDINATES_ERROR         4205
-#define ERR_NO_SPECIFIED_SUBWINDOW           4206
-#define ERR_SOME_OBJECT_ERROR                4207
+#define ERR_RUNTIME_ERROR                            4000   // common runtime error (no mql error)
+#define ERR_WRONG_FUNCTION_POINTER                   4001
+#define ERR_ARRAY_INDEX_OUT_OF_RANGE                 4002
+#define ERR_NO_MEMORY_FOR_CALL_STACK                 4003
+#define ERR_RECURSIVE_STACK_OVERFLOW                 4004
+#define ERR_NOT_ENOUGH_STACK_FOR_PARAM               4005
+#define ERR_NO_MEMORY_FOR_PARAM_STRING               4006
+#define ERR_NO_MEMORY_FOR_TEMP_STRING                4007
+#define ERR_NOT_INITIALIZED_STRING                   4008
+#define ERR_NOT_INITIALIZED_ARRAYSTRING              4009
+#define ERR_NO_MEMORY_FOR_ARRAYSTRING                4010
+#define ERR_TOO_LONG_STRING                          4011
+#define ERR_REMAINDER_FROM_ZERO_DIVIDE               4012
+#define ERR_ZERO_DIVIDE                              4013
+#define ERR_UNKNOWN_COMMAND                          4014
+#define ERR_WRONG_JUMP                               4015
+#define ERR_NOT_INITIALIZED_ARRAY                    4016
+#define ERR_DLL_CALLS_NOT_ALLOWED                    4017
+#define ERR_CANNOT_LOAD_LIBRARY                      4018
+#define ERR_CANNOT_CALL_FUNCTION                     4019
+#define ERR_EXTERNAL_CALLS_NOT_ALLOWED               4020
+#define ERR_NO_MEMORY_FOR_RETURNED_STR               4021
+#define ERR_SYSTEM_BUSY                              4022
+#define ERR_INVALID_FUNCTION_PARAMSCNT               4050   // invalid parameters count
+#define ERR_INVALID_FUNCTION_PARAMVALUE              4051   // invalid parameter value
+#define ERR_STRING_FUNCTION_INTERNAL                 4052
+#define ERR_SOME_ARRAY_ERROR                         4053   // some array error
+#define ERR_INCORRECT_SERIESARRAY_USING              4054
+#define ERR_CUSTOM_INDICATOR_ERROR                   4055   // custom indicator error
+#define ERR_INCOMPATIBLE_ARRAYS                      4056   // incompatible arrays
+#define ERR_GLOBAL_VARIABLES_PROCESSING              4057
+#define ERR_GLOBAL_VARIABLE_NOT_FOUND                4058
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTING              4059
+#define ERR_FUNCTION_NOT_CONFIRMED                   4060
+#define ERR_SEND_MAIL_ERROR                          4061
+#define ERR_STRING_PARAMETER_EXPECTED                4062
+#define ERR_INTEGER_PARAMETER_EXPECTED               4063
+#define ERR_DOUBLE_PARAMETER_EXPECTED                4064
+#define ERR_ARRAY_AS_PARAMETER_EXPECTED              4065
+#define ERR_HISTORY_WILL_UPDATED                     4066   // history in update state
+#define ERR_HISTORY_UPDATE       ERR_HISTORY_WILL_UPDATED
+#define ERR_TRADE_ERROR                              4067   // error in trading function
+#define ERR_END_OF_FILE                              4099   // end of file
+#define ERR_SOME_FILE_ERROR                          4100   // some file error
+#define ERR_WRONG_FILE_NAME                          4101
+#define ERR_TOO_MANY_OPENED_FILES                    4102
+#define ERR_CANNOT_OPEN_FILE                         4103
+#define ERR_INCOMPATIBLE_FILEACCESS                  4104
+#define ERR_NO_ORDER_SELECTED                        4105
+#define ERR_UNKNOWN_SYMBOL                           4106
+#define ERR_INVALID_PRICE_PARAM                      4107
+#define ERR_INVALID_TICKET                           4108
+#define ERR_TRADE_NOT_ALLOWED                        4109
+#define ERR_LONGS_NOT_ALLOWED                        4110
+#define ERR_SHORTS_NOT_ALLOWED                       4111
+#define ERR_OBJECT_ALREADY_EXISTS                    4200
+#define ERR_UNKNOWN_OBJECT_PROPERTY                  4201
+#define ERR_OBJECT_DOES_NOT_EXIST                    4202
+#define ERR_UNKNOWN_OBJECT_TYPE                      4203
+#define ERR_NO_OBJECT_NAME                           4204
+#define ERR_OBJECT_COORDINATES_ERROR                 4205
+#define ERR_NO_SPECIFIED_SUBWINDOW                   4206
+#define ERR_SOME_OBJECT_ERROR                        4207
 
 // custom errors
-#define ERR_WINDOWS_ERROR                    5000  // Windows error
-#define ERR_FUNCTION_NOT_IMPLEMENTED         5001  // function not implemented
-#define ERR_INVALID_INPUT_PARAMVALUE         5002  // invalid input parameter value
-#define ERR_TERMINAL_NOT_YET_READY           5003  // terminal not yet ready
+#define ERR_WINDOWS_ERROR                            5000   // Windows error
+#define ERR_FUNCTION_NOT_IMPLEMENTED                 5001   // function not implemented
+#define ERR_INVALID_INPUT_PARAMVALUE                 5002   // invalid input parameter value
+#define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready
 
 
 /**

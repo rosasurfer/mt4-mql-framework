@@ -2681,7 +2681,7 @@ string GetErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                    ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                     ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                      ); // 4065
-      case ERR_HISTORY_WILL_UPDATED       : return("requested history data in update state"                        ); // 4066
+      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066
       case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067
       case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099
       case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100
@@ -4115,7 +4115,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
    // Balancewerte in Zielarray übertragen (die History ist nach CloseTime sortiert)
    for (int i=0; i < size; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_WILL_UPDATED prüfen (return=EMPTY_VALUE)
+      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
       if (bar == -1)                               // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
@@ -4154,19 +4154,19 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  *
  * NOTE:
  * ----
- * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
+ * Kann den Fehler ERR_HISTORY_UPDATE auslösen.
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    if (symbol == "0")            // MQL: NULL ist ein Integer
       symbol = Symbol();
 
    if (time < Time[Bars-1]) int bar = -1;                                           // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
-   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_WILL_UPDATED (auch bei exact=FALSE)
+   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_UPDATE (auch bei exact=FALSE)
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
       last_library_error = error;
-      if (error != ERR_HISTORY_WILL_UPDATED)
+      if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftPrevious()", error);
       return(EMPTY_VALUE);
    }
@@ -4186,13 +4186,13 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
  *
  * NOTE:
  * ----
- * Kann den Fehler ERR_HISTORY_WILL_UPDATED auslösen.
+ * Kann den Fehler ERR_HISTORY_UPDATE auslösen.
  */
 int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    if (symbol == "0")                                    // MQL: NULL ist ein Integer
       symbol = Symbol();
 
-   int bar = iBarShift(symbol, timeframe, time, true);   // evt. ERR_HISTORY_WILL_UPDATED
+   int bar = iBarShift(symbol, timeframe, time, true);   // evt. ERR_HISTORY_UPDATE
 
    if (bar == -1) {                                      // falls die Bar nicht existiert:
       // TODO: Verwendung von Time und Bars ist Unfug
@@ -4206,7 +4206,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
       last_library_error = error;
-      if (error != ERR_HISTORY_WILL_UPDATED) catch("iBarShiftNext()", error);
+      if (error != ERR_HISTORY_UPDATE) catch("iBarShiftNext()", error);
       return(EMPTY_VALUE);
    }
    return(bar);

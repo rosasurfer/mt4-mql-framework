@@ -60,7 +60,7 @@ int init() {
 int start() {
    int processedBars = IndicatorCounted();
 
-   // Neuzeichnen übergreifend merken (falls ERR_HISTORY_WILL_UPDATED)
+   // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
    static bool redraw = false;
    if (processedBars == 0) {                    redraw =  true; }
    else if (redraw)        { processedBars = 0; redraw = false; }
@@ -81,7 +81,7 @@ int start() {
 
    // Grid zeichnen
    if (processedBars == 0) {
-      redraw = (DrawGrid()==ERR_HISTORY_WILL_UPDATED);
+      redraw = (DrawGrid()==ERR_HISTORY_UPDATE);
    }
 
    return(catch("start()"));
