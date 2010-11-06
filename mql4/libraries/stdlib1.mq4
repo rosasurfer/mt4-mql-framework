@@ -45,7 +45,7 @@ datetime TimeGMT() {
 
 
 /**
- * Inlined conditional statement für Strings.
+ * Inlined conditional String-Statement.
  *
  * @param  bool   condition
  * @param  string thenValue
@@ -61,7 +61,7 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Inlined conditional statement für Integers.
+ * Inlined conditional Integer-Statement.
  *
  * @param  bool condition
  * @param  int  thenValue
@@ -77,7 +77,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
 
 
 /**
- * Inlined conditional statement für Doubles.
+ * Inlined conditional Double-Statement.
  *
  * @param  bool   condition
  * @param  double thenValue
@@ -1756,8 +1756,8 @@ double GetAverageSpread(string symbol) {
  * Schreibt die Balance-History eines Accounts in die angegebenen Zielarrays. Die Werte sind aufsteigend nach Zeitpunkt sortiert.
  *
  * @param  int       account  - Account-Nummer
- * @param  datetime& times[]  - Zeiger auf ein Array zur Aufnahme der Zeitpunkte der Balanceänderung
- * @param  double&   values[] - Zeiger auf ein Array zur Aufnahme der Balance zum jeweiligen Zeitpunkt
+ * @param  datetime& times[]  - Zeiger auf Array für die Zeitpunkte der Balanceänderung
+ * @param  double&   values[] - Zeiger auf Array für die entsprechenden Balancewerte
  *
  * @return int - Fehlerstatus
  */
@@ -4090,11 +4090,10 @@ datetime GmtToServerTime(datetime gmtTime) {
 
 
 /**
- * Berechnet den vollständigen Verlauf der Balance für den aktuellen Chart und schreibt die Werte in das übergebene
- * Zielarray.  Diese Funktion ist vorzuziehen, wenn der Indikator vollständig neu berechnet werden soll.
+ * Ermittelt den Balanceverlauf des angegebenen Accounts für die Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
- * @param  int     account - Account, für den der Indikator berechnet werden soll
- * @param  double& iBuffer - Indikatorpuffer oder Array
+ * @param  int     account - Account-Nummer
+ * @param  double& iBuffer - Zeiger auf ein Ziel-/Ergebnisarray (kann Indikatorpuffer sein)
  *
  * @return int - Fehlerstatus
  */
@@ -4104,33 +4103,33 @@ int iBalanceSeries(int account, double& iBuffer[]) {
       ArrayInitialize(iBuffer, EMPTY_VALUE);
    }
 
-   datetime times[];  ArrayResize(times, 0);
-   double   values[]; ArrayResize(values, 0);
-
    // Balance-History holen
-   GetBalanceHistory(account, times, values);
+   datetime times[];  ArrayResize(times , 0);
+   double   values[]; ArrayResize(values, 0);
+   GetBalanceHistory(account, times, values);      // Ergebnis ist aufsteigend nach Zeitpunkt der Balanceänderung sortiert (times[0] = ältester Eintrag)
 
-   int bar, lastBar, z, size=ArraySize(times);
 
-   // Balancewerte in Zielarray übertragen (die History ist nach CloseTime sortiert)
-   for (int i=0; i < size; i++) {
+   int bar, lastBar, z, noOfValues=ArraySize(values);
+
+   // Balancewerte der Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
+   for (int i=0; i < noOfValues; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
+      bar = iBarShiftNext(times[i]);               // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
       if (bar == -1)                               // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
-      // Indikatorlücken mit vorherigem Balancewert füllen
+      // übersprungene Bars mit vorherigem Balancewert füllen
       if (bar < lastBar-1) {
          for (z=lastBar-1; z > bar; z--)
             iBuffer[z] = iBuffer[lastBar];
       }
 
-      // Balancewert eintragen
+      // aktuellen Balancewert eintragen
       iBuffer[bar] = values[i];
       lastBar = bar;
    }
 
-   // Indikator bis zur ersten Bar mit dem letzten bekannten Wert füllen
+   // Zielarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
    for (bar=lastBar-1; bar >= 0; bar--) {
       iBuffer[bar] = iBuffer[lastBar];
    }
@@ -4154,14 +4153,15 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  *
  * NOTE:
  * ----
- * Kann den Fehler ERR_HISTORY_UPDATE auslösen.
+ * Kann ERR_HISTORY_UPDATE auslösen.
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")            // MQL: NULL ist ein Integer
+   if (symbol == "0")            // MQL: NULL ist ein Integer (0)
       symbol = Symbol();
 
-   if (time < Time[Bars-1]) int bar = -1;                                           // Korrektur von iBarShift(), falls Zeitpunkt zu alt für den Chart ist
-   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_UPDATE (auch bei exact=FALSE)
+   // TODO: Fehler, Time[] und Bars beziehen sich auf den aktuellen Chart
+   if (time < Time[Bars-1]) int bar = -1;                                           // Zeitpunkt ist zu alt für den Chart
+   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_UPDATE
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -4175,38 +4175,38 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 
 
 /**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
+ * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes im aktuellen Chart und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time      - Zeitpunkt
+ * @param  datetime time - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
  * NOTE:
  * ----
- * Kann den Fehler ERR_HISTORY_UPDATE auslösen.
+ * Kann ERR_HISTORY_UPDATE auslösen.
  */
-int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                                    // MQL: NULL ist ein Integer
-      symbol = Symbol();
-
-   int bar = iBarShift(symbol, timeframe, time, true);   // evt. ERR_HISTORY_UPDATE
-
-   if (bar == -1) {                                      // falls die Bar nicht existiert:
-      // TODO: Verwendung von Time und Bars ist Unfug
-      if (time < Time[Bars-1])                           // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
-         bar = Bars-1;
-      else if (time < Time[0])                           // Kurslücke, die nächste existierende Bar wird zurückgeben
-         bar = iBarShift(symbol, timeframe, time) - 1;
-    //else: (time > Time[0]) => bar=-1                   // Zeitpunkt ist zu neu für den Chart
-   }
+int iBarShiftNext(datetime time) {
+   int bar = iBarShift(NULL, 0, time, true);             // evt. ERR_HISTORY_UPDATE
 
    int error = GetLastError();
+
+   if (error == ERR_NO_ERROR) {
+      if (bar == -1) {                                   // falls die Bar nicht existiert:
+         if (time < Time[Bars-1])                        // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
+            bar = Bars-1;
+         else if (time < Time[0]) {                      // Kurslücke, die nächste existierende Bar zurückgeben
+            bar = iBarShift(NULL, 0, time) - 1;
+            error = GetLastError();
+         }
+         //else: (time > Time[0]) bar=-1                 // Zeitpunkt ist zu neu für den Chart
+      }
+   }
+
    if (error != ERR_NO_ERROR) {
       last_library_error = error;
-      if (error != ERR_HISTORY_UPDATE) catch("iBarShiftNext()", error);
+      if (error != ERR_HISTORY_UPDATE)
+         catch("iBarShiftNext()", error);
       return(EMPTY_VALUE);
    }
    return(bar);
