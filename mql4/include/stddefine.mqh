@@ -341,21 +341,21 @@ int catch(string message="", int error=ERR_NO_ERROR) {
  * @param string message - Message
  * @param int    error   - Error-Code
  *
- * @return int - Fehlerstatus
+ * @return int - der angegebene Error-Code
  *
  * NOTE:
  * -----
  * Ist in der Headerdatei definiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
  * (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
-int log(string message="", int error=-1) {
+int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
       message = "???";
 
-   if (error == -1) Print(StringConcatenate(WindowExpertName(), "::", message));
-   else             Print(StringConcatenate(WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
+   if (error == ERR_NO_ERROR) Print(StringConcatenate(WindowExpertName(), "::", message));
+   else                       Print(StringConcatenate(WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
 
-   return(ERR_NO_ERROR);
+   return(error);
 }
 
 

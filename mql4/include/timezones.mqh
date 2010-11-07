@@ -1,5 +1,5 @@
 /**
- * stdlib-dst-tables.mqh
+ * stdlib-dst.mqh
  *
  * Umschaltzeiten von Normal-auf Sommerzeit und umgekehrt für die einzelnen Zeitzonen.
  *
