@@ -10,28 +10,25 @@
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
-   // TODO: mit ShellExecute() implementieren
-
-   /*
-   int hInstance = ShellExecuteA(0, "", "notepad.exe", "", "", SW_SHOWNORMAL);
-   if (hInstance < 32)
-      return(catch("start()  ShellExecuteA() failed, error: "+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
-
-   log("start()   hInstance="+ hInstance);
-   return(0);
-   */
-
    string globalConfigFile = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
    string localConfigFile  = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
 
-   string lpCmdLine = "notepad.exe "+ globalConfigFile +" "+ localConfigFile;      // um neue Instanz zu starten:  notepad.exe -m
+   string file = globalConfigFile;
 
-   int error = WinExec(lpCmdLine, SW_SHOWNORMAL);
-   if (error < 32)
-      return(catch("start(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR));
+   int hInstance = ShellExecuteA(0, "open", file, "", "", SW_SHOWNORMAL);
+   if (hInstance < 32)
+      return(catch("start(1)  ShellExecuteA() failed to open "+ file +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
 
-   return(catch("start(2)"));
+   file = localConfigFile;
+   
+   hInstance = ShellExecuteA(0, "open", file, "", "", SW_SHOWNORMAL);
+   if (hInstance < 32)
+      return(catch("start(2)  ShellExecuteA() failed to open "+ file +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
+
+   return(catch("start(3)"));
 }
