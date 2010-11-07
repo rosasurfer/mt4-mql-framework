@@ -2598,6 +2598,13 @@ string GetDayOfWeek(datetime time, bool long=true) {
 
 
 /**
+ * Alias für GetErrorDescription()
+ */
+string ErrorDescription(int error) {
+}
+
+
+/**
  * Gibt eine lesbare Beschreibung eines MQL-Fehlercodes zurück.
  *
  * @param  int error - MQL-Fehlercode

@@ -14,6 +14,10 @@
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    int  WinExec(string lpCmdLine, int nCmdShow);
 
+#import "shell32.dll"
+
+   int  ShellExecuteA(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
+
 #import "user32.dll"
 
    int  GetActiveWindow();

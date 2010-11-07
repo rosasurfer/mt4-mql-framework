@@ -13,7 +13,7 @@
    string   JoinInts(int& values[], string separator);
    string   JoinStrings(string& values[], string separator);
 
-   // conditional Statements
+   // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
    int      ifInt(bool condition, int iThen, int iElse);
    string   ifString(bool condition, string strThen, string strElse);
@@ -159,6 +159,7 @@
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
    string   GetErrorDescription(int error);
+   string   ErrorDescription(int error);
    string   GetEventDescription(int event);
    int      GetLastLibraryError();
    int      GetMovingAverageMethod(string description);
