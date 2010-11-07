@@ -15,6 +15,15 @@
 int start() {
    // TODO: mit ShellExecute() implementieren
 
+   /*
+   int hInstance = ShellExecuteA(0, "", "notepad.exe", "", "", SW_SHOWNORMAL);
+   if (hInstance < 32)
+      return(catch("start()  ShellExecuteA() failed, error: "+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
+
+   log("start()   hInstance="+ hInstance);
+   return(0);
+   */
+
    string globalConfigFile = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
    string localConfigFile  = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
 
