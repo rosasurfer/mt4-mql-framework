@@ -3,8 +3,8 @@
  *
  * Umschaltzeiten von Normal-auf Sommerzeit und umgekehrt für die einzelnen Zeitzonen.
  *
- * Daten sind ausgelagert, da MetaEditor über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und in der Folge
- * Zeilensprungmarken falsch anzeigt.
+ * Daten sind ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und in der Folge
+ * bei Fehlern falsche Zeilennummern zurückgibt.
  */
 
 // Umschaltzeiten für EET/EEST (Athen) GMT+0200,GMT+0300

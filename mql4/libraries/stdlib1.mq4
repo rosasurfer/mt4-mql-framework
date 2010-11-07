@@ -4611,7 +4611,7 @@ int RGB(int red, int green, int blue) {
 string DoubleToStrMorePrecision(double number, int precision) {
    double rem, integer, integer2;
    /*
-   MetaEditor interpretiert über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend und zeigt in der Folge Zeilensprungmarken falsch an.
+   Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
    double DecimalArray[17] = { 1.0,
                               10.0,
                              100.0,
