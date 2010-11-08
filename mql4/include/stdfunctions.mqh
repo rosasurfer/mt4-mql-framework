@@ -352,8 +352,8 @@ int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
       message = "???";
 
-   if (error == ERR_NO_ERROR) Print(StringConcatenate(WindowExpertName(), "::", message));
-   else                       Print(StringConcatenate(WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
+   if (error == ERR_NO_ERROR) Print(message);
+   else                       Print(StringConcatenate(message, "   [", error, " - ", GetErrorDescription(error), "]"));
 
    return(error);
 }

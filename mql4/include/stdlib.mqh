@@ -7,6 +7,9 @@
 
 #import "stdlib.ex4"
 
+   // Terminal-Laufzeitfunktionen
+   int      stdLib_onTick(int tick, int processedBars);
+
    // Arrays
    string   JoinBools(bool& values[], string separator);
    string   JoinDoubles(double& values[], string separator);

@@ -162,6 +162,11 @@ int init() {
  *
  */
 int start() {
+   static int tick, processedBars;
+   tick++;
+   processedBars = IndicatorCounted();
+   stdLib_onTick(tick, processedBars);
+   
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
       init = false;
@@ -204,9 +209,6 @@ int start() {
    }
 
 
-
-
-   int processedBars = IndicatorCounted();
 
    if (processedBars == 0) { // TODO: processedBars ist bei jedem Timeframe-Wechsel 0, wir wollen processedBars==0 aber nur bei Chartänderungen detektieren
       //ArrayInitialize(RateGrid.Limits, 0);
