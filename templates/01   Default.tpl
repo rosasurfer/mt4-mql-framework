@@ -13,7 +13,7 @@ shift=1
 ohlc=0
 askline=0
 days=0
-descriptions=0
+descriptions=1
 shift_size=50
 fixed_pos=750
 window_left=0
@@ -1820,7 +1820,7 @@ window_num=0
 <inputs>
 PivotType=D
 PivotPeriods=0
-Mark.TradingRanges=1
+Mark.TradingRanges=5
 </inputs>
 </expert>
 shift_0=0
