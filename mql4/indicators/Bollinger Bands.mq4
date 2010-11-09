@@ -1,7 +1,6 @@
 /**
  * Bollinger-Bands-Indikator
  */
-
 #include <stdlib.mqh>
 
 
@@ -39,7 +38,9 @@ int    period;                                     // Period-Code zum angegebene
 
 
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
 int init() {
    init = true;
@@ -124,7 +125,9 @@ int init() {
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen

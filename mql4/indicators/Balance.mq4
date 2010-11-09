@@ -1,7 +1,6 @@
 /**
  * Zeichnet den Balance-Verlauf eines Accounts.
  */
-
 #include <stdlib.mqh>
 
 
@@ -28,7 +27,9 @@ double Balance[];
 
 
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
 int init() {
    init = true;
@@ -64,7 +65,9 @@ int init() {
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen

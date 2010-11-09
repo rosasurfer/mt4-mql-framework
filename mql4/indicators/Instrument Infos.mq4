@@ -3,7 +3,6 @@
  *
  * Zeigt die Eigenschaften eines Instruments an.
  */
-
 #include <stdlib.mqh>
 
 
@@ -57,7 +56,9 @@ string labels[];
 
 
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
 int init() {
    CreateLabels();
@@ -66,7 +67,9 @@ int init() {
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    static int error = ERR_NO_ERROR;
@@ -79,7 +82,9 @@ int start() {
 
 
 /**
+ * Deinitialisierung
  *
+ * @return int - Fehlerstatus
  */
 int deinit() {
    RemoveChartObjects(labels);

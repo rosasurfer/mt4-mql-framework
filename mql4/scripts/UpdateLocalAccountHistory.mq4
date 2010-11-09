@@ -1,5 +1,4 @@
 
-
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -9,7 +8,9 @@
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    int error;

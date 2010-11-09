@@ -7,7 +7,6 @@
  * - unten Mitte:    die Größe einer Handels-Unit
  * - unten Mitte:    die im Moment gehaltene Position
  */
-
 #include <stdlib.mqh>
 
 
@@ -307,7 +306,7 @@ int UpdateUnitSizeLabel() {
       double leverage = 7.0;
       double lotValue = Bid / tickSize * tickValue;
       double unitSize = equity * leverage / lotValue;
-      
+
       // TODO: max(stdDeviation(100xH1|120xH1)) (4-5 Tage) als Volatilitätsmaß berücksichtigen
 
       if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
@@ -408,7 +407,7 @@ int UpdatePositionLabel() {
 int UpdateMarginLevels() {
    if (!position.Checked)
       CheckPosition();
-   
+
 
    if (position.Total == 0) {                // keine Position im Markt: evt. vorhandene Marker löschen
       ObjectDelete(freezeLevelLabel);
@@ -429,7 +428,7 @@ int UpdateMarginLevels() {
          return(ERR_UNKNOWN_SYMBOL);
 
       bool markFreezeLevel = true;
-      
+
       if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                              }
       else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin;       markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur SO-Level anzeigen
       else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;         }

@@ -3,7 +3,6 @@
  *
  * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der neuen Session.
  */
-
 #include <stdlib.mqh>
 
 
@@ -25,7 +24,9 @@ string labels[];
 
 
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
 int init() {
    init = true;
@@ -55,7 +56,9 @@ int init() {
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    int processedBars = IndicatorCounted();
@@ -89,7 +92,9 @@ int start() {
 
 
 /**
+ * Deinitialisierung
  *
+ * @return int - Fehlerstatus
  */
 int deinit() {
    RemoveChartObjects(labels);

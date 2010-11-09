@@ -1,10 +1,8 @@
 /**
  * Config.mq4
  *
- * Lädt die globale und die lokale Konfigurationsdatei der laufenden Instanz in den Texteditor.
+ * Lädt die globale und die lokale Konfigurationsdatei der laufenden Instanz in die Defaultanwendung (Editor).
  */
-
-
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -15,20 +13,16 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   string globalConfigFile = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
-   string localConfigFile  = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
+   string files[2];
 
-   string file = globalConfigFile;
+   files[0] = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
+   files[1] = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
 
-   int hInstance = ShellExecuteA(0, "open", file, "", "", SW_SHOWNORMAL);
-   if (hInstance < 32)
-      return(catch("start(1)  ShellExecuteA() failed to open "+ file +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
+   for (int i=0; i < 2; i++) {
+      int hInstance = ShellExecuteA(0, "open", files[i], "", "", SW_SHOWNORMAL);
+      if (hInstance < 32)
+         return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
+   }
 
-   file = localConfigFile;
-   
-   hInstance = ShellExecuteA(0, "open", file, "", "", SW_SHOWNORMAL);
-   if (hInstance < 32)
-      return(catch("start(2)  ShellExecuteA() failed to open "+ file +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
-
-   return(catch("start(3)"));
+   return(catch("start(2)"));
 }

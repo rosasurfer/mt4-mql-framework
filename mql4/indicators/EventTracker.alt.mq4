@@ -3,7 +3,6 @@
  *
  * Überwacht ein Instrument auf verschiedene, konfigurierbare Signale und benachrichtigt optisch, akustisch und/oder per SMS.
  */
-
 #include <stdlib.mqh>
 
 
@@ -52,9 +51,10 @@ int    gridDigits;
 double gridSize;
 
 
-
 /**
+ * Initialisierung
  *
+ * @return int - Fehlerstatus
  */
 int init() {
    init = true;
@@ -159,14 +159,16 @@ int init() {
 
 
 /**
+ * Main-Funktion
  *
+ * @return int - Fehlerstatus
  */
 int start() {
    static int tick, processedBars;
    tick++;
    processedBars = IndicatorCounted();
    stdLib_onTick(tick, processedBars);
-   
+
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
       init = false;
