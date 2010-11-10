@@ -167,7 +167,7 @@ int start() {
    static int Tick, UnchangedBars;
    Tick++;
    UnchangedBars = IndicatorCounted();
-   stdLib_onTick(Tick, UnchangedBars);
+   stdLib_onTick(UnchangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
@@ -555,17 +555,17 @@ int CheckPivotLevels() {
 
    // Timeframe <= H1 wählen
 
-   int sessionStartBar = iBarShiftNext(sessionStart);
-   if (sessionStartBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
+   int sessionStartBar = iBarShiftNext(NULL, 0, sessionStart);
+   if (sessionStartBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE ???
       return(GetLastLibraryError());
 
-   // todayOpen
    // todayHigh
    // todayLow
 
    // yesterdayHigh
    // yesterdayLow
    // yesterdayClose
+
    // yesterdayInsideDay
 
    Print("CheckPivotLevels()    sessionStart="+ TimeToStr(sessionStart) +"    sessionStartBar="+ sessionStartBar);

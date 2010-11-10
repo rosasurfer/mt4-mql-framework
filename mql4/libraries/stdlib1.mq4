@@ -1,7 +1,6 @@
 /**
  * stdlib.mq4
  */
-
 #property library
 
 
@@ -10,32 +9,28 @@
 #include <win32api.mqh>
 
 
-int lib_lastError = ERR_NO_ERROR;
+int lib_last_error = ERR_NO_ERROR;
 
-int Tick          = 0;
-int UnchangedBars = 0;
-int ChangedBars   = 0;
+int Tick           = 0;
+int UnchangedBars  = 0;
+int ChangedBars    = 0;
 
 
 /**
- * Informiert die Library über das Eintreffen eines neuen Ticks.
+ * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
+ * oder eines neuen Ticks erfolgt (z.B im EventListener).
  *
- * @param  int tick          - Tick-Counter, ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben oder eines neuen Ticks erfolgt (z.B EventListener)
- * @param  int unchangedBars - Rückgabewert von IndicatorCounted(), der direkte Aufruf in Libraries gäbe -1 zurück
+ * @param  int unchangedBars - Rückgabewert von IndicatorCounted(), der direkte Aufruf in der Library gäbe -1 zurück
  *
  * @return int - Fehlerstatus
  */
-int stdLib_onTick(int tick, int unchangedBars) {
-   if (tick < 1) {
-      lib_lastError = catch("onTick()  invalid parameter tick: "+ tick, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(lib_lastError);
-   }
+int stdLib_onTick(int unchangedBars) {
    if (unchangedBars < 0) {
-      lib_lastError = catch("onTick()  invalid parameter unchangedBars: "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(lib_lastError);
+      lib_last_error = catch("onTick()  invalid parameter unchangedBars: "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(lib_last_error);
    }
 
-   Tick          = tick;
+   Tick++;
    UnchangedBars = unchangedBars;
    ChangedBars   = Bars - UnchangedBars;
 
@@ -68,7 +63,7 @@ datetime TimeGMT() {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("TimeGMT()", error);
+      lib_last_error = catch("TimeGMT()", error);
       return(-1);
    }
    return(time);
@@ -289,7 +284,7 @@ string StringReplace(string object, string search, string replace) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("StringReplace()", error);
+      lib_last_error = catch("StringReplace()", error);
       return("");
    }
    return(result);
@@ -314,7 +309,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerPrevSessionStartTime()", error);
+      lib_last_error = catch("GetServerPrevSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -339,7 +334,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerPrevSessionEndTime()", error);
+      lib_last_error = catch("GetServerPrevSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -367,7 +362,7 @@ datetime GetServerSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerSessionStartTime()", error);
+      lib_last_error = catch("GetServerSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -396,7 +391,7 @@ datetime GetServerSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerSessionEndTime()", error);
+      lib_last_error = catch("GetServerSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -421,7 +416,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerNextSessionStartTime()", error);
+      lib_last_error = catch("GetServerNextSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -446,7 +441,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerNextSessionEndTime()", error);
+      lib_last_error = catch("GetServerNextSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -471,7 +466,7 @@ datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtPrevSessionStartTime()", error);
+      lib_last_error = catch("GetGmtPrevSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -496,7 +491,7 @@ datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtPrevSessionEndTime()", error);
+      lib_last_error = catch("GetGmtPrevSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -524,7 +519,7 @@ datetime GetGmtSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtSessionStartTime()", error);
+      lib_last_error = catch("GetGmtSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -552,7 +547,7 @@ datetime GetGmtSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtSessionEndTime()", error);
+      lib_last_error = catch("GetGmtSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -577,7 +572,7 @@ datetime GetGmtNextSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtNextSessionStartTime()", error);
+      lib_last_error = catch("GetGmtNextSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -602,7 +597,7 @@ datetime GetGmtNextSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtNextSessionEndTime()", error);
+      lib_last_error = catch("GetGmtNextSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -633,7 +628,7 @@ datetime GetEasternPrevSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternPrevSessionStartTime()", error);
+      lib_last_error = catch("GetEasternPrevSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(previousStart);
@@ -657,7 +652,7 @@ datetime GetEasternPrevSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternPrevSessionEndTime()", error);
+      lib_last_error = catch("GetEasternPrevSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(previousEnd);
@@ -688,7 +683,7 @@ datetime GetEasternSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternSessionStartTime()", error);
+      lib_last_error = catch("GetEasternSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(easternStart);
@@ -714,7 +709,7 @@ datetime GetEasternSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternSessionEndTime()", error);
+      lib_last_error = catch("GetEasternSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(easternEnd);
@@ -744,7 +739,7 @@ datetime GetEasternNextSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternNextSessionStartTime()", error);
+      lib_last_error = catch("GetEasternNextSessionStartTime()", error);
       return(EMPTY_VALUE);
    }
    return(nextStart);
@@ -768,7 +763,7 @@ datetime GetEasternNextSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternNextSessionEndTime()", error);
+      lib_last_error = catch("GetEasternNextSessionEndTime()", error);
       return(EMPTY_VALUE);
    }
    return(nextEnd);
@@ -809,7 +804,7 @@ string DecimalToHex(int i) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("DecimalToHex()", error);
+      lib_last_error = catch("DecimalToHex()", error);
       return("");
    }
    return(result);
@@ -839,7 +834,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_MN1: return(PERIOD_W1 );
    }
 
-   lib_lastError = catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -881,7 +876,7 @@ datetime EasternToGMT(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EasternToGMT()", error);
+      lib_last_error = catch("EasternToGMT()", error);
       return(-1);
    }
    return(gmtTime);
@@ -917,7 +912,7 @@ datetime EasternToServerTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EasternToServerTime()", error);
+      lib_last_error = catch("EasternToServerTime()", error);
       return(-1);
    }
    return(serverTime);
@@ -946,7 +941,7 @@ bool EventListener(int event, int& results[], int flags=0) {
       case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
    }
 
-   lib_lastError = catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
 }
 
@@ -1016,7 +1011,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.BarOpen()", error);
+      lib_last_error = catch("EventListener.BarOpen()", error);
       return(false);
    }
    return(results[0] != 0);
@@ -1041,7 +1036,7 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.OrderChange()", error);
+      lib_last_error = catch("EventListener.OrderChange()", error);
       return(false);
    }
    return(eventStatus);
@@ -1066,7 +1061,7 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.OrderPlace()", error);
+      lib_last_error = catch("EventListener.OrderPlace()", error);
       return(false);
    }
    return(eventStatus);
@@ -1091,7 +1086,7 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.OrderCancel()", error);
+      lib_last_error = catch("EventListener.OrderCancel()", error);
       return(false);
    }
    return(eventStatus);
@@ -1207,7 +1202,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.PositionOpen()", error);
+      lib_last_error = catch("EventListener.PositionOpen()", error);
       return(false);
    }
    return(eventStatus);
@@ -1253,7 +1248,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
             int error = GetLastError();
             if (error == ERR_NO_ERROR)
                error = ERR_RUNTIME_ERROR;
-            lib_lastError = catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
+            lib_last_error = catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
             // TODO: bei offenen Orders in einem Account und dem ersten Login in einen neuen Account crasht alles (erster Login dauert länger)
             return(false);
          }
@@ -1306,7 +1301,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.PositionClose(2)", error);
+      lib_last_error = catch("EventListener.PositionClose(2)", error);
       return(false);
    }
    return(eventStatus);
@@ -1331,7 +1326,7 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.AccountPayment()", error);
+      lib_last_error = catch("EventListener.AccountPayment()", error);
       return(false);
    }
    return(eventStatus);
@@ -1356,7 +1351,7 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.HistoryChange()", error);
+      lib_last_error = catch("EventListener.HistoryChange()", error);
       return(false);
    }
    return(eventStatus);
@@ -1402,7 +1397,7 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventListener.AccountChange()", error);
+      lib_last_error = catch("EventListener.AccountChange()", error);
       return(false);
    }
    return(eventStatus);
@@ -1431,7 +1426,7 @@ bool EventTracker.GetBandLimits(double& destination[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventTracker.GetBandLimits()", error);
+      lib_last_error = catch("EventTracker.GetBandLimits()", error);
       return(false);
    }
    return(true);
@@ -1453,7 +1448,7 @@ bool EventTracker.SetBandLimits(double& limits[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventTracker.SetBandLimits()", error);
+      lib_last_error = catch("EventTracker.SetBandLimits()", error);
       return(false);
    }
    return(true);
@@ -1481,7 +1476,7 @@ bool EventTracker.GetRateGridLimits(double& destination[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventTracker.GetRateGridLimits()", error);
+      lib_last_error = catch("EventTracker.GetRateGridLimits()", error);
       return(false);
    }
    return(true);
@@ -1502,7 +1497,7 @@ bool EventTracker.SetRateGridLimits(double& limits[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("EventTracker.SetRateGridLimits()", error);
+      lib_last_error = catch("EventTracker.SetRateGridLimits()", error);
       return(false);
    }
    return(true);
@@ -1556,7 +1551,7 @@ int Explode(string object, string separator, string& results[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR)
-      lib_lastError = catch("Explode()", error);
+      lib_last_error = catch("Explode()", error);
    return(error);
 }
 
@@ -1573,8 +1568,8 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    int error;
 
    if (ArrayRange(destination, 1) != HISTORY_COLUMNS) {
-      lib_lastError = catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(destination, 0) +"]["+ ArrayRange(destination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS);
-      return(lib_lastError);
+      lib_last_error = catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(destination, 0) +"]["+ ArrayRange(destination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS);
+      return(lib_last_error);
    }
 
    int    cache.account[1];
@@ -1587,7 +1582,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
          //Print("GetAccountHistory()  delivering ", ArrayRange(destination, 0), " cached raw history entries for account "+ account);
          error = GetLastError();
          if (error != ERR_NO_ERROR)
-            lib_lastError = catch("GetAccountHistory(2)", error);
+            lib_last_error = catch("GetAccountHistory(2)", error);
          return(error);
       }
    }
@@ -1604,7 +1599,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    if (handle < 0) {
       error = GetLastError();
       if (error != ERR_NO_ERROR) {
-         lib_lastError = error;
+         lib_last_error = error;
          if (error == ERR_CANNOT_OPEN_FILE) Print("GetAccountHistory()  cannot open file \"", filename, "\" - does it exist?");
          else                               catch("GetAccountHistory(3)  FileOpen(filename="+ filename +")", error);
       }
@@ -1690,7 +1685,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    // END_OF_FILE Error zurücksetzen
    error = GetLastError();
    if (error != ERR_END_OF_FILE)
-      lib_lastError = catch("GetAccountHistory(6)", error);
+      lib_last_error = catch("GetAccountHistory(6)", error);
 
    // Datei schließen
    FileClose(handle);
@@ -1711,7 +1706,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 
    error = GetLastError();
    if (error != ERR_END_OF_FILE)
-      lib_lastError = catch("GetAccountHistory(7)", error);
+      lib_last_error = catch("GetAccountHistory(7)", error);
    return(error);
 }
 
@@ -1731,19 +1726,19 @@ int GetAccountNumber() {
    if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalTopWindow());
       if (title == "") {
-         lib_lastError = ERR_TERMINAL_NOT_YET_READY;
+         lib_last_error = ERR_TERMINAL_NOT_YET_READY;
          return(0);
       }
 
       int pos = StringFind(title, ":");
       if (pos < 1) {
-         lib_lastError = catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
+         lib_last_error = catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
          return(0);
       }
 
       string strAccount = StringSubstrFix(title, 0, pos);
       if (!StringIsDigit(strAccount)) {
-         lib_lastError = catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
+         lib_last_error = catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
          return(0);
       }
 
@@ -1752,7 +1747,7 @@ int GetAccountNumber() {
 
    int error = catch("GetAccountNumber(3)");
    if (error != ERR_NO_ERROR) {
-      lib_lastError = error;
+      lib_last_error = error;
       return(0);
    }
 
@@ -1777,7 +1772,7 @@ double GetAverageSpread(string symbol) {
    else if (symbol == "USDCHF") return(0.0001 );
 
    //spread = MarketInfo(symbol, MODE_POINT) * MarketInfo(symbol, MODE_SPREAD); // aktueller Spread in Points
-   lib_lastError = catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL);
+   lib_last_error = catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL);
 
    return(0);
 }
@@ -1808,7 +1803,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
 
          error = GetLastError();
          if (error != ERR_NO_ERROR)
-            lib_lastError = catch("GetBalanceHistory(1)", error);
+            lib_last_error = catch("GetBalanceHistory(1)", error);
          return(error);
       }
    }
@@ -1861,7 +1856,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
 
    error = GetLastError();
    if (error != ERR_NO_ERROR)
-      lib_lastError = catch("GetBalanceHistory(2)", error);
+      lib_last_error = catch("GetBalanceHistory(2)", error);
    return(error);
 }
 
@@ -1881,14 +1876,14 @@ string GetComputerName() {
       error = GetLastError();
       if (error == ERR_NO_ERROR)
          error = ERR_NO_MEMORY_FOR_RETURNED_STR;
-      lib_lastError = catch("GetComputerName(1)   kernel32.GetComputerNameA(buffer, "+ lpSize[0] +")    result: 0", error);
+      lib_last_error = catch("GetComputerName(1)   kernel32.GetComputerNameA(buffer, "+ lpSize[0] +")    result: 0", error);
       return("");
    }
    //Print("GetComputerName()   GetComputerNameA()   result: 1   copied: "+ lpSize[0] +"   buffer: "+ buffer[0]);
 
    error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetComputerName(2)", error);
+      lib_last_error = catch("GetComputerName(2)", error);
       return("");
    }
    return(buffer[0]);
@@ -1921,7 +1916,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetConfigBool()", error);
+      lib_last_error = catch("GetConfigBool()", error);
       return(false);
    }
    return(result);
@@ -1952,7 +1947,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetConfigDouble()", error);
+      lib_last_error = catch("GetConfigDouble()", error);
       return(0);
    }
    return(result);
@@ -1979,7 +1974,7 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetConfigInt()", error);
+      lib_last_error = catch("GetConfigInt()", error);
       return(0);
    }
    return(result);
@@ -2008,7 +2003,7 @@ string GetConfigString(string section, string key, string defaultValue="") {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetConfigString()", error);
+      lib_last_error = catch("GetConfigString()", error);
       return("");
    }
    return(buffer[0]);
@@ -2032,7 +2027,7 @@ int GetEasternToGmtOffset(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternToGmtOffset()", error);
+      lib_last_error = catch("GetEasternToGmtOffset()", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -2065,7 +2060,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetEasternToServerTimeOffset()", error);
+      lib_last_error = catch("GetEasternToServerTimeOffset()", error);
       return(EMPTY_VALUE);
    }
    return(easternToGmtOffset + gmtToServerTimeOffset);
@@ -2094,7 +2089,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGlobalConfigBool()", error);
+      lib_last_error = catch("GetGlobalConfigBool()", error);
       return(false);
    }
    return(result);
@@ -2121,7 +2116,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGlobalConfigDouble()", error);
+      lib_last_error = catch("GetGlobalConfigDouble()", error);
       return(0);
    }
    return(result);
@@ -2144,7 +2139,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGlobalConfigInt()", error);
+      lib_last_error = catch("GetGlobalConfigInt()", error);
       return(0);
    }
    return(result);
@@ -2169,7 +2164,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGlobalConfigString()", error);
+      lib_last_error = catch("GetGlobalConfigString()", error);
       return("");
    }
    return(buffer[0]);
@@ -2197,7 +2192,7 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtToEasternTimeOffset(gmtTime="+ gmtTime +"="+ TimeToStr(gmtTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +")", error);
+      lib_last_error = catch("GetGmtToEasternTimeOffset(gmtTime="+ gmtTime +"="+ TimeToStr(gmtTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +")", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -2254,13 +2249,13 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
    }
 
    else {
-      lib_lastError = catch("GetGmtToServerTimeOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetGmtToServerTimeOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetGmtToServerTimeOffset(2)", error);
+      lib_last_error = catch("GetGmtToServerTimeOffset(2)", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -2273,8 +2268,8 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
  * @return int - Fehlercode
  */
 int GetLastLibraryError() {
-   int error = lib_lastError;
-   lib_lastError = ERR_NO_ERROR;
+   int error = lib_last_error;
+   lib_last_error = ERR_NO_ERROR;
    return(error);
 }
 
@@ -2301,7 +2296,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetLocalConfigBool()", error);
+      lib_last_error = catch("GetLocalConfigBool()", error);
       return(false);
    }
    return(result);
@@ -2328,7 +2323,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetLocalConfigDouble()", error);
+      lib_last_error = catch("GetLocalConfigDouble()", error);
       return(0);
    }
    return(result);
@@ -2351,7 +2346,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetLocalConfigInt()", error);
+      lib_last_error = catch("GetLocalConfigInt()", error);
       return(0);
    }
    return(result);
@@ -2376,7 +2371,7 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetLocalConfigString()", error);
+      lib_last_error = catch("GetLocalConfigString()", error);
       return("");
    }
    return(buffer[0]);
@@ -3438,7 +3433,7 @@ string GetEventDescription(int event) {
       case EVENT_HISTORY_CHANGE : return("HistoryChange" );
    }
 
-   lib_lastError = catch("GetEventDescription() - unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetEventDescription() - unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3452,7 +3447,7 @@ string GetEventDescription(int event) {
  */
 int GetLocalToGmtOffset(datetime localTime=-1) {
    if (localTime != -1) {
-      lib_lastError = catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
@@ -3472,7 +3467,7 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetLocalToGmtOffset()", error);
+      lib_last_error = catch("GetLocalToGmtOffset()", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -3498,7 +3493,7 @@ int GetMovingAverageMethod(string description) {
    if (description == "LWMA"     ) return(MODE_LWMA);
    if (description == "MODE_LWMA") return(MODE_LWMA);
 
-   lib_lastError = catch("GetMovingAverageMethod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetMovingAverageMethod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -3522,7 +3517,7 @@ string GetOperationTypeDescription(int type) {
       case OP_MARGINCREDIT: return("Margin Credit");
    }
 
-   lib_lastError = catch("GetOperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetOperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3547,7 +3542,7 @@ int GetPeriod(string description) {
    if (description == "W1" ) return(PERIOD_W1 );      // 10080  weekly
    if (description == "MN1") return(PERIOD_MN1);      // 43200  monthly
 
-   lib_lastError = catch("GetPeriod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetPeriod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -3575,7 +3570,7 @@ string GetPeriodDescription(int period=0) {
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
 
-   lib_lastError = catch("GetPeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetPeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3603,7 +3598,7 @@ int GetPeriodFlag(int period=0) {
       case PERIOD_MN1: return(PERIODFLAG_MN1);
    }
 
-   lib_lastError = catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -3647,14 +3642,14 @@ string GetServerTimezone() {
 
    string configValue = GetConfigString("Timezones", account, "");
    if (configValue == "") {
-      lib_lastError = catch("GetServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
    }
 
    string values[];
    Explode(configValue, ",", values);
    if (ArraySize(values) > 2) {
-      lib_lastError = catch("GetServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    string zone = JoinStrings(values, ",");
@@ -3676,13 +3671,13 @@ string GetServerTimezone() {
    else if (zone == "EST,EDT" ) {}
 
    else {
-      lib_lastError = catch("GetServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerTimezone(4)", error);
+      lib_last_error = catch("GetServerTimezone(4)", error);
       return("");
    }
    return(zone);
@@ -3715,7 +3710,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerToEasternTimeOffset()", error);
+      lib_last_error = catch("GetServerToEasternTimeOffset()", error);
       return(EMPTY_VALUE);
    }
    return(serverToGmtOffset + gmtToEasternTimeOffset);
@@ -3768,13 +3763,13 @@ int GetServerToGmtOffset(datetime serverTime) {
    }
 
    else {
-      lib_lastError = catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
+      lib_last_error = catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetServerToGmtOffset(2)", error);
+      lib_last_error = catch("GetServerToGmtOffset(2)", error);
       return(EMPTY_VALUE);
    }
    return(offset);
@@ -3798,7 +3793,7 @@ int GetTerminalTopWindow() {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetTerminalTopWindow()", error);
+      lib_last_error = catch("GetTerminalTopWindow()", error);
       return(0);
    }
    return(child);
@@ -3823,7 +3818,7 @@ string GetUninitReasonDescription(int reason) {
       case REASON_ACCOUNT    : return("account changed"                       );
    }
 
-   lib_lastError = catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3843,7 +3838,7 @@ string GetWindowText(int hWnd) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GetWindowText()", error);
+      lib_last_error = catch("GetWindowText()", error);
       return("");
    }
    return(buffer[0]);
@@ -3868,7 +3863,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GmtToEasternTime()", error);
+      lib_last_error = catch("GmtToEasternTime()", error);
       return(-1);
    }
    return(easternTime);
@@ -3897,7 +3892,7 @@ datetime GmtToServerTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("GmtToServerTime()", error);
+      lib_last_error = catch("GmtToServerTime()", error);
       return(-1);
    }
    return(serverTime);
@@ -3929,7 +3924,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
    // Balancewerte der Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
    for (int i=0; i < noOfValues; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(times[i]);               // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
+      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
       if (bar == -1)                               // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
@@ -3951,7 +3946,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR)
-      lib_lastError = catch("iBalanceSeries()", error);
+      lib_last_error = catch("iBalanceSeries()", error);
    return(error);
 }
 
@@ -3963,7 +3958,7 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
  * @param  datetime time      - Zeitpunkt
  *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
  * NOTE:
@@ -3971,16 +3966,28 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  * Kann ERR_HISTORY_UPDATE auslösen.
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")            // MQL: NULL ist ein Integer (0)
+   if (symbol == "0")                                       // MQL: NULL ist ein Integer (0)
       symbol = Symbol();
 
-   // TODO: Fehler, Time[] und Bars beziehen sich auf den aktuellen Chart
-   if (time < Time[Bars-1]) int bar = -1;                                           // Zeitpunkt ist zu alt für den Chart
-   else                         bar = iBarShift(symbol, timeframe, time, false);    // evt. ERR_HISTORY_UPDATE
+   // Datenreihe holen
+   datetime times[];
+   ArrayResize(times, 0);
+   ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+   int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
-   int error = GetLastError();
+   if (error == ERR_NO_ERROR) {
+      // Bars überprüfen
+      if (time < times[ArraySize(times)-1]) {
+         int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
+      }
+      else {
+         bar   = iBarShift(symbol, timeframe, time);
+         error = GetLastError();                            // ERR_HISTORY_UPDATE ???
+      }
+   }
+
    if (error != ERR_NO_ERROR) {
-      lib_lastError = error;
+      lib_last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftPrevious()", error);
       return(EMPTY_VALUE);
@@ -3990,36 +3997,50 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 
 
 /**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes im aktuellen Chart und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
+ * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param  datetime time - Zeitpunkt
+ * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time      - Zeitpunkt
  *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert;
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
  * NOTE:
  * ----
  * Kann ERR_HISTORY_UPDATE auslösen.
  */
-int iBarShiftNext(datetime time) {
-   int bar = iBarShift(NULL, 0, time, true);             // evt. ERR_HISTORY_UPDATE
+int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
+   if (symbol == "0")                                       // MQL: NULL ist ein Integer
+      symbol = Symbol();
 
-   int error = GetLastError();
+   int bar   = iBarShift(NULL, 0, time, true);
+   int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
-   if (error == ERR_NO_ERROR) {
-      if (bar == -1) {                                   // falls die Bar nicht existiert:
-         if (time < Time[Bars-1])                        // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
-            bar = Bars-1;
-         else if (time < Time[0]) {                      // Kurslücke, die nächste existierende Bar zurückgeben
-            bar = iBarShift(NULL, 0, time) - 1;
-            error = GetLastError();
+   if (error==ERR_NO_ERROR) if (bar==-1) {                  // falls die Bar nicht existiert und auch kein Update läuft
+      // Datenreihe holen
+      datetime times[];
+      ArrayResize(times, 0);
+      ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+      error = GetLastError();                               // ERR_HISTORY_UPDATE ???
+
+      if (error == ERR_NO_ERROR) {
+         // Bars überprüfen
+         int bars = ArraySize(times);
+
+         if (time < times[bars-1])                          // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
+            bar = bars-1;
+
+         else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
+            bar   = iBarShift(symbol, timeframe, time) - 1;
+            error = GetLastError();                         // ERR_HISTORY_UPDATE ???
          }
-         //else: (time > Time[0]) bar=-1                 // Zeitpunkt ist zu neu für den Chart
+         //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für den Chart, bar bleibt -1
       }
    }
 
    if (error != ERR_NO_ERROR) {
-      lib_lastError = error;
+      lib_last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftNext()", error);
       return(EMPTY_VALUE);
@@ -4051,7 +4072,7 @@ int IncreasePeriod(int period = 0) {
       case PERIOD_MN1: return(PERIOD_MN1);
    }
 
-   lib_lastError = catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -4145,7 +4166,7 @@ string JoinStrings(string values[], string separator) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("JoinStrings()", error);
+      lib_last_error = catch("JoinStrings()", error);
       return("");
    }
    return(result);
@@ -4156,8 +4177,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onBarOpen(int details[]) {
-   lib_lastError = catch("onBarOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onBarOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4165,8 +4186,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onOrderPlace(int details[]) {
-   lib_lastError = catch("onOrderPlace()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onOrderPlace()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4174,8 +4195,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onOrderChange(int details[]) {
-   lib_lastError = catch("onOrderChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onOrderChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4183,8 +4204,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onOrderCancel(int details[]) {
-   lib_lastError = catch("onOrderCancel()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onOrderCancel()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4196,8 +4217,8 @@ string JoinStrings(string values[], string separator) {
  * @return int - Fehlerstatus
  */
 /*abstract*/ int onPositionOpen(int tickets[]) {
-   lib_lastError = catch("onPositionOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onPositionOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4205,8 +4226,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onPositionClose(int details[]) {
-   lib_lastError = catch("onPositionClose()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onPositionClose()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4214,8 +4235,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onAccountChange(int details[]) {
-   lib_lastError = catch("onAccountChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onAccountChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4223,8 +4244,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onAccountPayment(int details[]) {
-   lib_lastError = catch("onAccountPayment()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onAccountPayment()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4232,8 +4253,8 @@ string JoinStrings(string values[], string separator) {
  *
  */
 /*abstract*/ int onHistoryChange(int details[]) {
-   lib_lastError = catch("onHistoryChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
-   return(lib_lastError);
+   lib_last_error = catch("onHistoryChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED);
+   return(lib_last_error);
 }
 
 
@@ -4273,7 +4294,7 @@ int RemoveChartObjects(string& labels[]) {
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST) return(ERR_NO_ERROR);
    if (error != ERR_NO_ERROR)
-      lib_lastError = catch("RemoveChartObjects()", error);
+      lib_last_error = catch("RemoveChartObjects()", error);
    return(error);
 }
 
@@ -4290,8 +4311,8 @@ int SendTextMessage(string receiver, string message) {
    int error;
 
    if (!StringIsDigit(receiver)) {
-      lib_lastError = catch("SendTextMessage(1)   invalid parameter receiver: "+ receiver, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(lib_lastError);
+      lib_last_error = catch("SendTextMessage(1)   invalid parameter receiver: "+ receiver, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(lib_last_error);
    }
 
    // TODO: Gateway-Zugangsdaten auslagern
@@ -4309,13 +4330,13 @@ int SendTextMessage(string receiver, string message) {
 
    error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32) {
-      lib_lastError = catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR);
-      return(lib_lastError);
+      lib_last_error = catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR);
+      return(lib_last_error);
    }
 
    error = GetLastError();
    if (error != ERR_NO_ERROR)
-      lib_lastError = catch("SendTextMessage(2)", error);
+      lib_last_error = catch("SendTextMessage(2)", error);
    return(error);
 }
 
@@ -4344,7 +4365,7 @@ datetime ServerToEasternTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("ServerToEasternTime()", error);
+      lib_last_error = catch("ServerToEasternTime()", error);
       return(-1);
    }
    return(easternTime);
@@ -4373,7 +4394,7 @@ datetime ServerToGMT(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("ServerToGMT()", error);
+      lib_last_error = catch("ServerToGMT()", error);
       return(-1);
    }
    return(gmtTime);
@@ -4394,7 +4415,7 @@ int SetWindowText(int hWnd, string text) {
       int error = GetLastError();
       if (error == ERR_NO_ERROR)
          error = ERR_WINDOWS_ERROR;
-      lib_lastError = catch("SetWindowText()   user32.SetWindowTextA(hWnd="+hWnd+", lpString=\""+text+"\")    result: 0", error);
+      lib_last_error = catch("SetWindowText()   user32.SetWindowTextA(hWnd="+hWnd+", lpString=\""+text+"\")    result: 0", error);
       return(error);
    }
 
@@ -4485,7 +4506,7 @@ int StringFindR(string object, string search) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError= catch("StringFindR()", error);
+      lib_last_error= catch("StringFindR()", error);
       return(-1);
    }
    return(lastFound);
@@ -4522,7 +4543,7 @@ string StringToLower(string value) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("StringToLower()", error);
+      lib_last_error = catch("StringToLower()", error);
       return("");
    }
    return(result);
@@ -4559,7 +4580,7 @@ string StringToUpper(string value) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("StringToUpper()", error);
+      lib_last_error = catch("StringToUpper()", error);
       return("");
    }
    return(result);
@@ -4603,7 +4624,7 @@ string UrlEncode(string value) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("UrlEncode()", error);
+      lib_last_error = catch("UrlEncode()", error);
       return("");
    }
    return(result);
@@ -4764,7 +4785,7 @@ int MathSign(double number) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0) {
-      lib_lastError = catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
+      lib_last_error = catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -4933,7 +4954,7 @@ string FormatNumber(double number, string mask) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_lastError = catch("FormatNumber()", error);
+      lib_last_error = catch("FormatNumber()", error);
       return("");
    }
    return(outStr);

@@ -1,14 +1,13 @@
 /**
  * stdlib.mqh
  */
-
-#include <stddefine.mqh>   // constant definitions
+#include <stddefine.mqh>         // constants definitions
 
 
 #import "stdlib.ex4"
 
    // Terminal-Laufzeitfunktionen
-   int      stdLib_onTick(int tick, int unchangedBars);
+   int      stdLib_onTick(int unchangedBars);
 
    // Arrays
    string   JoinBools(bool& values[], string separator);
@@ -176,7 +175,7 @@
    string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);
    int      iBalanceSeries(int account, double& iBuffer[]);
-   int      iBarShiftNext(datetime time);
+   int      iBarShiftNext(string symbol, int timeframe, datetime time);
    int      iBarShiftPrevious(string symbol, int timeframe, datetime time);
    int      IncreasePeriod(int period);
    int      RegisterChartObject(string label, string& objects[]);

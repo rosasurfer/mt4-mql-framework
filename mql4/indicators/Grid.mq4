@@ -160,7 +160,7 @@ int DrawGrid() {
             chartTime = EasternToServerTime(easternTime - 2*DAYS);
       }
       else {                                                // Separator liegt innerhalb der Bar-Range, die Zeit der ersten existierenden Session-Bar verwenden
-         bar = iBarShiftNext(separatorTime);
+         bar = iBarShiftNext(NULL, 0, separatorTime);
          if (bar == EMPTY_VALUE)
             return(GetLastLibraryError());
          chartTime = Time[bar];
