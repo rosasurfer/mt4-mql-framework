@@ -164,10 +164,10 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   static int tick, processedBars;
-   tick++;
-   processedBars = IndicatorCounted();
-   stdLib_onTick(tick, processedBars);
+   static int Tick, UnchangedBars;
+   Tick++;
+   UnchangedBars = IndicatorCounted();
+   stdLib_onTick(Tick, UnchangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
@@ -212,7 +212,7 @@ int start() {
 
 
 
-   if (processedBars == 0) { // TODO: processedBars ist bei jedem Timeframe-Wechsel 0, wir wollen processedBars==0 aber nur bei Chartänderungen detektieren
+   if (UnchangedBars == 0) { // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
       //ArrayInitialize(RateGrid.Limits, 0);
       //EventTracker.SetRateGridLimits(RateGrid.Limits);
       //ArrayInitialize(Band.Limits, 0);
@@ -437,7 +437,7 @@ int CheckRateGrid() {
  * @return int - Fehlerstatus
  */
 int InitializeRateGrid() {
-   //Print("InitializeRateGrid()   bars="+ Bars +"    processedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
+   //Print("InitializeRateGrid()   bars="+ Bars +"    unchangedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
 
    int cells = MathFloor((Bid+Ask)/2 / gridSize);
 

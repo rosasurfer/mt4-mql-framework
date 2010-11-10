@@ -84,13 +84,13 @@ int start() {
    if (account == 0)
       account = GetAccountNumber();
 
-   int processedBars = IndicatorCounted();
+   int UnchangedBars = IndicatorCounted();
 
-   if (processedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
+   if (UnchangedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
       iBalanceSeries(account, Balance);
    }
    else {
-      for (int i=Bars-processedBars; i >= 0; i--) {      // nur fehlende Werte neu berechnen
+      for (int i=Bars-UnchangedBars; i >= 0; i--) {      // nur fehlende Werte neu berechnen
          iBalance(account, Balance, i);
       }
    }

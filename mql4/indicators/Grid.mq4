@@ -61,12 +61,12 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   int processedBars = IndicatorCounted();
+   int UnchangedBars = IndicatorCounted();
 
    // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
    static bool redraw = false;
-   if (processedBars == 0) {                    redraw =  true; }
-   else if (redraw)        { processedBars = 0; redraw = false; }
+   if (UnchangedBars == 0) {                    redraw =  true; }
+   else if (redraw)        { UnchangedBars = 0; redraw = false; }
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
@@ -83,7 +83,7 @@ int start() {
 
 
    // Grid zeichnen
-   if (processedBars == 0) {
+   if (UnchangedBars == 0) {
       redraw = (DrawGrid()==ERR_HISTORY_UPDATE);
    }
 

@@ -10,32 +10,35 @@
 #include <win32api.mqh>
 
 
-int lib_tick          = 0;
-int lib_processedBars = 0;
-int lib_lastError     = ERR_NO_ERROR;
+int lib_lastError = ERR_NO_ERROR;
+
+int Tick          = 0;
+int UnchangedBars = 0;
+int ChangedBars   = 0;
 
 
 /**
- * Initialisiert die Library bei Eintreffen eines neuen Ticks.
+ * Informiert die Library über das Eintreffen eines neuen Ticks.
  *
  * @param  int tick          - Tick-Counter, ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben oder eines neuen Ticks erfolgt (z.B EventListener)
- * @param  int processedBars - Rückgabewert von IndicatorCounted(), der direkte Aufruf in Libraries gibt -1 zurück
+ * @param  int unchangedBars - Rückgabewert von IndicatorCounted(), der direkte Aufruf in Libraries gäbe -1 zurück
  *
  * @return int - Fehlerstatus
  */
-int stdLib_onTick(int tick, int processedBars) {
+int stdLib_onTick(int tick, int unchangedBars) {
    if (tick < 1) {
       lib_lastError = catch("onTick()  invalid parameter tick: "+ tick, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(lib_lastError);
    }
-   if (processedBars < 0) {
-      lib_lastError = catch("onTick()  invalid parameter processedBars: "+ processedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (unchangedBars < 0) {
+      lib_lastError = catch("onTick()  invalid parameter unchangedBars: "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(lib_lastError);
    }
 
-   lib_tick          = tick;
-   lib_processedBars = processedBars;
-   
+   Tick          = tick;
+   UnchangedBars = unchangedBars;
+   ChangedBars   = Bars - UnchangedBars;
+
    return(ERR_NO_ERROR);
 }
 

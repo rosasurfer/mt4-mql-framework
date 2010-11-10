@@ -144,7 +144,7 @@ int start() {
    if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(0);
 
-   int processedBars = IndicatorCounted(),
+   int UnchangedBars = IndicatorCounted(),
        iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar
        bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
@@ -154,11 +154,11 @@ int start() {
 
 
    // Anzahl der zu berechnenden Bars bestimmen
-   if (processedBars == 0) {
+   if (UnchangedBars == 0) {
       bars = iLastIndBar + 1;                   // alle
    }
    else {                                       // nur die fehlenden Bars
-      bars = Bars - processedBars;
+      bars = Bars - UnchangedBars;
       if (bars > iLastIndBar + 1)
          bars = iLastIndBar + 1;
       // TODO: Eventhandler integrieren: Update nur bei onNewHigh|onNewLow
