@@ -146,7 +146,7 @@ int init() {
       }
    }
 
-   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, ifString(Track.RateChanges, " (Grid: "+RateGrid.Size+")", ""), "   Track.PivotLevels=", Track.PivotLevels, "   Track.BollingerBands=", Track.BollingerBands);
+   Print("init()    Sound.Alerts=", Sound.Alerts, "   SMS.Alerts=", SMS.Alerts, "   Track.Positions=", Track.Positions, "   Track.RateChanges=", Track.RateChanges, ifString(Track.RateChanges, " (Grid="+RateGrid.Size+")", ""), "   Track.PivotLevels=", Track.PivotLevels, "   Track.BollingerBands=", Track.BollingerBands);
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -210,18 +210,8 @@ int start() {
          return(ERR_HISTORY_UPDATE);
    }
 
-
-
-   if (UnchangedBars == 0) { // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
-      //ArrayInitialize(RateGrid.Limits, 0);
-      //EventTracker.SetRateGridLimits(RateGrid.Limits);
-      //ArrayInitialize(Band.Limits, 0);
-      //EventTracker.SetBandLimits(Band.Limits);
-   }
-
-
    // Pivot-Level
-   if (false && Track.PivotLevels)
+   if (Track.PivotLevels)
       if (CheckPivotLevels() == ERR_HISTORY_UPDATE)
          return(ERR_HISTORY_UPDATE);
 
@@ -230,6 +220,16 @@ int start() {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
       if (CheckBollingerBands() == ERR_HISTORY_UPDATE)
          return(ERR_HISTORY_UPDATE);
+   }
+
+
+
+   // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
+   if (UnchangedBars == 0) {
+      //ArrayInitialize(RateGrid.Limits, 0);
+      //EventTracker.SetRateGridLimits(RateGrid.Limits);
+      //ArrayInitialize(Band.Limits, 0);
+      //EventTracker.SetBandLimits(Band.Limits);
    }
 
    return(catch("start(2)"));
@@ -543,6 +543,37 @@ int InitializeRateGrid() {
 int CheckPivotLevels() {
    if (!Track.PivotLevels)
       return(0);
+
+   static bool done;
+   if (done) return(0);
+   done = true;
+
+
+   // Pivot-Level ermitteln
+   // ---------------------
+   datetime sessionStart = GetServerSessionStartTime(Time[0]);
+
+   // Timeframe <= H1 wählen
+
+   int sessionStartBar = iBarShiftNext(sessionStart);
+   if (sessionStartBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
+      return(GetLastLibraryError());
+
+   // todayOpen
+   // todayHigh
+   // todayLow
+
+   // yesterdayHigh
+   // yesterdayLow
+   // yesterdayClose
+   // yesterdayInsideDay
+
+   Print("CheckPivotLevels()    sessionStart="+ TimeToStr(sessionStart) +"    sessionStartBar="+ sessionStartBar);
+
+
+
+   // Pivot-Level überprüfen
+   // ----------------------
 
    return(catch("CheckPivotLevels()"));
 }
