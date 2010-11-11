@@ -302,6 +302,12 @@
 #define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready
 
 
+// globale Variablen, stehen überall (in Scripten und in Libraries) zur Verfügung
+int Tick          =  0;
+int UnchangedBars = -1;
+int ChangedBars   = -1;
+
+
 /**
  * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Nach Rückkehr ist der letzte Error-Code
  * immer zurückgesetzt.

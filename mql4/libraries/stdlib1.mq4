@@ -11,10 +11,6 @@
 
 int lib_last_error = ERR_NO_ERROR;
 
-int Tick           = 0;
-int UnchangedBars  = 0;
-int ChangedBars    = 0;
-
 
 /**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
@@ -26,7 +22,7 @@ int ChangedBars    = 0;
  */
 int stdLib_onTick(int unchangedBars) {
    if (unchangedBars < 0) {
-      lib_last_error = catch("onTick()  invalid parameter unchangedBars: "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+      lib_last_error = catch("stdLib_onTick()  invalid parameter unchangedBars: "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(lib_last_error);
    }
 
