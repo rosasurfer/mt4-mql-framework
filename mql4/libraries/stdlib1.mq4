@@ -39,6 +39,28 @@ int stdLib_onTick(int unchangedBars) {
 
 
 /**
+ * Konvertiert einen Boolean in den String "true" oder "false".
+ *
+ * @param  bool value
+ *
+ * @return string
+ */
+string BoolToStr(bool value) {
+   if (value)
+      return("true");
+   return("false");
+}
+
+
+/**
+ * Alias für BoolToStr()
+ */
+string BooleanToStr(bool value) {
+   return(BoolToStr(value));
+}
+
+
+/**
  * Gibt die aktuelle Zeit in GMT (Greenwich Mean Time) zurück (entspricht UTC).
  *
  * @return datetime
@@ -1150,7 +1172,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
-         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", GetOperationTypeDescription(type));
+         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeToStr(type));
       }
 
       // offene Positionen überprüfen und ggf. aktualisieren
@@ -1193,7 +1215,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
          ArrayResize(knownPositions, positions+1);
          knownPositions[positions] = ticket;
-         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", GetOperationTypeDescription(type));
+         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeToStr(type));
       }
    }
 
@@ -1292,7 +1314,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          noOfKnownPositions++;
          ArrayResize(knownPositions, noOfKnownPositions);
          knownPositions[noOfKnownPositions-1] = OrderTicket();
-         //Print("EventListener.PositionClose()   open position #", ticket, " added: ", GetOperationTypeDescription(OrderType()));
+         //Print("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeToStr(OrderType()));
       }
    }
 
@@ -2400,21 +2422,21 @@ string GetDayOfWeek(datetime time, bool long=true) {
 
 
 /**
- * Alias für GetErrorDescription()
+ * Alias für ErrorToStr()
  */
 string ErrorDescription(int error) {
-   return(GetErrorDescription(error));
+   return(ErrorToStr(error));
 }
 
 
 /**
- * Gibt eine lesbare Beschreibung eines MQL-Fehlercodes zurück.
+ * Gibt die lesbare Beschreibung eines MQL-Fehlercodes zurück.
  *
  * @param  int error - MQL-Fehlercode
  *
- * @return string - lesbare Beschreibung
+ * @return string
  */
-string GetErrorDescription(int error) {
+string ErrorToStr(int error) {
    switch (error) {
       case ERR_NO_ERROR                   : return("no error"                                                      ); //    0
 
@@ -2530,9 +2552,9 @@ string GetErrorDescription(int error) {
  *
  * @param  int error - Win32-Fehlercode
  *
- * @return string - lesbare Beschreibung
+ * @return string
  */
-string GetWindowsErrorDescription(int error) {
+string WindowsErrorToStr(int error) {
    switch (error) {
       case NO_ERROR                       : return("The operation completed successfully."                                                                                                                                         );
 
@@ -3418,9 +3440,9 @@ string GetWindowsErrorDescription(int error) {
  *
  * @param  int event - Event
  *
- * @return string - lesbare Version
+ * @return string
  */
-string GetEventDescription(int event) {
+string EventToStr(int event) {
    switch (event) {
       case EVENT_BAR_OPEN       : return("BarOpen"       );
       case EVENT_ORDER_PLACE    : return("OrderPlace"    );
@@ -3433,7 +3455,7 @@ string GetEventDescription(int event) {
       case EVENT_HISTORY_CHANGE : return("HistoryChange" );
    }
 
-   lib_last_error = catch("GetEventDescription() - unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("EventToStr()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3503,9 +3525,9 @@ int GetMovingAverageMethod(string description) {
  *
  * @param  int type - Operation-Type
  *
- * @return string - lesbare Version
+ * @return string
  */
-string GetOperationTypeDescription(int type) {
+string OperationTypeToStr(int type) {
    switch (type) {
       case OP_BUY         : return("Buy"          );
       case OP_SELL        : return("Sell"         );
@@ -3517,7 +3539,7 @@ string GetOperationTypeDescription(int type) {
       case OP_MARGINCREDIT: return("Margin Credit");
    }
 
-   lib_last_error = catch("GetOperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("OperationTypeToStr()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3548,13 +3570,21 @@ int GetPeriod(string description) {
 
 
 /**
+ * Alias für PeriodToStr().
+ */
+string TimeframeToStr(int timeframe=0) {
+   return(PeriodToStr(timeframe));
+}
+
+
+/**
  * Gibt die lesbare Version eines Timeframe-Codes zurück.
  *
  * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: Periode des aktuellen Charts)
  *
- * @return string - lesbare Version
+ * @return string
  */
-string GetPeriodDescription(int period=0) {
+string PeriodToStr(int period=0) {
    if (period == 0)
       period = Period();
 
@@ -3570,7 +3600,7 @@ string GetPeriodDescription(int period=0) {
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
 
-   lib_last_error = catch("GetPeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3608,9 +3638,9 @@ int GetPeriodFlag(int period=0) {
  *
  * @param  int flags - binäre Kombination verschiedener Timeframe-Flags
  *
- * @return string - lesbare Version
+ * @return string
  */
-string GetPeriodFlagDescription(int flags) {
+string PeriodFlagToStr(int flags) {
    string description = "";
 
    if (flags & PERIODFLAG_M1  != 0) description = StringConcatenate(description, " | M1");
@@ -3805,9 +3835,9 @@ int GetTerminalTopWindow() {
  *
  * @param  int reason - Code
  *
- * @return string - lesbare Version
+ * @return string
  */
-string GetUninitReasonDescription(int reason) {
+string UninitReasonToStr(int reason) {
    switch (reason) {
       case REASON_FINISHED   : return("execution finished "                   );
       case REASON_REMOVE     : return("expert or indicator removed from chart");
@@ -3818,7 +3848,7 @@ string GetUninitReasonDescription(int reason) {
       case REASON_ACCOUNT    : return("account changed"                       );
    }
 
-   lib_last_error = catch("GetUninitReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
+   lib_last_error = catch("UninitReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -3971,8 +4001,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 
    // Datenreihe holen
    datetime times[];
-   ArrayResize(times, 0);
-   int bars = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+   int bars  = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
    if (error == ERR_NO_ERROR) {
@@ -4020,7 +4049,6 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
    if (error==ERR_NO_ERROR) if (bar==-1) {                  // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
-      ArrayResize(times, 0);
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
       error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
@@ -4328,7 +4356,7 @@ int SendTextMessage(string receiver, string message) {
 
    error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32) {
-      lib_last_error = catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ GetWindowsErrorDescription(error) +")", ERR_WINDOWS_ERROR);
+      lib_last_error = catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR);
       return(lib_last_error);
    }
 
@@ -4799,6 +4827,14 @@ string StringRepeat(string input, int times) {
 
 
 /**
+ * Alias für NumberToStr().
+ */
+string FormatNumber(double number, string mask) {
+   return(NumberToStr(number, mask));
+}
+
+
+/**
  * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierneden String zurück.
  * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
  *
@@ -4822,7 +4858,7 @@ string StringRepeat(string input, int times) {
  *
  * @return string - formatierter String
  */
-string FormatNumber(double number, string mask) {
+string NumberToStr(double number, string mask) {
    if (number == EMPTY_VALUE)
       number = 0;
 
@@ -4948,11 +4984,11 @@ string FormatNumber(double number, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   //Print("FormatNumber(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
+   //Print("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      lib_last_error = catch("FormatNumber()", error);
+      lib_last_error = catch("NumberToStr()", error);
       return("");
    }
    return(outStr);
@@ -5007,7 +5043,7 @@ string FormatNumber(double number, string mask) {
  * L or l = left align final string
  * T ot t = trim end result
  */
-string NumberToStr(double n, string mask) {
+string orig_NumberToStr(double n, string mask) {
    if (MathAbs(n) == EMPTY_VALUE)
       n = 0;
 
@@ -5372,16 +5408,6 @@ int StrToColor(string str) {
 bool StrToBool(string str) {
    str = StringToLower(StringSubstr(str, 0, 1));
    return(str=="t" || str=="y" || str=="1");
-}
-
-
-/**
- * Converts the boolean value true or false to the string "true" or "false"
- */
-string BoolToStr(bool bval) {
-   if (bval)
-      return("true");
-   return("false");
 }
 
 

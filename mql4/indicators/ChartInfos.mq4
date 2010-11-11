@@ -241,8 +241,8 @@ int UpdatePriceLabel() {
 
    double price = (Bid + Ask) / 2;
 
-   if (Digits==3 || Digits==5) string strPrice = FormatNumber(price, StringConcatenate(", .", Digits-1, "'"));
-   else                               strPrice = FormatNumber(price, StringConcatenate(", .", Digits));
+   if (Digits==3 || Digits==5) string strPrice = NumberToStr(price, StringConcatenate(", .", Digits-1, "'"));
+   else                               strPrice = NumberToStr(price, StringConcatenate(", .", Digits));
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
@@ -326,7 +326,7 @@ int UpdateUnitSizeLabel() {
       else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50
       else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100
 
-      strUnitSize = StringConcatenate("UnitSize:  ", FormatNumber(unitSize, ", .+"), " Lot");
+      strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " Lot");
    }
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
@@ -386,8 +386,8 @@ int UpdatePositionLabel() {
       CheckPosition();
 
    if      (!position.InMarket)  string strPosition = " ";
-   else if (position.Total == 0)        strPosition = StringConcatenate("Position:  ±", FormatNumber(position.Long, ", .+"), " Lot (fully hedged)");
-   else                                 strPosition = StringConcatenate("Position:  " , FormatNumber(position.Total, "+, .+"), " Lot");
+   else if (position.Total == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(position.Long, ", .+"), " Lot (fully hedged)");
+   else                                 strPosition = StringConcatenate("Position:  " , NumberToStr(position.Total, "+, .+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
@@ -448,9 +448,9 @@ int UpdateMarginLevels() {
       }
       /*
       Print("UpdateMarginLevels()"
-                                  +"    equity="+ FormatNumber(equity, ", .2")
-                            +"    equity(100%)="+ FormatNumber(usedMargin, ", .2") +" ("+ FormatNumber(equity-usedMargin, "+, .2") +" => "+ FormatNumber(quoteFreezeLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
-                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ FormatNumber(equityStopoutLevel, ", .2") +" ("+ FormatNumber(equity-equityStopoutLevel, "+, .2") +" => "+ FormatNumber(quoteStopoutLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
+                                  +"    equity="+ NumberToStr(equity, ", .2")
+                            +"    equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
+                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
       );
       */
 

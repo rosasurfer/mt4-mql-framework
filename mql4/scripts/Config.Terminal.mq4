@@ -21,7 +21,7 @@ int start() {
    for (int i=0; i < 2; i++) {
       int hInstance = ShellExecuteA(0, "open", files[i], "", "", SW_SHOWNORMAL);
       if (hInstance < 32)
-         return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ GetWindowsErrorDescription(hInstance) +")", ERR_WINDOWS_ERROR));
+         return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ WindowsErrorToStr(hInstance) +")", ERR_WINDOWS_ERROR));
    }
 
    return(catch("start(2)"));

@@ -160,19 +160,11 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
-   string   GetErrorDescription(int error);
-   string   ErrorDescription(int error);
-   string   GetEventDescription(int event);
    int      GetLastLibraryError();
    int      GetMovingAverageMethod(string description);
-   string   GetOperationTypeDescription(int operationType);
    int      GetPeriod(string description);
-   string   GetPeriodDescription(int period);
    int      GetPeriodFlag(int period);
-   string   GetPeriodFlagDescription(int flags);
    int      GetTerminalTopWindow();
-   string   GetUninitReasonDescription(int reason);
-   string   GetWindowsErrorDescription(int error);
    string   GetWindowText(int hWnd);
    int      iBalanceSeries(int account, double& iBuffer[]);
    int      iBarShiftNext(string symbol, int timeframe, datetime time);
@@ -182,6 +174,20 @@
    int      RemoveChartObjects(string& objects[]);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
+
+   // toString-Funktionen
+   string   BoolToStr(bool value);
+   string   BooleanToStr(bool value);
+   string   ErrorToStr(int error);
+   string   ErrorDescription(int error);
+   string   EventToStr(int event);
+   string   NumberToStr(double number, string mask);
+   string   OperationTypeToStr(int type);
+   string   PeriodToStr(int period);
+   string   PeriodFlagToStr(int flag);
+   string   TimeframeToStr(int timeframe);
+   string   UninitReasonToStr(int reason);
+   string   WindowsErrorToStr(int error);
 
 
    // ----------------------------------------------------------------------------------

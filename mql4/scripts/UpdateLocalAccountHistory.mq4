@@ -256,16 +256,16 @@ int start() {
 
    // Orderdaten schreiben
    for (i=0; i < orders; i++) {
-      string strType = GetOperationTypeDescription(types[i]);
-      string strSize = ""; if (types[i] < OP_BALANCE) strSize = FormatNumber(sizes[i], ".+");
+      string strType = OperationTypeToStr(types[i]);
+      string strSize = ""; if (types[i] < OP_BALANCE) strSize = NumberToStr(sizes[i], ".+");
 
       string strOpenTime  = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
       string strCloseTime = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
 
-      string strOpenPrice  = ""; if (openPrices [i] > 0) strOpenPrice  = FormatNumber(openPrices [i], ".2+");
-      string strClosePrice = ""; if (closePrices[i] > 0) strClosePrice = FormatNumber(closePrices[i], ".2+");
-      string strStopLoss   = ""; if (stopLosses [i] > 0) strStopLoss   = FormatNumber(stopLosses [i], ".2+");
-      string strTakeProfit = ""; if (takeProfits[i] > 0) strTakeProfit = FormatNumber(takeProfits[i], ".2+");
+      string strOpenPrice  = ""; if (openPrices [i] > 0) strOpenPrice  = NumberToStr(openPrices [i], ".2+");
+      string strClosePrice = ""; if (closePrices[i] > 0) strClosePrice = NumberToStr(closePrices[i], ".2+");
+      string strStopLoss   = ""; if (stopLosses [i] > 0) strStopLoss   = NumberToStr(stopLosses [i], ".2+");
+      string strTakeProfit = ""; if (takeProfits[i] > 0) strTakeProfit = NumberToStr(takeProfits[i], ".2+");
 
       string strExpTime="", strExpTimestamp="";
       if (expTimes[i] > 0) {

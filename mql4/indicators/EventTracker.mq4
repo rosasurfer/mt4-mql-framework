@@ -192,10 +192,10 @@ int start() {
 
    // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
-      //Print("start()   Account "+ accountData[1] +"    alter Tick="+ FormatNumber(Close[0], ".4'"));
+      //Print("start()   Account "+ accountData[1] +"    alter Tick="+ NumberToStr(Close[0], ".4'"));
       return(catch("start(1)"));
    }
-   //Print("start()   Account "+ accountData[1] +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    neuer Tick="+ FormatNumber(Close[0], ".4'"));
+   //Print("start()   Account "+ accountData[1] +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    neuer Tick="+ NumberToStr(Close[0], ".4'"));
 
 
    // Positionen
@@ -261,10 +261,10 @@ int onPositionOpen(int tickets[]) {
       if (Digits==3 || Digits==5) string priceFormat = StringConcatenate(".", Digits-1, "'");
       else                               priceFormat = StringConcatenate(".", Digits);
 
-      string type       = GetOperationTypeDescription(OrderType());
-      string lots       = FormatNumber(OrderLots(), ".+");
+      string type       = OperationTypeToStr(OrderType());
+      string lots       = NumberToStr(OrderLots(), ".+");
       string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-      string price      = FormatNumber(OrderOpenPrice(), priceFormat);
+      string price      = NumberToStr(OrderOpenPrice(), priceFormat);
       string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
 
       // ggf. SMS verschicken
@@ -308,11 +308,11 @@ int onPositionClose(int tickets[]) {
       if (Digits==3 || Digits==5) string priceFormat = StringConcatenate(".", Digits-1, "'");
       else                               priceFormat = StringConcatenate(".", Digits);
 
-      string type       = GetOperationTypeDescription(OrderType());
-      string lots       = FormatNumber(OrderLots(), ".+");
+      string type       = OperationTypeToStr(OrderType());
+      string lots       = NumberToStr(OrderLots(), ".+");
       string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-      string openPrice  = FormatNumber(OrderOpenPrice(), priceFormat);
-      string closePrice = FormatNumber(OrderClosePrice(), priceFormat);
+      string openPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+      string closePrice = NumberToStr(OrderClosePrice(), priceFormat);
       string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
@@ -373,7 +373,7 @@ int CheckRateGrid() {
    // Limite überprüfen
    if (Ask > RateGrid.Limits[1]) {
       string message = instrument.Name +" => "+ DoubleToStr(RateGrid.Limits[1], gridDigits);
-      string ask     = FormatNumber(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
+      string ask     = NumberToStr(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
 
       // SMS verschicken
       if (SMS.Alerts) {
@@ -401,7 +401,7 @@ int CheckRateGrid() {
 
    else if (Bid < RateGrid.Limits[0]) {
       message    = instrument.Name +" <= "+ DoubleToStr(RateGrid.Limits[0], gridDigits);
-      string bid = FormatNumber(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
+      string bid = NumberToStr(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
 
       // SMS verschicken
       if (SMS.Alerts) {
@@ -437,7 +437,7 @@ int CheckRateGrid() {
  * @return int - Fehlerstatus
  */
 int InitializeRateGrid() {
-   //Print("InitializeRateGrid()   bars="+ Bars +"    unchangedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ FormatNumber(Close[0], "."+gridDigits+"\'") +"    Bid="+ FormatNumber(Bid, "."+gridDigits+"\'"));
+   //Print("InitializeRateGrid()   bars="+ Bars +"    unchangedBars="+ IndicatorCounted() +"    ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"    Time[0]="+ TimeToStr(Time[0]) +"    Close[0]="+ NumberToStr(Close[0], "."+gridDigits+"\'") +"    Bid="+ NumberToStr(Bid, "."+gridDigits+"\'"));
 
    int cells = MathFloor((Bid+Ask)/2 / gridSize);
 
@@ -475,20 +475,20 @@ int InitializeRateGrid() {
 
    // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
    while (!up && !down) {
-      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" and lastSignal="+ lastSignal);
+      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ PeriodToStr(period) +" and lastSignal="+ lastSignal);
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_UPDATE auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
             error = GetLastLibraryError();
             if (error == ERR_HISTORY_UPDATE) {
-               //Print("InitializeRateGrid()    timeframe "+ GetPeriodDescription(period) +" in update status");
+               //Print("InitializeRateGrid()    timeframe "+ PeriodToStr(period) +" in update status");
                return(error);
             }
             if (error == ERR_NO_ERROR) error = ERR_RUNTIME_ERROR;
             return(catch("InitializeRateGrid(2)", error));
          }
       }
-      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ GetPeriodDescription(period) +" with lastSignalBar="+ lastSignalBar);
+      //Print("InitializeRateGrid()    looking for last signal in timeframe "+ PeriodToStr(period) +" with lastSignalBar="+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
@@ -505,7 +505,7 @@ int InitializeRateGrid() {
          if (error != ERR_NO_ERROR      ) return(catch("InitializeRateGrid(2)", error));
 
          if (up || down) {
-            //Print("InitializeRateGrid()    last signal found in timeframe "+ GetPeriodDescription(period) +" at bar="+ bar);
+            //Print("InitializeRateGrid()    last signal found in timeframe "+ PeriodToStr(period) +" at bar="+ bar);
             break;
          }
       }
@@ -515,14 +515,14 @@ int InitializeRateGrid() {
       if (up && down) {                                                       // Bar hat beide Limite berührt
          if (period == PERIOD_M1)
             break;
-         //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits, decreasing timeframe");
+         //Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits, decreasing timeframe");
          period = DecreasePeriod(period);                                     // Timeframe verringern
          up = false; down = false;
       }
    }
    /*
-   if      ( up &&  down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched both limits");
-   else if (!up || !down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ GetPeriodDescription(period) +" touched one limit");
+   if      ( up &&  down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits");
+   else if (!up || !down) Print("InitializeRateGrid()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched one limit");
    else                   Print("InitializeRateGrid()    no bar ever touched a limit");
    */
 
@@ -557,19 +557,24 @@ int CheckPivotLevels() {
    if (sessionStartBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE ???
       return(GetLastLibraryError());
    */
+
+   int period = PERIOD_H1;
+
    double today[4];
-   GetOHLC(today, NULL, PERIOD_D1, TimeCurrent());
+   GetOHLC(today, NULL, period, TimeCurrent());
 
    double todaysHigh = today[MODE_HIGH];
    double todaysLow  = today[MODE_LOW ];
+
+   Print("CheckPivotLevels()    todaysHigh(period:"+ PeriodToStr(period) +")="+ NumberToStr(todaysHigh, ".4'"));
+   Print("CheckPivotLevels()    todaysLow(period:" + PeriodToStr(period) +")="+ NumberToStr(todaysLow , ".4'"));
+
 
    // yesterdayHigh
    // yesterdayLow
    // yesterdayClose
 
    // yesterdayInsideDay
-
-   Print("CheckPivotLevels()    sessionStart=");
 
 
 
@@ -587,21 +592,23 @@ int CheckPivotLevels() {
  * @param  string   symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  int      timeframe      - Periode (default: 0 = aktuelle Periode)
  * @param  datetime time           - Zeitpunkt
- * @param  bool     strict         - Wenn TRUE (default), wird die Zeitzoneneinstellung des Tradeservers ignoriert und der tatsächliche Sessionbeginn
+ * @param  bool     exact          - Wenn TRUE (default), wird die Zeitzoneneinstellung des Tradeservers ignoriert und der tatsächliche Sessionbeginn
  *                                   als Basis für Periodenübergänge verwendet. Wenn FALSE, werden die Beginn- und Endzeiten der Bars des Tradeservers
  *                                   verwendet (für Perioden > H1 meistens falsch).
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den angegebenen Zeitpunkt keine Kurse existieren,
  *                             ggf. ERR_HISTORY_UPDATE
  */
-int GetOHLC(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time, bool strict=true) {
+int GetOHLC(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time, bool exact=true) {
    if (symbol == "0")                                       // MQL: NULL ist ein Integer (0)
       symbol = Symbol();
 
+   log("GetOHLC(timeframe="+ PeriodToStr(timeframe) +", exact="+ BoolToStr(exact) +")");
+
    // für PERIOD_M1 bis PERIOD_H1 ist der Parameter strict egal
-   if (timeframe < PERIOD_H4 || !strict) {
+   if (timeframe < PERIOD_H4 || !exact) {
       // Bar ermitteln
-      int bar = iBarShift(symbol, timeframe, time, true);
+      int bar   = iBarShift(symbol, timeframe, time, true);
       int error = GetLastError();                           // ERR_HISTORY_UPDATE ???
 
       if (error != ERR_NO_ERROR) {
@@ -621,7 +628,7 @@ int GetOHLC(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/,
       destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
    }
    else {
-      // Period > PERIOD_H1 und strict=TRUE: Timeframe auf H1 herunterbrechen
+      // Period > PERIOD_H1 und exact=TRUE: Timeframe auf H1 herunterbrechen
    }
 
    return(catch("GetOHLC(2)"));
@@ -645,7 +652,7 @@ int CheckBollingerBands() {
    }
 
    string mask = StringConcatenate(".", Digits);
-   Print("CheckBollingerBands()   checking bands ...    ", FormatNumber(Band.Limits[2], mask), "  <=  ", FormatNumber(Band.Limits[1], mask), "  =>  ", FormatNumber(Band.Limits[0], mask));
+   Print("CheckBollingerBands()   checking bands ...    ", NumberToStr(Band.Limits[2], mask), "  <=  ", NumberToStr(Band.Limits[1], mask), "  =>  ", NumberToStr(Band.Limits[0], mask));
 
    double upperBand = Band.Limits[0]-0.000001,                 // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
           movingAvg = Band.Limits[1]+0.000001,
@@ -678,7 +685,7 @@ int InitializeBandLimits() {
    if (error != ERR_NO_ERROR      ) return(catch("InitializeBandLimits()", error));
 
    string mask = StringConcatenate(".", Digits);
-   Print("InitializeBandLimits()   Bollinger band limits calculated: ", FormatNumber(Band.Limits[2], mask), "  <=  ", FormatNumber(Band.Limits[1], mask), "  =>  ", FormatNumber(Band.Limits[0], mask));
+   Print("InitializeBandLimits()   Bollinger band limits calculated: ", NumberToStr(Band.Limits[2], mask), "  <=  ", NumberToStr(Band.Limits[1], mask), "  =>  ", NumberToStr(Band.Limits[0], mask));
    return(error);
 }
 
@@ -702,7 +709,7 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
    if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
    if (error != ERR_NO_ERROR      ) return(catch("iBollingerBands()", error));
 
-   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ FormatNumber(results[2], ".5") +"  <=  "+ FormatNumber(results[1], ".5") +"  =>  "+ FormatNumber(results[1], ".5"));
+   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ NumberToStr(results[2], ".5") +"  <=  "+ NumberToStr(results[1], ".5") +"  =>  "+ NumberToStr(results[1], ".5"));
    return(error);
 }
 

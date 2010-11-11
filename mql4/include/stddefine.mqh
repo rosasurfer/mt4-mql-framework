@@ -323,7 +323,7 @@ int catch(string message="", int error=ERR_NO_ERROR) {
    if (error != ERR_NO_ERROR) {
       if (message == "")
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "   [", error, " - ", GetErrorDescription(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "   [", error, " - ", ErrorToStr(error), "]"));
    }
 
    return(error);
@@ -353,7 +353,7 @@ int log(string message="", int error=ERR_NO_ERROR) {
       message = "???";
 
    if (error == ERR_NO_ERROR) Print(message);
-   else                       Print(StringConcatenate(message, "   [", error, " - ", GetErrorDescription(error), "]"));
+   else                       Print(StringConcatenate(message, "   [", error, " - ", ErrorToStr(error), "]"));
 
    return(error);
 }
