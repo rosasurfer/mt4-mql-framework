@@ -386,12 +386,7 @@ int HandleEvents(int events, int flags=0) {
    if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT, flags);
    if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE , flags);
 
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      catch("HandleEvents()", error);
-      return(false);
-   }
-   return(status != 0);
+   return(status!=0 && catch("HandleEvents()")==ERR_NO_ERROR);
 }
 
 
@@ -428,11 +423,6 @@ int HandleEvent(int event, int flags=0) {
          catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
 
-   int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
-      catch("HandleEvent()", error);
-      return(false);
-   }
-   return(status);
+   return(status && catch("HandleEvent()")==ERR_NO_ERROR);
 }
 

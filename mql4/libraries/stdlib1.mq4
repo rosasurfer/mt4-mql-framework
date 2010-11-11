@@ -3972,12 +3972,12 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
    // Datenreihe holen
    datetime times[];
    ArrayResize(times, 0);
-   ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+   int bars = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
    if (error == ERR_NO_ERROR) {
       // Bars überprüfen
-      if (time < times[ArraySize(times)-1]) {
+      if (time < times[bars-1]) {
          int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
       }
       else {
@@ -4021,13 +4021,11 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
       // Datenreihe holen
       datetime times[];
       ArrayResize(times, 0);
-      ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+      int bars = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
       error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
       if (error == ERR_NO_ERROR) {
          // Bars überprüfen
-         int bars = ArraySize(times);
-
          if (time < times[bars-1])                          // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
             bar = bars-1;
 

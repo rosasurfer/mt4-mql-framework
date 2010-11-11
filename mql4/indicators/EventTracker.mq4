@@ -551,16 +551,17 @@ int CheckPivotLevels() {
 
    // Pivot-Level ermitteln
    // ---------------------
-   datetime sessionStart = GetServerSessionStartTime(Time[0]);
-
+   /*
    // Timeframe <= H1 wählen
-
    int sessionStartBar = iBarShiftNext(NULL, 0, sessionStart);
    if (sessionStartBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE ???
       return(GetLastLibraryError());
+   */
+   double today[4];
+   GetOHLC(today, NULL, PERIOD_D1, TimeCurrent());
 
-   // todayHigh
-   // todayLow
+   double todaysHigh = today[MODE_HIGH];
+   double todaysLow  = today[MODE_LOW ];
 
    // yesterdayHigh
    // yesterdayLow
@@ -568,7 +569,7 @@ int CheckPivotLevels() {
 
    // yesterdayInsideDay
 
-   Print("CheckPivotLevels()    sessionStart="+ TimeToStr(sessionStart) +"    sessionStartBar="+ sessionStartBar);
+   Print("CheckPivotLevels()    sessionStart=");
 
 
 
@@ -576,6 +577,54 @@ int CheckPivotLevels() {
    // ----------------------
 
    return(catch("CheckPivotLevels()"));
+}
+
+
+/**
+ * Ermittelt die O-H-L-C-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Zielarray.
+ *
+ * @param  double&  destination[4] - Zielarray für die Werte { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string   symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe      - Periode (default: 0 = aktuelle Periode)
+ * @param  datetime time           - Zeitpunkt
+ * @param  bool     strict         - Wenn TRUE (default), wird die Zeitzoneneinstellung des Tradeservers ignoriert und der tatsächliche Sessionbeginn
+ *                                   als Basis für Periodenübergänge verwendet. Wenn FALSE, werden die Beginn- und Endzeiten der Bars des Tradeservers
+ *                                   verwendet (für Perioden > H1 meistens falsch).
+ *
+ * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den angegebenen Zeitpunkt keine Kurse existieren,
+ *                             ggf. ERR_HISTORY_UPDATE
+ */
+int GetOHLC(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time, bool strict=true) {
+   if (symbol == "0")                                       // MQL: NULL ist ein Integer (0)
+      symbol = Symbol();
+
+   // für PERIOD_M1 bis PERIOD_H1 ist der Parameter strict egal
+   if (timeframe < PERIOD_H4 || !strict) {
+      // Bar ermitteln
+      int bar = iBarShift(symbol, timeframe, time, true);
+      int error = GetLastError();                           // ERR_HISTORY_UPDATE ???
+
+      if (error != ERR_NO_ERROR) {
+         if (error != ERR_HISTORY_UPDATE)
+            catch("GetOHLC(1)", error);
+         //lib_last_error = error;
+         return(error);
+      }
+      if (bar == -1) {                                      // keine Kurse zu diesem Zeitpunkt
+         //lib_last_error = ERR_NO_RESULT;
+         return(ERR_NO_RESULT);
+      }
+
+      destination[MODE_OPEN ] = iOpen (symbol, timeframe, bar);
+      destination[MODE_HIGH ] = iHigh (symbol, timeframe, bar);
+      destination[MODE_LOW  ] = iLow  (symbol, timeframe, bar);
+      destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
+   }
+   else {
+      // Period > PERIOD_H1 und strict=TRUE: Timeframe auf H1 herunterbrechen
+   }
+
+   return(catch("GetOHLC(2)"));
 }
 
 
