@@ -11,7 +11,7 @@
 
 /**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
- * oder eines neuen Ticks erfolgt (z.B im EventListener).
+ * oder eines neuen Ticks erfolgt (z.B. im EventListener).
  *
  * @param  int unchangedBars - Rückgabewert von IndicatorCounted(), der direkte Aufruf in der Library gäbe -1 zurück
  *
