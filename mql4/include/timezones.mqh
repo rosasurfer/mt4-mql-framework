@@ -1,7 +1,7 @@
 /**
  * stdlib-dst.mqh
  *
- * Umschaltzeiten von Normal-auf Sommerzeit und umgekehrt für die einzelnen Zeitzonen.
+ * Umschaltzeiten von Normal- auf Sommerzeit und zurück für die einzelnen Zeitzonen.
  *
  * Daten sind ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und in der Folge
  * bei Fehlern falsche Zeilennummern zurückgibt.

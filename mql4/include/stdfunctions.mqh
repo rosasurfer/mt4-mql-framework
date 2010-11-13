@@ -114,7 +114,7 @@
 #define EVENT_HISTORY_CHANGE   256     // EVENT_POSITION_CLOSE | EVENT_ACCOUNT_PAYMENT
 
 
-// Array-Identifier zum Zugriff auf verschiedne Pivotlevel, siehe iPivotLevel()
+// Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
 #define PIVOT_R3                 0
 #define PIVOT_R2                 1
 #define PIVOT_R1                 2
