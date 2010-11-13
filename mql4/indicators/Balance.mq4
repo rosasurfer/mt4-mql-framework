@@ -104,16 +104,14 @@ int start() {
  * Berechnet den Balancewert am angegebenen Offset des aktuellen Charts und schreibt ihn in den bereitgestellten
  * Indikatorpuffer.
  *
- * NOTE:
- * -----
- * Die einzelnen Werte dieses Indikators hängen von vorhergehenden Werten desselben Indikators ab. Daher vereinfacht
- * und beschleunigt der übergebene Indikatorpuffer die Berechnung einzelner Werte ganz wesentlich.
- *
  * @param int     account - Account, für den der Indikator berechnet werden soll
  * @param double& iBuffer - Zeichenpuffer, muß dem aktuellen Chart entsprechend dimensioniert sein
  * @param int     offset  - Chart-Offset des zu berechnenden Wertes (Barindex)
  *
  * @return int - Fehlerstatus
+ *
+ * NOTE:    Die einzelnen Werte dieses Indikators hängen von vorhergehenden Werten desselben Indikators ab. Daher vereinfacht
+ * -----    und beschleunigt der übergebene Indikatorpuffer die Berechnung einzelner Werte ganz wesentlich.
  */
 int iBalance(int account, double& iBuffer[], int offset) {
 

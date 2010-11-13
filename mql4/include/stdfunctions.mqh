@@ -1,7 +1,7 @@
 /**
  * stddefine.mqh
  *
- * MQL function declarations and constant definitions
+ * Global MQL functions and constant definitions
  */
 
 
@@ -303,6 +303,8 @@
 
 
 // globale Variablen, stehen überall (in Scripten und in Libraries) zur Verfügung
+int last_error = ERR_NO_ERROR;
+
 int Tick          =  0;
 int UnchangedBars = -1;
 int ChangedBars   = -1;
@@ -317,10 +319,8 @@ int ChangedBars   = -1;
  *
  * @return int - der aufgetretene Error-Code
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei definiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * NOTE:    Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
+ * -----                                               (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error == ERR_NO_ERROR) error = GetLastError();
@@ -329,7 +329,7 @@ int catch(string message="", int error=ERR_NO_ERROR) {
    if (error != ERR_NO_ERROR) {
       if (message == "")
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "   [", error, " - ", ErrorToStr(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
    }
 
    return(error);
@@ -349,17 +349,15 @@ int catch(string message="", int error=ERR_NO_ERROR) {
  *
  * @return int - der angegebene Error-Code
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei definiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * NOTE:    Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
+ * -----                                               (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
       message = "???";
 
    if (error == ERR_NO_ERROR) Print(message);
-   else                       Print(StringConcatenate(message, "   [", error, " - ", ErrorToStr(error), "]"));
+   else                       Print(StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]"));
 
    return(error);
 }
@@ -375,9 +373,8 @@ int log(string message="", int error=ERR_NO_ERROR) {
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
- * NOTE:
+ * NOTE:    Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  * -----
- * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  */
 int HandleEvents(int events, int flags=0) {
    int status = 0;
@@ -406,9 +403,8 @@ int HandleEvents(int events, int flags=0) {
  * @return bool - ob das Event aufgetreten ist oder nicht
  *
  *
- * NOTE:
+ * NOTE:    Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  * -----
- * Ist in der Headerdatei definiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  */
 int HandleEvent(int event, int flags=0) {
    bool status = false;
