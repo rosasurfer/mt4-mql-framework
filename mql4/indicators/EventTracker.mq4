@@ -192,7 +192,7 @@ int start() {
 
    // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
-      Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'"));
+      //Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'"));
       return(catch("start(1)"));
    }
    //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   neuer Tick="+ NumberToStr(Close[0], ".4'"));
@@ -430,7 +430,7 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
-      catch("iOHLCTime()", error)
+      catch("iOHLCTime()", error);
    return(error);
 }
 
