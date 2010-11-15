@@ -193,7 +193,7 @@ int start() {
    // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
       Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'"));
-      //return(catch("start(1)"));
+      return(catch("start(1)"));
    }
    //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   neuer Tick="+ NumberToStr(Close[0], ".4'"));
 
@@ -312,11 +312,14 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/
    destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
-   if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != ERR_NO_ERROR      ) return(catch("iOHLCBar(2)", error));
 
-   if (destination[MODE_OPEN] == 0)
+   if (error != ERR_NO_ERROR) {
+      if (error != ERR_HISTORY_UPDATE)
+         catch("iOHLCBar(2)", error);
+   }
+   else if (destination[MODE_OPEN] == 0) {
       error = ERR_NO_RESULT;
+   }
    return(error);
 }
 
@@ -356,8 +359,11 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
    int bars = iBars(symbol, timeframe);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
-   if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != ERR_NO_ERROR      ) return(catch("iOHLCBarRange(3)", error));
+   if (error != ERR_NO_ERROR) {
+      if (error != ERR_HISTORY_UPDATE)
+         catch("iOHLCBarRange(3)", error);
+      return(error);
+   }
 
    if (bars-1 < to) {
       destination[MODE_OPEN ] = 0;
@@ -376,15 +382,15 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
    destination[MODE_CLOSE] = iClose(symbol, timeframe, to);
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
-   if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != ERR_NO_ERROR      ) return(catch("iOHLCBarRange(4)", error));
+   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+      catch("iOHLCBarRange(4)", error);
    return(error);
 }
 
 
 /**
  * Ermittelt die OHLC-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Zielarray.
- * Die Ergebnisse sind die Werte der Bar, die diesen Zeitpunkt abdeckt.
+ * Ergebnis sind die Werte der Bar, die diesen Zeitpunkt abdeckt.
  *
  * @param  double&  destination[4] - Zielarray für die Werte { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
  * @param  string   symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
@@ -395,39 +401,39 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
  *                             ggf. ERR_HISTORY_UPDATE
  */
 int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                                    // NULL ist ein Integer (0)
+   if (symbol == "0")                           // NULL ist ein Integer (0)
       symbol = Symbol();
 
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+   // TODO: Parameter bool exact=TRUE implementieren
    int bar = iBarShift(symbol, timeframe, time, true);
 
-   int error = GetLastError();                           // ERR_HISTORY_UPDATE ???
+   int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
          catch("iOHLCTime(1)", error);
       return(error);
    }
-   if (bar == -1)                                        // keine Kurse für diesen Zeitpunkt
+
+   if (bar == -1) {                             // keine Kurse für diesen Zeitpunkt
+      destination[MODE_OPEN ] = 0;
+      destination[MODE_HIGH ] = 0;
+      destination[MODE_LOW  ] = 0;
+      destination[MODE_CLOSE] = 0;
       return(ERR_NO_RESULT);
+   }
 
    destination[MODE_OPEN ] = iOpen (symbol, timeframe, bar);
    destination[MODE_HIGH ] = iHigh (symbol, timeframe, bar);
    destination[MODE_LOW  ] = iLow  (symbol, timeframe, bar);
    destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
 
-
-   return(catch("iOHLCTime(2)"));
-   /*
-   if (symbol == Symbol()) { // fürs aktuelle Symbol möglichst die aktuelle Periode verwenden (um ERR_HISTORY_UPDATE zu vermeiden)
-   }
-   // (1) prüfen, ob Chartperiode paßt
-   if (Period() <= timeframe) {
-      // ja
-      // (2) Beginn- und Endzeit der gefragten Periode berechnen
-      // (3) Beginn- und Endbars ermitteln
-      // (4) OHLC für diese Range ermitteln
-   }
-   */
+   error = GetLastError();                      // ERR_HISTORY_UPDATE ???
+   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+      catch("iOHLCTime()", error)
+   return(error);
 }
+
 
 int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from, datetime to) {}
 
