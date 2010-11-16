@@ -167,8 +167,8 @@
    int      GetTerminalTopWindow();
    string   GetWindowText(int hWnd);
    int      iBalanceSeries(int account, double& iBuffer[]);
-   int      iBarShiftNext(string symbol, int timeframe, datetime time);
-   int      iBarShiftPrevious(string symbol, int timeframe, datetime time);
+   int      iBarShiftNext(string symbol, int period, datetime time);
+   int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
    int      RegisterChartObject(string label, string& objects[]);
    int      RemoveChartObjects(string& objects[]);

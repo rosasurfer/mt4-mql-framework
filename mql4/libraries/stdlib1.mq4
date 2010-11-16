@@ -4094,9 +4094,9 @@ int iBalanceSeries(int account, double& iBuffer[]) {
 /**
  * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
  *
- * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time      - Zeitpunkt
+ * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      period - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
@@ -4104,13 +4104,13 @@ int iBalanceSeries(int account, double& iBuffer[]) {
  * NOTE:    Kann ERR_HISTORY_UPDATE auslösen.
  * ----
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
 
    // Datenreihe holen
    datetime times[];
-   int bars  = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+   int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
    if (error == ERR_NO_ERROR) {
@@ -4119,7 +4119,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
          int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
       }
       else {
-         bar   = iBarShift(symbol, timeframe, time);
+         bar   = iBarShift(symbol, period, time);
          error = GetLastError();                            // ERR_HISTORY_UPDATE ???
       }
    }
@@ -4137,9 +4137,9 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
 /**
  * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param  string   symbol    - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      timeframe - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
- * @param  datetime time      - Zeitpunkt
+ * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
+ * @param  int      period - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
@@ -4147,17 +4147,17 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time
  * NOTE:    Kann ERR_HISTORY_UPDATE auslösen.
  * ----
  */
-int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
 
-   int bar   = iBarShift(NULL, 0, time, true);
+   int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
    if (error==ERR_NO_ERROR) if (bar==-1) {                  // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
-      int bars = ArrayCopySeries(times, MODE_TIME, symbol, timeframe);
+      int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
       error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
       if (error == ERR_NO_ERROR) {
@@ -4166,7 +4166,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
             bar = bars-1;
 
          else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
-            bar   = iBarShift(symbol, timeframe, time) - 1;
+            bar   = iBarShift(symbol, period, time) - 1;
             error = GetLastError();                         // ERR_HISTORY_UPDATE ???
          }
          //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für den Chart, bar bleibt -1
