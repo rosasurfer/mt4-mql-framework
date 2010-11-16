@@ -254,8 +254,7 @@ int CheckPivotLevels() {
 
    double today[4];
    //int error = iOHLCBarRange(today, NULL, period, from, to);
-   //int error = iOHLCTime(today, NULL, period, D'2010.11.14 03:02');
-   int error = iOHLCTimeRange(today, NULL, D'2010.11.10 07:30:10', D'2010.11.11 23:58:30');
+   int error = iOHLCTimeRange(today, NULL, D'2010.11.10 00:00:10', D'2010.11.11 23:59:30');
 
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
@@ -374,14 +373,25 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
    if (from > bars-1)
       from = bars-1;
 
+   int high=from, low=from;
+
+   if (from != to) {
+      high = iHighest(symbol, timeframe, MODE_HIGH, from-to+1, to);
+      low  = iLowest (symbol, timeframe, MODE_LOW , from-to+1, to);
+      error = GetLastError();                   // ERR_HISTORY_UPDATE ???
+      if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+         catch("iOHLCBarRange(4)", error);
+      return(error);
+   }
+
    destination[MODE_OPEN ] = iOpen (symbol, timeframe, from);
-   destination[MODE_HIGH ] = iHigh (symbol, timeframe, iHighest(symbol, timeframe, MODE_HIGH, from-to+1, to));
-   destination[MODE_LOW  ] = iLow  (symbol, timeframe, iLowest (symbol, timeframe, MODE_LOW , from-to+1, to));
-   destination[MODE_CLOSE] = iClose(symbol, timeframe, to);
+   destination[MODE_HIGH ] = iHigh (symbol, timeframe, high);
+   destination[MODE_LOW  ] = iLow  (symbol, timeframe, low );
+   destination[MODE_CLOSE] = iClose(symbol, timeframe, to  );
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
-      catch("iOHLCBarRange(4)", error);
+      catch("iOHLCBarRange(5)", error);
    return(error);
 }
 
@@ -454,11 +464,14 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
       to   = tmp;
    }
 
+   // TODO: Parameter bool exact=TRUE berücksichtigen bzw. implementieren
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+
    // größtmögliche für from und to geeignete Periode bestimmen
    int pMinutes[60] = { PERIOD_H1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M30, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1 };
    int pHours  [24] = { PERIOD_D1, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1 };
 
-   int tSec = TimeSeconds(to);   // 'to' wird zur nächsten Minute aufgerundet
+   int tSec = TimeSeconds(to);                  // 'to' wird zur nächsten Minute aufgerundet
    if (tSec > 0)
       to += 60 - tSec;
 
@@ -469,15 +482,51 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
 
       if (period==PERIOD_D1) if (TimeDayOfWeek(from)==MONDAY) if (TimeDayOfWeek(to)==SATURDAY)
          period = PERIOD_W1;
-      // Prüfung auf PERIOD_MN1 ist nicht sinnvoll
+      // die weitere Prüfung auf PERIOD_MN1 ist wenig sinnvoll
    }
 
+   // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
+   int fromBar = iBarShiftNext(symbol, period, from);
+   if (fromBar == EMPTY_VALUE)                  // ERR_HISTORY_UPDATE ???
+      return(GetLastLibraryError());
 
+   int toBar = iBarShiftPrevious(symbol, period, to-1);
+   if (toBar == EMPTY_VALUE)                    // ERR_HISTORY_UPDATE ???
+      return(GetLastLibraryError());
 
+   if (fromBar==-1 || toBar==-1) {              // Zeitraum ist zu alt oder zu jung für den Chart
+      destination[MODE_OPEN ] = 0;
+      destination[MODE_HIGH ] = 0;
+      destination[MODE_LOW  ] = 0;
+      destination[MODE_CLOSE] = 0;
+      return(ERR_NO_RESULT);
+   }
 
+   // high- und lowBar ermitteln (identisch zu iOHLCBarRange(), wir sparen hier aber alle zusätzlichen Checks)
+   int highBar=fromBar, lowBar=fromBar;
 
-   Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +"   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +"   period="+ PeriodToStr(period));
+   if (fromBar != toBar) {
+      highBar = iHighest(symbol, period, MODE_HIGH, fromBar-toBar+1, toBar);
+      lowBar  = iLowest (symbol, period, MODE_LOW , fromBar-toBar+1, toBar);
+      int error = GetLastError();                   // ERR_HISTORY_UPDATE ???
+      if (error != ERR_NO_ERROR) {
+         if (error != ERR_HISTORY_UPDATE) catch("iOHLCTimeRange(3)", error);
+         return(error);
+      }
+   }
+
+   destination[MODE_OPEN ] = iOpen (symbol, period, fromBar);
+   destination[MODE_HIGH ] = iHigh (symbol, period, highBar);
+   destination[MODE_LOW  ] = iLow  (symbol, period, lowBar );
+   destination[MODE_CLOSE] = iClose(symbol, period, toBar  );
+   //Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodToStr(period));
+
+   error = GetLastError();                      // ERR_HISTORY_UPDATE ???
+   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+      catch("iOHLCTimeRange(4)", error);
+   return(error);
 }
+
 
 
 
