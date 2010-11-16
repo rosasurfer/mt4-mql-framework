@@ -350,7 +350,7 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
    if (from < to) {
       int tmp = from;
       from = to;
-      to = tmp;
+      to   = tmp;
    }
 
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
@@ -363,7 +363,7 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
       return(error);
    }
 
-   if (bars-1 < to) {
+   if (bars-1 < to) {                           // History enthält zu wenig Daten in dieser Periode
       destination[MODE_OPEN ] = 0;
       destination[MODE_HIGH ] = 0;
       destination[MODE_LOW  ] = 0;
@@ -421,19 +421,50 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
       return(ERR_NO_RESULT);
    }
 
-   destination[MODE_OPEN ] = iOpen (symbol, timeframe, bar);
-   destination[MODE_HIGH ] = iHigh (symbol, timeframe, bar);
-   destination[MODE_LOW  ] = iLow  (symbol, timeframe, bar);
-   destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
+   error = iOHLCBar(destination, symbol, timeframe, bar);
 
-   error = GetLastError();                      // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
-      catch("iOHLCTime()", error);
+      catch("iOHLCTime(2)", error);
    return(error);
 }
 
 
-int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from, datetime to) {}
+/**
+ * Ermittelt die OHLC-Werte eines Instruments für einen Zeitraum und schreibt sie in das angegebene Zielarray.
+ * Existieren in diesem Zeitraum keine Kurse, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
+ *
+ * @param  double&  destination[4] - Zielarray für die Werte { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string   symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  datetime from           - Beginn des Zeitraumes
+ * @param  datetime to             - Ende des Zeitraumes
+ *
+ * @return int - Fehlerstatus: ERR_NO_RESULT, wenn im Zeitraum keine Kurse existieren,
+ *                             ggf. ERR_HISTORY_UPDATE
+ */
+int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from, datetime to) {
+   if (symbol == "0")                           // NULL ist ein Integer (0)
+      symbol = Symbol();
+
+   if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (from < to) {
+      datetime tmp = from;
+      from = to;
+      to   = tmp;
+   }
+
+   // für from und to geeignete Periode bestimmen
+   int fromPeriod, toPeriod;
+
+   if      (from %  5*MINUTES >= MINUTE) fromPeriod = PERIOD_M1;
+   else if (from % 15*MINUTES >= MINUTE) fromPeriod = PERIOD_M5;
+   else if (from % 30*MINUTES >= MINUTE) fromPeriod = PERIOD_M15;
+   else if (from %    HOUR    >= MINUTE) fromPeriod = PERIOD_M30;
+   else if (from %  4*HOURS   >= MINUTE) fromPeriod = PERIOD_H1;
+   else if (from %    DAY     >= MINUTE) fromPeriod = PERIOD_H4;
+   else                                  fromPeriod = PERIOD_D1;
+}
 
 
 
