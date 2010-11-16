@@ -253,9 +253,9 @@ int CheckPivotLevels() {
    int to     = 1;
 
    double today[4];
-   //int error = iOHLCTime(today, NULL, period, TimeCurrent());
-
-   int error = iOHLCBarRange(today, NULL, period, from, to);
+   //int error = iOHLCBarRange(today, NULL, period, from, to);
+   //int error = iOHLCTime(today, NULL, period, D'2010.11.14 03:02');
+   int error = iOHLCTimeRange(today, NULL, D'2010.11.10 07:30:10', D'2010.11.11 23:58:30');
 
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
@@ -448,22 +448,35 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
    if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (from < to) {
+   if (from > to) {
       datetime tmp = from;
       from = to;
       to   = tmp;
    }
 
-   // für from und to geeignete Periode bestimmen
-   int fromPeriod, toPeriod;
+   // größtmögliche für from und to geeignete Periode bestimmen
+   int pMinutes[60] = { PERIOD_H1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M30, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1 };
+   int pHours  [24] = { PERIOD_D1, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1 };
 
-   if      (from %  5*MINUTES >= MINUTE) fromPeriod = PERIOD_M1;
-   else if (from % 15*MINUTES >= MINUTE) fromPeriod = PERIOD_M5;
-   else if (from % 30*MINUTES >= MINUTE) fromPeriod = PERIOD_M15;
-   else if (from %    HOUR    >= MINUTE) fromPeriod = PERIOD_M30;
-   else if (from %  4*HOURS   >= MINUTE) fromPeriod = PERIOD_H1;
-   else if (from %    DAY     >= MINUTE) fromPeriod = PERIOD_H4;
-   else                                  fromPeriod = PERIOD_D1;
+   int tSec = TimeSeconds(to);   // 'to' wird zur nächsten Minute aufgerundet
+   if (tSec > 0)
+      to += 60 - tSec;
+
+   int period = MathMin(pMinutes[TimeMinute(from)], pMinutes[TimeMinute(to)]);
+
+   if (period == PERIOD_H1) {
+      period = MathMin(pHours[TimeHour(from)], pHours[TimeHour(to)]);
+
+      if (period==PERIOD_D1) if (TimeDayOfWeek(from)==MONDAY) if (TimeDayOfWeek(to)==SATURDAY)
+         period = PERIOD_W1;
+      // Prüfung auf PERIOD_MN1 ist nicht sinnvoll
+   }
+
+
+
+
+
+   Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +"   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +"   period="+ PeriodToStr(period));
 }
 
 
