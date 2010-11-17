@@ -34,7 +34,7 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
-      init_error = GetLastLibraryError();
+      init_error = stdlib_GetLastError();
       return(init_error);
    }
 
@@ -162,7 +162,7 @@ int DrawGrid() {
       else {                                                // Separator liegt innerhalb der Bar-Range, die Zeit der ersten existierenden Session-Bar verwenden
          bar = iBarShiftNext(NULL, 0, separatorTime);
          if (bar == EMPTY_VALUE)
-            return(GetLastLibraryError());
+            return(stdlib_GetLastError());
          chartTime = Time[bar];
       }
 

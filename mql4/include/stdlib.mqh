@@ -6,8 +6,10 @@
 
 #import "stdlib.ex4"
 
-   // Terminal-Laufzeitfunktionen
-   int      stdLib_onTick(int unchangedBars);
+   // Laufzeitfunktionen
+   int      stdlib_onTick(int indicatorCounted);
+   int      stdlib_GetLastError();
+   int      stdlib_PeekLastError();
 
    // Arrays
    string   JoinBools(bool& values[], string separator);
@@ -160,7 +162,6 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& times[], double& values[]);
    string   GetComputerName();
-   int      GetLastLibraryError();
    int      GetMovingAverageMethod(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);

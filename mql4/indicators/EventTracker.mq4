@@ -62,7 +62,7 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
-      init_error = GetLastLibraryError();
+      init_error = stdlib_GetLastError();
       return(init_error);
    }
 
@@ -166,7 +166,7 @@ int start() {
    Tick++;
    UnchangedBars = IndicatorCounted();
    ChangedBars   = Bars - UnchangedBars;
-   stdLib_onTick(UnchangedBars);
+   stdlib_onTick(UnchangedBars);
    //log("start(Tick="+ Tick +")   UnchangedBars="+ UnchangedBars +"   ChangedBars="+ ChangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
@@ -258,8 +258,8 @@ int CheckPivotLevels() {
 
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
-         catch("CheckPivotLevels()    iOHLCTime() returned unexpected error", error);
-      log("CheckPivotLevels()    iOHLCTime() returned "+ ErrorToID(error));
+         catch("CheckPivotLevels()    iOHLCTimeRange() returned unexpected error", error);
+      log("CheckPivotLevels()    iOHLCTimeRange() returned "+ ErrorToID(error));
       return(error);
    }
 
@@ -412,8 +412,8 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
    if (symbol == "0")                           // NULL ist ein Integer (0)
       symbol = Symbol();
 
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
    // TODO: Parameter bool exact=TRUE implementieren
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
    int bar = iBarShift(symbol, timeframe, time, true);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
@@ -464,7 +464,7 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
       to   = tmp;
    }
 
-   // TODO: Parameter bool exact=TRUE berücksichtigen bzw. implementieren
+   // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    // größtmögliche für from und to geeignete Periode bestimmen
@@ -488,11 +488,11 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
    if (fromBar == EMPTY_VALUE)                  // ERR_HISTORY_UPDATE ???
-      return(GetLastLibraryError());
+      return(stdlib_GetLastError());
 
    int toBar = iBarShiftPrevious(symbol, period, to-1);
    if (toBar == EMPTY_VALUE)                    // ERR_HISTORY_UPDATE ???
-      return(GetLastLibraryError());
+      return(stdlib_GetLastError());
 
    if (fromBar==-1 || toBar==-1) {              // Zeitraum ist zu alt oder zu jung für den Chart
       destination[MODE_OPEN ] = 0;
@@ -775,7 +775,7 @@ int InitializeRateGrid() {
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_UPDATE auslösen (return=EMPTY_VALUE)
          if (lastSignalBar == EMPTY_VALUE) {
-            error = GetLastLibraryError();
+            error = stdlib_GetLastError();
             if (error == ERR_HISTORY_UPDATE)
                return(error);
             if (error == ERR_NO_ERROR)

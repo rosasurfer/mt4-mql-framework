@@ -17,7 +17,7 @@ int start() {
 
    int account = GetAccountNumber();
    if (account == 0)
-      return(catch("start()", GetLastLibraryError()));
+      return(catch("start()", stdlib_GetLastError()));
 
    int tick   = GetTickCount();
    int orders = OrdersHistoryTotal();

@@ -1,7 +1,7 @@
 /**
  * stddefine.mqh
  *
- * Global MQL functions and constant definitions
+ * Globale MQL-Funktionen, Variablen und Konstanten.
  */
 
 
@@ -302,7 +302,7 @@
 #define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready
 
 
-// globale Variablen, stehen überall (in Scripten und in Libraries) zur Verfügung
+// globale Variablen, stehen überall und (auch in Libraries) zur Verfügung
 int last_error = ERR_NO_ERROR;
 
 int Tick          =  0;
@@ -311,8 +311,8 @@ int ChangedBars   = -1;
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Nach Rückkehr ist der letzte Error-Code
- * immer zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error
+ * gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare interne MQL-Fehler-Code ist nach Aufruf dieser Funktion immer zurückgesetzt.
  *
  * @param string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
  * @param int    error   - manuelles Forcieren eines bestimmten Error-Codes
@@ -320,24 +320,25 @@ int ChangedBars   = -1;
  * @return int - der aufgetretene Error-Code
  *
  * NOTE:    Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                               (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * -----                                               (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error == ERR_NO_ERROR) error = GetLastError();
-   else                               GetLastError(); // Parameter error angegeben, den letzten tatsächlichen Fehler zurücksetzen
+   else                               GetLastError(); // forcierten Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
    if (error != ERR_NO_ERROR) {
       if (message == "")
          message = "???";
       Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
+      last_error = error;
    }
 
    return(error);
 
    // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
    log();
-   HandleEvents(0);
-   HandleEvent(0);
+   HandleEvent(NULL);
+   HandleEvents(NULL);
 }
 
 
@@ -356,8 +357,12 @@ int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
       message = "???";
 
-   if (error == ERR_NO_ERROR) Print(message);
-   else                       Print(StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]"));
+   if (error == ERR_NO_ERROR) {
+      Print(message);
+   }
+   else {
+      Print(StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]"));
+   }
 
    return(error);
 }
