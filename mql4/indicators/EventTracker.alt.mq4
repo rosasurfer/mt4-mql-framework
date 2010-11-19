@@ -249,13 +249,25 @@ int CheckPivotLevels() {
 
    // Pivot-Level ermitteln
    // ---------------------
-   int period = PERIOD_H4;
+   int startBar, endBar, day=2;
+   int error = GetDailyStartEndBars(day, startBar, endBar);
+
+   if (error != ERR_NO_ERROR) {
+      if (error != ERR_HISTORY_UPDATE)
+         catch("CheckPivotLevels()    GetDailyStartEndBars() returned unexpected error", error);
+      log("CheckPivotLevels()    GetDailyStartEndBars() returned "+ ErrorToID(error));
+      return(error);
+   }
+   Print("CheckPivotLevels(D1["+ day +"])    startBar="+ startBar +"    endBar="+ endBar);
+
+
+   /*
+   int period = PERIOD_D1;
    int bar    = 1;
    int from   = 3;
    int to     = 1;
-
    double today[4];
-   int error = iOHLCBar(today, NULL, period, bar, true);
+   int error = iOHLCBar(today, NULL, period, bar, false);
    //int error = iOHLCBarRange(today, NULL, period, from, to);
    //int error = iOHLCTimeRange(today, NULL, D'2010.11.10 00:00:10', D'2010.11.11 23:59:30');
 
@@ -268,6 +280,7 @@ int CheckPivotLevels() {
 
    //Print("CheckPivotLevels("+ PeriodToStr(period) +")    from="+ TimeToStr(iTime(NULL, period, from)) +"   to="+ TimeToStr(iTime(NULL, period, to)+ period*MINUTES));
    Print("CheckPivotLevels("+ PeriodToStr(period) +"["+bar+"])    Open="+ NumberToStr(today[MODE_OPEN], ".4'") +"    High="+ NumberToStr(today[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(today[MODE_LOW], ".4'") +"    Close="+ NumberToStr(today[MODE_CLOSE], ".4'"));
+   */
 
 
    // yesterdayHigh
@@ -284,6 +297,48 @@ int CheckPivotLevels() {
 
 
 /**
+ *
+ */
+int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
+   // Ausgangspunkt ist die Startbar der aktuellen Session
+   datetime startTime = GetServerSessionStartTime(Time[0]);
+   if (startTime == -1)                                     // Wochenend-Candles
+      startTime = GetServerPrevSessionEndTime(Time[0]);
+
+   int _endBar=0, _startBar=iBarShiftNext(NULL, 0, startTime);
+   if (_startBar == EMPTY_VALUE)                            // ERR_HISTORY_UPDATE
+      return(stdlib_GetLastError());
+
+
+   // Bars durchlaufen und Bar-Range der gewünschten Periode ermitteln
+   for (int i=1; i<=bar; i++) {
+      _endBar = _startBar + 1;                              // Endbar der nächsten Range ist die der letzten Startbar vorhergehende Bar
+
+      startTime = GetServerSessionStartTime(Time[_endBar]);
+      while (startTime == -1) {                             // Endbar kann theoretisch wieder eine Wochenend-Candle sein
+         _endBar = iBarShiftNext(NULL, 0, GetServerPrevSessionEndTime(Time[_endBar])) + 1;
+         if (_endBar == EMPTY_VALUE)                        // ERR_HISTORY_UPDATE
+            return(stdlib_GetLastError());
+         startTime = GetServerSessionStartTime(Time[_endBar]);
+      }
+
+      if (_endBar > Bars-1)                                 // Chart deckt die Session nicht ab => Abbruch
+         return(catch("GetDailyStartEndBars(1)"));
+
+      _startBar = iBarShiftNext(NULL, 0, startTime);
+      if (_startBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
+         return(stdlib_GetLastError());
+   }
+
+   startBar = _startBar;
+   endBar   = _endBar;
+
+   return(catch("GetDailyStartEndBars(2)"));
+}
+
+
+
+/**
  * Ermittelt die OHLC-Werte eines Instruments für eine einzelne Bar einer Periode und schreibt sie in das angegebene Zielarray.
  * Existiert die angegebene Bar nicht, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
@@ -291,15 +346,14 @@ int CheckPivotLevels() {
  * @param  string  symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  int     period         - Periode (default: 0 = aktuelle Periode)
  * @param  int     bar            - Bar-Offset
- * @param  bool    history        - TRUE:  als Grundlage werden, unabhängig von der Zeitzoneneinstellung des Tradeservers, die in der History gespeicherten
- *                                         Bars verwendet (default)
- *                                  FALSE: als Grundlage werden exakte Zeiträume des tatsächlichen Handels verwendet, entspricht der Tradeserver-Zeitzone
+ * @param  bool    serverTimezone - TRUE:  Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
+ *                                  FALSE: Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der Tradeserver-Zeitzone
  *                                         "EST+0700,EDT+0700"
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
  */
-int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool history=true) {
+int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool serverTimezone=true) {
 
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
@@ -308,10 +362,10 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, i
    if (bar < 0)
       return(catch("iOHLCBar(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (!history) {
+   if (!serverTimezone) {
       // Beginn- und Endzeit der tatsächlichen Bar ermitteln
       //datetime time = iTimeBar(symbol, period, bar, true);
-      //Print("iOHLCBar()    history=FALSE   Time("+ PeriodToStr(period) +"["+bar+"])="+ TimeToStr(time) +"   ServerOffset="+ (serverOffset/MINUTES) +" min.");
+      //Print("iOHLCBar()    serverTimezone="+ BoolToStr(useServerTimezone) +"   Time("+ PeriodToStr(period) +"["+bar+"])="+ TimeToStr(time) +"   ServerOffset="+ (serverOffset/MINUTES) +" min.");
    }
 
    destination[MODE_OPEN ] = iOpen (symbol, period, bar);
@@ -672,6 +726,7 @@ int onBarOpen(int timeframes[]) {
 int CheckRateGrid() {
    if (!Track.RateChanges)
       return(0);
+   string logMsg = "";
 
    // aktuelle Limite ermitteln, ggf. neu berechnen
    if (RateGrid.Limits[0] == 0) if (!EventTracker.GetRateGridLimits(RateGrid.Limits)) {
@@ -690,9 +745,9 @@ int CheckRateGrid() {
       // SMS verschicken
       if (SMS.Alerts) {
          if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == ERR_NO_ERROR)
-            Print("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", ask, ")");
+            logMsg = StringConcatenate("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", ask, ")");
       }
-      else Print("CheckRateGrid()   ", message, "   (Ask: ", ask, ")");
+      else  logMsg = StringConcatenate("CheckRateGrid()   ", message, "   (Ask: ", ask, ")");
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -708,7 +763,7 @@ int CheckRateGrid() {
       }
       RateGrid.Limits[0] = NormalizeDouble(RateGrid.Limits[1] - gridSize - gridSize, gridDigits);
       EventTracker.SetRateGridLimits(RateGrid.Limits);
-      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
+      Print(logMsg, "   grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
 
    else if (Bid < RateGrid.Limits[0]) {
@@ -718,9 +773,9 @@ int CheckRateGrid() {
       // SMS verschicken
       if (SMS.Alerts) {
          if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == ERR_NO_ERROR)
-            Print("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", bid, ")");
+            logMsg = StringConcatenate("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", bid, ")");
       }
-      else Print("CheckRateGrid()   ", message, "   (Bid: ", bid, ")");
+      else  logMsg = StringConcatenate("CheckRateGrid()   ", message, "   (Bid: ", bid, ")");
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -736,7 +791,7 @@ int CheckRateGrid() {
       }
       RateGrid.Limits[1] = NormalizeDouble(RateGrid.Limits[0] + gridSize + gridSize, gridDigits);
       EventTracker.SetRateGridLimits(RateGrid.Limits);
-      Print("CheckRateGrid()   Grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
+      Print(logMsg, "   grid adjusted: ", DoubleToStr(RateGrid.Limits[0], gridDigits), "  <=>  ", DoubleToStr(RateGrid.Limits[1], gridDigits));
    }
 
    return(catch("CheckRateGrid(4)"));

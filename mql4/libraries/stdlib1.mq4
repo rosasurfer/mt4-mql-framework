@@ -4422,6 +4422,10 @@ datetime ServerToGMT(datetime serverTime) {
       return(-1);
 
    datetime gmtTime = serverTime - serverToGmtOffset;
+   if (gmtTime < 0) {
+      catch("ServerToGMT()   invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
 
    //Print("ServerToGMT()    server: "+ TimeToStr(serverTime) +"     GMT offset: "+ (serverToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
 
