@@ -191,8 +191,10 @@ int start() {
 
 
    // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
-   if (TimeCurrent() < accountData[2])
+   if (TimeCurrent() < accountData[2]) {
+      //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   alter Tick="+ NumberToStr(Close[0], ".4'"));
       return(catch("start(1)"));
+   }
    //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   neuer Tick="+ NumberToStr(Close[0], ".4'"));
 
 
@@ -221,7 +223,6 @@ int start() {
          return(ERR_HISTORY_UPDATE);
    }
 
-
    /* // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
    if (UnchangedBars == 0) {
       ArrayInitialize(RateGrid.Limits, 0);
@@ -248,23 +249,25 @@ int CheckPivotLevels() {
 
    // Pivot-Level ermitteln
    // ---------------------
-   int period = PERIOD_D1;
-   int from   = 1;
+   int period = PERIOD_H4;
+   int bar    = 1;
+   int from   = 3;
    int to     = 1;
 
    double today[4];
+   int error = iOHLCBar(today, NULL, period, bar, true);
    //int error = iOHLCBarRange(today, NULL, period, from, to);
-   int error = iOHLCTimeRange(today, NULL, D'2010.11.10 00:00:10', D'2010.11.11 23:59:30');
+   //int error = iOHLCTimeRange(today, NULL, D'2010.11.10 00:00:10', D'2010.11.11 23:59:30');
 
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
-         catch("CheckPivotLevels()    iOHLCTimeRange() returned unexpected error", error);
-      log("CheckPivotLevels()    iOHLCTimeRange() returned "+ ErrorToID(error));
+         catch("CheckPivotLevels()    iOHLCBar() returned unexpected error", error);
+      log("CheckPivotLevels()    iOHLCBar() returned "+ ErrorToID(error));
       return(error);
    }
 
    //Print("CheckPivotLevels("+ PeriodToStr(period) +")    from="+ TimeToStr(iTime(NULL, period, from)) +"   to="+ TimeToStr(iTime(NULL, period, to)+ period*MINUTES));
-   Print("CheckPivotLevels("+ PeriodToStr(period) +")    Open="+ NumberToStr(today[MODE_OPEN], ".4'") +"    High="+ NumberToStr(today[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(today[MODE_LOW], ".4'") +"    Close="+ NumberToStr(today[MODE_CLOSE], ".4'"));
+   Print("CheckPivotLevels("+ PeriodToStr(period) +"["+bar+"])    Open="+ NumberToStr(today[MODE_OPEN], ".4'") +"    High="+ NumberToStr(today[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(today[MODE_LOW], ".4'") +"    Close="+ NumberToStr(today[MODE_CLOSE], ".4'"));
 
 
    // yesterdayHigh
@@ -286,27 +289,35 @@ int CheckPivotLevels() {
  *
  * @param  double& destination[4] - Zielarray für die Werte { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
  * @param  string  symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int     timeframe      - Periode (default: 0 = aktuelle Periode)
+ * @param  int     period         - Periode (default: 0 = aktuelle Periode)
  * @param  int     bar            - Bar-Offset
+ * @param  bool    history        - TRUE:  als Grundlage werden, unabhängig von der Zeitzoneneinstellung des Tradeservers, die in der History gespeicherten
+ *                                         Bars verwendet (default)
+ *                                  FALSE: als Grundlage werden exakte Zeiträume des tatsächlichen Handels verwendet, entspricht der Tradeserver-Zeitzone
+ *                                         "EST+0700,EDT+0700"
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
- *
- * NOTE:    Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
- * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  */
-int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, int bar) {
+int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool history=true) {
+
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+
    if (symbol == "0")                           // NULL ist ein Integer (0)
       symbol = Symbol();
-
    if (bar < 0)
       return(catch("iOHLCBar(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
-   destination[MODE_OPEN ] = iOpen (symbol, timeframe, bar);
-   destination[MODE_HIGH ] = iHigh (symbol, timeframe, bar);
-   destination[MODE_LOW  ] = iLow  (symbol, timeframe, bar);
-   destination[MODE_CLOSE] = iClose(symbol, timeframe, bar);
+   if (!history) {
+      // Beginn- und Endzeit der tatsächlichen Bar ermitteln
+      //datetime time = iTimeBar(symbol, period, bar, true);
+      //Print("iOHLCBar()    history=FALSE   Time("+ PeriodToStr(period) +"["+bar+"])="+ TimeToStr(time) +"   ServerOffset="+ (serverOffset/MINUTES) +" min.");
+   }
+
+   destination[MODE_OPEN ] = iOpen (symbol, period, bar);
+   destination[MODE_HIGH ] = iHigh (symbol, period, bar);
+   destination[MODE_LOW  ] = iLow  (symbol, period, bar);
+   destination[MODE_CLOSE] = iClose(symbol, period, bar);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
 
@@ -340,6 +351,9 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/
  * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  */
 int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, int from, int to) {
+
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+
    if (symbol == "0")                           // NULL ist ein Integer (0)
       symbol = Symbol();
 
@@ -352,7 +366,6 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
       to   = tmp;
    }
 
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
    int bars = iBars(symbol, timeframe);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
@@ -409,11 +422,13 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
  *                             ggf. ERR_HISTORY_UPDATE
  */
 int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
-   if (symbol == "0")                           // NULL ist ein Integer (0)
-      symbol = Symbol();
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+
+   if (symbol == "0")                           // NULL ist ein Integer (0)
+      symbol = Symbol();
+
    int bar = iBarShift(symbol, timeframe, time, true);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
@@ -452,6 +467,10 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
  *                             ggf. ERR_HISTORY_UPDATE
  */
 int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from, datetime to) {
+
+   // TODO: Parameter bool exact=TRUE implementieren
+   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+
    if (symbol == "0")                           // NULL ist ein Integer (0)
       symbol = Symbol();
 
@@ -463,9 +482,6 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
       from = to;
       to   = tmp;
    }
-
-   // TODO: Parameter bool exact=TRUE implementieren
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    // größtmögliche für from und to geeignete Periode bestimmen
    int pMinutes[60] = { PERIOD_H1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M30, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1 };
