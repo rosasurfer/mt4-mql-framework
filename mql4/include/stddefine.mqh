@@ -324,12 +324,12 @@ int ChangedBars   = -1;
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error == ERR_NO_ERROR) error = GetLastError();
-   else                               GetLastError(); // forcierten Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
+   else                               GetLastError(); // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
    if (error != ERR_NO_ERROR) {
       if (message == "")
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), "   ", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
       last_error = error;
    }
 
@@ -357,12 +357,12 @@ int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
       message = "???";
 
-   if (error == ERR_NO_ERROR) {
-      Print(message);
-   }
-   else {
-      Print(StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]"));
-   }
+   message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message);
+
+   if (error != ERR_NO_ERROR)
+      message = StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]");
+
+   Print(message);
 
    return(error);
 }
