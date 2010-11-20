@@ -302,38 +302,40 @@ int CheckPivotLevels() {
 int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
    // Ausgangspunkt ist die Startbar der aktuellen Session
    datetime startTime = GetServerSessionStartTime(Time[0]);
-   if (startTime == -1)                                     // Wochenend-Candles
+   if (startTime == -1)                                        // Wochenend-Candles
       startTime = GetServerPrevSessionEndTime(Time[0]);
 
    int _endBar=0, _startBar=iBarShiftNext(NULL, 0, startTime);
-   if (_startBar == EMPTY_VALUE)                            // ERR_HISTORY_UPDATE
+   if (_startBar == EMPTY_VALUE)                               // ERR_HISTORY_UPDATE
       return(stdlib_GetLastError());
 
 
    // Bars durchlaufen und Bar-Range der gewünschten Periode ermitteln
    for (int i=1; i<=bar; i++) {
-      _endBar = _startBar + 1;                              // Endbar der nächsten Range ist die der letzten Startbar vorhergehende Bar
+      _endBar = _startBar + 1;                                 // Endbar der nächsten Range ist die der letzten Startbar vorhergehende Bar
+      if (_endBar >= Bars)                                     // Chart deckt die Session nicht ab => Abbruch
+         return(catch("GetDailyStartEndBars(1)"));
 
       startTime = GetServerSessionStartTime(Time[_endBar]);
-      while (startTime == -1) {                             // Endbar kann theoretisch wieder eine Wochenend-Candle sein
-         _endBar = iBarShiftNext(NULL, 0, GetServerPrevSessionEndTime(Time[_endBar])) + 1;
-         if (_endBar == EMPTY_VALUE)                        // ERR_HISTORY_UPDATE
+      while (startTime == -1) {                                // Endbar kann theoretisch wieder eine Wochenend-Candle sein
+         _startBar = iBarShiftNext(NULL, 0, GetServerPrevSessionEndTime(Time[_endBar]));
+         if (_startBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
             return(stdlib_GetLastError());
+         _endBar = _startBar + 1;
+         if (_endBar >= Bars)                                  // Chart deckt die Session nicht ab => Abbruch
+            return(catch("GetDailyStartEndBars(2)"));
          startTime = GetServerSessionStartTime(Time[_endBar]);
       }
 
-      if (_endBar > Bars-1)                                 // Chart deckt die Session nicht ab => Abbruch
-         return(catch("GetDailyStartEndBars(1)"));
-
       _startBar = iBarShiftNext(NULL, 0, startTime);
-      if (_startBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
+      if (_startBar == EMPTY_VALUE)                            // ERR_HISTORY_UPDATE
          return(stdlib_GetLastError());
    }
 
    startBar = _startBar;
    endBar   = _endBar;
 
-   return(catch("GetDailyStartEndBars(2)"));
+   return(catch("GetDailyStartEndBars(3)"));
 }
 
 
