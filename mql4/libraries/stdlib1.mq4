@@ -10,6 +10,15 @@
 
 
 /**
+ *
+ */
+void stdlib_init(bool traceMode) {
+   //__SCRIPT__ = WindowExpertName();
+   //__TRACE__  = traceMode;
+}
+
+
+/**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
  * oder eines neuen Ticks erfolgt (z.B. im EventListener).
  *
@@ -48,6 +57,25 @@ int stdlib_GetLastError() {
  */
 int stdlib_PeekLastError() {
    return(last_error);
+}
+
+
+/**
+ *
+ */
+void trace(string script, string function) {
+   string stack[];
+   int    stackSize = ArraySize(stack);
+   
+   if (script != "-1") {
+      ArrayResize(stack, stackSize+1);
+      stack[stackSize] = StringConcatenate(script, "::", function);
+   }
+   else if (stackSize > 0) {
+      ArrayResize(stack, stackSize-1);
+   }
+
+   Print("trace()    ", script, "::", function, "   stackSize=", ArraySize(stack));
 }
 
 
@@ -194,8 +222,12 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringIStartsWith(string object, string prefix) {
+   //if (__TRACE__) trace(__SCRIPT__, "StringIStartsWith()");
+   
    object = StringToLower(object);
    prefix = StringToLower(prefix);
+
+   //if (__TRACE__) trace(-1, 0);
    return(StringLeft(object, StringLen(prefix)) == prefix);
 }
 
