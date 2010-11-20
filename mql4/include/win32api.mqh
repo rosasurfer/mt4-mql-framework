@@ -12,6 +12,7 @@
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
+   void OutputDebugStringA(string lpMessage);
    int  WinExec(string lpCmdLine, int nCmdShow);
 
 #import "shell32.dll"
