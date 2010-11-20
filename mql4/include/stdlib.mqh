@@ -180,7 +180,7 @@
    // toString-Funktionen
    string   BoolToStr(bool value);
    string   BooleanToStr(bool value);
-   string   ErrorToID(int error);
+   string   ErrorID(int error);
    string   ErrorToStr(int error);
    string   ErrorDescription(int error);
    string   EventToStr(int event);

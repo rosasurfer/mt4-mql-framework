@@ -167,7 +167,6 @@ int start() {
    UnchangedBars = IndicatorCounted();
    ChangedBars   = Bars - UnchangedBars;
    stdlib_onTick(UnchangedBars);
-   //log("start(Tick="+ Tick +")   UnchangedBars="+ UnchangedBars +"   ChangedBars="+ ChangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
@@ -190,12 +189,12 @@ int start() {
    EventListener.AccountChange(accountData, 0);             // der Eventlistener gibt unabhängig vom Auftreten des Events immer die aktuellen Accountdaten zurück
 
 
-   // alte Ticks abfangen, alle Events werden nur nach neuen Ticks überprüft
+   // alte Ticks abfangen, sämtliche Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
-      //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   alter Tick="+ NumberToStr(Close[0], ".4'"));
+      //Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       return(catch("start(1)"));
    }
-   //Print("start()   account="+ accountData[1] +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   neuer Tick="+ NumberToStr(Close[0], ".4'"));
+   //Print("start()   account="+ accountData[1] +"   neuer Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
 
    // Positionen
@@ -249,38 +248,18 @@ int CheckPivotLevels() {
 
    // Pivot-Level ermitteln
    // ---------------------
-   int startBar, endBar, day=2;
-   int error = GetDailyStartEndBars(day, startBar, endBar);
-
-   if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE)
-         catch("CheckPivotLevels()    GetDailyStartEndBars() returned unexpected error", error);
-      log("CheckPivotLevels()    GetDailyStartEndBars() returned "+ ErrorToID(error));
-      return(error);
-   }
-   Print("CheckPivotLevels(D1["+ day +"])    startBar="+ startBar +"    endBar="+ endBar);
-
-
-   /*
-   int period = PERIOD_D1;
-   int bar    = 1;
-   int from   = 3;
-   int to     = 1;
-   double today[4];
-   int error = iOHLCBar(today, NULL, period, bar, false);
-   //int error = iOHLCBarRange(today, NULL, period, from, to);
-   //int error = iOHLCTimeRange(today, NULL, D'2010.11.10 00:00:10', D'2010.11.11 23:59:30');
+   int day = 0;
+   double ohlc[4];
+   int error = iOHLCBar(ohlc, Symbol(), PERIOD_D1, day, true);
 
    if (error != ERR_NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE)
          catch("CheckPivotLevels()    iOHLCBar() returned unexpected error", error);
-      log("CheckPivotLevels()    iOHLCBar() returned "+ ErrorToID(error));
+      log("CheckPivotLevels()    iOHLCBar() returned "+ ErrorID(error));
       return(error);
    }
+   Print("CheckPivotLevels(day="+ day +")    Open="+ NumberToStr(ohlc[MODE_OPEN], ".4'") +"    High="+ NumberToStr(ohlc[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(ohlc[MODE_LOW], ".4'") +"    Close="+ NumberToStr(ohlc[MODE_CLOSE], ".4'"));
 
-   //Print("CheckPivotLevels("+ PeriodToStr(period) +")    from="+ TimeToStr(iTime(NULL, period, from)) +"   to="+ TimeToStr(iTime(NULL, period, to)+ period*MINUTES));
-   Print("CheckPivotLevels("+ PeriodToStr(period) +"["+bar+"])    Open="+ NumberToStr(today[MODE_OPEN], ".4'") +"    High="+ NumberToStr(today[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(today[MODE_LOW], ".4'") +"    Close="+ NumberToStr(today[MODE_CLOSE], ".4'"));
-   */
 
 
    // yesterdayHigh
@@ -299,13 +278,16 @@ int CheckPivotLevels() {
 /**
  *
  */
-int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
+int GetDailyStartEndBars(string symbol/*=NULL*/, int& startBar, int& endBar, int bar) {
+   if (symbol == "0")                                          // NULL ist ein Integer (0)
+      symbol = Symbol();
+
    // Ausgangspunkt ist die Startbar der aktuellen Session
    datetime startTime = GetServerSessionStartTime(Time[0]);
    if (startTime == -1)                                        // Wochenend-Candles
       startTime = GetServerPrevSessionEndTime(Time[0]);
 
-   int _endBar=0, _startBar=iBarShiftNext(NULL, 0, startTime);
+   int _endBar=0, _startBar=iBarShiftNext(symbol, PERIOD_H1, startTime);
    if (_startBar == EMPTY_VALUE)                               // ERR_HISTORY_UPDATE
       return(stdlib_GetLastError());
 
@@ -318,7 +300,7 @@ int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
 
       startTime = GetServerSessionStartTime(Time[_endBar]);
       while (startTime == -1) {                                // Endbar kann theoretisch wieder eine Wochenend-Candle sein
-         _startBar = iBarShiftNext(NULL, 0, GetServerPrevSessionEndTime(Time[_endBar]));
+         _startBar = iBarShiftNext(symbol, PERIOD_H1, GetServerPrevSessionEndTime(Time[_endBar]));
          if (_startBar == EMPTY_VALUE)                         // ERR_HISTORY_UPDATE
             return(stdlib_GetLastError());
          _endBar = _startBar + 1;
@@ -327,7 +309,7 @@ int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
          startTime = GetServerSessionStartTime(Time[_endBar]);
       }
 
-      _startBar = iBarShiftNext(NULL, 0, startTime);
+      _startBar = iBarShiftNext(symbol, PERIOD_H1, startTime);
       if (_startBar == EMPTY_VALUE)                            // ERR_HISTORY_UPDATE
          return(stdlib_GetLastError());
    }
@@ -348,38 +330,59 @@ int GetDailyStartEndBars(int bar, int& startBar, int& endBar) {
  * @param  string  symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  int     period         - Periode (default: 0 = aktuelle Periode)
  * @param  int     bar            - Bar-Offset
- * @param  bool    serverTimezone - TRUE:  Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
- *                                  FALSE: Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der Tradeserver-Zeitzone
+ * @param  bool    exact          - TRUE:  Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der (virtuellen) Tradeserver-Zeitzone
  *                                         "EST+0700,EDT+0700"
+ *                                - FALSE: Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
  */
-int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool serverTimezone=true) {
-
+int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool exact=false) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
-   if (symbol == "0")                           // NULL ist ein Integer (0)
+   if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
    if (bar < 0)
       return(catch("iOHLCBar(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (!serverTimezone) {
-      // Beginn- und Endzeit der tatsächlichen Bar ermitteln
-      //datetime time = iTimeBar(symbol, period, bar, true);
-      //Print("iOHLCBar()    serverTimezone="+ BoolToStr(useServerTimezone) +"   Time("+ PeriodToStr(period) +"["+bar+"])="+ TimeToStr(time) +"   ServerOffset="+ (serverOffset/MINUTES) +" min.");
+
+   // schnelle Berechnung für exact=FALSE oder Perioden < H4
+   if (!exact || period < PERIOD_H4) {
+      destination[MODE_OPEN ] = iOpen (symbol, period, bar);
+      destination[MODE_HIGH ] = iHigh (symbol, period, bar);
+      destination[MODE_LOW  ] = iLow  (symbol, period, bar);
+      destination[MODE_CLOSE] = iClose(symbol, period, bar);
+   }
+   else {
+      // exakte Berechnung (nur Perioden > H1)
+      switch (period) {
+         case PERIOD_D1:
+            // Timeframe bestimmen und Beginn- und Endbar in diesem Timeframe ermitteln
+            int startBar, endBar, error=GetDailyStartEndBars(symbol, startBar, endBar, bar);
+            if (error != ERR_NO_ERROR) {
+               if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(2)", error);
+               return(error);
+            }
+            // OHLC dieser Range ermitteln
+            error = iOHLCBarRange(destination, symbol, PERIOD_H1, startBar, endBar);
+            if (error != ERR_NO_ERROR) {
+               if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(3)", error);
+               return(error);
+            }
+            break;
+
+         case PERIOD_H4 :
+         case PERIOD_W1 :
+         case PERIOD_MN1:
+         default:
+            return(catch("iOHLCBar(4)   exact calculation for PERIOD_"+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
+      }
    }
 
-   destination[MODE_OPEN ] = iOpen (symbol, period, bar);
-   destination[MODE_HIGH ] = iHigh (symbol, period, bar);
-   destination[MODE_LOW  ] = iLow  (symbol, period, bar);
-   destination[MODE_CLOSE] = iClose(symbol, period, bar);
-
-   int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
+   error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
    if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE)
-         catch("iOHLCBar(2)", error);
+      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(5)", error);
    }
    else if (destination[MODE_OPEN] == 0) {
       error = ERR_NO_RESULT;
@@ -396,7 +399,7 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, i
  *
  * @param  double& destination[4] - Zielarray für die Werte { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
  * @param  string  symbol         - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int     timeframe      - Periode (default: 0 = aktuelle Periode)
+ * @param  int     period         - Periode (default: 0 = aktuelle Periode)
  * @param  int     from           - Offset der Startbar
  * @param  int     to             - Offset der Endbar
  *
@@ -406,8 +409,7 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, i
  * NOTE:    Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  */
-int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*/, int from, int to) {
-
+int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, int from, int to) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                           // NULL ist ein Integer (0)
@@ -422,7 +424,7 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
       to   = tmp;
    }
 
-   int bars = iBars(symbol, timeframe);
+   int bars = iBars(symbol, period);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) {
@@ -445,18 +447,20 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int timeframe/
    int high=from, low=from;
 
    if (from != to) {
-      high = iHighest(symbol, timeframe, MODE_HIGH, from-to+1, to);
-      low  = iLowest (symbol, timeframe, MODE_LOW , from-to+1, to);
+      high = iHighest(symbol, period, MODE_HIGH, from-to+1, to);
+      low  = iLowest (symbol, period, MODE_LOW , from-to+1, to);
+
       error = GetLastError();                   // ERR_HISTORY_UPDATE ???
-      if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
-         catch("iOHLCBarRange(4)", error);
-      return(error);
+      if (error != ERR_NO_ERROR) {
+         if (error != ERR_HISTORY_UPDATE) catch("iOHLCBarRange(4)", error);
+         return(error);
+      }
    }
 
-   destination[MODE_OPEN ] = iOpen (symbol, timeframe, from);
-   destination[MODE_HIGH ] = iHigh (symbol, timeframe, high);
-   destination[MODE_LOW  ] = iLow  (symbol, timeframe, low );
-   destination[MODE_CLOSE] = iClose(symbol, timeframe, to  );
+   destination[MODE_OPEN ] = iOpen (symbol, period, from);
+   destination[MODE_HIGH ] = iHigh (symbol, period, high);
+   destination[MODE_LOW  ] = iLow  (symbol, period, low );
+   destination[MODE_CLOSE] = iClose(symbol, period, to  );
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)

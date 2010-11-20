@@ -66,7 +66,7 @@ int stdlib_PeekLastError() {
 void trace(string script, string function) {
    string stack[];
    int    stackSize = ArraySize(stack);
-   
+
    if (script != "-1") {
       ArrayResize(stack, stackSize+1);
       stack[stackSize] = StringConcatenate(script, "::", function);
@@ -223,7 +223,7 @@ bool StringStartsWith(string object, string prefix) {
  */
 bool StringIStartsWith(string object, string prefix) {
    //if (__TRACE__) trace(__SCRIPT__, "StringIStartsWith()");
-   
+
    object = StringToLower(object);
    prefix = StringToLower(prefix);
 
@@ -2524,7 +2524,7 @@ string ErrorToStr(int error) {
  *
  * @return string
  */
-string ErrorToID(int error) {
+string ErrorID(int error) {
    switch (error) {
       case ERR_NO_ERROR                   : return("ERR_NO_ERROR"                   ); //    0
 
