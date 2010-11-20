@@ -205,21 +205,27 @@ int start() {
 
    // Kursänderungen
    if (Track.RateChanges) {                                 // TODO: Limite nach Config-Änderungen reinitialisieren
-      if (CheckRateGrid() == ERR_HISTORY_UPDATE)
+      if (CheckRateGrid() == ERR_HISTORY_UPDATE) {
+         Print("start()    CheckRateGrid() => ERR_HISTORY_UPDATE");
          return(ERR_HISTORY_UPDATE);
+      }
    }
 
    // Pivot-Level
    if (Track.PivotLevels) {
-      if (CheckPivotLevels() == ERR_HISTORY_UPDATE)
+      if (CheckPivotLevels() == ERR_HISTORY_UPDATE) {
+         Print("start()    CheckPivotLevels() => ERR_HISTORY_UPDATE");
          return(ERR_HISTORY_UPDATE);
+      }
    }
 
    // Bollinger-Bänder
    if (false && Track.BollingerBands) {
       HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
-      if (CheckBollingerBands() == ERR_HISTORY_UPDATE)
+      if (CheckBollingerBands() == ERR_HISTORY_UPDATE) {
+         Print("start()    CheckBollingerBands() => ERR_HISTORY_UPDATE");
          return(ERR_HISTORY_UPDATE);
+      }
    }
 
    /* // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
@@ -245,33 +251,45 @@ int CheckPivotLevels() {
    static bool done;
    if (done) return(0);
 
+   // heutige und vorherige Tradingranges und deren InsideBar-Status ermitteln
+   // ------------------------------------------------------------------------
+   double ranges[0][5];
+   int bar, MODE_INSIDEBAR = 4;
 
-   // Pivot-Level ermitteln
-   // ---------------------
-   int day = 0;
-   double ohlc[4];
-   int error = iOHLCBar(ohlc, Symbol(), PERIOD_D1, day, true);
+   while (true) {
+      // Tagesrange
+      double range[4];
+      int error = iOHLCBar(range, Symbol(), PERIOD_D1, bar, true);
+      if (error == ERR_NO_RESULT) catch("CheckPivotLevels(1)    iOHLCBar(bar="+ bar +") => ", error);
+      if (error != ERR_NO_ERROR ) return(error);
 
-   if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE)
-         catch("CheckPivotLevels()    iOHLCBar() returned unexpected error", error);
-      log("CheckPivotLevels()    iOHLCBar() returned "+ ErrorID(error));
-      return(error);
+      // Abbruch, wenn die vorherige Bar keine Inside-Bar ist
+      if (bar > 1 ) if (range[MODE_HIGH] < ranges[bar-1][MODE_HIGH] || range[MODE_LOW] > ranges[bar-1][MODE_LOW])
+         break;
+
+      ArrayResize(ranges, bar+1);
+      ranges[bar][MODE_OPEN ] = range[MODE_OPEN ];
+      ranges[bar][MODE_HIGH ] = range[MODE_HIGH ];
+      ranges[bar][MODE_LOW  ] = range[MODE_LOW  ];
+      ranges[bar][MODE_CLOSE] = range[MODE_CLOSE];
+      Print("CheckPivotLevels()    range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
+
+      // InsideBar-Status bestimmen und speichern
+      if (bar > 0) {
+         if (ranges[bar][MODE_HIGH] >= ranges[bar-1][MODE_HIGH] && ranges[bar][MODE_LOW] <= ranges[bar-1][MODE_LOW])
+            ranges[bar-1][MODE_INSIDEBAR] = 1;
+         else break;
+      }
+      bar++;
+      continue;
    }
-   Print("CheckPivotLevels(day="+ day +")    Open="+ NumberToStr(ohlc[MODE_OPEN], ".4'") +"    High="+ NumberToStr(ohlc[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(ohlc[MODE_LOW], ".4'") +"    Close="+ NumberToStr(ohlc[MODE_CLOSE], ".4'"));
 
-
-
-   // yesterdayHigh
-   // yesterdayLow
-   // yesterdayClose
-   // yesterdayInsideDay
 
    // Pivot-Level überprüfen
    // ----------------------
 
    done = true;
-   return(catch("CheckPivotLevels()"));
+   return(catch("CheckPivotLevels(2)"));
 }
 
 
@@ -359,30 +377,26 @@ int iOHLCBar(double& destination[4], string symbol/*=NULL*/, int period/*=0*/, i
          case PERIOD_D1:
             // Timeframe bestimmen und Beginn- und Endbar in diesem Timeframe ermitteln
             int startBar, endBar, error=GetDailyStartEndBars(symbol, startBar, endBar, bar);
-            if (error != ERR_NO_ERROR) {
-               if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(2)", error);
-               return(error);
-            }
+            if (error != ERR_NO_ERROR) return(error);
+
             // OHLC dieser Range ermitteln
             error = iOHLCBarRange(destination, symbol, PERIOD_H1, startBar, endBar);
-            if (error != ERR_NO_ERROR) {
-               if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(3)", error);
-               return(error);
-            }
+            if (error == ERR_NO_RESULT) catch("iOHLCBar(2)    iOHLCBarRange() => ", error);
+            if (error != ERR_NO_ERROR ) return(error);
             break;
 
          case PERIOD_H4 :
          case PERIOD_W1 :
          case PERIOD_MN1:
          default:
-            return(catch("iOHLCBar(4)   exact calculation for PERIOD_"+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
+            return(catch("iOHLCBar(3)   exact calculation for PERIOD_"+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
       }
    }
 
    error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
    if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(5)", error);
+      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(4)", error);
    }
    else if (destination[MODE_OPEN] == 0) {
       error = ERR_NO_RESULT;
@@ -428,8 +442,7 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int period/*=0
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE)
-         catch("iOHLCBarRange(3)", error);
+      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBarRange(3)", error);
       return(error);
    }
 
@@ -463,7 +476,7 @@ int iOHLCBarRange(double& destination[4], string symbol/*=NULL*/, int period/*=0
    destination[MODE_CLOSE] = iClose(symbol, period, to  );
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
-   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+   if (error != ERR_HISTORY_UPDATE)
       catch("iOHLCBarRange(5)", error);
    return(error);
 }
@@ -493,8 +506,7 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
    if (error != ERR_NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE)
-         catch("iOHLCTime(1)", error);
+      if (error != ERR_HISTORY_UPDATE) catch("iOHLCTime(1)", error);
       return(error);
    }
 
@@ -507,8 +519,7 @@ int iOHLCTime(double& destination[4], string symbol/*=NULL*/, int timeframe/*=0*
    }
 
    error = iOHLCBar(destination, symbol, timeframe, bar);
-
-   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+   if (error == ERR_NO_RESULT)
       catch("iOHLCTime(2)", error);
    return(error);
 }
@@ -584,7 +595,7 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
    if (fromBar != toBar) {
       highBar = iHighest(symbol, period, MODE_HIGH, fromBar-toBar+1, toBar);
       lowBar  = iLowest (symbol, period, MODE_LOW , fromBar-toBar+1, toBar);
-      int error = GetLastError();                   // ERR_HISTORY_UPDATE ???
+      int error = GetLastError();               // ERR_HISTORY_UPDATE ???
       if (error != ERR_NO_ERROR) {
          if (error != ERR_HISTORY_UPDATE) catch("iOHLCTimeRange(3)", error);
          return(error);
@@ -598,7 +609,7 @@ int iOHLCTimeRange(double& destination[4], string symbol/*=NULL*/, datetime from
    //Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodToStr(period));
 
    error = GetLastError();                      // ERR_HISTORY_UPDATE ???
-   if (error != ERR_NO_ERROR) if (error != ERR_HISTORY_UPDATE)
+   if (error != ERR_HISTORY_UPDATE)
       catch("iOHLCTimeRange(4)", error);
    return(error);
 }
