@@ -1579,19 +1579,19 @@ static double EventTracker.bandLimits[3];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& lpDestination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double& lpResults[3] - Zeiger auf Array für die Ergebnisse { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.GetBandLimits(double& lpDestination[]) {
+bool EventTracker.GetBandLimits(double& lpResults[]) {
    // falls keine Daten gespeichert sind ...
    if (EventTracker.bandLimits[0]==0 || EventTracker.bandLimits[1]==0 || EventTracker.bandLimits[2]==0)
       return(false);
 
-   lpDestination[0] = EventTracker.bandLimits[0];
-   lpDestination[1] = EventTracker.bandLimits[1];
-   lpDestination[2] = EventTracker.bandLimits[2];
+   lpResults[0] = EventTracker.bandLimits[0];
+   lpResults[1] = EventTracker.bandLimits[1];
+   lpResults[2] = EventTracker.bandLimits[2];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1630,18 +1630,18 @@ static double EventTracker.rateGridLimits[2];
  * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& lpDestination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
+ * @param  double& lpResults[2] - Zeiger auf Array für die Ergebnisse { LOWER_VALUE, UPPER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.GetRateGridLimits(double& lpDestination[]) {
+bool EventTracker.GetRateGridLimits(double& lpResults[]) {
    // falls keine Daten gespeichert sind ...
    if (EventTracker.rateGridLimits[0]==0 || EventTracker.rateGridLimits[1]==0)
       return(false);
 
-   lpDestination[0] = EventTracker.rateGridLimits[0];
-   lpDestination[1] = EventTracker.rateGridLimits[1];
+   lpResults[0] = EventTracker.rateGridLimits[0];
+   lpResults[1] = EventTracker.rateGridLimits[1];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1724,14 +1724,14 @@ int Explode(string object, string separator, string& lpResults[]) {
 /**
  * Liest die History eines Accounts aus dem Dateisystem in das übergebene Zielarray ein.  Die Datensätze werden als Strings (Rohdaten) zurückgegeben.
  *
- * @param  int     account                          - Account-Nummer
- * @param  string& lpDestination[][HISTORY_COLUMNS] - Zeiger auf ein zweidimensionales Array
+ * @param  int     account                      - Account-Nummer
+ * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Array für die Ergebnisse
  *
  * @return int - Fehlerstatus
  */
-int GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]) {
-   if (ArrayRange(lpDestination, 1) != HISTORY_COLUMNS)
-      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(lpDestination, 0) +"]["+ ArrayRange(lpDestination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
+   if (ArrayRange(lpResults, 1) != HISTORY_COLUMNS)
+      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(lpResults, 0) +"]["+ ArrayRange(lpResults, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    int    cache.account[1];
    string cache[][HISTORY_COLUMNS];
@@ -1739,7 +1739,7 @@ int GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]) {
    // Daten nach Möglichkeit aus dem Cache liefern
    if (account == cache.account[0]) {
       if (ArrayRange(cache, 0) > 0) {
-         ArrayCopy(lpDestination, cache);
+         ArrayCopy(lpResults, cache);
          //Print("GetAccountHistory()  delivering ", ArrayRange(destination, 0), " cached raw history entries for account "+ account);
          return(catch("GetAccountHistory(2)"));
       }
@@ -1849,10 +1849,10 @@ int GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]) {
 
    // Daten in Zielarray kopieren und cachen
    if (ArrayRange(result, 0) == 0) {
-      ArrayResize(lpDestination, 0);
+      ArrayResize(lpResults, 0);
    }
    else {
-      ArrayCopy(lpDestination, result);
+      ArrayCopy(lpResults, result);
       ArrayCopy(cache, result);
    }
    cache.account[0] = account;

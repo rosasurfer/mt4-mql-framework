@@ -158,7 +158,7 @@
 
    // sonstiges
    int      DecreasePeriod(int period);
-   int      GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]);
+   int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
