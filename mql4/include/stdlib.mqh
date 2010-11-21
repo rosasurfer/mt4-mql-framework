@@ -13,10 +13,10 @@
    int      stdlib_PeekLastError();
 
    // Arrays
-   string   JoinBools(bool& values[], string separator);
-   string   JoinDoubles(double& values[], string separator);
-   string   JoinInts(int& values[], string separator);
-   string   JoinStrings(string& values[], string separator);
+   string   JoinBools(bool& lpValues[], string separator);
+   string   JoinDoubles(double& lpValues[], string separator);
+   string   JoinInts(int& lpValues[], string separator);
+   string   JoinStrings(string& lpValues[], string separator);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
@@ -97,16 +97,16 @@
    datetime TimeGMT();
 
    // Eventlistener
-   bool     EventListener(int event, int& results[], int flags);
-   bool     EventListener.AccountChange(int& results[], int flags);
-   bool     EventListener.AccountPayment(int& results[], int flags);
-   bool     EventListener.BarOpen(int& results[], int flags);
-   bool     EventListener.HistoryChange(int& results[], int flags);
-   bool     EventListener.OrderPlace(int& results[], int flags);
-   bool     EventListener.OrderChange(int& results[], int flags);
-   bool     EventListener.OrderCancel(int& results[], int flags);
-   bool     EventListener.PositionOpen(int& results[], int flags);
-   bool     EventListener.PositionClose(int& results[], int flags);
+   bool     EventListener(int event, int& lpResults[], int flags);
+   bool     EventListener.AccountChange(int& lpResults[], int flags);
+   bool     EventListener.AccountPayment(int& lpResults[], int flags);
+   bool     EventListener.BarOpen(int& lpResults[], int flags);
+   bool     EventListener.HistoryChange(int& lpResults[], int flags);
+   bool     EventListener.OrderPlace(int& lpResults[], int flags);
+   bool     EventListener.OrderChange(int& lpResults[], int flags);
+   bool     EventListener.OrderCancel(int& lpResults[], int flags);
+   bool     EventListener.PositionOpen(int& lpResults[], int flags);
+   bool     EventListener.PositionClose(int& lpResults[], int flags);
 
    // Eventhandler
    int      onAccountChange(int details[]);
@@ -120,10 +120,10 @@
    int      onPositionClose(int tickets[]);
 
    // EventTracker (Indikator)
-   bool     EventTracker.GetBandLimits(double& limits[3]);
-   bool     EventTracker.SetBandLimits(double& limits[3]);
-   bool     EventTracker.GetRateGridLimits(double& limits[2]);
-   bool     EventTracker.SetRateGridLimits(double& limits[2]);
+   bool     EventTracker.GetBandLimits(double& lpLimits[3]);
+   bool     EventTracker.SetBandLimits(double& lpLimits[3]);
+   bool     EventTracker.GetRateGridLimits(double& lpLimits[2]);
+   bool     EventTracker.SetRateGridLimits(double& lpLimits[2]);
 
    // Math
    double   MathRoundFix(double number, int decimals);
@@ -153,27 +153,27 @@
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
-   int      Explode(string object, string separator, string& results[]);
+   int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
 
    // sonstiges
    int      DecreasePeriod(int period);
-   int      GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]);
+   int      GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
-   int      GetBalanceHistory(int account, datetime& times[], double& values[]);
+   int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
    int      GetMovingAverageMethod(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
    int      GetTerminalTopWindow();
    string   GetWindowText(int hWnd);
-   int      iBalanceSeries(int account, double& iBuffer[]);
+   int      iBalanceSeries(int account, double& lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
-   int      RegisterChartObject(string label, string& objects[]);
-   int      RemoveChartObjects(string& objects[]);
+   int      RegisterChartObject(string label, string& lpObjects[]);
+   int      RemoveChartObjects(string& lpObjects[]);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
 

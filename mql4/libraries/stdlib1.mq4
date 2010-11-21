@@ -367,6 +367,11 @@ string StringReplace(string object, string search, string replace) {
  * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerPrevSessionStartTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -376,7 +381,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerPrevSessionStartTime()", error);
+      catch("GetServerPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -392,6 +397,11 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerPrevSessionEndTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -401,7 +411,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerPrevSessionEndTime()", error);
+      catch("GetServerPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -418,6 +428,11 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerSessionStartTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1)  return(EMPTY_VALUE);
 
@@ -429,7 +444,7 @@ datetime GetServerSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerSessionStartTime()", error);
+      catch("GetServerSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -446,6 +461,11 @@ datetime GetServerSessionStartTime(datetime serverTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerSessionEndTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -458,7 +478,7 @@ datetime GetServerSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerSessionEndTime()", error);
+      catch("GetServerSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -474,6 +494,11 @@ datetime GetServerSessionEndTime(datetime serverTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerNextSessionStartTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerNextSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -483,7 +508,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerNextSessionStartTime()", error);
+      catch("GetServerNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverStart);
@@ -499,6 +524,11 @@ datetime GetServerNextSessionStartTime(datetime serverTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetServerNextSessionEndTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerNextSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = ServerToEasternTime(serverTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -508,7 +538,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetServerNextSessionEndTime()", error);
+      catch("GetServerNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(serverEnd);
@@ -524,6 +554,11 @@ datetime GetServerNextSessionEndTime(datetime serverTime) {
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtPrevSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -533,7 +568,7 @@ datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtPrevSessionStartTime()", error);
+      catch("GetGmtPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -549,6 +584,11 @@ datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtPrevSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -558,7 +598,7 @@ datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtPrevSessionEndTime()", error);
+      catch("GetGmtPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -575,6 +615,11 @@ datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtSessionStartTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1)  return(EMPTY_VALUE);
 
@@ -586,7 +631,7 @@ datetime GetGmtSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtSessionStartTime()", error);
+      catch("GetGmtSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -603,6 +648,11 @@ datetime GetGmtSessionStartTime(datetime gmtTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtSessionEndTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -614,7 +664,7 @@ datetime GetGmtSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtSessionEndTime()", error);
+      catch("GetGmtSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -630,6 +680,11 @@ datetime GetGmtSessionEndTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtNextSessionStartTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtNextSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -639,7 +694,7 @@ datetime GetGmtNextSessionStartTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtNextSessionStartTime()", error);
+      catch("GetGmtNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtStart);
@@ -655,6 +710,11 @@ datetime GetGmtNextSessionStartTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetGmtNextSessionEndTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtNextSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternTime = GmtToEasternTime(gmtTime);
    if (easternTime == -1) return(EMPTY_VALUE);
 
@@ -664,7 +724,7 @@ datetime GetGmtNextSessionEndTime(datetime gmtTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetGmtNextSessionEndTime()", error);
+      catch("GetGmtNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(gmtEnd);
@@ -680,6 +740,11 @@ datetime GetGmtNextSessionEndTime(datetime gmtTime) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternPrevSessionStartTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternPrevSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    // aktuellen Sessionbeginn ermitteln (17:00)
    int hour = TimeHour(easternTime);
    datetime currentStart = easternTime -(hour+7)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);    // Time -hours -7h => 17:00 am vorherigen Tag
@@ -695,7 +760,7 @@ datetime GetEasternPrevSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternPrevSessionStartTime()", error);
+      catch("GetEasternPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(previousStart);
@@ -711,6 +776,11 @@ datetime GetEasternPrevSessionStartTime(datetime easternTime) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternPrevSessionEndTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternPrevSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
    if (previousStart == EMPTY_VALUE) return(EMPTY_VALUE);
 
@@ -719,7 +789,7 @@ datetime GetEasternPrevSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternPrevSessionEndTime()", error);
+      catch("GetEasternPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(previousEnd);
@@ -736,6 +806,11 @@ datetime GetEasternPrevSessionEndTime(datetime easternTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternSessionStartTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    // aktuellen Sessionbeginn ermitteln (17:00)
    int hour = TimeHour(easternTime);
    datetime easternStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hour +17h => 17:00
@@ -750,7 +825,7 @@ datetime GetEasternSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternSessionStartTime()", error);
+      catch("GetEasternSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(easternStart);
@@ -767,6 +842,11 @@ datetime GetEasternSessionStartTime(datetime easternTime) {
  *                    EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternSessionEndTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime easternStart = GetEasternSessionStartTime(easternTime);
    if (easternStart == EMPTY_VALUE) return(EMPTY_VALUE);
    if (easternStart == -1)          return(-1);
@@ -776,7 +856,7 @@ datetime GetEasternSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternSessionEndTime()", error);
+      catch("GetEasternSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(easternEnd);
@@ -792,6 +872,11 @@ datetime GetEasternSessionEndTime(datetime easternTime) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternNextSessionStartTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternNextSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    // nächsten Sessionbeginn ermitteln (17:00)
    int hour = TimeHour(easternTime);
    datetime nextStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hours +17h => 17:00
@@ -806,7 +891,7 @@ datetime GetEasternNextSessionStartTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternNextSessionStartTime()", error);
+      catch("GetEasternNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(nextStart);
@@ -822,6 +907,11 @@ datetime GetEasternNextSessionStartTime(datetime easternTime) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 datetime GetEasternNextSessionEndTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternNextSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    datetime nextStart = GetEasternNextSessionStartTime(easternTime);
    if (nextStart == EMPTY_VALUE) return(EMPTY_VALUE);
 
@@ -830,7 +920,7 @@ datetime GetEasternNextSessionEndTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("GetEasternNextSessionEndTime()", error);
+      catch("GetEasternNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
    return(nextEnd);
@@ -933,6 +1023,11 @@ string DoubleToStrTrim(double value) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime EasternToGMT(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("EasternToGMT(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
    if (easternToGmtOffset == EMPTY_VALUE)
       return(-1);
@@ -943,7 +1038,7 @@ datetime EasternToGMT(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("EasternToGMT()", error);
+      catch("EasternToGMT(2)", error);
       return(-1);
    }
    return(gmtTime);
@@ -958,6 +1053,11 @@ datetime EasternToGMT(datetime easternTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime EasternToServerTime(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("EasternToServerTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    string zone = GetServerTimezone();
    if (zone == "")
       return(-1);
@@ -979,7 +1079,7 @@ datetime EasternToServerTime(datetime easternTime) {
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
-      catch("EasternToServerTime()", error);
+      catch("EasternToServerTime(2)", error);
       return(-1);
    }
    return(serverTime);
@@ -989,23 +1089,23 @@ datetime EasternToServerTime(datetime easternTime) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
  *
- * @param  int  event     - Event
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int  event       - Event
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener(int event, int& results[], int flags=0) {
+bool EventListener(int event, int& lpResults[], int flags=0) {
    switch (event) {
-      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (results, flags));
-      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (results, flags));
-      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (results, flags));
-      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (results, flags));
-      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (results, flags));
-      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (results, flags));
-      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (results, flags));
-      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(results, flags));
-      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
+      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (lpResults, flags));
+      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (lpResults, flags));
+      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (lpResults, flags));
+      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (lpResults, flags));
+      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (lpResults, flags));
+      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (lpResults, flags));
+      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (lpResults, flags));
+      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(lpResults, flags));
+      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (lpResults, flags));
    }
 
    catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
@@ -1016,14 +1116,14 @@ bool EventListener(int event, int& results[], int flags=0) {
 /**
  * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
  *
- * @param  int& results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int  flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ * @param  int& lpResults[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int  flags       - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.BarOpen(int& results[], int flags=0) {
-   ArrayResize(results, 1);
-   results[0] = 0;
+bool EventListener.BarOpen(int& lpResults[], int flags=0) {
+   ArrayResize(lpResults, 1);
+   lpResults[0] = 0;
 
    int currentPeriodFlag = GetPeriodFlag(Period());
    if (flags == 0)
@@ -1033,7 +1133,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
    if (flags & currentPeriodFlag != 0) {
       static datetime lastOpenTime = 0;
       if (lastOpenTime != 0) if (lastOpenTime != Time[0])
-         results[0] |= currentPeriodFlag;
+         lpResults[0] |= currentPeriodFlag;
       lastOpenTime = Time[0];
    }
 
@@ -1055,7 +1155,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
-               results[0] |= PERIODFLAG_M1;
+               lpResults[0] |= PERIODFLAG_M1;
             //Print("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
@@ -1066,14 +1166,14 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
 
    // TODO: verbleibende Timeframe-Flags verarbeiten
    if (false) {
-      if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
-      if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
-      if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
-      if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
-      if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
-      if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
-      if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
-      if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
+      if (flags & PERIODFLAG_M5  != 0) lpResults[0] |= PERIODFLAG_M5 ;
+      if (flags & PERIODFLAG_M15 != 0) lpResults[0] |= PERIODFLAG_M15;
+      if (flags & PERIODFLAG_M30 != 0) lpResults[0] |= PERIODFLAG_M30;
+      if (flags & PERIODFLAG_H1  != 0) lpResults[0] |= PERIODFLAG_H1 ;
+      if (flags & PERIODFLAG_H4  != 0) lpResults[0] |= PERIODFLAG_H4 ;
+      if (flags & PERIODFLAG_D1  != 0) lpResults[0] |= PERIODFLAG_D1 ;
+      if (flags & PERIODFLAG_W1  != 0) lpResults[0] |= PERIODFLAG_W1 ;
+      if (flags & PERIODFLAG_MN1 != 0) lpResults[0] |= PERIODFLAG_MN1;
    }
 
    int error = GetLastError();
@@ -1081,23 +1181,23 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
       catch("EventListener.BarOpen()", error);
       return(false);
    }
-   return(results[0] != 0);
+   return(lpResults[0] != 0);
 }
 
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
  *
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderChange(int& results[], int flags=0) {
+bool EventListener.OrderChange(int& lpResults[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+   if (ArraySize(lpResults) > 0)
+      ArrayResize(lpResults, 0);
 
    // TODO: implementieren
 
@@ -1113,16 +1213,16 @@ bool EventListener.OrderChange(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
  *
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderPlace(int& results[], int flags=0) {
+bool EventListener.OrderPlace(int& lpResults[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+   if (ArraySize(lpResults) > 0)
+      ArrayResize(lpResults, 0);
 
    // TODO: implementieren
 
@@ -1138,16 +1238,16 @@ bool EventListener.OrderPlace(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
  *
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderCancel(int& results[], int flags=0) {
+bool EventListener.OrderCancel(int& lpResults[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+   if (ArraySize(lpResults) > 0)
+      ArrayResize(lpResults, 0);
 
    // TODO: implementieren
 
@@ -1164,20 +1264,20 @@ bool EventListener.OrderCancel(int& results[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int& tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
- * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                          (default: 0)
+ * @param  int& lpTickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
+ * @param  int  flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ *                            (default: 0)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionOpen(int& tickets[], int flags=0) {
+bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
       return(false);
 
    // Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(tickets) > 0)
-      ArrayResize(tickets, 0);
+   if (ArraySize(lpTickets) > 0)
+      ArrayResize(lpTickets, 0);
 
    static int      accountNumber[1];
    static datetime accountInitTime[1];                      // GMT-Zeit
@@ -1253,8 +1353,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
-               ArrayResize(tickets, ArraySize(tickets)+1);
-               tickets[ArraySize(tickets)-1] = ticket;
+               ArrayResize(lpTickets, ArraySize(lpTickets)+1);
+               lpTickets[ArraySize(lpTickets)-1] = ticket;
             }
          }
 
@@ -1264,7 +1364,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       }
    }
 
-   bool eventStatus = (ArraySize(tickets) > 0);
+   bool eventStatus = (ArraySize(lpTickets) > 0);
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
@@ -1280,20 +1380,20 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int& tickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
- * @param  int  flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                          (default: 0)
+ * @param  int& lpTickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
+ * @param  int  flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ *                            (default: 0)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionClose(int& tickets[], int flags=0) {
+bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
       return(false);
 
    // Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(tickets) > 0)
-      ArrayResize(tickets, 0);
+   if (ArraySize(lpTickets) > 0)
+      ArrayResize(lpTickets, 0);
 
    static int accountNumber[1];
    static int knownPositions[];                                  // bekannte Positionen
@@ -1340,8 +1440,8 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
-               ArrayResize(tickets, ArraySize(tickets)+1);
-               tickets[ArraySize(tickets)-1] = knownPositions[i];
+               ArrayResize(lpTickets, ArraySize(lpTickets)+1);
+               lpTickets[ArraySize(lpTickets)-1] = knownPositions[i];
             }
          }
       }
@@ -1365,7 +1465,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       }
    }
 
-   bool eventStatus = (ArraySize(tickets) > 0);
+   bool eventStatus = (ArraySize(lpTickets) > 0);
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    error = GetLastError();
@@ -1380,16 +1480,16 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountPayment(int& results[], int flags=0) {
+bool EventListener.AccountPayment(int& lpResults[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+   if (ArraySize(lpResults) > 0)
+      ArrayResize(lpResults, 0);
 
    // TODO: implementieren
 
@@ -1405,16 +1505,16 @@ bool EventListener.AccountPayment(int& results[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
  *
- * @param  int& results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.HistoryChange(int& results[], int flags=0) {
+bool EventListener.HistoryChange(int& lpResults[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
+   if (ArraySize(lpResults) > 0)
+      ArrayResize(lpResults, 0);
 
    // TODO: implementieren
 
@@ -1432,12 +1532,12 @@ bool EventListener.HistoryChange(int& results[], int flags=0) {
  * Beim Start des Terminals und während eines Accountwechsels treten in der Initialiserungsphase "Ticks" mit AccountNumber() == 0 auf. Diese fehlerhaften Aufrufe des Terminals
  * werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int& results[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
- * @param  int  flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int& lpResults[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
+ * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountChange(int& results[], int flags=0) {
+bool EventListener.AccountChange(int& lpResults[], int flags=0) {
    static int accountData[3];                         // { last_account_number, current_account_number, current_account_init_servertime }
 
    bool eventStatus = false;
@@ -1460,9 +1560,9 @@ bool EventListener.AccountChange(int& results[], int flags=0) {
    }
    //Print("EventListener.AccountChange()   eventStatus: "+ eventStatus);
 
-   if (ArraySize(results) != 3)
-      ArrayResize(results, 3);
-   ArrayCopy(results, accountData);
+   if (ArraySize(lpResults) != 3)
+      ArrayResize(lpResults, 3);
+   ArrayCopy(lpResults, accountData);
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1479,19 +1579,19 @@ static double EventTracker.bandLimits[3];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& destination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double& lpDestination[3] - Zielarray für die aktuellen Limite { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.GetBandLimits(double& destination[]) {
+bool EventTracker.GetBandLimits(double& lpDestination[]) {
    // falls keine Daten gespeichert sind ...
    if (EventTracker.bandLimits[0]==0 || EventTracker.bandLimits[1]==0 || EventTracker.bandLimits[2]==0)
       return(false);
 
-   destination[0] = EventTracker.bandLimits[0];
-   destination[1] = EventTracker.bandLimits[1];
-   destination[2] = EventTracker.bandLimits[2];
+   lpDestination[0] = EventTracker.bandLimits[0];
+   lpDestination[1] = EventTracker.bandLimits[1];
+   lpDestination[2] = EventTracker.bandLimits[2];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1506,14 +1606,14 @@ bool EventTracker.GetBandLimits(double& destination[]) {
  * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& limits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double& lpLimits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
-bool EventTracker.SetBandLimits(double& limits[]) {
-   EventTracker.bandLimits[0] = limits[0];
-   EventTracker.bandLimits[1] = limits[1];
-   EventTracker.bandLimits[2] = limits[2];
+bool EventTracker.SetBandLimits(double& lpLimits[]) {
+   EventTracker.bandLimits[0] = lpLimits[0];
+   EventTracker.bandLimits[1] = lpLimits[1];
+   EventTracker.bandLimits[2] = lpLimits[2];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1530,18 +1630,18 @@ static double EventTracker.rateGridLimits[2];
  * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& destination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
+ * @param  double& lpDestination[2] - Zielarray für die aktuellen Limite { LOWER_VALUE, UPPER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE andererseits (nicht existierende Daten)
  */
-bool EventTracker.GetRateGridLimits(double& destination[]) {
+bool EventTracker.GetRateGridLimits(double& lpDestination[]) {
    // falls keine Daten gespeichert sind ...
    if (EventTracker.rateGridLimits[0]==0 || EventTracker.rateGridLimits[1]==0)
       return(false);
 
-   destination[0] = EventTracker.rateGridLimits[0];
-   destination[1] = EventTracker.rateGridLimits[1];
+   lpDestination[0] = EventTracker.rateGridLimits[0];
+   lpDestination[1] = EventTracker.rateGridLimits[1];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1556,13 +1656,13 @@ bool EventTracker.GetRateGridLimits(double& destination[]) {
  * Setzt die aktuellen RateGrid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
  *
- * @param  double& limits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
+ * @param  double& lpLimits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus
  */
-bool EventTracker.SetRateGridLimits(double& limits[]) {
-   EventTracker.rateGridLimits[0] = limits[0];
-   EventTracker.rateGridLimits[1] = limits[1];
+bool EventTracker.SetRateGridLimits(double& lpLimits[]) {
+   EventTracker.rateGridLimits[0] = lpLimits[0];
+   EventTracker.rateGridLimits[1] = lpLimits[1];
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -1576,22 +1676,22 @@ bool EventTracker.SetRateGridLimits(double& limits[]) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string  object    - zu zerlegender String
- * @param  string  separator - Trennstring
- * @param  string& results[] - Zielarray für die Teilstrings
+ * @param  string  object      - zu zerlegender String
+ * @param  string  separator   - Trennstring
+ * @param  string& lpResults[] - Zielarray für die Teilstrings
  *
  * @return int - Fehlerstatus
  */
-int Explode(string object, string separator, string& results[]) {
+int Explode(string object, string separator, string& lpResults[]) {
    int lenObject    = StringLen(object),
        lenSeparator = StringLen(separator);
 
    if (separator == "") {
       // String in einzelne Zeichen zerlegen
-      ArrayResize(results, lenObject);
+      ArrayResize(lpResults, lenObject);
 
       for (int i=0; i < lenObject; i++) {
-         results[i] = StringSubstr(object, i, 1);
+         lpResults[i] = StringSubstr(object, i, 1);
       }
    }
    else {
@@ -1600,18 +1700,18 @@ int Explode(string object, string separator, string& results[]) {
       i = 0;
 
       while (i < lenObject) {
-         ArrayResize(results, size+1);
+         ArrayResize(lpResults, size+1);
 
          pos = StringFind(object, separator, i);
          if (pos == -1) {
-            results[size] = StringSubstr(object, i);
+            lpResults[size] = StringSubstr(object, i);
             break;
          }
          else if (i == pos) {
-            results[size] = "";
+            lpResults[size] = "";
          }
          else {
-            results[size] = StringSubstrFix(object, i, pos-i);
+            lpResults[size] = StringSubstrFix(object, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
@@ -1624,14 +1724,14 @@ int Explode(string object, string separator, string& results[]) {
 /**
  * Liest die History eines Accounts aus dem Dateisystem in das übergebene Zielarray ein.  Die Datensätze werden als Strings (Rohdaten) zurückgegeben.
  *
- * @param  int     account                        - Account-Nummer
- * @param  string& destination[][HISTORY_COLUMNS] - Zeiger auf ein zweidimensionales Array
+ * @param  int     account                          - Account-Nummer
+ * @param  string& lpDestination[][HISTORY_COLUMNS] - Zeiger auf ein zweidimensionales Array
  *
  * @return int - Fehlerstatus
  */
-int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
-   if (ArrayRange(destination, 1) != HISTORY_COLUMNS)
-      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(destination, 0) +"]["+ ArrayRange(destination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+int GetAccountHistory(int account, string& lpDestination[][HISTORY_COLUMNS]) {
+   if (ArrayRange(lpDestination, 1) != HISTORY_COLUMNS)
+      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(lpDestination, 0) +"]["+ ArrayRange(lpDestination, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    int    cache.account[1];
    string cache[][HISTORY_COLUMNS];
@@ -1639,7 +1739,7 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
    // Daten nach Möglichkeit aus dem Cache liefern
    if (account == cache.account[0]) {
       if (ArrayRange(cache, 0) > 0) {
-         ArrayCopy(destination, cache);
+         ArrayCopy(lpDestination, cache);
          //Print("GetAccountHistory()  delivering ", ArrayRange(destination, 0), " cached raw history entries for account "+ account);
          return(catch("GetAccountHistory(2)"));
       }
@@ -1749,10 +1849,10 @@ int GetAccountHistory(int account, string& destination[][HISTORY_COLUMNS]) {
 
    // Daten in Zielarray kopieren und cachen
    if (ArrayRange(result, 0) == 0) {
-      ArrayResize(destination, 0);
+      ArrayResize(lpDestination, 0);
    }
    else {
-      ArrayCopy(destination, result);
+      ArrayCopy(lpDestination, result);
       ArrayCopy(cache, result);
    }
    cache.account[0] = account;
@@ -1830,13 +1930,13 @@ double GetAverageSpread(string symbol) {
 /**
  * Schreibt die Balance-History eines Accounts in die angegebenen Zielarrays. Die Werte sind aufsteigend nach Zeitpunkt sortiert.
  *
- * @param  int       account  - Account-Nummer
- * @param  datetime& times[]  - Zeiger auf Array für die Zeitpunkte der Balanceänderung
- * @param  double&   values[] - Zeiger auf Array für die entsprechenden Balancewerte
+ * @param  int       account    - Account-Nummer
+ * @param  datetime& lpTimes[]  - Zeiger auf Array für die Zeitpunkte der Balanceänderung
+ * @param  double&   lpValues[] - Zeiger auf Array für die entsprechenden Balancewerte
  *
  * @return int - Fehlerstatus
  */
-int GetBalanceHistory(int account, datetime& times[], double& values[]) {
+int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    int      cache.account[1];
    datetime cache.times[];
    double   cache.values[];
@@ -1844,8 +1944,8 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    // Daten nach Möglichkeit aus dem Cache liefern
    if (account == cache.account[0]) {
       if (ArraySize(cache.times) > 0) {
-         ArrayCopy(times, cache.times);
-         ArrayCopy(values, cache.values);
+         ArrayCopy(lpTimes, cache.times);
+         ArrayCopy(lpValues, cache.values);
          //Print("Delivering ", ArraySize(times), " cached balance entries for account "+ account);
          return(catch("GetBalanceHistory(1)"));
       }
@@ -1855,8 +1955,8 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    string data[][HISTORY_COLUMNS]; ArrayResize(data, 0);
    GetAccountHistory(account, data);
 
-   ArrayResize(times,  0);
-   ArrayResize(values, 0);
+   ArrayResize(lpTimes,  0);
+   ArrayResize(lpValues, 0);
 
    // Balancedatensätze auslesen (History ist nach CloseTime sortiert)
    datetime time=0, lastTime=0;
@@ -1870,13 +1970,13 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
          time = StrToInteger(data[i][HC_CLOSETIMESTAMP]);
 
          if (time == lastTime) {       // existieren mehrere Balanceänderungen zum selben Zeitpunkt,
-            values[n-1] = balance;     // den vorherigen Balancewert mit dem aktuellen überschreiben
+            lpValues[n-1] = balance;   // den vorherigen Balancewert mit dem aktuellen überschreiben
          }
          else {
-            ArrayResize(times,  n+1);
-            ArrayResize(values, n+1);
-            times [n] = time;
-            values[n] = balance;
+            ArrayResize(lpTimes,  n+1);
+            ArrayResize(lpValues, n+1);
+            lpTimes [n] = time;
+            lpValues[n] = balance;
             n++;
          }
       }
@@ -1886,13 +1986,13 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    }
 
    // Daten cachen
-   if (ArraySize(times) == 0) {
+   if (ArraySize(lpTimes) == 0) {
       ArrayResize(cache.times,  0);
       ArrayResize(cache.values, 0);
    }
    else {
-      ArrayCopy(cache.times, times);
-      ArrayCopy(cache.values, values);
+      ArrayCopy(cache.times , lpTimes );
+      ArrayCopy(cache.values, lpValues);
    }
    cache.account[0] = account;
    //Print("Cached ", ArraySize(cache.times), " balance entries for account "+ account);
@@ -2048,6 +2148,11 @@ string GetConfigString(string section, string key, string defaultValue="") {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetEasternToGmtOffset(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternToGmtOffset(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    int offset, year = TimeYear(easternTime)-1970;
 
    // New York                                   GMT-0500,GMT-0400
@@ -2055,7 +2160,7 @@ int GetEasternToGmtOffset(datetime easternTime) {
    else if (easternTime < EDT_schedule[year][1]) offset = -4 * HOURS;
    else                                          offset = -5 * HOURS;
 
-   if (catch("GetEasternToGmtOffset()") != ERR_NO_ERROR)
+   if (catch("GetEasternToGmtOffset(2)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -2070,6 +2175,11 @@ int GetEasternToGmtOffset(datetime easternTime) {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetEasternToServerTimeOffset(datetime easternTime) {
+   if (easternTime < 1) {
+      catch("GetEasternToServerTimeOffset(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    string zone = GetServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
@@ -2086,7 +2196,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
    if (zone != "GMT")
       gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
 
-   if (catch("GetEasternToServerTimeOffset()") != ERR_NO_ERROR)
+   if (catch("GetEasternToServerTimeOffset(2)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(easternToGmtOffset + gmtToServerTimeOffset);
@@ -2200,6 +2310,11 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  * -----
  */
 int GetGmtToEasternTimeOffset(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtToEasternTimeOffset(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    int offset, year = TimeYear(gmtTime)-1970;
 
    // New York                               GMT-0500[,GMT-0400]
@@ -2207,7 +2322,7 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
    else if (gmtTime < EDT_schedule[year][3]) offset = 4 * HOURS;
    else                                      offset = 5 * HOURS;
 
-   if (catch("GetGmtToEasternTimeOffset()") != ERR_NO_ERROR)
+   if (catch("GetGmtToEasternTimeOffset(2)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -2225,6 +2340,11 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
  * -----
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GetGmtToServerTimeOffset(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    string timezone = GetServerTimezone();
    if (timezone == "")
       return(EMPTY_VALUE);
@@ -2263,11 +2383,11 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
    }
 
    else {
-      catch("GetGmtToServerTimeOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      catch("GetGmtToServerTimeOffset(2)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
-   if (catch("GetGmtToServerTimeOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetGmtToServerTimeOffset(3)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -2380,6 +2500,11 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
  * @return string - Wochentag
  */
 string GetDayOfWeek(datetime time, bool long=true) {
+   if (time < 1) {
+      catch("GetDayOfWeek(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
    static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
    string day = weekDays[TimeDayOfWeek(time)];
@@ -3806,6 +3931,11 @@ string GetServerTimezone() {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToEasternTimeOffset(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerToEasternTimeOffset(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    string zone = GetServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
@@ -3822,7 +3952,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
    // Offset GMT zu Eastern Time
    int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(serverTime - serverToGmtOffset);
 
-   if (catch("GetServerToEasternTimeOffset()") != ERR_NO_ERROR)
+   if (catch("GetServerToEasternTimeOffset(2)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(serverToGmtOffset + gmtToEasternTimeOffset);
@@ -3837,6 +3967,11 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToGmtOffset(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("GetServerToGmtOffset(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    string zone = GetServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
@@ -3875,11 +4010,11 @@ int GetServerToGmtOffset(datetime serverTime) {
    }
 
    else {
-      catch("GetServerToGmtOffset(1)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
+      catch("GetServerToGmtOffset(2)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
       return(EMPTY_VALUE);
    }
 
-   if (catch("GetServerToGmtOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetServerToGmtOffset(3)") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -3958,6 +4093,11 @@ string GetWindowText(int hWnd) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
  */
 datetime GmtToEasternTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GmtToEasternTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(gmtTime);  // Offset von GMT zu New Yorker Zeit
    if (gmtToEasternTimeOffset == EMPTY_VALUE)
       return(-1);
@@ -3966,7 +4106,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
 
    //Print("GmtToEasternTime()    GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtToEasternTimeOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
 
-   if (catch("GmtToEasternTime()") != ERR_NO_ERROR)
+   if (catch("GmtToEasternTime(2)") != ERR_NO_ERROR)
       return(-1);
    return(easternTime);
 }
@@ -3980,6 +4120,11 @@ datetime GmtToEasternTime(datetime gmtTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GmtToServerTime(datetime gmtTime) {
+   if (gmtTime < 1) {
+      catch("GmtToServerTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
    if (GetServerTimezone() == "GMT")
       return(gmtTime);
@@ -3992,7 +4137,7 @@ datetime GmtToServerTime(datetime gmtTime) {
 
    //Print("GmtToServerTime()    GMT: "+ TimeToStr(gmtTime) +"     server offset: "+ (gmtToServerTimeOffset/HOURS) +"     server: "+ TimeToStr(serverTime));
 
-   if (catch("GmtToServerTime()") != ERR_NO_ERROR)
+   if (catch("GmtToServerTime(2)") != ERR_NO_ERROR)
       return(-1);
    return(serverTime);
 }
@@ -4001,15 +4146,15 @@ datetime GmtToServerTime(datetime gmtTime) {
 /**
  * Ermittelt den Balanceverlauf des angegebenen Accounts für die Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
- * @param  int     account - Account-Nummer
- * @param  double& iBuffer - Zeiger auf ein Ziel-/Ergebnisarray (kann Indikatorpuffer sein)
+ * @param  int     account  - Account-Nummer
+ * @param  double& lpBuffer - Zeiger auf ein Ziel-/Ergebnisarray (kann Indikatorpuffer sein)
  *
  * @return int - Fehlerstatus
  */
-int iBalanceSeries(int account, double& iBuffer[]) {
-   if (ArrayRange(iBuffer, 0) != Bars) {
-      ArrayResize(iBuffer, Bars);
-      ArrayInitialize(iBuffer, EMPTY_VALUE);
+int iBalanceSeries(int account, double& lpBuffer[]) {
+   if (ArrayRange(lpBuffer, 0) != Bars) {
+      ArrayResize(lpBuffer, Bars);
+      ArrayInitialize(lpBuffer, EMPTY_VALUE);
    }
 
    // Balance-History holen
@@ -4030,17 +4175,17 @@ int iBalanceSeries(int account, double& iBuffer[]) {
       // übersprungene Bars mit vorherigem Balancewert füllen
       if (bar < lastBar-1) {
          for (z=lastBar-1; z > bar; z--)
-            iBuffer[z] = iBuffer[lastBar];
+            lpBuffer[z] = lpBuffer[lastBar];
       }
 
       // aktuellen Balancewert eintragen
-      iBuffer[bar] = values[i];
+      lpBuffer[bar] = values[i];
       lastBar = bar;
    }
 
    // Zielarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
    for (bar=lastBar-1; bar >= 0; bar--) {
-      iBuffer[bar] = iBuffer[lastBar];
+      lpBuffer[bar] = lpBuffer[lastBar];
    }
 
    return(catch("iBalanceSeries()"));
@@ -4064,6 +4209,11 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
 
+   if (time < 1) {
+      catch("iBarShiftPrevious(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
    // Datenreihe holen
    datetime times[];
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
@@ -4083,7 +4233,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (error != ERR_NO_ERROR) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
-         catch("iBarShiftPrevious()", error);
+         catch("iBarShiftPrevious(2)", error);
       return(EMPTY_VALUE);
    }
    return(bar);
@@ -4106,6 +4256,11 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
+
+   if (time < 1) {
+      catch("iBarShiftNext(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
 
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
@@ -4132,7 +4287,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (error != ERR_NO_ERROR) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
-         catch("iBarShiftNext()", error);
+         catch("iBarShiftNext(2)", error);
       return(EMPTY_VALUE);
    }
    return(bar);
@@ -4339,15 +4494,15 @@ abstract*/ int onHistoryChange(int details[]) {
 /**
  * Fügt das angegebene Objektlabel den bereits gespeicherten Labels hinzu.
  *
- * @param  string  label     - zu speicherndes Label
- * @param  string& objects[] - Array mit bereits gespeicherten Labels
+ * @param  string  label       - zu speicherndes Label
+ * @param  string& lpObjects[] - Array mit bereits gespeicherten Labels
  *
  * @return int - Fehlerstatus
  */
-int RegisterChartObject(string label, string& objects[]) {
-   int size = ArraySize(objects);
-   ArrayResize(objects, size+1);
-   objects[size] = label;
+int RegisterChartObject(string label, string& lpObjects[]) {
+   int size = ArraySize(lpObjects);
+   ArrayResize(lpObjects, size+1);
+   lpObjects[size] = label;
    return(0);
 }
 
@@ -4355,19 +4510,19 @@ int RegisterChartObject(string label, string& objects[]) {
 /**
  * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
  *
- * @param  string& labels[] - Array mit Objektlabels
+ * @param  string& lpLabels[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects(string& labels[]) {
-   int size = ArraySize(labels);
+int RemoveChartObjects(string& lpLabels[]) {
+   int size = ArraySize(lpLabels);
    if (size == 0)
       return(0);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(labels[i]);
+      ObjectDelete(lpLabels[i]);
    }
-   ArrayResize(labels, 0);
+   ArrayResize(lpLabels, 0);
 
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST)
@@ -4417,6 +4572,11 @@ int SendTextMessage(string receiver, string message) {
  * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
  */
 datetime ServerToEasternTime(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("ServerToEasternTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
    if (GetServerTimezone() == "EST,EDT")
       return(serverTime);
@@ -4431,7 +4591,7 @@ datetime ServerToEasternTime(datetime serverTime) {
 
    //Print("ServerToEasternTime()    server: "+ TimeToStr(serverTime) +"     GMT: "+ TimeToStr(gmtTime) +"     ET: "+ TimeToStr(easternTime));
 
-   if (catch("ServerToEasternTime()") != ERR_NO_ERROR)
+   if (catch("ServerToEasternTime(2)") != ERR_NO_ERROR)
       return(-1);
    return(easternTime);
 }
@@ -4445,6 +4605,11 @@ datetime ServerToEasternTime(datetime serverTime) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime ServerToGMT(datetime serverTime) {
+   if (serverTime < 1) {
+      catch("ServerToGMT(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
    if (GetServerTimezone() == "GMT")
       return(serverTime);
@@ -4455,13 +4620,13 @@ datetime ServerToGMT(datetime serverTime) {
 
    datetime gmtTime = serverTime - serverToGmtOffset;
    if (gmtTime < 0) {
-      catch("ServerToGMT()   invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("ServerToGMT(2)   invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
    //Print("ServerToGMT()    server: "+ TimeToStr(serverTime) +"     GMT offset: "+ (serverToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
 
-   if (catch("ServerToGMT()") != ERR_NO_ERROR)
+   if (catch("ServerToGMT(3)") != ERR_NO_ERROR)
       return(-1);
    return(gmtTime);
 }

@@ -299,16 +299,16 @@ int start() {
 /**
  *
  */
-int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   if (ArrayRange(tickets, 1) != 3)
-      return(catch("SortTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+int SortTickets(int& lpTickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
+   if (ArrayRange(lpTickets, 1) != 3)
+      return(catch("SortTickets(1)  invalid parameter tickets["+ ArrayRange(lpTickets, 0) +"]["+ ArrayRange(lpTickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
-   if (ArrayRange(tickets, 0) < 2)
+   if (ArrayRange(lpTickets, 0) < 2)
       return(catch("SortTickets(2)"));
 
 
    // zuerst alles nach CloseTime sortieren
-   ArraySort(tickets);
+   ArraySort(lpTickets);
 
    int close, open, ticket;
    int lastClose=0, lastOpen=0, n=0;
@@ -316,12 +316,12 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
 
    // Datensätze mit derselben CloseTime nach OpenTime sortieren
    int sameClose[][3]; ArrayResize(sameClose, 0); ArrayResize(sameClose, 1);    // {OpenTime, Ticket, index}
-   int count = ArrayRange(tickets, 0);
+   int count = ArrayRange(lpTickets, 0);
 
    for (int i=0; i < count; i++) {
-      close  = tickets[i][0];
-      open   = tickets[i][1];
-      ticket = tickets[i][2];
+      close  = lpTickets[i][0];
+      open   = lpTickets[i][1];
+      ticket = lpTickets[i][2];
 
       if (close == lastClose) {
          n++;
@@ -329,7 +329,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
       }
       else if (n > 0) {
          // in sameClose gesammelte Werte neu sortieren
-         SortSameCloseTickets(sameClose, tickets);
+         SortSameCloseTickets(sameClose, lpTickets);
          ArrayResize(sameClose, 1);
          n = 0;
       }
@@ -342,7 +342,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    }
    // im letzten Schleifendurchlauf in sameClose gesammelte Werte müssen extra sortiert werden
    if (n > 0) {
-      SortSameCloseTickets(sameClose, tickets);
+      SortSameCloseTickets(sameClose, lpTickets);
       n = 0;
    }
 
@@ -351,9 +351,9 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    int sameCloseOpen[][2]; ArrayResize(sameCloseOpen, 0); ArrayResize(sameCloseOpen, 1); // {Ticket, index}
 
    for (i=0; i < count; i++) {
-      close  = tickets[i][0];
-      open   = tickets[i][1];
-      ticket = tickets[i][2];
+      close  = lpTickets[i][0];
+      open   = lpTickets[i][1];
+      ticket = lpTickets[i][2];
 
       if (close==lastClose && open==lastOpen) {
          n++;
@@ -361,7 +361,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
       }
       else if (n > 0) {
          // in sameCloseOpen gesammelte Werte neu sortieren
-         SortSameCloseOpenTickets(sameCloseOpen, tickets);
+         SortSameCloseOpenTickets(sameCloseOpen, lpTickets);
          ArrayResize(sameCloseOpen, 1);
          n = 0;
       }
@@ -374,7 +374,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    }
    // im letzten Schleifendurchlauf in sameCloseOpen gesammelte Werte müssen extra sortiert werden
    if (n > 0)
-      SortSameCloseOpenTickets(sameCloseOpen, tickets);
+      SortSameCloseOpenTickets(sameCloseOpen, lpTickets);
 
    return(catch("SortTickets(3)"));
 }
@@ -383,7 +383,7 @@ int SortTickets(int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
 /**
  *
  */
-int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
+int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& lpTickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    int open, ticket, i;
 
    int sameCloseCopy[][3]; ArrayResize(sameCloseCopy, 0);
@@ -396,8 +396,8 @@ int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& ti
       open   = sameClose    [n][0];
       ticket = sameClose    [n][1];
       i      = sameCloseCopy[n][2];
-      tickets[i][1] = open;               // Original-Daten mit den sortierten Werten überschreiben
-      tickets[i][2] = ticket;
+      lpTickets[i][1] = open;             // Original-Daten mit den sortierten Werten überschreiben
+      lpTickets[i][2] = ticket;
    }
 
    return(catch("SortSameCloseTickets()"));
@@ -407,7 +407,7 @@ int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& ti
 /**
  *
  */
-int SortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& tickets[][/*{OpenTime, CloseTime, Ticket}*/]) {
+int SortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& lpTickets[][/*{OpenTime, CloseTime, Ticket}*/]) {
    int ticket=0, i=0;
 
    int sameCloseOpenCopy[][2]; ArrayResize(sameCloseOpenCopy, 0);
@@ -419,7 +419,7 @@ int SortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& tick
    for (int n=0; n < count; n++) {
       ticket = sameCloseOpen    [n][0];
       i      = sameCloseOpenCopy[n][1];
-      tickets[i][2] = ticket;                   // Original-Daten mit den sortierten Werten überschreiben
+      lpTickets[i][2] = ticket;                 // Original-Daten mit den sortierten Werten überschreiben
    }
 
    return(catch("SortSameCloseOpenTickets()"));
