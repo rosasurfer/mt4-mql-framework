@@ -254,12 +254,12 @@ int CheckPivotLevels() {
    // heutige und vorherige Tradingranges und deren InsideBar-Status ermitteln
    // ------------------------------------------------------------------------
    double ranges[0][5];
-   int bar, MODE_INSIDEBAR = 4;
+   int bar, MODE_INSIDEBAR = 4, period = PERIOD_H1;
 
    while (true) {
       // Tagesrange
       double range[4];
-      int error = iOHLCBar(range, Symbol(), PERIOD_D1, bar, true);
+      int error = iOHLCBar(range, Symbol(), period, bar, true);
       if (error == ERR_NO_RESULT) catch("CheckPivotLevels(1)    iOHLCBar(bar="+ bar +") => ", error);
       if (error != ERR_NO_ERROR ) return(error);
 
@@ -272,7 +272,7 @@ int CheckPivotLevels() {
       ranges[bar][MODE_HIGH ] = range[MODE_HIGH ];
       ranges[bar][MODE_LOW  ] = range[MODE_LOW  ];
       ranges[bar][MODE_CLOSE] = range[MODE_CLOSE];
-      Print("CheckPivotLevels()    range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
+      Print("CheckPivotLevels()    "+ PeriodToStr(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
 
       // InsideBar-Status bestimmen und speichern
       if (bar > 0) {
