@@ -1424,12 +1424,12 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
             int  event=1, type=OrderType();
             bool pending;
 
-            if      (StringStartsWith(OrderComment(), "so:" )) pending = true;                                       // Margin Stopout, wie pending behandeln
-            else if (StringStartsWith(OrderComment(), "[tp]")) pending = true;
-            else if (StringStartsWith(OrderComment(), "[sl]")) pending = true;
+            if      (StringIStartsWith(OrderComment(), "so:" )) pending = true;              // Margin Stopout, wie pending behandeln
+            else if (StringIStartsWith(OrderComment(), "[tp]")) pending = true;
+            else if (StringIStartsWith(OrderComment(), "[sl]")) pending = true;
             else if (OrderTakeProfit() > 0) {
-               if      (type == OP_BUY )                       pending = (OrderClosePrice() >= OrderTakeProfit());
-               else if (type == OP_SELL)                       pending = (OrderClosePrice() <= OrderTakeProfit());
+               if      (type == OP_BUY )                        pending = (OrderClosePrice() >= OrderTakeProfit());
+               else if (type == OP_SELL)                        pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
             if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
