@@ -415,23 +415,26 @@ int UpdateMarginLevels() {
    }
    else {
       // MarginLevel für Freeze und Stopout berechnen und anzeigen
-      double equity       = AccountEquity();
-      double usedMargin   = AccountMargin();
-      //double usedMargin   = ifDouble(position.InMarket, position.Total * MarketInfo(Symbol(), MODE_MARGINREQUIRED), AccountMargin());
-      int    stopoutMode  = AccountStopoutMode();
-      int    stopoutLevel = AccountStopoutLevel();
-      double tickSize     = MarketInfo(Symbol(), MODE_TICKSIZE);
-      double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(position.Total);
-
+      double equity         = AccountEquity();
+      double usedMargin     = AccountMargin();
+      //double usedMargin     = ifDouble(position.InMarket, position.Total * MarketInfo(Symbol(), MODE_MARGINREQUIRED), AccountMargin());
+      int    stopoutMode    = AccountStopoutMode();
+      int    stopoutLevel   = AccountStopoutLevel();
+      double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
+      double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
+      double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
+      double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // für Anzeige im Label
+             tickValue      = tickValue * MathAbs(position.Total);            // TickValue der gesamten Position
+      
       int error = GetLastError();
       if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)  // bei Start oder Accountwechsel
          return(ERR_UNKNOWN_SYMBOL);
 
       bool markFreezeLevel = true;
 
-      if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                              }
-      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin;       markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur SO-Level anzeigen
-      else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;         }
+      if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                        }
+      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur SO-Level anzeigen
+      else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;   }
 
       double quoteFreezeDiff  = (equity - usedMargin        ) / tickValue * tickSize;
       double quoteStopoutDiff = (equity - equityStopoutLevel) / tickValue * tickSize;
@@ -454,7 +457,6 @@ int UpdateMarginLevels() {
       );
       */
 
-
       // FreezeLevel anzeigen
       if (markFreezeLevel) {
          if (ObjectFind(freezeLevelLabel) == -1) {
@@ -462,7 +464,7 @@ int UpdateMarginLevels() {
             ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_DOT);
             ObjectSet(freezeLevelLabel, OBJPROP_COLOR, Orange);
             ObjectSet(freezeLevelLabel, OBJPROP_BACK , false);
-            ObjectSetText(freezeLevelLabel, "100%");
+            ObjectSetText(freezeLevelLabel, StringConcatenate("100%   1:", DoubleToStr(marginLeverage, 0)));
             RegisterChartObject(freezeLevelLabel, labels);
          }
          ObjectSet(freezeLevelLabel, OBJPROP_PRICE1, quoteFreezeLevel);
@@ -474,7 +476,7 @@ int UpdateMarginLevels() {
          ObjectSet(stopoutLevelLabel, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, Red);
          ObjectSet(stopoutLevelLabel, OBJPROP_BACK , false);
-            if (stopoutMode == ASM_PERCENT) string description = StringConcatenate(stopoutLevel, "%");
+            if (stopoutMode == ASM_PERCENT) string description = StringConcatenate(stopoutLevel, "%   1:", DoubleToStr(marginLeverage, 0));
             else                                   description = StringConcatenate(DoubleToStr(stopoutLevel, 2), AccountCurrency());
          ObjectSetText(stopoutLevelLabel, description);
          RegisterChartObject(stopoutLevelLabel, labels);
