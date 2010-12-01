@@ -113,7 +113,7 @@ int start() {
          netProfits  [n] = OrderProfit();
          expTimes    [n] = OrderExpiration();   // GrossProfit, NormalizedProfit und Balance werden später berechnet
          magicNumbers[n] = OrderMagicNumber();
-         comments    [n] = OrderComment();
+         comments    [n] = StringTrim(OrderComment());
          n++;
       }
    }

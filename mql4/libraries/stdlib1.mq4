@@ -1421,12 +1421,13 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
          }
 
          if (OrderCloseTime() > 0) {   // Position geschlossen, in flags angegebene Orderkriterien prüfen
-            int  event=1, type=OrderType();
-            bool pending;
+            int    event=1, type=OrderType();
+            bool   pending;
+            string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringIStartsWith(OrderComment(), "so:" )) pending = true;              // Margin Stopout, wie pending behandeln
-            else if (StringIStartsWith(OrderComment(), "[tp]")) pending = true;
-            else if (StringIStartsWith(OrderComment(), "[sl]")) pending = true;
+            if      (StringStartsWith(comment, "so:" )) pending = true;                      // Margin Stopout, wie pending behandeln
+            else if (StringStartsWith(comment, "[tp]")) pending = true;
+            else if (StringStartsWith(comment, "[sl]")) pending = true;
             else if (OrderTakeProfit() > 0) {
                if      (type == OP_BUY )                        pending = (OrderClosePrice() >= OrderTakeProfit());
                else if (type == OP_SELL)                        pending = (OrderClosePrice() <= OrderTakeProfit());
