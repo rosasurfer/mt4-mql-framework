@@ -336,7 +336,8 @@ int catch(string message="", int error=ERR_NO_ERROR) {
    return(error);
 
    // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
-   log();
+   log(NULL);
+   debug(NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
 }
@@ -365,6 +366,28 @@ int log(string message="", int error=ERR_NO_ERROR) {
    Print(message);
 
    return(error);
+}
+
+
+#import "kernel32.dll"
+
+   void OutputDebugStringA(string lpMessage);
+
+#import
+
+
+/**
+ * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
+ */
+void debug(string message) {
+   if (!StringStartsWith(message, "::"))
+      message = StringConcatenate(" ", message);
+
+   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), message);
+
+   OutputDebugStringA(message);
+
+   return(ERR_NO_ERROR);
 }
 
 

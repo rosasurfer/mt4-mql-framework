@@ -79,6 +79,8 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   //debug("::start()   enter");
+
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
@@ -88,6 +90,7 @@ int start() {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != ERR_NO_ERROR)               return(0);
    }
+
 
    // Accountinitialiserung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0)
@@ -101,6 +104,9 @@ int start() {
    UpdateUnitSizeLabel();
    UpdatePositionLabel();
    UpdateMarginLevels();
+
+
+   //debug("::start()   leave");
    return(catch("start()"));
 }
 
@@ -425,7 +431,7 @@ int UpdateMarginLevels() {
       double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
       double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // für Anzeige im Label
              tickValue      = tickValue * MathAbs(position.Total);            // TickValue der gesamten Position
-      
+
       int error = GetLastError();
       if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)  // bei Start oder Accountwechsel
          return(ERR_UNKNOWN_SYMBOL);

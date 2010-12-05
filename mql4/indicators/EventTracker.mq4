@@ -163,6 +163,8 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   //debug("::start()   start");
+
    Tick++;
    UnchangedBars = IndicatorCounted();
    ChangedBars   = Bars - UnchangedBars;
@@ -192,7 +194,7 @@ int start() {
    // alte Ticks abfangen, sämtliche Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
       //Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      return(catch("start(1)"));
+      //return(catch("start(1)"));
    }
    //Print("start()   account="+ accountData[1] +"   neuer Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
@@ -235,6 +237,7 @@ int start() {
       ArrayInitialize(Band.Limits, 0);
       EventTracker.SetBandLimits(Band.Limits);
    } */
+   //debug("::start()   leave");
    return(catch("start(2)"));
 
    double destination[4]; iOHLCBar(destination, 0, 0, 0); iOHLCBarRange(destination, 0, 0, 0, 0); iOHLCTime(destination, 0, 0, 0); iOHLCTimeRange(destination, 0, 0, 0);

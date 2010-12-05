@@ -1879,7 +1879,7 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
-      string title = GetWindowText(GetTerminalTopWindow());
+      string title = GetWindowText(GetTerminalWindow());
       if (title == "") {
          last_error = ERR_TERMINAL_NOT_YET_READY;
          return(0);
@@ -4027,7 +4027,7 @@ int GetServerToGmtOffset(datetime serverTime) {
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
-int GetTerminalTopWindow() {
+int GetTerminalWindow() {
    int child, parent = WindowHandle(Symbol(), Period());
 
    // TODO: child statisch implementieren und nur ein einziges Mal ermitteln
@@ -4037,7 +4037,7 @@ int GetTerminalTopWindow() {
       parent = GetParent(child);
    }
 
-   if (catch("GetTerminalTopWindow()") != ERR_NO_ERROR)
+   if (catch("GetTerminalWindow()") != ERR_NO_ERROR)
       return(0);
 
    return(child);

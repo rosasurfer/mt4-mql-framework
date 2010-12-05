@@ -166,7 +166,7 @@
    int      GetMovingAverageMethod(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
-   int      GetTerminalTopWindow();
+   int      GetTerminalWindow();
    string   GetWindowText(int hWnd);
    int      iBalanceSeries(int account, double& lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
