@@ -194,7 +194,7 @@ int start() {
    // alte Ticks abfangen, sämtliche Events werden nur nach neuen Ticks überprüft
    if (TimeCurrent() < accountData[2]) {
       //Print("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      //return(catch("start(1)"));
+      return(catch("start(1)"));
    }
    //Print("start()   account="+ accountData[1] +"   neuer Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 

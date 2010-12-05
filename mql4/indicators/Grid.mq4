@@ -61,6 +61,8 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   //debug("::start()   enter");
+
    int UnchangedBars = IndicatorCounted();
 
    // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
@@ -87,6 +89,7 @@ int start() {
       redraw = (DrawGrid()==ERR_HISTORY_UPDATE);
    }
 
+   //debug("::start()   leave");
    return(catch("start()"));
 }
 
