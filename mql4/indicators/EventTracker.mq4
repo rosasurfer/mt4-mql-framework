@@ -163,7 +163,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("::start()   start");
+   //debug("::start()   enter");
 
    Tick++;
    UnchangedBars = IndicatorCounted();
