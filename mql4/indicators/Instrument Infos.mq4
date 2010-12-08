@@ -179,10 +179,11 @@ int UpdateInfos() {
 
    bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);
    color  Font.Color = ifInt(tradeAllowed, Font.Color.Active, Font.Color.Inactive);
+   string format = ifString(Digits==3 || Digits==5, StringConcatenate(", .", Digits-1, "'"), StringConcatenate(", .", Digits)) ;
 
-                                                                ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
-   double point        = Point;                                 ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", DoubleToStr(point, Digits)), Font.Size, Font.Name, Font.Color);
-   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);     ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", DoubleToStr(tickSize, Digits)), Font.Size, Font.Name, Font.Color);
+                                                            ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
+   double point        = Point;                             ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", NumberToStr(point, format)), Font.Size, Font.Name, Font.Color);
+   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE); ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", NumberToStr(tickSize, format)), Font.Size, Font.Name, Font.Color);
 
    int    spread       = MarketInfo(symbol, MODE_SPREAD);
    int    stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL);
