@@ -66,7 +66,7 @@
 #define OP_BUYSTOP               4     // stop buy order
 #define OP_SELLSTOP              5     // stop sell order
 #define OP_BALANCE               6     // account credit or withdrawel transaction (undocumented)
-#define OP_MARGINCREDIT          7     // margin credit facility, no transaction (undocumented)
+#define OP_CREDIT                7     // credit facility, no transaction (undocumented)
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
@@ -125,7 +125,7 @@
 
 
 // Konstanten zum Zugriff auf die Spalten der Account-History
-#define HISTORY_COLUMNS         23
+#define HISTORY_COLUMNS         22
 #define HC_TICKET                0
 #define HC_OPENTIME              1
 #define HC_OPENTIMESTAMP         2
@@ -146,9 +146,8 @@
 #define HC_SWAP                 17
 #define HC_NETPROFIT            18
 #define HC_GROSSPROFIT          19
-#define HC_NORMALIZEDPROFIT     20
-#define HC_BALANCE              21
-#define HC_COMMENT              22
+#define HC_BALANCE              20
+#define HC_COMMENT              21
 
 
 // Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)

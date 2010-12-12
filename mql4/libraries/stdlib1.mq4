@@ -1749,7 +1749,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
    // Cache-Miss, History-Datei auslesen
    int tick = GetTickCount();
-   string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","NormalizedProfit","Balance","Comment" };
+   string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
    ArrayResize(header, HISTORY_COLUMNS);
 
    // Datei öffnen
@@ -3741,14 +3741,14 @@ int GetMovingAverageMethod(string description) {
  */
 string OperationTypeToStr(int type) {
    switch (type) {
-      case OP_BUY         : return("Buy"          );
-      case OP_SELL        : return("Sell"         );
-      case OP_BUYLIMIT    : return("Buy Limit"    );
-      case OP_SELLLIMIT   : return("Sell Limit"   );
-      case OP_BUYSTOP     : return("Stop Buy"     );
-      case OP_SELLSTOP    : return("Stop Sell"    );
-      case OP_BALANCE     : return("Balance"      );
-      case OP_MARGINCREDIT: return("Margin Credit");
+      case OP_BUY      : return("Buy"       );
+      case OP_SELL     : return("Sell"      );
+      case OP_BUYLIMIT : return("Buy Limit" );
+      case OP_SELLLIMIT: return("Sell Limit");
+      case OP_BUYSTOP  : return("Stop Buy"  );
+      case OP_SELLSTOP : return("Stop Sell" );
+      case OP_BALANCE  : return("Balance"   );
+      case OP_CREDIT   : return("Credit"    );
    }
 
    catch("OperationTypeToStr()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
