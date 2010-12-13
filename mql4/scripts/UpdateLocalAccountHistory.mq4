@@ -86,7 +86,7 @@ int start() {
    }
 
 
-   // (4) aktuelle History sortiert einlesen und zwischenspeichern, um Hedges etc. entsprechend korrigieren zu können
+   // (4) aktuelle History sortiert einlesen und zwischenspeichern, um Transaktionsdaten etc. korrigieren zu können
    for (i=firstNewTicket; i < orders; i++) {
       int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
@@ -185,7 +185,7 @@ int start() {
    }
 
 
-   // GrossProfit und Balance berechnen und mit dem in der History gespeicherten letzten Wert gegenprüfen
+   // (6) GrossProfit und Balance berechnen und mit dem letzten in der History gespeicherten Wert abgleichen
    for (i=0; i < orders; i++) {
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
@@ -197,42 +197,22 @@ int start() {
    }
 
 
-   // Rückkehr, wenn lokale History aktuell ist
+   // (7) Balance stimmt und keine neuen Daten zu schreiben = > lokale History ist aktuell => Rückkehr
    if (orders == 0) {
-      Print("start()  local history is up to date");
       MessageBox("History is up to date.", "Script", MB_ICONINFORMATION|MB_OK);
       return(catch("start(7)"));
    }
 
 
-   // Alle Daten ok: Datei schreiben
-   int handle;
-
-   // Ist die Historydatei leer, wird sie neugeschrieben. Anderenfalls werden die neuen Daten am Ende angefügt.
+   // (8) neue Daten: Ist die Historydatei leer, wird sie neugeschrieben, anderenfalls werden die Daten angefügt.
    if (ArrayRange(history, 0) == 0) {
-      // Datei neu erzeugen (und ggf. löschen)
-      handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_WRITE, '\t');
+      // Datei erzeugen (und ggf. löschen)
+      int handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_WRITE, '\t');
       if (handle < 0)
          return(catch("start(8)  FileOpen()"));
 
       // Header schreiben
-      string timezone = GetServerTimezone();
-      int iOffset;
-      if      (timezone == "EET"     ) iOffset =  2;     // Hier sind evt. Fehler in der Timezone-Berechnung unkritisch,
-      else if (timezone == "EET,EEST") iOffset =  2;     // denn das Ergebnis wird nur für den Header verwendet.
-      else if (timezone == "CET"     ) iOffset =  1;
-      else if (timezone == "CET,CEST") iOffset =  1;
-      else if (timezone == "GMT"     ) iOffset =  0;
-      else if (timezone == "GMT,BST" ) iOffset =  0;
-      else if (timezone == "EST"     ) iOffset = -5;
-      else if (timezone == "EST,EDT" ) iOffset = -5;
-      string strOffset = DoubleToStr(MathAbs(iOffset), 0);
-
-      if (MathAbs(iOffset) < 10) strOffset = "0"+ strOffset;
-      if (iOffset < 0)           strOffset = "-"+ strOffset;
-      else                       strOffset = "+"+ strOffset;
-
-      string header = "# History for account no. "+ account +" at "+ AccountCompany() +" (ordered by CloseTime+OpenTime+Ticket, transaction times are GMT"+ strOffset +":00)\n"
+      string header = "# History for account no. "+ account +" ("+ AccountCompany() +")\n"
                     + "#";
       if (FileWrite(handle, header) < 0) {
          int error = GetLastError();
@@ -258,7 +238,7 @@ int start() {
    }
 
 
-   // Orderdaten schreiben
+   // (9) Orderdaten schreiben
    for (i=0; i < orders; i++) {
       string strType = OperationTypeToStr(types[i]);
       string strSize = ""; if (types[i] < OP_BALANCE) strSize = NumberToStr(sizes[i], ".+");
@@ -292,8 +272,6 @@ int start() {
    }
    FileClose(handle);
 
-
-   log("start()  written history entries = ", orders);
    debug("::start()   leave");
    MessageBox("History successfully updated.", "Script", MB_ICONINFORMATION|MB_OK);
    return(catch("start(14)"));
