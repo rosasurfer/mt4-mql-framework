@@ -53,25 +53,25 @@ int start() {
 
 
    // Hilfsvariablen
-   int      n, ticket, type;
-   int      tickets[];      ArrayResize(tickets,      0); ArrayResize(tickets,      orders);
-   int      types[];        ArrayResize(types,        0); ArrayResize(types,        orders);
-   double   sizes[];        ArrayResize(sizes,        0); ArrayResize(sizes,        orders);
-   string   symbols[];      ArrayResize(symbols,      0); ArrayResize(symbols,      orders);
-   datetime openTimes[];    ArrayResize(openTimes,    0); ArrayResize(openTimes,    orders);
-   datetime closeTimes[];   ArrayResize(closeTimes,   0); ArrayResize(closeTimes,   orders);
-   double   openPrices[];   ArrayResize(openPrices,   0); ArrayResize(openPrices,   orders);
-   double   closePrices[];  ArrayResize(closePrices,  0); ArrayResize(closePrices,  orders);
-   double   stopLosses[];   ArrayResize(stopLosses,   0); ArrayResize(stopLosses,   orders);
-   double   takeProfits[];  ArrayResize(takeProfits,  0); ArrayResize(takeProfits,  orders);
-   double   commissions[];  ArrayResize(commissions,  0); ArrayResize(commissions,  orders);
-   double   swaps[];        ArrayResize(swaps,        0); ArrayResize(swaps,        orders);
-   double   netProfits[];   ArrayResize(netProfits,   0); ArrayResize(netProfits,   orders);
+   int      tickets     []; ArrayResize(tickets,      0); ArrayResize(tickets,      orders);
+   int      types       []; ArrayResize(types,        0); ArrayResize(types,        orders);
+   double   sizes       []; ArrayResize(sizes,        0); ArrayResize(sizes,        orders);
+   string   symbols     []; ArrayResize(symbols,      0); ArrayResize(symbols,      orders);
+   datetime openTimes   []; ArrayResize(openTimes,    0); ArrayResize(openTimes,    orders);
+   datetime closeTimes  []; ArrayResize(closeTimes,   0); ArrayResize(closeTimes,   orders);
+   double   openPrices  []; ArrayResize(openPrices,   0); ArrayResize(openPrices,   orders);
+   double   closePrices []; ArrayResize(closePrices,  0); ArrayResize(closePrices,  orders);
+   double   stopLosses  []; ArrayResize(stopLosses,   0); ArrayResize(stopLosses,   orders);
+   double   takeProfits []; ArrayResize(takeProfits,  0); ArrayResize(takeProfits,  orders);
+   datetime expTimes    []; ArrayResize(expTimes,     0); ArrayResize(expTimes,     orders);
+   double   commissions []; ArrayResize(commissions,  0); ArrayResize(commissions,  orders);
+   double   swaps       []; ArrayResize(swaps,        0); ArrayResize(swaps,        orders);
+   double   netProfits  []; ArrayResize(netProfits,   0); ArrayResize(netProfits,   orders);
    double   grossProfits[]; ArrayResize(grossProfits, 0); ArrayResize(grossProfits, orders);
-   double   balances[];     ArrayResize(balances,     0); ArrayResize(balances,     orders);
-   datetime expTimes[];     ArrayResize(expTimes,     0); ArrayResize(expTimes,     orders);
+   double   balances    []; ArrayResize(balances,     0); ArrayResize(balances,     orders);
    int      magicNumbers[]; ArrayResize(magicNumbers, 0); ArrayResize(magicNumbers, orders);
-   string   comments[];     ArrayResize(comments,     0); ArrayResize(comments,     orders);
+   string   comments    []; ArrayResize(comments,     0); ArrayResize(comments,     orders);
+   int n;
 
 
    // (3) erstes, neu zu speicherndes Ticket suchen
@@ -88,32 +88,33 @@ int start() {
 
    // (4) aktuelle History sortiert einlesen und zwischenspeichern, um Hedges etc. entsprechend korrigieren zu können
    for (i=firstNewTicket; i < orders; i++) {
-      ticket = ticketData[i][2];
+      int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
          return(catch("start(3)  OrderSelect(ticket="+ ticket +")"));
 
-      type = OrderType();                       // gecancelte Orders werden nicht berücksichtigt
-      if (type==OP_BUY || type==OP_SELL || type==OP_BALANCE) {
-         tickets     [n] = ticket;
-         types       [n] = type;
-         sizes       [n] = OrderLots();
-         symbols     [n] = OrderSymbol();
-         openTimes   [n] = OrderOpenTime();
-         closeTimes  [n] = OrderCloseTime();
-         openPrices  [n] = OrderOpenPrice();
-         closePrices [n] = OrderClosePrice();
-         stopLosses  [n] = OrderStopLoss();
-         takeProfits [n] = OrderTakeProfit();
-         commissions [n] = OrderCommission();
-         swaps       [n] = OrderSwap();
-         netProfits  [n] = OrderProfit();
-         expTimes    [n] = OrderExpiration();   // GrossProfit und Balance werden später berechnet
-         magicNumbers[n] = OrderMagicNumber();
-         comments    [n] = StringTrim(OrderComment());
-         n++;
-      }
-   }
+      // gecancelte Orders werden nicht berücksichtigt
+      int type = OrderType();
+      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
+         continue;
 
+      tickets     [n] = ticket;
+      types       [n] = type;
+      sizes       [n] = OrderLots();
+      symbols     [n] = OrderSymbol();
+      openTimes   [n] = OrderOpenTime();
+      closeTimes  [n] = OrderCloseTime();
+      openPrices  [n] = OrderOpenPrice();
+      closePrices [n] = OrderClosePrice();
+      stopLosses  [n] = OrderStopLoss();
+      takeProfits [n] = OrderTakeProfit();
+      expTimes    [n] = OrderExpiration();
+      commissions [n] = OrderCommission();
+      swaps       [n] = OrderSwap();
+      netProfits  [n] = OrderProfit();
+      magicNumbers[n] = OrderMagicNumber();
+      comments    [n] = StringTrim(OrderComment());   // GrossProfit und Balance werden später berechnet
+      n++;
+   }
 
    // Arrays justieren
    if (n < orders) {
@@ -139,11 +140,14 @@ int start() {
    }
 
 
-   // gehedgte Positionen korrigieren (Größe, ClosePrice, Commission, Swap, NetProfit)
+   // (5) Hedges korrigieren (Größe, ClosePrice, Commission, Swap, NetProfit)
    for (i=0; i < orders; i++) {
-      if (sizes[i] == 0) {
-         if (StringSubstr(comments[i], 0, 16) != "close hedge by #")
-            return(catch("start(4)  transaction "+ tickets[i] +" - unknown comment for hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+
+      // TODO: OrderType prüfen, Test auf 0.0 reicht nicht (Credit etc.)
+
+      if (sizes[i] == 0.0) {
+         if (!StringIStartsWith(comments[i], "close hedge by #"))
+            return(catch("start(4)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Position suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -151,14 +155,16 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(5)  cannot find counterpart position #"+ ticket +" for hedged position #"+ tickets[i], ERR_RUNTIME_ERROR));
+            return(catch("start(5)  cannot find counterpart ticket #"+ ticket +" for hedged position #"+ tickets[i], ERR_RUNTIME_ERROR));
 
          // zeitliche Reihenfolge der gehedgten Positionen bestimmen
          int first, second;
          if      (openTimes[i] < openTimes[n]) { first = i; second = n; }
          else if (openTimes[i] > openTimes[n]) { first = n; second = i; }
-         else if (tickets[i]   < tickets[n]  ) { first = i; second = n; }  // beide zum selben Zeitpunkt eröffnet: unwahrscheinlich, doch nicht unmöglich
+         else if (tickets  [i] < tickets  [n]) { first = i; second = n; }  // beide zum selben Zeitpunkt eröffnet: unwahrscheinlich, doch nicht unmöglich
          else                                  { first = n; second = i; }
+
+         // bis hier ok, doch was ist mit partiellen Closes ???
 
          // Orderdaten korrigieren
          sizes[i]       = sizes[n];
