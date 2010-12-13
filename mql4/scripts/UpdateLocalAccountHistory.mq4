@@ -140,12 +140,12 @@ int start() {
    }
 
 
-   // (5) Hedges korrigieren (Größe, ClosePrice, Commission, Swap, NetProfit)
+   // (5) Hedges korrigieren (Größe, ClosePrice, Commission, Swap, NetProfit => zur 1. Position, die hedgende Position wird verworfen)
    for (i=0; i < orders; i++) {
+      if ((types[i]==OP_BUY || types[i]==OP_SELL) && sizes[i]==0.0) {
 
-      // TODO: OrderType prüfen, Test auf 0.0 reicht nicht (Credit etc.)
+         // TODO: prüfen, wie sich die Orderkommentare bei partiellen Closes und custom comments verhalten
 
-      if (sizes[i] == 0.0) {
          if (!StringIStartsWith(comments[i], "close hedge by #"))
             return(catch("start(4)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
@@ -155,29 +155,32 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(5)  cannot find counterpart ticket #"+ ticket +" for hedged position #"+ tickets[i], ERR_RUNTIME_ERROR));
+            return(catch("start(5)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
-         // zeitliche Reihenfolge der gehedgten Positionen bestimmen
+         // zeitliche Reihenfolge der Hedges bestimmen
          int first, second;
          if      (openTimes[i] < openTimes[n]) { first = i; second = n; }
          else if (openTimes[i] > openTimes[n]) { first = n; second = i; }
          else if (tickets  [i] < tickets  [n]) { first = i; second = n; }  // beide zum selben Zeitpunkt eröffnet: unwahrscheinlich, doch nicht unmöglich
          else                                  { first = n; second = i; }
 
-         // bis hier ok, doch was ist mit partiellen Closes ???
-
          // Orderdaten korrigieren
-         sizes[i]       = sizes[n];
-         closePrices[i] = openPrices[second];   // ClosePrice ist der OpenPrice der späteren Position (sie hedgt die frühere Position)
-         closePrices[n] = openPrices[second];
+         if (i == first) {
+            sizes      [first] = sizes      [second];    // alle Transaktionsdaten in der 1. Order speichern
+            closePrices[first] = openPrices [second];
+            commissions[first] = commissions[second];
+            swaps      [first] = swaps      [second];
+            netProfits [first] = netProfits [second];
 
-         commissions[first] = commissions[n];   // der gesamte Profit/Loss wird der gehedgten Postion zugerechnet
-         swaps      [first] = swaps      [n];
-         netProfits [first] = netProfits [n];
-
-         commissions[second] = 0;               // die hedgende Position selbst verursacht keine Kosten
-         swaps      [second] = 0;
-         netProfits [second] = 0;
+            sizes     [second] = 0.0;                    // hedgende Order auf 0 setzen, damit sie später gelöscht werden kann
+            comments  [second] = "close hedge by #"+ tickets[first];
+         }
+         else /*(i == second)*/ {
+            // hedgende Order aus den Daten löschen
+            // TODO: prüfen, ob ArrayCopy(void dest[], object source[]) auf ein und demselben Array arbeiten kann
+            orders--;
+         }
+         comments[first] = "closed by hedge";
       }
    }
 
