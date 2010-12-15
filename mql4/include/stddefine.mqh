@@ -379,10 +379,7 @@ int log(string message="", int error=ERR_NO_ERROR) {
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  */
 void debug(string message) {
-   if (!StringStartsWith(message, "::"))
-      message = StringConcatenate(" ", message);
-
-   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), message);
+   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message);
 
    OutputDebugStringA(message);
 

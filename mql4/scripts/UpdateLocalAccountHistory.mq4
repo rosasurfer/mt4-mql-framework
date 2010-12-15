@@ -1,7 +1,7 @@
 /**
  * UpdateAccountHistory.mq4
  *
- * Synchronisiert die Datenbank mit der aktuellen Accounthistory. Exportierte Daten sind nach { CloseTime, OpenTime, Ticket } sortiert.
+ * Synchronisiert die Datenbank mit der aktuellen Accounthistory.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -13,11 +13,135 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   debug("::start()   enter");
+   // (1) verfügbare Historydaten einlesen
+   int orders = OrdersHistoryTotal();
+
+   int      tickets        []; ArrayResize(tickets,         orders);    // Hilfsvariablen
+   int      types          []; ArrayResize(types,           orders);
+   double   sizes          []; ArrayResize(sizes,           orders);
+   string   symbols        []; ArrayResize(symbols,         orders);
+   datetime openTimes      []; ArrayResize(openTimes,       orders);
+   datetime closeTimes     []; ArrayResize(closeTimes,      orders);
+   double   openPrices     []; ArrayResize(openPrices,      orders);
+   double   closePrices    []; ArrayResize(closePrices,     orders);
+   double   stopLosses     []; ArrayResize(stopLosses,      orders);
+   double   takeProfits    []; ArrayResize(takeProfits,     orders);
+   datetime expirationTimes[]; ArrayResize(expirationTimes, orders);
+   double   commissions    []; ArrayResize(commissions,     orders);
+   double   swaps          []; ArrayResize(swaps,           orders);
+   double   profits        []; ArrayResize(profits,         orders);
+   int      magicNumbers   []; ArrayResize(magicNumbers,    orders);
+   string   comments       []; ArrayResize(comments,        orders);
+
+   for (int n, i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE rein theoretisch: während des Auslesens ändert sich die Anzahl der Datensätze
+         break;
+      int type = OrderType();                               // gecancelte Orders überspringen
+      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
+         continue;
+      tickets        [n] = OrderTicket();
+      types          [n] = type;
+      sizes          [n] = OrderLots();
+      symbols        [n] = OrderSymbol();
+      openTimes      [n] = OrderOpenTime();
+      closeTimes     [n] = OrderCloseTime();
+      openPrices     [n] = OrderOpenPrice();
+      closePrices    [n] = OrderClosePrice();
+      stopLosses     [n] = OrderStopLoss();
+      takeProfits    [n] = OrderTakeProfit();
+      expirationTimes[n] = OrderExpiration();
+      commissions    [n] = OrderCommission();
+      swaps          [n] = OrderSwap();
+      profits        [n] = OrderProfit();
+      magicNumbers   [n] = OrderMagicNumber();
+      comments       [n] = OrderComment();
+      n++;
+   }
+
+   // Arrays justieren
+   if (n < orders) {
+      ArrayResize(tickets,         n);
+      ArrayResize(types,           n);
+      ArrayResize(sizes,           n);
+      ArrayResize(symbols,         n);
+      ArrayResize(openTimes,       n);
+      ArrayResize(closeTimes,      n);
+      ArrayResize(openPrices,      n);
+      ArrayResize(closePrices,     n);
+      ArrayResize(stopLosses,      n);
+      ArrayResize(takeProfits,     n);
+      ArrayResize(expirationTimes, n);
+      ArrayResize(commissions,     n);
+      ArrayResize(swaps,           n);
+      ArrayResize(profits,         n);
+      ArrayResize(magicNumbers,    n);
+      ArrayResize(comments,        n);
+      orders = n;
+   }
+
+
+   // (2) Daten in CVS-Datei schreiben
+
+   // Datei erzeugen (und ggf. löschen)
+   int handle = FileOpen('AccountHistory_'+ AccountNumber() +".csv", FILE_CSV|FILE_WRITE, '\t');
+   if (handle < 0)
+      return(catch("start(1)  FileOpen()"));
+
+   // Header schreiben
+   string header = "# History for account no. "+ AccountNumber() +" ("+ AccountCompany() +")\n"
+                 + "#";
+   if (FileWrite(handle, header) < 0) {
+      int error = GetLastError();
+      FileClose(handle);
+      return(catch("start(2)  FileWrite()", error));
+   }
+   if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
+      error = GetLastError();
+      FileClose(handle);
+      return(catch("start(3)  FileWrite()", error));
+   }
+
+
+
+
+
+
+
+
+
+
+
+   // (3) Datei per synchronem HTTP-Post-Request auf Server laden
+   // (3) Antwort des Servers einlesen
+   // (4) Antwort auswerten und Rückmeldung an den User geben
+
+   return(catch("start()"));
+   start_old();
+}
+
+
+/**
+ * Alte Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int start_old() {
+   debug("start_old()   enter");
+
+   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Daten sortieren
+   // (2) letztes, bereits gespeichertes Ticket und entsprechende AccountBalance ermitteln
+   // (3) erstes, neu zu speicherndes Ticket suchen
+   // (4) aktuelle History sortiert einlesen und zwischenspeichern, um Transaktionsdaten etc. korrigieren zu können
+   // (5) Hedges korrigieren (Größe, ClosePrice, Commission, Swap, NetProfit => zur 1. Position, die hedgende Position wird verworfen)
+   // (6) GrossProfit und Balance berechnen und mit dem letzten in der History gespeicherten Wert abgleichen
+   // (7) Balance stimmt und es sind keine neuen Daten zu schreiben = > lokale History ist aktuell => Rückkehr
+   // (8) neue Daten: Ist die Historydatei leer, wird sie neugeschrieben, anderenfalls werden die Daten angefügt.
+   // (9) Orderdaten schreiben
+
 
    int account = GetAccountNumber();
    if (account == 0)
-      return(catch("start(1)", stdlib_GetLastError()));
+      return(catch("start_old(1)", stdlib_GetLastError()));
 
    // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Daten sortieren
    int orders = OrdersHistoryTotal();
@@ -49,7 +173,7 @@ int start() {
       lastBalance = StrToDouble (history[entries-1][HC_BALANCE]);
    }
    if (orders==0 && lastBalance!=AccountBalance())
-      return(catch("start(2)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
+      return(catch("start_old(2)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
 
 
    // Hilfsvariablen
@@ -71,7 +195,6 @@ int start() {
    double   balances    []; ArrayResize(balances,     0); ArrayResize(balances,     orders);
    int      magicNumbers[]; ArrayResize(magicNumbers, 0); ArrayResize(magicNumbers, orders);
    string   comments    []; ArrayResize(comments,     0); ArrayResize(comments,     orders);
-   int n;
 
 
    // (3) erstes, neu zu speicherndes Ticket suchen
@@ -87,10 +210,11 @@ int start() {
 
 
    // (4) aktuelle History sortiert einlesen und zwischenspeichern, um Transaktionsdaten etc. korrigieren zu können
+   int n;
    for (i=firstNewTicket; i < orders; i++) {
       int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
-         return(catch("start(3)  OrderSelect(ticket="+ ticket +")"));
+         return(catch("start_old(3)  OrderSelect(ticket="+ ticket +")"));
 
       // gecancelte Orders werden nicht berücksichtigt
       int type = OrderType();
@@ -147,7 +271,7 @@ int start() {
          // TODO: prüfen, wie sich die Orderkommentare bei partiellen Closes und custom comments verhalten
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("start(4)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start_old(4)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Position suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -155,7 +279,7 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(5)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start_old(5)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
          // zeitliche Reihenfolge der Hedges bestimmen
          int first, second;
@@ -192,15 +316,15 @@ int start() {
       lastBalance     = balances[i];
    }
    if (lastBalance != AccountBalance()) {
-      Print("start()  balance mismatch, calculated: "+ DoubleToStr(lastBalance, 2) +"   online: "+ DoubleToStr(AccountBalance(), 2));
-      return(catch("start(6)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
+      Print("start_old()  balance mismatch, calculated: "+ DoubleToStr(lastBalance, 2) +"   online: "+ DoubleToStr(AccountBalance(), 2));
+      return(catch("start_old(6)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
    }
 
 
-   // (7) Balance stimmt und keine neuen Daten zu schreiben = > lokale History ist aktuell => Rückkehr
+   // (7) Balance stimmt und es sind keine neuen Daten zu schreiben = > lokale History ist aktuell => Rückkehr
    if (orders == 0) {
       MessageBox("History is up to date.", "Script", MB_ICONINFORMATION|MB_OK);
-      return(catch("start(7)"));
+      return(catch("start_old(7)"));
    }
 
 
@@ -209,7 +333,7 @@ int start() {
       // Datei erzeugen (und ggf. löschen)
       int handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_WRITE, '\t');
       if (handle < 0)
-         return(catch("start(8)  FileOpen()"));
+         return(catch("start_old(8)  FileOpen()"));
 
       // Header schreiben
       string header = "# History for account no. "+ account +" ("+ AccountCompany() +")\n"
@@ -217,23 +341,23 @@ int start() {
       if (FileWrite(handle, header) < 0) {
          int error = GetLastError();
          FileClose(handle);
-         return(catch("start(9)  FileWrite()", error));
+         return(catch("start_old(9)  FileWrite()", error));
       }
       if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(10)  FileWrite()", error));
+         return(catch("start_old(10)  FileWrite()", error));
       }
    }
    // Historydatei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       handle = FileOpen(account +"/account history.csv", FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (handle < 0)
-         return(catch("start(11)  FileOpen()"));
+         return(catch("start_old(11)  FileOpen()"));
       if (!FileSeek(handle, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(12)  FileSeek()", error));
+         return(catch("start_old(12)  FileSeek()", error));
       }
    }
 
@@ -267,14 +391,14 @@ int start() {
       if (FileWrite(handle, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(handle);
-         return(catch("start(13)  FileWrite()", error));
+         return(catch("start_old(13)  FileWrite()", error));
       }
    }
    FileClose(handle);
 
-   debug("::start()   leave");
+   debug("start_old()   leave");
    MessageBox("History successfully updated.", "Script", MB_ICONINFORMATION|MB_OK);
-   return(catch("start(14)"));
+   return(catch("start_old(14)"));
 }
 
 

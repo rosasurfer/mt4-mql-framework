@@ -79,7 +79,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("::start()   enter");
+   //debug("start()   enter");
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
@@ -106,7 +106,7 @@ int start() {
    UpdateMarginLevels();
 
 
-   //debug("::start()   leave");
+   //debug("start()   leave");
    return(catch("start()"));
 }
 

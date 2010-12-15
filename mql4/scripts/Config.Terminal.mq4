@@ -13,7 +13,7 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("::start()   enter");
+   //debug("start()   enter");
 
    string files[2];
 
@@ -26,6 +26,6 @@ int start() {
          return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ WindowsErrorToStr(hInstance) +")", ERR_WINDOWS_ERROR));
    }
 
-   //debug("::start()   leave");
+   //debug("start()   leave");
    return(catch("start(2)"));
 }

@@ -163,7 +163,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("::start()   enter");
+   //debug("start()   enter");
 
    Tick++;
    UnchangedBars = IndicatorCounted();
@@ -237,7 +237,7 @@ int start() {
       ArrayInitialize(Band.Limits, 0);
       EventTracker.SetBandLimits(Band.Limits);
    } */
-   //debug("::start()   leave");
+   //debug("start()   leave");
    return(catch("start(2)"));
 
    double destination[4]; iOHLCBar(destination, 0, 0, 0); iOHLCBarRange(destination, 0, 0, 0, 0); iOHLCTime(destination, 0, 0, 0); iOHLCTimeRange(destination, 0, 0, 0);
