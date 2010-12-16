@@ -80,39 +80,43 @@ int start() {
    }
 
 
-   // (2) Daten in CVS-Datei schreiben
-
-   // Datei erzeugen (und ggf. löschen)
-   int handle = FileOpen('AccountHistory_'+ AccountNumber() +".csv", FILE_CSV|FILE_WRITE, '\t');
+   // (2) CSV-Datei schreiben
+   // Datei erzeugen (bzw. existierende Datei auf Länge 0 zurücksetzen)
+   int handle = FileOpen("AccountHistory_"+ AccountNumber() +".csv", FILE_CSV|FILE_WRITE, '\t');   // Spaltentrennzeichen: Tab
    if (handle < 0)
       return(catch("start(1)  FileOpen()"));
 
-   // Header schreiben
-   string header = "# History for account no. "+ AccountNumber() +" ("+ AccountCompany() +")\n"
-                 + "#";
+   // Dateikommentar schreiben
+   string header = "# Account history for account #"+ AccountNumber() +" ("+ AccountCompany() +") - "+ AccountName();
    if (FileWrite(handle, header) < 0) {
       int error = GetLastError();
       FileClose(handle);
       return(catch("start(2)  FileWrite()", error));
    }
-   if (FileWrite(handle, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
+
+   // Status-Header schreiben
+   if (FileWrite(handle, "[Status]\naccount status informations") < 0) {
       error = GetLastError();
       FileClose(handle);
       return(catch("start(3)  FileWrite()", error));
    }
 
+   // Daten-Header schreiben
+   if (FileWrite(handle, "[Data]\nTicket","OpenTime","OpenTimestamp","TypeDescription","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+      error = GetLastError();
+      FileClose(handle);
+      return(catch("start(4)  FileWrite()", error));
+   }
+
+   // Datei schließen
+   FileClose(handle);
 
 
 
 
 
 
-
-
-
-
-   // (3) Datei per synchronem HTTP-Post-Request auf Server laden
-   // (3) Antwort des Servers einlesen
+   // (3) Datei per HTTP-Post-Request zum Server schicken und auf Antwort warten
    // (4) Antwort auswerten und Rückmeldung an den User geben
 
    return(catch("start()"));
