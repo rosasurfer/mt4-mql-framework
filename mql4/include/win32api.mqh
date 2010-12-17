@@ -394,7 +394,7 @@
 #define SW_MAX                         SW_FORCEMINIMIZE
 
 
-// MessageBox() flags
+// Dialog box flags
 #define MB_OK                                0x00000000
 #define MB_OKCANCEL                          0x00000001
 #define MB_ABORTRETRYIGNORE                  0x00000002
@@ -427,7 +427,7 @@
 #define MB_RTLREADING                        0x00100000
 
 
-// Dialog Box Command IDs
+// Dialog box command IDs (return codes)
 #define IDOK                                          1
 #define IDCANCEL                                      2
 #define IDABORT                                       3
