@@ -93,6 +93,16 @@
 #define MODE_LWMA                3     // linear weighted moving average
 
 
+// Price identifiers, siehe iMA()
+#define PRICE_CLOSE              0     // close price
+#define PRICE_OPEN               1     // open price
+#define PRICE_HIGH               2     // high price
+#define PRICE_LOW                3     // low price
+#define PRICE_MEDIAN             4     // median price: (high+low)/2
+#define PRICE_TYPICAL            5     // typical price: (high+low+close)/3
+#define PRICE_WEIGHTED           6     // weighted close price: (high+low+close+close)/4
+
+
 // Rates array identifier, siehe ArrayCopyRates()
 #define RATE_TIME                0     // bar open time
 #define RATE_OPEN                1     // open price
