@@ -1,7 +1,7 @@
 /**
  * Config.mq4
  *
- * Lädt die globale und die lokale Konfigurationsdatei der laufenden Instanz in die Defaultanwendung (Editor).
+ * Lädt die Konfigurationsdateien der MetaTrader-Instanz in den Editor.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -29,3 +29,4 @@ int start() {
    //debug("start()   leave");
    return(catch("start(2)"));
 }
+

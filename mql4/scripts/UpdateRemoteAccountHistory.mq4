@@ -4,6 +4,7 @@
  * Aktualisiert die entfernte Server-Accounthistory.
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 
 /**
@@ -40,7 +41,7 @@ int start() {
          continue;
       tickets        [n] = OrderTicket();
       types          [n] = type;
-      sizes          [n] = OrderLots();
+      sizes          [n] = OrderLots();        if (types[n]==OP_BALANCE || types[n]==OP_CREDIT) sizes[n] = 0;
       symbols        [n] = OrderSymbol();
       openTimes      [n] = OrderOpenTime();
       closeTimes     [n] = OrderCloseTime();
@@ -53,7 +54,7 @@ int start() {
       swaps          [n] = OrderSwap();
       profits        [n] = OrderProfit();
       magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = OrderComment();
+      comments       [n] = OrderComment();     comments[n] = StringTrim(comments[n]);
       n++;
    }
 
@@ -79,43 +80,106 @@ int start() {
    }
 
 
-   // (2) CSV-Datei schreiben
-   // Datei erzeugen (bzw. existierende Datei auf Länge 0 zurücksetzen)
-   int handle = FileOpen("AccountHistory_"+ AccountNumber() +".csv", FILE_CSV|FILE_WRITE, '\t');   // Spaltentrennzeichen: Tab
-   if (handle < 0)
+   // (2) CSV-Datei neu schreiben
+   string filename = "tmp_accounthistory_"+ AccountNumber() +".csv";
+   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');     // Spaltentrennzeichen: Tab
+   if (hFile < 0)
       return(catch("start(1)  FileOpen()"));
 
-   // Dateikommentar schreiben
+   // (2.1) Dateikommentar
    string header = "# Account history for account #"+ AccountNumber() +" ("+ AccountCompany() +") - "+ AccountName();
-   if (FileWrite(handle, header) < 0) {
+   if (FileWrite(hFile, header) < 0) {
       int error = GetLastError();
-      FileClose(handle);
+      FileClose(hFile);
       return(catch("start(2)  FileWrite()", error));
    }
 
-   // Status-Header schreiben
-   if (FileWrite(handle, "[Status]\naccount status informations") < 0) {
+   // (2.2) Status
+   if (FileWrite(hFile, "[Status]") < 0) {
       error = GetLastError();
-      FileClose(handle);
+      FileClose(hFile);
       return(catch("start(3)  FileWrite()", error));
    }
-
-   // Daten-Header schreiben
-   if (FileWrite(handle, "[Data]\nTicket","OpenTime","OpenTimestamp","TypeDescription","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+   if (FileWrite(hFile, "account status information") < 0) {
       error = GetLastError();
-      FileClose(handle);
+      FileClose(hFile);
       return(catch("start(4)  FileWrite()", error));
    }
 
-   // Datei schließen
-   FileClose(handle);
+   // (2.2) Daten
+   if (FileWrite(hFile, "[Data]\nTicket","OpenTime","OpenTimestamp","TypeStr","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+      error = GetLastError();
+      FileClose(hFile);
+      return(catch("start(5)  FileWrite()", error));
+   }
+   for (i=0; i < orders; i++) {
+      string strOpenTime    = TimeToStr(openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strType        = OperationTypeToStr(types[i]);
+      string strSize        = NumberToStr(sizes[i], ".+");
+      string strOpenPrice   = ""; if (openPrices [i] > 0) strOpenPrice  = NumberToStr(openPrices [i], ".2+");
+      string strStopLoss    = ""; if (stopLosses [i] > 0) strStopLoss   = NumberToStr(stopLosses [i], ".2+");
+      string strTakeProfit  = ""; if (takeProfits[i] > 0) strTakeProfit = NumberToStr(takeProfits[i], ".2+");
+      string strExpirationTime="", strExpirationTimestamp="";
+      if (expirationTimes[i] > 0) {
+         strExpirationTime      = TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+         strExpirationTimestamp = expirationTimes[i];
+      }
+      string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strClosePrice  = ""; if (closePrices[i] > 0) strClosePrice = NumberToStr(closePrices[i], ".2+");
+      string strCommission  = DoubleToStr(commissions[i], 2);
+      string strSwap        = DoubleToStr(swaps      [i], 2);
+      string strProfit      = DoubleToStr(profits    [i], 2);
+      string strMagicNumber = ""; if (magicNumbers[i] != 0) strMagicNumber = magicNumbers[i];
+
+      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strExpirationTime,strExpirationTimestamp,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
+         error = GetLastError();
+         FileClose(hFile);
+         return(catch("start(6)  FileWrite()", error));
+      }
+   }
+
+   // (2.3) Datei schließen
+   FileClose(hFile);
+   error = GetLastError();
+   if (error != ERR_NO_ERROR)
+      return(catch("start(7)  FileClose()", error));
 
 
+   // (3) Datei zum Server schicken und Antwort entgegennehmen
+   string response = UploadHistoryFile(filename);
 
 
-   // (3) Datei per HTTP-Post-Request zum Server schicken und auf Antwort warten
    // (4) Antwort auswerten und Rückmeldung an den User geben
 
-   return(catch("start()"));
+   return(catch("start(7)"));
+}
+
+
+/**
+ * Lädt die angegebene Datei per HTTP-Post-Request auf den Server und gibt die Antwort des Servers zurück.
+ *
+ * @param  string filename - Dateiname
+ *
+ * @return int - Fehlerstatus
+ */
+int UploadHistoryFile(string filename) {
+   string url = "http://sub.domain.tld/uploadAccountHistory.php";
+
+   string targetDir    = TerminalPath() +"\\experts\\files";
+   string uploadFile   = targetDir +"\\"+ filename;
+   string responseFile = targetDir +"\\"+ filename +".response";
+   string logFile      = targetDir +"\\"+ filename +".log";
+   string lpCmdLine    = "wget.exe \""+ url +"\" --post-file=\""+ uploadFile +"\" -o \""+ logFile +"\" -O \""+ responseFile +"\"";
+
+   Print("UploadHistoryFile()  strLen(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
+   return(catch("UploadHistoryFile()"));
+
+
+
+   int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
+   if (error < 32)
+      return(catch("UploadHistoryFile(1)  execution of \'"+ lpCmdLine +"\' failed with error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+
+   return(catch("UploadHistoryFile(2)"));
 }
 

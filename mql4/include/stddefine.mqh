@@ -65,8 +65,8 @@
 #define OP_SELLLIMIT             3     // sell limit order
 #define OP_BUYSTOP               4     // stop buy order
 #define OP_SELLSTOP              5     // stop sell order
-#define OP_BALANCE               6     // account credit or withdrawel transaction (undocumented)
-#define OP_CREDIT                7     // credit facility, no transaction (undocumented)
+#define OP_BALANCE               6     // account credit or withdrawel transaction
+#define OP_CREDIT                7     // credit facility, no transaction
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
