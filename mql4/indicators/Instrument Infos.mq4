@@ -198,7 +198,7 @@ int UpdateInfos() {
       ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
-   double lotSize  = MarketInfo(symbol, MODE_LOTSIZE); ObjectSetText(names[LOTSIZE], StringConcatenate("Lot size: ", NumberToStr(lotSize, ", .+"), " units"), Font.Size, Font.Name, Font.Color);
+   double lotSize   = MarketInfo(symbol, MODE_LOTSIZE); ObjectSetText(names[LOTSIZE], StringConcatenate("Lot size: ", NumberToStr(lotSize, ", .+"), " units"), Font.Size, Font.Name, Font.Color);
    double tickValue = MarketInfo(symbol, MODE_TICKVALUE);
    double pipValue  = tickValue * ifInt(Digits==3 || Digits==5, 10, 1);
          ObjectSetText(names[TICKVALUE], StringConcatenate("Pip value: ", NumberToStr(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
@@ -210,7 +210,7 @@ int UpdateInfos() {
 
    int    marginCalcMode    = MarketInfo(symbol, MODE_MARGINCALCMODE   ); ObjectSetText(names[MARGINCALCMODE   ], StringConcatenate("Margin calculation mode: ", strMCM[marginCalcMode]), Font.Size, Font.Name, Font.Color);
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   );
-      double marginLeverage = lotValue / marginRequired;                  ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", NumberToStr(marginRequired, ", .2+"), " ", accountCurrency, " (1:", DoubleToStr(marginLeverage, 0), ")"), Font.Size, Font.Name, Font.Color);
+      double marginLeverage = lotValue / marginRequired;                  ObjectSetText(names[MARGINREQUIRED   ], StringConcatenate("Margin required: ", NumberToStr(marginRequired, ", .2+"), " ", accountCurrency, " (1:", NumberToStr(marginLeverage, ", ."), ")"), Font.Size, Font.Name, Font.Color);
 
    double marginInit        = MarketInfo(symbol, MODE_MARGININIT       ); ObjectSetText(names[MARGININIT       ], StringConcatenate("Margin init: ", NumberToStr(marginInit, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
    double marginMaintenance = MarketInfo(symbol, MODE_MARGINMAINTENANCE); ObjectSetText(names[MARGINMAINTENANCE], StringConcatenate("Margin maintenance: ", NumberToStr(marginMaintenance, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
@@ -227,9 +227,9 @@ int UpdateInfos() {
    double expires           = MarketInfo(symbol, MODE_EXPIRATION       ); if (expires > 0) ObjectSetText(names[EXPIRATION], StringConcatenate("Future expires: ", TimeToStr(expires)), Font.Size, Font.Name, Font.Color);
 
 
-   int    accountLeverage   = AccountLeverage();     ObjectSetText(names[ACCOUNT_LEVERAGE], StringConcatenate("Account leverage: 1:", accountLeverage), Font.Size, Font.Name, Font.Color);
+   int    accountLeverage   = AccountLeverage();     ObjectSetText(names[ACCOUNT_LEVERAGE], StringConcatenate("Account leverage: 1:", NumberToStr(accountLeverage, ", .")), Font.Size, Font.Name, Font.Color);
    int    stopoutMode       = AccountStopoutMode();  ObjectSetText(names[STOPOUT_MODE    ], StringConcatenate("Account stopout mode: ", strASM[stopoutMode]), Font.Size, Font.Name, Font.Color);
-   int    stopoutLevel      = AccountStopoutLevel(); ObjectSetText(names[STOPOUT_LEVEL   ], StringConcatenate("Account stopout level: ", stopoutLevel, ifString(stopoutMode==ASM_PERCENT, " %", " "+ accountCurrency)), Font.Size, Font.Name, Font.Color);
+   int    stopoutLevel      = AccountStopoutLevel(); ObjectSetText(names[STOPOUT_LEVEL   ], StringConcatenate("Account stopout level: ", NumberToStr(stopoutLevel, ", ."), ifString(stopoutMode==ASM_PERCENT, " %", " "+ accountCurrency)), Font.Size, Font.Name, Font.Color);
 
    int error = GetLastError();
    if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)
