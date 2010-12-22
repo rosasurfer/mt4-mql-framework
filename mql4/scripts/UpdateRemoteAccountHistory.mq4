@@ -41,7 +41,7 @@ int start() {
          continue;
       tickets        [n] = OrderTicket();
       types          [n] = type;
-      sizes          [n] = OrderLots();        if (types[n]==OP_BALANCE || types[n]==OP_CREDIT) sizes[n] = 0;
+      sizes          [n] = OrderLots(); if (types[n]==OP_BALANCE || types[n]==OP_CREDIT) sizes[n] = 0;
       symbols        [n] = OrderSymbol();
       openTimes      [n] = OrderOpenTime();
       closeTimes     [n] = OrderCloseTime();
@@ -54,7 +54,7 @@ int start() {
       swaps          [n] = OrderSwap();
       profits        [n] = OrderProfit();
       magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = OrderComment();     comments[n] = StringTrim(comments[n]);
+      comments       [n] = StringTrim(OrderComment());
       n++;
    }
 
@@ -163,18 +163,15 @@ int start() {
  * @return int - Fehlerstatus
  */
 int UploadHistoryFile(string filename) {
-   string url = "http://sub.domain.tld/uploadAccountHistory.php";
-
+   string url          = "\"http://sub.domain.tld/uploadAccountHistory.php\"";
    string targetDir    = TerminalPath() +"\\experts\\files";
-   string uploadFile   = targetDir +"\\"+ filename;
-   string responseFile = targetDir +"\\"+ filename +".response";
-   string logFile      = targetDir +"\\"+ filename +".log";
-   string lpCmdLine    = "wget.exe \""+ url +"\" --post-file=\""+ uploadFile +"\" -o \""+ logFile +"\" -O \""+ responseFile +"\"";
+   string dataFile     = "\""+ targetDir +"\\"+ filename +"\"";
+   string responseFile = "\""+ targetDir +"\\"+ filename +".response\"";
+   string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
+   string lpCmdLine    = "wget.exe "+ url +" --post-file="+ dataFile +" -O "+ responseFile +" -o "+ logFile;
 
-   Print("UploadHistoryFile()  strLen(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
-   return(catch("UploadHistoryFile()"));
-
-
+   //Print("UploadHistoryFile()  strLen(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
+   //return(catch("UploadHistoryFile()"));
 
    int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
