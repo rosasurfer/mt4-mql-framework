@@ -287,7 +287,7 @@ int UpdateSpreadLabel() {
 
 
 /**
- * Aktualisiert das UnitSize-Label.
+ * Aktualisiert die Anzeige der aktuellen UnitSize.
  *
  * @return int - Fehlerstatus
  */
@@ -308,12 +308,12 @@ int UpdateUnitSizeLabel() {
       if (equity < 0)
          equity = 0;
 
-      // Accountequity wird real 7-fach gehebelt (= 7% der Equity mit Hebel 1:100)
-      double leverage = 7.0;
-      double lotValue = Bid / tickSize * tickValue;
-      double unitSize = equity * leverage / lotValue;
+      // Accountequity wird mit dem Wert von 'leverage' real gehebelt
+      int    leverage = 35;                              // leverage war bis 11/2010 = 7, dann mit GBP/JPY,H1-Scalper = 35
+      double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;    // unitSize=equity/lotValue (Hebel von 1)
 
-      // TODO: max(stdDeviation(100xH1|120xH1)) (4-5 Tage) als Volatilitätsmaß berücksichtigen
+      // TODO: Volatilität oder ATR berücksichtigen
 
       if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
       else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002
