@@ -80,7 +80,7 @@ int start() {
    }
 
 
-   // (2) CSV-Datei neu schreiben
+   // (2) CSV-Datei schreiben
    string filename = "tmp_accounthistory_"+ AccountNumber() +".csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');     // Spaltentrennzeichen: Tab
    if (hFile < 0)
@@ -95,7 +95,7 @@ int start() {
    }
 
    // (2.2) Status
-   if (FileWrite(hFile, "[Status]") < 0) {
+   if (FileWrite(hFile, "[Account]") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(3)  FileWrite()", error));
@@ -170,8 +170,7 @@ int UploadHistoryFile(string filename) {
    string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
    string lpCmdLine    = "wget.exe "+ url +" --post-file="+ dataFile +" -O "+ responseFile +" -o "+ logFile;
 
-   //Print("UploadHistoryFile()  strLen(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
-   //return(catch("UploadHistoryFile()"));
+   //Print("UploadHistoryFile()  len(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
 
    int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
