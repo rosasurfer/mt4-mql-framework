@@ -2,8 +2,9 @@
  * Zeigt im Chart verschiedene Informationen an:
  *
  * - oben links:     der Name des Instruments
- * - oben rechts:    der aktuelle Kurs (average price)
- * - unter dem Kurs: der Spread, wenn 'Show.Spread' TRUE ist
+ * - oben rechts:    der aktuelle Kurs: (Bid+Ask) / 2
+ * - unter dem Kurs: der Spread
+ * - unten rechts:   der Schluﬂkurs der letzten H1-Bar, wenn das Chartsymbol in Last.H1.Close.Symbols aufgef¸hrt ist
  * - unten Mitte:    die Grˆﬂe einer Handels-Unit
  * - unten Mitte:    die im Moment gehaltene Position
  */
@@ -19,15 +20,16 @@ int  init_error = ERR_NO_ERROR;
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool Spread.Including.Commission = false;         // ob der Spread inklusive einer evt. Commission angezeigt werden soll
+extern bool   Spread.Including.Commission = false;       // ob der Spread inklusive einer evt. Commission angezeigt werden soll
+extern string Last.H1.Close.Symbols       = "";          // Symbole, f¸r die der Schluﬂkurs der letzten H1-Bar angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
+string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
-bool position.Checked;
+bool lastH1Close, position.Checked;
 
 
 /**
@@ -48,20 +50,31 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
+
+   // Konfiguration auswerten
+   lastH1Close = StringIContains(","+StringTrim(Last.H1.Close.Symbols)+",", ","+Symbol()+",");
+   
+
    // Label definieren und erzeugen
-   instrumentLabel   = StringConcatenate(WindowExpertName(), ".Instrument"        );
-   priceLabel        = StringConcatenate(WindowExpertName(), ".Price"             );
-   spreadLabel       = StringConcatenate(WindowExpertName(), ".Spread"            );
-   unitSizeLabel     = StringConcatenate(WindowExpertName(), ".UnitSize"          );
-   positionLabel     = StringConcatenate(WindowExpertName(), ".Position"          );
-   freezeLevelLabel  = StringConcatenate(WindowExpertName(), ".MarginFreezeLevel" );
-   stopoutLevelLabel = StringConcatenate(WindowExpertName(), ".MarginStopoutLevel");
+   string indicatorName = WindowExpertName();
+   instrumentLabel    = StringConcatenate(indicatorName, ".Instrument"        );
+   priceLabel         = StringConcatenate(indicatorName, ".Price"             );
+   h1CloseLabel       = StringConcatenate(indicatorName, ".H1-Close"          );
+   spreadLabel        = StringConcatenate(indicatorName, ".Spread"            );
+   unitSizeLabel      = StringConcatenate(indicatorName, ".UnitSize"          );
+   positionLabel      = StringConcatenate(indicatorName, ".Position"          );
+   freezeLevelLabel   = StringConcatenate(indicatorName, ".MarginFreezeLevel" );
+   stopoutLevelLabel  = StringConcatenate(indicatorName, ".MarginStopoutLevel");
 
    CreateInstrumentLabel();
    CreatePriceLabel();
    CreateSpreadLabel();
    CreateUnitSizeLabel();
    CreatePositionLabel();
+
+   if (lastH1Close)
+      CreateH1CloseLabel();
+
 
    // nach Parameter‰nderung sofort start() aufrufen und nicht auf den n‰chsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -105,6 +118,9 @@ int start() {
    UpdatePositionLabel();
    UpdateMarginLevels();
 
+   if (lastH1Close)
+      UpdateH1CloseLabel();
+
 
    //debug("start()   leave");
    return(catch("start()"));
@@ -132,7 +148,7 @@ int CreateInstrumentLabel() {
       ObjectDelete(instrumentLabel);
 
    if (ObjectCreate(instrumentLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(instrumentLabel, OBJPROP_CORNER   , CORNER_TOP_LEFT);
+      ObjectSet(instrumentLabel, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
       ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
       RegisterChartObject(instrumentLabel, labels);
@@ -158,15 +174,37 @@ int CreatePriceLabel() {
       ObjectDelete(priceLabel);
 
    if (ObjectCreate(priceLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(priceLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
+      ObjectSet(priceLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
-      ObjectSet(priceLabel, OBJPROP_YDISTANCE,  9);
+      ObjectSet(priceLabel, OBJPROP_YDISTANCE, 9);
       ObjectSetText(priceLabel, " ", 1);
       RegisterChartObject(priceLabel, labels);
    }
    else GetLastError();
 
    return(catch("CreatePriceLabel()"));
+}
+
+
+/**
+ * Erzeugt das Label f¸r den letzten H1-Schluﬂkurs.
+ *
+ * @return int - Fehlerstatus
+ */
+int CreateH1CloseLabel() {
+   if (ObjectFind(h1CloseLabel) > -1)
+      ObjectDelete(h1CloseLabel);
+
+   if (ObjectCreate(h1CloseLabel, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(h1CloseLabel, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet(h1CloseLabel, OBJPROP_XDISTANCE, 11);
+      ObjectSet(h1CloseLabel, OBJPROP_YDISTANCE, 9);
+      ObjectSetText(h1CloseLabel, " ", 1);
+      RegisterChartObject(h1CloseLabel, labels);
+   }
+   else GetLastError();
+
+   return(catch("CreateH1CloseLabel()"));
 }
 
 
@@ -180,7 +218,7 @@ int CreateSpreadLabel() {
       ObjectDelete(spreadLabel);
 
    if (ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(spreadLabel, OBJPROP_CORNER   , CORNER_TOP_RIGHT);
+      ObjectSet(spreadLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
       ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 32);
       ObjectSetText(spreadLabel, " ", 1);
@@ -202,9 +240,9 @@ int CreateUnitSizeLabel() {
       ObjectDelete(unitSizeLabel);
 
    if (ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(unitSizeLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
+      ObjectSet(unitSizeLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
-      ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE,  11);
+      ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE, 11);
       ObjectSetText(unitSizeLabel, " ", 1);
       RegisterChartObject(unitSizeLabel, labels);
    }
@@ -224,9 +262,9 @@ int CreatePositionLabel() {
       ObjectDelete(positionLabel);
 
    if (ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(positionLabel, OBJPROP_CORNER   , CORNER_BOTTOM_LEFT);
+      ObjectSet(positionLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
-      ObjectSet(positionLabel, OBJPROP_YDISTANCE,  11);
+      ObjectSet(positionLabel, OBJPROP_YDISTANCE, 11);
       ObjectSetText(positionLabel, " ", 1);
       RegisterChartObject(positionLabel, labels);
    }
@@ -237,7 +275,7 @@ int CreatePositionLabel() {
 
 
 /**
- * Aktualisiert das Kurslabel.
+ * Aktualisiert die Kursanzeige.
  *
  * @return int - Fehlerstatus
  */
@@ -260,7 +298,36 @@ int UpdatePriceLabel() {
 
 
 /**
- * Aktualisiert das Spreadlabel.
+ * Aktualisiert die Anzeige des letzten H1-Schluﬂkurses.
+ *
+ * @return int - Fehlerstatus
+ */
+int UpdateH1CloseLabel() {
+   double close = iClose(NULL, PERIOD_H1, 1);
+   if (GetLastError() == ERR_HISTORY_UPDATE)
+      return(ERR_HISTORY_UPDATE);
+   
+   static double lastClose = 0;
+   if (lastClose == close)
+      return(ERR_NO_ERROR);
+   lastClose = close;
+
+   if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
+   else                               strClose = NumberToStr(close, StringConcatenate(", .", Digits));
+
+   strClose = StringConcatenate("H1:  ", strClose);
+
+   ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
+
+   int error = GetLastError();
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(ERR_NO_ERROR);
+   return(catch("UpdateH1CloseLabel()", error));
+}
+
+
+/**
+ * Aktualisiert die Spreadanzeige.
  *
  * @return int - Fehlerstatus
  */
@@ -287,7 +354,7 @@ int UpdateSpreadLabel() {
 
 
 /**
- * Aktualisiert die Anzeige der aktuellen UnitSize.
+ * Aktualisiert die UnitSize-Anzeige.
  *
  * @return int - Fehlerstatus
  */
@@ -308,8 +375,8 @@ int UpdateUnitSizeLabel() {
       if (equity < 0)
          equity = 0;
 
-      // Accountequity wird mit dem Wert von 'leverage' real gehebelt
-      int    leverage = 35;                              // leverage war bis 11/2010 = 7, dann mit GBP/JPY,H1-Scalper = 35
+      // Accountequity wird mit 'leverage' real gehebelt
+      int    leverage = 35;                              // leverage war bis 11/2010 = 7, ab dann mit GBP/JPY,H1-Scalper = 35
       double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
       double unitSize = equity / lotValue * leverage;    // unitSize=equity/lotValue (Hebel von 1)
 
@@ -347,6 +414,7 @@ int UpdateUnitSizeLabel() {
 bool   position.InMarket;
 double position.Long, position.Short, position.Total;
 
+
 /**
  * Ermittelt und speichert die momentane Marktpositionierung f¸r das aktuelle Instrument.
  *
@@ -383,7 +451,7 @@ int CheckPosition() {
 
 
 /**
- * Aktualisiert das Position-Label.
+ * Aktualisiert die Positionsanzeige.
  *
  * @return int - Fehlerstatus
  */
