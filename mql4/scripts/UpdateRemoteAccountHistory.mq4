@@ -116,7 +116,7 @@ int start() {
    }
 
    // (2.2) Daten
-   if (FileWrite(hFile, "[Data]\n#Ticket","OpenTime","OpenTimestamp","TypeStr","Type","Units","Instrument","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+   if (FileWrite(hFile, "[Data]\n#Ticket","OpenTime","OpenTimestamp","TypeStr","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(7)  FileWrite()", error));
