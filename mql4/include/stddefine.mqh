@@ -58,7 +58,7 @@
 #define PERIODFLAG_MN1         256     // monthly
 
 
-// weitere Operation-Types, siehe OrderSend() u. OrderType()
+// Operation-Types, siehe OrderSend() u. OrderType()
 #define OP_BUY                   0     // long position
 #define OP_SELL                  1     // short position
 #define OP_BUYLIMIT              2     // buy limit order
