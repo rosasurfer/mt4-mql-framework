@@ -53,27 +53,20 @@ int init() {
 
    // Konfiguration auswerten
    lastH1Close = StringIContains(","+StringTrim(Last.H1.Close.Symbols)+",", ","+Symbol()+",");
-   
+
 
    // Label definieren und erzeugen
    string indicatorName = WindowExpertName();
-   instrumentLabel    = StringConcatenate(indicatorName, ".Instrument"        );
-   priceLabel         = StringConcatenate(indicatorName, ".Price"             );
-   h1CloseLabel       = StringConcatenate(indicatorName, ".H1-Close"          );
-   spreadLabel        = StringConcatenate(indicatorName, ".Spread"            );
-   unitSizeLabel      = StringConcatenate(indicatorName, ".UnitSize"          );
-   positionLabel      = StringConcatenate(indicatorName, ".Position"          );
-   freezeLevelLabel   = StringConcatenate(indicatorName, ".MarginFreezeLevel" );
-   stopoutLevelLabel  = StringConcatenate(indicatorName, ".MarginStopoutLevel");
+   instrumentLabel   = StringConcatenate(indicatorName, ".Instrument"        );
+   priceLabel        = StringConcatenate(indicatorName, ".Price"             );
+   h1CloseLabel      = StringConcatenate(indicatorName, ".H1-Close"          );
+   spreadLabel       = StringConcatenate(indicatorName, ".Spread"            );
+   unitSizeLabel     = StringConcatenate(indicatorName, ".UnitSize"          );
+   positionLabel     = StringConcatenate(indicatorName, ".Position"          );
+   freezeLevelLabel  = StringConcatenate(indicatorName, ".MarginFreezeLevel" );
+   stopoutLevelLabel = StringConcatenate(indicatorName, ".MarginStopoutLevel");
 
-   CreateInstrumentLabel();
-   CreatePriceLabel();
-   CreateSpreadLabel();
-   CreateUnitSizeLabel();
-   CreatePositionLabel();
-
-   if (lastH1Close)
-      CreateH1CloseLabel();
+   CreateLabels();
 
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
@@ -109,7 +102,6 @@ int start() {
    if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
 
-
    position.Checked = false;
 
    UpdatePriceLabel();
@@ -120,7 +112,6 @@ int start() {
 
    if (lastH1Close)
       UpdateH1CloseLabel();
-
 
    //debug("start()   leave");
    return(catch("start()"));
@@ -139,14 +130,14 @@ int deinit() {
 
 
 /**
- * Erzeugt das Instrument-Label.
+ * Erzeugt die einzelnen Label.
  *
  * @return int - Fehlerstatus
  */
-int CreateInstrumentLabel() {
-   if (ObjectFind(instrumentLabel) > -1)
+int CreateLabels() {
+   // Instrument
+   if (ObjectFind(instrumentLabel) >= 0)
       ObjectDelete(instrumentLabel);
-
    if (ObjectCreate(instrumentLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(instrumentLabel, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
@@ -154,25 +145,13 @@ int CreateInstrumentLabel() {
       RegisterChartObject(instrumentLabel, labels);
    }
    else GetLastError();
-
-   // Instrumentnamen einlesen und setzen
    string instrument = GetGlobalConfigString("Instruments", Symbol(), Symbol());
    string name       = GetGlobalConfigString("Instrument.Names", instrument, instrument);
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);          // Instrumentname wird gleich hier (und nur ein einziges mal) gesetzt
 
-   return(catch("CreateInstrumentLabel()"));
-}
-
-
-/**
- * Erzeugt das Kurslabel.
- *
- * @return int - Fehlerstatus
- */
-int CreatePriceLabel() {
-   if (ObjectFind(priceLabel) > -1)
+   // aktueller Kurs
+   if (ObjectFind(priceLabel) >= 0)
       ObjectDelete(priceLabel);
-
    if (ObjectCreate(priceLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(priceLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
@@ -182,41 +161,9 @@ int CreatePriceLabel() {
    }
    else GetLastError();
 
-   return(catch("CreatePriceLabel()"));
-}
-
-
-/**
- * Erzeugt das Label für den letzten H1-Schlußkurs.
- *
- * @return int - Fehlerstatus
- */
-int CreateH1CloseLabel() {
-   if (ObjectFind(h1CloseLabel) > -1)
-      ObjectDelete(h1CloseLabel);
-
-   if (ObjectCreate(h1CloseLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(h1CloseLabel, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet(h1CloseLabel, OBJPROP_XDISTANCE, 11);
-      ObjectSet(h1CloseLabel, OBJPROP_YDISTANCE, 9);
-      ObjectSetText(h1CloseLabel, " ", 1);
-      RegisterChartObject(h1CloseLabel, labels);
-   }
-   else GetLastError();
-
-   return(catch("CreateH1CloseLabel()"));
-}
-
-
-/**
- * Erzeugt das Spreadlabel.
- *
- * @return int - Fehlerstatus
- */
-int CreateSpreadLabel() {
-   if (ObjectFind(spreadLabel) > -1)
+   // Spread
+   if (ObjectFind(spreadLabel) >= 0)
       ObjectDelete(spreadLabel);
-
    if (ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(spreadLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
@@ -226,19 +173,23 @@ int CreateSpreadLabel() {
    }
    else GetLastError();
 
-   return(catch("CreateSpreadLabel()"));
-}
+   // letzter H1-Schlußkurs
+   if (lastH1Close) {
+      if (ObjectFind(h1CloseLabel) >= 0)
+         ObjectDelete(h1CloseLabel);
+      if (ObjectCreate(h1CloseLabel, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(h1CloseLabel, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(h1CloseLabel, OBJPROP_XDISTANCE, 11);
+         ObjectSet(h1CloseLabel, OBJPROP_YDISTANCE, 9);
+         ObjectSetText(h1CloseLabel, " ", 1);
+         RegisterChartObject(h1CloseLabel, labels);
+      }
+      else GetLastError();
+   }
 
-
-/**
- * Erzeugt das UnitSize-Label.
- *
- * @return int - Fehlerstatus
- */
-int CreateUnitSizeLabel() {
-   if (ObjectFind(unitSizeLabel) > -1)
+   // UnitSize
+   if (ObjectFind(unitSizeLabel) >= 0)
       ObjectDelete(unitSizeLabel);
-
    if (ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(unitSizeLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
@@ -248,19 +199,9 @@ int CreateUnitSizeLabel() {
    }
    else GetLastError();
 
-   return(catch("CreateUnitSizeLabel()"));
-}
-
-
-/**
- * Erzeugt das Positionlabel.
- *
- * @return int - Fehlerstatus
- */
-int CreatePositionLabel() {
-   if (ObjectFind(positionLabel) > -1)
+   // aktuelle Position
+   if (ObjectFind(positionLabel) >= 0)
       ObjectDelete(positionLabel);
-
    if (ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(positionLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
@@ -270,7 +211,7 @@ int CreatePositionLabel() {
    }
    else GetLastError();
 
-   return(catch("CreatePositionLabel()"));
+   return(catch("CreateLabels()"));
 }
 
 
@@ -294,35 +235,6 @@ int UpdatePriceLabel() {
    if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
       return(ERR_NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
-}
-
-
-/**
- * Aktualisiert die Anzeige des letzten H1-Schlußkurses.
- *
- * @return int - Fehlerstatus
- */
-int UpdateH1CloseLabel() {
-   double close = iClose(NULL, PERIOD_H1, 1);
-   if (GetLastError() == ERR_HISTORY_UPDATE)
-      return(ERR_HISTORY_UPDATE);
-   
-   static double lastClose = 0;
-   if (lastClose == close)
-      return(ERR_NO_ERROR);
-   lastClose = close;
-
-   if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
-   else                               strClose = NumberToStr(close, StringConcatenate(", .", Digits));
-
-   strClose = StringConcatenate("H1:  ", strClose);
-
-   ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
-
-   int error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
-   return(catch("UpdateH1CloseLabel()", error));
 }
 
 
@@ -354,6 +266,38 @@ int UpdateSpreadLabel() {
 
 
 /**
+ * Aktualisiert die Anzeige des letzten H1-Schlußkurses.
+ *
+ * @return int - Fehlerstatus
+ */
+int UpdateH1CloseLabel() {
+   if (!lastH1Close)
+      return(0);
+
+   double close = iClose(NULL, PERIOD_H1, 1);
+   if (GetLastError() == ERR_HISTORY_UPDATE)
+      return(ERR_HISTORY_UPDATE);
+
+   static double lastClose = 0;
+   if (lastClose == close)
+      return(ERR_NO_ERROR);
+   lastClose = close;
+
+   if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
+   else                               strClose = NumberToStr(close, StringConcatenate(", .", Digits));
+
+   strClose = StringConcatenate("H1:  ", strClose);
+
+   ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
+
+   int error = GetLastError();
+   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(ERR_NO_ERROR);
+   return(catch("UpdateH1CloseLabel()", error));
+}
+
+
+/**
  * Aktualisiert die UnitSize-Anzeige.
  *
  * @return int - Fehlerstatus
@@ -367,15 +311,17 @@ int UpdateUnitSizeLabel() {
    if (Bid==0 || tickSize==0 || tickValue==0 || error==ERR_UNKNOWN_SYMBOL)    // bei Start oder Accountwechsel
       return(ERR_UNKNOWN_SYMBOL);
 
+   string strUnitSize;
 
-   string strUnitSize = "";
-
-   if (tradeAllowed) {
+   if (!tradeAllowed) {
+      strUnitSize = " ";      // der Labeltext darf nicht leer sein
+   }
+   else {
       double equity = AccountEquity() - AccountCredit();
       if (equity < 0)
          equity = 0;
 
-      // Accountequity wird mit 'leverage' real gehebelt
+      // Accountequity wird mit 'leverage' gehebelt
       int    leverage = 35;                              // leverage war bis 11/2010 = 7, ab dann mit GBP/JPY,H1-Scalper = 35
       double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
       double unitSize = equity / lotValue * leverage;    // unitSize=equity/lotValue (Hebel von 1)
@@ -416,41 +362,6 @@ double position.Long, position.Short, position.Total;
 
 
 /**
- * Ermittelt und speichert die momentane Marktpositionierung für das aktuelle Instrument.
- *
- * @return int - Fehlerstatus
- */
-int CheckPosition() {
-   if (position.Checked)
-      return(ERR_NO_ERROR);
-
-   position.Long  = 0;
-   position.Short = 0;
-   position.Total = 0;
-
-   int orders = OrdersTotal();
-
-   for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
-         break;
-
-      if (OrderSymbol() == Symbol()) {
-         if      (OrderType() == OP_BUY ) position.Long  += OrderLots();
-         else if (OrderType() == OP_SELL) position.Short += OrderLots();
-      }
-   }
-   position.Long  = NormalizeDouble(position.Long , 8);                 // Floating-Point-Fehler bereinigen
-   //position.Long  = 0.12;
-   position.Short = NormalizeDouble(position.Short, 8);
-   position.Total = NormalizeDouble(position.Long - position.Short, 8);
-
-   position.InMarket = (position.Long > 0 || position.Short > 0);
-
-   return(catch("CheckPosition()"));
-}
-
-
-/**
  * Aktualisiert die Positionsanzeige.
  *
  * @return int - Fehlerstatus
@@ -470,7 +381,6 @@ int UpdatePositionLabel() {
       return(ERR_NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
 }
-
 
 
 /**
@@ -507,7 +417,7 @@ int UpdateMarginLevels() {
       bool markFreezeLevel = true;
 
       if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                        }
-      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur SO-Level anzeigen
+      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur StopOut anzeigen
       else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;   }
 
       double quoteFreezeDiff  = (equity - usedMargin        ) / tickValue * tickSize;
@@ -565,3 +475,37 @@ int UpdateMarginLevels() {
    return(catch("UpdateMarginLevels()", error));
 }
 
+
+/**
+ * Ermittelt und speichert die momentane Marktpositionierung für das aktuelle Instrument.
+ *
+ * @return int - Fehlerstatus
+ */
+int CheckPosition() {
+   if (position.Checked)
+      return(ERR_NO_ERROR);
+
+   position.Long  = 0;
+   position.Short = 0;
+   position.Total = 0;
+
+   int orders = OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+         break;
+
+      if (OrderSymbol() == Symbol()) {
+         if      (OrderType() == OP_BUY ) position.Long  += OrderLots();
+         else if (OrderType() == OP_SELL) position.Short += OrderLots();
+      }
+   }
+   position.Long  = NormalizeDouble(position.Long , 8);
+   position.Short = NormalizeDouble(position.Short, 8);
+   position.Total = NormalizeDouble(position.Long - position.Short, 8);
+
+   position.InMarket = (position.Long > 0 || position.Short > 0);
+   position.Checked  = true;
+
+   return(catch("CheckPosition()"));
+}
