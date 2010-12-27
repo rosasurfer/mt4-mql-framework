@@ -52,7 +52,7 @@ int init() {
 
 
    // Konfiguration auswerten
-   lastH1Close = StringIContains(","+StringTrim(Last.H1.Close.Symbols)+",", ","+Symbol()+",");
+   lastH1Close = StringIContains(","+StringTrim(Last.H1.Close.Symbols)+",", ","+GetInstrument(Symbol(), Symbol())+",");
 
 
    // Label definieren und erzeugen
