@@ -77,17 +77,21 @@ int init() {
 
 
    // Konfiguration auswerten
-   instrument         = GetGlobalConfigString("Instruments", Symbol(), Symbol());
-   instrument.Name    = GetGlobalConfigString("Instrument.Names", instrument, instrument);
+   instrument = GetConfigString("Instruments", Symbol(), "");
+   if (instrument == "") {
+      init_error = catch("init(1)   instrument not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
+      return(init_error);
+   }
+   instrument.Name    = GetConfigString("Instrument.Names", instrument, instrument);
    instrument.Section = StringConcatenate("EventTracker.", instrument);
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
    SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
    if (SMS.Alerts) {
-      SMS.Receiver = GetGlobalConfigString("SMS", "Receiver", SMS.Receiver);
+      SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
-         catch("init(1)  Invalid input parameter SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(2)  Invalid input parameter SMS.Receiver: "+ SMS.Receiver, ERR_INVALID_INPUT_PARAMVALUE);
          SMS.Alerts = false;
       }
    }
@@ -103,7 +107,7 @@ int init() {
    if (Track.RateChanges) {
       RateGrid.Size = GetConfigInt(instrument.Section, "RateChanges.Gridsize", RateGrid.Size);
       if (RateGrid.Size < 1) {
-         catch("init(2)  Invalid input parameter RateGrid.Size: "+ GetConfigString(instrument.Section, "RateChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(3)  Invalid input parameter RateGrid.Size: "+ GetConfigString(instrument.Section, "RateChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
          Track.RateChanges = false;
       }
       gridDigits = Digits - ifInt(Digits==3 || Digits==5, 1, 0);
@@ -118,30 +122,30 @@ int init() {
    // Bollinger-Bänder
    Track.BollingerBands = GetConfigBool(instrument.Section, "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
-      BollingerBands.Periods = GetGlobalConfigInt("BollingerBands."+ instrument, "Slow.Periods", BollingerBands.Periods);
+      BollingerBands.Periods = GetConfigInt("BollingerBands."+ instrument, "Slow.Periods", BollingerBands.Periods);
       if (BollingerBands.Periods == 0)
-         BollingerBands.Periods = GetGlobalConfigInt("BollingerBands", "Slow.Periods", BollingerBands.Periods);
+         BollingerBands.Periods = GetConfigInt("BollingerBands", "Slow.Periods", BollingerBands.Periods);
       if (BollingerBands.Periods < 2) {
-         catch("init(3)  Invalid input parameter Slow.Periods: "+ GetGlobalConfigString("BollingerBands."+ instrument, "Slow.Periods", GetGlobalConfigString("BollingerBands", "Slow.Periods", "")), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(4)  Invalid input parameter Slow.Periods: "+ GetConfigString("BollingerBands."+ instrument, "Slow.Periods", GetConfigString("BollingerBands", "Slow.Periods", "")), ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
-      string strValue = GetGlobalConfigString("BollingerBands."+ instrument, "Slow.Timeframe", "");
+      string strValue = GetConfigString("BollingerBands."+ instrument, "Slow.Timeframe", "");
       if (strValue == "")
-         strValue = GetGlobalConfigString("BollingerBands", "Slow.Timeframe", strValue);
+         strValue = GetConfigString("BollingerBands", "Slow.Timeframe", strValue);
       BollingerBands.Timeframe = GetPeriod(strValue);
       if (BollingerBands.Timeframe == 0) {
-         catch("init(4)  Invalid input parameter value Slow.Timeframe: "+ strValue, ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(5)  Invalid input parameter value Slow.Timeframe: "+ strValue, ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
-      BollingerBands.MA.Deviation = GetGlobalConfigDouble("BollingerBands."+ instrument, "Deviation.EMA", BollingerBands.MA.Deviation);
+      BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands."+ instrument, "Deviation.EMA", BollingerBands.MA.Deviation);
       if (CompareDoubles(BollingerBands.MA.Deviation, 0))
-         BollingerBands.MA.Deviation = GetGlobalConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
+         BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
       if (BollingerBands.MA.Deviation < 0 || CompareDoubles(BollingerBands.MA.Deviation, 0)) {
-         catch("init(5)  Invalid input parameter Deviation.EMA: "+ BollingerBands.MA.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(6)  Invalid input parameter Deviation.EMA: "+ BollingerBands.MA.Deviation, ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
@@ -153,7 +157,7 @@ int init() {
       WindowRedraw();
    }
 
-   return(catch("init(6)"));
+   return(catch("init(7)"));
 }
 
 
@@ -640,11 +644,10 @@ int onPositionOpen(int tickets[]) {
       if (Digits==3 || Digits==5) string priceFormat = StringConcatenate(".", Digits-1, "'");
       else                               priceFormat = StringConcatenate(".", Digits);
 
-      string type       = OperationTypeToStr(OrderType());
-      string lots       = NumberToStr(OrderLots(), ".+");
-      string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
-      string price      = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message    = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument, " @ ", price);
+      string type    = OperationTypeToStr(OrderType());
+      string lots    = NumberToStr(OrderLots(), ".+");
+      string price   = NumberToStr(OrderOpenPrice(), priceFormat);
+      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument.Name, " @ ", price);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -689,10 +692,9 @@ int onPositionClose(int tickets[]) {
 
       string type       = OperationTypeToStr(OrderType());
       string lots       = NumberToStr(OrderLots(), ".+");
-      string instrument = GetConfigString("Instrument.Names", OrderSymbol(), OrderSymbol());
       string openPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice = NumberToStr(OrderClosePrice(), priceFormat);
-      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument, " @ ", openPrice, " -> ", closePrice);
+      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument.Name, " @ ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {

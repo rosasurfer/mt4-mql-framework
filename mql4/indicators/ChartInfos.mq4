@@ -145,9 +145,17 @@ int CreateLabels() {
       RegisterChartObject(instrumentLabel, labels);
    }
    else GetLastError();
-   string instrument = GetGlobalConfigString("Instruments", Symbol(), Symbol());
-   string name       = GetGlobalConfigString("Instrument.Names", instrument, instrument);
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);          // Instrumentname wird gleich hier (und nur ein einziges mal) gesetzt
+   string instrument = GetConfigString("Instruments", Symbol(), "");
+   if (instrument == "") {
+      log("CreateLabels()   instrument not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
+      instrument = Symbol();
+   }
+   string name = GetConfigString("Instrument.LongNames", instrument, "");
+   if (name == "")
+      name = GetConfigString("Instrument.Names", instrument, instrument);
+   if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+   else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
 
    // aktueller Kurs
    if (ObjectFind(priceLabel) >= 0)
