@@ -77,12 +77,12 @@ int init() {
 
 
    // Konfiguration auswerten
-   instrument = GetConfigString("Instruments", Symbol(), "");
+   instrument = GetInstrument(Symbol(), "");
    if (instrument == "") {
-      init_error = catch("init(1)   instrument not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
+      init_error = catch("init(1)   instrument id not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
       return(init_error);
    }
-   instrument.Name    = GetConfigString("Instrument.Names", instrument, instrument);
+   instrument.Name    = GetInstrumentName(instrument, instrument);
    instrument.Section = StringConcatenate("EventTracker.", instrument);
 
    // Sound- und SMS-Einstellungen

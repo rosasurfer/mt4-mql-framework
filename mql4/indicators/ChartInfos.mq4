@@ -145,14 +145,14 @@ int CreateLabels() {
       RegisterChartObject(instrumentLabel, labels);
    }
    else GetLastError();
-   string instrument = GetConfigString("Instruments", Symbol(), "");
+   string instrument = GetInstrument(Symbol(), "");
    if (instrument == "") {
-      log("CreateLabels()   instrument not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
+      log("CreateLabels()   instrument id not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
       instrument = Symbol();
    }
-   string name = GetConfigString("Instrument.LongNames", instrument, "");
+   string name = GetInstrumentLongName(instrument, "");
    if (name == "")
-      name = GetConfigString("Instrument.Names", instrument, instrument);
+      name = GetInstrumentName(instrument, instrument);
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
