@@ -20,7 +20,7 @@ int  init_error = ERR_NO_ERROR;
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool   Spread.Including.Commission = false;       // ob der Spread inklusive einer evt. Commission angezeigt werden soll
+extern bool   Spread.Including.Commission = false;       // ob der Spread inklusive Commission angezeigt werden soll
 extern string Last.H1.Close.Symbols       = "";          // Symbole, für die der Schlußkurs der letzten H1-Bar angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,26 +406,25 @@ int UpdateMarginLevels() {
       ObjectDelete(stopoutLevelLabel);
    }
    else {
-      // MarginLevel für Freeze und Stopout berechnen und anzeigen
+      // Kurslevel für Margin-Freeze und -Stopout berechnen und anzeigen
       double equity         = AccountEquity();
       double usedMargin     = AccountMargin();
-      //double usedMargin     = ifDouble(position.InMarket, position.Total * MarketInfo(Symbol(), MODE_MARGINREQUIRED), AccountMargin());
       int    stopoutMode    = AccountStopoutMode();
       int    stopoutLevel   = AccountStopoutLevel();
       double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
       double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
       double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
-      double marginLeverage = Bid / tickSize * tickValue / marginRequired; // für Anzeige im Label
-             tickValue      = tickValue * MathAbs(position.Total);         // TickValue der gesamten Position
+      double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // Hebel der real zur Verfügung gestellten Kreditlinie für das Symbol
+             tickValue      = tickValue * MathAbs(position.Total);            // TickValue der gesamten Position
 
       int error = GetLastError();
-      if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)                       // bei Start oder Accountwechsel
+      if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)                          // bei Start oder Accountwechsel
          return(ERR_UNKNOWN_SYMBOL);
 
-      bool markFreezeLevel = true;
+      bool showFreezeLevel = true;
 
       if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                        }
-      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; markFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur StopOut anzeigen
+      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; showFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur StopOut anzeigen
       else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;   }
 
       double quoteFreezeDiff  = (equity - usedMargin        ) / tickValue * tickSize;
@@ -450,7 +449,7 @@ int UpdateMarginLevels() {
       */
 
       // FreezeLevel anzeigen
-      if (markFreezeLevel) {
+      if (showFreezeLevel) {
          if (ObjectFind(freezeLevelLabel) == -1) {
             ObjectCreate(freezeLevelLabel, OBJ_HLINE, 0, 0, 0);
             ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
@@ -469,7 +468,7 @@ int UpdateMarginLevels() {
          ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, Red);
          ObjectSet(stopoutLevelLabel, OBJPROP_BACK , false);
             if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
-            else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", .2"), AccountCurrency());
+            else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
          ObjectSetText(stopoutLevelLabel, description);
          RegisterChartObject(stopoutLevelLabel, labels);
       }
