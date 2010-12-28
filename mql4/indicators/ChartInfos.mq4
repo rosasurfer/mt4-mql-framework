@@ -415,11 +415,11 @@ int UpdateMarginLevels() {
       double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
       double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
       double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
-      double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // für Anzeige im Label
-             tickValue      = tickValue * MathAbs(position.Total);            // TickValue der gesamten Position
+      double marginLeverage = Bid / tickSize * tickValue / marginRequired; // für Anzeige im Label
+             tickValue      = tickValue * MathAbs(position.Total);         // TickValue der gesamten Position
 
       int error = GetLastError();
-      if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)  // bei Start oder Accountwechsel
+      if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)                       // bei Start oder Accountwechsel
          return(ERR_UNKNOWN_SYMBOL);
 
       bool markFreezeLevel = true;
@@ -453,10 +453,10 @@ int UpdateMarginLevels() {
       if (markFreezeLevel) {
          if (ObjectFind(freezeLevelLabel) == -1) {
             ObjectCreate(freezeLevelLabel, OBJ_HLINE, 0, 0, 0);
-            ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_DOT);
-            ObjectSet(freezeLevelLabel, OBJPROP_COLOR, Orange);
+            ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet(freezeLevelLabel, OBJPROP_COLOR, C'0,201,206');
             ObjectSet(freezeLevelLabel, OBJPROP_BACK , false);
-            ObjectSetText(freezeLevelLabel, StringConcatenate("100%  1:", DoubleToStr(marginLeverage, 0)));
+            ObjectSetText(freezeLevelLabel, StringConcatenate("Freeze  1:", DoubleToStr(marginLeverage, 0)));
             RegisterChartObject(freezeLevelLabel, labels);
          }
          ObjectSet(freezeLevelLabel, OBJPROP_PRICE1, quoteFreezeLevel);
@@ -465,11 +465,11 @@ int UpdateMarginLevels() {
       // StopoutLevel anzeigen
       if (ObjectFind(stopoutLevelLabel) == -1) {
          ObjectCreate(stopoutLevelLabel, OBJ_HLINE, 0, 0, 0);
-         ObjectSet(stopoutLevelLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(stopoutLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
          ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, Red);
          ObjectSet(stopoutLevelLabel, OBJPROP_BACK , false);
-            if (stopoutMode == ASM_PERCENT) string description = StringConcatenate(stopoutLevel, "%  1:", DoubleToStr(marginLeverage, 0));
-            else                                   description = StringConcatenate(DoubleToStr(stopoutLevel, 2), AccountCurrency());
+            if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
+            else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", .2"), AccountCurrency());
          ObjectSetText(stopoutLevelLabel, description);
          RegisterChartObject(stopoutLevelLabel, labels);
       }
