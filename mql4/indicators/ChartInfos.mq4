@@ -455,7 +455,7 @@ int UpdateMarginLevels() {
             ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet(freezeLevelLabel, OBJPROP_COLOR, C'0,201,206');
             ObjectSet(freezeLevelLabel, OBJPROP_BACK , false);
-            ObjectSetText(freezeLevelLabel, StringConcatenate("Freeze  1:", DoubleToStr(marginLeverage, 0)));
+            ObjectSetText(freezeLevelLabel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
             RegisterChartObject(freezeLevelLabel, labels);
          }
          ObjectSet(freezeLevelLabel, OBJPROP_PRICE1, quoteFreezeLevel);
