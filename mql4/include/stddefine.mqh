@@ -360,13 +360,13 @@ int ChangedBars = -1;
  * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error
  * gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare interne MQL-Fehler-Code ist nach Aufruf dieser Funktion immer zurückgesetzt.
  *
- * @param string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
- * @param int    error   - manuelles Forcieren eines bestimmten Error-Codes
+ * @param  string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
+ * @param  int    error   - manuelles Forcieren eines bestimmten Error-Codes
  *
  * @return int - der aufgetretene Error-Code
  *
- * NOTE:    Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                               (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
+ * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
+ * -----                                              (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
  */
 int catch(string message="", int error=ERR_NO_ERROR) {
    if (error == ERR_NO_ERROR) error = GetLastError();
@@ -392,13 +392,13 @@ int catch(string message="", int error=ERR_NO_ERROR) {
 /**
  * Logged eine Message und einen ggf. angegebenen Fehler.
  *
- * @param string message - Message
- * @param int    error   - Error-Code
+ * @param  string message - Message
+ * @param  int    error   - Error-Code
  *
  * @return int - der angegebene Error-Code
  *
- * NOTE:    Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                               (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
+ * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int log(string message="", int error=ERR_NO_ERROR) {
    if (message == "")
@@ -437,14 +437,14 @@ void debug(string message) {
 /**
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
  *
- * @param int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
- * @param int flags  - zusätzliche eventspezifische Flags (default: 0), bei verknüpften Eventbezeichnern nur sinnvoll, wenn die Flags
- *                     für alle Events zutreffend sind
+ * @param  int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
+ * @param  int flags  - zusätzliche eventspezifische Flags (default: 0), bei verknüpften Eventbezeichnern nur sinnvoll, wenn die Flags
+ *                      für alle Events zutreffend sind
  *
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
- * NOTE:    Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ * NOTE:   Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  * -----
  */
 int HandleEvents(int events, int flags=0) {
@@ -468,13 +468,13 @@ int HandleEvents(int events, int flags=0) {
  * Prüft, ob ein einzelnes Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
  * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
  *
- * @param int event - Eventbezeichner
- * @param int flags - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int event - Eventbezeichner
+ * @param  int flags - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - ob das Event aufgetreten ist oder nicht
  *
  *
- * NOTE:    Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ * NOTE:   Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
  * -----
  */
 int HandleEvent(int event, int flags=0) {
