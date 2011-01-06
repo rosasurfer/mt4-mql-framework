@@ -470,7 +470,7 @@ int UpdateMarginLevels() {
       if (ObjectFind(stopoutLevelLabel) == -1) {
          ObjectCreate(stopoutLevelLabel, OBJ_HLINE, 0, 0, 0);
          ObjectSet(stopoutLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, Red);
+         ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, OrangeRed);
          ObjectSet(stopoutLevelLabel, OBJPROP_BACK , false);
             if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
             else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
