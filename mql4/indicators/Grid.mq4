@@ -63,12 +63,15 @@ int init() {
 int start() {
    //debug("start()   enter");
 
-   int UnchangedBars = IndicatorCounted();
+   Tick++;
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   stdlib_onTick(ValidBars);
 
    // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
    static bool redraw = false;
-   if (UnchangedBars == 0) {                    redraw =  true; }
-   else if (redraw)        { UnchangedBars = 0; redraw = false; }
+   if (ValidBars == 0) {                redraw = true;  }
+   else if (redraw)    { ValidBars = 0; redraw = false; }
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
@@ -85,7 +88,7 @@ int start() {
 
 
    // Grid zeichnen
-   if (UnchangedBars == 0) {
+   if (ValidBars == 0) {
       redraw = (DrawGrid()==ERR_HISTORY_UPDATE);
    }
 

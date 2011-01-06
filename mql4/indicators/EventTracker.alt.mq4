@@ -170,9 +170,9 @@ int start() {
    //debug("start()   enter");
 
    Tick++;
-   UnchangedBars = IndicatorCounted();
-   ChangedBars   = Bars - UnchangedBars;
-   stdlib_onTick(UnchangedBars);
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   stdlib_onTick(ValidBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
@@ -234,8 +234,8 @@ int start() {
       }
    }
 
-   /* // TODO: UnchangedBars ist bei jedem Timeframe-Wechsel 0, wir wollen UnchangedBars==0 aber nur bei Chartänderungen detektieren
-   if (UnchangedBars == 0) {
+   /* // TODO: ValidBars ist bei jedem Timeframe-Wechsel 0, wir wollen ValidBars==0 aber nur bei Chartänderungen detektieren
+   if (ValidBars == 0) {
       ArrayInitialize(RateGrid.Limits, 0);
       EventTracker.SetRateGridLimits(RateGrid.Limits);
       ArrayInitialize(Band.Limits, 0);

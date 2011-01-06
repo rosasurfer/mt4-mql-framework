@@ -1,4 +1,4 @@
-/**
+ /**
  * stdlib.mq4
  */
 #property library
@@ -31,8 +31,8 @@ int stdlib_onTick(int indicatorCounted) {
       return(catch("stdlib_onTick()  invalid parameter indicatorCounted: "+ indicatorCounted, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    Tick++;
-   UnchangedBars = indicatorCounted;
-   ChangedBars   = Bars - UnchangedBars;
+   ValidBars   = indicatorCounted;
+   ChangedBars = Bars - ValidBars;
 
    return(ERR_NO_ERROR);
 }

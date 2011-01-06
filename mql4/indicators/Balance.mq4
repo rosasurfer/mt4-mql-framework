@@ -70,6 +70,11 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   Tick++;
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   stdlib_onTick(ValidBars);
+
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
@@ -84,13 +89,13 @@ int start() {
    if (account == 0)
       account = GetAccountNumber();
 
-   int UnchangedBars = IndicatorCounted();
+   int ValidBars = IndicatorCounted();
 
-   if (UnchangedBars == 0) {                             // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
+   if (ValidBars == 0) {                                 // 1. Aufruf oder nach Data-Pumping: alles neu berechnen
       iBalanceSeries(account, Balance);
    }
    else {
-      for (int i=Bars-UnchangedBars; i >= 0; i--) {      // nur fehlende Werte neu berechnen
+      for (int i=ChangedBars; i >= 0; i--) {             // nur fehlende Werte neu berechnen
          iBalance(account, Balance, i);
       }
    }

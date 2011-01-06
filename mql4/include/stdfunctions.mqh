@@ -351,9 +351,9 @@
 // globale Variablen, stehen überall und (auch in Libraries) zur Verfügung
 int last_error = ERR_NO_ERROR;
 
-int Tick          =  0;
-int UnchangedBars = -1;
-int ChangedBars   = -1;
+int Tick        =  0;
+int ValidBars   = -1;
+int ChangedBars = -1;
 
 
 /**

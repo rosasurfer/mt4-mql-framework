@@ -130,6 +130,11 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   Tick++;
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   stdlib_onTick(ValidBars);
+
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
@@ -144,8 +149,8 @@ int start() {
    if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(0);
 
-   int UnchangedBars = IndicatorCounted(),
-       iLastIndBar   = Bars - Periods,          // Index der letzten Indikator-Bar
+   int ValidBars   = IndicatorCounted(),
+       iLastIndBar = Bars - Periods,            // Index der letzten Indikator-Bar
        bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
 
@@ -154,11 +159,11 @@ int start() {
 
 
    // Anzahl der zu berechnenden Bars bestimmen
-   if (UnchangedBars == 0) {
+   if (ValidBars == 0) {
       bars = iLastIndBar + 1;                   // alle
    }
    else {                                       // nur die fehlenden Bars
-      bars = Bars - UnchangedBars;
+      bars = ChangedBars;
       if (bars > iLastIndBar + 1)
          bars = iLastIndBar + 1;
       // TODO: Eventhandler integrieren: Update nur bei onNewHigh|onNewLow

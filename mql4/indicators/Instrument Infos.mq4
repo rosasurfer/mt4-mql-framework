@@ -72,6 +72,11 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   Tick++;
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   stdlib_onTick(ValidBars);
+
    static int error = ERR_NO_ERROR;
 
    if (error == ERR_NO_ERROR)
