@@ -93,7 +93,7 @@ int start() {
       if (error != ERR_NO_ERROR)
          break;
    }
-   
+
    //debug("start()   leave");
    return(catch("start(2)"));
 }
@@ -353,7 +353,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
       result[row][col] = value;
    }
 
-   // Hier haben Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder Dateiende END_OF_FILE ausgelöst.
+   // Hier hat entweder ein Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder das Dateiende END_OF_FILE ausgelöst.
    if (error == ERR_NO_ERROR) {
       error = GetLastError();
       if (error == ERR_END_OF_FILE) {

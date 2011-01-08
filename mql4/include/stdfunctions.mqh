@@ -348,9 +348,8 @@
 #define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready
 
 
-// globale Variablen, stehen überall und (auch in Libraries) zur Verfügung
-int last_error = ERR_NO_ERROR;
-
+// globale Variablen, stehen überall (auch in Libraries) zur Verfügung
+int last_error  = ERR_NO_ERROR;
 int Tick        =  0;
 int ValidBars   = -1;
 int ChangedBars = -1;
