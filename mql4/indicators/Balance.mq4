@@ -58,13 +58,14 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   //debug("start()   enter");
+
    static int error = ERR_NO_ERROR;
 
    // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
    Tick++;
-   ValidBars   = ifInt(error!=ERR_NO_ERROR, 0, IndicatorCounted());
+   ValidBars   = ifInt(error!=ERR_NO_ERROR, 0, IndicatorCounted()); error = ERR_NO_ERROR;
    ChangedBars = Bars - ValidBars;
-   error       = ERR_NO_ERROR;
    stdlib_onTick(ValidBars);
 
 
@@ -82,9 +83,9 @@ int start() {
    // Entweder alle Werte berechnen oder...
    if (ValidBars == 0) {
       error = iBalanceSeries(AccountNumber(), iBufferBalance);
+      //debug("start()   leave");
       return(catch("start(1)"));
    }
-
 
    // ... nur fehlende Werte berechnen
    for (int bar=ChangedBars; bar >= 0; bar--) {
@@ -92,6 +93,8 @@ int start() {
       if (error != ERR_NO_ERROR)
          break;
    }
+   
+   //debug("start()   leave");
    return(catch("start(2)"));
 }
 
@@ -148,12 +151,6 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
       lpBuffer[bar] = lpBuffer[lastBar];
    }
 
-   lpBuffer[7] = EMPTY_VALUE;
-   lpBuffer[6] = lpBuffer[13]-100;
-   lpBuffer[5] = EMPTY_VALUE;
-   lpBuffer[4] = lpBuffer[11]+100;
-   lpBuffer[3] = EMPTY_VALUE;
-
    return(catch("iBalanceSeries(2)"));
 }
 
@@ -201,7 +198,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    if (cache.account[0] == account) {
       ArrayCopy(lpTimes , cache.times);
       ArrayCopy(lpValues, cache.values);
-      log("GetBalanceHistory()   Delivering "+ ArraySize(cache.times) +" cached balance history values for account "+ account);
+      log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" cached balance values for account "+ account);
       return(catch("GetBalanceHistory(1)"));
    }
 
@@ -254,7 +251,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    cache.account[0] = account;
    ArrayResize(cache.times,  0); ArrayCopy(cache.times,  lpTimes );
    ArrayResize(cache.values, 0); ArrayCopy(cache.values, lpValues);
-   log("GetBalanceHistory()   Cached "+ ArraySize(lpTimes) +" balance history values for account "+ account);
+   log("GetBalanceHistory()   cached "+ ArraySize(lpTimes) +" balance values for account "+ account);
 
    return(catch("GetBalanceHistory(4)"));
 }
@@ -280,7 +277,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // Daten nach Möglichkeit aus dem Cache liefern
    if (cache.account[0] == account) {
       ArrayCopy(lpResults, cache);
-      log("GetAccountHistory()   Delivering "+ ArrayRange(cache, 0) +" cached raw history entries for account "+ account);
+      log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" cached history entries for account "+ account);
       return(catch("GetAccountHistory(2)"));
    }
 
@@ -375,12 +372,12 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
 
    // Daten in Zielarray kopieren und cachen
-   if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls die Datei noch erstellt wird)
+   if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
       ArrayCopy(lpResults, result);
 
       cache.account[0] = account;
       ArrayResize(cache, 0); ArrayCopy(cache, result);
-      log("GetAccountHistory()   cached "+ ArrayRange(cache, 0) +" raw history entries for account "+ account);
+      log("GetAccountHistory()   cached "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
 
    return(catch("GetAccountHistory(7)"));
