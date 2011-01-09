@@ -171,6 +171,7 @@
    int      GetPeriodFlag(int period);
    int      GetTerminalWindow();
    string   GetWindowText(int hWnd);
+   int      iBalance(int account, double& lpBuffer[], int bar);
    int      iBalanceSeries(int account, double& lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);

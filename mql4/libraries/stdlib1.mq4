@@ -2104,74 +2104,66 @@ int Explode(string object, string separator, string& lpResults[]) {
 
 
 /**
- * Liest die History eines Accounts aus dem Dateisystem in das übergebene Zielarray ein.  Die Datensätze werden als Strings (Rohdaten) zurückgegeben.
+ * Liest die History eines Accounts aus dem Dateisystem in das angegebene Ergebnisarray ein.  Die Daten im Ergebnisarray werden als Strings gespeichert.
  *
  * @param  int     account                      - Account-Nummer
- * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Array für die Ergebnisse
+ * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
  *
- * @return int - Fehlerstatus
+ * @return int - Fehlerstatus: ERR_CANNOT_OPEN_FILE, wenn die Datei nicht gefunden wurde
  */
 int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    if (ArrayRange(lpResults, 1) != HISTORY_COLUMNS)
-      return(catch("GetAccountHistory(1)  invalid parameter destination["+ ArrayRange(lpResults, 0) +"]["+ ArrayRange(lpResults, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("GetAccountHistory(1)   invalid parameter lpResults["+ ArrayRange(lpResults, 0) +"]["+ ArrayRange(lpResults, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    int    cache.account[1];
    string cache[][HISTORY_COLUMNS];
 
+   ArrayResize(lpResults, 0);
+
    // Daten nach Möglichkeit aus dem Cache liefern
-   if (account == cache.account[0]) {
-      if (ArrayRange(cache, 0) > 0) {
-         ArrayCopy(lpResults, cache);
-         //Print("GetAccountHistory()  delivering ", ArrayRange(destination, 0), " cached raw history entries for account "+ account);
-         return(catch("GetAccountHistory(2)"));
-      }
+   if (cache.account[0] == account) {
+      ArrayCopy(lpResults, cache);
+      log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" cached history entries for account "+ account);
+      return(catch("GetAccountHistory(2)"));
    }
 
-
    // Cache-Miss, History-Datei auslesen
-   int tick = GetTickCount();
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-   ArrayResize(header, HISTORY_COLUMNS);
-
-   // Datei öffnen
    string filename = StringConcatenate(account, "/account history.csv");
-   int handle = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
-   if (handle < 0) {
+   int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
+   if (hFile < 0) {
       int error = GetLastError();
-      if (error == ERR_CANNOT_OPEN_FILE) log("GetAccountHistory()  cannot open file \""+ filename +"\"", error);
-      else                               catch("GetAccountHistory(3)  FileOpen(filename="+ filename +")", error);
-      return(error);
+      if (error == ERR_CANNOT_OPEN_FILE)
+         return(error);
+      return(catch("GetAccountHistory(3)   FileOpen(\""+ filename +"\")", error));
    }
 
    string value;
-   bool   newLine=true, blankLine=false, lineEnd=true, comment=false;
+   bool   newLine=true, blankLine=false, lineEnd=true;
    int    lines=0, row=-2, col=-1;
-   string result[][HISTORY_COLUMNS]; ArrayResize(result, 0);
+   string result[][HISTORY_COLUMNS]; ArrayResize(result, 0);   // tmp. Zwischenspeicher für ausgelesene Daten
 
-
-   // Daten zeilenweise auslesen
-   while (!FileIsEnding(handle)) {
+   // Daten feldweise einlesen und Zeilen erkennen
+   while (!FileIsEnding(hFile)) {
       newLine = false;
-
-      if (lineEnd) {             // Wenn im letzten Durchlauf das Zeilenende erreicht wurde,
-         newLine   = true;       // Flags auf Zeilenbeginn setzen.
-         lineEnd   = false;
-         comment   = false;
+      if (lineEnd) {                                           // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
+         newLine   = true;                                     // Flags auf Zeilenbeginn setzen.
          blankLine = false;
-         col = -1;               // Spaltenindex vor der ersten Spalte
+         lineEnd   = false;
+         col = -1;                                             // Spaltenindex vor der ersten Spalte (erste Spalte = 0)
       }
 
-      value = FileReadString(handle);
+      // nächstes Feld auslesen
+      value = FileReadString(hFile);
 
-      if (FileIsLineEnding(handle) || FileIsEnding(handle)) {
+      // auf Leerzeilen, Zeilen- und Dateiende prüfen
+      if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd = true;
-
          if (newLine) {
             if (StringLen(value) == 0) {
-               if (FileIsEnding(handle))     // Zeilenbeginn, Leervalue und Dateiende => keine Zeile (nichts), also Abbruch
+               if (FileIsEnding(hFile))                        // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
                   break;
-               // Zeilenbeginn, Leervalue und Zeilenende => Leerzeile
-               blankLine = true;
+               blankLine = true;                               // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
             }
          }
          lines++;
@@ -2184,21 +2176,14 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
       value = StringTrim(value);
 
       // Kommentarzeilen überspringen
-      if (newLine) {
-         if (StringGetChar(value, 0) == 35)  // char code 35: #
-            comment = true;
-      }
-      if (comment)
+      if (newLine) /*&&*/ if (StringGetChar(value, 0)==35)     // char(35) = #
          continue;
 
       // Zeilen- und Spaltenindex aktualisieren und Bereich überprüfen
       col++;
-      if (lineEnd) {
-         if (col < HISTORY_COLUMNS-1 || col > HISTORY_COLUMNS-1) {
-            Alert("GetAccountHistory(4)  data format error in file \"", filename, "\", column count in line ", lines, " is not ", HISTORY_COLUMNS);
-            error = ERR_SOME_FILE_ERROR;
-            break;
-         }
+      if (lineEnd) /*&&*/ if (col!=HISTORY_COLUMNS-1) {
+         error = catch("GetAccountHistory(4)   data format error in \""+ filename +"\", column count in line "+ lines +" is not "+ HISTORY_COLUMNS, ERR_RUNTIME_ERROR);
+         break;
       }
       if (newLine)
          row++;
@@ -2206,45 +2191,46 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
       // Headerinformationen in der ersten Datenzeile überprüfen und Headerzeile überspringen
       if (row == -1) {
          if (value != header[col]) {
-            Alert("GetAccountHistory(5)  data format error in file \"", filename, "\", unexpected column header \"", value, "\"");
-            error = ERR_SOME_FILE_ERROR;
+            error = catch("GetAccountHistory(5)   data format error in \""+ filename +"\", unexpected column header \""+ value +"\"", ERR_RUNTIME_ERROR);
             break;
          }
-         continue;
+         continue;   // jmp
       }
 
-      // Datenarray vergrößern und Rohdaten speichern (alle als String)
+      // Ergebnisarray vergrößern und Rohdaten speichern (als String)
       if (newLine)
          ArrayResize(result, row+1);
       result[row][col] = value;
    }
 
-   // END_OF_FILE Error zurücksetzen
-   error = GetLastError();
-   if (error != ERR_END_OF_FILE)
-      catch("GetAccountHistory(6)", error);
+   // Hier hat entweder ein Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder das Dateiende END_OF_FILE ausgelöst.
+   if (error == ERR_NO_ERROR) {
+      error = GetLastError();
+      if (error == ERR_END_OF_FILE) {
+         error = ERR_NO_ERROR;
+      }
+      else {
+         catch("GetAccountHistory(6)", error);
+      }
+   }
 
-   // Datei schließen
-   FileClose(handle);
-   Print("GetAccountHistory()  history file data rows: ", row+1, "   used time: ", GetTickCount()-tick, " ms");
+   // vor evt. Fehler-Rückkehr auf jeden Fall Datei schließen
+   FileClose(hFile);
+
+   if (error != ERR_NO_ERROR)    // ret
+      return(error);
 
 
    // Daten in Zielarray kopieren und cachen
-   if (ArrayRange(result, 0) == 0) {
-      ArrayResize(lpResults, 0);
-   }
-   else {
+   if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
       ArrayCopy(lpResults, result);
-      ArrayCopy(cache, result);
+
+      cache.account[0] = account;
+      ArrayResize(cache, 0); ArrayCopy(cache, result);
+      log("GetAccountHistory()   cached "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
-   cache.account[0] = account;
-   //Print("GetAccountHistory()  cached ", ArrayRange(cache, 0), " raw history entries for account "+ account);
 
-
-   error = GetLastError();
-   if (error != ERR_END_OF_FILE)
-      catch("GetAccountHistory(7)", error);
-   return(error);
+   return(catch("GetAccountHistory(7)"));
 }
 
 
@@ -2310,11 +2296,11 @@ double GetAverageSpread(string symbol) {
 
 
 /**
- * Schreibt die Balance-History eines Accounts in die angegebenen Zielarrays. Die Werte sind aufsteigend nach Zeitpunkt sortiert.
+ * Schreibt die Balance-History eines Accounts in die angegebenen Ergebnisarrays (aufsteigend nach Zeitpunkt sortiert).
  *
  * @param  int       account    - Account-Nummer
- * @param  datetime& lpTimes[]  - Zeiger auf Array für die Zeitpunkte der Balanceänderung
- * @param  double&   lpValues[] - Zeiger auf Array für die entsprechenden Balancewerte
+ * @param  datetime& lpTimes[]  - Zeiger auf Ergebnisarray für die Zeitpunkte der Balanceänderung
+ * @param  double&   lpValues[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
  *
  * @return int - Fehlerstatus
  */
@@ -2323,36 +2309,47 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    datetime cache.times[];
    double   cache.values[];
 
-   // Daten nach Möglichkeit aus dem Cache liefern
-   if (account == cache.account[0]) {
-      if (ArraySize(cache.times) > 0) {
-         ArrayCopy(lpTimes, cache.times);
-         ArrayCopy(lpValues, cache.values);
-         //Print("Delivering ", ArraySize(times), " cached balance entries for account "+ account);
-         return(catch("GetBalanceHistory(1)"));
-      }
+   ArrayResize(lpTimes,  0);
+   ArrayResize(lpValues, 0);
+
+   // Daten nach Möglichkeit aus dem Cache liefern       TODO: paralleles Cachen mehrerer Wertereihen ermöglichen
+   if (cache.account[0] == account) {
+      ArrayCopy(lpTimes , cache.times);
+      ArrayCopy(lpValues, cache.values);
+      log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" cached balance values for account "+ account);
+      return(catch("GetBalanceHistory(1)"));
    }
 
    // Cache-Miss, Balance-Daten aus Account-History auslesen
    string data[][HISTORY_COLUMNS]; ArrayResize(data, 0);
-   GetAccountHistory(account, data);
+   int error = GetAccountHistory(account, data);
+   if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2)", error));
+   if (error != ERR_NO_ERROR        ) return(catch("GetBalanceHistory(3)"));
 
-   ArrayResize(lpTimes,  0);
-   ArrayResize(lpValues, 0);
+   // Balancedatensätze einlesen und auswerten (History ist nach CloseTime sortiert)
+   datetime time, lastTime;
+   double   balance, lastBalance;
+   int n, size=ArrayRange(data, 0);
 
-   // Balancedatensätze auslesen (History ist nach CloseTime sortiert)
-   datetime time=0, lastTime=0;
-   double   balance=0.0, lastBalance=0.0;
-   int n=0, size=ArrayRange(data, 0);
+   if (size == 0)
+      return(catch("GetBalanceHistory(4)"));
 
    for (int i=0; i<size; i++) {
-      balance = StrToDouble(data[i][HC_BALANCE]);
+      balance = StrToDouble (data[i][HC_BALANCE       ]);
+      time    = StrToInteger(data[i][HC_CLOSETIMESTAMP]);
 
-      if (balance != lastBalance) {
-         time = StrToInteger(data[i][HC_CLOSETIMESTAMP]);
-
-         if (time == lastTime) {       // existieren mehrere Balanceänderungen zum selben Zeitpunkt,
-            lpValues[n-1] = balance;   // den vorherigen Balancewert mit dem aktuellen überschreiben
+      // der erste Datensatz wird immer geschrieben...
+      if (i == 0) {
+         ArrayResize(lpTimes,  n+1);
+         ArrayResize(lpValues, n+1);
+         lpTimes [n] = time;
+         lpValues[n] = balance;
+         n++;                                // n: Anzahl der existierenden Ergebnisdaten => ArraySize(lpTimes)
+      }
+      else if (balance != lastBalance) {
+         // ... alle weiteren nur, wenn die Balance sich geändert hat
+         if (time == lastTime) {             // Existieren mehrere Balanceänderungen zum selben Zeitpunkt,
+            lpValues[n-1] = balance;         // wird der letzte Wert nur mit dem aktuellen überschrieben.
          }
          else {
             ArrayResize(lpTimes,  n+1);
@@ -2362,24 +2359,17 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
             n++;
          }
       }
-
       lastTime    = time;
       lastBalance = balance;
    }
 
    // Daten cachen
-   if (ArraySize(lpTimes) == 0) {
-      ArrayResize(cache.times,  0);
-      ArrayResize(cache.values, 0);
-   }
-   else {
-      ArrayCopy(cache.times , lpTimes );
-      ArrayCopy(cache.values, lpValues);
-   }
    cache.account[0] = account;
-   //Print("Cached ", ArraySize(cache.times), " balance entries for account "+ account);
+   ArrayResize(cache.times,  0); ArrayCopy(cache.times,  lpTimes );
+   ArrayResize(cache.values, 0); ArrayCopy(cache.values, lpValues);
+   log("GetBalanceHistory()   cached "+ ArraySize(lpTimes) +" balance values for account "+ account);
 
-   return(catch("GetBalanceHistory(2)"));
+   return(catch("GetBalanceHistory(5)"));
 }
 
 
@@ -4526,10 +4516,32 @@ datetime GmtToServerTime(datetime gmtTime) {
 
 
 /**
- * Ermittelt den Balanceverlauf des angegebenen Accounts für die Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
+ * Berechnet den Balancewert eines Accounts am angegebenen Offset des aktuellen Charts und schreibt ihn in das Ergebnisarray.
+ *
+ * @param  int     account  - Account, für den der Wert berechnet werden soll
+ * @param  double& lpBuffer - Zeiger auf Ergebnisarray (kann Indikatorpuffer sein)
+ * @param  int     bar      - Barindex des zu berechnenden Wertes (Chart-Offset)
+ *
+ * @return int - Fehlerstatus
+ */
+int iBalance(int account, double& lpBuffer[], int bar) {
+   // TODO: iBalance(int account, double& lpBuffer, int bar) implementieren
+
+   // zur Zeit wird der Indikator hier noch komplett neuberechnet
+   if (iBalanceSeries(account, lpBuffer) == ERR_HISTORY_UPDATE) {
+      catch("iBalance(1)");
+      return(ERR_HISTORY_UPDATE);
+   }
+
+   return(catch("iBalance(2)"));
+}
+
+
+/**
+ * Berechnet den Balanceverlauf eines Accounts für alle Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
  * @param  int     account  - Account-Nummer
- * @param  double& lpBuffer - Zeiger auf ein Ziel-/Ergebnisarray (kann Indikatorpuffer sein)
+ * @param  double& lpBuffer - Zeiger auf Ergebnisarray (kann Indikatorpuffer sein)
  *
  * @return int - Fehlerstatus
  */
@@ -4542,22 +4554,29 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
    // Balance-History holen
    datetime times[];  ArrayResize(times , 0);
    double   values[]; ArrayResize(values, 0);
-   GetBalanceHistory(account, times, values);      // Ergebnis ist aufsteigend nach Zeitpunkt der Balanceänderung sortiert (times[0] = ältester Eintrag)
 
+   int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (times[0], values[0] sind älteste Werte)
+   if (error != ERR_NO_ERROR) {
+      catch("iBalanceSeries(1)");
+      return(error);
+   }
 
-   int bar, lastBar, z, noOfValues=ArraySize(values);
+   int bar, lastBar, historySize=ArraySize(values);
 
-   // Balancewerte der Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
-   for (int i=0; i < noOfValues; i++) {
+   // Balancewerte für Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
+   for (int i=0; i < historySize; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, 0, times[i]);      // TODO: auf ERR_HISTORY_UPDATE prüfen (return=EMPTY_VALUE)
-      if (bar == -1)                               // dieser und alle folgenden Werte sind zu neu für den Chart
+      bar = iBarShiftNext(NULL, 0, times[i]);
+      if (bar == EMPTY_VALUE)                               // ERR_HISTORY_UPDATE ?
+         return(stdlib_GetLastError());
+      if (bar == -1)                                        // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
-      // übersprungene Bars mit vorherigem Balancewert füllen
+      // Lücken mit vorherigem Balancewert füllen
       if (bar < lastBar-1) {
-         for (z=lastBar-1; z > bar; z--)
+         for (int z=lastBar-1; z > bar; z--) {
             lpBuffer[z] = lpBuffer[lastBar];
+         }
       }
 
       // aktuellen Balancewert eintragen
@@ -4565,12 +4584,12 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
       lastBar = bar;
    }
 
-   // Zielarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
+   // Ergebnisarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
    for (bar=lastBar-1; bar >= 0; bar--) {
       lpBuffer[bar] = lpBuffer[lastBar];
    }
 
-   return(catch("iBalanceSeries()"));
+   return(catch("iBalanceSeries(2)"));
 }
 
 

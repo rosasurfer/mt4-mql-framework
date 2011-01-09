@@ -1,5 +1,5 @@
 /**
- * UpdateRemoteAccountHistory.mq4
+ * UpdateRemoteAccountHistory
  *
  * Aktualisiert die entfernte Server-Accounthistory.
  */
@@ -34,23 +34,25 @@ int start() {
    string   comments       []; ArrayResize(comments,        orders);
 
    for (int n, i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE nur rein theoretisch: während des Auslesens ändert sich die Anzahl der Datensätze
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE ist rein theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
          break;
+
       int type = OrderType();                               // gecancelte Orders überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
          continue;
+
       tickets        [n] = OrderTicket();
       types          [n] = type;
       symbols        [n] = OrderSymbol();
          if (symbols[n] == "") {
-            units    [n] = 0;
+            units[n]= 0;
          }
          else {
             int lotSize = MarketInfo(symbols[n], MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) return(catch("start(1)  Please add symbol \""+ symbols[n] +"\" to the market watch window !", error));
             if (error != ERR_NO_ERROR      ) return(catch("start(2)", error));
-            units    [n] = OrderLots() * lotSize;
+            units[n] = OrderLots() * lotSize;
          }
       openTimes      [n] = OrderOpenTime();
       closeTimes     [n] = OrderCloseTime();
@@ -63,7 +65,7 @@ int start() {
       swaps          [n] = OrderSwap();
       profits        [n] = OrderProfit();
       magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = StringReplace(StringReplace(StringTrim(OrderComment()), "\n", " "), "\t", " ");
+      comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
       n++;
    }
 
