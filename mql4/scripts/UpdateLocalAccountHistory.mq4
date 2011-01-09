@@ -1,7 +1,7 @@
 /**
  * UpdateLocalAccountHistory
  *
- * Aktualisiert die lokale, dateibasierte Accounthistory.
+ * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Credit-Lines werden nicht gespeichert.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>

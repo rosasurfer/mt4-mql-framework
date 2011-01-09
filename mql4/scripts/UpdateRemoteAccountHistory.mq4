@@ -33,10 +33,11 @@ int start() {
    int      magicNumbers   []; ArrayResize(magicNumbers,    orders);
    string   comments       []; ArrayResize(comments,        orders);
 
-   for (int n, i=0; i < orders; i++) {
+   int n;
+
+   for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE ist rein theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
          break;
-
       int type = OrderType();                               // gecancelte Orders überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
          continue;
@@ -44,9 +45,8 @@ int start() {
       tickets        [n] = OrderTicket();
       types          [n] = type;
       symbols        [n] = OrderSymbol();
-         if (symbols[n] == "") {
-            units[n]= 0;
-         }
+         if (symbols[n] == "")
+            units [n]= 0;
          else {
             int lotSize = MarketInfo(symbols[n], MODE_LOTSIZE);
             int error = GetLastError();
@@ -93,7 +93,7 @@ int start() {
 
    // (2) CSV-Datei schreiben
    string filename = "tmp_accounthistory_"+ AccountNumber() +".csv";
-   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');     // Spaltentrennzeichen: Tab
+   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("start(3)  FileOpen()"));
 
@@ -118,30 +118,32 @@ int start() {
    }
 
    // (2.2) Daten
-   if (FileWrite(hFile, "[Data]\n#Ticket","OpenTime","OpenTimestamp","TypeStr","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+   if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(7)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
-      string strOpenTime    = TimeToStr(openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      string strType        = OperationTypeToStr(types[i]);
-      string strOpenPrice   = ""; if (openPrices [i] > 0) strOpenPrice  = NumberToStr(openPrices [i], ".2+");
-      string strStopLoss    = ""; if (stopLosses [i] > 0) strStopLoss   = NumberToStr(stopLosses [i], ".2+");
-      string strTakeProfit  = ""; if (takeProfits[i] > 0) strTakeProfit = NumberToStr(takeProfits[i], ".2+");
-      string strExpirationTime="", strExpirationTimestamp="";
-      if (expirationTimes[i] > 0) {
-         strExpirationTime      = TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-         strExpirationTimestamp = expirationTimes[i];
-      }
-      string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      string strClosePrice  = ""; if (closePrices[i] > 0) strClosePrice = NumberToStr(closePrices[i], ".2+");
-      string strCommission  = DoubleToStr(commissions[i], 2);
-      string strSwap        = DoubleToStr(swaps      [i], 2);
-      string strProfit      = DoubleToStr(profits    [i], 2);
-      string strMagicNumber = ""; if (magicNumbers[i] != 0) strMagicNumber = magicNumbers[i];
+      string strType         = OperationTypeToStr(types[i]);
 
-      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strExpirationTime,strExpirationTimestamp,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
+      string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strCloseTime    = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+
+      string strOpenPrice    = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
+      string strStopLoss     = ifString(stopLosses [i]==0, "", NumberToStr(stopLosses [i], ".2+"));
+      string strTakeProfit   = ifString(takeProfits[i]==0, "", NumberToStr(takeProfits[i], ".2+"));
+      string strClosePrice   = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
+
+      string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      string strExpTimestamp = ifString(expirationTimes[i]==0, "", expirationTimes[i]);
+
+      string strCommission   = DoubleToStr(commissions[i], 2);
+      string strSwap         = DoubleToStr(swaps      [i], 2);
+      string strProfit       = DoubleToStr(profits    [i], 2);
+
+      string strMagicNumber  = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
+
+      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strExpTime,strExpTimestamp,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
          return(catch("start(8)  FileWrite()", error));
@@ -156,7 +158,7 @@ int start() {
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
-   string response = UploadHistoryFile(filename);
+   string response = UploadDataFile(filename);
 
 
    // (4) Antwort auswerten und Rückmeldung an den User geben
@@ -172,20 +174,18 @@ int start() {
  *
  * @return int - Fehlerstatus
  */
-int UploadHistoryFile(string filename) {
-   string url          = "\"http://sub.domain.tld/uploadAccountHistory.php\"";
+int UploadDataFile(string filename) {
+   string url          = StringConcatenate("\"", "http://sub.domain.tld/uploadAccountHistory.php", "\"");
    string targetDir    = TerminalPath() +"\\experts\\files";
    string dataFile     = "\""+ targetDir +"\\"+ filename +"\"";
    string responseFile = "\""+ targetDir +"\\"+ filename +".response\"";
    string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
-   string lpCmdLine    = "wget.exe "+ url +" --post-file="+ dataFile +" -O "+ responseFile +" -o "+ logFile;
-
-   //Print("UploadHistoryFile()  len(lpCmdLine)="+ StringLen(lpCmdLine) +": "+ lpCmdLine);
+   string lpCmdLine    = "wget.exe "+ url +" --post-file="+ dataFile +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
 
    int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("UploadHistoryFile(1)  execution of \'"+ lpCmdLine +"\' failed with error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("UploadDataFile(1)  execution of \'"+ lpCmdLine +"\' failed with error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
-   return(catch("UploadHistoryFile(2)"));
+   return(catch("UploadDataFile(2)"));
 }
 
