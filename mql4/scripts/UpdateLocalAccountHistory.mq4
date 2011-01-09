@@ -52,7 +52,7 @@ int start() {
    if (orders == 0) {
       if (lastBalance != AccountBalance())
          return(catch("start(3)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
-      MessageBox("History is up to date.", "Script", MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
       return(catch("start(4)"));
    }
 
@@ -266,7 +266,7 @@ int start() {
    }
    FileClose(hFile);
 
-   MessageBox("History successfully updated.", "Script", MB_ICONINFORMATION|MB_OK);
+   MessageBox("History successfully updated.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
    return(catch("start(15)"));
 }
 
