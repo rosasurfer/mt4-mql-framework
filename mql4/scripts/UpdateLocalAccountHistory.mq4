@@ -96,8 +96,8 @@ int start() {
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
          return(catch("start(5)  OrderSelect(ticket="+ ticket +")"));
 
-      int type = OrderType();                                  // gecancelte Orders überspringen
-      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
+      int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen
+      if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
 
       tickets        [n] = ticket;
