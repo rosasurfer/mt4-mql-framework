@@ -1,7 +1,8 @@
 /**
  * UpdateRemoteAccountHistory
  *
- * Aktualisiert die entfernte Server-Accounthistory.
+ * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten (unsortiert) übertragen.
+ * Die Auswertung und Zuordnung erfolgt auf dem Server
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -46,11 +47,12 @@ int start() {
       types          [n] = type;
       symbols        [n] = OrderSymbol();
          if (symbols[n] == "")
-            units [n]= 0;
-         else {
-            int lotSize = MarketInfo(symbols[n], MODE_LOTSIZE);
+            units[n]= 0;
+         else {                                             // broker-spezifische Symbole normalisieren
+            symbols[n]  = FindNormalizedSymbol(OrderSymbol(), OrderSymbol());
+            int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
-            if (error == ERR_UNKNOWN_SYMBOL) return(catch("start(1)  Please add symbol \""+ symbols[n] +"\" to the market watch window !", error));
+            if (error == ERR_UNKNOWN_SYMBOL) return(catch("start(1)  Please add \""+ OrderSymbol() +"\" to the market watch window !", error));
             if (error != ERR_NO_ERROR      ) return(catch("start(2)", error));
             units[n] = OrderLots() * lotSize;
          }

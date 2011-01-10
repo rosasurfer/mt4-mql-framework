@@ -42,7 +42,7 @@ double BollingerBands.MA.Deviation  = 0;
 
 
 // sonstige Variablen
-string instrument, instrument.Name, instrument.Section;
+string symbol, symbolName, symbolSection;
 
 double RateGrid.Limits[2];                         // { UPPER_VALUE, LOWER_VALUE }
 double Band.Limits[3];                             // { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
@@ -77,13 +77,9 @@ int init() {
 
 
    // Konfiguration auswerten
-   instrument = GetInstrument(Symbol(), "");
-   if (instrument == "") {
-      init_error = catch("init(1)   instrument id not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
-      return(init_error);
-   }
-   instrument.Name    = GetInstrumentName(instrument, instrument);
-   instrument.Section = StringConcatenate("EventTracker.", instrument);
+   symbol        = FindNormalizedSymbol(Symbol(), Symbol());
+   symbolName    = FindSymbolName(symbol, symbol);
+   symbolSection = StringConcatenate("EventTracker.", symbol);
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
@@ -103,11 +99,11 @@ int init() {
       Track.Positions = true;
 
    // Kursänderungen
-   Track.RateChanges = GetConfigBool(instrument.Section, "RateChanges", Track.RateChanges);
+   Track.RateChanges = GetConfigBool(symbolSection, "RateChanges", Track.RateChanges);
    if (Track.RateChanges) {
-      RateGrid.Size = GetConfigInt(instrument.Section, "RateChanges.Gridsize", RateGrid.Size);
+      RateGrid.Size = GetConfigInt(symbolSection, "RateChanges.Gridsize", RateGrid.Size);
       if (RateGrid.Size < 1) {
-         catch("init(3)  Invalid input parameter RateGrid.Size: "+ GetConfigString(instrument.Section, "RateChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(3)  Invalid input parameter RateGrid.Size: "+ GetConfigString(symbolSection, "RateChanges.Gridsize", ""), ERR_INVALID_INPUT_PARAMVALUE);
          Track.RateChanges = false;
       }
       gridDigits = Digits - ifInt(Digits==3 || Digits==5, 1, 0);
@@ -115,23 +111,23 @@ int init() {
    }
 
    // Pivot-Level
-   Track.PivotLevels = GetConfigBool(instrument.Section, "PivotLevels", Track.PivotLevels);
+   Track.PivotLevels = GetConfigBool(symbolSection, "PivotLevels", Track.PivotLevels);
    if (Track.PivotLevels)
-      PivotLevels.PreviousDayRange = GetConfigBool(instrument.Section, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
+      PivotLevels.PreviousDayRange = GetConfigBool(symbolSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
 
    // Bollinger-Bänder
-   Track.BollingerBands = GetConfigBool(instrument.Section, "BollingerBands", Track.BollingerBands);
+   Track.BollingerBands = GetConfigBool(symbolSection, "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
-      BollingerBands.Periods = GetConfigInt("BollingerBands."+ instrument, "Slow.Periods", BollingerBands.Periods);
+      BollingerBands.Periods = GetConfigInt("BollingerBands."+ symbol, "Slow.Periods", BollingerBands.Periods);
       if (BollingerBands.Periods == 0)
          BollingerBands.Periods = GetConfigInt("BollingerBands", "Slow.Periods", BollingerBands.Periods);
       if (BollingerBands.Periods < 2) {
-         catch("init(4)  Invalid input parameter Slow.Periods: "+ GetConfigString("BollingerBands."+ instrument, "Slow.Periods", GetConfigString("BollingerBands", "Slow.Periods", "")), ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(4)  Invalid input parameter Slow.Periods: "+ GetConfigString("BollingerBands."+ symbol, "Slow.Periods", GetConfigString("BollingerBands", "Slow.Periods", "")), ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
-      string strValue = GetConfigString("BollingerBands."+ instrument, "Slow.Timeframe", "");
+      string strValue = GetConfigString("BollingerBands."+ symbol, "Slow.Timeframe", "");
       if (strValue == "")
          strValue = GetConfigString("BollingerBands", "Slow.Timeframe", strValue);
       BollingerBands.Timeframe = GetPeriod(strValue);
@@ -141,7 +137,7 @@ int init() {
       }
    }
    if (Track.BollingerBands) {
-      BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands."+ instrument, "Deviation.EMA", BollingerBands.MA.Deviation);
+      BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands."+ symbol, "Deviation.EMA", BollingerBands.MA.Deviation);
       if (CompareDoubles(BollingerBands.MA.Deviation, 0))
          BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
       if (BollingerBands.MA.Deviation < 0 || CompareDoubles(BollingerBands.MA.Deviation, 0)) {
@@ -647,7 +643,7 @@ int onPositionOpen(int tickets[]) {
       string type    = OperationTypeToStr(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
       string price   = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", instrument.Name, " @ ", price);
+      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " @ ", price);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -694,7 +690,7 @@ int onPositionClose(int tickets[]) {
       string lots       = NumberToStr(OrderLots(), ".+");
       string openPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice = NumberToStr(OrderClosePrice(), priceFormat);
-      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", instrument.Name, " @ ", openPrice, " -> ", closePrice);
+      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", symbolName, " @ ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -754,7 +750,7 @@ int CheckRateGrid() {
 
    // Limite überprüfen
    if (Ask > RateGrid.Limits[1]) {
-      string message = instrument.Name +" => "+ DoubleToStr(RateGrid.Limits[1], gridDigits);
+      string message = symbolName +" => "+ DoubleToStr(RateGrid.Limits[1], gridDigits);
       string ask     = NumberToStr(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
 
       // SMS verschicken
@@ -769,8 +765,8 @@ int CheckRateGrid() {
          PlaySound(Sound.File.Up);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastSignal", RateGrid.Limits[1]);
-      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
+      GlobalVariableSet("EventTracker."+ symbol +".RateGrid.LastSignal", RateGrid.Limits[1]);
+      GlobalVariableSet("EventTracker."+ symbol +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Ask > RateGrid.Limits[1]) {
@@ -782,7 +778,7 @@ int CheckRateGrid() {
    }
 
    else if (Bid < RateGrid.Limits[0]) {
-      message    = instrument.Name +" <= "+ DoubleToStr(RateGrid.Limits[0], gridDigits);
+      message    = symbolName +" <= "+ DoubleToStr(RateGrid.Limits[0], gridDigits);
       string bid = NumberToStr(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
 
       // SMS verschicken
@@ -797,8 +793,8 @@ int CheckRateGrid() {
          PlaySound(Sound.File.Down);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastSignal", RateGrid.Limits[0]);
-      GlobalVariableSet("EventTracker."+ instrument +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
+      GlobalVariableSet("EventTracker."+ symbol +".RateGrid.LastSignal", RateGrid.Limits[0]);
+      GlobalVariableSet("EventTracker."+ symbol +".RateGrid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Bid < RateGrid.Limits[0]) {
@@ -832,8 +828,8 @@ int InitializeRateGrid() {
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
 
    // wenn vorhanden, letztes Signal auslesen
-   string varLastSignalValue = "EventTracker."+ instrument +".RateGrid.LastSignal",
-          varLastSignalTime  = "EventTracker."+ instrument +".RateGrid.LastTime";
+   string varLastSignalValue = "EventTracker."+ symbol +".RateGrid.LastSignal",
+          varLastSignalTime  = "EventTracker."+ symbol +".RateGrid.LastTime";
 
    bool     lastSignal;
    double   lastSignalValue = GlobalVariableGet(varLastSignalValue);

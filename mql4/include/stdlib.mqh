@@ -163,9 +163,10 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
-   string   GetInstrument(string symbol, string defaultValue);
-   string   GetInstrumentLongName(string instrument, string defaultName);
-   string   GetInstrumentName(string instrument, string defaultName);
+   string   NormalizeSymbol(string symbol);
+   string   FindNormalizedSymbol(string symbol, string defaultValue);
+   string   FindSymbolName(string symbol, string defaultName);
+   string   FindSymbolLongName(string symbol, string defaultName);
    int      GetMovingAverageMethod(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);

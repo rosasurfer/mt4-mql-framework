@@ -61,14 +61,13 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Gibt die Instrument-ID eines Symbols, oder den angegebenen Defaultwert, wenn keine Instrument-ID für dieses Symbol existiert.
+ * Gibt für ein broker-spezifisches das allgemeingültige Symbol zurück.
  *
- * @param  string symbol       - Symbol
- * @param  string defaultValue - Default-Rückgabewert
+ * @param  string symbol - broker-spezifisches Symbol
  *
- * @return string
+ * @return string - allgemeingültiges Symbol oder "", wenn kein allgemeingültiges Symbol gefunden wurde
  */
-string GetInstrument(string symbol, string defaultValue="") {
+string NormalizeSymbol(string symbol) {
    symbol = StringToUpper(symbol);
 
    if      (StringEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
@@ -325,117 +324,135 @@ string GetInstrument(string symbol, string defaultValue="") {
    if (symbol == "XAUUSD"   ) return("XAUUSD"  );
    if (symbol == "XAUUSDX"  ) return("XAUUSD"  );
 
-   return(defaultValue);
+   log("NormalizeSymbol()  unknown symbol \""+ symbol +"\"");
+   return("");
 }
 
 
 /**
- * Gibt den Kurznamen eines Instruments zurück, oder den angegebenen Defaultwert, wenn kein Kurzname für dieses Instrument existiert.
+ * Gibt die allgemeingültige Form eines Symbols zurück oder den angegebenen Defaultwert, wenn keine allgemeingültige dieses Symbols Form gefunden wurde.
  *
- * @param  string instrument  - Instrumentbezeichner
+ * @param  string symbol       - broker-spezifisches Symbol
+ * @param  string defaultValue - Default-Rückgabewert
+ *
+ * @return string - allgemeingültiger oder Default-Rückgabewert
+ */
+string FindNormalizedSymbol(string symbol, string defaultValue="") {
+   string normalized = NormalizeSymbol(symbol);
+
+   if (normalized == "")
+      return(defaultValue);
+   return(normalized);
+}
+
+
+/**
+ * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Defaultwert, wenn kein Kurzname für dieses Symbol gefunden wurde.
+ *
+ * @param  string symbol      - Symbol
  * @param  string defaultName - Default-Rückgabewert
  *
  * @return string
  */
-string GetInstrumentName(string instrument, string defaultName="") {
-   instrument = StringToUpper(instrument);
+string FindSymbolName(string symbol, string defaultName="") {
+   symbol = StringToUpper(symbol);
 
-   if (instrument == "#DAX.X"  ) return("DAX"      );
-   if (instrument == "#DJI.X"  ) return("DJIA"     );
-   if (instrument == "#DJT.X"  ) return("DJTA"     );
-   if (instrument == "#N100.X" ) return("N100"     );
-   if (instrument == "#NCOMP.X") return("NCOMP"    );
-   if (instrument == "#NIK.X"  ) return("Nikkei"   );
-   if (instrument == "#SPX.X"  ) return("SP500"    );
-   if (instrument == "AUDCAD"  ) return("AUD/CAD"  );
-   if (instrument == "AUDCHF"  ) return("AUD/CHF"  );
-   if (instrument == "AUDJPY"  ) return("AUD/JPY"  );
-   if (instrument == "AUDLFX"  ) return("AUD-Index");
-   if (instrument == "AUDNZD"  ) return("AUD/NZD"  );
-   if (instrument == "AUDUSD"  ) return("AUD/USD"  );
-   if (instrument == "CADCHF"  ) return("CAD/CHF"  );
-   if (instrument == "CADJPY"  ) return("CAD/JPY"  );
-   if (instrument == "CADLFX"  ) return("CAD-Index");
-   if (instrument == "CHFJPY"  ) return("CHF/JPY"  );
-   if (instrument == "CHFLFX"  ) return("CHF-Index");
-   if (instrument == "EURAUD"  ) return("EUR/AUD"  );
-   if (instrument == "EURCAD"  ) return("EUR/CAD"  );
-   if (instrument == "EURCHF"  ) return("EUR/CHF"  );
-   if (instrument == "EURDKK"  ) return("EUR/DKK"  );
-   if (instrument == "EURGBP"  ) return("EUR/GBP"  );
-   if (instrument == "EURJPY"  ) return("EUR/JPY"  );
-   if (instrument == "EURLFX"  ) return("EUR-Index");
-   if (instrument == "EURNOK"  ) return("EUR/NOK"  );
-   if (instrument == "EURNZD"  ) return("EUR/NZD"  );
-   if (instrument == "EURRUR"  ) return("EUR/RUR"  );
-   if (instrument == "EURSEK"  ) return("EUR/SEK"  );
-   if (instrument == "EURUSD"  ) return("EUR/USD"  );
-   if (instrument == "EURX"    ) return("EUR-Index");
-   if (instrument == "GBPAUD"  ) return("GBP/AUD"  );
-   if (instrument == "GBPCAD"  ) return("GBP/CAD"  );
-   if (instrument == "GBPCHF"  ) return("GBP/CHF"  );
-   if (instrument == "GBPJPY"  ) return("GBP/JPY"  );
-   if (instrument == "GBPLFX"  ) return("GBP-Index");
-   if (instrument == "GBPNZD"  ) return("GBP/NZD"  );
-   if (instrument == "GBPRUR"  ) return("GBP/RUR"  );
-   if (instrument == "GBPUSD"  ) return("GBP/USD"  );
-   if (instrument == "JPYLFX"  ) return("JPY-Index");
-   if (instrument == "NZDCAD"  ) return("NZD/CAD"  );
-   if (instrument == "NZDCHF"  ) return("NZD/CHF"  );
-   if (instrument == "NZDJPY"  ) return("NZD/JPY"  );
-   if (instrument == "NZDLFX"  ) return("NZD-Index");
-   if (instrument == "NZDUSD"  ) return("NZD/USD"  );
-   if (instrument == "SGDJPY"  ) return("SGD/JPY"  );
-   if (instrument == "USDCAD"  ) return("USD/CAD"  );
-   if (instrument == "USDCHF"  ) return("USD/CHF"  );
-   if (instrument == "USDCZK"  ) return("USD/CZK"  );
-   if (instrument == "USDDKK"  ) return("USD/DKK"  );
-   if (instrument == "USDHKD"  ) return("USD/HKD"  );
-   if (instrument == "USDHUF"  ) return("USD/HUF"  );
-   if (instrument == "USDJPY"  ) return("USD/JPY"  );
-   if (instrument == "USDLFX"  ) return("USD-Index");
-   if (instrument == "USDMXN"  ) return("USD/MXN"  );
-   if (instrument == "USDNOK"  ) return("USD/NOK"  );
-   if (instrument == "USDPLN"  ) return("USD/PLN"  );
-   if (instrument == "USDRUR"  ) return("USD/RUR"  );
-   if (instrument == "USDSEK"  ) return("USD/SEK"  );
-   if (instrument == "USDSGD"  ) return("USD/SGD"  );
-   if (instrument == "USDX"    ) return("USD-Index");
-   if (instrument == "USDZAR"  ) return("USD/ZAR"  );
-   if (instrument == "XAGUSD"  ) return("Silver"   );
-   if (instrument == "XAUUSD"  ) return("Gold"     );
+   if (symbol == "#DAX.X"  ) return("DAX"      );
+   if (symbol == "#DJI.X"  ) return("DJIA"     );
+   if (symbol == "#DJT.X"  ) return("DJTA"     );
+   if (symbol == "#N100.X" ) return("N100"     );
+   if (symbol == "#NCOMP.X") return("NCOMP"    );
+   if (symbol == "#NIK.X"  ) return("Nikkei"   );
+   if (symbol == "#SPX.X"  ) return("SP500"    );
+   if (symbol == "AUDCAD"  ) return("AUD/CAD"  );
+   if (symbol == "AUDCHF"  ) return("AUD/CHF"  );
+   if (symbol == "AUDJPY"  ) return("AUD/JPY"  );
+   if (symbol == "AUDLFX"  ) return("AUD-Index");
+   if (symbol == "AUDNZD"  ) return("AUD/NZD"  );
+   if (symbol == "AUDUSD"  ) return("AUD/USD"  );
+   if (symbol == "CADCHF"  ) return("CAD/CHF"  );
+   if (symbol == "CADJPY"  ) return("CAD/JPY"  );
+   if (symbol == "CADLFX"  ) return("CAD-Index");
+   if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
+   if (symbol == "CHFLFX"  ) return("CHF-Index");
+   if (symbol == "EURAUD"  ) return("EUR/AUD"  );
+   if (symbol == "EURCAD"  ) return("EUR/CAD"  );
+   if (symbol == "EURCHF"  ) return("EUR/CHF"  );
+   if (symbol == "EURDKK"  ) return("EUR/DKK"  );
+   if (symbol == "EURGBP"  ) return("EUR/GBP"  );
+   if (symbol == "EURJPY"  ) return("EUR/JPY"  );
+   if (symbol == "EURLFX"  ) return("EUR-Index");
+   if (symbol == "EURNOK"  ) return("EUR/NOK"  );
+   if (symbol == "EURNZD"  ) return("EUR/NZD"  );
+   if (symbol == "EURRUR"  ) return("EUR/RUR"  );
+   if (symbol == "EURSEK"  ) return("EUR/SEK"  );
+   if (symbol == "EURUSD"  ) return("EUR/USD"  );
+   if (symbol == "EURX"    ) return("EUR-Index");
+   if (symbol == "GBPAUD"  ) return("GBP/AUD"  );
+   if (symbol == "GBPCAD"  ) return("GBP/CAD"  );
+   if (symbol == "GBPCHF"  ) return("GBP/CHF"  );
+   if (symbol == "GBPJPY"  ) return("GBP/JPY"  );
+   if (symbol == "GBPLFX"  ) return("GBP-Index");
+   if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
+   if (symbol == "GBPRUR"  ) return("GBP/RUR"  );
+   if (symbol == "GBPUSD"  ) return("GBP/USD"  );
+   if (symbol == "JPYLFX"  ) return("JPY-Index");
+   if (symbol == "NZDCAD"  ) return("NZD/CAD"  );
+   if (symbol == "NZDCHF"  ) return("NZD/CHF"  );
+   if (symbol == "NZDJPY"  ) return("NZD/JPY"  );
+   if (symbol == "NZDLFX"  ) return("NZD-Index");
+   if (symbol == "NZDUSD"  ) return("NZD/USD"  );
+   if (symbol == "SGDJPY"  ) return("SGD/JPY"  );
+   if (symbol == "USDCAD"  ) return("USD/CAD"  );
+   if (symbol == "USDCHF"  ) return("USD/CHF"  );
+   if (symbol == "USDCZK"  ) return("USD/CZK"  );
+   if (symbol == "USDDKK"  ) return("USD/DKK"  );
+   if (symbol == "USDHKD"  ) return("USD/HKD"  );
+   if (symbol == "USDHUF"  ) return("USD/HUF"  );
+   if (symbol == "USDJPY"  ) return("USD/JPY"  );
+   if (symbol == "USDLFX"  ) return("USD-Index");
+   if (symbol == "USDMXN"  ) return("USD/MXN"  );
+   if (symbol == "USDNOK"  ) return("USD/NOK"  );
+   if (symbol == "USDPLN"  ) return("USD/PLN"  );
+   if (symbol == "USDRUR"  ) return("USD/RUR"  );
+   if (symbol == "USDSEK"  ) return("USD/SEK"  );
+   if (symbol == "USDSGD"  ) return("USD/SGD"  );
+   if (symbol == "USDX"    ) return("USD-Index");
+   if (symbol == "USDZAR"  ) return("USD/ZAR"  );
+   if (symbol == "XAGUSD"  ) return("Silver"   );
+   if (symbol == "XAUUSD"  ) return("Gold"     );
 
    return(defaultName);
 }
 
 
 /**
- * Gibt den Langnamen eines Instruments zurück, oder den angegebenen Defaultwert, wenn kein Langname für dieses Instrument existiert.
+ * Gibt den Langnamen eines Symbols zurück oder den angegebenen Defaultwert, wenn kein Langname für dieses Symbol gefunden wurde.
  *
- * @param  string instrument  - Instrumentbezeichner
+ * @param  string symbol      - Symbol
  * @param  string defaultName - Default-Rückgabewert
  *
  * @return string
  */
-string GetInstrumentLongName(string instrument, string defaultName="") {
-   instrument = StringToUpper(instrument);
+string FindSymbolLongName(string symbol, string defaultName="") {
+   symbol = StringToUpper(symbol);
 
-   if (instrument == "#DJI.X"  ) return("Dow Jones Industrial"    );
-   if (instrument == "#DJT.X"  ) return("Dow Jones Transportation");
-   if (instrument == "#N100.X" ) return("Nasdaq 100"              );
-   if (instrument == "#NCOMP.X") return("Nasdaq Composite"        );
-   if (instrument == "#NIK.X"  ) return("Nikkei 225"              );
-   if (instrument == "#SPX.X"  ) return("S&P 500"                 );
-   if (instrument == "AUDLFX"  ) return("AUD-Index © LiteForex"   );
-   if (instrument == "CADLFX"  ) return("CAD-Index © LiteForex"   );
-   if (instrument == "CHFLFX"  ) return("CHF-Index © LiteForex"   );
-   if (instrument == "EURLFX"  ) return("EUR-Index © LiteForex"   );
-   if (instrument == "EURX"    ) return("EUR-Index (Eurex)"       );
-   if (instrument == "GBPLFX"  ) return("GBP-Index © LiteForex"   );
-   if (instrument == "JPYLFX"  ) return("1/JPY-Index © LiteForex" );
-   if (instrument == "NZDLFX"  ) return("NZD-Index © LiteForex"   );
-   if (instrument == "USDLFX"  ) return("USD-Index © LiteForex"   );
-   if (instrument == "USDX"    ) return("USD-Index (CME)"         );
+   if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
+   if (symbol == "#DJT.X"  ) return("Dow Jones Transportation");
+   if (symbol == "#N100.X" ) return("Nasdaq 100"              );
+   if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
+   if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
+   if (symbol == "#SPX.X"  ) return("S&P 500"                 );
+   if (symbol == "AUDLFX"  ) return("AUD-Index © LiteForex"   );
+   if (symbol == "CADLFX"  ) return("CAD-Index © LiteForex"   );
+   if (symbol == "CHFLFX"  ) return("CHF-Index © LiteForex"   );
+   if (symbol == "EURLFX"  ) return("EUR-Index © LiteForex"   );
+   if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
+   if (symbol == "GBPLFX"  ) return("GBP-Index © LiteForex"   );
+   if (symbol == "JPYLFX"  ) return("1/JPY-Index © LiteForex" );
+   if (symbol == "NZDLFX"  ) return("NZD-Index © LiteForex"   );
+   if (symbol == "USDLFX"  ) return("USD-Index © LiteForex"   );
+   if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    return(defaultName);
 }

@@ -52,7 +52,7 @@ int init() {
 
 
    // Konfiguration auswerten
-   lastH1Close = StringIContains(","+StringTrim(Last.H1.Close.Symbols)+",", ","+GetInstrument(Symbol(), Symbol())+",");
+   lastH1Close = StringIContains(","+ StringTrim(Last.H1.Close.Symbols) +",", ","+ FindNormalizedSymbol(Symbol(), Symbol()) +",");
 
 
    // Label definieren und erzeugen
@@ -150,14 +150,8 @@ int CreateLabels() {
       RegisterChartObject(instrumentLabel, labels);
    }
    else GetLastError();
-   string instrument = GetInstrument(Symbol(), "");
-   if (instrument == "") {
-      log("CreateLabels()   instrument id not found for symbol \""+ Symbol() +"\"", ERR_RUNTIME_ERROR);
-      instrument = Symbol();
-   }
-   string name = GetInstrumentLongName(instrument, "");
-   if (name == "")
-      name = GetInstrumentName(instrument, instrument);
+   string symbol = FindNormalizedSymbol(Symbol(), Symbol());
+   string name   = FindSymbolLongName(symbol, FindSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
