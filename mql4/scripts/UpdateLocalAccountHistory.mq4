@@ -1,7 +1,7 @@
 /**
  * UpdateLocalAccountHistory
  *
- * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Credit-Lines werden nicht gespeichert.
+ * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Credits werden nicht gespeichert.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -188,6 +188,8 @@ int start() {
       if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
          continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
+      if (types[i] == OP_CREDIT)
+         grossProfits[i] = 0;                                              // Credits ignorieren (falls sie doch in die History mit übernommen werden)
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
