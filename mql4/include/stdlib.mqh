@@ -189,10 +189,13 @@
    string   ErrorToStr(int error);
    string   ErrorDescription(int error);
    string   EventToStr(int event);
+   string   IntToHexStr(int integer);
+   string   IntegerToHexString(int integer);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
    string   PeriodToStr(int period);
    string   PeriodFlagToStr(int flag);
+   string   StructToStr(int struct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitReasonToStr(int reason);
    string   WindowsErrorToStr(int error);
@@ -205,6 +208,5 @@
    // ----------------------------------------------------------------------------------
    int      RGB(int red, int green, int blue);
    string   DoubleToStrMorePrecision(double number, int precision);
-   string   IntegerToHexString(int integer);
 
 #import

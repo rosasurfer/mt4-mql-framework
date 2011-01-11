@@ -1,5 +1,26 @@
- /**
+/**
  * stdlib.mq4
+ *
+ *
+ * Datentypen und Speichergrößen in C, Win32-API (16-bit word size) und MQL:
+ * ========================================================================
+ *
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * |         |         |        |        |  1 bit |                 |                   0x1 |                        0 - 1 |                            0-1 |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                      0 - 255 |                          0-255 |                |      BYTE,CHAR      |                |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |                   0 - 65.535 |                       0-65.535 |     short      |   SHORT,WORD,WCHAR  |                |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |             -2.147.483.648 - |              0 - 4.294.967.295 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
+ * |         |         |        |        |        |                 |                       |              2.147.483.647   |                                |                |    WPARAM,LPARAM    | color,datetime |
+ * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF | -9.223.372.036.854.775.808 - | 0 - 18.446.744.073.709.551.616 |     double     |  LONGLONG,DWORDLONG |  double,string |
+ * |         |         |        |        |        |                 |                       |  9.223.372.036.854.775.807   |                                |                |                     |                |
+ * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
 #property library
 
@@ -57,6 +78,27 @@ int stdlib_GetLastError() {
  */
 int stdlib_PeekLastError() {
    return(last_error);
+}
+
+
+/**
+ * Gibt den Inhalt einer Windows Structure als hexadezimalen String zurück.
+ *
+ * @param  int struct[]
+ *
+ * @return string
+ */
+string StructToStr(int struct[]) {
+   string result = "";
+   int size = ArraySize(struct);
+
+   for (int i=0; i < size; i++) {
+      result = StringConcatenate(result, " ", IntToHexStr(struct[i]));
+   }
+
+   if (size == 0)
+      return("");
+   return(StringSubstr(result, 1));
 }
 
 
@@ -500,14 +542,14 @@ string BooleanToStr(bool value) {
 
 
 /**
- * Gibt die aktuelle Zeit in GMT (Greenwich Mean Time) zurück (entspricht UTC).
+ * Gibt die aktuelle Zeit in GMT zurück (entspricht UTC).
  *
- * @return datetime
+ * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
-   int SYSTEMTIME[4];
+   int SYSTEMTIME[4];         // 4 * 4 byte = 16 byte
    GetSystemTime(SYSTEMTIME);
-                                                      // typedef struct SYSTEMTIME {   // see Win32-API
+                                                      // typedef struct _SYSTEMTIME { // st
    int nYear     = SYSTEMTIME[0] &  0x0000FFFF;       //     WORD wYear;
    int nMonth    = SYSTEMTIME[0] >> 16;               //     WORD wMonth;
    int nDoW      = SYSTEMTIME[1] &  0x0000FFFF;       //     WORD wDayOfWeek;
@@ -516,11 +558,11 @@ datetime TimeGMT() {
    int nMin      = SYSTEMTIME[2] >> 16;               //     WORD wMinute;
    int nSec      = SYSTEMTIME[3] &  0x0000FFFF;       //     WORD wSecond;
    int nMilliSec = SYSTEMTIME[3] >> 16;               //     WORD wMilliseconds;
-                                                      // } SYSTEMTIME;
+                                                      // } SYSTEMTIME;           // = 16 byte
    string strTime = StringConcatenate(nYear, ".", nMonth, ".", nDay, " ", nHour, ":", nMin, ":", nSec);
    datetime time  = StrToTime(strTime);
 
-   //Print("TimeGMT()   strTime="+ strTime +"    StrToTime(strTime)="+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   //Print("TimeGMT()   strTime = "+ strTime +"    StrToTime(strTime) = "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
    int error = GetLastError();
    if (error != ERR_NO_ERROR) {
@@ -4075,24 +4117,35 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
       return(EMPTY_VALUE);
    }
 
-   int tzInfos[43];
-   int type = GetTimeZoneInformation(tzInfos);
-
-   int offset = 0;
-
-   if (type != TIME_ZONE_ID_UNKNOWN) {
-      offset = tzInfos[0];
-      if (type == TIME_ZONE_ID_DAYLIGHT)
-         offset += tzInfos[42];
+   int TIME_ZONE_INFORMATION[43];      // 43 * 4 byte = 172 byte
+   int type = GetTimeZoneInformation(TIME_ZONE_INFORMATION);         // typedef struct _TIME_ZONE_INFORMATION { // tzi
+                                                                     //    LONG       Bias;              //     4
+   int offset = 0;                                                   //    WCHAR      StandardName[32];  //    64
+                                                                     //    SYSTEMTIME StandardDate;      //    16
+   if (type != TIME_ZONE_ID_UNKNOWN) {                               //    LONG       StandardBias;      //     4
+      offset = TIME_ZONE_INFORMATION[0];                             //    WCHAR      DaylightName[32];  //    64
+      if (type == TIME_ZONE_ID_DAYLIGHT)                             //    SYSTEMTIME DaylightDate;      //    16
+         offset += TIME_ZONE_INFORMATION[42];                        //    LONG       DaylightBias;      //     4
+      offset *= -60;                                                 // } TIME_ZONE_INFORMATION;         // = 172 byte
    }
-   offset *= -1 * MINUTES;
 
    //Print("GetLocalToGmtOffset()   difference between local and GMT is: ", (offset/MINUTES), " minutes");
 
    if (catch("GetLocalToGmtOffset()") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
-
    return(offset);
+/*
+TIME_ZONE_INFORMATION = FFFFFF88 
+                        00540047 00200042 006F004E 006D0072 006C0061 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+                           T   G    .   B    o   N    m   r    l   a    e   z    t   i
+                        000A0000 00050000 00000004 00000000 
+                        00000000 
+                        00540047 00200042 006F0053 006D006D 00720065 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+                                                 S        m    r   e
+                        00030000 00050000 00000003 00000000 
+                        FFFFFFC4
+                           G   T    B        N   o    r   m    a   l    z   e    i   t
+*/
 }
 
 
@@ -5267,6 +5320,39 @@ string UrlEncode(string value) {
 }
 
 
+/**
+ * Konvertiert einen Integer in seine hexadezimale Representation.
+ *
+ * @param  string value
+ *
+ * @return string
+ *
+ * Beispiel: IntToHexStr(2026701066) => "78CD010A"
+ */
+string IntToHexStr(int integer) {
+   string result = "00000000";
+   int value, shift = 28;
+
+   for (int i=0; i < 8; i++) {
+      value = (integer >> shift) & 0x0F;
+      if (value < 10) result = StringSetChar(result, i,  value     +'0');
+      else            result = StringSetChar(result, i, (value-10) +'A');
+      shift -= 4;
+   }
+   return(result);
+}
+
+
+/**
+ * Alias für IntToHexStr()
+ *
+ * @see IntToHexStr
+ */
+string IntegerToHexString(int integer) {
+   return(IntToHexStr(integer));
+}
+
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 // Original-MetaQuotes Funktionen             !!! NICHT VERWENDEN !!!                 //
 //                                                                                    //
@@ -5354,22 +5440,6 @@ string DoubleToStrMorePrecision(double number, int precision) {
    return(retstring);
 }
 
-
-/**
- * convert integer to string contained input's hexadecimal notation
- */
-string IntegerToHexString(int integer) {
-   string result = "00000000";
-   int value, shift = 28;
-
-   for (int i=0; i < 8; i++) {
-      value = (integer >> shift) & 0x0F;
-      if (value < 10) result = StringSetChar(result, i,  value     +'0');
-      else            result = StringSetChar(result, i, (value-10) +'A');
-      shift -= 4;
-   }
-   return(result);
-}
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
