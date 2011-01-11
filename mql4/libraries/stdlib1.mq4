@@ -110,8 +110,8 @@ int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
  *
  * typedef struct _TIME_ZONE_INFORMATION {   // tzi
  *    LONG       Bias;                       //   4               LocalTime + Bias = GMT
- *    WCHAR      StandardName[32];           //  64
- *    SYSTEMTIME StandardDate;               //  16
+ *    WCHAR      StandardName[32];           //  64               GMT + Offset = LocalTime
+ *    SYSTEMTIME StandardDate;               //  16               Bias = -Offset
  *    LONG       StandardBias;               //   4
  *    WCHAR      DaylightName[32];           //  64
  *    SYSTEMTIME DaylightDate;               //  16
