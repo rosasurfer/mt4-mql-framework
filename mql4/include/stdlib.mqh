@@ -1,7 +1,7 @@
 /**
  * stdlib.mqh
  */
-#include <stddefine.mqh>         // constants definitions
+#include <stddefine.mqh>         // constants definition etc.
 
 
 #import "stdlib.ex4"
@@ -195,16 +195,31 @@
    string   OperationTypeToStr(int type);
    string   PeriodToStr(int period);
    string   PeriodFlagToStr(int flag);
-   string   StructToStr(int struct[]);
+   string   StructToHexStr(int struct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitReasonToStr(int reason);
    string   WindowsErrorToStr(int error);
+
+   // Win32 structs getter
+   int      st.Year(int& /*SYSTEMTIME*/ st[]);
+   int      st.Month(int& /*SYSTEMTIME*/ st[]);
+   int      st.DayOfWeek(int& /*SYSTEMTIME*/ st[]);
+   int      st.Day(int& /*SYSTEMTIME*/ st[]);
+   int      st.Hour(int& /*SYSTEMTIME*/ st[]);
+   int      st.Minute(int& /*SYSTEMTIME*/ st[]);
+   int      st.Second(int& /*SYSTEMTIME*/ st[]);
+   int      st.MilliSec(int& /*SYSTEMTIME*/ st[]);
+   int      tzi.Bias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
+   void     tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
+   int      tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
+   void     tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
+   int      tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
 
 
    // ----------------------------------------------------------------------------------
    // Original-MetaQuotes Funktionen   !!! NICHT VERWENDEN !!!
    //
-   // Diese Funktionen stehen hier nur zur Dokumentation. Sie sind teilweise fehlerhaft.
+   // Diese Funktionen sind teilweise noch fehlerhaft.
    // ----------------------------------------------------------------------------------
    int      RGB(int red, int green, int blue);
    string   DoubleToStrMorePrecision(double number, int precision);

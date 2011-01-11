@@ -82,13 +82,70 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Gibt den Inhalt einer Windows Structure als hexadezimalen String zurück.
+ * Win32 struct SYSTEMTIME getter
+ *
+ * typedef struct _SYSTEMTIME {  // st
+ *     WORD wYear;
+ *     WORD wMonth;
+ *     WORD wDayOfWeek;
+ *     WORD wDay;
+ *     WORD wHour;
+ *     WORD wMinute;
+ *     WORD wSecond;
+ *     WORD wMilliseconds;
+ * } SYSTEMTIME;                 // 16 byte = int[4]
+ */
+int st.Year     (int& /*SYSTEMTIME*/ st[]) { return(st[0] &  0x0000FFFF); }
+int st.Month    (int& /*SYSTEMTIME*/ st[]) { return(st[0] >> 16        ); }
+int st.DayOfWeek(int& /*SYSTEMTIME*/ st[]) { return(st[1] &  0x0000FFFF); }
+int st.Day      (int& /*SYSTEMTIME*/ st[]) { return(st[1] >> 16        ); }
+int st.Hour     (int& /*SYSTEMTIME*/ st[]) { return(st[2] &  0x0000FFFF); }
+int st.Minute   (int& /*SYSTEMTIME*/ st[]) { return(st[2] >> 16        ); }
+int st.Second   (int& /*SYSTEMTIME*/ st[]) { return(st[3] &  0x0000FFFF); }
+int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
+
+
+/**
+ * Win32 struct TIME_ZONE_INFORMATION getter
+ *
+ * typedef struct _TIME_ZONE_INFORMATION {   // tzi
+ *    LONG       Bias;                       //   4               LocalTime + Bias = GMT
+ *    WCHAR      StandardName[32];           //  64
+ *    SYSTEMTIME StandardDate;               //  16
+ *    LONG       StandardBias;               //   4
+ *    WCHAR      DaylightName[32];           //  64
+ *    SYSTEMTIME DaylightDate;               //  16
+ *    LONG       DaylightBias;               //   4
+ * } TIME_ZONE_INFORMATION;                  // 172 byte = int[43]
+ */
+int  tzi.Bias        (int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[ 0]); }
+void tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
+int  tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[17]); }
+void tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
+int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[42]); }
+
+/*
+TIME_ZONE_INFORMATION = FFFFFF88
+                        00540047 00200042 006F004E 006D0072 006C0061 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+                           T   G    .   B    o   N    m   r    l   a    e   z    t   i
+                        000A0000 00050000 00000004 00000000
+                        00000000
+                        00540047 00200042 006F0053 006D006D 00720065 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+                                                 S        m    r   e
+                        00030000 00050000 00000003 00000000
+                        FFFFFFC4
+                           G   T    B        N   o    r   m    a   l    z   e    i   t
+*/
+
+
+/**
+ * Gibt den Inhalt einer Windows-Structure als hexadezimalen String zurück.
  *
  * @param  int struct[]
  *
  * @return string
  */
-string StructToStr(int struct[]) {
+string StructToHexStr(int& struct[]) {
    string result = "";
    int size = ArraySize(struct);
 
@@ -547,19 +604,17 @@ string BooleanToStr(bool value) {
  * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
-   int SYSTEMTIME[4];         // 4 * 4 byte = 16 byte
-   GetSystemTime(SYSTEMTIME);
-                                                      // typedef struct _SYSTEMTIME { // st
-   int nYear     = SYSTEMTIME[0] &  0x0000FFFF;       //     WORD wYear;
-   int nMonth    = SYSTEMTIME[0] >> 16;               //     WORD wMonth;
-   int nDoW      = SYSTEMTIME[1] &  0x0000FFFF;       //     WORD wDayOfWeek;
-   int nDay      = SYSTEMTIME[1] >> 16;               //     WORD wDay;
-   int nHour     = SYSTEMTIME[2] &  0x0000FFFF;       //     WORD wHour;
-   int nMin      = SYSTEMTIME[2] >> 16;               //     WORD wMinute;
-   int nSec      = SYSTEMTIME[3] &  0x0000FFFF;       //     WORD wSecond;
-   int nMilliSec = SYSTEMTIME[3] >> 16;               //     WORD wMilliseconds;
-                                                      // } SYSTEMTIME;           // = 16 byte
-   string strTime = StringConcatenate(nYear, ".", nMonth, ".", nDay, " ", nHour, ":", nMin, ":", nSec);
+   /*SYSTEMTIME*/ int st[4];     // @see struct SYSTEMTIME: 16 byte
+   GetSystemTime(st);
+
+   int year  = st.Year(st);
+   int month = st.Month(st);
+   int day   = st.Day(st);
+   int hour  = st.Hour(st);
+   int min   = st.Minute(st);
+   int sec   = st.Second(st);
+
+   string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
    datetime time  = StrToTime(strTime);
 
    //Print("TimeGMT()   strTime = "+ strTime +"    StrToTime(strTime) = "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
@@ -4117,16 +4172,16 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
       return(EMPTY_VALUE);
    }
 
-   int TIME_ZONE_INFORMATION[43];      // 43 * 4 byte = 172 byte
-   int type = GetTimeZoneInformation(TIME_ZONE_INFORMATION);         // typedef struct _TIME_ZONE_INFORMATION { // tzi
-                                                                     //    LONG       Bias;              //     4
-   int offset = 0;                                                   //    WCHAR      StandardName[32];  //    64
-                                                                     //    SYSTEMTIME StandardDate;      //    16
-   if (type != TIME_ZONE_ID_UNKNOWN) {                               //    LONG       StandardBias;      //     4
-      offset = TIME_ZONE_INFORMATION[0];                             //    WCHAR      DaylightName[32];  //    64
-      if (type == TIME_ZONE_ID_DAYLIGHT)                             //    SYSTEMTIME DaylightDate;      //    16
-         offset += TIME_ZONE_INFORMATION[42];                        //    LONG       DaylightBias;      //     4
-      offset *= -60;                                                 // } TIME_ZONE_INFORMATION;         // = 172 byte
+   int /*TIME_ZONE_INFORMATION*/ tzi[43];       // @see struct TIME_ZONE_INFORMATION
+   int type = GetTimeZoneInformation(tzi);
+
+   int offset = 0;
+
+   if (type != TIME_ZONE_ID_UNKNOWN) {
+      offset = tzi.Bias(tzi);
+      if (type == TIME_ZONE_ID_DAYLIGHT)
+         offset += tzi.DaylightBias(tzi);
+      offset *= -60;
    }
 
    //Print("GetLocalToGmtOffset()   difference between local and GMT is: ", (offset/MINUTES), " minutes");
@@ -4134,18 +4189,6 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
    if (catch("GetLocalToGmtOffset()") != ERR_NO_ERROR)
       return(EMPTY_VALUE);
    return(offset);
-/*
-TIME_ZONE_INFORMATION = FFFFFF88 
-                        00540047 00200042 006F004E 006D0072 006C0061 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
-                           T   G    .   B    o   N    m   r    l   a    e   z    t   i
-                        000A0000 00050000 00000004 00000000 
-                        00000000 
-                        00540047 00200042 006F0053 006D006D 00720065 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
-                                                 S        m    r   e
-                        00030000 00050000 00000003 00000000 
-                        FFFFFFC4
-                           G   T    B        N   o    r   m    a   l    z   e    i   t
-*/
 }
 
 
