@@ -2237,7 +2237,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // Daten nach Möglichkeit aus dem Cache liefern
    if (cache.account[0] == account) {
       ArrayCopy(lpResults, cache);
-      log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" cached history entries for account "+ account);
+      log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(2)"));
    }
 
@@ -2341,7 +2341,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
       cache.account[0] = account;
       ArrayResize(cache, 0); ArrayCopy(cache, result);
-      log("GetAccountHistory()   cached "+ ArrayRange(cache, 0) +" history entries for account "+ account);
+      log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
 
    return(catch("GetAccountHistory(7)"));
@@ -2430,7 +2430,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    if (cache.account[0] == account) {
       ArrayCopy(lpTimes , cache.times);
       ArrayCopy(lpValues, cache.values);
-      log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" cached balance values for account "+ account);
+      log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" balance values for account "+ account +" from cache");
       return(catch("GetBalanceHistory(1)"));
    }
 
@@ -2481,7 +2481,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    cache.account[0] = account;
    ArrayResize(cache.times,  0); ArrayCopy(cache.times,  lpTimes );
    ArrayResize(cache.values, 0); ArrayCopy(cache.values, lpValues);
-   log("GetBalanceHistory()   cached "+ ArraySize(lpTimes) +" balance values for account "+ account);
+   log("GetBalanceHistory()   caching "+ ArraySize(lpTimes) +" balance values for account "+ account);
 
    return(catch("GetBalanceHistory(5)"));
 }

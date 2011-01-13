@@ -1,5 +1,5 @@
 /**
- * Zeigt den Balance-Verlauf des Accounts als Linienchart in Indikatorfenster) an.
+ * Zeigt den Balance-Verlauf des Accounts als Linienchart im Indikatorfenster an.
  */
 #include <stdlib.mqh>
 
@@ -84,7 +84,8 @@ int start() {
    }
    else {
       // ... oder nur die fehlenden berechnen
-      for (int bar=ChangedBars; bar >= 0; bar--) {
+      for (int bar=ChangedBars; bar > 0;) {
+         bar--;
          error = iBalance(AccountNumber(), iBufferBalance, bar);
          if (error != ERR_NO_ERROR)
             break;
