@@ -196,6 +196,7 @@
    string   PeriodToStr(int period);
    string   PeriodFlagToStr(int flag);
    string   StructToHexStr(int struct[]);
+   string   StructToStr(int struct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitReasonToStr(int reason);
    string   WindowsErrorToStr(int error);

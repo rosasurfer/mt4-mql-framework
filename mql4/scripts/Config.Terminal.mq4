@@ -13,8 +13,6 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("start()   enter");
-
    string files[2];
 
    files[0] = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
@@ -26,7 +24,5 @@ int start() {
          return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ WindowsErrorToStr(hInstance) +")", ERR_WINDOWS_ERROR));
    }
 
-   //debug("start()   leave");
    return(catch("start(2)"));
 }
-

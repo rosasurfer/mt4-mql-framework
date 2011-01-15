@@ -8,11 +8,11 @@
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |  1 bit |                 |                   0x1 |                        0 - 1 |                            0-1 |                |                     |                |
+ * |         |         |        |        |  1 bit |                 |                  0x01 |                        0 - 1 |                            0-1 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                      0 - 255 |                          0-255 |                |      BYTE,CHAR      |                |
+ * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                   -128 - 127 |                          0-255 |                |      BYTE,CHAR      |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |                   0 - 65.535 |                       0-65.535 |     short      |   SHORT,WORD,WCHAR  |                |
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |             -32.768 - 32.767 |                       0-65.535 |     short      |   SHORT,WORD,WCHAR  |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |             -2.147.483.648 - |              0 - 4.294.967.295 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
  * |         |         |        |        |        |                 |                       |              2.147.483.647   |                                |                |    WPARAM,LPARAM    | color,datetime |
@@ -82,7 +82,7 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Win32 struct SYSTEMTIME getter
+ * Struct SYSTEMTIME getter
  *
  * typedef struct _SYSTEMTIME {  // st
  *     WORD wYear;
@@ -94,6 +94,9 @@ int stdlib_PeekLastError() {
  *     WORD wSecond;
  *     WORD wMilliseconds;
  * } SYSTEMTIME;                 // 16 byte = int[4]
+ *
+ *
+ * SYSTEMTIME = DB070100 06000F00 12003600 05000A03
  */
 int st.Year     (int& /*SYSTEMTIME*/ st[]) { return(st[0] &  0x0000FFFF); }
 int st.Month    (int& /*SYSTEMTIME*/ st[]) { return(st[0] >> 16        ); }
@@ -106,17 +109,28 @@ int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
 
 
 /**
- * Win32 struct TIME_ZONE_INFORMATION getter
+ * Struct TIME_ZONE_INFORMATION getter
  *
  * typedef struct _TIME_ZONE_INFORMATION {   // tzi
- *    LONG       Bias;                       //   4               LocalTime + Bias = GMT
- *    WCHAR      StandardName[32];           //  64               GMT + Offset = LocalTime
- *    SYSTEMTIME StandardDate;               //  16               Bias = -Offset
- *    LONG       StandardBias;               //   4
- *    WCHAR      DaylightName[32];           //  64
- *    SYSTEMTIME DaylightDate;               //  16
- *    LONG       DaylightBias;               //   4
- * } TIME_ZONE_INFORMATION;                  // 172 byte = int[43]
+ *    LONG       Bias;                       //   4      => tzi[ 0]     LocalTime + Bias = GMT
+ *    WCHAR      StandardName[32];           //  64      => tzi[ 1]     GMT + Offset = LocalTime
+ *    SYSTEMTIME StandardDate;               //  16      => tzi[17]     Bias = -Offset
+ *    LONG       StandardBias;               //   4      => tzi[21]
+ *    WCHAR      DaylightName[32];           //  64      => tzi[22]
+ *    SYSTEMTIME DaylightDate;               //  16      => tzi[38]
+ *    LONG       DaylightBias;               //   4      => tzi[42]
+ * } TIME_ZONE_INFORMATION;                  // 172 byte =  int[43]
+ *
+ *
+ * TIME_ZONE_INFORMATION = 88FFFFFF
+ *                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                         G   T    B   .    N   o    r   m    a   l    z   e    i   t
+ *                         00000A00 00000500 04000000 00000000
+ *                         00000000
+ *                         47005400 42002000 53006F00 6D006D00 65007200 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                         G   T    B   .    S   o    m   m    e   r    z   e    i   t
+ *                         00000300 00000500 03000000 00000000
+ *                         C4FFFFFF
  */
 int  tzi.Bias        (int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[ 0]); }
 void tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
@@ -124,22 +138,9 @@ int  tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[17]); }
 void tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
 int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[42]); }
 
-/*
-TIME_ZONE_INFORMATION = FFFFFF88
-                        00540047 00200042 006F004E 006D0072 006C0061 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-                           T   G    .   B    o   N    m   r    l   a    e   z    t   i
-                        000A0000 00050000 00000004 00000000
-                        00000000
-                        00540047 00200042 006F0053 006D006D 00720065 0065007A 00740069 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-                                                 S        m    r   e
-                        00030000 00050000 00000003 00000000
-                        FFFFFFC4
-                           G   T    B        N   o    r   m    a   l    z   e    i   t
-*/
-
 
 /**
- * Gibt den Inhalt einer Windows-Structure als hexadezimalen String zurück.
+ * Gibt den Inhalt einer Win32-Structure als hexadezimalen String zurück.
  *
  * @param  int struct[]
  *
@@ -149,13 +150,56 @@ string StructToHexStr(int& struct[]) {
    string result = "";
    int size = ArraySize(struct);
 
+   // Structs werden in MQL mit Hilfe von Integers nachgebildet, Integers sind aber bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+   // Für ein korrektes Ergebnis muß diese Interpretation wieder rückgängig gemacht werden.
    for (int i=0; i < size; i++) {
-      result = StringConcatenate(result, " ", IntToHexStr(struct[i]));
+      string hex   = IntToHexStr(struct[i]);
+      string byte1 = StringSubstr(hex, 6, 2);
+      string byte2 = StringSubstr(hex, 4, 2);
+      string byte3 = StringSubstr(hex, 2, 2);
+      string byte4 = StringSubstr(hex, 0, 2);
+      result = StringConcatenate(result, " ", byte1, byte2, byte3, byte4);
    }
 
-   if (size == 0)
+   if (size > 0)
+      result = StringSubstr(result, 1);
+
+   if (catch("StructToHexStr(0)") != ERR_NO_ERROR)
       return("");
-   return(StringSubstr(result, 1));
+   return(result);
+}
+
+
+/**
+ * Gibt den Inhalt einer Win32-Structure als normal lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
+ * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
+ *
+ * @param  int struct[]
+ *
+ * @return string
+ */
+string StructToStr(int& struct[]) {
+   string result = "";
+   int size = ArraySize(struct);
+
+   for (int i=0; i < size; i++) {
+      string intResult = "0000";
+      int value, shift=24, integer=struct[i];
+
+      // Structs werden in MQL mit Hilfe von Integers nachgebildet, Integers sind aber bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+      // Für ein korrektes Ergebnis muß diese Interpretation wieder rückgängig gemacht werden.
+      for (int n=0; n < 4; n++) {
+         value = (integer >> shift) & 0xFF;                                      // Integer in Bytes zerlegen
+         if (value < 0x20) intResult = StringSetChar(intResult, 3-n, '.');
+         else              intResult = StringSetChar(intResult, 3-n, value);     // jedes Byte an der richtigen Stelle darstellen
+         shift -= 8;
+      }
+      result = StringConcatenate(result, intResult);
+   }
+
+   if (catch("StructToStr()") != ERR_NO_ERROR)
+      return("");
+   return(result);
 }
 
 
@@ -604,7 +648,7 @@ string BooleanToStr(bool value) {
  * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
-   /*SYSTEMTIME*/ int st[4];     // @see struct SYSTEMTIME: 16 byte
+   int /*SYSTEMTIME*/ st[4];     // struct SYSTEMTIME = 16 byte
    GetSystemTime(st);
 
    int year  = st.Year(st);
@@ -4172,7 +4216,7 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
       return(EMPTY_VALUE);
    }
 
-   int /*TIME_ZONE_INFORMATION*/ tzi[43];       // @see struct TIME_ZONE_INFORMATION
+   int /*TIME_ZONE_INFORMATION*/ tzi[43];       // struct TIME_ZONE_INFORMATION = 172 byte
    int type = GetTimeZoneInformation(tzi);
 
    int offset = 0;
@@ -5378,21 +5422,11 @@ string IntToHexStr(int integer) {
 
    for (int i=0; i < 8; i++) {
       value = (integer >> shift) & 0x0F;
-      if (value < 10) result = StringSetChar(result, i,  value     +'0');
-      else            result = StringSetChar(result, i, (value-10) +'A');
+      if (value < 10) result = StringSetChar(result, i,  value     +'0');  // 0x30 = '0'        // Integer in Nibbles zerlegen und jedes
+      else            result = StringSetChar(result, i, (value-10) +'A');  // 0x41 = 'A'        // einzelne Nibble hexadezimal darstellen
       shift -= 4;
    }
    return(result);
-}
-
-
-/**
- * Alias für IntToHexStr()
- *
- * @see IntToHexStr
- */
-string IntegerToHexString(int integer) {
-   return(IntToHexStr(integer));
 }
 
 
