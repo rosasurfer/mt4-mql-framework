@@ -49,7 +49,7 @@ void stdlib_init(bool traceMode) {
  */
 int stdlib_onTick(int indicatorCounted) {
    if (indicatorCounted < 0)
-      return(catch("stdlib_onTick()  invalid parameter indicatorCounted: "+ indicatorCounted, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("stdlib_onTick()  invalid parameter indicatorCounted = "+ indicatorCounted, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    Tick++;
    ValidBars   = indicatorCounted;
@@ -82,9 +82,9 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Struct SYSTEMTIME getter
+ * Win32 structure SYSTEMTIME
  *
- * typedef struct _SYSTEMTIME {  // st
+ * struct SYSTEMTIME {
  *     WORD wYear;
  *     WORD wMonth;
  *     WORD wDayOfWeek;
@@ -93,10 +93,9 @@ int stdlib_PeekLastError() {
  *     WORD wMinute;
  *     WORD wSecond;
  *     WORD wMilliseconds;
- * } SYSTEMTIME;                 // 16 byte = int[4]
+ * } st;                     // 16 byte = int[4]
  *
- *
- * SYSTEMTIME = DB070100 06000F00 12003600 05000A03
+ * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
 int st.Year     (int& /*SYSTEMTIME*/ st[]) { return(st[0] &  0x0000FFFF); }
 int st.Month    (int& /*SYSTEMTIME*/ st[]) { return(st[0] >> 16        ); }
@@ -109,34 +108,33 @@ int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
 
 
 /**
- * Struct TIME_ZONE_INFORMATION getter
+ * Win32 structure TIME_ZONE_INFORMATION
  *
- * typedef struct _TIME_ZONE_INFORMATION {   // tzi
- *    LONG       Bias;                       //   4      => tzi[ 0]     LocalTime + Bias = GMT
- *    WCHAR      StandardName[32];           //  64      => tzi[ 1]     GMT + Offset = LocalTime
- *    SYSTEMTIME StandardDate;               //  16      => tzi[17]     Bias = -Offset
- *    LONG       StandardBias;               //   4      => tzi[21]
- *    WCHAR      DaylightName[32];           //  64      => tzi[22]
- *    SYSTEMTIME DaylightDate;               //  16      => tzi[38]
- *    LONG       DaylightBias;               //   4      => tzi[42]
- * } TIME_ZONE_INFORMATION;                  // 172 byte =  int[43]
+ * struct TIME_ZONE_INFORMATION {
+ *    LONG       Bias;                  //   4     => tzi[ 0]     Formeln:               GMT = UTC
+ *    WCHAR      StandardName[32];      //  64     => tzi[ 1]     --------              Bias = -Offset
+ *    SYSTEMTIME StandardDate;          //  16     => tzi[17]               LocalTime + Bias = GMT        (LocalTime -> GMT)
+ *    LONG       StandardBias;          //   4     => tzi[21]                   GMT + Offset = LocalTime  (GMT -> LocalTime)
+ *    WCHAR      DaylightName[32];      //  64     => tzi[22]
+ *    SYSTEMTIME DaylightDate;          //  16     => tzi[38]
+ *    LONG       DaylightBias;          //   4     => tzi[42]
+ * } tzi;                               // 172 byte = int[43]
  *
- *
- * TIME_ZONE_INFORMATION = 88FFFFFF
- *                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
- *                         G   T    B   .    N   o    r   m    a   l    z   e    i   t
- *                         00000A00 00000500 04000000 00000000
- *                         00000000
- *                         47005400 42002000 53006F00 6D006D00 65007200 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
- *                         G   T    B   .    S   o    m   m    e   r    z   e    i   t
- *                         00000300 00000500 03000000 00000000
- *                         C4FFFFFF
+ * StructToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
+ *                                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                         G   T    B   .    N   o    r   m    a   l    z   e    i   t
+ *                                         00000A00 00000500 04000000 00000000
+ *                                         00000000
+ *                                         47005400 42002000 53006F00 6D006D00 65007200 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                         G   T    B   .    S   o    m   m    e   r    z   e    i   t
+ *                                         00000300 00000500 03000000 00000000
+ *                                         C4FFFFFF
  */
-int  tzi.Bias        (int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[ 0]); }
+int  tzi.Bias        (int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[0]);               }
 void tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
-int  tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[17]); }
+int  tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[17]);              }
 void tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
-int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[42]); }
+int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[42]);              }
 
 
 /**
@@ -171,7 +169,7 @@ string StructToHexStr(int& lpStruct[]) {
 
 
 /**
- * Gibt den Inhalt einer Win32-Structure als normal lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
+ * Gibt den Inhalt einer Win32-Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
  * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
  *
  * @param  int& lpStruct[]
