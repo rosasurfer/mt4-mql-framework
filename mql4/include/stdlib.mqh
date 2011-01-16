@@ -153,8 +153,10 @@
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
+   string   Struct.GetWCharString(int& lpStruct[], int from, int len);
    int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
+
 
    // sonstiges
    int      DecreasePeriod(int period);
@@ -210,9 +212,12 @@
    int      st.Minute(int& /*SYSTEMTIME*/ st[]);
    int      st.Second(int& /*SYSTEMTIME*/ st[]);
    int      st.MilliSec(int& /*SYSTEMTIME*/ st[]);
+
    int      tzi.Bias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
+   string   tzi.StandardName(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
    void     tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
    int      tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
+   string   tzi.DaylightName(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
    void     tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
    int      tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
 

@@ -84,7 +84,7 @@ int stdlib_PeekLastError() {
 /**
  * Win32 structure SYSTEMTIME
  *
- * struct SYSTEMTIME {
+ * typedef struct _SYSTEMTIME {
  *     WORD wYear;
  *     WORD wMonth;
  *     WORD wDayOfWeek;
@@ -93,24 +93,24 @@ int stdlib_PeekLastError() {
  *     WORD wMinute;
  *     WORD wSecond;
  *     WORD wMilliseconds;
- * } st;                     // 16 byte = int[4]
+ * } SYSTEMTIME, st;         // 16 byte = int[4]
  *
  * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
-int st.Year     (int& /*SYSTEMTIME*/ st[]) { return(st[0] &  0x0000FFFF); }
-int st.Month    (int& /*SYSTEMTIME*/ st[]) { return(st[0] >> 16        ); }
-int st.DayOfWeek(int& /*SYSTEMTIME*/ st[]) { return(st[1] &  0x0000FFFF); }
-int st.Day      (int& /*SYSTEMTIME*/ st[]) { return(st[1] >> 16        ); }
-int st.Hour     (int& /*SYSTEMTIME*/ st[]) { return(st[2] &  0x0000FFFF); }
-int st.Minute   (int& /*SYSTEMTIME*/ st[]) { return(st[2] >> 16        ); }
-int st.Second   (int& /*SYSTEMTIME*/ st[]) { return(st[3] &  0x0000FFFF); }
-int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
+int st.Year     (/*SYSTEMTIME*/ int& st[]) { return(st[0] &  0x0000FFFF); }
+int st.Month    (/*SYSTEMTIME*/ int& st[]) { return(st[0] >> 16        ); }
+int st.DayOfWeek(/*SYSTEMTIME*/ int& st[]) { return(st[1] &  0x0000FFFF); }
+int st.Day      (/*SYSTEMTIME*/ int& st[]) { return(st[1] >> 16        ); }
+int st.Hour     (/*SYSTEMTIME*/ int& st[]) { return(st[2] &  0x0000FFFF); }
+int st.Minute   (/*SYSTEMTIME*/ int& st[]) { return(st[2] >> 16        ); }
+int st.Second   (/*SYSTEMTIME*/ int& st[]) { return(st[3] &  0x0000FFFF); }
+int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
 
 
 /**
  * Win32 structure TIME_ZONE_INFORMATION
  *
- * struct TIME_ZONE_INFORMATION {
+ * typedef struct _TIME_ZONE_INFORMATION {
  *    LONG       Bias;                  //   4     => tzi[ 0]     Formeln:               GMT = UTC
  *    WCHAR      StandardName[32];      //  64     => tzi[ 1]     --------              Bias = -Offset
  *    SYSTEMTIME StandardDate;          //  16     => tzi[17]               LocalTime + Bias = GMT        (LocalTime -> GMT)
@@ -118,7 +118,7 @@ int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
  *    WCHAR      DaylightName[32];      //  64     => tzi[22]
  *    SYSTEMTIME DaylightDate;          //  16     => tzi[38]
  *    LONG       DaylightBias;          //   4     => tzi[42]
- * } tzi;                               // 172 byte = int[43]
+ * } TIME_ZONE_INFORMATION, tzi;        // 172 byte = int[43]
  *
  * StructToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
  *                                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
@@ -130,11 +130,13 @@ int st.MilliSec (int& /*SYSTEMTIME*/ st[]) { return(st[3] >> 16        ); }
  *                                         00000300 00000500 03000000 00000000
  *                                         C4FFFFFF
  */
-int  tzi.Bias        (int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[0]);               }
-void tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
-int  tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[17]);              }
-void tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
-int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[])                           { return(tzi[42]);              }
+int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[0]); }                               // Bias in Minuten
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(Struct.GetWCharString(tzi, 1, 16)); }
+void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
+int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[21]); }                              // Bias in Minuten
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(Struct.GetWCharString(tzi, 22, 16)); }
+void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
+int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[42]); }                              // Bias in Minuten
 
 
 /**
@@ -196,6 +198,54 @@ string StructToStr(int& lpStruct[]) {
    }
 
    if (catch("StructToStr()") != ERR_NO_ERROR)
+      return("");
+   return(result);
+}
+
+
+/**
+ * Gibt den in einem Struct im angegebenen Bereich gespeicherten, mit einem Zero-Character terminierten WCHAR-String zurück (Multibyte-Characters).
+ *
+ * @param  int& lpStruct[] - Win32 structure
+ * @param  int  from       - Index des ersten Integers der Charactersequenz
+ * @param  int  len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ *
+ * @return string
+ *
+ *
+ * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
+ * ----
+ */
+string Struct.GetWCharString(int& lpStruct[], int from, int len) {
+   if (from < 0)
+      return(catch("Struct.GetWCharString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   int to = from+len, size=ArraySize(lpStruct);
+   if (to > size)
+      return(catch("Struct.GetWCharString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   string result = "";
+
+   for (int i=from; i < to; i++) {
+      string strChar;
+      int word, shift=0, integer=lpStruct[i];
+
+      for (int n=0; n < 2; n++) {
+         word = (integer >> shift) & 0xFFFF;
+         if (word == 0)                                        // termination character (zero WCHAR)
+            break;
+         int byte1 = (word >> 0) & 0xFF;
+         int byte2 = (word >> 8) & 0xFF;
+
+         if (byte1!=0 && byte2==0) strChar = CharToStr(byte1);
+         else                      strChar = "?";              // multi-byte character
+         result = StringConcatenate(result, strChar);
+         shift += 16;
+      }
+      if (word == 0)
+         break;
+   }
+
+   if (catch("Struct.GetWCharString(3)") != ERR_NO_ERROR)
       return("");
    return(result);
 }
@@ -3097,7 +3147,7 @@ string ErrorToStr(int error) {
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                      ); //  150
 
       // runtime errors
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000       common runtime error (no mql error)
       case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                        ); // 4001
       case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                      ); // 4002
       case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                             ); // 4003
@@ -3120,13 +3170,13 @@ string ErrorToStr(int error) {
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
       case ERR_SYSTEM_BUSY                : return("system busy (never generated error)"                           ); // 4022
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051
+      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050       invalid parameters count
+      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051       invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
-      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053
+      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053       some array error
       case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                                  ); // 4054
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056
+      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055       custom indicator error
+      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056       incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
       case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                             ); // 4059
@@ -3136,10 +3186,10 @@ string ErrorToStr(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                    ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                     ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                      ); // 4065
-      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066
-      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067
-      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099
-      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100
+      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066       history in update state
+      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067       error in trading function
+      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099       end of file
+      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100       some file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                               ); // 4101
       case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                         ); // 4102
       case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                              ); // 4103
@@ -3161,10 +3211,10 @@ string ErrorToStr(int error) {
       case ERR_SOME_OBJECT_ERROR          : return("object error"                                                  ); // 4207
 
       // custom errors
-      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000
-      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001
-      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002
-      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5003
+      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000       Windows error
+      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001       function not implemented
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002       invalid input parameter value
+      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5003       terminal not yet ready
    }
    return("unknown error");
 }
