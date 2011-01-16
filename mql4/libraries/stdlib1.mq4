@@ -82,6 +82,48 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Win32 structure PROCESS_INFORMATION
+ *
+ * typedef struct _PROCESS_INFORMATION {
+ *     HANDLE hProcess;
+ *     HANDLE hThread;
+ *     DWORD  dwProcessId;
+ *     DWORD  dwThreadId;
+ * } PROCESS_INFORMATION, pi;       // = 16 byte = int[4]
+ *
+ * StructToHexStr(PROCESS_INFORMATION) =
+ */
+
+
+/**
+ * Win32 structure STARTUPINFO
+ *
+ * typedef struct _STARTUPINFO {
+ *     DWORD  cb;
+ *     LPTSTR lpReserved;
+ *     LPTSTR lpDesktop;
+ *     LPTSTR lpTitle;
+ *     DWORD  dwX;
+ *     DWORD  dwY;
+ *     DWORD  dwXSize;
+ *     DWORD  dwYSize;
+ *     DWORD  dwXCountChars;
+ *     DWORD  dwYCountChars;
+ *     DWORD  dwFillAttribute;
+ *     DWORD  dwFlags;
+ *     WORD   wShowWindow;
+ *     WORD   cbReserved2;
+ *     LPBYTE lpReserved2;
+ *     HANDLE hStdInput;
+ *     HANDLE hStdOutput;
+ *     HANDLE hStdError;
+ * } STARTUPINFO, si;       // = 68 byte = int[17]
+ *
+ * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
+ */
+
+
+/**
  * Win32 structure SYSTEMTIME
  *
  * typedef struct _SYSTEMTIME {
@@ -93,7 +135,7 @@ int stdlib_PeekLastError() {
  *     WORD wMinute;
  *     WORD wSecond;
  *     WORD wMilliseconds;
- * } SYSTEMTIME, st;         // 16 byte = int[4]
+ * } SYSTEMTIME, st;       // = 16 byte = int[4]
  *
  * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
@@ -111,14 +153,14 @@ int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
  * Win32 structure TIME_ZONE_INFORMATION
  *
  * typedef struct _TIME_ZONE_INFORMATION {
- *    LONG       Bias;                  //   4     => tzi[ 0]     Formeln:               GMT = UTC
- *    WCHAR      StandardName[32];      //  64     => tzi[ 1]     --------              Bias = -Offset
- *    SYSTEMTIME StandardDate;          //  16     => tzi[17]               LocalTime + Bias = GMT        (LocalTime -> GMT)
- *    LONG       StandardBias;          //   4     => tzi[21]                   GMT + Offset = LocalTime  (GMT -> LocalTime)
- *    WCHAR      DaylightName[32];      //  64     => tzi[22]
- *    SYSTEMTIME DaylightDate;          //  16     => tzi[38]
- *    LONG       DaylightBias;          //   4     => tzi[42]
- * } TIME_ZONE_INFORMATION, tzi;        // 172 byte = int[43]
+ *    LONG       Bias;                //     4     => tzi[ 0]     Formeln:               GMT = UTC
+ *    WCHAR      StandardName[32];    //    64     => tzi[ 1]     --------              Bias = -Offset
+ *    SYSTEMTIME StandardDate;        //    16     => tzi[17]               LocalTime + Bias = GMT        (LocalTime -> GMT)
+ *    LONG       StandardBias;        //     4     => tzi[21]                   GMT + Offset = LocalTime  (GMT -> LocalTime)
+ *    WCHAR      DaylightName[32];    //    64     => tzi[22]
+ *    SYSTEMTIME DaylightDate;        //    16     => tzi[38]
+ *    LONG       DaylightBias;        //     4     => tzi[42]
+ * } TIME_ZONE_INFORMATION, tzi;      // = 172 byte = int[43]
  *
  * StructToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
  *                                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000

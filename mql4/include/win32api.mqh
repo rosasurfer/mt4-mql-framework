@@ -5,11 +5,14 @@
 
 #import "kernel32.dll"
 
+   int  CreateProcessA(string lpApplicationName, string lpCommandLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int dwCreationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    int  GetComputerNameA(string lpBuffer, int lpBufferSize[]);
+   int  GetEnvironmentStringsA();
    void GetLocalTime(int lpSystemTime[]);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int nBufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
+   void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
