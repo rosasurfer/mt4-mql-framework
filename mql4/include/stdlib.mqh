@@ -183,20 +183,20 @@
    int      SetWindowText(int hWnd, string text);
 
    // toString-Funktionen
-   string   BoolToStr(bool value);
    string   BooleanToStr(bool value);
+   string   BoolToStr(bool value);
+   string   ErrorDescription(int error);
    string   ErrorID(int error);
    string   ErrorToStr(int error);
-   string   ErrorDescription(int error);
    string   EventToStr(int event);
-   string   IntToHexStr(int integer);
    string   IntegerToHexString(int integer);
+   string   IntToHexStr(int integer);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
-   string   PeriodToStr(int period);
    string   PeriodFlagToStr(int flag);
-   string   StructToHexStr(int struct[]);
-   string   StructToStr(int struct[]);
+   string   PeriodToStr(int period);
+   string   StructToHexStr(int& lpStruct[]);
+   string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitReasonToStr(int reason);
    string   WindowsErrorToStr(int error);

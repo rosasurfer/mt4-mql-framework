@@ -142,18 +142,18 @@ int  tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]) { return(tzi[42]); }
 /**
  * Gibt den Inhalt einer Win32-Structure als hexadezimalen String zurück.
  *
- * @param  int struct[]
+ * @param  int& lpStruct[]
  *
  * @return string
  */
-string StructToHexStr(int& struct[]) {
+string StructToHexStr(int& lpStruct[]) {
    string result = "";
-   int size = ArraySize(struct);
+   int size = ArraySize(lpStruct);
 
-   // Structs werden in MQL mit Hilfe von Integers nachgebildet, Integers sind aber bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
-   // Für ein korrektes Ergebnis muß diese Interpretation wieder rückgängig gemacht werden.
+   // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+   // Diese Interpretation muß wieder rückgängig gemacht werden.
    for (int i=0; i < size; i++) {
-      string hex   = IntToHexStr(struct[i]);
+      string hex   = IntToHexStr(lpStruct[i]);
       string byte1 = StringSubstr(hex, 6, 2);
       string byte2 = StringSubstr(hex, 4, 2);
       string byte3 = StringSubstr(hex, 2, 2);
@@ -174,27 +174,27 @@ string StructToHexStr(int& struct[]) {
  * Gibt den Inhalt einer Win32-Structure als normal lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
  * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
  *
- * @param  int struct[]
+ * @param  int& lpStruct[]
  *
  * @return string
  */
-string StructToStr(int& struct[]) {
+string StructToStr(int& lpStruct[]) {
    string result = "";
-   int size = ArraySize(struct);
+   int size = ArraySize(lpStruct);
 
    for (int i=0; i < size; i++) {
-      string intResult = "0000";
-      int value, shift=24, integer=struct[i];
+      string strInt = "0000";
+      int value, shift=24, integer=lpStruct[i];
 
-      // Structs werden in MQL mit Hilfe von Integers nachgebildet, Integers sind aber bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
-      // Für ein korrektes Ergebnis muß diese Interpretation wieder rückgängig gemacht werden.
+      // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+      // Diese Interpretation muß wieder rückgängig gemacht werden.
       for (int n=0; n < 4; n++) {
-         value = (integer >> shift) & 0xFF;                                      // Integer in Bytes zerlegen
-         if (value < 0x20) intResult = StringSetChar(intResult, 3-n, '.');
-         else              intResult = StringSetChar(intResult, 3-n, value);     // jedes Byte an der richtigen Stelle darstellen
+         value = (integer >> shift) & 0xFF;                                // Integer in Bytes zerlegen
+         if (value < 0x20) strInt = StringSetChar(strInt, 3-n, '.');
+         else              strInt = StringSetChar(strInt, 3-n, value);     // jedes Byte an der richtigen Stelle darstellen
          shift -= 8;
       }
-      result = StringConcatenate(result, intResult);
+      result = StringConcatenate(result, strInt);
    }
 
    if (catch("StructToStr()") != ERR_NO_ERROR)
