@@ -91,8 +91,28 @@ int stdlib_PeekLastError() {
  *     DWORD  dwThreadId;
  * } PROCESS_INFORMATION, pi;       // = 16 byte = int[4]
  *
- * StructToHexStr(PROCESS_INFORMATION) =
+ * StructToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
  */
+int pi.hProcess (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[0]); }
+int pi.hThread  (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[1]); }
+int pi.ProcessId(/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[2]); }
+int pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[3]); }
+
+
+/**
+ * Win32 structure SECURITY_ATTRIBUTES
+ *
+ * typedef struct _SECURITY_ATTRIBUTES {
+ *     DWORD  nLength;
+ *     LPVOID lpSecurityDescriptor;
+ *     BOOL   bInheritHandle;
+ * } SECURITY_ATTRIBUTES, sa;       // = 12 byte = int[3]
+ *
+ * StructToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
+ */
+int  sa.Length            (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[0]); }
+int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[1]); }
+bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 0); }
 
 
 /**
@@ -182,7 +202,7 @@ int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                   
 
 
 /**
- * Gibt den Inhalt einer Win32-Structure als hexadezimalen String zurück.
+ * Gibt den Inhalt einer Structure als hexadezimalen String zurück.
  *
  * @param  int& lpStruct[]
  *
@@ -192,7 +212,7 @@ string StructToHexStr(int& lpStruct[]) {
    string result = "";
    int size = ArraySize(lpStruct);
 
-   // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+   // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
    // Diese Interpretation muß wieder rückgängig gemacht werden.
    for (int i=0; i < size; i++) {
       string hex   = IntToHexStr(lpStruct[i]);
@@ -206,14 +226,14 @@ string StructToHexStr(int& lpStruct[]) {
    if (size > 0)
       result = StringSubstr(result, 1);
 
-   if (catch("StructToHexStr(0)") != ERR_NO_ERROR)
+   if (catch("StructToHexStr()") != ERR_NO_ERROR)
       return("");
    return(result);
 }
 
 
 /**
- * Gibt den Inhalt einer Win32-Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
+ * Gibt den Inhalt einer Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
  * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
  *
  * @param  int& lpStruct[]
@@ -228,7 +248,7 @@ string StructToStr(int& lpStruct[]) {
       string strInt = "0000";
       int value, shift=24, integer=lpStruct[i];
 
-      // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind bereits interpretiert (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
+      // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
       // Diese Interpretation muß wieder rückgängig gemacht werden.
       for (int n=0; n < 4; n++) {
          value = (integer >> shift) & 0xFF;                                // Integer in Bytes zerlegen
@@ -246,9 +266,9 @@ string StructToStr(int& lpStruct[]) {
 
 
 /**
- * Gibt den in einem Struct im angegebenen Bereich gespeicherten, mit einem Zero-Character terminierten WCHAR-String zurück (Multibyte-Characters).
+ * Gibt den in einer Structure im angegebenen Bereich gespeicherten, mit einem Zero-Character terminierten WCHAR-String zurück (Multibyte-Characters).
  *
- * @param  int& lpStruct[] - Win32 structure
+ * @param  int& lpStruct[] - Structure
  * @param  int  from       - Index des ersten Integers der Charactersequenz
  * @param  int  len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
  *
@@ -2636,10 +2656,10 @@ string GetComputerName() {
       error = GetLastError();
       if (error == ERR_NO_ERROR)
          error = ERR_NO_MEMORY_FOR_RETURNED_STR;
-      catch("GetComputerName(1)   kernel32.GetComputerNameA(buffer, "+ lpSize[0] +")    result: 0", error);
+      catch("GetComputerName(1)   kernel32.GetComputerName(buffer, "+ lpSize[0] +") = FALSE", error);
       return("");
    }
-   //Print("GetComputerName()   GetComputerNameA()   result: 1   copied: "+ lpSize[0] +"   buffer: "+ buffer[0]);
+   //Print("GetComputerName()   GetComputerNameA()   copied "+ lpSize[0] +" chars,   buffer=\""+ buffer[0] +"\"");
 
    if (catch("GetComputerName(2)") != ERR_NO_ERROR)
       return("");
@@ -3377,6 +3397,33 @@ string ErrorID(int error) {
       case ERR_TERMINAL_NOT_YET_READY     : return("ERR_TERMINAL_NOT_YET_READY"     ); // 5003
    }
    return(error);
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung eines ShellExecute() oder ShellExecuteEx()-Fehlercodes zurück.
+ *
+ * @param  int error - ShellExecute-Fehlercode
+ *
+ * @return string
+ */
+string ShellExecuteErrorToStr(int error) {
+   switch (error) {
+      case 0                     : return("Out of memory or resources."                        );
+      case ERROR_BAD_FORMAT      : return(WindowsErrorToStr(error)                             );
+      case SE_ERR_FNF            : return("File not found."                                    );
+      case SE_ERR_PNF            : return("Path not found."                                    );
+      case SE_ERR_ACCESSDENIED   : return("Access denied."                                     );
+      case SE_ERR_OOM            : return("Out of memory."                                     );
+      case SE_ERR_SHARE          : return("A sharing violation occurred."                      );
+      case SE_ERR_ASSOCINCOMPLETE: return("File association information incomplete or invalid.");
+      case SE_ERR_DDETIMEOUT     : return("DDE operation timed out."                           );
+      case SE_ERR_DDEFAIL        : return("DDE operation failed."                              );
+      case SE_ERR_DDEBUSY        : return("DDE operation is busy."                             );
+      case SE_ERR_NOASSOC        : return("File association information not available."        );
+      case SE_ERR_DLLNOTFOUND    : return("Dynamic-link library not found."                    );
+   }
+   return("unknown error");
 }
 
 
@@ -5206,7 +5253,7 @@ int SendTextMessage(string receiver, string message) {
 
    int error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed, error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("SendTextMessage(2)"));
 }
@@ -5294,7 +5341,7 @@ int SetWindowText(int hWnd, string text) {
       int error = GetLastError();
       if (error == ERR_NO_ERROR)
          error = ERR_WINDOWS_ERROR;
-      return(catch("SetWindowText()   user32.SetWindowTextA(hWnd="+ hWnd +", lpString=\""+ text +"\")    result: 0", error));
+      return(catch("SetWindowText()   user32.SetWindowTextA(hWnd="+ hWnd +", lpString=\""+ text +"\") = FALSE", error));
    }
 
    return(0);

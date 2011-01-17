@@ -186,7 +186,7 @@ int UploadDataFile(string filename) {
 
    int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("UploadDataFile(1)  execution of \'"+ lpCmdLine +"\' failed with error: "+ error +" ("+ WindowsErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("UploadDataFile(1)  execution of \'"+ lpCmdLine +"\' failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("UploadDataFile(2)"));
 }

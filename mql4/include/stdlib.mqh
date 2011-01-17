@@ -197,6 +197,7 @@
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
+   string   ShellExecuteErrorToStr(int error);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
@@ -204,22 +205,31 @@
    string   WindowsErrorToStr(int error);
 
    // Win32 structs getter
-   int      st.Year(int& /*SYSTEMTIME*/ st[]);
-   int      st.Month(int& /*SYSTEMTIME*/ st[]);
-   int      st.DayOfWeek(int& /*SYSTEMTIME*/ st[]);
-   int      st.Day(int& /*SYSTEMTIME*/ st[]);
-   int      st.Hour(int& /*SYSTEMTIME*/ st[]);
-   int      st.Minute(int& /*SYSTEMTIME*/ st[]);
-   int      st.Second(int& /*SYSTEMTIME*/ st[]);
-   int      st.MilliSec(int& /*SYSTEMTIME*/ st[]);
+   int      pi.hProcess (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hThread  (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ProcessId(/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]);
 
-   int      tzi.Bias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
-   string   tzi.StandardName(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
-   void     tzi.StandardDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
-   int      tzi.StandardBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
-   string   tzi.DaylightName(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
-   void     tzi.DaylightDate(int& /*TIME_ZONE_INFORMATION*/ tzi[], int& /*SYSTEMTIME*/ st[]);
-   int      tzi.DaylightBias(int& /*TIME_ZONE_INFORMATION*/ tzi[]);
+   int      sa.Length            (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   int      sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   bool     sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+
+   int      st.Year     (/*SYSTEMTIME*/ int& st[]);
+   int      st.Month    (/*SYSTEMTIME*/ int& st[]);
+   int      st.DayOfWeek(/*SYSTEMTIME*/ int& st[]);
+   int      st.Day      (/*SYSTEMTIME*/ int& st[]);
+   int      st.Hour     (/*SYSTEMTIME*/ int& st[]);
+   int      st.Minute   (/*SYSTEMTIME*/ int& st[]);
+   int      st.Second   (/*SYSTEMTIME*/ int& st[]);
+   int      st.MilliSec (/*SYSTEMTIME*/ int& st[]);
+
+   int      tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
 
 
    // ----------------------------------------------------------------------------------
