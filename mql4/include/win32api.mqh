@@ -5,7 +5,7 @@
 
 #import "kernel32.dll"
 
-   int  CreateProcessA(string lpApplicationName, string lpCommandLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int dwCreationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
+   int  CreateProcessA(int lpApplicationName, string lpCommandLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int dwCreationFlags, int lpEnvironment, int lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    int  GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetEnvironmentStringsA();
    void GetLocalTime(int lpSystemTime[]);

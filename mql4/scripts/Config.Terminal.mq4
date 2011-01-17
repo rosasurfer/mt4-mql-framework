@@ -13,47 +13,48 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   /*
-   string lpCommandLine = "calc.exe";
-
-   int lpProcessAttributes[3] = {12, 0, 0};
-   int lpThreadAttributes [3] = {12, 0, 0};
-   int lpEnvironment[1]; lpEnvironment[0] = GetEnvironmentStringsA();
-
-   int lpStartupInfo[17]; lpStartupInfo[0] = 68;
-   int lpProcessInformation[4];
-
-   int result = CreateProcessA("",                       // NULL: no module name (use command line)
-                               lpCommandLine,            // command line
-                               lpProcessAttributes,      // process attributes
-                               lpThreadAttributes,       // thread attributes
-                               false,                    // set handle inheritance to FALSE
-                               0,                        // no special creation flags
-                               lpEnvironment,            // environment block
-                               "",                       // NULL: use parent's starting directory
-                               lpStartupInfo,
-                               lpProcessInformation
-   );
-
-   if (result == 0) {
-      int error = GetLastError();
-      if (error == ERR_NO_ERROR)
-         error = ERR_WINDOWS_ERROR;
-      return(catch("start(0)   CreateProcess() failed", error));
-   }
-   Print("start()   CreateProcess() success,   result="+ result);
-   return(catch("start(1)"));
-   */
-
    string files[2];
    files[0] = "\""+ TerminalPath() +"\\..\\metatrader-global-config.ini\"";
    files[1] = "\""+ TerminalPath() +"\\experts\\config\\metatrader-local-config.ini\"";
 
    for (int i=0; i < 2; i++) {
       int hInstance = ShellExecuteA(0, "open", files[i], "", "", SW_SHOWNORMAL);
-      if (hInstance < 32)
+      if (hInstance < 33)
          return(catch("start(1)  ShellExecuteA() failed to open "+ files[i] +",    error="+ hInstance +" ("+ WindowsErrorToStr(hInstance) +")", ERR_WINDOWS_ERROR));
    }
-
    return(catch("start(2)"));
+   return(test());
+}
+
+
+/**
+ *
+ */
+int test() {
+   string lpCommandLine = "calc.exe";
+   int /*SECURITY_ATTRIBUTES*/ sa[ 3] = {12};
+   int /*STARTUPINFO*/         si[17] = {68};
+   int /*PROCESS_INFORMATION*/ pi[ 4];
+
+   int result = CreateProcessA(NULL,            // module name
+                               lpCommandLine,   // command line
+                               sa,              // process attributes
+                               sa,              // thread attributes
+                               false,           // handle inheritance
+                               0,               // creation flags
+                               NULL,            // environment block
+                               NULL,            // starting directory
+                               si,              // startup info
+                               pi               // process info
+   );
+
+   if (result == 0) {
+      int error = GetLastError();
+      if (error == ERR_NO_ERROR)
+         error = ERR_WINDOWS_ERROR;
+      return(catch("test(1)   CreateProcess() failed", error));
+   }
+   Print("test()   CreateProcess() success    pi = "+ StructToHexStr(pi));
+
+   return(catch("test(2)"));
 }
