@@ -33,22 +33,16 @@ int start() {
  *
  */
 int test() {
-   string lpCommandLine = "calc.exe";
+   string commandLine = "notepad.exe -m";
    int /*STARTUPINFO*/         si[17] = {68};
    int /*PROCESS_INFORMATION*/ pi[ 4];
 
-   bool success = CreateProcessA(NULL,            // module name
-                                 lpCommandLine,   // command line
-                                 NULL,            // process attributes
-                                 NULL,            // thread attributes
-                                 false,           // handle inheritance
-                                 0,               // creation flags
-                                 NULL,            // environment block
-                                 NULL,            // starting directory
-                                 si,              // startup info
-                                 pi               // process info
-   );
-   if (!success)
+   Print("test()   si = "+ StructToHexStr(si));
+   Print("test()   si.Flags = "+ si.FlagsToStr(si) +"     si.ShowWindow = "+ si.ShowWindowToStr(si));
+
+   return(catch("test(2)"));
+
+   if (!CreateProcessA(NULL, commandLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
       return(catch("test(1)   CreateProcess() failed", ERR_WINDOWS_ERROR));
 
    CloseHandle(pi.hProcess(pi));

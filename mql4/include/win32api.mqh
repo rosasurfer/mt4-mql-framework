@@ -29,7 +29,7 @@
    bool SetWindowTextA(int hWnd, string lpString);
 
 
-   // Von hier an MetaQuest code (nicht überprüft)
+   // Von hier an MetaQuest-Code (nicht überprüft)
    //
    // messages
    bool PostMessageA(int hWnd, int Msg, int wParam, int lParam);
@@ -450,7 +450,16 @@
 #define CREATE_NO_WINDOW                         0x08000000
 
 
-// ShowWindow() commands
+// Process priority flags, see CreateProcess()
+#define IDLE_PRIORITY_CLASS                      0x00000040
+#define BELOW_NORMAL_PRIORITY_CLASS              0x00004000
+#define NORMAL_PRIORITY_CLASS                    0x00000020
+#define ABOVE_NORMAL_PRIORITY_CLASS              0x00008000
+#define HIGH_PRIORITY_CLASS                      0x00000080
+#define REALTIME_PRIORITY_CLASS                  0x00000100
+
+
+// ShowWindow() commands (keine Flags)
 #define SW_HIDE                                       0
 #define SW_SHOWNORMAL                                 1
 #define SW_NORMAL                         SW_SHOWNORMAL
@@ -480,6 +489,22 @@
 #define SE_ERR_DDEBUSY                               30     // DDE operation is busy.
 #define SE_ERR_NOASSOC                               31     // File association not available.
 #define SE_ERR_DLLNOTFOUND                           32     // Dynamic-link library not found.
+
+
+// STARTUPINFO structure flags
+#define STARTF_FORCEONFEEDBACK               0x00000040
+#define STARTF_FORCEOFFFEEDBACK              0x00000080
+#define STARTF_PREVENTPINNING                0x00002000
+#define STARTF_RUNFULLSCREEN                 0x00000020
+#define STARTF_TITLEISAPPID                  0x00001000
+#define STARTF_TITLEISLINKNAME               0x00000800
+#define STARTF_USECOUNTCHARS                 0x00000008
+#define STARTF_USEFILLATTRIBUTE              0x00000010
+#define STARTF_USEHOTKEY                     0x00000200
+#define STARTF_USEPOSITION                   0x00000004
+#define STARTF_USESHOWWINDOW                 0x00000001
+#define STARTF_USESIZE                       0x00000002
+#define STARTF_USESTDHANDLES                 0x00000100
 
 
 // Windows error codes

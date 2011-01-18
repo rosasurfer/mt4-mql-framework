@@ -205,31 +205,48 @@
    string   WindowsErrorToStr(int error);
 
    // Win32 structs getter
-   int      pi.hProcess (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.hThread  (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ProcessId(/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hProcess          (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hThread           (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ProcessId         (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ThreadId          (/*PROCESS_INFORMATION*/ int& pi[]);
 
    int      sa.Length            (/*SECURITY_ATTRIBUTES*/ int& sa[]);
    int      sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]);
    bool     sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
 
-   int      st.Year     (/*SYSTEMTIME*/ int& st[]);
-   int      st.Month    (/*SYSTEMTIME*/ int& st[]);
-   int      st.DayOfWeek(/*SYSTEMTIME*/ int& st[]);
-   int      st.Day      (/*SYSTEMTIME*/ int& st[]);
-   int      st.Hour     (/*SYSTEMTIME*/ int& st[]);
-   int      st.Minute   (/*SYSTEMTIME*/ int& st[]);
-   int      st.Second   (/*SYSTEMTIME*/ int& st[]);
-   int      st.MilliSec (/*SYSTEMTIME*/ int& st[]);
+   int      si.Desktop           (/*STARTUPINFO*/ int& si[]);
+   int      si.Title             (/*STARTUPINFO*/ int& si[]);
+   int      si.X                 (/*STARTUPINFO*/ int& si[]);
+   int      si.Y                 (/*STARTUPINFO*/ int& si[]);
+   int      si.XSize             (/*STARTUPINFO*/ int& si[]);
+   int      si.YSize             (/*STARTUPINFO*/ int& si[]);
+   int      si.XCountChars       (/*STARTUPINFO*/ int& si[]);
+   int      si.YCountChars       (/*STARTUPINFO*/ int& si[]);
+   int      si.FillAttribute     (/*STARTUPINFO*/ int& si[]);
+   int      si.Flags             (/*STARTUPINFO*/ int& si[]);
+   string   si.FlagsToStr        (/*STARTUPINFO*/ int& si[]);
+   int      si.ShowWindow        (/*STARTUPINFO*/ int& si[]);
+   string   si.ShowWindowToStr   (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdInput         (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdOutput        (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdError         (/*STARTUPINFO*/ int& si[]);
 
-   int      tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   int      st.Year              (/*SYSTEMTIME*/ int& st[]);
+   int      st.Month             (/*SYSTEMTIME*/ int& st[]);
+   int      st.DayOfWeek         (/*SYSTEMTIME*/ int& st[]);
+   int      st.Day               (/*SYSTEMTIME*/ int& st[]);
+   int      st.Hour              (/*SYSTEMTIME*/ int& st[]);
+   int      st.Minute            (/*SYSTEMTIME*/ int& st[]);
+   int      st.Second            (/*SYSTEMTIME*/ int& st[]);
+   int      st.MilliSec          (/*SYSTEMTIME*/ int& st[]);
+
+   int      tzi.Bias             (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.StandardName     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.StandardDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.StandardBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.DaylightName     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.DaylightDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.DaylightBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
 
 
    // ----------------------------------------------------------------------------------

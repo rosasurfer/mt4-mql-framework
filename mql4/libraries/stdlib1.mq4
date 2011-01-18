@@ -119,28 +119,99 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 
  * Win32 structure STARTUPINFO
  *
  * typedef struct _STARTUPINFO {
- *     DWORD  cb;
- *     LPTSTR lpReserved;
- *     LPTSTR lpDesktop;
- *     LPTSTR lpTitle;
- *     DWORD  dwX;
- *     DWORD  dwY;
- *     DWORD  dwXSize;
- *     DWORD  dwYSize;
- *     DWORD  dwXCountChars;
- *     DWORD  dwYCountChars;
- *     DWORD  dwFillAttribute;
- *     DWORD  dwFlags;
- *     WORD   wShowWindow;
- *     WORD   cbReserved2;
- *     LPBYTE lpReserved2;
- *     HANDLE hStdInput;
- *     HANDLE hStdOutput;
- *     HANDLE hStdError;
+ *     DWORD  cb;                       =>  si[ 0]
+ *     LPTSTR lpReserved;               =>  si[ 1]
+ *     LPTSTR lpDesktop;                =>  si[ 2]
+ *     LPTSTR lpTitle;                  =>  si[ 3]
+ *     DWORD  dwX;                      =>  si[ 4]
+ *     DWORD  dwY;                      =>  si[ 5]
+ *     DWORD  dwXSize;                  =>  si[ 6]
+ *     DWORD  dwYSize;                  =>  si[ 7]
+ *     DWORD  dwXCountChars;            =>  si[ 8]
+ *     DWORD  dwYCountChars;            =>  si[ 9]
+ *     DWORD  dwFillAttribute;          =>  si[10]
+ *     DWORD  dwFlags;                  =>  si[11]
+ *     WORD   wShowWindow;              =>  si[12]
+ *     WORD   cbReserved2;              =>  si[12]
+ *     LPBYTE lpReserved2;              =>  si[13]
+ *     HANDLE hStdInput;                =>  si[14]
+ *     HANDLE hStdOutput;               =>  si[15]
+ *     HANDLE hStdError;                =>  si[16]
  * } STARTUPINFO, si;       // = 68 byte = int[17]
  *
  * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
  */
+int si.Desktop      (/*STARTUPINFO*/ int& si[]) { return(si[ 2]); }
+int si.Title        (/*STARTUPINFO*/ int& si[]) { return(si[ 3]); }
+int si.X            (/*STARTUPINFO*/ int& si[]) { return(si[ 4]); }
+int si.Y            (/*STARTUPINFO*/ int& si[]) { return(si[ 5]); }
+int si.XSize        (/*STARTUPINFO*/ int& si[]) { return(si[ 6]); }
+int si.YSize        (/*STARTUPINFO*/ int& si[]) { return(si[ 7]); }
+int si.XCountChars  (/*STARTUPINFO*/ int& si[]) { return(si[ 8]); }
+int si.YCountChars  (/*STARTUPINFO*/ int& si[]) { return(si[ 9]); }
+int si.FillAttribute(/*STARTUPINFO*/ int& si[]) { return(si[10]); }
+int si.Flags        (/*STARTUPINFO*/ int& si[]) { return(si[11]); }
+int si.ShowWindow   (/*STARTUPINFO*/ int& si[]) { return(si[12] & 0xFFFF); }
+int si.hStdInput    (/*STARTUPINFO*/ int& si[]) { return(si[14]); }
+int si.hStdOutput   (/*STARTUPINFO*/ int& si[]) { return(si[15]); }
+int si.hStdError    (/*STARTUPINFO*/ int& si[]) { return(si[16]); }
+
+
+/**
+ * Gibt die lesbare Version eines STARTUPINFO-Flags zurück.
+ *
+ * @param  int& si[] - STARTUPINFO structure
+ *
+ * @return string
+ */
+string si.FlagsToStr(/*STARTUPINFO*/ int& si[]) {
+   string result = "";
+   int flags = si.Flags(si);
+
+   if (flags & STARTF_FORCEONFEEDBACK  == STARTF_FORCEONFEEDBACK ) result = StringConcatenate(result, " | STARTF_FORCEONFEEDBACK" );
+   if (flags & STARTF_FORCEOFFFEEDBACK == STARTF_FORCEOFFFEEDBACK) result = StringConcatenate(result, " | STARTF_FORCEOFFFEEDBACK");
+   if (flags & STARTF_PREVENTPINNING   == STARTF_PREVENTPINNING  ) result = StringConcatenate(result, " | STARTF_PREVENTPINNING"  );
+   if (flags & STARTF_RUNFULLSCREEN    == STARTF_RUNFULLSCREEN   ) result = StringConcatenate(result, " | STARTF_RUNFULLSCREEN"   );
+   if (flags & STARTF_TITLEISAPPID     == STARTF_TITLEISAPPID    ) result = StringConcatenate(result, " | STARTF_TITLEISAPPID"    );
+   if (flags & STARTF_TITLEISLINKNAME  == STARTF_TITLEISLINKNAME ) result = StringConcatenate(result, " | STARTF_TITLEISLINKNAME" );
+   if (flags & STARTF_USECOUNTCHARS    == STARTF_USECOUNTCHARS   ) result = StringConcatenate(result, " | STARTF_USECOUNTCHARS"   );
+   if (flags & STARTF_USEFILLATTRIBUTE == STARTF_USEFILLATTRIBUTE) result = StringConcatenate(result, " | STARTF_USEFILLATTRIBUTE");
+   if (flags & STARTF_USEHOTKEY        == STARTF_USEHOTKEY       ) result = StringConcatenate(result, " | STARTF_USEHOTKEY"       );
+   if (flags & STARTF_USEPOSITION      == STARTF_USEPOSITION     ) result = StringConcatenate(result, " | STARTF_USEPOSITION"     );
+   if (flags & STARTF_USESHOWWINDOW    == STARTF_USESHOWWINDOW   ) result = StringConcatenate(result, " | STARTF_USESHOWWINDOW"   );
+   if (flags & STARTF_USESIZE          == STARTF_USESIZE         ) result = StringConcatenate(result, " | STARTF_USESIZE"         );
+   if (flags & STARTF_USESTDHANDLES    == STARTF_USESTDHANDLES   ) result = StringConcatenate(result, " | STARTF_USESTDHANDLES"   );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 3);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version einer STARTUPINFO ShowWindow-Command-ID zurück.
+ *
+ * @param  int& si[] - STARTUPINFO structure
+ *
+ * @return string
+ */
+string si.ShowWindowToStr(/*STARTUPINFO*/ int& si[]) {
+   switch (si.ShowWindow(si)) {
+      case SW_HIDE           : return("SW_HIDE"           );
+      case SW_SHOWNORMAL     : return("SW_SHOWNORMAL"     );
+      case SW_SHOWMINIMIZED  : return("SW_SHOWMINIMIZED"  );
+      case SW_SHOWMAXIMIZED  : return("SW_SHOWMAXIMIZED"  );
+      case SW_SHOWNOACTIVATE : return("SW_SHOWNOACTIVATE" );
+      case SW_SHOW           : return("SW_SHOW"           );
+      case SW_MINIMIZE       : return("SW_MINIMIZE"       );
+      case SW_SHOWMINNOACTIVE: return("SW_SHOWMINNOACTIVE");
+      case SW_SHOWNA         : return("SW_SHOWNA"         );
+      case SW_RESTORE        : return("SW_RESTORE"        );
+      case SW_SHOWDEFAULT    : return("SW_SHOWDEFAULT"    );
+      case SW_FORCEMINIMIZE  : return("SW_FORCEMINIMIZE"  );
+   }
+   return("");
+}
 
 
 /**
@@ -4513,26 +4584,26 @@ int GetPeriodFlag(int period=0) {
 /**
  * Gibt die lesbare Version eines Timeframe-Flags zurück.
  *
- * @param  int flags - binäre Kombination verschiedener Timeframe-Flags
+ * @param  int flags - Kombination verschiedener Timeframe-Flags
  *
  * @return string
  */
 string PeriodFlagToStr(int flags) {
-   string description = "";
+   string result = "";
 
-   if (flags & PERIODFLAG_M1  != 0) description = StringConcatenate(description, " | M1");
-   if (flags & PERIODFLAG_M5  != 0) description = StringConcatenate(description, " | M5");
-   if (flags & PERIODFLAG_M15 != 0) description = StringConcatenate(description, " | M15");
-   if (flags & PERIODFLAG_M30 != 0) description = StringConcatenate(description, " | M30");
-   if (flags & PERIODFLAG_H1  != 0) description = StringConcatenate(description, " | H1");
-   if (flags & PERIODFLAG_H4  != 0) description = StringConcatenate(description, " | H4");
-   if (flags & PERIODFLAG_D1  != 0) description = StringConcatenate(description, " | D1");
-   if (flags & PERIODFLAG_W1  != 0) description = StringConcatenate(description, " | W1");
-   if (flags & PERIODFLAG_MN1 != 0) description = StringConcatenate(description, " | MN1");
+   if (flags & PERIODFLAG_M1  != 0) result = StringConcatenate(result, " | M1" );
+   if (flags & PERIODFLAG_M5  != 0) result = StringConcatenate(result, " | M5" );
+   if (flags & PERIODFLAG_M15 != 0) result = StringConcatenate(result, " | M15");
+   if (flags & PERIODFLAG_M30 != 0) result = StringConcatenate(result, " | M30");
+   if (flags & PERIODFLAG_H1  != 0) result = StringConcatenate(result, " | H1" );
+   if (flags & PERIODFLAG_H4  != 0) result = StringConcatenate(result, " | H4" );
+   if (flags & PERIODFLAG_D1  != 0) result = StringConcatenate(result, " | D1" );
+   if (flags & PERIODFLAG_W1  != 0) result = StringConcatenate(result, " | W1" );
+   if (flags & PERIODFLAG_MN1 != 0) result = StringConcatenate(result, " | MN1");
 
-   if (StringLen(description) > 0)
-      description = StringSubstr(description, 3);
-   return(description);
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 3);
+   return(result);
 }
 
 
