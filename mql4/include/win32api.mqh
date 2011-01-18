@@ -15,6 +15,7 @@
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
+   int  WaitForSingleObject(int hHandle, int dwMilliseconds);
    int  WinExec(string lpCmdLine, int nCmdShow);
 
 #import "shell32.dll"
@@ -505,6 +506,14 @@
 #define STARTF_USESHOWWINDOW                 0x00000001
 #define STARTF_USESIZE                       0x00000002
 #define STARTF_USESTDHANDLES                 0x00000100
+
+
+// Wait function constants, see WaitForSingleObject()
+#define WAIT_ABANDONED                       0x00000080
+#define WAIT_OBJECT_0                        0x00000000
+#define WAIT_TIMEOUT                         0x00000102
+#define WAIT_FAILED                          0xFFFFFFFF
+#define INFINITE                             0xFFFFFFFF     // infinite timeout
 
 
 // Windows error codes

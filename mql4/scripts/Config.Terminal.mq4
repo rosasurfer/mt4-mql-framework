@@ -33,22 +33,34 @@ int start() {
  *
  */
 int test() {
-   string commandLine = "wget.exe";
+   string filename = "wget";
+
+   string url          = "\"http://sub.domain.tld/uploadAccountHistory.php\"";
+   string targetDir    = TerminalPath() +"\\experts\\files";
+   string dataFile     = "\""+ targetDir +"\\"+ filename +"\"";
+   string responseFile = "\""+ targetDir +"\\"+ filename +".response\"";
+   string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
+   //string lpCmdLine    = "wget.exe -b "+ url +" --post-file="+ dataFile +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
+   string cmdLine      = "wget.exe -b "+ url +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
+
 
    int /*STARTUPINFO*/ si[17]; ArrayInitialize(si, 0);
       si.set.cb        (si, 68);
-    //si.set.Flags     (si, STARTF_USESHOWWINDOW);
-      si.set.ShowWindow(si, SW_SHOWMINIMIZED);
+      si.set.Flags     (si, STARTF_USESHOWWINDOW);
+      si.set.ShowWindow(si, SW_HIDE);
 
    int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
 
-   if (!CreateProcessA(NULL, commandLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
+   if (!CreateProcessA(NULL, cmdLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
       return(catch("test(1)   CreateProcess() failed", ERR_WINDOWS_ERROR));
+
+   if (WaitForSingleObject(pi.hProcess(pi), INFINITE) == WAIT_FAILED)
+      catch("test(2)   WaitForSingleObject() failed", ERR_WINDOWS_ERROR);
 
    CloseHandle(pi.hProcess(pi));
    CloseHandle(pi.hThread(pi));
 
-   return(catch("test(2)"));
+   return(catch("test(3)"));
 }
 
    /*
