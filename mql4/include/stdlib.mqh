@@ -204,7 +204,7 @@
    string   UninitReasonToStr(int reason);
    string   WindowsErrorToStr(int error);
 
-   // Win32 structs getter
+   // Win32-Structs Getter und Setter
    int      pi.hProcess          (/*PROCESS_INFORMATION*/ int& pi[]);
    int      pi.hThread           (/*PROCESS_INFORMATION*/ int& pi[]);
    int      pi.ProcessId         (/*PROCESS_INFORMATION*/ int& pi[]);
@@ -214,6 +214,7 @@
    int      sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]);
    bool     sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
 
+   int      si.cb                (/*STARTUPINFO*/ int& si[]);
    int      si.Desktop           (/*STARTUPINFO*/ int& si[]);
    int      si.Title             (/*STARTUPINFO*/ int& si[]);
    int      si.X                 (/*STARTUPINFO*/ int& si[]);
@@ -230,6 +231,10 @@
    int      si.hStdInput         (/*STARTUPINFO*/ int& si[]);
    int      si.hStdOutput        (/*STARTUPINFO*/ int& si[]);
    int      si.hStdError         (/*STARTUPINFO*/ int& si[]);
+
+   int      si.set.cb            (/*STARTUPINFO*/ int& si[], int size);
+   int      si.set.Flags         (/*STARTUPINFO*/ int& si[], int flags);
+   int      si.set.ShowWindow    (/*STARTUPINFO*/ int& si[], int cmdShow);
 
    int      st.Year              (/*SYSTEMTIME*/ int& st[]);
    int      st.Month             (/*SYSTEMTIME*/ int& st[]);

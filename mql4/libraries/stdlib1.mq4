@@ -141,20 +141,25 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 
  *
  * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
  */
-int si.Desktop      (/*STARTUPINFO*/ int& si[]) { return(si[ 2]); }
-int si.Title        (/*STARTUPINFO*/ int& si[]) { return(si[ 3]); }
-int si.X            (/*STARTUPINFO*/ int& si[]) { return(si[ 4]); }
-int si.Y            (/*STARTUPINFO*/ int& si[]) { return(si[ 5]); }
-int si.XSize        (/*STARTUPINFO*/ int& si[]) { return(si[ 6]); }
-int si.YSize        (/*STARTUPINFO*/ int& si[]) { return(si[ 7]); }
-int si.XCountChars  (/*STARTUPINFO*/ int& si[]) { return(si[ 8]); }
-int si.YCountChars  (/*STARTUPINFO*/ int& si[]) { return(si[ 9]); }
-int si.FillAttribute(/*STARTUPINFO*/ int& si[]) { return(si[10]); }
-int si.Flags        (/*STARTUPINFO*/ int& si[]) { return(si[11]); }
-int si.ShowWindow   (/*STARTUPINFO*/ int& si[]) { return(si[12] & 0xFFFF); }
-int si.hStdInput    (/*STARTUPINFO*/ int& si[]) { return(si[14]); }
-int si.hStdOutput   (/*STARTUPINFO*/ int& si[]) { return(si[15]); }
-int si.hStdError    (/*STARTUPINFO*/ int& si[]) { return(si[16]); }
+int si.cb            (/*STARTUPINFO*/ int& si[]) { return(si[ 0]); }
+int si.Desktop       (/*STARTUPINFO*/ int& si[]) { return(si[ 2]); }
+int si.Title         (/*STARTUPINFO*/ int& si[]) { return(si[ 3]); }
+int si.X             (/*STARTUPINFO*/ int& si[]) { return(si[ 4]); }
+int si.Y             (/*STARTUPINFO*/ int& si[]) { return(si[ 5]); }
+int si.XSize         (/*STARTUPINFO*/ int& si[]) { return(si[ 6]); }
+int si.YSize         (/*STARTUPINFO*/ int& si[]) { return(si[ 7]); }
+int si.XCountChars   (/*STARTUPINFO*/ int& si[]) { return(si[ 8]); }
+int si.YCountChars   (/*STARTUPINFO*/ int& si[]) { return(si[ 9]); }
+int si.FillAttribute (/*STARTUPINFO*/ int& si[]) { return(si[10]); }
+int si.Flags         (/*STARTUPINFO*/ int& si[]) { return(si[11]); }
+int si.ShowWindow    (/*STARTUPINFO*/ int& si[]) { return(si[12] & 0xFFFF); }
+int si.hStdInput     (/*STARTUPINFO*/ int& si[]) { return(si[14]); }
+int si.hStdOutput    (/*STARTUPINFO*/ int& si[]) { return(si[15]); }
+int si.hStdError     (/*STARTUPINFO*/ int& si[]) { return(si[16]); }
+
+int si.set.cb        (/*STARTUPINFO*/ int& si[], int size   ) { si[ 0] =  size; }
+int si.set.Flags     (/*STARTUPINFO*/ int& si[], int flags  ) { si[11] = flags; }
+int si.set.ShowWindow(/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
 
 
 /**

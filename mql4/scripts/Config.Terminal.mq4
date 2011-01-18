@@ -33,14 +33,14 @@ int start() {
  *
  */
 int test() {
-   string commandLine = "notepad.exe -m";
-   int /*STARTUPINFO*/         si[17] = {68};
-   int /*PROCESS_INFORMATION*/ pi[ 4];
+   string commandLine = "wget.exe";
 
-   Print("test()   si = "+ StructToHexStr(si));
-   Print("test()   si.Flags = "+ si.FlagsToStr(si) +"     si.ShowWindow = "+ si.ShowWindowToStr(si));
+   int /*STARTUPINFO*/ si[17]; ArrayInitialize(si, 0);
+      si.set.cb        (si, 68);
+    //si.set.Flags     (si, STARTF_USESHOWWINDOW);
+      si.set.ShowWindow(si, SW_SHOWMINIMIZED);
 
-   return(catch("test(2)"));
+   int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
 
    if (!CreateProcessA(NULL, commandLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
       return(catch("test(1)   CreateProcess() failed", ERR_WINDOWS_ERROR));
@@ -50,3 +50,18 @@ int test() {
 
    return(catch("test(2)"));
 }
+
+   /*
+   SW_HIDE
+   SW_SHOWNORMAL
+   SW_SHOWMINIMIZED
+   SW_SHOWMAXIMIZED
+   SW_SHOWNOACTIVATE
+   SW_SHOW
+   SW_MINIMIZE
+   SW_SHOWMINNOACTIVE
+   SW_SHOWNA
+   SW_RESTORE
+   SW_SHOWDEFAULT
+   SW_FORCEMINIMIZE
+   */
