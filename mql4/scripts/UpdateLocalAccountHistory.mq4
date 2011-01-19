@@ -37,8 +37,8 @@ int start() {
       return(catch("start(1)", stdlib_GetLastError()));
    string history[][HISTORY_COLUMNS]; ArrayResize(history, 0);
 
-   int error = GetAccountHistory(account, history);            // ERR_CANNOT_OPEN_FILE ?
-   if (error!=ERR_NO_ERROR) /*&&*/ if (error!=ERR_CANNOT_OPEN_FILE)
+   int error = GetAccountHistory(account, history);            // ERR_CANNOT_OPEN_FILE ignorieren => History leer
+   if (error!=ERR_NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)
       return(catch("start(2)", error));
 
    int    lastTicket;
@@ -48,10 +48,15 @@ int start() {
    if (histSize > 0) {
       lastTicket  = StrToInteger(history[histSize-1][HC_TICKET ]);
       lastBalance = StrToDouble (history[histSize-1][HC_BALANCE]);
+      //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (orders == 0) {
-      if (lastBalance != AccountBalance())
-         return(catch("start(3)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
+      if (lastBalance != AccountBalance()) {
+         PlaySound("notify.wav");
+         MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+         return(catch("start(3)"));
+      }
+      PlaySound("ding.wav");
       MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
       return(catch("start(4)"));
    }
@@ -67,9 +72,17 @@ int start() {
          }
       }
    }
+   if (iFirstTicketToSave == orders) {
+      if (lastBalance != AccountBalance())
+         return(catch("start(3)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+      PlaySound("ding.wav");
+      MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+      return(catch("start(4)"));
+   }
+   //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
 
 
-   // (4) zu speichernde Orderdaten jetzt sortiert einlesen
+   // (4) Orderdaten sortiert einlesen
    int      tickets        []; ArrayResize(tickets,         0); ArrayResize(tickets,         orders);
    int      types          []; ArrayResize(types,           0); ArrayResize(types,           orders);
    string   symbols        []; ArrayResize(symbols,         0); ArrayResize(symbols,         orders);
@@ -91,7 +104,7 @@ int start() {
 
    int n;
 
-   for (i=iFirstTicketToSave; i < orders; i++) {
+   for (i=0; i < orders; i++) {
       int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
          return(catch("start(5)  OrderSelect(ticket="+ ticket +")"));
@@ -144,8 +157,8 @@ int start() {
 
 
    // (5) Hedges korrigieren (alle relevanten Daten der 1. Position zuordnen, hedgende Position verwerfen)
-   for (i=0; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // markierte Hedge-Order (wird verworfen)
+   for (i=iFirstTicketToSave; i < orders; i++) {
+      if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
          continue;
 
       if ((types[i]==OP_BUY || types[i]==OP_SELL) && sizes[i]==0) {
@@ -162,12 +175,8 @@ int start() {
          if (n == orders)
             return(catch("start(7)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
-         // zeitliche Reihenfolge der Hedges bestimmen
-         int first, second;
-         if      (openTimes[i] < openTimes[n]) { first = i; second = n; }
-         else if (openTimes[i] > openTimes[n]) { first = n; second = i; }
-         else if (tickets  [i] < tickets  [n]) { first = i; second = n; }  // beide zum selben Zeitpunkt eröffnet: unwahrscheinlich, doch nicht unmöglich
-         else                                  { first = n; second = i; }
+         int first  = MathMin(i, n);
+         int second = MathMax(i, n);
 
          // Orderdaten korrigieren
          if (i == first) {
@@ -177,14 +186,15 @@ int start() {
             swaps      [first] = swaps      [second];
             netProfits [first] = netProfits [second];
          }
-         comments[first] = "closed by hedge";
-         tickets[second] = 0;                                              // erste Order enthält jetzt alle Daten, hedgende Order verwerfen
+         closeTimes[first] = openTimes[second];
+         comments  [first] = "closed by hedge";
+         tickets  [second] = 0;                                            // erste Order enthält jetzt alle Daten, hedgende Order verwerfen
       }
    }
 
 
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
-   for (i=0; i < orders; i++) {
+   for (i=iFirstTicketToSave; i < orders; i++) {
       if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
          continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
@@ -195,7 +205,9 @@ int start() {
    }
    if (lastBalance != AccountBalance()) {
       log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
-      return(catch("start(8)  balance mismatch, more history data needed", ERR_RUNTIME_ERROR));
+      PlaySound("notify.wav");
+      MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      return(catch("start(8)"));
    }
 
 
@@ -234,7 +246,7 @@ int start() {
 
 
    // (8) Orderdaten schreiben
-   for (i=0; i < orders; i++) {
+   for (i=iFirstTicketToSave; i < orders; i++) {
       if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
          continue;
 
@@ -268,6 +280,7 @@ int start() {
    }
    FileClose(hFile);
 
+   PlaySound("ding.wav");
    MessageBox("History successfully updated.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
    return(catch("start(15)"));
 }

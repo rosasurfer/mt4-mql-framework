@@ -378,7 +378,7 @@ int UpdatePositionLabel() {
       CheckPosition();
 
    if      (!position.InMarket)  string strPosition = " ";
-   else if (position.Total == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(position.Long, ", .+"), " Lot (fully hedged)");
+   else if (position.Total == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(position.Long, ", .+"), " Lot (hedged)");
    else                                 strPosition = StringConcatenate("Position:  " , NumberToStr(position.Total, "+, .+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
