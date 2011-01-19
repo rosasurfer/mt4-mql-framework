@@ -102,63 +102,37 @@ int start() {
    int      magicNumbers   []; ArrayResize(magicNumbers,    0); ArrayResize(magicNumbers,    orders);
    string   comments       []; ArrayResize(comments,        0); ArrayResize(comments,        orders);
 
-   int n;
-
    for (i=0; i < orders; i++) {
       int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
          return(catch("start(5)  OrderSelect(ticket="+ ticket +")"));
 
-      int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen
+      int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
 
-      tickets        [n] = ticket;
-      types          [n] = type;
-      symbols        [n] = OrderSymbol();
-      sizes          [n] = ifDouble(symbols[n]=="", 0, OrderLots());
-      openTimes      [n] = OrderOpenTime();
-      closeTimes     [n] = OrderCloseTime();
-      openPrices     [n] = OrderOpenPrice();
-      closePrices    [n] = OrderClosePrice();
-      stopLosses     [n] = OrderStopLoss();
-      takeProfits    [n] = OrderTakeProfit();
-      expirationTimes[n] = OrderExpiration();
-      commissions    [n] = OrderCommission();
-      swaps          [n] = OrderSwap();
-      netProfits     [n] = OrderProfit();
-      magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
-      n++;
-   }
-
-   // Arrays justieren
-   if (n < orders) {
-      ArrayResize(tickets,         n);
-      ArrayResize(types,           n);
-      ArrayResize(symbols,         n);
-      ArrayResize(sizes,           n);
-      ArrayResize(openTimes,       n);
-      ArrayResize(closeTimes,      n);
-      ArrayResize(openPrices,      n);
-      ArrayResize(closePrices,     n);
-      ArrayResize(stopLosses,      n);
-      ArrayResize(takeProfits,     n);
-      ArrayResize(expirationTimes, n);
-      ArrayResize(commissions,     n);
-      ArrayResize(swaps,           n);
-      ArrayResize(netProfits,      n);
-      ArrayResize(grossProfits,    n);
-      ArrayResize(balances,        n);
-      ArrayResize(magicNumbers,    n);
-      ArrayResize(comments,        n);
-      orders = n;
+      tickets        [i] = ticket;
+      types          [i] = type;
+      symbols        [i] = OrderSymbol();
+      sizes          [i] = ifDouble(symbols[i]=="", 0, OrderLots());
+      openTimes      [i] = OrderOpenTime();
+      closeTimes     [i] = OrderCloseTime();
+      openPrices     [i] = OrderOpenPrice();
+      closePrices    [i] = OrderClosePrice();
+      stopLosses     [i] = OrderStopLoss();
+      takeProfits    [i] = OrderTakeProfit();
+      expirationTimes[i] = OrderExpiration();
+      commissions    [i] = OrderCommission();
+      swaps          [i] = OrderSwap();
+      netProfits     [i] = OrderProfit();
+      magicNumbers   [i] = OrderMagicNumber();
+      comments       [i] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
    }
 
 
    // (5) Hedges korrigieren (alle relevanten Daten der 1. Position zuordnen, hedgende Position verwerfen)
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
+      if (tickets[i] == 0)                                                 // markierte Orders überspringen
          continue;
 
       if ((types[i]==OP_BUY || types[i]==OP_SELL) && sizes[i]==0) {
@@ -169,7 +143,7 @@ int start() {
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
-         for (n=0; n < orders; n++)
+         for (int n=0; n < orders; n++)
             if (tickets[n] == ticket)
                break;
          if (n == orders)
@@ -195,11 +169,11 @@ int start() {
 
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
+      if (tickets[i] == 0)                                                 // verworfene Orders überspringen
          continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       if (types[i] == OP_CREDIT)
-         grossProfits[i] = 0;                                              // Credits ignorieren (falls sie doch in die History mit übernommen werden)
+         grossProfits[i] = 0;                                              // Creditbeträge ignorieren (falls sie hier doch auftauchen)
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
