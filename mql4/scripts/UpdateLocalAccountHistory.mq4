@@ -38,7 +38,7 @@ int start() {
    string history[][HISTORY_COLUMNS]; ArrayResize(history, 0);
 
    int error = GetAccountHistory(account, history);            // ERR_CANNOT_OPEN_FILE ignorieren => History leer
-   if (error!=ERR_NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)
+   if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)
       return(catch("start(2)", error));
 
    int    lastTicket;

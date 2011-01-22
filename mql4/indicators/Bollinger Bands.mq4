@@ -18,7 +18,7 @@
 
 
 bool init       = false;
-int  init_error = ERR_NO_ERROR;
+int  init_error = NO_ERROR;
 
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ int    period;                                     // Period-Code zum angegebene
  */
 int init() {
    init = true;
-   init_error = ERR_NO_ERROR;
+   init_error = NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
@@ -138,11 +138,11 @@ int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
-      if (init_error != ERR_NO_ERROR)               return(0);
+      if (init_error != NO_ERROR)                   return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
+   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != ERR_NO_ERROR)               return(0);
+      if (init()     != NO_ERROR)                   return(0);
    }
 
 

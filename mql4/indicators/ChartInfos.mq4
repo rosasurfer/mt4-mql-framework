@@ -15,7 +15,7 @@
 
 
 bool init       = false;
-int  init_error = ERR_NO_ERROR;
+int  init_error = NO_ERROR;
 
 
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ bool lastH1Close, position.Checked;
  */
 int init() {
    init = true;
-   init_error = ERR_NO_ERROR;
+   init_error = NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
@@ -95,11 +95,11 @@ int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
-      if (init_error != ERR_NO_ERROR)               return(0);
+      if (init_error != NO_ERROR)                   return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
+   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != ERR_NO_ERROR)               return(0);
+      if (init()     != NO_ERROR)                   return(0);
    }
 
 
@@ -239,8 +239,8 @@ int UpdatePriceLabel() {
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
 }
 
@@ -266,8 +266,8 @@ int UpdateSpreadLabel() {
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
 }
 
@@ -287,7 +287,7 @@ int UpdateH1CloseLabel() {
 
    static double lastClose = 0;
    if (lastClose == close)
-      return(ERR_NO_ERROR);
+      return(NO_ERROR);
    lastClose = close;
 
    if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
@@ -298,8 +298,8 @@ int UpdateH1CloseLabel() {
    ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdateH1CloseLabel()", error));
 }
 
@@ -358,8 +358,8 @@ int UpdateUnitSizeLabel() {
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdateUnitSizeLabel()", error));
 }
 
@@ -384,8 +384,8 @@ int UpdatePositionLabel() {
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
 }
 
@@ -476,8 +476,8 @@ int UpdateMarginLevels() {
 
 
    error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
    return(catch("UpdateMarginLevels()", error));
 }
 
@@ -489,7 +489,7 @@ int UpdateMarginLevels() {
  */
 int CheckPosition() {
    if (position.Checked)
-      return(ERR_NO_ERROR);
+      return(NO_ERROR);
 
    position.Long  = 0;
    position.Short = 0;

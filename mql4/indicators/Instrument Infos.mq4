@@ -77,9 +77,9 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   static int error = ERR_NO_ERROR;
+   static int error = NO_ERROR;
 
-   if (error == ERR_NO_ERROR)
+   if (error == NO_ERROR)
       error = UpdateInfos();
 
    return(catch("start()"));
@@ -237,8 +237,8 @@ int UpdateInfos() {
    int    stopoutLevel      = AccountStopoutLevel(); ObjectSetText(names[STOPOUT_LEVEL   ], StringConcatenate("Account stopout level: ", NumberToStr(stopoutLevel, ", ."), ifString(stopoutMode==ASM_PERCENT, " %", " "+ accountCurrency)), Font.Size, Font.Name, Font.Color);
 
    int error = GetLastError();
-   if (error==ERR_NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)
-      return(ERR_NO_ERROR);
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)
+      return(NO_ERROR);
    return(catch("UpdateInfos()", error));
 }
 

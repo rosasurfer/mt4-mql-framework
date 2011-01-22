@@ -11,7 +11,7 @@
 
 
 bool init       = false;
-int  init_error = ERR_NO_ERROR;
+int  init_error = NO_ERROR;
 
 double iBufferBalance[];
 
@@ -23,7 +23,7 @@ double iBufferBalance[];
  */
 int init() {
    init = true;
-   init_error = ERR_NO_ERROR;
+   init_error = NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
@@ -58,11 +58,11 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   static int error = ERR_NO_ERROR;
+   static int error = NO_ERROR;
 
    // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
    Tick++;
-   ValidBars   = ifInt(error!=ERR_NO_ERROR, 0, IndicatorCounted()); error = ERR_NO_ERROR;
+   ValidBars   = ifInt(error!=NO_ERROR, 0, IndicatorCounted()); error = NO_ERROR;
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
@@ -70,11 +70,11 @@ int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
       init = false;
-      if (init_error != ERR_NO_ERROR)               return(0);
+      if (init_error != NO_ERROR)                   return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {           // Aufruf nach Tick
+   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != ERR_NO_ERROR)               return(0);
+      if (init()     != NO_ERROR)                   return(0);
    }
 
 
@@ -87,12 +87,12 @@ int start() {
       for (int bar=ChangedBars; bar > 0;) {
          bar--;
          error = iBalance(AccountNumber(), iBufferBalance, bar);
-         if (error != ERR_NO_ERROR)
+         if (error != NO_ERROR)
             break;
       }
    }
 
-   if (error != ERR_NO_ERROR)
+   if (error != NO_ERROR)
       log("start()", error);
 
    return(catch("start()"));

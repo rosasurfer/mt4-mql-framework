@@ -183,6 +183,7 @@
    int      RemoveChartObjects(string& lpObjects[]);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
 
    // toString-Funktionen
    string   BooleanToStr(bool value);
@@ -202,6 +203,7 @@
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitReasonToStr(int reason);
+   string   WaitForSingleObjectToStr(int value);
    string   WindowsErrorToStr(int error);
 
    // Win32-Structs Getter und Setter

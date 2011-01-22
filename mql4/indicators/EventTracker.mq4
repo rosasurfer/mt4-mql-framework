@@ -10,7 +10,7 @@
 
 
 bool init       = false;
-int  init_error = ERR_NO_ERROR;
+int  init_error = NO_ERROR;
 
 
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ double gridSize;
  */
 int init() {
    init = true;
-   init_error = ERR_NO_ERROR;
+   init_error = NO_ERROR;
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
@@ -173,11 +173,11 @@ int start() {
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                        // Aufruf nach erstem init()
       init = false;
-      if (init_error != ERR_NO_ERROR)               return(0);
+      if (init_error != NO_ERROR)                   return(0);
    }
-   else if (init_error != ERR_NO_ERROR) {             // Aufruf nach Tick
+   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != ERR_NO_ERROR)               return(0);
+      if (init()     != NO_ERROR)                   return(0);
    }
 
 
@@ -264,7 +264,7 @@ int CheckPivotLevels() {
       double range[4];
       int error = iOHLCBar(range, Symbol(), period, bar, true);
       if (error == ERR_NO_RESULT) catch("CheckPivotLevels(1)    iOHLCBar(bar="+ bar +") => ", error);
-      if (error != ERR_NO_ERROR ) return(error);
+      if (error != NO_ERROR     ) return(error);
 
       // Abbruch, wenn die vorherige Bar keine Inside-Bar ist
       if (bar > 1 ) if (range[MODE_HIGH] < ranges[bar-1][MODE_HIGH] || range[MODE_LOW] > ranges[bar-1][MODE_LOW])
@@ -392,12 +392,12 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int
             int startBar, endBar;
             error = GetDailyStartEndBars(symbol, bar, startBar, endBar);
             if (error == ERR_NO_RESULT) catch("iOHLCBar(2)    GetDailyStartEndBars() => ", error);
-            if (error != ERR_NO_ERROR ) return(error);
+            if (error != NO_ERROR     ) return(error);
 
             // OHLC dieser Range ermitteln
             error = iOHLCBarRange(lpResults, symbol, PERIOD_H1, startBar, endBar);
             if (error == ERR_NO_RESULT) catch("iOHLCBar(3)    iOHLCBarRange() => ", error);
-            if (error != ERR_NO_ERROR ) return(error);
+            if (error != NO_ERROR     ) return(error);
             break;
 
          case PERIOD_H4 :
@@ -408,7 +408,7 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int
       }
    }
 
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(5)", error);
    }
    else if (lpResults[MODE_OPEN] == 0) {
@@ -454,7 +454,7 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/
    int bars = iBars(symbol, period);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE) catch("iOHLCBarRange(3)", error);
       return(error);
    }
@@ -510,7 +510,7 @@ int iOHLCTime(double& lpResults[4], string symbol/*=NULL*/, int timeframe/*=0*/,
    int bar = iBarShift(symbol, timeframe, time, true);
 
    int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE) catch("iOHLCTime(1)", error);
       return(error);
    }
@@ -631,7 +631,7 @@ int onPositionOpen(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
-         if (error == ERR_NO_ERROR)
+         if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
          return(catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error));
       }
@@ -648,7 +648,7 @@ int onPositionOpen(int tickets[]) {
       // ggf. SMS verschicken
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (error != ERR_NO_ERROR)
+         if (error != NO_ERROR)
             return(catch("onPositionOpen(2)   error sending text message to "+ SMS.Receiver, error));
          Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
       }
@@ -695,7 +695,7 @@ int onPositionClose(int tickets[]) {
       // ggf. SMS verschicken
       if (SMS.Alerts) {
          int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (error != ERR_NO_ERROR)
+         if (error != NO_ERROR)
             return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
          Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
       }
@@ -755,7 +755,7 @@ int CheckRateGrid() {
 
       // SMS verschicken
       if (SMS.Alerts) {
-         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == ERR_NO_ERROR)
+         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
             logMsg = StringConcatenate("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", ask, ")");
       }
       else  logMsg = StringConcatenate("CheckRateGrid()   ", message, "   (Ask: ", ask, ")");
@@ -783,7 +783,7 @@ int CheckRateGrid() {
 
       // SMS verschicken
       if (SMS.Alerts) {
-         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == ERR_NO_ERROR)
+         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
             logMsg = StringConcatenate("CheckRateGrid()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", bid, ")");
       }
       else  logMsg = StringConcatenate("CheckRateGrid()   ", message, "   (Bid: ", bid, ")");
@@ -837,7 +837,7 @@ int InitializeRateGrid() {
    int      lastSignalBar   = -1;
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) if (error != ERR_GLOBAL_VARIABLE_NOT_FOUND)
+   if (error != NO_ERROR) if (error != ERR_GLOBAL_VARIABLE_NOT_FOUND)
       return(catch("InitializeRateGrid(1)", error));
 
    if (lastSignalValue > 0) if (lastSignalTime > 0) {
@@ -860,7 +860,7 @@ int InitializeRateGrid() {
             error = stdlib_GetLastError();
             if (error == ERR_HISTORY_UPDATE)
                return(error);
-            if (error == ERR_NO_ERROR)
+            if (error == NO_ERROR)
                error = ERR_RUNTIME_ERROR;
             return(catch("InitializeRateGrid(2)", error));
          }
@@ -879,7 +879,7 @@ int InitializeRateGrid() {
 
          error = GetLastError();
          if (error == ERR_HISTORY_UPDATE) return(error);
-         if (error != ERR_NO_ERROR      ) return(catch("InitializeRateGrid(2)", error));
+         if (error != NO_ERROR          ) return(catch("InitializeRateGrid(2)", error));
 
          if (up || down) {
             //Print("InitializeRateGrid()    last signal found in timeframe "+ PeriodToStr(period) +" at bar="+ bar);
@@ -961,7 +961,7 @@ int InitializeBandLimits() {
    int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.MA.Deviation, 0, Band.Limits);
 
    if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != ERR_NO_ERROR      ) return(catch("InitializeBandLimits()", error));
+   if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
    string mask = StringConcatenate(".", Digits);
    Print("InitializeBandLimits()   Bollinger band limits calculated: ", NumberToStr(Band.Limits[2], mask), "  <=  ", NumberToStr(Band.Limits[1], mask), "  =>  ", NumberToStr(Band.Limits[0], mask));
@@ -986,7 +986,7 @@ int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int
 
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
-   if (error != ERR_NO_ERROR      ) return(catch("iBollingerBands()", error));
+   if (error != NO_ERROR          ) return(catch("iBollingerBands()", error));
 
    //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ NumberToStr(results[2], ".5") +"  <=  "+ NumberToStr(results[1], ".5") +"  =>  "+ NumberToStr(results[1], ".5"));
    return(error);

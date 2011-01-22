@@ -193,7 +193,7 @@
 #define CORNER_BOTTOM_RIGHT      3
 
 
-// weiterer deinit()-Reason, siehe UninitializeReason()
+// deinit()-Reasons, siehe UninitializeReason()
 #define REASON_FINISHED          0   // execution finished
 #define REASON_REMOVE            1   // program removed from chart
 #define REASON_RECOMPILE         2   // program recompiled
@@ -242,6 +242,7 @@
 
 // MQL-Fehlercodes (Win32-Fehlercodes siehe win32api.mqh)
 #define ERR_NO_ERROR                                    0
+#define NO_ERROR                             ERR_NO_ERROR
 
 // trade server errors
 #define ERR_NO_RESULT                                   1
@@ -349,7 +350,7 @@
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung
-int last_error  = ERR_NO_ERROR;
+int last_error  = NO_ERROR;
 int Tick        =  0;
 int ValidBars   = -1;
 int ChangedBars = -1;
@@ -367,11 +368,11 @@ int ChangedBars = -1;
  * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
  * -----                                              (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
  */
-int catch(string message="", int error=ERR_NO_ERROR) {
-   if (error == ERR_NO_ERROR) error = GetLastError();
-   else                               GetLastError(); // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
+int catch(string message="", int error=NO_ERROR) {
+   if (error == NO_ERROR) error = GetLastError();
+   else                           GetLastError(); // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       if (message == "")
          message = "???";
       Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
@@ -399,13 +400,13 @@ int catch(string message="", int error=ERR_NO_ERROR) {
  * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
  * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
-int log(string message="", int error=ERR_NO_ERROR) {
+int log(string message="", int error=NO_ERROR) {
    if (message == "")
       message = "???";
 
    message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message);
 
-   if (error != ERR_NO_ERROR)
+   if (error != NO_ERROR)
       message = StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]");
 
    Print(message);
@@ -429,7 +430,7 @@ void debug(string message) {
 
    OutputDebugStringA(message);
 
-   return(ERR_NO_ERROR);
+   return(NO_ERROR);
 }
 
 
@@ -459,7 +460,7 @@ int HandleEvents(int events, int flags=0) {
    if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT, flags);
    if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE , flags);
 
-   return(status!=0 && catch("HandleEvents()")==ERR_NO_ERROR);
+   return(status!=0 && catch("HandleEvents()")==NO_ERROR);
 }
 
 
@@ -495,6 +496,6 @@ int HandleEvent(int event, int flags=0) {
          catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
 
-   return(status && catch("HandleEvent()")==ERR_NO_ERROR);
+   return(status && catch("HandleEvent()")==NO_ERROR);
 }
 

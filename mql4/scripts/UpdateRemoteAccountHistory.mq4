@@ -53,7 +53,7 @@ int start() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) return(catch("start(1)  Please add \""+ OrderSymbol() +"\" to the market watch window !", error));
-            if (error != ERR_NO_ERROR      ) return(catch("start(2)", error));
+            if (error != NO_ERROR          ) return(catch("start(2)", error));
             units[n] = OrderLots() * lotSize;
          }
       openTimes      [n] = OrderOpenTime();
@@ -155,7 +155,7 @@ int start() {
    // (2.3) Datei schlieﬂen
    FileClose(hFile);
    error = GetLastError();
-   if (error != ERR_NO_ERROR)
+   if (error != NO_ERROR)
       return(catch("start(9)  FileClose()", error));
 
 
@@ -182,11 +182,9 @@ int UploadDataFile(string filename) {
    string dataFile     = "\""+ targetDir +"\\"+ filename +"\"";
    string responseFile = "\""+ targetDir +"\\"+ filename +".response\"";
    string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
-   string lpCmdLine    = "wget.exe "+ url +" --post-file="+ dataFile +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
+   string cmdLine      = "wget.exe "+ url +" --post-file="+ dataFile +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
 
-   int error = WinExec(lpCmdLine, SW_SHOWNORMAL);     // SW_SHOWNORMAL|SW_HIDE
-   if (error < 32)
-      return(catch("UploadDataFile(1)  execution of \'"+ lpCmdLine +"\' failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+   WinExecAndWait(cmdLine, SW_SHOWNORMAL);    // SW_SHOWNORMAL|SW_HIDE
 
-   return(catch("UploadDataFile(2)"));
+   return(catch("UploadDataFile()"));
 }

@@ -55,7 +55,7 @@ int stdlib_onTick(int indicatorCounted) {
    ValidBars   = indicatorCounted;
    ChangedBars = Bars - ValidBars;
 
-   return(ERR_NO_ERROR);
+   return(NO_ERROR);
 }
 
 
@@ -66,7 +66,7 @@ int stdlib_onTick(int indicatorCounted) {
  */
 int stdlib_GetLastError() {
    int error = last_error;
-   last_error = ERR_NO_ERROR;
+   last_error = NO_ERROR;
    return(error);
 }
 
@@ -302,7 +302,7 @@ string StructToHexStr(int& lpStruct[]) {
    if (size > 0)
       result = StringSubstr(result, 1);
 
-   if (catch("StructToHexStr()") != ERR_NO_ERROR)
+   if (catch("StructToHexStr()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -335,7 +335,7 @@ string StructToStr(int& lpStruct[]) {
       result = StringConcatenate(result, strInt);
    }
 
-   if (catch("StructToStr()") != ERR_NO_ERROR)
+   if (catch("StructToStr()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -383,9 +383,59 @@ string Struct.GetWCharString(int& lpStruct[], int from, int len) {
          break;
    }
 
-   if (catch("Struct.GetWCharString(3)") != ERR_NO_ERROR)
+   if (catch("Struct.GetWCharString(3)") != NO_ERROR)
       return("");
    return(result);
+}
+
+
+/**
+ * Führt eine Anwendung aus und wartet, bis sie beendet ist.
+ *
+ * @param  string cmdLine - Befehlszeile
+ * @param  int    cmdShow - ShowWindow() command id
+ *
+ * @return int - Fehlerstatus
+ */
+int WinExecAndWait(string cmdLine, int cmdShow) {
+   int /*STARTUPINFO*/ si[17]; ArrayInitialize(si, 0);
+      si.set.cb        (si, 68);
+      si.set.Flags     (si, STARTF_USESHOWWINDOW);
+      si.set.ShowWindow(si, cmdShow);
+   int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
+
+   if (!CreateProcessA(NULL, cmdLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
+      return(catch("WinExecAndWait(1)   CreateProcess() failed", ERR_WINDOWS_ERROR));
+
+   int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
+
+   if (result != WAIT_OBJECT_0) {
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2)   WaitForSingleObject() failed", ERR_WINDOWS_ERROR);
+      else                       log("WinExecAndWait()   WaitForSingleObject() => "+ WaitForSingleObjectToStr(result));
+   }
+
+   CloseHandle(pi.hProcess(pi));
+   CloseHandle(pi.hThread(pi));
+
+   return(catch("WinExecAndWait(3)"));
+}
+
+
+/**
+ * Gibt die lesbare Version eines Rückgabewertes von WaitForSingleObject() zurück.
+ *
+ * @param  int value - Rückgabewert
+ *
+ * @return string
+ */
+string WaitForSingleObjectToStr(int value) {
+   switch (value) {
+      case WAIT_FAILED   : return("WAIT_FAILED"   );
+      case WAIT_ABANDONED: return("WAIT_ABANDONED");
+      case WAIT_OBJECT_0 : return("WAIT_OBJECT_0" );
+      case WAIT_TIMEOUT  : return("WAIT_TIMEOUT"  );
+   }
+   return("");
 }
 
 
@@ -850,7 +900,7 @@ datetime TimeGMT() {
    //Print("TimeGMT()   strTime = "+ strTime +"    StrToTime(strTime) = "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("TimeGMT()", error);
       return(-1);
    }
@@ -1075,7 +1125,7 @@ string StringReplace(string object, string search, string replace) {
    result = StringConcatenate(result, StringSubstr(object, startPos));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("StringReplace()", error);
       return("");
    }
@@ -1105,7 +1155,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) {
    //Print("GetServerPrevSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   previousStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1135,7 +1185,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) {
    //Print("GetServerPrevSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   previousEnd: "+ TimeToStr(serverEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1168,7 +1218,7 @@ datetime GetServerSessionStartTime(datetime serverTime) {
    //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverSessionStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1202,7 +1252,7 @@ datetime GetServerSessionEndTime(datetime serverTime) {
     //Print("GetServerSessionEndTime()  time: "+ TimeToStr(serverTime) +"   serverEnd: "+ TimeToStr(serverEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1232,7 +1282,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) {
    //Print("GetServerNextSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   nextStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1262,7 +1312,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) {
    //Print("GetServerNextSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   nextEnd: "+ TimeToStr(serverEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetServerNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1292,7 +1342,7 @@ datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
    //Print("GetGmtPrevSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousStart: "+ TimeToStr(gmtStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1322,7 +1372,7 @@ datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
    //Print("GetGmtPrevSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousEnd: "+ TimeToStr(gmtEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1355,7 +1405,7 @@ datetime GetGmtSessionStartTime(datetime gmtTime) {
    //Print("GetGmtSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtStart: "+ TimeToStr(gmtStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1388,7 +1438,7 @@ datetime GetGmtSessionEndTime(datetime gmtTime) {
    //Print("GetGmtSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtEnd: "+ TimeToStr(gmtEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1418,7 +1468,7 @@ datetime GetGmtNextSessionStartTime(datetime gmtTime) {
    //Print("GetGmtNextSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextStart: "+ TimeToStr(gmtStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1448,7 +1498,7 @@ datetime GetGmtNextSessionEndTime(datetime gmtTime) {
    //Print("GetGmtNextSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextEnd: "+ TimeToStr(gmtEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetGmtNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1484,7 +1534,7 @@ datetime GetEasternPrevSessionStartTime(datetime easternTime) {
    //Print("GetEasternPrevSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   previousStart: "+ TimeToStr(previousStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternPrevSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1513,7 +1563,7 @@ datetime GetEasternPrevSessionEndTime(datetime easternTime) {
    //Print("GetEasternPrevSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   previousEnd: "+ TimeToStr(previousEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternPrevSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1549,7 +1599,7 @@ datetime GetEasternSessionStartTime(datetime easternTime) {
    //Print("GetEasternSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(easternStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1580,7 +1630,7 @@ datetime GetEasternSessionEndTime(datetime easternTime) {
    //Print("GetEasternSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionEnd: "+ TimeToStr(easternEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1615,7 +1665,7 @@ datetime GetEasternNextSessionStartTime(datetime easternTime) {
    //Print("GetEasternNextSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   nextStart: "+ TimeToStr(nextStart));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternNextSessionStartTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1644,7 +1694,7 @@ datetime GetEasternNextSessionEndTime(datetime easternTime) {
    //Print("GetEasternNextSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   nextEnd: "+ TimeToStr(nextEnd));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("GetEasternNextSessionEndTime(2)", error);
       return(EMPTY_VALUE);
    }
@@ -1685,7 +1735,7 @@ string DecimalToHex(int i) {
    else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("DecimalToHex()", error);
       return("");
    }
@@ -1762,7 +1812,7 @@ datetime EasternToGMT(datetime easternTime) {
    //Print("EasternToGMT()    ET: "+ TimeToStr(easternTime) +"     GMT offset: "+ (easternToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EasternToGMT(2)", error);
       return(-1);
    }
@@ -1803,7 +1853,7 @@ datetime EasternToServerTime(datetime easternTime) {
    //Print("EasternToServerTime()    ET: "+ TimeToStr(easternTime) +"     server: "+ TimeToStr(serverTime));
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EasternToServerTime(2)", error);
       return(-1);
    }
@@ -1902,7 +1952,7 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
    }
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.BarOpen()", error);
       return(false);
    }
@@ -1927,7 +1977,7 @@ bool EventListener.OrderChange(int& lpResults[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.OrderChange()", error);
       return(false);
    }
@@ -1952,7 +2002,7 @@ bool EventListener.OrderPlace(int& lpResults[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.OrderPlace()", error);
       return(false);
    }
@@ -1977,7 +2027,7 @@ bool EventListener.OrderCancel(int& lpResults[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.OrderCancel()", error);
       return(false);
    }
@@ -2093,7 +2143,7 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.PositionOpen()", error);
       return(false);
    }
@@ -2138,7 +2188,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
       for (int i=0; i < noOfKnownPositions; i++) {
          if (!OrderSelect(knownPositions[i], SELECT_BY_TICKET)) {
             int error = GetLastError();
-            if (error == ERR_NO_ERROR)
+            if (error == NO_ERROR)
                error = ERR_RUNTIME_ERROR;
             catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
             // TODO: bei offenen Orders in einem Account und dem ersten Login in einen neuen Account crasht alles (erster Login dauert länger)
@@ -2195,7 +2245,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.PositionClose(2)", error);
       return(false);
    }
@@ -2220,7 +2270,7 @@ bool EventListener.AccountPayment(int& lpResults[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.AccountPayment()", error);
       return(false);
    }
@@ -2245,7 +2295,7 @@ bool EventListener.HistoryChange(int& lpResults[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.HistoryChange()", error);
       return(false);
    }
@@ -2291,7 +2341,7 @@ bool EventListener.AccountChange(int& lpResults[], int flags=0) {
    ArrayCopy(lpResults, accountData);
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventListener.AccountChange()", error);
       return(false);
    }
@@ -2320,7 +2370,7 @@ bool EventTracker.GetBandLimits(double& lpResults[]) {
    lpResults[2] = EventTracker.bandLimits[2];
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventTracker.GetBandLimits()", error);
       return(false);
    }
@@ -2342,7 +2392,7 @@ bool EventTracker.SetBandLimits(double& lpLimits[]) {
    EventTracker.bandLimits[2] = lpLimits[2];
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventTracker.SetBandLimits()", error);
       return(false);
    }
@@ -2370,7 +2420,7 @@ bool EventTracker.GetRateGridLimits(double& lpResults[]) {
    lpResults[1] = EventTracker.rateGridLimits[1];
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventTracker.GetRateGridLimits()", error);
       return(false);
    }
@@ -2391,7 +2441,7 @@ bool EventTracker.SetRateGridLimits(double& lpLimits[]) {
    EventTracker.rateGridLimits[1] = lpLimits[1];
 
    int error = GetLastError();
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("EventTracker.SetRateGridLimits()", error);
       return(false);
    }
@@ -2548,10 +2598,10 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    }
 
    // Hier hat entweder ein Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder das Dateiende END_OF_FILE ausgelöst.
-   if (error == ERR_NO_ERROR) {
+   if (error == NO_ERROR) {
       error = GetLastError();
       if (error == ERR_END_OF_FILE) {
-         error = ERR_NO_ERROR;
+         error = NO_ERROR;
       }
       else {
          catch("GetAccountHistory(6)", error);
@@ -2561,7 +2611,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // vor evt. Fehler-Rückkehr auf jeden Fall Datei schließen
    FileClose(hFile);
 
-   if (error != ERR_NO_ERROR)    // ret
+   if (error != NO_ERROR)    // ret
       return(error);
 
 
@@ -2611,7 +2661,7 @@ int GetAccountNumber() {
       account = StrToInteger(strAccount);
    }
 
-   if (catch("GetAccountNumber(3)") != ERR_NO_ERROR)
+   if (catch("GetAccountNumber(3)") != NO_ERROR)
       return(0);
    return(account);
 }
@@ -2668,7 +2718,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
    string data[][HISTORY_COLUMNS]; ArrayResize(data, 0);
    int error = GetAccountHistory(account, data);
    if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2)", error));
-   if (error != ERR_NO_ERROR        ) return(catch("GetBalanceHistory(3)"));
+   if (error != NO_ERROR            ) return(catch("GetBalanceHistory(3)"));
 
    // Balancedatensätze einlesen und auswerten (History ist nach CloseTime sortiert)
    datetime time, lastTime;
@@ -2730,14 +2780,14 @@ string GetComputerName() {
 
    if (!GetComputerNameA(buffer[0], lpSize)) {
       error = GetLastError();
-      if (error == ERR_NO_ERROR)
+      if (error == NO_ERROR)
          error = ERR_NO_MEMORY_FOR_RETURNED_STR;
       catch("GetComputerName(1)   kernel32.GetComputerName(buffer, "+ lpSize[0] +") = FALSE", error);
       return("");
    }
    //Print("GetComputerName()   GetComputerNameA()   copied "+ lpSize[0] +" chars,   buffer=\""+ buffer[0] +"\"");
 
-   if (catch("GetComputerName(2)") != ERR_NO_ERROR)
+   if (catch("GetComputerName(2)") != NO_ERROR)
       return("");
 
    return(buffer[0]);
@@ -2768,7 +2818,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
-   if (catch("GetConfigBool()") != ERR_NO_ERROR)
+   if (catch("GetConfigBool()") != NO_ERROR)
       return(false);
 
    return(result);
@@ -2797,7 +2847,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetConfigDouble()") != ERR_NO_ERROR)
+   if (catch("GetConfigDouble()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -2822,7 +2872,7 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigFile);   // gibt auch negative Werte richtig zurück
        result = GetPrivateProfileIntA(section, key, result      , localConfigFile);
 
-   if (catch("GetConfigInt()") != ERR_NO_ERROR)
+   if (catch("GetConfigInt()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -2849,7 +2899,7 @@ string GetConfigString(string section, string key, string defaultValue="") {
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, globalConfigFile);
    GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, localConfigFile);
 
-   if (catch("GetConfigString()") != ERR_NO_ERROR)
+   if (catch("GetConfigString()") != NO_ERROR)
       return("");
 
    return(buffer[0]);
@@ -2876,7 +2926,7 @@ int GetEasternToGmtOffset(datetime easternTime) {
    else if (easternTime < EDT_schedule[year][1]) offset = -4 * HOURS;
    else                                          offset = -5 * HOURS;
 
-   if (catch("GetEasternToGmtOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetEasternToGmtOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -2912,7 +2962,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
    if (zone != "GMT")
       gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
 
-   if (catch("GetEasternToServerTimeOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetEasternToServerTimeOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(easternToGmtOffset + gmtToServerTimeOffset);
@@ -2939,7 +2989,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
-   if (catch("GetGlobalConfigBool()") != ERR_NO_ERROR)
+   if (catch("GetGlobalConfigBool()") != NO_ERROR)
       return(false);
 
    return(result);
@@ -2964,7 +3014,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetGlobalConfigDouble()") != ERR_NO_ERROR)
+   if (catch("GetGlobalConfigDouble()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -2985,7 +3035,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 
    int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
-   if (catch("GetGlobalConfigInt()") != ERR_NO_ERROR)
+   if (catch("GetGlobalConfigInt()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -3008,7 +3058,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
 
-   if (catch("GetGlobalConfigString()") != ERR_NO_ERROR)
+   if (catch("GetGlobalConfigString()") != NO_ERROR)
       return("");
 
    return(buffer[0]);
@@ -3038,7 +3088,7 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
    else if (gmtTime < EDT_schedule[year][3]) offset = 4 * HOURS;
    else                                      offset = 5 * HOURS;
 
-   if (catch("GetGmtToEasternTimeOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetGmtToEasternTimeOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -3103,7 +3153,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    }
 
-   if (catch("GetGmtToServerTimeOffset(3)") != ERR_NO_ERROR)
+   if (catch("GetGmtToServerTimeOffset(3)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -3130,7 +3180,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
-   if (catch("GetLocalConfigBool()") != ERR_NO_ERROR)
+   if (catch("GetLocalConfigBool()") != NO_ERROR)
       return(false);
 
    return(result);
@@ -3155,7 +3205,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetLocalConfigDouble()") != ERR_NO_ERROR)
+   if (catch("GetLocalConfigDouble()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -3176,7 +3226,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 
    int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
 
-   if (catch("GetLocalConfigInt()") != ERR_NO_ERROR)
+   if (catch("GetLocalConfigInt()") != NO_ERROR)
       return(0);
 
    return(result);
@@ -3199,7 +3249,7 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 
    GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LEN, configFile);
 
-   if (catch("GetLocalConfigString()") != ERR_NO_ERROR)
+   if (catch("GetLocalConfigString()") != NO_ERROR)
       return("");
 
    return(buffer[0]);
@@ -3249,7 +3299,7 @@ string ErrorDescription(int error) {
  */
 string ErrorToStr(int error) {
    switch (error) {
-      case ERR_NO_ERROR                   : return("no error"                                                      ); //    0
+      case NO_ERROR                       : return("no error"                                                      ); //    0
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
@@ -3367,7 +3417,7 @@ string ErrorToStr(int error) {
  */
 string ErrorID(int error) {
    switch (error) {
-      case ERR_NO_ERROR                   : return("ERR_NO_ERROR"                   ); //    0
+      case NO_ERROR                       : return("NO_ERROR"                       ); //    0
 
       // trade server errors
       case ERR_NO_RESULT                  : return("ERR_NO_RESULT"                  ); //    1
@@ -4443,7 +4493,7 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
 
    //Print("GetLocalToGmtOffset()   difference between local and GMT is: ", (offset/MINUTES), " minutes");
 
-   if (catch("GetLocalToGmtOffset()") != ERR_NO_ERROR)
+   if (catch("GetLocalToGmtOffset()") != NO_ERROR)
       return(EMPTY_VALUE);
    return(offset);
 }
@@ -4658,7 +4708,7 @@ string GetServerTimezone() {
       return("");
    }
 
-   if (catch("GetServerTimezone(4)") != ERR_NO_ERROR)
+   if (catch("GetServerTimezone(4)") != NO_ERROR)
       return("");
 
    return(zone);
@@ -4694,7 +4744,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
    // Offset GMT zu Eastern Time
    int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(serverTime - serverToGmtOffset);
 
-   if (catch("GetServerToEasternTimeOffset(2)") != ERR_NO_ERROR)
+   if (catch("GetServerToEasternTimeOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(serverToGmtOffset + gmtToEasternTimeOffset);
@@ -4756,7 +4806,7 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
 
-   if (catch("GetServerToGmtOffset(3)") != ERR_NO_ERROR)
+   if (catch("GetServerToGmtOffset(3)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -4778,7 +4828,7 @@ int GetTerminalWindow() {
       parent = GetParent(child);
    }
 
-   if (catch("GetTerminalWindow()") != ERR_NO_ERROR)
+   if (catch("GetTerminalWindow()") != NO_ERROR)
       return(0);
 
    return(child);
@@ -4821,7 +4871,7 @@ string GetWindowText(int hWnd) {
 
    GetWindowTextA(hWnd, buffer[0], MAX_STRING_LEN);
 
-   if (catch("GetWindowText()") != ERR_NO_ERROR)
+   if (catch("GetWindowText()") != NO_ERROR)
       return("");
    return(buffer[0]);
 }
@@ -4848,7 +4898,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
 
    //Print("GmtToEasternTime()    GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtToEasternTimeOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
 
-   if (catch("GmtToEasternTime(2)") != ERR_NO_ERROR)
+   if (catch("GmtToEasternTime(2)") != NO_ERROR)
       return(-1);
    return(easternTime);
 }
@@ -4879,7 +4929,7 @@ datetime GmtToServerTime(datetime gmtTime) {
 
    //Print("GmtToServerTime()    GMT: "+ TimeToStr(gmtTime) +"     server offset: "+ (gmtToServerTimeOffset/HOURS) +"     server: "+ TimeToStr(serverTime));
 
-   if (catch("GmtToServerTime(2)") != ERR_NO_ERROR)
+   if (catch("GmtToServerTime(2)") != NO_ERROR)
       return(-1);
    return(serverTime);
 }
@@ -4926,7 +4976,7 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
    double   values[]; ArrayResize(values, 0);
 
    int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (times[0], values[0] sind älteste Werte)
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("iBalanceSeries(1)");
       return(error);
    }
@@ -4990,7 +5040,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
-   if (error == ERR_NO_ERROR) {
+   if (error == NO_ERROR) {
       // Bars überprüfen
       if (time < times[bars-1]) {
          int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
@@ -5001,7 +5051,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
       }
    }
 
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftPrevious(2)", error);
@@ -5036,13 +5086,13 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
-   if (error==ERR_NO_ERROR) if (bar==-1) {                  // falls die Bar nicht existiert und auch kein Update läuft
+   if (error==NO_ERROR) if (bar==-1) {                      // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
       error = GetLastError();                               // ERR_HISTORY_UPDATE ???
 
-      if (error == ERR_NO_ERROR) {
+      if (error == NO_ERROR) {
          // Bars überprüfen
          if (time < times[bars-1])                          // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
             bar = bars-1;
@@ -5055,7 +5105,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
       }
    }
 
-   if (error != ERR_NO_ERROR) {
+   if (error != NO_ERROR) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftNext(2)", error);
@@ -5180,7 +5230,7 @@ string JoinStrings(string values[], string separator) {
       result = StringConcatenate(values[0], result);
    }
 
-   if (catch("JoinStrings()") != ERR_NO_ERROR)
+   if (catch("JoinStrings()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -5297,7 +5347,7 @@ int RemoveChartObjects(string& lpLabels[]) {
 
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST)
-      return(ERR_NO_ERROR);
+      return(NO_ERROR);
    return(catch("RemoveChartObjects()", error));
 }
 
@@ -5362,7 +5412,7 @@ datetime ServerToEasternTime(datetime serverTime) {
 
    //Print("ServerToEasternTime()    server: "+ TimeToStr(serverTime) +"     GMT: "+ TimeToStr(gmtTime) +"     ET: "+ TimeToStr(easternTime));
 
-   if (catch("ServerToEasternTime(2)") != ERR_NO_ERROR)
+   if (catch("ServerToEasternTime(2)") != NO_ERROR)
       return(-1);
    return(easternTime);
 }
@@ -5397,7 +5447,7 @@ datetime ServerToGMT(datetime serverTime) {
 
    //Print("ServerToGMT()    server: "+ TimeToStr(serverTime) +"     GMT offset: "+ (serverToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
 
-   if (catch("ServerToGMT(3)") != ERR_NO_ERROR)
+   if (catch("ServerToGMT(3)") != NO_ERROR)
       return(-1);
    return(gmtTime);
 }
@@ -5415,7 +5465,7 @@ int SetWindowText(int hWnd, string text) {
 
    if (!SetWindowTextA(hWnd, text)) {
       int error = GetLastError();
-      if (error == ERR_NO_ERROR)
+      if (error == NO_ERROR)
          error = ERR_WINDOWS_ERROR;
       return(catch("SetWindowText()   user32.SetWindowTextA(hWnd="+ hWnd +", lpString=\""+ text +"\") = FALSE", error));
    }
@@ -5505,7 +5555,7 @@ int StringFindR(string object, string search) {
       lastFound = result;
    }
 
-   if (catch("StringFindR()") != ERR_NO_ERROR)
+   if (catch("StringFindR()") != NO_ERROR)
       return(-1);
    return(lastFound);
 }
@@ -5539,7 +5589,7 @@ string StringToLower(string value) {
       else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
    }
 
-   if (catch("StringToLower()") != ERR_NO_ERROR)
+   if (catch("StringToLower()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -5573,7 +5623,7 @@ string StringToUpper(string value) {
       else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
    }
 
-   if (catch("StringToUpper()") != ERR_NO_ERROR)
+   if (catch("StringToUpper()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -5614,7 +5664,7 @@ string UrlEncode(string value) {
          result = StringConcatenate(result, "%", DecimalToHex(char));
    }
 
-   if (catch("UrlEncode()") != ERR_NO_ERROR)
+   if (catch("UrlEncode()") != NO_ERROR)
       return("");
    return(result);
 }
@@ -5956,7 +6006,7 @@ string NumberToStr(double number, string mask) {
 
    //Print("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
-   if (catch("NumberToStr()") != ERR_NO_ERROR)
+   if (catch("NumberToStr()") != NO_ERROR)
       return("");
    return(outStr);
 }
