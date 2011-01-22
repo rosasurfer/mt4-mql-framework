@@ -177,14 +177,23 @@ int start() {
  * @return int - Fehlerstatus
  */
 int UploadDataFile(string filename) {
-   string url          = StringConcatenate("\"", "http://sub.domain.tld/uploadAccountHistory.php", "\"");
+   // HTTP-Request absetzen
+   string url          = "http://sub.domain.tld/uploadAccountHistory.php";
    string targetDir    = TerminalPath() +"\\experts\\files";
-   string dataFile     = "\""+ targetDir +"\\"+ filename +"\"";
-   string responseFile = "\""+ targetDir +"\\"+ filename +".response\"";
-   string logFile      = "\""+ targetDir +"\\"+ filename +".log\"";
-   string cmdLine      = "wget.exe "+ url +" --post-file="+ dataFile +" --header=\"Content-Type: text/plain\" -O "+ responseFile +" -o "+ logFile;
+   string dataFile     = targetDir +"\\"+ filename;
+   string responseFile = targetDir +"\\"+ filename +".response";
+   string logFile      = targetDir +"\\"+ filename +".log";
+   //log("UploadDataFile()   targetDir = \""+ targetDir +"\"   filename = \""+ filename +"\"");
+   string cmdLine = "wget.exe \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -o \""+ logFile +"\"";
 
-   WinExecAndWait(cmdLine, SW_SHOWNORMAL);    // SW_SHOWNORMAL|SW_HIDE
+   if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)     // SW_SHOWNORMAL|SW_HIDE
+      return(ERR_RUNTIME_ERROR);
 
-   return(catch("UploadDataFile()"));
+   // Datei mit Serverantwort zeilenweise einlesen
+   string lines[];
+   FileReadLines(filename +".response", lines, false);   // FileReadLines() benötigt relativen Pfad
+
+   log("UploadDataFile()   response lines = "+ ArraySize(lines));
+
+   return(catch("UploadDataFile(3)"));
 }

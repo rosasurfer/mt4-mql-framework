@@ -125,6 +125,9 @@
    bool     EventTracker.GetRateGridLimits(double& lpLimits[2]);
    bool     EventTracker.SetRateGridLimits(double& lpLimits[2]);
 
+   // File - I/O
+   int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
+
    // Math
    double   MathRoundFix(double number, int decimals);
    int      MathSign(double number);
@@ -156,7 +159,6 @@
    string   Struct.GetWCharString(int& lpStruct[], int from, int len);
    int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
-
 
    // sonstiges
    int      DecreasePeriod(int period);

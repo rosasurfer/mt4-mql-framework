@@ -422,6 +422,84 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 
 
 /**
+ * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
+ *
+ * @param  string  filename       - Dateiname, ggf. mit relativer (nicht absoluter) Pfadangabe
+ * @param  string& lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
+ * @param  bool    skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
+ *
+ * @return int - Fehlerstatus
+ */
+int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false) {
+   int fieldSeparator = '\t';
+
+   // Datei öffnen
+   int hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);  // FileOpen() erwartet Pfadangabe relativ zu .\experts\files
+   if (hFile < 0)
+      return(catch("FileReadLines(1)   FileOpen(\""+ filename +"\")", GetLastError()));
+
+   // Datei zeilenweise einlesen
+   bool newLine=true, blankLine=false, lineEnd=true;
+   string line, lines[]; ArrayResize(lines, 0);                         // Zwischenspeicher für gelesene Zeilen
+   int i = 0;                                                           // Zeilenzähler
+
+   while (!FileIsEnding(hFile)) {
+      newLine = false;
+      if (lineEnd) {                                                    // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
+         newLine   = true;                                              // Flags auf Zeilenbeginn setzen.
+         blankLine = false;
+         lineEnd   = false;
+      }
+
+      // Zeile auslesen
+      string value = FileReadString(hFile);
+
+      // auf Zeilen- und Dateiende prüfen
+      if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
+         lineEnd = true;
+         if (newLine) {
+            if (StringLen(value) == 0) {
+               if (FileIsEnding(hFile))                                 // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
+                  break;
+               blankLine = true;                                        // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
+            }
+         }
+      }
+
+      // Leerzeilen ggf. überspringen
+      if (blankLine) /*&&*/ if (skipEmptyLines)
+         continue;
+
+      // Wert in neuer Zeile speichern oder vorherige Zeile aktualisieren
+      if (newLine) {
+         i++;
+         ArrayResize(lines, i);
+         lines[i-1] = value;
+         //log("FileReadLines()   new line = \""+ lines[i-1] +"\"");
+      }
+      else {
+         lines[i-1] = StringConcatenate(lines[i-1], CharToStr(fieldSeparator), value);
+         //log("FileReadLines()   updated line = \""+ lines[i-1] +"\"");
+      }
+   }
+
+   // Dateiende hat ERR_END_OF_FILE ausgelöst
+   int error = GetLastError();
+   if (error!=ERR_END_OF_FILE) /*&&*/ if (error!=NO_ERROR)
+      return(catch("FileReadLines(2)", error));
+
+   // Datei schließen
+   FileClose(hFile);
+
+   // Zeilen in Ergebnisarray kopieren
+   ArrayResize(lpResult, i);
+   ArrayCopy(lpResult, lines);
+
+   return(catch("FileReadLines(3)"));
+}
+
+
+/**
  * Gibt die lesbare Version eines Rückgabewertes von WaitForSingleObject() zurück.
  *
  * @param  int value - Rückgabewert
@@ -2498,7 +2576,7 @@ int Explode(string object, string separator, string& lpResults[]) {
 
 
 /**
- * Liest die History eines Accounts aus dem Dateisystem in das angegebene Ergebnisarray ein.  Die Daten im Ergebnisarray werden als Strings gespeichert.
+ * Liest die History eines Accounts aus dem Dateisystem in das angegebene Ergebnisarray ein (Daten werden als Strings gespeichert).
  *
  * @param  int     account                      - Account-Nummer
  * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
