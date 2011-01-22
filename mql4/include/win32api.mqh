@@ -461,21 +461,27 @@
 
 
 // ShowWindow() commands (keine Flags)
-#define SW_HIDE                                       0
-#define SW_SHOWNORMAL                                 1
-#define SW_NORMAL                         SW_SHOWNORMAL
-#define SW_SHOWMINIMIZED                              2
-#define SW_SHOWMAXIMIZED                              3
-#define SW_MAXIMIZE                    SW_SHOWMAXIMIZED
-#define SW_SHOWNOACTIVATE                             4
-#define SW_SHOW                                       5
-#define SW_MINIMIZE                                   6
-#define SW_SHOWMINNOACTIVE                            7
-#define SW_SHOWNA                                     8
-#define SW_RESTORE                                    9
-#define SW_SHOWDEFAULT                               10
-#define SW_FORCEMINIMIZE                             11
-#define SW_MAX                         SW_FORCEMINIMIZE
+#define SW_SHOW                           5  // Activates the window and displays it in its current size and position.
+#define SW_SHOWNA                         8  // Displays the window in its current size and position. Similar to SW_SHOW, except that the window is not activated.
+#define SW_HIDE                           0  // Hides the window and activates another window.
+
+#define SW_SHOWMAXIMIZED                  3  // Activates the window and displays it as a maximized window.
+#define SW_MAXIMIZE        SW_SHOWMAXIMIZED
+
+#define SW_SHOWMINIMIZED                  2  // Activates the window and displays it as a minimized window.
+#define SW_SHOWMINNOACTIVE                7  // Displays the window as a minimized window. Similar to SW_SHOWMINIMIZED, except the window is not activated.
+#define SW_MINIMIZE                       6  // Minimizes the specified window and activates the next top-level window in the Z order.
+#define SW_FORCEMINIMIZE                 11  // Minimizes a window, even if the thread that owns the window is not responding. This flag should only be used when
+#define SW_MAX             SW_FORCEMINIMIZE  // minimizing windows from a different thread.
+
+#define SW_SHOWNORMAL                     1  // Activates and displays a window. If the window is minimized or maximized, Windows restores it to its original size and
+#define SW_NORMAL             SW_SHOWNORMAL  // position. An application should specify this flag when displaying the window for the first time.
+#define SW_SHOWNOACTIVATE                 4  // Displays a window in its most recent size and position. Similar to SW_SHOWNORMAL, except that the window is not activated.
+#define SW_RESTORE                        9  // Activates and displays the window. If the window is minimized or maximized, Windows restores it to its original size and
+                                             // position. An application should specify this flag when restoring a minimized window.
+
+#define SW_SHOWDEFAULT                   10  // Sets the show state based on the SW_ flag specified in the STARTUPINFO structure passed to the CreateProcess() function by
+                                             // the program that started the application.
 
 
 // ShellExecute() error codes
