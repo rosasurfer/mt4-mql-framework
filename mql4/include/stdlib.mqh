@@ -125,7 +125,7 @@
    bool     EventTracker.GetRateGridLimits(double& lpLimits[2]);
    bool     EventTracker.SetRateGridLimits(double& lpLimits[2]);
 
-   // File - I/O
+   // Files, I/O
    int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
 
    // Math
@@ -171,6 +171,7 @@
    string   FindNormalizedSymbol(string symbol, string defaultValue);
    string   FindSymbolName(string symbol, string defaultName);
    string   FindSymbolLongName(string symbol, string defaultName);
+   string   GetAccountDirectory(int account);
    int      GetMovingAverageMethod(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);

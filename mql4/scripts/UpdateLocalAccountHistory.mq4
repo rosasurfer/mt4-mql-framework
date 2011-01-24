@@ -186,9 +186,11 @@ int start() {
 
 
    // (7) CSV-Datei erzeugen
+   string filename = GetAccountDirectory(AccountNumber()) +"/account history.csv";
+
    if (ArrayRange(history, 0) == 0) {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
-      int hFile = FileOpen(account +"/account history.csv", FILE_CSV|FILE_WRITE, '\t');
+      int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
          return(catch("start(9)  FileOpen()"));
 
@@ -208,7 +210,7 @@ int start() {
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
-      hFile = FileOpen(account +"/account history.csv", FILE_CSV|FILE_READ|FILE_WRITE, '\t');
+      hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
          return(catch("start(12)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {

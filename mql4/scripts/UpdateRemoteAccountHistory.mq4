@@ -94,7 +94,7 @@ int start() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = "tmp_accounthistory_"+ AccountNumber() +".csv";
+   string filename = GetAccountDirectory(AccountNumber()) +"\\tmp_"+ WindowExpertName() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("start(3)  FileOpen()"));
@@ -172,26 +172,26 @@ int start() {
 /**
  * Lädt die angegebene Datei per HTTP-Post-Request auf den Server und gibt die Antwort des Servers zurück.
  *
- * @param  string filename - Dateiname
+ * @param  string filename - Dateiname, relativ zu "{terminal-directory}\experts\files"
  *
  * @return int - Fehlerstatus
  */
 int UploadDataFile(string filename) {
-   // HTTP-Request absetzen
+   // Command-Line zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
-   string targetDir    = TerminalPath() +"\\experts\\files";
-   string dataFile     = targetDir +"\\"+ filename;
-   string responseFile = targetDir +"\\"+ filename +".response";
-   string logFile      = targetDir +"\\"+ filename +".log";
-   //log("UploadDataFile()   targetDir = \""+ targetDir +"\"   filename = \""+ filename +"\"");
-   string cmdLine = "wget.exe \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -o \""+ logFile +"\"";
+   string filesDir     = TerminalPath() +"\\experts\\files";
+   string dataFile     = filesDir +"\\"+ filename;
+   string responseFile = filesDir +"\\"+ filename +".response";
+   string logFile      = filesDir +"\\"+ filename +".log";
+   string cmdLine      = "wget.exe \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -o \""+ logFile +"\"";
 
+   // HTTP-Request absetzen
    if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)     // SW_SHOWNORMAL|SW_HIDE
       return(ERR_RUNTIME_ERROR);
 
-   // Datei mit Serverantwort zeilenweise einlesen
+   // Serverantwort zeilenweise einlesen
    string lines[];
-   FileReadLines(filename +".response", lines, false);   // FileReadLines() benötigt relativen Pfad
+   FileReadLines(filename +".response", lines, false);   // FileReadLines() erwartet relativen Pfad
 
    log("UploadDataFile()   response lines = "+ ArraySize(lines));
 

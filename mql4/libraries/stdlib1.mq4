@@ -390,6 +390,33 @@ string Struct.GetWCharString(int& lpStruct[], int from, int len) {
 
 
 /**
+ * Gibt das files-Verzeichnis des angegebenen Accounts zurück.
+ *
+ * @param  int account - Account-Nummer
+ *
+ * @return string - Verzeichnisname, relativ zu "{terminal-directory}\experts\files"
+ */
+string GetAccountDirectory(int account) {
+   switch (account) {
+      case     {account-no}: return("Alpari - demo - "+ account);
+      case    {account-no}: return("Alpari - demo - "+         account);
+      case    {account-no}: return("Alpari - live (1) - "+     account);
+      case    {account-no}: return("Alpari - live (2) - "+     account);
+      case   {account-no}: return("APBG - demo - "+           account);
+      case      {account-no}: return("ATC - demo - "+            account);
+      case     {account-no}: return("ATC - live - "+            account);
+      case      {account-no}: return("FB Capital - demo - "+     account);
+      case {account-no}: return("MB Trading - demo - "+     account);
+      case     {account-no}: return("SIG - live - "+            account);
+      case    {account-no}: return("Forex ltd - demo - "+      account);
+   }
+
+   log("GetAccountDirectory()   unknown files directory for account #"+ AccountNumber());
+   return(AccountNumber());
+}
+
+
+/**
  * Führt eine Anwendung aus und wartet, bis sie beendet ist.
  *
  * @param  string cmdLine - Befehlszeile
@@ -424,7 +451,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 /**
  * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
  *
- * @param  string  filename       - Dateiname, ggf. mit relativer (nicht absoluter) Pfadangabe
+ * @param  string  filename       - Dateiname mit zu "{terminal-path}\experts\files" relativer Pfadangabe
  * @param  string& lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
  * @param  bool    skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
  *
@@ -2601,7 +2628,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-   string filename = StringConcatenate(account, "/account history.csv");
+   string filename = GetAccountDirectory(account) +"/account history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
