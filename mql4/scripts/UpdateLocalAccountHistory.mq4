@@ -161,7 +161,7 @@ int start() {
             netProfits [first] = netProfits [second];
          }
          closeTimes[first] = openTimes[second];
-         comments  [first] = "closed by hedge";
+         comments  [first] = ifString(comments[first]=="partial close", "partial closed by hedge", "closed by hedge");
          tickets  [second] = 0;                                            // erste Order enthält jetzt alle Daten, hedgende Order verwerfen
       }
    }
