@@ -160,23 +160,33 @@ int start() {
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
-   string response = UploadDataFile(filename);
+   string response[];
+   int result = UploadDataFile(filename, response);
+
+   if (result >= ERR_RUNTIME_ERROR) {        // Rückkehr, falls Fehler aufgetreten
+      error = catch("start(10)");
+      if (error == NO_ERROR)
+         error = ERR_RUNTIME_ERROR;
+      return(error);
+   }
 
 
    // (4) Antwort auswerten und Rückmeldung an den User geben
+   log("start()   result = "+ result);
 
-   return(catch("start(10)"));
+   return(catch("start(11)"));
 }
 
 
 /**
  * Lädt die angegebene Datei per HTTP-Post-Request auf den Server und gibt die Antwort des Servers zurück.
  *
- * @param  string filename - Dateiname, relativ zu "{terminal-directory}\experts\files"
+ * @param  string  filename   - Dateiname, relativ zu "{terminal-directory}\experts\files"
+ * @param  string& lpResponse - Zeiger auf ein Array zur Aufnahme der zeilenweisen Serverantwort
  *
- * @return int - Fehlerstatus
+ * @return int - Serverresponse-Code (< ERR_RUNTIME_ERROR) oder MQL-Fehlerstatus (>= ERR_RUNTIME_ERROR)
  */
-int UploadDataFile(string filename) {
+int UploadDataFile(string filename, string& lpResponse[]) {
    // Command-Line zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
    string filesDir     = TerminalPath() +"\\experts\\files";
@@ -186,14 +196,29 @@ int UploadDataFile(string filename) {
    string cmdLine      = "wget.exe \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -o \""+ logFile +"\"";
 
    // HTTP-Request absetzen
-   if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)     // SW_SHOWNORMAL|SW_HIDE
+   if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)                          // SW_SHOWNORMAL|SW_HIDE
       return(ERR_RUNTIME_ERROR);
 
    // Serverantwort zeilenweise einlesen
-   string lines[];
-   FileReadLines(filename +".response", lines, false);   // FileReadLines() erwartet relativen Pfad
+   if (FileReadLines(filename +".response", lpResponse, false) != NO_ERROR)   // FileReadLines() erwartet relativen Pfad
+      return(ERR_RUNTIME_ERROR);
 
-   log("UploadDataFile()   response lines = "+ ArraySize(lines));
+   // Serverantwort auswerten
+   int resultCode, lines = ArraySize(lpResponse);
+   if (lines == 0) {
+      resultCode = 500;                                                       // Server-Error
+   }
+   else {
+      string values[];
+      Explode(lpResponse[0], ":", values);
+      string strCode = StringTrim(values[0]);
+      if (StringIsDigit(strCode)) resultCode = StrToInteger(strCode);
+      else                        resultCode = 500;                           // Server-Error
+   }
+   //log("UploadDataFile()   result code = "+ resultCode);
 
-   return(catch("UploadDataFile(3)"));
+   int error = catch("UploadDataFile()");
+   if (error != NO_ERROR)
+      return(error);
+   return(resultCode);
 }

@@ -465,6 +465,14 @@ int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false
    if (hFile < 0)
       return(catch("FileReadLines(1)   FileOpen(\""+ filename +"\")", GetLastError()));
 
+
+   // Schnelle Rückkehr bei leerer Datei
+   if (FileSize(hFile) == 0) {
+      ArrayResize(lpResult, 0);
+      return(catch("FileReadLines(2)"));
+   }
+
+
    // Datei zeilenweise einlesen
    bool newLine=true, blankLine=false, lineEnd=true;
    string line, lines[]; ArrayResize(lines, 0);                         // Zwischenspeicher für gelesene Zeilen
@@ -520,7 +528,8 @@ int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false
 
    // Zeilen in Ergebnisarray kopieren
    ArrayResize(lpResult, i);
-   ArrayCopy(lpResult, lines);
+   if (i > 0)
+      ArrayCopy(lpResult, lines);
 
    return(catch("FileReadLines(3)"));
 }
