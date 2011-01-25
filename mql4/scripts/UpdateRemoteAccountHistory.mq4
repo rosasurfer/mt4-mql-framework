@@ -1,7 +1,7 @@
 /**
  * UpdateRemoteAccountHistory
  *
- * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten (unsortiert) übertragen.
+ * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten übertragen.
  * Die Auswertung und Zuordnung erfolgt auf dem Server
  */
 #include <stdlib.mqh>
@@ -14,6 +14,14 @@
  * @return int - Fehlerstatus
  */
 int start() {
+   int account = AccountNumber();
+   if (account == 0) {
+      log("start()  no trade server connection");
+      PlaySound("notify.wav");
+      MessageBox("No trade server connection.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      return(ERR_NO_CONNECTION);
+   }
+
    // (1) verfügbare Historydaten einlesen
    int orders = OrdersHistoryTotal();
 
@@ -94,13 +102,13 @@ int start() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = GetAccountDirectory(AccountNumber()) +"\\tmp_"+ WindowExpertName() +".txt";
+   string filename = GetAccountDirectory(account) +"\\tmp_"+ WindowExpertName() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("start(3)  FileOpen()"));
 
    // (2.1) Dateikommentar
-   string header = "# Account history for account #"+ AccountNumber() +" ("+ AccountCompany() +") - "+ AccountName();
+   string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName();
    if (FileWrite(hFile, header) < 0) {
       error = GetLastError();
       FileClose(hFile);

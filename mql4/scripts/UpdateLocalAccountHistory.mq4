@@ -13,6 +13,15 @@
  * @return int - Fehlerstatus
  */
 int start() {
+   int account = AccountNumber();
+   if (account == 0) {
+      log("start()  no trade server connection");
+      PlaySound("notify.wav");
+      MessageBox("No trade server connection.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      return(ERR_NO_CONNECTION);
+   }
+
+
    // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Daten sortieren
    int orders = OrdersHistoryTotal();
    int ticketData[][3];
@@ -32,14 +41,11 @@ int start() {
 
 
    // (2) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
-   int account = GetAccountNumber();
-   if (account == 0)
-      return(catch("start(1)", stdlib_GetLastError()));
    string history[][HISTORY_COLUMNS]; ArrayResize(history, 0);
 
    int error = GetAccountHistory(account, history);            // ERR_CANNOT_OPEN_FILE ignorieren => History leer
    if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)
-      return(catch("start(2)", error));
+      return(catch("start(1)", error));
 
    int    lastTicket;
    double lastBalance;
@@ -54,11 +60,11 @@ int start() {
       if (lastBalance != AccountBalance()) {
          PlaySound("notify.wav");
          MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
-         return(catch("start(3)"));
+         return(catch("start(2)"));
       }
       PlaySound("ding.wav");
       MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
-      return(catch("start(4)"));
+      return(catch("start(3)"));
    }
 
 
@@ -74,10 +80,10 @@ int start() {
    }
    if (iFirstTicketToSave == orders) {
       if (lastBalance != AccountBalance())
-         return(catch("start(3)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+         return(catch("start(4)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
       MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
-      return(catch("start(4)"));
+      return(catch("start(5)"));
    }
    //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
 
@@ -105,7 +111,7 @@ int start() {
    for (i=0; i < orders; i++) {
       int ticket = ticketData[i][2];
       if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
-         return(catch("start(5)  OrderSelect(ticket="+ ticket +")"));
+         return(catch("start(6)  OrderSelect(ticket="+ ticket +")"));
 
       int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
@@ -139,7 +145,7 @@ int start() {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("start(6)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(7)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -147,7 +153,7 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(7)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(8)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
          int first  = MathMin(i, n);
          int second = MathMax(i, n);
@@ -181,18 +187,18 @@ int start() {
       log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
-      return(catch("start(8)"));
+      return(catch("start(9)"));
    }
 
 
    // (7) CSV-Datei erzeugen
-   string filename = GetAccountDirectory(AccountNumber()) +"/account history.csv";
+   string filename = GetAccountDirectory(account) +"/account history.csv";
 
    if (ArrayRange(history, 0) == 0) {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(9)  FileOpen()"));
+         return(catch("start(10)  FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n"
@@ -200,23 +206,23 @@ int start() {
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(10)  FileWrite()", error));
+         return(catch("start(11)  FileWrite()", error));
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(11)  FileWrite()", error));
+         return(catch("start(12)  FileWrite()", error));
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(12)  FileOpen()"));
+         return(catch("start(13)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(13)  FileSeek()", error));
+         return(catch("start(14)  FileSeek()", error));
       }
    }
 
@@ -251,14 +257,14 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(14)  FileWrite()", error));
+         return(catch("start(15)  FileWrite()", error));
       }
    }
    FileClose(hFile);
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
-   return(catch("start(15)"));
+   return(catch("start(16)"));
 }
 
 
