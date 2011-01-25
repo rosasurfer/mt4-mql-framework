@@ -60,8 +60,14 @@ int start() {
             symbols[n]  = FindNormalizedSymbol(OrderSymbol(), OrderSymbol());
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
-            if (error == ERR_UNKNOWN_SYMBOL) return(catch("start(1)  Please add \""+ OrderSymbol() +"\" to the market watch window !", error));
-            if (error != NO_ERROR          ) return(catch("start(2)", error));
+            if (error == ERR_UNKNOWN_SYMBOL) {
+               log("start()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
+               PlaySound("notify.wav");
+               MessageBox("Add \""+ OrderSymbol() +"\" to the market watch window !", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+               return(error);
+            }
+            if (error != NO_ERROR)
+               return(catch("start(1)", error));
             units[n] = OrderLots() * lotSize;
          }
       openTimes      [n] = OrderOpenTime();
@@ -105,33 +111,33 @@ int start() {
    string filename = GetAccountDirectory(account) +"\\tmp_"+ WindowExpertName() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
-      return(catch("start(3)  FileOpen()"));
+      return(catch("start(2)  FileOpen()"));
 
    // (2.1) Dateikommentar
    string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName();
    if (FileWrite(hFile, header) < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(4)  FileWrite()", error));
+      return(catch("start(3)  FileWrite()", error));
    }
 
    // (2.2) Status
    if (FileWrite(hFile, "[Account]") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(5)  FileWrite()", error));
+      return(catch("start(4)  FileWrite()", error));
    }
    if (FileWrite(hFile, "account status information") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(6)  FileWrite()", error));
+      return(catch("start(5)  FileWrite()", error));
    }
 
    // (2.2) Daten
    if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(7)  FileWrite()", error));
+      return(catch("start(6)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
       string strType         = OperationTypeToStr(types[i]);
@@ -156,7 +162,7 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strExpTime,strExpTimestamp,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(8)  FileWrite()", error));
+         return(catch("start(7)  FileWrite()", error));
       }
    }
 
@@ -164,15 +170,15 @@ int start() {
    FileClose(hFile);
    error = GetLastError();
    if (error != NO_ERROR)
-      return(catch("start(9)  FileClose()", error));
+      return(catch("start(8)  FileClose()", error));
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
    string response[];
    int result = UploadDataFile(filename, response);
 
-   if (result >= ERR_RUNTIME_ERROR) {        // Rückkehr, falls Fehler aufgetreten
-      error = catch("start(10)");
+   if (result >= ERR_RUNTIME_ERROR) {        // bei Fehler Rückkehr
+      error = catch("start(9)");
       if (error == NO_ERROR)
          error = ERR_RUNTIME_ERROR;
       return(error);
@@ -180,9 +186,22 @@ int start() {
 
 
    // (4) Antwort auswerten und Rückmeldung an den User geben
-   log("start()   result = "+ result);
+   if (result == 200) {
+      PlaySound("ding.wav");
+      MessageBox("UploadDataFile()\nresult = "+ result, WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+   }
+   else {
+      if (ArraySize(response) > 0) {
+         string message = StringTrim(response[0]);
+         if (StringLen(message) == 0)
+            message = "result = "+ result;
+      }
+      else  message = "result = "+ result;
+      PlaySound("notify.wav");
+      MessageBox("UploadDataFile()\nerror "+ message, WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+   }
 
-   return(catch("start(11)"));
+   return(catch("start(10)"));
 }
 
 
