@@ -453,7 +453,7 @@ int UpdateMarginLevels() {
             ObjectCreate(freezeLevelLabel, OBJ_HLINE, 0, 0, 0);
             ObjectSet(freezeLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet(freezeLevelLabel, OBJPROP_COLOR, C'0,201,206');
-            ObjectSet(freezeLevelLabel, OBJPROP_BACK , false);
+            ObjectSet(freezeLevelLabel, OBJPROP_BACK , true);
             ObjectSetText(freezeLevelLabel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
             RegisterChartObject(freezeLevelLabel, labels);
          }
@@ -465,7 +465,7 @@ int UpdateMarginLevels() {
          ObjectCreate(stopoutLevelLabel, OBJ_HLINE, 0, 0, 0);
          ObjectSet(stopoutLevelLabel, OBJPROP_STYLE, STYLE_SOLID);
          ObjectSet(stopoutLevelLabel, OBJPROP_COLOR, OrangeRed);
-         ObjectSet(stopoutLevelLabel, OBJPROP_BACK , false);
+         ObjectSet(stopoutLevelLabel, OBJPROP_BACK , true);
             if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
             else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
          ObjectSetText(stopoutLevelLabel, description);
