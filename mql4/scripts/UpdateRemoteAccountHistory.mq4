@@ -114,7 +114,7 @@ int start() {
       return(catch("start(2)  FileOpen()"));
 
    // (2.1) Dateikommentar
-   string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName();
+   string header = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
    if (FileWrite(hFile, header) < 0) {
       error = GetLastError();
       FileClose(hFile);
@@ -122,12 +122,17 @@ int start() {
    }
 
    // (2.2) Status
-   if (FileWrite(hFile, "[Account]") < 0) {
+   if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountName","AccountBalance") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(4)  FileWrite()", error));
    }
-   if (FileWrite(hFile, "account status information") < 0) {
+   string accountCompany = AccountCompany();
+   string accountNumber  = AccountNumber();
+   string accountName    = AccountName();
+   string accountBalance = NumberToStr(AccountBalance(), ".2+");
+
+   if (FileWrite(hFile, accountCompany,accountNumber,accountName,accountBalance) < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(5)  FileWrite()", error));
