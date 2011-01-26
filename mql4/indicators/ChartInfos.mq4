@@ -85,8 +85,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("start()   enter");
-
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
@@ -118,7 +116,6 @@ int start() {
    if (lastH1Close)
       UpdateH1CloseLabel();
 
-   //debug("start()   leave");
    return(catch("start()"));
 }
 
@@ -200,7 +197,7 @@ int CreateLabels() {
    if (ObjectCreate(unitSizeLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(unitSizeLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
-      ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE, 11);
+      ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE, 9);
       ObjectSetText(unitSizeLabel, " ", 1);
       RegisterChartObject(unitSizeLabel, labels);
    }
@@ -212,7 +209,7 @@ int CreateLabels() {
    if (ObjectCreate(positionLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(positionLabel, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
       ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
-      ObjectSet(positionLabel, OBJPROP_YDISTANCE, 11);
+      ObjectSet(positionLabel, OBJPROP_YDISTANCE, 9);
       ObjectSetText(positionLabel, " ", 1);
       RegisterChartObject(positionLabel, labels);
    }
