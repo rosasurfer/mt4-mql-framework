@@ -817,7 +817,6 @@ string NormalizeSymbol(string symbol) {
    if (symbol == "XAUUSD"   ) return("XAUUSD"  );
    if (symbol == "XAUUSDX"  ) return("XAUUSD"  );
 
-   log("NormalizeSymbol()  unknown symbol \""+ symbol +"\"");
    return("");
 }
 
