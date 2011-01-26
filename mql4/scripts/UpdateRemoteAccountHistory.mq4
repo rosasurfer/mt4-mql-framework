@@ -122,17 +122,16 @@ int start() {
    }
 
    // (2.2) Status
-   if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountName","AccountBalance") < 0) {
+   if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountBalance") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(4)  FileWrite()", error));
    }
    string accountCompany = AccountCompany();
    string accountNumber  = AccountNumber();
-   string accountName    = AccountName();
    string accountBalance = NumberToStr(AccountBalance(), ".2+");
 
-   if (FileWrite(hFile, accountCompany,accountNumber,accountName,accountBalance) < 0) {
+   if (FileWrite(hFile, accountCompany,accountNumber,accountBalance) < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(5)  FileWrite()", error));
