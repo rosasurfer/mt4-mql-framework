@@ -25,22 +25,21 @@ int start() {
    // (1) verfügbare Historydaten einlesen
    int orders = OrdersHistoryTotal();
 
-   int      tickets        []; ArrayResize(tickets,         orders);
-   int      types          []; ArrayResize(types,           orders);
-   string   symbols        []; ArrayResize(symbols,         orders);
-   int      units          []; ArrayResize(units,           orders);
-   datetime openTimes      []; ArrayResize(openTimes,       orders);
-   datetime closeTimes     []; ArrayResize(closeTimes,      orders);
-   double   openPrices     []; ArrayResize(openPrices,      orders);
-   double   closePrices    []; ArrayResize(closePrices,     orders);
-   double   stopLosses     []; ArrayResize(stopLosses,      orders);
-   double   takeProfits    []; ArrayResize(takeProfits,     orders);
-   datetime expirationTimes[]; ArrayResize(expirationTimes, orders);
-   double   commissions    []; ArrayResize(commissions,     orders);
-   double   swaps          []; ArrayResize(swaps,           orders);
-   double   profits        []; ArrayResize(profits,         orders);
-   int      magicNumbers   []; ArrayResize(magicNumbers,    orders);
-   string   comments       []; ArrayResize(comments,        orders);
+   int      tickets     []; ArrayResize(tickets,      orders);
+   int      types       []; ArrayResize(types,        orders);
+   string   symbols     []; ArrayResize(symbols,      orders);
+   int      units       []; ArrayResize(units,        orders);
+   datetime openTimes   []; ArrayResize(openTimes,    orders);
+   datetime closeTimes  []; ArrayResize(closeTimes,   orders);
+   double   openPrices  []; ArrayResize(openPrices,   orders);
+   double   closePrices []; ArrayResize(closePrices,  orders);
+   double   stopLosses  []; ArrayResize(stopLosses,   orders);
+   double   takeProfits []; ArrayResize(takeProfits,  orders);
+   double   commissions []; ArrayResize(commissions,  orders);
+   double   swaps       []; ArrayResize(swaps,        orders);
+   double   profits     []; ArrayResize(profits,      orders);
+   int      magicNumbers[]; ArrayResize(magicNumbers, orders);
+   string   comments    []; ArrayResize(comments,     orders);
 
    int n;
 
@@ -51,9 +50,9 @@ int start() {
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
          continue;
 
-      tickets        [n] = OrderTicket();
-      types          [n] = type;
-      symbols        [n] = OrderSymbol();
+      tickets[n] = OrderTicket();
+      types  [n] = type;
+      symbols[n] = OrderSymbol();
          if (symbols[n] == "")
             units[n]= 0;
          else {                                             // broker-spezifische Symbole normalisieren
@@ -70,39 +69,37 @@ int start() {
                return(catch("start(1)", error));
             units[n] = OrderLots() * lotSize;
          }
-      openTimes      [n] = OrderOpenTime();
-      closeTimes     [n] = OrderCloseTime();
-      openPrices     [n] = OrderOpenPrice();
-      closePrices    [n] = OrderClosePrice();
-      stopLosses     [n] = OrderStopLoss();
-      takeProfits    [n] = OrderTakeProfit();
-      expirationTimes[n] = OrderExpiration();
-      commissions    [n] = OrderCommission();
-      swaps          [n] = OrderSwap();
-      profits        [n] = OrderProfit();
-      magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
+      openTimes   [n] = OrderOpenTime();
+      closeTimes  [n] = OrderCloseTime();
+      openPrices  [n] = OrderOpenPrice();
+      closePrices [n] = OrderClosePrice();
+      stopLosses  [n] = OrderStopLoss();
+      takeProfits [n] = OrderTakeProfit();
+      commissions [n] = OrderCommission();
+      swaps       [n] = OrderSwap();
+      profits     [n] = OrderProfit();
+      magicNumbers[n] = OrderMagicNumber();
+      comments    [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
       n++;
    }
 
    // Arrays justieren
    if (n < orders) {
-      ArrayResize(tickets,         n);
-      ArrayResize(types,           n);
-      ArrayResize(symbols,         n);
-      ArrayResize(units,           n);
-      ArrayResize(openTimes,       n);
-      ArrayResize(closeTimes,      n);
-      ArrayResize(openPrices,      n);
-      ArrayResize(closePrices,     n);
-      ArrayResize(stopLosses,      n);
-      ArrayResize(takeProfits,     n);
-      ArrayResize(expirationTimes, n);
-      ArrayResize(commissions,     n);
-      ArrayResize(swaps,           n);
-      ArrayResize(profits,         n);
-      ArrayResize(magicNumbers,    n);
-      ArrayResize(comments,        n);
+      ArrayResize(tickets,     n);
+      ArrayResize(types,       n);
+      ArrayResize(symbols,     n);
+      ArrayResize(units,       n);
+      ArrayResize(openTimes,   n);
+      ArrayResize(closeTimes,  n);
+      ArrayResize(openPrices,  n);
+      ArrayResize(closePrices, n);
+      ArrayResize(stopLosses,  n);
+      ArrayResize(takeProfits, n);
+      ArrayResize(commissions, n);
+      ArrayResize(swaps,       n);
+      ArrayResize(profits,     n);
+      ArrayResize(magicNumbers,n);
+      ArrayResize(comments,    n);
       orders = n;
    }
 
@@ -138,32 +135,29 @@ int start() {
    }
 
    // (2.2) Daten
-   if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","ExpirationTime","ExpirationTimestamp","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+   if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(6)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
-      string strType         = OperationTypeToStr(types[i]);
+      string strType        = OperationTypeToStr(types[i]);
 
-      string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      string strCloseTime    = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strOpenTime    = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
 
-      string strOpenPrice    = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
-      string strStopLoss     = ifString(stopLosses [i]==0, "", NumberToStr(stopLosses [i], ".2+"));
-      string strTakeProfit   = ifString(takeProfits[i]==0, "", NumberToStr(takeProfits[i], ".2+"));
-      string strClosePrice   = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
+      string strOpenPrice   = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
+      string strStopLoss    = ifString(stopLosses [i]==0, "", NumberToStr(stopLosses [i], ".2+"));
+      string strTakeProfit  = ifString(takeProfits[i]==0, "", NumberToStr(takeProfits[i], ".2+"));
+      string strClosePrice  = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
 
-      string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      string strExpTimestamp = ifString(expirationTimes[i]==0, "", expirationTimes[i]);
+      string strCommission  = DoubleToStr(commissions[i], 2);
+      string strSwap        = DoubleToStr(swaps      [i], 2);
+      string strProfit      = DoubleToStr(profits    [i], 2);
 
-      string strCommission   = DoubleToStr(commissions[i], 2);
-      string strSwap         = DoubleToStr(swaps      [i], 2);
-      string strProfit       = DoubleToStr(profits    [i], 2);
+      string strMagicNumber = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
 
-      string strMagicNumber  = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
-
-      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strExpTime,strExpTimestamp,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
+      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
          return(catch("start(7)  FileWrite()", error));
