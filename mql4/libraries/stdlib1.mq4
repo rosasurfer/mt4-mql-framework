@@ -2842,8 +2842,8 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
       return(catch("GetBalanceHistory(4)"));
 
    for (int i=0; i<size; i++) {
-      balance = StrToDouble (data[i][HC_BALANCE       ]);
-      time    = StrToInteger(data[i][HC_CLOSETIMESTAMP]);
+      balance = StrToDouble (data[i][AH_BALANCE       ]);
+      time    = StrToInteger(data[i][AH_CLOSETIMESTAMP]);
 
       // der erste Datensatz wird immer geschrieben...
       if (i == 0) {

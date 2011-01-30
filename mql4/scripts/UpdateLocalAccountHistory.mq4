@@ -52,8 +52,8 @@ int start() {
    int    histSize = ArrayRange(history, 0);
 
    if (histSize > 0) {
-      lastTicket  = StrToInteger(history[histSize-1][HC_TICKET ]);
-      lastBalance = StrToDouble (history[histSize-1][HC_BALANCE]);
+      lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
+      lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
       //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (orders == 0) {
@@ -167,7 +167,7 @@ int start() {
             netProfits [first] = netProfits [second];
          }
          closeTimes[first] = openTimes[second];
-         comments  [first] = ifString(comments[first]=="partial close", "partial closed by hedge", "closed by hedge");
+         comments  [first] = ifString(comments[first]=="partial close" || comments[second]=="partial close", "partial closed by hedge", "closed by hedge");
          tickets  [second] = 0;                                            // erste Order enthält jetzt alle Daten, hedgende Order verwerfen
       }
    }

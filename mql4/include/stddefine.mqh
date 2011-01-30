@@ -69,6 +69,11 @@
 #define OP_CREDIT                7     // credit facility, no transaction
 
 
+// Custom Operation-Types
+#define OP_TRANSFER     OP_BALANCE     // Balance-Änderung durch Kunden (Ein-/Auszahlung)
+#define OP_VENDORMATCHING        8     // Balance-Änderung durch Criminal (Swap, sonstige)
+
+
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
 #define OFLAG_CURRENTSYMBOL      1     // order of current symbol (active chart)
 #define OFLAG_BUY                2     // long order
@@ -136,28 +141,28 @@
 
 // Konstanten zum Zugriff auf die Spalten der Account-History
 #define HISTORY_COLUMNS         22
-#define HC_TICKET                0
-#define HC_OPENTIME              1
-#define HC_OPENTIMESTAMP         2
-#define HC_TYPEDESCRIPTION       3
-#define HC_TYPE                  4
-#define HC_SIZE                  5
-#define HC_SYMBOL                6
-#define HC_OPENPRICE             7
-#define HC_STOPLOSS              8
-#define HC_TAKEPROFIT            9
-#define HC_CLOSETIME            10
-#define HC_CLOSETIMESTAMP       11
-#define HC_CLOSEPRICE           12
-#define HC_EXPIRATIONTIME       13
-#define HC_EXPIRATIONTIMESTAMP  14
-#define HC_MAGICNUMBER          15
-#define HC_COMMISSION           16
-#define HC_SWAP                 17
-#define HC_NETPROFIT            18
-#define HC_GROSSPROFIT          19
-#define HC_BALANCE              20
-#define HC_COMMENT              21
+#define AH_TICKET                0
+#define AH_OPENTIME              1
+#define AH_OPENTIMESTAMP         2
+#define AH_TYPEDESCRIPTION       3
+#define AH_TYPE                  4
+#define AH_SIZE                  5
+#define AH_SYMBOL                6
+#define AH_OPENPRICE             7
+#define AH_STOPLOSS              8
+#define AH_TAKEPROFIT            9
+#define AH_CLOSETIME            10
+#define AH_CLOSETIMESTAMP       11
+#define AH_CLOSEPRICE           12
+#define AH_EXPIRATIONTIME       13
+#define AH_EXPIRATIONTIMESTAMP  14
+#define AH_MAGICNUMBER          15
+#define AH_COMMISSION           16
+#define AH_SWAP                 17
+#define AH_NETPROFIT            18
+#define AH_GROSSPROFIT          19
+#define AH_BALANCE              20
+#define AH_COMMENT              21
 
 
 // Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
