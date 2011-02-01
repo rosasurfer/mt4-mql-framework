@@ -179,7 +179,7 @@ int start() {
          continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       if (types[i] == OP_CREDIT)
-         grossProfits[i] = 0;                                              // Creditbeträge ignorieren (falls sie hier doch auftauchen)
+         grossProfits[i] = 0;                                              // Credit-Beträge ignorieren (falls sie hier überhaupt auftauchen)
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }

@@ -33,8 +33,6 @@ int start() {
    datetime closeTimes  []; ArrayResize(closeTimes,   orders);
    double   openPrices  []; ArrayResize(openPrices,   orders);
    double   closePrices []; ArrayResize(closePrices,  orders);
-   double   stopLosses  []; ArrayResize(stopLosses,   orders);
-   double   takeProfits []; ArrayResize(takeProfits,  orders);
    double   commissions []; ArrayResize(commissions,  orders);
    double   swaps       []; ArrayResize(swaps,        orders);
    double   profits     []; ArrayResize(profits,      orders);
@@ -73,8 +71,6 @@ int start() {
       closeTimes  [n] = OrderCloseTime();
       openPrices  [n] = OrderOpenPrice();
       closePrices [n] = OrderClosePrice();
-      stopLosses  [n] = OrderStopLoss();
-      takeProfits [n] = OrderTakeProfit();
       commissions [n] = OrderCommission();
       swaps       [n] = OrderSwap();
       profits     [n] = OrderProfit();
@@ -93,8 +89,6 @@ int start() {
       ArrayResize(closeTimes,  n);
       ArrayResize(openPrices,  n);
       ArrayResize(closePrices, n);
-      ArrayResize(stopLosses,  n);
-      ArrayResize(takeProfits, n);
       ArrayResize(commissions, n);
       ArrayResize(swaps,       n);
       ArrayResize(profits,     n);
@@ -135,7 +129,7 @@ int start() {
    }
 
    // (2.2) Daten
-   if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
+   if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
       return(catch("start(6)  FileWrite()", error));
@@ -147,8 +141,6 @@ int start() {
       string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
 
       string strOpenPrice   = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
-      string strStopLoss    = ifString(stopLosses [i]==0, "", NumberToStr(stopLosses [i], ".2+"));
-      string strTakeProfit  = ifString(takeProfits[i]==0, "", NumberToStr(takeProfits[i], ".2+"));
       string strClosePrice  = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
 
       string strCommission  = DoubleToStr(commissions[i], 2);
@@ -157,7 +149,7 @@ int start() {
 
       string strMagicNumber = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
 
-      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
+      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
          return(catch("start(7)  FileWrite()", error));
