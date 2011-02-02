@@ -71,7 +71,7 @@
 
 // Custom Operation-Types
 #define OP_TRANSFER              8     // Balance-Änderung durch Kunden (Ein-/Auszahlung)
-#define OP_VENDORMATCHING        9     // Balance-Änderung durch Criminal (Swap, sonstiges)
+#define OP_VENDOR                9     // Balance-Änderung durch Criminal (Swap, sonstiges)
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
