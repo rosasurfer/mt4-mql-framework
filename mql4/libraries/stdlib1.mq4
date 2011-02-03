@@ -2575,16 +2575,18 @@ int Explode(string object, string separator, string& lpResults[]) {
    int lenObject    = StringLen(object),
        lenSeparator = StringLen(separator);
 
-   if (separator == "") {
-      // String in einzelne Zeichen zerlegen
+   if (lenObject == 0) {                     // Leerstring
+      ArrayResize(lpResults, 1);
+      lpResults[0] = object;
+   }
+   else if (separator == "") {               // String in einzelne Zeichen zerlegen
       ArrayResize(lpResults, lenObject);
 
       for (int i=0; i < lenObject; i++) {
          lpResults[i] = StringSubstr(object, i, 1);
       }
    }
-   else {
-      // String in Substrings zerlegen
+   else {                                    // String in Substrings zerlegen
       int size, pos;
       i = 0;
 
@@ -5636,12 +5638,15 @@ bool StringICompare(string string1, string string2) {
  * @return bool
  */
 bool StringIsDigit(string value) {
-   int char;
+   int len = StringLen(value);
 
-   for (int i=StringLen(value)-1; i >= 0; i--) {
-      char = StringGetChar(value, i);
-      if (char < 48) return(false);
-      if (57 < char) return(false);    // Conditions für MQL optimiert
+   if (len == 0)
+      return(false);
+
+   for (int i=0; i < len; i++) {
+      int char = StringGetChar(value, i);
+      if (char < '0') return(false);
+      if (char > '9') return(false);    // Conditions für MQL optimiert
    }
 
    return(true);

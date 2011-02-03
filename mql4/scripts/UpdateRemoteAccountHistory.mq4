@@ -164,8 +164,8 @@ int start() {
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
-   string response[];
-   int result = UploadDataFile(filename, response);
+   string errorMsg = "";
+   int result = UploadDataFile(filename, errorMsg);
 
    if (result >= ERR_RUNTIME_ERROR) {        // bei Fehler Rückkehr
       error = catch("start(9)");
@@ -176,19 +176,13 @@ int start() {
 
 
    // (4) Antwort auswerten und Rückmeldung an den User geben
-   if (result == 200) {
+   if (result==200 || result==201) {
       PlaySound("ding.wav");
-      MessageBox("UploadDataFile()\nresult = "+ result, WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), WindowExpertName(), MB_ICONINFORMATION|MB_OK);
    }
    else {
-      if (ArraySize(response) > 0) {
-         string message = StringTrim(response[0]);
-         if (StringLen(message) == 0)
-            message = "result = "+ result;
-      }
-      else  message = "result = "+ result;
       PlaySound("notify.wav");
-      MessageBox("UploadDataFile()\nerror "+ message, WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start(10)"));
@@ -199,11 +193,11 @@ int start() {
  * Lädt die angegebene Datei per HTTP-Post-Request auf den Server und gibt die Antwort des Servers zurück.
  *
  * @param  string  filename   - Dateiname, relativ zu "{terminal-directory}\experts\files"
- * @param  string& lpResponse - Zeiger auf ein Array zur Aufnahme der zeilenweisen Serverantwort
+ * @param  string& lpErrorMsg - Zeiger auf einen String zur Aufnahme einer Fehlermeldung
  *
  * @return int - Serverresponse-Code (< ERR_RUNTIME_ERROR) oder MQL-Fehlerstatus (>= ERR_RUNTIME_ERROR)
  */
-int UploadDataFile(string filename, string& lpResponse[]) {
+int UploadDataFile(string filename, string& lpErrorMsg) {
    // Command-Line zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
    string filesDir     = TerminalPath() +"\\experts\\files";
@@ -217,25 +211,35 @@ int UploadDataFile(string filename, string& lpResponse[]) {
       return(ERR_RUNTIME_ERROR);
 
    // Serverantwort zeilenweise einlesen
-   if (FileReadLines(filename +".response", lpResponse, false) != NO_ERROR)   // FileReadLines() erwartet relativen Pfad
+   string response[];
+   if (FileReadLines(filename +".response", response, false) != NO_ERROR)     // FileReadLines() erwartet relativen Pfad
       return(ERR_RUNTIME_ERROR);
 
    // Serverantwort auswerten
-   int resultCode, lines = ArraySize(lpResponse);
+   int errorCode, lines = ArraySize(response);
    if (lines == 0) {
-      resultCode = 500;                                                       // Server-Error
+      errorCode  = 500;
+      lpErrorMsg = "Server error, try again later.";
    }
    else {
       string values[];
-      Explode(lpResponse[0], ":", values);
-      string strCode = StringTrim(values[0]);
-      if (StringIsDigit(strCode)) resultCode = StrToInteger(strCode);
-      else                        resultCode = 500;                           // Server-Error
+      Explode(response[0], ":", values);
+      string strErrorCode = StringTrim(values[0]);
+
+      if (StringIsDigit(strErrorCode)) {
+         errorCode = StrToInteger(strErrorCode);
+         if (ArraySize(values) > 1) lpErrorMsg = StringTrim(values[1]);
+         else                       lpErrorMsg = "";                          // keine Meldung, nur der Code
+      }
+      else {
+         errorCode  = 500;
+         lpErrorMsg = "Server error, try again later.";
+      }
    }
-   //log("UploadDataFile()   result code = "+ resultCode);
+   //log("UploadDataFile()   result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
 
    int error = catch("UploadDataFile()");
    if (error != NO_ERROR)
       return(error);
-   return(resultCode);
+   return(errorCode);
 }

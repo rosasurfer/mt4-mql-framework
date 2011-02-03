@@ -156,7 +156,6 @@
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
-   string   Struct.GetWCharString(int& lpStruct[], int from, int len);
    int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
 
@@ -202,6 +201,7 @@
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
+   string   Struct.GetWCharString(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
