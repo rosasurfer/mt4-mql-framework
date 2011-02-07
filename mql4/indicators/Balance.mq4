@@ -1,5 +1,5 @@
 /**
- * Zeigt den Balance-Verlauf des Accounts als Linienchart im Indikatorfenster an.
+ * Zeigt den Balance-Verlauf des aktuellen Accounts als Linienchart im Indikatorfenster an.
  */
 #include <stdlib.mqh>
 

@@ -400,8 +400,8 @@ string GetAccountDirectory(int account) {
    switch (account) {
       case     {account-no}: return("Alpari - demo - "+ account);
       case    {account-no}: return("Alpari - demo - "+         account);
-      case    {account-no}: return("Alpari - live (1) - "+     account);
-      case    {account-no}: return("Alpari - live (2) - "+     account);
+      case    {account-no}: return("Alpari - live - "+         account);
+      case    {account-no}: return("Alpari - live - "+         account);
       case   {account-no}: return("APBG - demo - "+           account);
       case      {account-no}: return("ATC - demo - "+            account);
       case     {account-no}: return("ATC - live - "+            account);
