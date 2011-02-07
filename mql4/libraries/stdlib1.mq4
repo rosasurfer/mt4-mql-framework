@@ -3036,10 +3036,10 @@ int GetEasternToGmtOffset(datetime easternTime) {
 
    int offset, year = TimeYear(easternTime)-1970;
 
-   // New York                                   GMT-0500,GMT-0400
-   if      (easternTime < EDT_schedule[year][0]) offset = -5 * HOURS;
-   else if (easternTime < EDT_schedule[year][1]) offset = -4 * HOURS;
-   else                                          offset = -5 * HOURS;
+   // New York                                      GMT-0500,GMT-0400
+   if      (easternTime < EDT_transitions[year][0]) offset = -5 * HOURS;
+   else if (easternTime < EDT_transitions[year][1]) offset = -4 * HOURS;
+   else                                             offset = -5 * HOURS;
 
    if (catch("GetEasternToGmtOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
@@ -3198,10 +3198,10 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
 
    int offset, year = TimeYear(gmtTime)-1970;
 
-   // New York                               GMT-0500[,GMT-0400]
-   if      (gmtTime < EDT_schedule[year][2]) offset = 5 * HOURS;
-   else if (gmtTime < EDT_schedule[year][3]) offset = 4 * HOURS;
-   else                                      offset = 5 * HOURS;
+   // New York                                  GMT-0500[,GMT-0400]
+   if      (gmtTime < EDT_transitions[year][2]) offset = 5 * HOURS;
+   else if (gmtTime < EDT_transitions[year][3]) offset = 4 * HOURS;
+   else                                         offset = 5 * HOURS;
 
    if (catch("GetGmtToEasternTimeOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
@@ -3231,36 +3231,36 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
 
-   // Athen                                      GMT+0200[,GMT+0300]
-   if      (timezone == "EET"     )              offset = -2 * HOURS;
+   // Athen                                         GMT+0200[,GMT+0300]
+   if      (timezone == "EET"     )                 offset = -2 * HOURS;
    else if (timezone == "EET,EEST") {
-      if      (gmtTime < EEST_schedule[year][2]) offset = -2 * HOURS;
-      else if (gmtTime < EEST_schedule[year][3]) offset = -3 * HOURS;
-      else                                       offset = -2 * HOURS;
+      if      (gmtTime < EEST_transitions[year][2]) offset = -2 * HOURS;
+      else if (gmtTime < EEST_transitions[year][3]) offset = -3 * HOURS;
+      else                                          offset = -2 * HOURS;
    }
 
-   // Berlin                                     GMT+0100[,GMT+0200]
-   else if (timezone == "CET"     )              offset = -1 * HOUR;
+   // Berlin                                        GMT+0100[,GMT+0200]
+   else if (timezone == "CET"     )                 offset = -1 * HOUR;
    else if (timezone == "CET,CEST") {
-      if      (gmtTime < CEST_schedule[year][2]) offset = -1 * HOUR;
-      else if (gmtTime < CEST_schedule[year][3]) offset = -2 * HOURS;
-      else                                       offset = -1 * HOUR;
+      if      (gmtTime < CEST_transitions[year][2]) offset = -1 * HOUR;
+      else if (gmtTime < CEST_transitions[year][3]) offset = -2 * HOURS;
+      else                                          offset = -1 * HOUR;
    }
 
-   // London                                     GMT+0000[,GMT+0100]
-   else if (timezone == "GMT"    )               offset =  0;
+   // London                                        GMT+0000[,GMT+0100]
+   else if (timezone == "GMT"    )                  offset =  0;
    else if (timezone == "GMT,BST") {
-      if      (gmtTime < BST_schedule[year][2])  offset =  0;
-      else if (gmtTime < BST_schedule[year][3])  offset = -1 * HOUR;
-      else                                       offset =  0;
+      if      (gmtTime < BST_transitions[year][2])  offset =  0;
+      else if (gmtTime < BST_transitions[year][3])  offset = -1 * HOUR;
+      else                                          offset =  0;
    }
 
-   // New York                                   GMT-0500[,GMT-0400]
-   else if (timezone == "EST"    )               offset = 5 * HOURS;
+   // New York                                      GMT-0500[,GMT-0400]
+   else if (timezone == "EST"    )                  offset = 5 * HOURS;
    else if (timezone == "EST,EDT") {
-      if      (gmtTime < EDT_schedule[year][2])  offset = 5 * HOURS;
-      else if (gmtTime < EDT_schedule[year][3])  offset = 4 * HOURS;
-      else                                       offset = 5 * HOURS;
+      if      (gmtTime < EDT_transitions[year][2])  offset = 5 * HOURS;
+      else if (gmtTime < EDT_transitions[year][3])  offset = 4 * HOURS;
+      else                                          offset = 5 * HOURS;
    }
 
    else {
@@ -4884,36 +4884,36 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 
-   // Athen                                         GMT+0200[,GMT+0300]
-   if      (zone == "EET"     )                     offset = 2 * HOURS;
+   // Athen                                            GMT+0200[,GMT+0300]
+   if      (zone == "EET"     )                        offset = 2 * HOURS;
    else if (zone == "EET,EEST") {
-      if      (serverTime < EEST_schedule[year][0]) offset = 2 * HOURS;
-      else if (serverTime < EEST_schedule[year][1]) offset = 3 * HOURS;
-      else                                          offset = 2 * HOURS;
+      if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
+      else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
    }
 
-   // Berlin                                        GMT+0100[,GMT+0200]
-   else if (zone == "CET"     )                     offset = 1 * HOUR;
+   // Berlin                                           GMT+0100[,GMT+0200]
+   else if (zone == "CET"     )                        offset = 1 * HOUR;
    else if (zone == "CET,CEST") {
-      if      (serverTime < CEST_schedule[year][0]) offset = 1 * HOURS;
-      else if (serverTime < CEST_schedule[year][1]) offset = 2 * HOURS;
-      else                                          offset = 1 * HOURS;
+      if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
+      else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
+      else                                             offset = 1 * HOURS;
    }
 
-   // London                                        GMT+0000[,GMT+0100]
-   else if (zone == "GMT"    )                      offset = 0;
+   // London                                           GMT+0000[,GMT+0100]
+   else if (zone == "GMT"    )                         offset = 0;
    else if (zone == "GMT,BST") {
-      if      (serverTime < BST_schedule[year][0])  offset = 0;
-      else if (serverTime < BST_schedule[year][1])  offset = 1 * HOUR;
-      else                                          offset = 0;
+      if      (serverTime < BST_transitions[year][0])  offset = 0;
+      else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
+      else                                             offset = 0;
    }
 
-   // New York                                      GMT-0500[,GMT-0400]
-   else if (zone == "EST"    )                      offset = -5 * HOURS;
+   // New York                                         GMT-0500[,GMT-0400]
+   else if (zone == "EST"    )                         offset = -5 * HOURS;
    else if (zone == "EST,EDT") {
-      if      (serverTime < EDT_schedule[year][0])  offset = -5 * HOURS;
-      else if (serverTime < EDT_schedule[year][1])  offset = -4 * HOURS;
-      else                                          offset = -5 * HOURS;
+      if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
+      else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
+      else                                             offset = -5 * HOURS;
    }
 
    else {

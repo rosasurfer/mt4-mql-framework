@@ -1,14 +1,14 @@
 /**
  * timezones.mqh
  *
- * Umschaltzeiten von Normal- auf Sommerzeit und zurück für die einzelnen Zeitzonen.
+ * Übergangszeiten von Normal- auf Sommerzeit und zurück für die einzelnen Zeitzonen.
  *
- * Daten sind ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und in der Folge
- * bei Fehlern falsche Zeilennummern zurückgibt.
+ * Daten sind ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und bei
+ * Compile-Fehlern falsche Zeilennummern zurückgibt.
  */
 
-// Umschaltzeiten für EET/EEST (Athen) GMT+0200,GMT+0300
-datetime EEST_schedule[50][4] = {
+// Europe/Athen (EET/EEST) GMT+0200,GMT+0300
+datetime EEST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    -1,                     -1,                        -1,                     -1,
    -1,                     -1,                        -1,                     -1,
@@ -63,8 +63,8 @@ datetime EEST_schedule[50][4] = {
 };
 
 
-// Umschaltzeiten für CET/CEST (Berlin) GMT+0100,GMT+0200
-datetime CEST_schedule[50][4] = {
+// Europe/Berlin (CET/CEST) GMT+0100,GMT+0200
+datetime CEST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    -1,                     -1,                        -1,                     -1,
    -1,                     -1,                        -1,                     -1,
@@ -119,8 +119,8 @@ datetime CEST_schedule[50][4] = {
 };
 
 
-// Umschaltzeiten für GMT/BST (London) GMT+0000,GMT+0100
-datetime BST_schedule[50][4] = {
+// Europe/London (GMT/BST) GMT+0000,GMT+0100
+datetime BST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    D'1970.01.01 00:00:00', D'1971.01.01 00:00:00',    D'1970.01.01 00:00:00', D'1971.01.01 00:00:00', // das ganze Jahr BST
    D'1971.01.01 00:00:00', D'1971.10.31 03:00:00',    D'1971.01.01 00:00:00', D'1971.10.31 02:00:00', // Zeitzonenwechsel von BST zu GMT
@@ -175,8 +175,8 @@ datetime BST_schedule[50][4] = {
 };
 
 
-// Umschaltzeiten für EST/EDT (New York) GMT-0500,GMT-0400
-datetime EDT_schedule[50][4] = {
+// Amerika/New_York (EST/EDT) GMT-0500,GMT-0400
+datetime EDT_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    D'1970.04.26 02:00:00', D'1970.10.25 02:00:00',    D'1970.04.26 07:00:00', D'1970.10.25 06:00:00',
    D'1971.04.25 02:00:00', D'1971.10.31 02:00:00',    D'1971.04.25 07:00:00', D'1971.10.31 06:00:00',
