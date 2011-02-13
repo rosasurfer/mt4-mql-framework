@@ -12,7 +12,7 @@
  * @return int - Fehlerstatus
  */
 int start() {
-   SendFakeTick();
+   SendFakeTick(true);
 
    return(catch("start()"));
 }

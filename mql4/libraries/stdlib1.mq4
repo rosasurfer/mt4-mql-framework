@@ -394,9 +394,11 @@ int WM_MT4;    // überdauert Timeframe-Wechsel
 /**
  * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
  *
+ * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
+ *
  * @return int - Fehlerstatus (-1, wenn das Script im Backtester läuft und WindowHandle() nicht benutzt werden kann)
  */
-int SendFakeTick() {
+int SendFakeTick(bool sound=false) {
    if (IsTesting())
       return(-1);
 
@@ -405,6 +407,9 @@ int SendFakeTick() {
 
    int hWnd = WindowHandle(Symbol(), Period());
    PostMessageA(hWnd, WM_MT4, 2, 1);
+
+   if (sound)
+      PlaySound("tick1.wav");
 
    return(catch("SendFakeTick()"));
 }

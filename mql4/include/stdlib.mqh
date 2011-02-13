@@ -183,7 +183,7 @@
    int      IncreasePeriod(int period);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
-   int      SendFakeTick();
+   int      SendFakeTick(bool sound);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
    int      WinExecAndWait(string cmdLine, int cmdShow);
