@@ -419,17 +419,17 @@ int SendFakeTick() {
  */
 string GetAccountDirectory(int account) {
    switch (account) {
-      case     {account-no}: return("Alpari - demo - "+ account);
-      case    {account-no}: return("Alpari - demo - "+         account);
-      case    {account-no}: return("Alpari - live - "+         account);
-      case    {account-no}: return("Alpari - live - "+         account);
-      case   {account-no}: return("APBG - demo - "+           account);
-      case      {account-no}: return("ATC - demo - "+            account);
-      case     {account-no}: return("ATC - live - "+            account);
-      case      {account-no}: return("FB Capital - demo - "+     account);
-      case {account-no}: return("MB Trading - demo - "+     account);
-      case     {account-no}: return("SIG - live - "+            account);
-      case    {account-no}: return("Forex ltd - demo - "+      account);
+      case     {account-no}: return("AlpariUK-Demo"        );
+      case    {account-no}: return("AlpariUK-Demo"        );
+      case    {account-no}: return("AlpariUK-Micro-2"     );
+      case    {account-no}: return("AlpariUK-Micro-1"     );
+      case   {account-no}: return("APBGTrading-Server"   );
+      case      {account-no}: return("ATCBrokers-Demo"      );
+      case     {account-no}: return("ATCBrokers-Live"      );
+      case      {account-no}: return("ForexBaltic-Server"   );
+      case {account-no}: return("MBTrading-Demo Server");
+      case     {account-no}: return("SIG-Real.com"         );
+      case    {account-no}: return("FOREX-Server"         );
    }
 
    log("GetAccountDirectory()   unknown files directory for account #"+ AccountNumber());
