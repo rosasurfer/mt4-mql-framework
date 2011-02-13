@@ -101,12 +101,10 @@ int init() {
       Max.Values = Bars;
    }
 
-
    // Indikatorlabel setzen
    SetIndexLabel(0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
    SetIndexLabel(1, StringConcatenate("MovingAvg(", Periods, "x", Timeframe, ")"));
    SetIndexLabel(2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
-
 
    // nach Setzen der Label Parameter auf aktuellen Zeitrahmen umrechnen
    if (Period() != period) {
@@ -114,12 +112,10 @@ int init() {
       Periods = MathRound(minutes/Period());
    }
 
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendFakeTick();
 
-   // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS) {
-      start();
-      WindowRedraw();
-   }
    return(catch("init()"));
 }
 

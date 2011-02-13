@@ -65,11 +65,9 @@ int init() {
    stopoutLevelLabel = StringConcatenate(indicatorName, ".MarginStopoutLevel");
    CreateLabels();
 
-   // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS) {
-      start();
-      WindowRedraw();
-   }
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendFakeTick();
 
    return(catch("init()"));
 }

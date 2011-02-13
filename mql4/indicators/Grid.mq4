@@ -46,11 +46,10 @@ int init() {
       ArrayResize(labels, 0);
    }
 
-   // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS) {
-      start();
-      WindowRedraw();
-   }
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendFakeTick();
+
    return(catch("init()"));
 }
 

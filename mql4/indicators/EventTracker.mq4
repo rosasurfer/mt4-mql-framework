@@ -147,11 +147,9 @@ int init() {
    }
    //log("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.RateChanges="+ Track.RateChanges + ifString(Track.RateChanges, " (Grid="+RateGrid.Size+")", "") +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
 
-   // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS) {
-      start();
-      WindowRedraw();
-   }
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendFakeTick();
 
    return(catch("init(7)"));
 }

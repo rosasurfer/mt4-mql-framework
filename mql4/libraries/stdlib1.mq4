@@ -389,6 +389,27 @@ string Struct.GetWCharString(int& lpStruct[], int from, int len) {
 }
 
 
+int WM_MT4;    // überdauert Timeframe-Wechsel
+
+/**
+ * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
+ *
+ * @return int - Fehlerstatus (-1, wenn das Script im Backtester läuft und WindowHandle() nicht benutzt werden kann)
+ */
+int SendFakeTick() {
+   if (IsTesting())
+      return(-1);
+
+   if (WM_MT4 == 0)
+      WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+
+   int hWnd = WindowHandle(Symbol(), Period());
+   PostMessageA(hWnd, WM_MT4, 2, 1);
+
+   return(catch("SendFakeTick()"));
+}
+
+
 /**
  * Gibt das files-Verzeichnis des angegebenen Accounts zurück.
  *
@@ -2517,7 +2538,7 @@ bool EventListener.AccountChange(int& lpResults[], int flags=0) {
 }
 
 
-static double EventTracker.bandLimits[3];
+double EventTracker.bandLimits[3];
 
 /**
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
@@ -2568,7 +2589,7 @@ bool EventTracker.SetBandLimits(double& lpLimits[]) {
 }
 
 
-static double EventTracker.rateGridLimits[2];
+double EventTracker.rateGridLimits[2];
 
 /**
  * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend

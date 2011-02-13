@@ -42,11 +42,9 @@ int init() {
          ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }
 
-   // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS) {
-      start();
-      WindowRedraw();
-   }
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendFakeTick();
 
    return(catch("init()"));
 }

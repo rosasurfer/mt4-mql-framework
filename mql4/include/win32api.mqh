@@ -27,14 +27,15 @@
    int  GetActiveWindow();
    int  GetParent(int hWnd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int nBufferSize);
+   bool PostMessageA(int hWnd, int Msg, int wParam, int lParam);
+   int  RegisterWindowMessageA(string lpString);
    bool SetWindowTextA(int hWnd, string lpString);
 
 
+   /*
    // Von hier an MetaQuest-Code (nicht überprüft)
    //
    // messages
-   bool PostMessageA(int hWnd, int Msg, int wParam, int lParam);
-   /*
    int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendNotifyMessageA(int hWnd, int Msg, int wParam, int lParam);
    void keybd_event(int bVk, int bScan, int dwFlags, int dwExtraInfo);
