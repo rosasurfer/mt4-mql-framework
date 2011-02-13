@@ -7,7 +7,7 @@
  * Compile-Fehlern falsche Zeilennummern zurückgibt.
  */
 
-// Europe/Athen (EET/EEST) GMT+0200,GMT+0300
+// Europe/Kiev GMT+0200,GMT+0300
 datetime EEST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    -1,                     -1,                        -1,                     -1,
@@ -63,7 +63,7 @@ datetime EEST_transitions[50][4] = {
 };
 
 
-// Europe/Berlin (CET/CEST) GMT+0100,GMT+0200
+// Europe/Berlin GMT+0100,GMT+0200
 datetime CEST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    -1,                     -1,                        -1,                     -1,
@@ -119,7 +119,7 @@ datetime CEST_transitions[50][4] = {
 };
 
 
-// Europe/London (GMT/BST) GMT+0000,GMT+0100
+// Europe/London GMT+0000,GMT+0100
 datetime BST_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    D'1970.01.01 00:00:00', D'1971.01.01 00:00:00',    D'1970.01.01 00:00:00', D'1971.01.01 00:00:00', // das ganze Jahr BST
@@ -175,7 +175,7 @@ datetime BST_transitions[50][4] = {
 };
 
 
-// Amerika/New_York (EST/EDT) GMT-0500,GMT-0400
+// Amerika/New_York GMT-0500,GMT-0400
 datetime EDT_transitions[50][4] = {
    // Umschaltzeiten in der Zeitzone                  // Umschaltzeiten in GMT
    D'1970.04.26 02:00:00', D'1970.10.25 02:00:00',    D'1970.04.26 07:00:00', D'1970.10.25 06:00:00',

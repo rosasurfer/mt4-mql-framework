@@ -2683,7 +2683,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-   string filename = GetAccountDirectory(account) +"/account history.csv";
+   string filename = GetAccountDirectory(account) +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
@@ -3276,7 +3276,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
 
-   // Athen                                         GMT+0200[,GMT+0300]
+   // Europe/Kiev                                   GMT+0200[,GMT+0300]
    if      (timezone == "EET"     )                 offset = -2 * HOURS;
    else if (timezone == "EET,EEST") {
       if      (gmtTime < EEST_transitions[year][2]) offset = -2 * HOURS;
@@ -3284,7 +3284,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       else                                          offset = -2 * HOURS;
    }
 
-   // Berlin                                        GMT+0100[,GMT+0200]
+   // Europe/Berlin                                 GMT+0100[,GMT+0200]
    else if (timezone == "CET"     )                 offset = -1 * HOUR;
    else if (timezone == "CET,CEST") {
       if      (gmtTime < CEST_transitions[year][2]) offset = -1 * HOUR;
@@ -3292,15 +3292,17 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       else                                          offset = -1 * HOUR;
    }
 
-   // London                                        GMT+0000[,GMT+0100]
-   else if (timezone == "GMT"    )                  offset =  0;
+   // GMT                                           GMT+0000
+   else if (timezone == "GMT")                      offset =  0;
+
+   // Europe/London                                 GMT+0000[,GMT+0100]
    else if (timezone == "GMT,BST") {
       if      (gmtTime < BST_transitions[year][2])  offset =  0;
       else if (gmtTime < BST_transitions[year][3])  offset = -1 * HOUR;
       else                                          offset =  0;
    }
 
-   // New York                                      GMT-0500[,GMT-0400]
+   // America/New_York                              GMT-0500[,GMT-0400]
    else if (timezone == "EST"    )                  offset = 5 * HOURS;
    else if (timezone == "EST,EDT") {
       if      (gmtTime < EDT_transitions[year][2])  offset = 5 * HOURS;
@@ -4847,19 +4849,19 @@ string GetServerTimezone() {
    }
    string zone = JoinStrings(values, ",");
 
-   if      (zone == "EET"     ) {} // Eastern European Time      GMT+0200[,GMT+0300] (Athen)
+   if      (zone == "EET"     ) {} // Europe/Kiev        GMT+0200[,GMT+0300]
    else if (zone == "EET,EET" ) {  zone = "EET"; }
    else if (zone == "EET,EEST") {}
 
-   else if (zone == "CET"     ) {} // Central European Time      GMT+0100[,GMT+0200] (Berlin)
+   else if (zone == "CET"     ) {} // Europe/Berlin      GMT+0100[,GMT+0200]
    else if (zone == "CET,CET" ) {  zone = "CET"; }
    else if (zone == "CET,CEST") {}
 
-   else if (zone == "GMT"     ) {} // Greenwich Mean Time        GMT+0000[,GMT+0100] (London)
+   else if (zone == "GMT"     ) {} // GMT                GMT+0000[,GMT+0100]
    else if (zone == "GMT,GMT" ) {  zone = "GMT"; }
    else if (zone == "GMT,BST" ) {}
 
-   else if (zone == "EST"     ) {} // Eastern Standard Time      GMT-0500[,GMT-0400] (New York)
+   else if (zone == "EST"     ) {} // America/New_York   GMT-0500[,GMT-0400]
    else if (zone == "EST,EST" ) {  zone = "EST"; }
    else if (zone == "EST,EDT" ) {}
 
@@ -4929,7 +4931,7 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 
-   // Athen                                            GMT+0200[,GMT+0300]
+   // Europe/Kiev                                      GMT+0200[,GMT+0300]
    if      (zone == "EET"     )                        offset = 2 * HOURS;
    else if (zone == "EET,EEST") {
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
@@ -4937,7 +4939,7 @@ int GetServerToGmtOffset(datetime serverTime) {
       else                                             offset = 2 * HOURS;
    }
 
-   // Berlin                                           GMT+0100[,GMT+0200]
+   // Europe/Berlin                                    GMT+0100[,GMT+0200]
    else if (zone == "CET"     )                        offset = 1 * HOUR;
    else if (zone == "CET,CEST") {
       if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
@@ -4945,15 +4947,17 @@ int GetServerToGmtOffset(datetime serverTime) {
       else                                             offset = 1 * HOURS;
    }
 
-   // London                                           GMT+0000[,GMT+0100]
+   // GMT                                              GMT+0000
    else if (zone == "GMT"    )                         offset = 0;
+
+   // Europe/London                                    GMT+0000[,GMT+0100]
    else if (zone == "GMT,BST") {
       if      (serverTime < BST_transitions[year][0])  offset = 0;
       else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
       else                                             offset = 0;
    }
 
-   // New York                                         GMT-0500[,GMT-0400]
+   // America/New_York                                 GMT-0500[,GMT-0400]
    else if (zone == "EST"    )                         offset = -5 * HOURS;
    else if (zone == "EST,EDT") {
       if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
