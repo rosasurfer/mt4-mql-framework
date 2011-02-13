@@ -50,10 +50,8 @@ int init() {
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
-
    // Konfiguration auswerten
    lastH1Close = StringIContains(","+ StringTrim(Last.H1.Close.Symbols) +",", ","+ FindNormalizedSymbol(Symbol(), Symbol()) +",");
-
 
    // Label definieren und erzeugen
    string indicatorName = WindowExpertName();
@@ -65,9 +63,7 @@ int init() {
    positionLabel     = StringConcatenate(indicatorName, ".Position"          );
    freezeLevelLabel  = StringConcatenate(indicatorName, ".MarginFreezeLevel" );
    stopoutLevelLabel = StringConcatenate(indicatorName, ".MarginStopoutLevel");
-
    CreateLabels();
-
 
    // nach Parameteränderung sofort start() aufrufen und nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS) {
@@ -99,7 +95,6 @@ int start() {
       if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
       if (init()     != NO_ERROR)                   return(0);
    }
-
 
    // Accountinitialiserung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0)
@@ -147,6 +142,7 @@ int CreateLabels() {
       RegisterChartObject(instrumentLabel, labels);
    }
    else GetLastError();
+
    string symbol = FindNormalizedSymbol(Symbol(), Symbol());
    string name   = FindSymbolLongName(symbol, FindSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");

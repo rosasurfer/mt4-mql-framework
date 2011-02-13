@@ -991,6 +991,16 @@ string FindSymbolLongName(string symbol, string defaultName="") {
    if (symbol == "USDLFX"  ) return("USD-Index © LiteForex"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
+   string prefix = StringLeft(symbol, -3);
+   string suffix = StringRight(symbol, 3);
+
+   if      (suffix == ".AB") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Balance" ));
+   else if (suffix == ".EQ") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Equity"  ));
+   else if (suffix == ".LV") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Leverage"));
+   else if (suffix == ".PL") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Profit/Loss"     ));
+   else if (suffix == ".FM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Free Margin"     ));
+   else if (suffix == ".UM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Used Margin"     ));
+
    return(defaultName);
 }
 
