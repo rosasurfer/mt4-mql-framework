@@ -115,8 +115,57 @@ int stdlib_PeekLastError() {
  *                                   52484F44 4F447E31 2E424D50 00000000
  *                                    R H O D  O D ~ 1  . B M P
  */
-string wfd.FileName         (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToString(wfd, 11, 65)); }
-string wfd.AlternateFileName(/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToString(wfd, 76,  4)); }
+int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0]); }
+bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ); }
+bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ); }
+bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ); }
+bool   wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ); }
+bool   wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ); }
+bool   wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ); }
+bool   wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ); }
+bool   wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ); }
+bool   wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ); }
+bool   wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT); }
+bool   wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ); }
+bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ); }
+bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
+bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
+bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToStr(wfd, 11, 65)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToStr(wfd, 76,  4)); }
+
+
+/**
+ * Gibt die lesbare Version eines FileAttributes zurück.
+ *
+ * @param  int& wdf[] - WIN32_FIND_DATA structure
+ *
+ * @return string
+ */
+string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int& wdf[]) {
+   string result = "";
+   int flags = wfd.FileAttributes(wdf);
+
+   if (flags & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_READONLY"     );
+   if (flags & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_HIDDEN"       );
+   if (flags & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SYSTEM"       );
+   if (flags & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DIRECTORY"    );
+   if (flags & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ARCHIVE"      );
+   if (flags & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DEVICE"       );
+   if (flags & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NORMAL"       );
+   if (flags & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_TEMPORARY"    );
+   if (flags & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SPARSE_FILE"  );
+   if (flags & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT) result = StringConcatenate(result, " | FILE_ATTRIBUTE_REPARSE_POINT");
+   if (flags & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_COMPRESSED"   );
+   if (flags & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_OFFLINE"      );
+   if (flags & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NOT_INDEXED"  );
+   if (flags & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ENCRYPTED"    );
+   if (flags & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_VIRTUAL"      );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 3);
+   return(result);
+}
 
 
 /**
@@ -319,10 +368,10 @@ int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
  *                                         C4FFFFFF
  */
 int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[0]); }                               // Bias in Minuten
-string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToString(tzi, 1, 16)); }
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToStr(tzi, 1, 16)); }
 void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
 int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[21]); }                              // Bias in Minuten
-string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToString(tzi, 22, 16)); }
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToStr(tzi, 22, 16)); }
 void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
 int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[42]); }                              // Bias in Minuten
 
@@ -404,12 +453,12 @@ string StructToStr(int& lpStruct[]) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructCharToString(int& lpStruct[], int from, int len) {
+string StructCharToStr(int& lpStruct[], int from, int len) {
    if (from < 0)
-      return(catch("StructCharToString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+len, size=ArraySize(lpStruct);
    if (to > size)
-      return(catch("StructCharToString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -427,7 +476,7 @@ string StructCharToString(int& lpStruct[], int from, int len) {
          break;
    }
 
-   if (catch("StructCharToString(3)") != NO_ERROR)
+   if (catch("StructCharToStr(3)") != NO_ERROR)
       return("");
    return(result);
 }
@@ -446,12 +495,12 @@ string StructCharToString(int& lpStruct[], int from, int len) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructWCharToString(int& lpStruct[], int from, int len) {
+string StructWCharToStr(int& lpStruct[], int from, int len) {
    if (from < 0)
-      return(catch("StructWCharToString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructWCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+len, size=ArraySize(lpStruct);
    if (to > size)
-      return(catch("StructWCharToString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructWCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -475,7 +524,7 @@ string StructWCharToString(int& lpStruct[], int from, int len) {
          break;
    }
 
-   if (catch("StructWCharToString(3)") != NO_ERROR)
+   if (catch("StructWCharToStr(3)") != NO_ERROR)
       return("");
    return(result);
 }
@@ -5960,6 +6009,16 @@ string UrlEncode(string value) {
    if (catch("UrlEncode()") != NO_ERROR)
       return("");
    return(result);
+}
+
+
+/**
+ * Alias für IntToHexStr()
+ *
+ * Konvertiert einen Integer in seine hexadezimale Representation.
+ */
+string IntegerToHexStr(int integer) {
+   return(IntToHexStr(integer));
 }
 
 

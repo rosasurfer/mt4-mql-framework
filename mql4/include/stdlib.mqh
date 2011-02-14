@@ -195,15 +195,15 @@
    string   ErrorID(int error);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   IntegerToHexString(int integer);
+   string   IntegerToHexStr(int integer);
    string   IntToHexStr(int integer);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
-   string   StructCharToString(int& lpStruct[], int from, int len);
-   string   StructWCharToString(int& lpStruct[], int from, int len);
+   string   StructCharToStr(int& lpStruct[], int from, int len);
+   string   StructWCharToStr(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
@@ -260,8 +260,25 @@
    void     tzi.DaylightDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
    int      tzi.DaylightBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
 
-   string   wfd.FileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
-   string   wfd.AlternateFileName(/*WIN32_FIND_DATA*/ int& wfd[]);
+   int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int& wfd[]);
+   string   wdf.FileAttributesToStr       (/*WIN32_FIND_DATA*/ int& wdf[]);
+   bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int& wfd[]);
+   bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int& wfd[]);
+   string   wfd.FileName                  (/*WIN32_FIND_DATA*/ int& wfd[]);
+   string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
 
 
 

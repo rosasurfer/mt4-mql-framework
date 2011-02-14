@@ -138,8 +138,24 @@
 #define MB_RTLREADING                        0x00100000
 
 
-// File-Funktionen
+// File system constants
 #define MAX_PATH                                    260
+
+#define FILE_ATTRIBUTE_READONLY                       1
+#define FILE_ATTRIBUTE_HIDDEN                         2
+#define FILE_ATTRIBUTE_SYSTEM                         4
+#define FILE_ATTRIBUTE_DIRECTORY                     16
+#define FILE_ATTRIBUTE_ARCHIVE                       32
+#define FILE_ATTRIBUTE_DEVICE                        64
+#define FILE_ATTRIBUTE_NORMAL                       128
+#define FILE_ATTRIBUTE_TEMPORARY                    256
+#define FILE_ATTRIBUTE_SPARSE_FILE                  512
+#define FILE_ATTRIBUTE_REPARSE_POINT               1024
+#define FILE_ATTRIBUTE_COMPRESSED                  2048
+#define FILE_ATTRIBUTE_OFFLINE                     4096
+#define FILE_ATTRIBUTE_NOT_INDEXED                 8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang für MQL
+#define FILE_ATTRIBUTE_ENCRYPTED                  16384
+#define FILE_ATTRIBUTE_VIRTUAL                    65536
 
 
 // GetSystemMetrics() codes
