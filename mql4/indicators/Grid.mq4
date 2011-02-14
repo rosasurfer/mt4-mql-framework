@@ -4,7 +4,6 @@
  * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der neuen Session.
  */
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 #property indicator_chart_window
@@ -25,37 +24,6 @@ string labels[];
 
 
 /**
- * Ermittelt das History-Verzeichnis des aktuellen Tradeservers.
- *
- * @return string
- */
-string FindTradeServerDirectory() {
-   // eindeutigen Dateinamen erzeugen
-   string filename = StringConcatenate("t", GetCurrentThreadId(), ".tmp");
-
-   debug("FindTradeServerDirectory()   filename = "+ filename);
-
-   // temporäre Datei anlegen
-   int hFile = FileOpenHistory(filename, FILE_BIN|FILE_WRITE);
-   if (hFile < 0)
-      return(catch("FindTradeServerDirectory(1)  FileOpenHistory(\""+ filename +"\")"));
-   FileClose(hFile);
-
-   // Datei suchen und Tradeserver-Pfad auslesen
-
-   // Datei per Win-API löschen (MQL kann im History-Verzeichnis nicht löschen)
-   //if (!DeleteFileA(filename)) return(catch("FindTradeServerDirectory(2)   kernel32.DeleteFile(\""+ filename +"\") => FALSE", ERR_WINDOWS_ERROR));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("FindTradeServerDirectory(3)", error);
-      return("");
-   }
-   return("directoryName");
-}
-
-
-/**
  * Initialisierung
  *
  * @return int - Fehlerstatus
@@ -67,7 +35,7 @@ int init() {
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
       if (false) {
-         string tradeserverDirectory = FindTradeServerDirectory();
+         //string tradeserverDirectory = FindTradeServerDirectory();
       }
 
       init_error = stdlib_GetLastError();

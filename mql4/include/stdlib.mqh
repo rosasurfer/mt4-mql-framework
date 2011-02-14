@@ -202,7 +202,8 @@
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
-   string   Struct.GetWCharString(int& lpStruct[], int from, int len);
+   string   StructCharToString(int& lpStruct[], int from, int len);
+   string   StructWCharToString(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
@@ -238,9 +239,9 @@
    int      si.hStdOutput        (/*STARTUPINFO*/ int& si[]);
    int      si.hStdError         (/*STARTUPINFO*/ int& si[]);
 
-   int      si.set.cb            (/*STARTUPINFO*/ int& si[], int size);
-   int      si.set.Flags         (/*STARTUPINFO*/ int& si[], int flags);
-   int      si.set.ShowWindow    (/*STARTUPINFO*/ int& si[], int cmdShow);
+   int      si.setCb             (/*STARTUPINFO*/ int& si[], int size);
+   int      si.setFlags          (/*STARTUPINFO*/ int& si[], int flags);
+   int      si.setShowWindow     (/*STARTUPINFO*/ int& si[], int cmdShow);
 
    int      st.Year              (/*SYSTEMTIME*/ int& st[]);
    int      st.Month             (/*SYSTEMTIME*/ int& st[]);
@@ -258,6 +259,10 @@
    string   tzi.DaylightName     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
    void     tzi.DaylightDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
    int      tzi.DaylightBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+
+   string   wfd.FileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
+   string   wfd.AlternateFileName(/*WIN32_FIND_DATA*/ int& wfd[]);
+
 
 
    // ----------------------------------------------------------------------------------

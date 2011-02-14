@@ -6,6 +6,9 @@
    bool CloseHandle(int hObject);
    bool CreateProcessA(int lpApplicationName, string lpCommandLine, int lpProcessAttributes, int lpThreadAttributes, int bInheritHandles, int dwCreationFlags, int lpEnvironment, int lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
+   bool FindClose(int hFindFile);
+   int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
+   bool FindNextFileA(int hFindFile, int lpFindFileData[]);
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetEnvironmentStringsA();
    void GetLocalTime(int lpSystemTime[]);
@@ -126,13 +129,17 @@
 #define MB_APPLMODAL                         0x00000000
 #define MB_SYSTEMMODAL                       0x00001000
 #define MB_TASKMODAL                         0x00002000
-#define MB_HELP                              0x00004000 // help button
+#define MB_HELP                              0x00004000     // help button
 #define MB_NOFOCUS                           0x00008000
 #define MB_SETFOREGROUND                     0x00010000
 #define MB_DEFAULT_DESKTOP_ONLY              0x00020000
 #define MB_TOPMOST                           0x00040000
 #define MB_RIGHT                             0x00080000
 #define MB_RTLREADING                        0x00100000
+
+
+// File-Funktionen
+#define MAX_PATH                                    260
 
 
 // GetSystemMetrics() codes
@@ -232,6 +239,10 @@
 #define GW_CHILD                                      5
 
 
+// Handles
+#define INVALID_HANDLE_VALUE                 0xFFFFFFFF     // -1
+
+
 // Keyboard events
 #define KEYEVENTF_EXTENDEDKEY                    0x0001
 #define KEYEVENTF_KEYUP                          0x0002
@@ -261,7 +272,7 @@
 #define WM_ENDSESSION                            0x0016
 #define WM_SHOWWINDOW                            0x0018
 #define WM_WININICHANGE                          0x001A
-#define WM_SETTINGCHANGE                         0x001A // WM_WININICHANGE
+#define WM_SETTINGCHANGE                         0x001A     // WM_WININICHANGE
 #define WM_DEVMODECHANGE                         0x001B
 #define WM_ACTIVATEAPP                           0x001C
 #define WM_FONTCHANGE                            0x001D

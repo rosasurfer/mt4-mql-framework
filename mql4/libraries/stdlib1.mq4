@@ -82,13 +82,63 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Win32 structure WIN32_FIND_DATA
+ *
+ * typedef struct _WIN32_FIND_DATA {
+ *    DWORD    dwFileAttributes;          //   4     => wfd[ 0]
+ *    FILETIME ftCreationTime;            //   8     => wfd[ 1]
+ *    FILETIME ftLastAccessTime;          //   8     => wfd[ 3]
+ *    FILETIME ftLastWriteTime;           //   8     => wfd[ 5]
+ *    DWORD    nFileSizeHigh;             //   4     => wfd[ 7]
+ *    DWORD    nFileSizeLow;              //   4     => wfd[ 8]
+ *    DWORD    dwReserved0;               //   4     => wfd[ 9]
+ *    DWORD    dwReserved1;               //   4     => wfd[10]
+ *    TCHAR    cFileName[MAX_PATH];       // 260     => wfd[11]      A: 260 * 1 byte      W: 260 * 2 byte
+ *    TCHAR    cAlternateFileName[14];    //  14     => wfd[76]      A:  14 * 1 byte      W:  14 * 2 byte
+ * } WIN32_FIND_DATA, wfd;                // 318 byte = int[80]      2 byte Überhang
+ *
+ * StructToHexStr(WIN32_FIND_DATA) = 20000000
+ *                                   C0235A72 81BDC801
+ *                                   00F0D85B C9CBCB01
+ *                                   00884084 D32BC101
+ *                                   00000000 D2430000 05000000 3FE1807C
+ *
+ *                                   52686F64 6F64656E 64726F6E 2E626D70 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                    R h o d  o d e n  d r o n  . b m p
+ *                                   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                   00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+ *                                   00000000 00000000 00000000 00000000 00000000
+ *
+ *                                   52484F44 4F447E31 2E424D50 00000000
+ *                                    R H O D  O D ~ 1  . B M P
+ */
+string wfd.FileName         (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToString(wfd, 11, 65)); }
+string wfd.AlternateFileName(/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToString(wfd, 76,  4)); }
+
+
+/**
+ * Win32 structure FILETIME
+ *
+ * typedef struct _FILETIME {
+ *    DWORD dwLowDateTime;
+ *    DWORD dwHighDateTime;
+ * } FILETIME, ft;
+ *
+ * StructToHexStr(FILETIME) =
+ */
+
+
+/**
  * Win32 structure PROCESS_INFORMATION
  *
  * typedef struct _PROCESS_INFORMATION {
- *     HANDLE hProcess;
- *     HANDLE hThread;
- *     DWORD  dwProcessId;
- *     DWORD  dwThreadId;
+ *    HANDLE hProcess;
+ *    HANDLE hThread;
+ *    DWORD  dwProcessId;
+ *    DWORD  dwThreadId;
  * } PROCESS_INFORMATION, pi;       // = 16 byte = int[4]
  *
  * StructToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
@@ -103,9 +153,9 @@ int pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[3]); }
  * Win32 structure SECURITY_ATTRIBUTES
  *
  * typedef struct _SECURITY_ATTRIBUTES {
- *     DWORD  nLength;
- *     LPVOID lpSecurityDescriptor;
- *     BOOL   bInheritHandle;
+ *    DWORD  nLength;
+ *    LPVOID lpSecurityDescriptor;
+ *    BOOL   bInheritHandle;
  * } SECURITY_ATTRIBUTES, sa;       // = 12 byte = int[3]
  *
  * StructToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
@@ -119,24 +169,24 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 
  * Win32 structure STARTUPINFO
  *
  * typedef struct _STARTUPINFO {
- *     DWORD  cb;                       =>  si[ 0]
- *     LPTSTR lpReserved;               =>  si[ 1]
- *     LPTSTR lpDesktop;                =>  si[ 2]
- *     LPTSTR lpTitle;                  =>  si[ 3]
- *     DWORD  dwX;                      =>  si[ 4]
- *     DWORD  dwY;                      =>  si[ 5]
- *     DWORD  dwXSize;                  =>  si[ 6]
- *     DWORD  dwYSize;                  =>  si[ 7]
- *     DWORD  dwXCountChars;            =>  si[ 8]
- *     DWORD  dwYCountChars;            =>  si[ 9]
- *     DWORD  dwFillAttribute;          =>  si[10]
- *     DWORD  dwFlags;                  =>  si[11]
- *     WORD   wShowWindow;              =>  si[12]
- *     WORD   cbReserved2;              =>  si[12]
- *     LPBYTE lpReserved2;              =>  si[13]
- *     HANDLE hStdInput;                =>  si[14]
- *     HANDLE hStdOutput;               =>  si[15]
- *     HANDLE hStdError;                =>  si[16]
+ *    DWORD  cb;                        =>  si[ 0]
+ *    LPTSTR lpReserved;                =>  si[ 1]
+ *    LPTSTR lpDesktop;                 =>  si[ 2]
+ *    LPTSTR lpTitle;                   =>  si[ 3]
+ *    DWORD  dwX;                       =>  si[ 4]
+ *    DWORD  dwY;                       =>  si[ 5]
+ *    DWORD  dwXSize;                   =>  si[ 6]
+ *    DWORD  dwYSize;                   =>  si[ 7]
+ *    DWORD  dwXCountChars;             =>  si[ 8]
+ *    DWORD  dwYCountChars;             =>  si[ 9]
+ *    DWORD  dwFillAttribute;           =>  si[10]
+ *    DWORD  dwFlags;                   =>  si[11]
+ *    WORD   wShowWindow;               =>  si[12]
+ *    WORD   cbReserved2;               =>  si[12]
+ *    LPBYTE lpReserved2;               =>  si[13]
+ *    HANDLE hStdInput;                 =>  si[14]
+ *    HANDLE hStdOutput;                =>  si[15]
+ *    HANDLE hStdError;                 =>  si[16]
  * } STARTUPINFO, si;       // = 68 byte = int[17]
  *
  * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
@@ -157,9 +207,9 @@ int si.hStdInput     (/*STARTUPINFO*/ int& si[]) { return(si[14]); }
 int si.hStdOutput    (/*STARTUPINFO*/ int& si[]) { return(si[15]); }
 int si.hStdError     (/*STARTUPINFO*/ int& si[]) { return(si[16]); }
 
-int si.set.cb        (/*STARTUPINFO*/ int& si[], int size   ) { si[ 0] =  size; }
-int si.set.Flags     (/*STARTUPINFO*/ int& si[], int flags  ) { si[11] = flags; }
-int si.set.ShowWindow(/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
+int si.setCb         (/*STARTUPINFO*/ int& si[], int size   ) { si[ 0] =  size; }
+int si.setFlags      (/*STARTUPINFO*/ int& si[], int flags  ) { si[11] = flags; }
+int si.setShowWindow (/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
 
 
 /**
@@ -223,14 +273,14 @@ string si.ShowWindowToStr(/*STARTUPINFO*/ int& si[]) {
  * Win32 structure SYSTEMTIME
  *
  * typedef struct _SYSTEMTIME {
- *     WORD wYear;
- *     WORD wMonth;
- *     WORD wDayOfWeek;
- *     WORD wDay;
- *     WORD wHour;
- *     WORD wMinute;
- *     WORD wSecond;
- *     WORD wMilliseconds;
+ *    WORD wYear;
+ *    WORD wMonth;
+ *    WORD wDayOfWeek;
+ *    WORD wDay;
+ *    WORD wHour;
+ *    WORD wMinute;
+ *    WORD wSecond;
+ *    WORD wMilliseconds;
  * } SYSTEMTIME, st;       // = 16 byte = int[4]
  *
  * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
@@ -269,10 +319,10 @@ int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
  *                                         C4FFFFFF
  */
 int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[0]); }                               // Bias in Minuten
-string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(Struct.GetWCharString(tzi, 1, 16)); }
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToString(tzi, 1, 16)); }
 void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
 int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[21]); }                              // Bias in Minuten
-string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(Struct.GetWCharString(tzi, 22, 16)); }
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToString(tzi, 22, 16)); }
 void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
 int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[42]); }                              // Bias in Minuten
 
@@ -342,7 +392,7 @@ string StructToStr(int& lpStruct[]) {
 
 
 /**
- * Gibt den in einer Structure im angegebenen Bereich gespeicherten, mit einem Zero-Character terminierten WCHAR-String zurück (Multibyte-Characters).
+ * Gibt den in einer Structure im angegebenen Bereich gespeicherten und mit einem NULL-Character terminierten ANSI-String zurück.
  *
  * @param  int& lpStruct[] - Structure
  * @param  int  from       - Index des ersten Integers der Charactersequenz
@@ -354,12 +404,54 @@ string StructToStr(int& lpStruct[]) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string Struct.GetWCharString(int& lpStruct[], int from, int len) {
+string StructCharToString(int& lpStruct[], int from, int len) {
    if (from < 0)
-      return(catch("Struct.GetWCharString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructCharToString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+len, size=ArraySize(lpStruct);
    if (to > size)
-      return(catch("Struct.GetWCharString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("StructCharToString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   string result = "";
+
+   for (int i=from; i < to; i++) {
+      int byte, shift=0, integer=lpStruct[i];
+
+      for (int n=0; n < 4; n++) {
+         byte = (integer >> shift) & 0xFF;
+         if (byte == 0)                                        // termination character (0x00)
+            break;
+         result = StringConcatenate(result, CharToStr(byte));
+         shift += 8;
+      }
+      if (byte == 0)
+         break;
+   }
+
+   if (catch("StructCharToString(3)") != NO_ERROR)
+      return("");
+   return(result);
+}
+
+
+/**
+ * Gibt den in einer Structure im angegebenen Bereich gespeicherten mit einem NULL-Character terminierten WCHAR-String zurück (Multibyte-Characters).
+ *
+ * @param  int& lpStruct[] - Structure
+ * @param  int  from       - Index des ersten Integers der Charactersequenz
+ * @param  int  len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ *
+ * @return string
+ *
+ *
+ * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
+ * ----
+ */
+string StructWCharToString(int& lpStruct[], int from, int len) {
+   if (from < 0)
+      return(catch("StructWCharToString(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   int to = from+len, size=ArraySize(lpStruct);
+   if (to > size)
+      return(catch("StructWCharToString(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -369,7 +461,7 @@ string Struct.GetWCharString(int& lpStruct[], int from, int len) {
 
       for (int n=0; n < 2; n++) {
          word = (integer >> shift) & 0xFFFF;
-         if (word == 0)                                        // termination character (zero WCHAR)
+         if (word == 0)                                        // termination character (0x00)
             break;
          int byte1 = (word >> 0) & 0xFF;
          int byte2 = (word >> 8) & 0xFF;
@@ -383,7 +475,7 @@ string Struct.GetWCharString(int& lpStruct[], int from, int len) {
          break;
    }
 
-   if (catch("Struct.GetWCharString(3)") != NO_ERROR)
+   if (catch("StructWCharToString(3)") != NO_ERROR)
       return("");
    return(result);
 }
@@ -452,9 +544,9 @@ string GetAccountDirectory(int account) {
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
    int /*STARTUPINFO*/ si[17]; ArrayInitialize(si, 0);
-      si.set.cb        (si, 68);
-      si.set.Flags     (si, STARTF_USESHOWWINDOW);
-      si.set.ShowWindow(si, cmdShow);
+      si.setCb        (si, 68);
+      si.setFlags     (si, STARTF_USESHOWWINDOW);
+      si.setShowWindow(si, cmdShow);
    int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
 
    if (!CreateProcessA(NULL, cmdLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
