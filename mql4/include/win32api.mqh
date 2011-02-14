@@ -5,6 +5,7 @@
 
    bool CloseHandle(int hObject);
    bool CreateProcessA(int lpApplicationName, string lpCommandLine, int lpProcessAttributes, int lpThreadAttributes, int bInheritHandles, int dwCreationFlags, int lpEnvironment, int lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
+   bool DeleteFileA(string lpFileName);
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetEnvironmentStringsA();
    void GetLocalTime(int lpSystemTime[]);
@@ -13,6 +14,7 @@
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
+   int  GetCurrentThreadId();
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
    int  WaitForSingleObject(int hHandle, int dwMilliseconds);

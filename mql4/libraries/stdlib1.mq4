@@ -463,7 +463,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2)   WaitForSingleObject() failed", ERR_WINDOWS_ERROR);
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2)   WaitForSingleObject() => WAIT_FAILED", ERR_WINDOWS_ERROR);
       else                       log("WinExecAndWait()   WaitForSingleObject() => "+ WaitForSingleObjectToStr(result));
    }
 
@@ -5013,25 +5013,28 @@ int GetServerToGmtOffset(datetime serverTime) {
 }
 
 
+int hWndTerminal;
+
 /**
  * Gibt das Handle des Hauptfensters des MetaTrader-Terminals zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTerminalWindow() {
-   int child, parent = WindowHandle(Symbol(), Period());
+   if (hWndTerminal == 0) {
+      int hWndChild, hWndParent=WindowHandle(Symbol(), Period());
 
-   // TODO: child statisch implementieren und nur ein einziges Mal ermitteln
+      while (hWndParent != 0) {
+         hWndChild  = hWndParent;
+         hWndParent = GetParent(hWndChild);
+      }
+      hWndTerminal = hWndChild;
 
-   while (parent != 0) {
-      child  = parent;
-      parent = GetParent(child);
+      if (catch("GetTerminalWindow()") != NO_ERROR)
+         return(0);
    }
 
-   if (catch("GetTerminalWindow()") != NO_ERROR)
-      return(0);
-
-   return(child);
+   return(hWndTerminal);
 }
 
 
@@ -5579,7 +5582,7 @@ int SendTextMessage(string receiver, string message) {
 
    int error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1)  execution of \'"+ lpCmdLine +"\' failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1)  execution of \""+ lpCmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("SendTextMessage(2)"));
 }
@@ -5662,13 +5665,8 @@ datetime ServerToGMT(datetime serverTime) {
  * @return int - Fehlerstatus
  */
 int SetWindowText(int hWnd, string text) {
-
-   if (!SetWindowTextA(hWnd, text)) {
-      int error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_WINDOWS_ERROR;
-      return(catch("SetWindowText()   user32.SetWindowTextA(hWnd="+ hWnd +", lpString=\""+ text +"\") = FALSE", error));
-   }
+   if (!SetWindowTextA(hWnd, text))
+      return(catch("SetWindowText()   user32.SetWindowText(hWnd="+ hWnd +", lpString=\""+ text +"\") => FALSE", ERR_WINDOWS_ERROR));
 
    return(0);
 }
