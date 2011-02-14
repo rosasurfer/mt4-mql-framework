@@ -149,7 +149,7 @@ int init() {
 
    // nach Parameteränderung nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS)
-      SendFakeTick(false);
+      SendTick(false);
 
    return(catch("init(7)"));
 }

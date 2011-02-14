@@ -175,6 +175,7 @@
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
    int      GetTerminalWindow();
+   string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
    int      iBalance(int account, double& lpBuffer[], int bar);
    int      iBalanceSeries(int account, double& lpBuffer[]);
@@ -183,7 +184,7 @@
    int      IncreasePeriod(int period);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
-   int      SendFakeTick(bool sound);
+   int      SendTick(bool sound);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
    int      WinExecAndWait(string cmdLine, int cmdShow);

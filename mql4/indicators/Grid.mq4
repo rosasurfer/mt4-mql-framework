@@ -34,10 +34,6 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
-      if (false) {
-         //string tradeserverDirectory = FindTradeServerDirectory();
-      }
-
       init_error = stdlib_GetLastError();
       return(init_error);
    }
@@ -46,13 +42,12 @@ int init() {
    SetIndexLabel(0, NULL);
 
    // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
+   if (UninitializeReason() == REASON_RECOMPILE)
       ArrayResize(labels, 0);
-   }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS)
-      SendFakeTick(false);
+      SendTick(false);
 
    return(catch("init()"));
 }
@@ -64,8 +59,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("start()   enter");
-
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
@@ -92,10 +85,9 @@ int start() {
 
    // Grid zeichnen
    if (ValidBars == 0) {
-      redraw = (DrawGrid()==ERR_HISTORY_UPDATE);
+      redraw = (DrawGrid() == ERR_HISTORY_UPDATE);
    }
 
-   //debug("start()   leave");
    return(catch("start()"));
 }
 

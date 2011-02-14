@@ -539,7 +539,7 @@ int WM_MT4;    // überdauert Timeframe-Wechsel
  *
  * @return int - Fehlerstatus (-1, wenn das Script im Backtester läuft und WindowHandle() nicht benutzt werden kann)
  */
-int SendFakeTick(bool sound=false) {
+int SendTick(bool sound=false) {
    if (IsTesting())
       return(-1);
 
@@ -552,7 +552,68 @@ int SendFakeTick(bool sound=false) {
    if (sound)
       PlaySound("tick1.wav");
 
-   return(catch("SendFakeTick()"));
+   return(catch("SendTick()"));
+}
+
+
+/**
+ * Gibt das History-Verzeichnis des aktuellen Tradeservers zurück.
+ *
+ * @return string
+ */
+string GetTradeServerDirectory() {
+   string serverDirectory = "";
+
+   // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
+   string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+
+   int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
+   if (hFile < 0) {
+      catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")");
+      return("");
+   }
+   FileClose(hFile);
+
+   // Datei suchen und Tradeserver-Pfad auslesen
+   string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
+   int /*WIN32_FIND_DATA*/ wfd[80];
+
+   int hFindDir=FindFirstFileA(pattern, wfd), result=hFindDir;
+   while (result > 0) {
+      if (wfd.FileAttribute.Directory(wfd)) {
+         string name = wfd.FileName(wfd);
+         if (name != ".") /*&&*/ if (name != "..") {
+            pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
+            int hFindFile=FindFirstFileA(pattern, wfd);
+            if (hFindFile != INVALID_HANDLE_VALUE) {     // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
+               //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
+
+               FindClose(hFindFile);
+               serverDirectory = name;
+               if (!DeleteFileA(pattern))                // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
+                  return(catch("GetTradeServerDirectory(2)   kernel32.DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
+               break;
+            }
+         }
+      }
+      result = FindNextFileA(hFindDir, wfd);
+   }
+   if (result == INVALID_HANDLE_VALUE) {
+      catch("GetTradeServerDirectory(3)  kernel32.FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
+      return("");
+   }
+   FindClose(hFindDir);
+
+   //debug("GetTradeServerDirectory()   serverDirectory = "+ serverDirectory);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("GetTradeServerDirectory(4)", error);
+      return("");
+   }
+   if (serverDirectory == "")
+      catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR);
+   return(serverDirectory);
 }
 
 
@@ -1371,11 +1432,13 @@ bool StringIEndsWith(string object, string postfix) {
 
 
 /**
- * If N is positive StringLeft() returns the leftmost N characters of the string,
- * e.g.  StringLeft("ABCDEFG",  2)  =>  "AB".
+ * Gibt einen Substring eines Strings zurück.
  *
- * If N is negative StringLeft() returns all but the rightmost N characters of the string,
- * e.g.  StringLeft("ABCDEFG", -2)  =>  "ABCDE".
+ * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StringLeft("ABCDEFG",  2)  =>  "AB"
+ *
+ * Ist N negativ, gibt StringLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StringLeft("ABCDEFG", -2)  =>  "ABCDE"
  *
  * @param  string value
  * @param  int    n
@@ -1390,11 +1453,13 @@ string StringLeft(string value, int n) {
 
 
 /**
- * If N is positive StringRight() returns the rightmost N characters of the string,
- * e.g.  StringRight("ABCDEFG",  2)  =>  "FG".
+ * Gibt einen Substring eines Strings zurück.
  *
- * If N is negative StringRight() returns all but the leftmost N characters of the string,
- * e.g.  StringRight("ABCDEFG", -2)  =>  "CDEFG".
+ * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StringRight("ABCDEFG",  2)  =>  "FG"
+ *
+ * Ist N negativ, gibt StringLeft() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StringRight("ABCDEFG", -2)  =>  "CDEFG"
  *
  * @param  string value
  * @param  int    n
@@ -2970,8 +3035,9 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer (positiver Wert) oder 0, falls ein Fehler aufgetreten ist.
  *
+ *
  * NOTE:    Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
- * -----
+ * ----
  */
 int GetAccountNumber() {
    int account = AccountNumber();
@@ -2989,7 +3055,7 @@ int GetAccountNumber() {
          return(0);
       }
 
-      string strAccount = StringSubstrFix(title, 0, pos);
+      string strAccount = StringLeft(title, pos);
       if (!StringIsDigit(strAccount)) {
          catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
          return(0);
@@ -5002,7 +5068,7 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
- * Gibt die Zeitzoneneinstellungen des Tradeservers zurück.
+ * Gibt die Zeitzone des Tradeservers zurück.
  *
  * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
  *                  oder ein Leerstring, falls ein Fehler auftrat
