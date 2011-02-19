@@ -7,7 +7,7 @@
 #import "stdlib.ex4"
 
    // Laufzeitfunktionen
-   void     stdlib_init(bool traceMode);
+   void     stdlib_init(string scriptName);
    int      stdlib_onTick(int indicatorCounted);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();

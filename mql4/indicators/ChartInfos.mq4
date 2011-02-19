@@ -14,14 +14,9 @@
 #property indicator_chart_window
 
 
-bool init       = false;
-int  init_error = NO_ERROR;
-
-
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
-extern bool   Spread.Including.Commission = false;       // ob der Spread inklusive Commission angezeigt werden soll
-extern string Last.H1.Close.Symbols       = "";          // Symbole, für die der Schlußkurs der letzten H1-Bar angezeigt werden soll
+extern string H1.Close.Symbols = "";         // Symbole, für die der Schlußkurs der letzten H1-Bar angezeigt werden soll
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,7 +24,7 @@ extern string Last.H1.Close.Symbols       = "";          // Symbole, für die der
 string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
-bool lastH1Close, position.Checked;
+bool showH1Close, positionChecked;
 
 
 /**
@@ -38,20 +33,16 @@ bool lastH1Close, position.Checked;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true;
+   init       = true;
    init_error = NO_ERROR;
-
-   // ERR_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber()) {
-      init_error = stdlib_GetLastError();
-      return(init_error);
-   }
+   __SCRIPT__ = WindowExpertName();
+   stdlib_init(__SCRIPT__);
 
    // DataBox-Anzeige ausschalten
    SetIndexLabel(0, NULL);
 
    // Konfiguration auswerten
-   lastH1Close = StringIContains(","+ StringTrim(Last.H1.Close.Symbols) +",", ","+ FindNormalizedSymbol(Symbol(), Symbol()) +",");
+   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ FindNormalizedSymbol(Symbol(), Symbol()) +",");
 
    // Label definieren und erzeugen
    string indicatorName = WindowExpertName();
@@ -79,35 +70,22 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   init = false;
+   if (init_error != NO_ERROR) return(init_error);
+
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                      // Aufruf nach erstem init()
-      init = false;
-      if (init_error != NO_ERROR)                   return(0);
-   }
-   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
-      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != NO_ERROR)                   return(0);
-   }
-
-   // Accountinitialiserung abfangen (bei Start und Accountwechsel)
-   if (AccountNumber() == 0)
-      return(ERR_NO_CONNECTION);
-
-   position.Checked = false;
+   positionChecked = false;
 
    UpdatePriceLabel();
    UpdateSpreadLabel();
    UpdateUnitSizeLabel();
    UpdatePositionLabel();
    UpdateMarginLevels();
-
-   if (lastH1Close)
-      UpdateH1CloseLabel();
+   UpdateH1CloseLabel();
 
    return(catch("start()"));
 }
@@ -145,7 +123,7 @@ int CreateLabels() {
    string name   = FindSymbolLongName(symbol, FindSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);                         // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
 
    // aktueller Kurs
    if (ObjectFind(priceLabel) >= 0)
@@ -172,7 +150,7 @@ int CreateLabels() {
    else GetLastError();
 
    // letzter H1-Schlußkurs
-   if (lastH1Close) {
+   if (showH1Close) {
       if (ObjectFind(h1CloseLabel) >= 0)
          ObjectDelete(h1CloseLabel);
       if (ObjectCreate(h1CloseLabel, OBJ_LABEL, 0, 0, 0)) {
@@ -219,13 +197,21 @@ int CreateLabels() {
  * @return int - Fehlerstatus
  */
 int UpdatePriceLabel() {
-   if (Bid==0 || Ask==0)                  // bei Start oder Accountwechsel
-      return(0);
+   if (Bid == 0) {                  // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+      string strPrice = " ";
+   }
+   else {
+      static double lastBid=0, lastAsk=0;
+      if (lastBid==Bid) /*&&*/ if (lastAsk==Ask)
+         return(0);
+      lastBid = Bid;
+      lastAsk = Ask;
 
-   double price = (Bid + Ask) / 2;
+      double price = (Bid + Ask) / 2;
 
-   if (Digits==3 || Digits==5) string strPrice = NumberToStr(price, StringConcatenate(", .", Digits-1, "'"));
-   else                               strPrice = NumberToStr(price, StringConcatenate(", .", Digits));
+      if (Digits==3 || Digits==5) strPrice = NumberToStr(price, StringConcatenate(", .", Digits-1, "'"));
+      else                        strPrice = NumberToStr(price, StringConcatenate(", .", Digits));
+   }
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
@@ -242,21 +228,24 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   int spread = MarketInfo(Symbol(), MODE_SPREAD);
+   if (Bid == 0) {                  // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+      string strSpread = " ";
+   }
+   else {
+      int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
-   int error = GetLastError();
-   if (error == ERR_UNKNOWN_SYMBOL)       // bei Start oder Accountwechsel
-      return(error);
+      static int lastSpread = 0;
+      if (lastSpread == spread)
+         return(0);
+      lastSpread = spread;
 
-   if (Spread.Including.Commission) if (AccountNumber()=={account-no} || AccountNumber()=={account-no})
-      spread += 8;
-
-   if (Digits==3 || Digits==5) string strSpread = DoubleToStr(spread/10.0, 1);
-   else                               strSpread = spread;
+      if (Digits==3 || Digits==5) strSpread = DoubleToStr(spread/10.0, 1);
+      else                        strSpread = spread;
+   }
 
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
-   error = GetLastError();
+   int error = GetLastError();
    if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
@@ -269,7 +258,7 @@ int UpdateSpreadLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateH1CloseLabel() {
-   if (!lastH1Close)
+   if (!showH1Close)
       return(0);
 
    double close = iClose(NULL, PERIOD_H1, 1);
@@ -278,7 +267,7 @@ int UpdateH1CloseLabel() {
 
    static double lastClose = 0;
    if (lastClose == close)
-      return(NO_ERROR);
+      return(0);
    lastClose = close;
 
    if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
@@ -306,13 +295,10 @@ int UpdateUnitSizeLabel() {
    double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE);
 
    int error = GetLastError();
-   if (Bid==0 || tickSize==0 || tickValue==0 || error==ERR_UNKNOWN_SYMBOL)    // bei Start oder Accountwechsel
-      return(ERR_UNKNOWN_SYMBOL);
-
    string strUnitSize;
 
-   if (!tradeAllowed) {
-      strUnitSize = " ";      // der Labeltext darf nicht leer sein
+   if (error==ERR_UNKNOWN_SYMBOL || Bid==0 || tickSize==0 || tickValue==0 || !tradeAllowed) {      // bei Start oder Accountwechsel
+      strUnitSize = " ";
    }
    else {
       double equity = AccountEquity() - AccountCredit();
@@ -355,8 +341,8 @@ int UpdateUnitSizeLabel() {
 }
 
 
-bool   position.InMarket;
-double position.Long, position.Short, position.Total;
+bool   anyPosition;
+double longPosition, shortPosition, totalPosition;
 
 
 /**
@@ -365,12 +351,12 @@ double position.Long, position.Short, position.Total;
  * @return int - Fehlerstatus
  */
 int UpdatePositionLabel() {
-   if (!position.Checked)
+   if (!positionChecked)
       CheckPosition();
 
-   if      (!position.InMarket)  string strPosition = " ";
-   else if (position.Total == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(position.Long, ", .+"), " Lot (hedged)");
-   else                                 strPosition = StringConcatenate("Position:  " , NumberToStr(position.Total, "+, .+"), " Lot");
+   if      (!anyPosition)       string strPosition = " ";
+   else if (totalPosition == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " Lot (hedged)");
+   else                                strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
@@ -387,11 +373,10 @@ int UpdatePositionLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateMarginLevels() {
-   if (!position.Checked)
+   if (!positionChecked)
       CheckPosition();
 
-
-   if (position.Total == 0) {                // keine Position im Markt: evt. vorhandene Marker löschen
+   if (totalPosition == 0) {                // keine Position im Markt: ggf. vorhandene Marker löschen
       ObjectDelete(freezeLevelLabel);
       ObjectDelete(stopoutLevelLabel);
    }
@@ -405,7 +390,7 @@ int UpdateMarginLevels() {
       double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
       double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
       double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // Hebel der real zur Verfügung gestellten Kreditlinie für das Symbol
-             tickValue      = tickValue * MathAbs(position.Total);            // TickValue der gesamten Position
+             tickValue      = tickValue * MathAbs(totalPosition);             // TickValue der gesamten Position
 
       int error = GetLastError();
       if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)                          // bei Start oder Accountwechsel
@@ -422,7 +407,7 @@ int UpdateMarginLevels() {
 
       double quoteFreezeLevel, quoteStopoutLevel;
 
-      if (position.Total > 0) {           // long position
+      if (totalPosition > 0) {            // long position
          quoteFreezeLevel  = NormalizeDouble(Bid - quoteFreezeDiff, Digits);
          quoteStopoutLevel = NormalizeDouble(Bid - quoteStopoutDiff, Digits);
       }
@@ -479,12 +464,12 @@ int UpdateMarginLevels() {
  * @return int - Fehlerstatus
  */
 int CheckPosition() {
-   if (position.Checked)
-      return(NO_ERROR);
+   if (positionChecked)
+      return(0);
 
-   position.Long  = 0;
-   position.Short = 0;
-   position.Total = 0;
+   longPosition  = 0;
+   shortPosition = 0;
+   totalPosition = 0;
 
    int orders = OrdersTotal();
 
@@ -493,16 +478,16 @@ int CheckPosition() {
          break;
 
       if (OrderSymbol() == Symbol()) {
-         if      (OrderType() == OP_BUY ) position.Long  += OrderLots();
-         else if (OrderType() == OP_SELL) position.Short += OrderLots();
+         if      (OrderType() == OP_BUY ) longPosition  += OrderLots();
+         else if (OrderType() == OP_SELL) shortPosition += OrderLots();
       }
    }
-   position.Long  = NormalizeDouble(position.Long , 8);
-   position.Short = NormalizeDouble(position.Short, 8);
-   position.Total = NormalizeDouble(position.Long - position.Short, 8);
+   longPosition  = NormalizeDouble(longPosition , 8);
+   shortPosition = NormalizeDouble(shortPosition, 8);
+   totalPosition = NormalizeDouble(longPosition - shortPosition, 8);
+   anyPosition   = (longPosition > 0 || shortPosition > 0);
 
-   position.InMarket = (position.Long > 0 || position.Short > 0);
-   position.Checked  = true;
+   positionChecked = true;
 
    return(catch("CheckPosition()"));
 }

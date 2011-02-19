@@ -31,10 +31,12 @@
 
 
 /**
+ * Initialisierung interner Variablen der Library zur Verbesserung des Debuggings. 
  *
+ * @param  string scriptName - Name des Scriptes, das die Library lädt
  */
-void stdlib_init(bool traceMode) {
-   //__SCRIPT__ = WindowExpertName();
+void stdlib_init(string scriptName) {
+   __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
    //__TRACE__  = traceMode;
 }
 

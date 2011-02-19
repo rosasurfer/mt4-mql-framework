@@ -7,6 +7,18 @@
 
 
 /**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int init() {
+   __SCRIPT__ = WindowExpertName();
+   stdlib_init(__SCRIPT__);
+   return(catch("init()"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus

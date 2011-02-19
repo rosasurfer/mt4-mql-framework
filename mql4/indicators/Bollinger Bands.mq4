@@ -17,10 +17,6 @@
 #property indicator_style3 STYLE_SOLID
 
 
-bool init       = false;
-int  init_error = NO_ERROR;
-
-
 ////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
 
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
@@ -43,8 +39,10 @@ int    period;                                     // Period-Code zum angegebene
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true;
+   init       = true;
    init_error = NO_ERROR;
+   __SCRIPT__ = WindowExpertName();
+   stdlib_init(__SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {

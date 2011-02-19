@@ -10,9 +10,6 @@
 #property indicator_width1  2
 
 
-bool init       = false;
-int  init_error = NO_ERROR;
-
 double iBufferBalance[];
 
 
@@ -22,8 +19,10 @@ double iBufferBalance[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true;
+   init       = true;
    init_error = NO_ERROR;
+   __SCRIPT__ = WindowExpertName();
+   stdlib_init(__SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {

@@ -355,10 +355,13 @@
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung
-int last_error  = NO_ERROR;
-int Tick        =  0;
-int ValidBars   = -1;
-int ChangedBars = -1;
+string __SCRIPT__  = "";
+bool   init        = false;
+int    init_error  = NO_ERROR;
+int    last_error  = NO_ERROR;
+int    Tick        =  0;
+int    ValidBars   = -1;
+int    ChangedBars = -1;
 
 
 /**
@@ -380,7 +383,7 @@ int catch(string message="", int error=NO_ERROR) {
    if (error != NO_ERROR) {
       if (message == "")
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
       last_error = error;
    }
 
@@ -409,7 +412,7 @@ int log(string message="", int error=NO_ERROR) {
    if (message == "")
       message = "???";
 
-   message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message);
+   message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message);
 
    if (error != NO_ERROR)
       message = StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]");
@@ -431,10 +434,8 @@ int log(string message="", int error=NO_ERROR) {
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  */
 void debug(string message) {
-   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", WindowExpertName(), "::", message);
-
+   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message);
    OutputDebugStringA(message);
-
    return(NO_ERROR);
 }
 
