@@ -31,7 +31,7 @@
 
 
 /**
- * Initialisierung interner Variablen der Library zur Verbesserung des Debuggings. 
+ * Initialisierung interner Variablen der Library zur Verbesserung des Debuggings.
  *
  * @param  string scriptName - Name des Scriptes, das die Library lädt
  */
@@ -43,7 +43,7 @@ void stdlib_init(string scriptName) {
 
 /**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
- * oder eines neuen Ticks erfolgt (z.B. im EventListener).
+ * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
  *
  * @param  int indicatorCounted - Rückgabewert von IndicatorCounted(), der direkte Aufruf in der Library gibt -1 zurück
  *
@@ -53,7 +53,7 @@ int stdlib_onTick(int indicatorCounted) {
    if (indicatorCounted < 0)
       return(catch("stdlib_onTick()  invalid parameter indicatorCounted = "+ indicatorCounted, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   Tick++;
+   Tick++;                             // der Wert hat keine tatsächliche Bedeutung
    ValidBars   = indicatorCounted;
    ChangedBars = Bars - ValidBars;
 

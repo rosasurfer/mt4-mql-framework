@@ -33,9 +33,7 @@ bool showH1Close, positionChecked;
  * @return int - Fehlerstatus
  */
 int init() {
-   init       = true;
-   init_error = NO_ERROR;
-   __SCRIPT__ = WindowExpertName();
+   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // DataBox-Anzeige ausschalten
@@ -201,7 +199,7 @@ int UpdatePriceLabel() {
       string strPrice = " ";
    }
    else {
-      static double lastBid=0, lastAsk=0;
+      static double lastBid, lastAsk;
       if (lastBid==Bid) /*&&*/ if (lastAsk==Ask)
          return(0);
       lastBid = Bid;
@@ -234,7 +232,7 @@ int UpdateSpreadLabel() {
    else {
       int spread = MarketInfo(Symbol(), MODE_SPREAD);
 
-      static int lastSpread = 0;
+      static int lastSpread;
       if (lastSpread == spread)
          return(0);
       lastSpread = spread;
@@ -262,25 +260,35 @@ int UpdateH1CloseLabel() {
       return(0);
 
    double close = iClose(NULL, PERIOD_H1, 1);
-   if (GetLastError() == ERR_HISTORY_UPDATE)
+
+   int error = GetLastError();
+   if (error == ERR_HISTORY_UPDATE) {     // bei Start oder Accountwechsel
+      string strClose = " ";
       return(ERR_HISTORY_UPDATE);
+   }
+   else {
+      static double lastClose;
+      if (lastClose == close)
+         return(0);
+      lastClose = close;
 
-   static double lastClose = 0;
-   if (lastClose == close)
-      return(0);
-   lastClose = close;
+      if (Digits==3 || Digits==5) strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
+      else                        strClose = NumberToStr(close, StringConcatenate(", .", Digits));
 
-   if (Digits==3 || Digits==5) string strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
-   else                               strClose = NumberToStr(close, StringConcatenate(", .", Digits));
-
-   strClose = StringConcatenate("H1:  ", strClose);
+      strClose = StringConcatenate("H1:  ", strClose);
+   }
 
    ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
 
-   int error = GetLastError();
+   if (error == ERR_HISTORY_UPDATE) {
+      catch("UpdateH1CloseLabel(1)");
+      return(ERR_HISTORY_UPDATE);
+   }
+
+   error = GetLastError();
    if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
-   return(catch("UpdateH1CloseLabel()", error));
+   return(catch("UpdateH1CloseLabel(2)", error));
 }
 
 
@@ -301,34 +309,45 @@ int UpdateUnitSizeLabel() {
       strUnitSize = " ";
    }
    else {
-      double equity = AccountEquity() - AccountCredit();
+      double unitSize, equity=AccountEquity(), credit=AccountCredit();
+
+      static double lastEquity, lastCredit, lastBid, lastTickSize, lastTickValue;
+      if (equity==lastEquity) /*&&*/ if (credit==lastCredit) /*&&*/ if (Bid==lastBid) /*&&*/ if (tickSize==lastTickSize) /*&&*/ if (tickValue==lastTickValue)
+         return(0);
+      lastEquity    = equity;
+      lastCredit    = credit;
+      lastBid       = Bid;
+      lastTickSize  = tickSize;
+      lastTickValue = tickValue;
+
+      equity -= credit;
       if (equity < 0)
          equity = 0;
 
-      // Accountequity wird mit 'leverage' gehebelt
-      int    leverage = 35;                              // leverage war bis 11/2010 = 7, ab dann mit GBP/JPY,H1-Scalper = 35
-      double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;    // unitSize=equity/lotValue (Hebel von 1)
+      if (equity > 0) {                                     // Accountequity wird mit 'leverage' gehebelt
+         double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
+         int    leverage = 35;                              // leverage war bis 11/2010 = 7, ab dann mit GBP/JPY,H1-Scalper = 35
+         unitSize = equity / lotValue * leverage;           // unitSize = equity/lotValue entspricht Hebel von 1
 
-      // TODO: Volatilität oder ATR berücksichtigen
+         // TODO: Volatilität oder ATR berücksichtigen
 
-      if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
-      else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002
-      else if (unitSize <=    0.07) unitSize = NormalizeDouble(MathRound(unitSize/  0.005) *   0.005, 3);   //  0.04-0.07: Vielfache von   0.005
-      else if (unitSize <=    0.2 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.01 ) *   0.01 , 2);   //   0.07-0.2: Vielfache von   0.01
-      else if (unitSize <=    0.4 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.02 ) *   0.02 , 2);   //    0.2-0.4: Vielfache von   0.02
-      else if (unitSize <=    0.7 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.05 ) *   0.05 , 2);   //    0.4-0.7: Vielfache von   0.05
-      else if (unitSize <=    2   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfache von   0.1
-      else if (unitSize <=    4   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfache von   0.2
-      else if (unitSize <=    7   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfache von   0.5
-      else if (unitSize <=   20   ) unitSize = NormalizeDouble(MathRound(unitSize/  1    ) *   1    , 0);   //       7-20: Vielfache von   1
-      else if (unitSize <=   40   ) unitSize = NormalizeDouble(MathRound(unitSize/  2    ) *   2    , 0);   //      20-40: Vielfache von   2
-      else if (unitSize <=   70   ) unitSize = NormalizeDouble(MathRound(unitSize/  5    ) *   5    , 0);   //      40-70: Vielfache von   5
-      else if (unitSize <=  200   ) unitSize = NormalizeDouble(MathRound(unitSize/ 10    ) *  10    , 0);   //     70-200: Vielfache von  10
-      else if (unitSize <=  400   ) unitSize = NormalizeDouble(MathRound(unitSize/ 20    ) *  20    , 0);   //    200-400: Vielfache von  20
-      else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50
-      else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100
-
+         if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
+         else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002
+         else if (unitSize <=    0.07) unitSize = NormalizeDouble(MathRound(unitSize/  0.005) *   0.005, 3);   //  0.04-0.07: Vielfache von   0.005
+         else if (unitSize <=    0.2 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.01 ) *   0.01 , 2);   //   0.07-0.2: Vielfache von   0.01
+         else if (unitSize <=    0.4 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.02 ) *   0.02 , 2);   //    0.2-0.4: Vielfache von   0.02
+         else if (unitSize <=    0.7 ) unitSize = NormalizeDouble(MathRound(unitSize/  0.05 ) *   0.05 , 2);   //    0.4-0.7: Vielfache von   0.05
+         else if (unitSize <=    2   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfache von   0.1
+         else if (unitSize <=    4   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfache von   0.2
+         else if (unitSize <=    7   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfache von   0.5
+         else if (unitSize <=   20   ) unitSize = NormalizeDouble(MathRound(unitSize/  1    ) *   1    , 0);   //       7-20: Vielfache von   1
+         else if (unitSize <=   40   ) unitSize = NormalizeDouble(MathRound(unitSize/  2    ) *   2    , 0);   //      20-40: Vielfache von   2
+         else if (unitSize <=   70   ) unitSize = NormalizeDouble(MathRound(unitSize/  5    ) *   5    , 0);   //      40-70: Vielfache von   5
+         else if (unitSize <=  200   ) unitSize = NormalizeDouble(MathRound(unitSize/ 10    ) *  10    , 0);   //     70-200: Vielfache von  10
+         else if (unitSize <=  400   ) unitSize = NormalizeDouble(MathRound(unitSize/ 20    ) *  20    , 0);   //    200-400: Vielfache von  20
+         else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50
+         else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100
+      }
       strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " Lot");
    }
 
@@ -485,7 +504,7 @@ int CheckPosition() {
    longPosition  = NormalizeDouble(longPosition , 8);
    shortPosition = NormalizeDouble(shortPosition, 8);
    totalPosition = NormalizeDouble(longPosition - shortPosition, 8);
-   anyPosition   = (longPosition > 0 || shortPosition > 0);
+   anyPosition   = (longPosition!=0 || shortPosition!=0);
 
    positionChecked = true;
 

@@ -39,9 +39,7 @@ int    period;                                     // Period-Code zum angegebene
  * @return int - Fehlerstatus
  */
 int init() {
-   init       = true;
-   init_error = NO_ERROR;
-   __SCRIPT__ = WindowExpertName();
+   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
