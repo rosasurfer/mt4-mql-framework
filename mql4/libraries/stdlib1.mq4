@@ -532,6 +532,240 @@ string StructWCharToStr(int& lpStruct[], int from, int len) {
 }
 
 
+/**
+ * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
+ *
+ * @return string lnkFile - Pfadangabe zum Shortcut
+ *
+ * @return string - Dateipfad der Zieldatei
+ */
+string GetShortcutTarget(string lnkFile) {
+   /**
+    * --------------------------------------------------------------------------
+    *  How to read the target's path from a .lnk-file:
+    * --------------------------------------------------------------------------
+    *  Problem:
+    *
+    *     The COM interface to shell32.dll IShellLink::GetPath() fails!
+    *
+    *  Solution:
+    *
+    *    We need to parse the file manually. The path can be found like shown
+    *    here.  If the shell item id list is not present (as signaled in flags),
+    *    we have to assume A = -6.
+    *
+    *   +-----------------+----------------------------------------------------+
+    *   |     Byte-Offset | Description                                        |
+    *   +-----------------+----------------------------------------------------+
+    *   |               0 | 'L' (magic value)                                  |
+    *   +-----------------+----------------------------------------------------+
+    *   |            4-19 | GUID                                               |
+    *   +-----------------+----------------------------------------------------+
+    *   |           20-23 | shortcut flags                                     |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | ...                                                |
+    *   +-----------------+----------------------------------------------------+
+    *   |           76-77 | A (16 bit): size of shell item id list, if present |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | shell item id list, if present                     |
+    *   +-----------------+----------------------------------------------------+
+    *   |      78 + 4 + A | B (32 bit): size of file location info             |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | file location info                                 |
+    *   +-----------------+----------------------------------------------------+
+    *   |      78 + A + B | C (32 bit): size of local volume table             |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | local volume table                                 |
+    *   +-----------------+----------------------------------------------------+
+    *   |  78 + A + B + C | target path string (ending with 0x00)              |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | ...                                                |
+    *   +-----------------+----------------------------------------------------+
+    *   |             ... | 0x00                                               |
+    *   +-----------------+----------------------------------------------------+
+    *
+    *  @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
+    * --------------------------------------------------------------------------
+    */
+   if (StringLen(lnkFile) < 4 || StringRight(lnkFile, 4)!=".lnk") {
+      catch("GetShortcutTarget(1)  invalid parameter lnkFile = \""+ lnkFile +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   // --------------------------------------------------------------------------
+   // Get the .lnk-file content:
+   // --------------------------------------------------------------------------
+   int hFile = _lopen(string lnkFile, OF_READ);
+   if (hFile == HFILE_ERROR) {                     // kernel32::GetLastError() ist nicht erreichbar, Existenz daher manuell prüfen
+      if (IsFile(lnkFile)) catch("GetShortcutTarget(2)  access denied to \""+ lnkFile +"\"", ERR_CANNOT_OPEN_FILE);
+      else                 catch("GetShortcutTarget(3)  file not found: \""+ lnkFile +"\"", ERR_CANNOT_OPEN_FILE);
+      return("");
+   }
+   int fileSize = GetFileSize(hFile, NULL);
+   int ints     = MathCeil(fileSize/4.0);          // noch keinen Weg gefunden, Strings mit 0-Bytes einzulesen, daher int-Array als Buffer
+   int buffer[]; ArrayResize(buffer, ints);        // buffer[] ist maximal 3 Bytes größer als notwendig
+
+   int bytes = _lread(hFile, buffer, ints * 4);    // 1 Integer = 4 Bytes
+   _lclose(hFile);
+
+   if (bytes != fileSize) {
+      catch("GetShortcutTarget(4)  error reading \""+ lnkFile +"\"", ERR_WINDOWS_ERROR);
+      return("");
+   }
+   if (bytes < 24) {
+      catch("GetShortcutTarget(5)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   int charsSize = bytes;
+   int chars[]; ArrayResize(chars, charsSize);     // int-Array in char-Array umwandeln
+   for (int i, n=0; i < ints; i++) {
+      for (int shift=0; shift < 32 && n < charsSize; shift+=8, n++) {
+         chars[n] = (buffer[i] >> shift) & 0xFF;
+      }
+   }
+
+   // --------------------------------------------------------------------------
+   // Check the magic value (first byte) and the GUID (16 byte from 5th byte):
+   // --------------------------------------------------------------------------
+   // The GUID is telling the version of the .lnk-file format. We expect the
+   // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
+   // --------------------------------------------------------------------------
+   if (chars[0] != 'L') {                          // test the magic value
+      catch("GetShortcutTarget(6)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+   if (chars[ 4] != 0x01 ||                        // test the GUID
+       chars[ 5] != 0x14 ||
+       chars[ 6] != 0x02 ||
+       chars[ 7] != 0x00 ||
+       chars[ 8] != 0x00 ||
+       chars[ 9] != 0x00 ||
+       chars[10] != 0x00 ||
+       chars[11] != 0x00 ||
+       chars[12] != 0xC0 ||
+       chars[13] != 0x00 ||
+       chars[14] != 0x00 ||
+       chars[15] != 0x00 ||
+       chars[16] != 0x00 ||
+       chars[17] != 0x00 ||
+       chars[18] != 0x00 ||
+       chars[19] != 0x46) {
+      catch("GetShortcutTarget(7)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   // --------------------------------------------------------------------------
+   // Get the flags (4 byte from 21st byte) and
+   // --------------------------------------------------------------------------
+   // Check if it points to a file or directory.
+   // --------------------------------------------------------------------------
+   // Flags (4 byte little endian):
+   //        Bit 0 -> has shell item id list
+   //        Bit 1 -> points to file or directory
+   //        Bit 2 -> has description
+   //        Bit 3 -> has relative path
+   //        Bit 4 -> has working directory
+   //        Bit 5 -> has commandline arguments
+   //        Bit 6 -> has custom icon
+   // --------------------------------------------------------------------------
+   int dwFlags  = chars[20];
+       dwFlags |= chars[21] <<  8;
+       dwFlags |= chars[22] << 16;
+       dwFlags |= chars[23] << 24;
+
+   bool hasShellItemIdList = (dwFlags & 0x00000001 == 0x00000001);
+   bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
+
+   if (!pointsToFileOrDir) {
+      log("GetShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFile +"\"");
+      return("");
+   }
+
+   // --------------------------------------------------------------------------
+   // Shell item id list (starts at offset 76 with 2 byte length):
+   // --------------------------------------------------------------------------
+   int A = -6;
+   if (hasShellItemIdList) {
+      i = 76;
+      if (charsSize < i+2) {
+         catch("GetShortcutTarget(9)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+         return("");
+      }
+      A  = chars[76];               // little endian format
+      A |= chars[77] << 8;
+   }
+
+   // --------------------------------------------------------------------------
+   // File location info:
+   // --------------------------------------------------------------------------
+   // Follows the shell item id list and starts with 4 byte structure length,
+   // followed by 4 byte offset.
+   // --------------------------------------------------------------------------
+   i = 78 + 4 + A;
+   if (charsSize < i+4) {
+      catch("GetShortcutTarget(10)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+   int B  = chars[i];       i++;    // little endian format
+       B |= chars[i] <<  8; i++;
+       B |= chars[i] << 16; i++;
+       B |= chars[i] << 24;
+
+   // --------------------------------------------------------------------------
+   // Local volume table:
+   // --------------------------------------------------------------------------
+   // Follows the file location info and starts with 4 byte table length for
+   // skipping the actual table and moving to the local path string.
+   // --------------------------------------------------------------------------
+   i = 78 + A + B;
+   if (charsSize < i+4) {
+      catch("GetShortcutTarget(11)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+   int C  = chars[i];       i++;    // little endian format
+       C |= chars[i] <<  8; i++;
+       C |= chars[i] << 16; i++;
+       C |= chars[i] << 24;
+
+   // --------------------------------------------------------------------------
+   // Local path string (ending with 0x00):
+   // --------------------------------------------------------------------------
+   i = 78 + A + B + C;
+   if (charsSize < i+1) {
+      catch("GetShortcutTarget(12)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+   string target = "";
+   for (; i < charsSize; i++) {
+      if (chars[i] == 0x00)
+         break;
+      target = StringConcatenate(target, CharToStr(chars[i]));
+   }
+   if (StringLen(target) == 0) {
+      catch("GetShortcutTarget(13)  invalid target in .lnk-file \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   // --------------------------------------------------------------------------
+   // Convert the target path into the long filename format:
+   // --------------------------------------------------------------------------
+   // GetLongPathNameA() fails it the target file doesn't exist!
+   // --------------------------------------------------------------------------
+   string lfnBuffer[1]; lfnBuffer[0] = StringConcatenate("......", MAX_STRING_LITERAL);   // 6 + 255 = MAX_PATH + 1
+
+   if (!GetLongPathNameA(target, lfnBuffer[0], StringLen(lfnBuffer[0])))
+      return(target);                                                                     // file doesn't exist
+   target = lfnBuffer[0];
+
+   //debug("GetShortcutTarget()   chars = "+ ArraySize(chars) +"   A = "+ A +"   B = "+ B +"   C = "+ C +"   target = "+ target);
+
+   if (catch("GetShortcutTarget(14)") != NO_ERROR)
+      return("");
+   return(target);
+}
+
+
 int WM_MT4;    // überdauert Timeframe-Wechsel
 
 /**
@@ -3178,23 +3412,16 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
  * @return string - Name
  */
 string GetComputerName() {
-   int error;
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
+   int lpBufferSize[1]; lpBufferSize[0] = MAX_STRING_LITERAL_LEN;
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
-   int    lpSize[1]; lpSize[0] = MAX_STRING_LEN;
-
-   if (!GetComputerNameA(buffer[0], lpSize)) {
-      error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_NO_MEMORY_FOR_RETURNED_STR;
-      catch("GetComputerName(1)   kernel32.GetComputerName(buffer, "+ lpSize[0] +") = FALSE", error);
+   if (!GetComputerNameA(buffer[0], lpBufferSize)) {
+      catch("GetComputerName(1)   kernel32.GetComputerName(buffer, "+ lpBufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
       return("");
    }
-   //Print("GetComputerName()   GetComputerNameA()   copied "+ lpSize[0] +" chars,   buffer=\""+ buffer[0] +"\"");
 
    if (catch("GetComputerName(2)") != NO_ERROR)
       return("");
-
    return(buffer[0]);
 }
 
@@ -3215,11 +3442,11 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
    string strDefault = defaultValue;
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
 
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -3244,11 +3471,11 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
    string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
 
    double result = StrToDouble(buffer[0]);
 
@@ -3298,11 +3525,11 @@ string GetConfigString(string section, string key, string defaultValue="") {
    string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
    string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
+   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
 
    if (catch("GetConfigString()") != NO_ERROR)
       return("");
@@ -3387,9 +3614,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    string strDefault = defaultValue;
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
@@ -3413,9 +3640,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    double result = StrToDouble(buffer[0]);
 
@@ -3459,9 +3686,9 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
    string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    if (catch("GetGlobalConfigString()") != NO_ERROR)
       return("");
@@ -3580,9 +3807,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
    string strDefault = defaultValue;
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
@@ -3606,9 +3833,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    double result = StrToDouble(buffer[0]);
 
@@ -3652,9 +3879,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 string GetLocalConfigString(string section, string key, string defaultValue="") {
    string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LEN, configFile);
+   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LITERAL_LEN, configFile);
 
    if (catch("GetLocalConfigString()") != NO_ERROR)
       return("");
@@ -5279,9 +5506,9 @@ string UninitReasonToStr(int reason) {
  * @return string - Text
  */
 string GetWindowText(int hWnd) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_LEN_STRING, "");    // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetWindowTextA(hWnd, buffer[0], MAX_STRING_LEN);
+   GetWindowTextA(hWnd, buffer[0], MAX_STRING_LITERAL_LEN);
 
    if (catch("GetWindowText()") != NO_ERROR)
       return("");
@@ -6087,6 +6314,58 @@ string UrlEncode(string value) {
  */
 string IntegerToHexStr(int integer) {
    return(IntToHexStr(integer));
+}
+
+
+/**
+ * Prüft, ob der angegebene Name eine existierende und normale Datei ist (kein Verzeichnis).
+ *
+ * @return string pathName - Pfadangabe
+ *
+ * @return bool
+ */
+bool IsFile(string pathName) {
+   bool result = false;
+
+   if (StringLen(pathName) > 0) {
+      int /*WIN32_FIND_DATA*/ wfd[80];
+
+      int hSearch = FindFirstFileA(pathName, wfd);
+
+      if (hSearch != INVALID_HANDLE_VALUE) {
+         FindClose(hSearch);
+         result = !wfd.FileAttribute.Directory(wfd);
+      }
+   }
+
+   catch("IsFile()");
+   return(result);
+}
+
+
+/**
+ * Prüft, ob der angegebene Name ein existierendes Verzeichnis ist (keine normale Datei).
+ *
+ * @return string pathName - Pfadangabe
+ *
+ * @return bool
+ */
+bool IsDir(string pathName) {
+   bool result = false;
+
+   if (StringLen(pathName) > 0) {
+      int /*WIN32_FIND_DATA*/ wfd[80];
+
+      int hSearch = FindFirstFileA(pathName, wfd);
+
+      if (hSearch != INVALID_HANDLE_VALUE) {
+         FindClose(hSearch);
+         result = wfd.FileAttribute.Directory(wfd);
+      }
+   }
+
+   catch("IsDir()");
+   return(result);
 }
 
 

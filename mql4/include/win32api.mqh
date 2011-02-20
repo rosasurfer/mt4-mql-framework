@@ -11,17 +11,25 @@
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetEnvironmentStringsA();
+   int  GetFileSize(int hFile, int lpFileSizeHigh);
    void GetLocalTime(int lpSystemTime[]);
-   int  GetModuleFileNameA(int hModule, string lpBuffer, int nBufferSize);
+   int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
+   int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int nBufferSize, string lpFileName);
+   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetCurrentThreadId();
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
-   int  WaitForSingleObject(int hHandle, int dwMilliseconds);
-   int  WinExec(string lpCmdLine, int nCmdShow);
+   int  WaitForSingleObject(int hHandle, int milliseconds);
+   int  WinExec(string lpCmdLine, int cmdShow);
+   int _lcreat(string lpPathName, int attributes);
+   int _lopen(string lpPathName, int accessModes);
+   int _llseek(int hFile, int offset, int origin);
+   int _lread(int hFile, int lpBuffer[], int bytes);        // int lpBuffer, für string lpBuffer ReadFile() verwenden
+   int _lwrite(int hFile, int lpBuffer[], int bytes);       // int lpBuffer, für string lpBuffer WriteFile() verwenden
+   int _lclose(int hFile);
 
 #import "shell32.dll"
 
@@ -138,7 +146,7 @@
 #define MB_RTLREADING                        0x00100000
 
 
-// File system constants
+// File & I/O constants
 #define MAX_PATH                                    260
 
 #define FILE_ATTRIBUTE_READONLY                       1
@@ -156,6 +164,17 @@
 #define FILE_ATTRIBUTE_NOT_INDEXED                 8192     // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang für MQL
 #define FILE_ATTRIBUTE_ENCRYPTED                  16384
 #define FILE_ATTRIBUTE_VIRTUAL                    65536
+
+#define OF_READ                              0x00000000
+#define OF_WRITE                             0x00000001
+#define OF_READWRITE                         0x00000002
+#define OF_SHARE_COMPAT                      0x00000000
+#define OF_SHARE_EXCLUSIVE                   0x00000010
+#define OF_SHARE_DENY_WRITE                  0x00000020
+#define OF_SHARE_DENY_READ                   0x00000030
+#define OF_SHARE_DENY_NONE                   0x00000040
+
+#define HFILE_ERROR                          0xFFFFFFFF     // -1
 
 
 // GetSystemMetrics() codes

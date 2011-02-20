@@ -127,6 +127,10 @@
 
    // Files, I/O
    int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
+   string   GetShortcutTarget(string lnkFile);
+   bool     IsDir(string pathName);
+   bool     IsFile(string pathName);
+
 
    // Math
    double   MathRoundFix(double number, int decimals);
