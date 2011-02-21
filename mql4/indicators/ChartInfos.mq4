@@ -226,12 +226,13 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   if (Bid == 0) {                  // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+   int spread = MarketInfo(Symbol(), MODE_SPREAD);
+   int error  = GetLastError();
+
+   if (error==ERR_UNKNOWN_SYMBOL || Bid==0) {               // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
       string strSpread = " ";
    }
    else {
-      int spread = MarketInfo(Symbol(), MODE_SPREAD);
-
       static int lastSpread;
       if (lastSpread == spread)
          return(0);
@@ -243,7 +244,7 @@ int UpdateSpreadLabel() {
 
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
