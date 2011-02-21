@@ -194,7 +194,6 @@
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
    // toString-Funktionen
-   string   BooleanToStr(bool value);
    string   BoolToStr(bool value);
    string   ErrorDescription(int error);
    string   ErrorID(int error);
@@ -213,8 +212,7 @@
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
    string   UninitializeReasonToStr(int reason);
-   string   WaitForSingleObjectToStr(int value);
-   string   WindowsErrorToStr(int error);
+   string   WaitForSingleObjectValueToStr(int value);
 
    // Win32-Structs Getter und Setter
    int      pi.hProcess          (/*PROCESS_INFORMATION*/ int& pi[]);
