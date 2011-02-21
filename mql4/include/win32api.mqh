@@ -147,7 +147,7 @@
 
 
 // File & I/O constants
-#define MAX_PATH                                    260
+#define MAX_PATH                                    260     // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
 
 #define FILE_ATTRIBUTE_READONLY                       1
 #define FILE_ATTRIBUTE_HIDDEN                         2

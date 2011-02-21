@@ -752,9 +752,9 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    // GetLongPathNameA() fails it the target file doesn't exist!
    // --------------------------------------------------------------------------
-   string lfnBuffer[1]; lfnBuffer[0] = StringConcatenate("......", MAX_STRING_LITERAL);   // 6 + 255 = MAX_PATH + 1
+   string lfnBuffer[1]; lfnBuffer[0] = StringConcatenate(MAX_STRING_LITERAL, ".....");    // 255 + 5 = MAX_PATH
 
-   if (!GetLongPathNameA(target, lfnBuffer[0], StringLen(lfnBuffer[0])))
+   if (!GetLongPathNameA(target, lfnBuffer[0], MAX_PATH))
       return(target);                                                                     // file doesn't exist
    target = lfnBuffer[0];
 
