@@ -5481,7 +5481,7 @@ int GetTerminalWindow() {
  *
  * @return string
  */
-string UninitReasonToStr(int reason) {
+string UninitializeReasonToStr(int reason) {
    switch (reason) {
       case REASON_FINISHED   : return("execution finished "                   );
       case REASON_REMOVE     : return("expert or indicator removed from chart");
@@ -5492,7 +5492,7 @@ string UninitReasonToStr(int reason) {
       case REASON_ACCOUNT    : return("account changed"                       );
    }
 
-   catch("UninitReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("UninitializeReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 

@@ -212,7 +212,7 @@
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   TimeframeToStr(int timeframe);
-   string   UninitReasonToStr(int reason);
+   string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectToStr(int value);
    string   WindowsErrorToStr(int error);
 
