@@ -10,7 +10,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 
