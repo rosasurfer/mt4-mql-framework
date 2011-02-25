@@ -5,6 +5,7 @@
  */
 #include <stdlib.mqh>
 
+
 #property indicator_chart_window
 
 #property indicator_buffers 3
@@ -18,31 +19,28 @@
 #property indicator_width3  2
 
 
-////////////////////////////////////////////////////////////////// User Variablen ////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    Price        =     0;       // price mode (0...6)
-extern int    WindowSize   =     9;       // window size
-extern double Sigma        =   6.0;       // sigma parameter
-extern double Offset       =  0.85;       // offset of Gaussian distribution (0...1)
-extern double PctFilter    =     0;       // dynamic filter in decimal
-extern int    Shift        =     0;       //
-extern int    ColorMode    =     1;       // 0-on,1-off
-extern int    ColorBarBack =     1;       //
-extern bool   AlertMode    = false;       // sound alert switch
-extern bool   WarningMode  = false;       // sound warning switch
+extern int    MA.Period        = 9;             // averaging period
+extern int    AppliedPrice     = PRICE_CLOSE;
+extern string AppliedPrice.Hlp = "0: Close, 1: Open, 2: High, 3: Low, 4: Median, 5: Typical, 6: Weighted Close";
+extern double Sigma            = 6.0;           // sigma parameter
+extern double Offset           = 0.85;          // offset of Gaussian distribution (0...1)
+extern double PctFilter        = 0;             // dynamic filter in decimal
+extern int    BarShift         = 0;             // indicator forward/backward shift
+extern bool   UpDownColoring   = true;          // alernate colors switch
+extern int    ColorBarBack     = 1;
+extern bool   WarningMode      = false;         // warning sound switch
+extern bool   AlertMode        = false;         // alert sound switch
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-//---- indicator buffers
-double ALMA   [];
-double Uptrend[];
-double Dntrend[];
-double trend  [];
-double Del    [];
+double iALMA[], iUpTrend[], iDownTrend[];    // sichtbare Indikatorbuffer
+double wALMA[];                              // Gewichtung der einzelnen Bars (Summe = 1)
 
-int    draw_begin;
-double wALMA[];
+double iTrend[], iDel[];                     // intern (nicht sichtbar)
+
 bool   UpTrendAlert, DownTrendAlert;
 
 
@@ -55,46 +53,45 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   //---- indicator buffers mapping
+   // indicator buffers
    IndicatorBuffers(5);
-   SetIndexBuffer(0,ALMA);
-   SetIndexBuffer(1,Uptrend);
-   SetIndexBuffer(2,Dntrend);
-   SetIndexBuffer(3,trend);
-   SetIndexBuffer(4,Del);
+   SetIndexBuffer(0, iALMA     );
+   SetIndexBuffer(1, iUpTrend  );
+   SetIndexBuffer(2, iDownTrend);
+   SetIndexBuffer(3, iTrend    );
+   SetIndexBuffer(4, iDel      );
 
-   //---- drawing settings
-   SetIndexStyle(0,DRAW_LINE);
-   SetIndexStyle(1,DRAW_LINE);
-   SetIndexStyle(2,DRAW_LINE);
-   draw_begin = WindowSize;
-   SetIndexDrawBegin(0,draw_begin);
-   SetIndexDrawBegin(1,draw_begin);
-   SetIndexDrawBegin(2,draw_begin);
-   SetIndexShift(0,Shift);
-   SetIndexShift(1,Shift);
-   SetIndexShift(2,Shift);
-   IndicatorDigits(Digits);
+   // drawing settings
+   SetIndexStyle    (0, DRAW_LINE);
+   SetIndexStyle    (1, DRAW_LINE);
+   SetIndexStyle    (2, DRAW_LINE);
+   SetIndexDrawBegin(0, MA.Period);
+   SetIndexDrawBegin(1, MA.Period);
+   SetIndexDrawBegin(2, MA.Period);
+   SetIndexShift    (0, BarShift);
+   SetIndexShift    (1, BarShift);
+   SetIndexShift    (2, BarShift);
 
-   //---- name for DataWindow and indicator subwindow label
-   IndicatorShortName("ALMA("+WindowSize +")");
-   SetIndexLabel(0, "ALMA");
+   // indicator names
+   IndicatorShortName("ALMA("+ MA.Period +")");
+   SetIndexLabel(0, "ALMA("+ MA.Period +")");
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
+   IndicatorDigits(Digits);
 
-   double m = MathFloor(Offset * (WindowSize - 1));
-   double s = WindowSize/Sigma;
+   int    m = Offset * (MA.Period - 1);      // (int) double
+   double s = MA.Period / Sigma;
+   double wSum;
 
-   ArrayResize(wALMA, WindowSize);
-   double wsum = 0;
+   ArrayResize(wALMA, MA.Period);
 
-   for (int i=0; i < WindowSize; i++) {
-      wALMA[i] = MathExp(-((i-m)*(i-m))/(2*s*s));
-      wsum += wALMA[i];
+   for (int i=0; i < MA.Period; i++) {
+      wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+      wSum += wALMA[i];
    }
 
-   for (i=0; i < WindowSize; i++) {
-      wALMA[i] /= wsum;
+   for (i=0; i < MA.Period; i++) {
+      wALMA[i] /= wSum;                      // Gewichtungen der einzelnen Bars (Summe = 1)
    }
 
    return(catch("init()"));
@@ -117,104 +114,103 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   int tick = GetTickCount();
+   debug("start()   ChangedBars = "+ ChangedBars +"   execution time: "+ (GetTickCount()-tick) +" ms");
+
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   int limit, shift, i;
-   int counted_bars = IndicatorCounted();
-
    //----
-   if (counted_bars < 1) {
-      for (i=Bars-1; i>0; i--) {
-         ALMA   [i] = EMPTY_VALUE;
-         Uptrend[i] = EMPTY_VALUE;
-         Dntrend[i] = EMPTY_VALUE;
-      }
+   if (ValidBars == 0) {
+      ArrayInitialize(iALMA,      EMPTY_VALUE);
+      ArrayInitialize(iUpTrend,   EMPTY_VALUE);
+      ArrayInitialize(iDownTrend, EMPTY_VALUE);
    }
 
    //----
-   if (counted_bars > 0)
-      counted_bars--;
-   limit = Bars - counted_bars;
-
-   //----
-   for (shift=limit; shift>=0; shift--) {
-      if (shift > Bars - WindowSize)
+   for (int bar=ChangedBars-1; bar >= 0; bar--) {
+      if (bar > Bars-1 - MA.Period)
          continue;
 
       double sum  = 0;
       double wsum = 0;
 
-      for (i=0; i < WindowSize; i++) {
-         if (i < WindowSize)
-            sum += wALMA[i] * iMA(NULL, 0, 1, 0, 0, Price, shift + (WindowSize-1-i));
+      for (int i=0; i < MA.Period; i++) {
+         if (i < MA.Period)
+            sum += wALMA[i] * iMA(NULL, 0, 1, 0, 0, AppliedPrice, bar + (MA.Period-1-i));
       }
 
       //if(wsum != 0)
-      ALMA[shift] = sum;
+      iALMA[bar] = sum;
 
       if (PctFilter > 0) {
-         Del[shift] = MathAbs(ALMA[shift] - ALMA[shift+1]);
+         iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumdel=0;
-         for (int j=0; j <= WindowSize-1; j++)
-            sumdel = sumdel+Del[shift+j];
+         for (int j=0; j <= MA.Period-1; j++) {
+            sumdel += iDel[bar+j];
+         }
 
-         double AvgDel = sumdel/WindowSize;
+         double AvgDel = sumdel/MA.Period;
 
          double sumpow = 0;
-         for (j=0; j <= WindowSize-1; j++)
-            sumpow+=MathPow(Del[j+shift]-AvgDel,2);
+         for (j=0; j <= MA.Period-1; j++) {
+            sumpow += MathPow(iDel[j+bar] - AvgDel, 2);
+         }
 
-         double StdDev = MathSqrt(sumpow/WindowSize);
+         double StdDev = MathSqrt(sumpow/MA.Period);
          double Filter = PctFilter * StdDev;
 
-         if (MathAbs(ALMA[shift]-ALMA[shift+1]) < Filter)
-            ALMA[shift] = ALMA[shift+1];
+         if (MathAbs(iALMA[bar]-iALMA[bar+1]) < Filter)
+            iALMA[bar] = iALMA[bar+1];
       }
       else {
-         Filter=0;
+         Filter = 0;
       }
 
-      if (ColorMode > 0) {
-         trend[shift] = trend[shift+1];
-         if (ALMA[shift]-ALMA[shift+1] > Filter) trend[shift] = 1;
-         if (ALMA[shift+1]-ALMA[shift] > Filter) trend[shift] =-1;
+      if (UpDownColoring) {
+         iTrend[bar] = iTrend[bar+1];
+         if (iALMA[bar  ] - iALMA[bar+1] > Filter) iTrend[bar] =  1;
+         if (iALMA[bar+1] - iALMA[bar  ] > Filter) iTrend[bar] = -1;
 
-         if (trend[shift] > 0) {
-            Uptrend[shift] = ALMA[shift];
-            if (trend[shift+ColorBarBack] < 0)
-               Uptrend[shift+ColorBarBack] = ALMA[shift+ColorBarBack];
-            Dntrend[shift] = EMPTY_VALUE;
-            if (WarningMode && trend[shift+1]<0 && i==0)
+         if (iTrend[bar] > 0) {
+            iUpTrend[bar] = iALMA[bar];
+            if (iTrend[bar+ColorBarBack] < 0)
+               iUpTrend[bar+ColorBarBack] = iALMA[bar+ColorBarBack];
+            iDownTrend[bar] = EMPTY_VALUE;
+            if (WarningMode) /*&&*/ if (iTrend[bar+1] < 0) /*&&*/ if (i == 0) {
                PlaySound("alert2.wav");
+            }
          }
-         else if (trend[shift] < 0) {
-            Dntrend[shift] = ALMA[shift];
-            if (trend[shift+ColorBarBack] > 0)
-               Dntrend[shift+ColorBarBack] = ALMA[shift+ColorBarBack];
-            Uptrend[shift] = EMPTY_VALUE;
-            if (WarningMode && trend[shift+1]>0 && i==0)
+         else if (iTrend[bar] < 0) {
+            iDownTrend[bar] = iALMA[bar];
+            if (iTrend[bar+ColorBarBack] > 0)
+               iDownTrend[bar+ColorBarBack] = iALMA[bar+ColorBarBack];
+            iUpTrend[bar] = EMPTY_VALUE;
+            if (WarningMode) /*&&*/ if (iTrend[bar+1] > 0) /*&&*/ if (i == 0) {
                PlaySound("alert2.wav");
+            }
          }
       }
    }
 
    //----------
    if (AlertMode) {
-      if (trend[2]<0 && trend[1]>0 && !UpTrendAlert) {
-         Alert(Symbol() +" M"+ Period() +": ALMA Signal for BUY");
+      if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!UpTrendAlert) {
+         Alert(Symbol(), " M", Period(), ": ALMA buy signal");
          UpTrendAlert   = true;
          DownTrendAlert = false;
       }
-      if (trend[2]>0 && trend[1]<0 && !DownTrendAlert) {
-         Alert(Symbol() +" M"+ Period() +": ALMA Signal for SELL");
+      if (iTrend[2] > 0) /*&&*/ if (iTrend[1] < 0) /*&&*/ if (!DownTrendAlert) {
+         Alert(Symbol(), " M", Period(), ": ALMA sell signal");
          DownTrendAlert = true;
          UpTrendAlert   = false;
       }
    }
+
+   debug("start()   ChangedBars = "+ ChangedBars +"   execution time: "+ (GetTickCount()-tick) +" ms");
 
    return(catch("start()"));
 }
