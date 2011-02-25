@@ -207,8 +207,8 @@ int UpdatePriceLabel() {
 
       double price = (Bid + Ask) / 2;
 
-      if (Digits==3 || Digits==5) strPrice = NumberToStr(price, StringConcatenate(", .", Digits-1, "'"));
-      else                        strPrice = NumberToStr(price, StringConcatenate(", .", Digits));
+      if (Digits==3 || Digits==5) strPrice = NumberToStr(price, StringConcatenate(",,.", Digits-1, "'"));
+      else                        strPrice = NumberToStr(price, StringConcatenate(",,.", Digits));
    }
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
