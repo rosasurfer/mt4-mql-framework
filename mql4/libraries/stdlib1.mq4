@@ -1503,6 +1503,18 @@ string BoolToStr(bool value) {
 
 
 /**
+ * Konvertiert ein Boolean-Array in einen lesbaren String.
+ *
+ * @param  bool array[]
+ *
+ * @return string
+ */
+string BoolArrayToStr(bool& array[]) {
+   return(StringConcatenate("{", JoinBools(array, ", "), "}"));
+}
+
+
+/**
  * Gibt die aktuelle Zeit in GMT zurück (entspricht UTC).
  *
  * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
@@ -4932,6 +4944,18 @@ string JoinDoubles(double values[], string separator) {
 
 
 /**
+ * Konvertiert ein Double-Array in einen lesbaren String.
+ *
+ * @param  double array[]
+ *
+ * @return string
+ */
+string DoubleArrayToStr(double& array[]) {
+   return(StringConcatenate("{", JoinDoubles(array, ", "), "}"));
+}
+
+
+/**
  * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
  *
  * @param  int    values[]  - Array mit Ausgangswerten
@@ -4954,6 +4978,18 @@ string JoinInts(int values[], string separator) {
 
 
 /**
+ * Konvertiert ein Integer-Array in einen lesbaren String.
+ *
+ * @param  int array[]
+ *
+ * @return string
+ */
+string IntArrayToStr(int& array[]) {
+   return(StringConcatenate("{", JoinInts(array, ", "), "}"));
+}
+
+
+/**
  * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
  *
  * @param  string values[]  - Array mit Ausgangswerten
@@ -4969,12 +5005,30 @@ string JoinStrings(string values[], string separator) {
    for (int i=1; i < size; i++) {
       result = StringConcatenate(result, separator, values[i]);
    }
-   if (size > 0) {
+   if (size > 0)
       result = StringConcatenate(values[0], result);
-   }
 
    if (catch("JoinStrings()") != NO_ERROR)
       return("");
+   return(result);
+}
+
+
+/**
+ * Konvertiert ein String-Array in einen lesbaren String.
+ *
+ * @param  string array[]
+ *
+ * @return string
+ */
+string StringArrayToStr(string& array[]) {
+   string result = JoinStrings(array, "\", \"");
+
+   if (StringLen(result) > 0)
+      result = StringConcatenate("{\"", result, "\"}");
+   else
+      result = "{}";
+
    return(result);
 }
 

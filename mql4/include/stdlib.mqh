@@ -13,10 +13,10 @@
    int      stdlib_PeekLastError();
 
    // Arrays
-   string   JoinBools(bool& lpValues[], string separator);
-   string   JoinDoubles(double& lpValues[], string separator);
-   string   JoinInts(int& lpValues[], string separator);
-   string   JoinStrings(string& lpValues[], string separator);
+   string   JoinBools(bool& values[], string separator);
+   string   JoinDoubles(double& values[], string separator);
+   string   JoinInts(int& values[], string separator);
+   string   JoinStrings(string& values[], string separator);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
@@ -195,17 +195,21 @@
 
    // toString-Funktionen
    string   BoolToStr(bool value);
-   string   ErrorDescription(int error);
+   string   BoolArrayToStr(bool& values[]);
+   string   DoubleArrayToStr(double& values[]);
+   string   ErrorDescription(int error);                             // MetaQuotes-Alias
    string   ErrorID(int error);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   IntegerToHexStr(int integer);
+   string   IntArrayToStr(int& values[]);
    string   IntToHexStr(int integer);
+   string   IntegerToHexStr(int integer);                            // MetaQuotes-Alias
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
+   string   StringArrayToStr(string& values[]);
    string   StructCharToStr(int& lpStruct[], int from, int len);
    string   StructWCharToStr(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
