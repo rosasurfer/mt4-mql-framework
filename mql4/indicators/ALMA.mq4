@@ -23,7 +23,7 @@
 
 extern int    MA.Period        = 9;             // averaging period
 extern int    AppliedPrice     = PRICE_CLOSE;
-extern string AppliedPrice.Hlp = "0: Close, 1: Open, 2: High, 3: Low, 4: Median, 5: Typical, 6: Weighted Close";
+extern string AppliedPrice.Hlp = "0=Close  1=Open  2=High  3=Low  4=Median  5=Typical  6=Weighted Close";
 extern double GaussianOffset   = 0.85;          // Gaussian distribution offset (0...1)
 extern double Sigma            = 6.0;
 extern double PctFilter        = 0.0;           // minimum percentage change of ALMA
