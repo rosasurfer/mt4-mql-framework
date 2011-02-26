@@ -62,9 +62,9 @@ int init() {
    SetIndexStyle    (0, DRAW_LINE);
    SetIndexStyle    (1, DRAW_LINE);
    SetIndexStyle    (2, DRAW_LINE);
-   SetIndexDrawBegin(0, MA.Period);
-   SetIndexDrawBegin(1, MA.Period);
-   SetIndexDrawBegin(2, MA.Period);
+   SetIndexDrawBegin(0, MA.Period-1);
+   SetIndexDrawBegin(1, MA.Period-1);
+   SetIndexDrawBegin(2, MA.Period-1);
    SetIndexShift    (0, BarShift);
    SetIndexShift    (1, BarShift);
    SetIndexShift    (2, BarShift);
@@ -79,16 +79,16 @@ int init() {
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Period);
 
-   int    m = GaussianOffset * (MA.Period-1);        // (int) double
+   int    m = GaussianOffset * (MA.Period-1);   // (int) double
    double s = MA.Period / Sigma;
 
    double wSum;
    for (int i=0; i < MA.Period; i++) {
-      wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
-      wSum += wALMA[i];
+      wALMA[MA.Period-1-i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+      wSum += wALMA[MA.Period-1-i];             // Reihenfolge der Gewichte von rechts nach links (im Chart), um Zugriff in start() zu beschleunigen
    }
    for (i=0; i < MA.Period; i++) {
-      wALMA[i] /= wSum;                      // Gewichtungen der einzelnen Bars (Summe = 1)
+      wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
    }
 
    return(catch("init()"));
@@ -111,6 +111,8 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   int tick = GetTickCount();
+
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
@@ -119,29 +121,25 @@ int start() {
    // ----
    if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
+      ArrayInitialize(iTrend,               0);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
    }
 
    // ----
    int bar = ChangedBars-1;
-   if (bar > Bars-1-MA.Period)         // TODO: überprüfen !!!
-      bar = Bars-1-MA.Period;
+   if (bar > Bars - MA.Period)
+      bar = Bars - MA.Period;
 
    for (; bar >= 0; bar--) {
       iALMA[bar] = 0;
+
       for (int i=0; i < MA.Period; i++) {
-         iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, AppliedPrice, bar+(MA.Period-1-i));
+         iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, AppliedPrice, bar+i);
       }
 
-      /*
-      bar   MA.Period   i   MA.Period-1-i   bar+(MA.Period-1-i)
-       6        3       0        2                  8
-       6        3       1        1                  7
-       6        3       2        0                  6
-      */
-
-      if (PctFilter > 0) {
+      // ----------
+      if (PctFilter > 0) {                               // funktioniert nur mit TrendColoring und verdoppelt die Laufzeit
          iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumDel = 0;
@@ -167,9 +165,13 @@ int start() {
 
       // ----------
       if (TrendColoring) {
-         iTrend[bar] = iTrend[bar+1];
-         if (iALMA[bar  ] - iALMA[bar+1] > filter) iTrend[bar] =  1;
-         if (iALMA[bar+1] - iALMA[bar  ] > filter) iTrend[bar] = -1;
+       //if (iALMA[bar+1] != EMPTY_VALUE) {     // wenn nicht erste Bar
+       //   if (iTrend[bar+1] == 0)             // wenn zweite Bar
+       //      filter = 0;
+            if      (iALMA[bar  ]-iALMA[bar+1] > filter) iTrend[bar] =  1;
+            else if (iALMA[bar+1]-iALMA[bar  ] > filter) iTrend[bar] = -1;
+            else                                         iTrend[bar] = iTrend[bar+1];
+       //}
 
          if (iTrend[bar] > 0) {
             iUpTrend[bar] = iALMA[bar];
@@ -177,7 +179,6 @@ int start() {
                iUpTrend[bar+1] = iALMA[bar+1];
                if (SoundAlerts) /*&&*/ if (bar==0) PlaySound("alert2.wav");
             }
-            iDownTrend[bar] = EMPTY_VALUE;
          }
          else if (iTrend[bar] < 0) {
             iDownTrend[bar] = iALMA[bar];
@@ -185,13 +186,16 @@ int start() {
                iDownTrend[bar+1] = iALMA[bar+1];
                if (SoundAlerts) /*&&*/ if (bar==0) PlaySound("alert2.wav");
             }
-            iUpTrend[bar] = EMPTY_VALUE;
+         }
+         else {
+            iUpTrend  [bar] = iALMA[bar];
+            iDownTrend[bar] = iALMA[bar];
          }
       }
    }
 
    // ----------
-   if (TradeSignals) { // funktioniert nur mit TrendColoring
+   if (TradeSignals) {                 // funktioniert nur mit TrendColoring
       if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!UpTrendAlert) {
          Alert(Symbol(), " M", Period(), ": ALMA trend change UP (buy signal)");
          UpTrendAlert   = true;
@@ -204,5 +208,6 @@ int start() {
       }
    }
 
+   log("start()   ALMA("+ MA.Period +")   time: "+ (GetTickCount()-tick) +" msec");
    return(catch("start()"));
 }

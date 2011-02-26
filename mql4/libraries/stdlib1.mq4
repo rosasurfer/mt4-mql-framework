@@ -56,7 +56,6 @@ int stdlib_onTick(int indicatorCounted) {
    Tick++;                             // der Wert hat keine tatsächliche Bedeutung
    ValidBars   = indicatorCounted;
    ChangedBars = Bars - ValidBars;
-
    return(NO_ERROR);
 }
 
@@ -766,7 +765,7 @@ string GetShortcutTarget(string lnkFile) {
 }
 
 
-int WM_MT4;    // überdauert Timeframe-Wechsel
+int WM_MT4;    // überdauert Timeframe-Wechsel !!! Tut es nicht !!!
 
 /**
  * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
