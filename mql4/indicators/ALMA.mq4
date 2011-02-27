@@ -150,16 +150,15 @@ int start() {
          iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumDel = 0;
-         for (int j=0; j <= MA.Period-1; j++) {
+         for (int j=0; j < MA.Period; j++) {
             sumDel += iDel[bar+j];
          }
          double avgDel = sumDel/MA.Period;
 
          double sumPow = 0;
-         for (j=0; j <= MA.Period-1; j++) {
+         for (j=0; j < MA.Period; j++) {
             sumPow += MathPow(iDel[bar+j] - avgDel, 2);
          }
-
          double stdDev = MathSqrt(sumPow/MA.Period);
          double filter = PctFilter * stdDev;
 
