@@ -83,6 +83,99 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  double& array[] - Double-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedDoubleArray(double& array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen Integer-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  int& array[] - Integer-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedIntArray(int& array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen String-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  string& array[] - String-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedStringArray(string& array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Kehrt die Reihenfolge der Elemente eines Double-Arrays um.
+ *
+ * @param  double& array[] - Double-Array
+ *
+ * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
+ *                FALSE, wenn die interne Indizierung normal ist
+ *
+ * @see IsReverseIndexedDoubleArray()
+ */
+bool ReverseDoubleArray(double& array[]) {
+   if (ArraySetAsSeries(array, true))
+      return(!ArraySetAsSeries(array, false));
+   return(true);
+}
+
+
+/**
+ * Kehrt die Reihenfolge der Elemente eines Integer-Arrays um.
+ *
+ * @param  int& array[] - Integer-Array
+ *
+ * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
+ *                FALSE, wenn die interne Indizierung normal ist
+ *
+ * @see IsReverseIndexedIntArray()
+ */
+bool ReverseIntArray(int& array[]) {
+   if (ArraySetAsSeries(array, true))
+      return(!ArraySetAsSeries(array, false));
+   return(true);
+}
+
+
+/**
+ * Kehrt die Reihenfolge der Elemente eines String-Arrays um.
+ *
+ * @param  string& array[] - String-Array
+ *
+ * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
+ *                FALSE, wenn die interne Indizierung normal ist
+ *
+ * @see IsReverseIndexedStringArray()
+ */
+bool ReverseStringArray(string& array[]) {
+   if (ArraySetAsSeries(array, true))
+      return(!ArraySetAsSeries(array, false));
+   return(true);
+}
+
+
+/**
  * Win32 structure WIN32_FIND_DATA
  *
  * typedef struct _WIN32_FIND_DATA {

@@ -17,6 +17,12 @@
    string   JoinDoubles(double& values[], string separator);
    string   JoinInts(int& values[], string separator);
    string   JoinStrings(string& values[], string separator);
+   bool     ReverseDoubleArray(double& array[]);
+   bool     ReverseIntArray(int& array[]);
+   bool     ReverseStringArray(string& array[]);
+   bool     IsReverseIndexedDoubleArray(double& array[]);
+   bool     IsReverseIndexedIntArray(int& array[]);
+   bool     IsReverseIndexedSringArray(string& array[]);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);

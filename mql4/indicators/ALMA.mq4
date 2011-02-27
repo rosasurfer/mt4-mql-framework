@@ -21,17 +21,18 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Period        = 9;             // averaging period
-extern int    AppliedPrice     = PRICE_CLOSE;
-extern string AppliedPrice.Hlp = "0=Close  1=Open  2=High  3=Low  4=Median  5=Typical  6=Weighted Close";
-extern double GaussianOffset   = 0.85;          // Gaussian distribution offset (0...1)
-extern double Sigma            = 6.0;
-extern double PctFilter        = 0.0;           // minimum percentage change of ALMA
-extern int    BarShift         = 0;             // indicator display shift
-extern int    MaxBars          = -1;            // maximum number of bars to display
-extern bool   TrendColoring    = true;          // enable/disable alternate trend colors
-extern bool   SoundAlerts      = false;         // enable/disable sound alerts on trend changes (intra-bar too)
-extern bool   TradeSignals     = false;         // enable/disable dialog box alerts on trend changes (only on bar-open)
+extern int    MA.Period         = 9;               // averaging period
+extern int    AppliedPrice      = PRICE_CLOSE;     // price used for MA calculation
+extern string AppliedPrice.Help = "0=Close  1=Open  2=High  3=Low  4=Median  5=Typical  6=Weighted";
+extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0...1)
+extern double Sigma             = 6.0;
+extern double PctFilter         = 0.0;             // minimum percentage change of ALMA
+extern int    BarShift          = 0;               // indicator display shift
+extern int    MaxBars           = -1;              // maximum number of indicator values to calculate
+extern string MaxBars.Help      = "Max. bar values to calculate (-1: all)";
+extern bool   TrendColoring     = true;            // enable/disable alternate trend colors
+extern bool   SoundAlerts       = false;           // enable/disable sound alerts on trend changes (intra-bar too)
+extern bool   TradeSignals      = false;           // enable/disable dialog box alerts on trend changes (only on bar-open)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +40,7 @@ extern bool   TradeSignals     = false;         // enable/disable dialog box ale
 double iALMA[], iUpTrend[], iDownTrend[];       // sichtbare Indikatorbuffer
 double iTrend[], iDel[];                        // intern (nicht sichtbar)
 double wALMA[];                                 // Gewichtung der einzelnen Bars
-bool   UpTrendAlert, DownTrendAlert;
+bool   TradeSignalUp, TradeSignalDown;
 
 
 /**
@@ -63,9 +64,10 @@ int init() {
    SetIndexStyle    (0, DRAW_LINE);
    SetIndexStyle    (1, DRAW_LINE);
    SetIndexStyle    (2, DRAW_LINE);
-   SetIndexDrawBegin(0, MA.Period-1);
-   SetIndexDrawBegin(1, MA.Period-1);
-   SetIndexDrawBegin(2, MA.Period-1);
+   int startDraw = MathMax(MA.Period-1, Bars-ifInt(MaxBars < 0, Bars, MaxBars));
+   SetIndexDrawBegin(0, startDraw);
+   SetIndexDrawBegin(1, startDraw);
+   SetIndexDrawBegin(2, startDraw);
    SetIndexShift    (0, BarShift);
    SetIndexShift    (1, BarShift);
    SetIndexShift    (2, BarShift);
@@ -85,12 +87,13 @@ int init() {
 
    double wSum;
    for (int i=0; i < MA.Period; i++) {
-      wALMA[MA.Period-1-i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
-      wSum += wALMA[MA.Period-1-i];             // Reihenfolge der Gewichte von rechts nach links (im Chart), um Zugriff in start() zu beschleunigen
+      wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+      wSum += wALMA[i];
    }
    for (i=0; i < MA.Period; i++) {
       wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
    }
+   ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um Zugriff in start() zu beschleunigen
 
    return(catch("init()"));
 }
@@ -127,20 +130,23 @@ int start() {
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
    }
 
-   // ----
-   int bar = ChangedBars-1;
-   if (bar > Bars - MA.Period)
-      bar = Bars - MA.Period;
+   // Startbar ermitteln
+   if (ChangedBars > MaxBars) /*&&*/ if (MaxBars >= 0)
+      ChangedBars = MaxBars;
+   int startBar = MathMin(ChangedBars-1, Bars-MA.Period);
 
-   for (; bar >= 0; bar--) {
+
+   // Schleife über alle zu berechnenden Bars
+   for (int bar=startBar; bar >= 0; bar--) {
+
+      // Moving Average
       iALMA[bar] = 0;
-
       for (int i=0; i < MA.Period; i++) {
          iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, AppliedPrice, bar+i);
       }
 
-      // ----------
-      if (PctFilter > 0) {                               // funktioniert nur mit TrendColoring und verdoppelt die Laufzeit
+      // Percentage-Filter: funktioniert nur mit TrendColoring und verdoppelt die Laufzeit
+      if (PctFilter > 0) {
          iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumDel = 0;
@@ -164,7 +170,7 @@ int start() {
          filter = 0;
       }
 
-      // ----------
+      // TrendColoring
       if (TrendColoring) {
        //if (iALMA[bar+1] != EMPTY_VALUE) {     // wenn nicht erste Bar
        //   if (iTrend[bar+1] == 0)             // wenn zweite Bar
@@ -173,20 +179,15 @@ int start() {
             else if (iALMA[bar+1]-iALMA[bar  ] > filter) iTrend[bar] = -1;
             else                                         iTrend[bar] = iTrend[bar+1];
        //}
-
          if (iTrend[bar] > 0) {
             iUpTrend[bar] = iALMA[bar];
-            if (iTrend[bar+1] < 0) {
+            if (iTrend[bar+1] < 0)
                iUpTrend[bar+1] = iALMA[bar+1];
-               if (SoundAlerts) /*&&*/ if (bar==0) PlaySound("alert2.wav");
-            }
          }
          else if (iTrend[bar] < 0) {
             iDownTrend[bar] = iALMA[bar];
-            if (iTrend[bar+1] > 0) {
+            if (iTrend[bar+1] > 0)
                iDownTrend[bar+1] = iALMA[bar+1];
-               if (SoundAlerts) /*&&*/ if (bar==0) PlaySound("alert2.wav");
-            }
          }
          else {
             iUpTrend  [bar] = iALMA[bar];
@@ -195,20 +196,25 @@ int start() {
       }
    }
 
-   // ----------
-   if (TradeSignals) {                 // funktioniert nur mit TrendColoring
-      if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!UpTrendAlert) {
+   // SoundAlerts bei jedem Tick: funktioniert nur mit TrendColoring
+   if (SoundAlerts) /*&&*/ if (iTrend[1]!=iTrend[0]) {
+      PlaySound("alert2.wav");
+   }
+
+   // TradeSignals onBarOpen: funktioniert nur mit TrendColoring
+   if (TradeSignals) {
+      if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!TradeSignalUp) {
          Alert(Symbol(), " M", Period(), ": ALMA trend change UP (buy signal)");
-         UpTrendAlert   = true;
-         DownTrendAlert = false;
+         TradeSignalUp   = true;
+         TradeSignalDown = false;
       }
-      if (iTrend[2] > 0) /*&&*/ if (iTrend[1] < 0) /*&&*/ if (!DownTrendAlert) {
+      if (iTrend[2] > 0) /*&&*/ if (iTrend[1] < 0) /*&&*/ if (!TradeSignalDown) {
          Alert(Symbol(), " M", Period(), ": ALMA trend change DOWN (sell signal)");
-         DownTrendAlert = true;
-         UpTrendAlert   = false;
+         TradeSignalDown = true;
+         TradeSignalUp   = false;
       }
    }
 
-   log("start()   ALMA("+ MA.Period +")   time: "+ (GetTickCount()-tick) +" msec");
+   //log("start()   ALMA("+ MA.Period +")   startBar: "+ startBar +"   time: "+ (GetTickCount()-tick) +" msec");
    return(catch("start()"));
 }
