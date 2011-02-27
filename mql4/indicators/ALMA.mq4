@@ -28,6 +28,7 @@ extern double GaussianOffset   = 0.85;          // Gaussian distribution offset 
 extern double Sigma            = 6.0;
 extern double PctFilter        = 0.0;           // minimum percentage change of ALMA
 extern int    BarShift         = 0;             // indicator display shift
+extern int    MaxBars          = -1;            // maximum number of bars to display
 extern bool   TrendColoring    = true;          // enable/disable alternate trend colors
 extern bool   SoundAlerts      = false;         // enable/disable sound alerts on trend changes (intra-bar too)
 extern bool   TradeSignals     = false;         // enable/disable dialog box alerts on trend changes (only on bar-open)
