@@ -93,7 +93,7 @@ int init() {
    for (i=0; i < MA.Period; i++) {
       wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
    }
-   ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um Zugriff in start() zu beschleunigen
+   ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
 
    return(catch("init()"));
 }
