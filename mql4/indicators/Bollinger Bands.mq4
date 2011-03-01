@@ -108,7 +108,7 @@ int init() {
       Periods = MathRound(minutes/Period());
    }
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten
+   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 

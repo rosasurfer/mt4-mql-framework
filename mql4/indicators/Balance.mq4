@@ -39,7 +39,7 @@ int init() {
          ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten
+   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 

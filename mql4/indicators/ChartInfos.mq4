@@ -54,11 +54,22 @@ int init() {
    stopoutLevelLabel = StringConcatenate(indicatorName, ".MarginStopoutLevel");
    CreateLabels();
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten
+   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
    return(catch("init()"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   RemoveChartObjects(labels);
+   return(catch("deinit()"));
 }
 
 
@@ -86,17 +97,6 @@ int start() {
    UpdateH1CloseLabel();
 
    return(catch("start()"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   RemoveChartObjects(labels);
-   return(catch("deinit()"));
 }
 
 

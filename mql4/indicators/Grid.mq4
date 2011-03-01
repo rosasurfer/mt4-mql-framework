@@ -41,7 +41,7 @@ int init() {
    if (UninitializeReason() == REASON_RECOMPILE)
       ArrayResize(labels, 0);
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten
+   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 

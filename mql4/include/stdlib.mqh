@@ -171,6 +171,7 @@
 
    // sonstiges
    int      DecreasePeriod(int period);
+   string   ErrorDescription(int error);
    int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
@@ -197,14 +198,13 @@
    int      SendTick(bool sound);
    int      SendTextMessage(string receiver, string message);
    int      SetWindowText(int hWnd, string text);
+   string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
    // toString-Funktionen
    string   BoolToStr(bool value);
    string   BoolArrayToStr(bool& values[]);
    string   DoubleArrayToStr(double& values[]);
-   string   ErrorDescription(int error);                             // MetaQuotes-Alias
-   string   ErrorID(int error);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
    string   IntArrayToStr(int& values[]);

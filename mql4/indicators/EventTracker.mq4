@@ -143,7 +143,7 @@ int init() {
    }
    //log("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.RateChanges="+ Track.RateChanges + ifString(Track.RateChanges, " (Grid="+RateGrid.Size+")", "") +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten
+   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 

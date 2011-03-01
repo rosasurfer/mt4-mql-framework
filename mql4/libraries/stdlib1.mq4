@@ -4013,21 +4013,13 @@ string GetDayOfWeek(datetime time, bool long=true) {
 
 
 /**
- * Alias für ErrorToStr()
- */
-string ErrorDescription(int error) {
-   return(ErrorToStr(error));
-}
-
-
-/**
- * Gibt die lesbare Beschreibung eines MQL-Fehlercodes zurück.
+ * Gibt die Beschreibung eines MQL-Fehlercodes zurück.
  *
  * @param  int error - MQL-Fehlercode
  *
  * @return string
  */
-string ErrorToStr(int error) {
+string ErrorDescription(int error) {
    switch (error) {
       case NO_ERROR                       : return("no error"                                                      ); //    0
 
@@ -4145,7 +4137,7 @@ string ErrorToStr(int error) {
  *
  * @return string
  */
-string ErrorID(int error) {
+string ErrorToStr(int error) {
    switch (error) {
       case NO_ERROR                       : return("NO_ERROR"                       ); //    0
 
@@ -4683,13 +4675,13 @@ int GetTerminalWindow() {
 
 
 /**
- * Gibt die lesbare Version eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
+ * Gibt die Beschreibung eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
  *
  * @param  int reason - Code
  *
  * @return string
  */
-string UninitializeReasonToStr(int reason) {
+string UninitializeReasonDescription(int reason) {
    switch (reason) {
       case REASON_FINISHED   : return("execution finished "                   );
       case REASON_REMOVE     : return("expert or indicator removed from chart");
@@ -4698,6 +4690,29 @@ string UninitializeReasonToStr(int reason) {
       case REASON_CHARTCLOSE : return("chart closed"                          );
       case REASON_PARAMETERS : return("input parameters changed"              );
       case REASON_ACCOUNT    : return("account changed"                       );
+   }
+
+   catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string UninitializeReasonToStr(int reason) {
+   switch (reason) {
+      case REASON_FINISHED   : return("REASON_FINISHED"   );
+      case REASON_REMOVE     : return("REASON_REMOVE"     );
+      case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
+      case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
+      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
+      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
+      case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
    }
 
    catch("UninitializeReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);

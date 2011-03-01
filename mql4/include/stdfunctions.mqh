@@ -383,7 +383,7 @@ int catch(string message="", int error=NO_ERROR) {
    if (error != NO_ERROR) {
       if (message == "")
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message, "  [", error, " - ", ErrorToStr(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
       last_error = error;
    }
 
@@ -415,7 +415,7 @@ int log(string message="", int error=NO_ERROR) {
    message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message);
 
    if (error != NO_ERROR)
-      message = StringConcatenate(message, "  [", error, " - ", ErrorToStr(error), "]");
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    Print(message);
 
