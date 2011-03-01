@@ -121,7 +121,7 @@ int CreateLabels() {
    string name   = FindSymbolLongName(symbol, FindSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);                         // Anzeige wird gleich hier (und nur ein einziges mal) gesetzt
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird sofort (und nur hier) gesetzt
 
    // aktueller Kurs
    if (ObjectFind(priceLabel) >= 0)
