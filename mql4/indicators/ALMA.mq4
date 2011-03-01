@@ -95,6 +95,10 @@ int init() {
    }
    ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
 
+   // nach Parameteränderung nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      SendTick(false);
+
    return(catch("init()"));
 }
 
@@ -195,12 +199,12 @@ int start() {
       }
    }
 
-   // SoundAlerts bei jedem Tick: funktioniert nur mit TrendColoring
+   // SoundAlerts (bei jedem Tick): funktioniert nur mit TrendColoring
    if (SoundAlerts) /*&&*/ if (iTrend[1]!=iTrend[0]) {
       PlaySound("alert2.wav");
    }
 
-   // TradeSignals onBarOpen: funktioniert nur mit TrendColoring
+   // TradeSignals (onBarOpen): funktioniert nur mit TrendColoring
    if (TradeSignals) {
       if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!TradeSignalUp) {
          Alert(Symbol(), " M", Period(), ": ALMA trend change UP (buy signal)");
