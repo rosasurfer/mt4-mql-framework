@@ -190,11 +190,12 @@ int start() {
       SetIndexStyles();                         // Workaround um die diversen Terminalbugs
    }
 
+   static int lastTrend;
+
    // Startbar ermitteln
    if (ChangedBars > MaxValues) /*&&*/ if (MaxValues >= 0)
       ChangedBars = MaxValues;
    int startBar = MathMin(ChangedBars-1, Bars-MA.Period);
-
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
@@ -250,13 +251,15 @@ int start() {
    }
 
    // Legende aktualisieren
-   if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
-   else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
-   else                          fontColor = Color.Reversal;
-   ObjectSetText(legend, indicatorName, 9, "Arial Fett", fontColor);
-   int error = GetLastError();
-   if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) {     // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("start(0)", error));
+   if (iTrend[0] != lastTrend) {
+      if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
+      else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
+      else                          fontColor = Color.Reversal;
+      ObjectSetText(legend, indicatorName, 9, "Arial Fett", fontColor);
+      int error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) {     // bei offenem Properties-Dialog oder Object::onDrag()
+         return(catch("start(0)", error));
+      }
    }
 
    // SoundAlerts (bei jedem Tick)
@@ -277,6 +280,8 @@ int start() {
          tradeSignalUp   = false;
       }
    }
+
+   lastTrend = iTrend[0];
 
    if (startBar > 1) {
       //log("start()   ALMA("+ MA.Period +")   startBar: "+ startBar +"    time: "+ (GetTickCount()-tick) +" msec");
