@@ -482,31 +482,31 @@
 
 
 // Process creation flags, see CreateProcess()
-#define DEBUG_PROCESS                            0x00000001
-#define DEBUG_ONLY_THIS_PROCESS                  0x00000002
-#define CREATE_SUSPENDED                         0x00000004
-#define DETACHED_PROCESS                         0x00000008
-#define CREATE_NEW_CONSOLE                       0x00000010
-#define CREATE_NEW_PROCESS_GROUP                 0x00000200
-#define CREATE_UNICODE_ENVIRONMENT               0x00000400
-#define CREATE_SEPARATE_WOW_VDM                  0x00000800
-#define CREATE_SHARED_WOW_VDM                    0x00001000
-#define INHERIT_PARENT_AFFINITY                  0x00010000
-#define CREATE_PROTECTED_PROCESS                 0x00040000
-#define EXTENDED_STARTUPINFO_PRESENT             0x00080000
-#define CREATE_BREAKAWAY_FROM_JOB                0x01000000
-#define CREATE_PRESERVE_CODE_AUTHZ_LEVEL         0x02000000
-#define CREATE_DEFAULT_ERROR_MODE                0x04000000
-#define CREATE_NO_WINDOW                         0x08000000
+#define DEBUG_PROCESS                        0x00000001
+#define DEBUG_ONLY_THIS_PROCESS              0x00000002
+#define CREATE_SUSPENDED                     0x00000004
+#define DETACHED_PROCESS                     0x00000008
+#define CREATE_NEW_CONSOLE                   0x00000010
+#define CREATE_NEW_PROCESS_GROUP             0x00000200
+#define CREATE_UNICODE_ENVIRONMENT           0x00000400
+#define CREATE_SEPARATE_WOW_VDM              0x00000800
+#define CREATE_SHARED_WOW_VDM                0x00001000
+#define INHERIT_PARENT_AFFINITY              0x00010000
+#define CREATE_PROTECTED_PROCESS             0x00040000
+#define EXTENDED_STARTUPINFO_PRESENT         0x00080000
+#define CREATE_BREAKAWAY_FROM_JOB            0x01000000
+#define CREATE_PRESERVE_CODE_AUTHZ_LEVEL     0x02000000
+#define CREATE_DEFAULT_ERROR_MODE            0x04000000
+#define CREATE_NO_WINDOW                     0x08000000
 
 
 // Process priority flags, see CreateProcess()
-#define IDLE_PRIORITY_CLASS                      0x00000040
-#define BELOW_NORMAL_PRIORITY_CLASS              0x00004000
-#define NORMAL_PRIORITY_CLASS                    0x00000020
-#define ABOVE_NORMAL_PRIORITY_CLASS              0x00008000
-#define HIGH_PRIORITY_CLASS                      0x00000080
-#define REALTIME_PRIORITY_CLASS                  0x00000100
+#define IDLE_PRIORITY_CLASS                  0x00000040
+#define BELOW_NORMAL_PRIORITY_CLASS          0x00004000
+#define NORMAL_PRIORITY_CLASS                0x00000020
+#define ABOVE_NORMAL_PRIORITY_CLASS          0x00008000
+#define HIGH_PRIORITY_CLASS                  0x00000080
+#define REALTIME_PRIORITY_CLASS              0x00000100
 
 
 // ShowWindow() commands (keine Flags)
