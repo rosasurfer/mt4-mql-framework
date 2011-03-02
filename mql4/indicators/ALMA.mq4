@@ -41,7 +41,7 @@ double iALMA[], iTrend[], iDel[];                  // nicht sichtbare Buffer
 double wALMA[];                                    // Gewichtung der einzelnen Bars des MA
 bool   tradeSignalUp, tradeSignalDown;
 
-string labels[], legendLabel;
+string labels[], legend, indicatorName;
 
 
 /**
@@ -79,26 +79,15 @@ int init() {
    SetIndexStyles();             // Workaround um die diversen Terminalbugs
 
    // Anzeigeoptionen
-   IndicatorShortName("ALMA("+ MA.Period +")");
-   SetIndexLabel(0, "ALMA("+ MA.Period +")");
+   indicatorName = "ALMA("+ MA.Period +")";
+   IndicatorShortName(indicatorName);
+   SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
    IndicatorDigits(Digits);
 
-   /*
    // Legende
-   legendLabel = StringConcatenate(WindowExpertName(), ".Legend");
-   if (ObjectFind(legendLabel) >= 0)
-      ObjectDelete(legendLabel);
-   if (ObjectCreate(legendLabel, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(legendLabel, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(legendLabel, OBJPROP_XDISTANCE,  4);
-      ObjectSet(legendLabel, OBJPROP_YDISTANCE, 30);
-      RegisterChartObject(legendLabel, labels);
-   }
-   else GetLastError();
-   ObjectSetText(legendLabel, " ", 10);
-   */
+   legend = AddLegendLabel(indicatorName);
 
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Period);
@@ -119,6 +108,51 @@ int init() {
       SendTick(false);
 
    return(catch("init()"));
+}
+
+
+/**
+ * Erzeugt und positioniert ein neues Label für den angegebenen Namen.
+ *
+ * @param  string indicatorName - Indikatorname
+ *
+ * @return string - vollständiger Name des erzeugten Labels
+ */
+string AddLegendLabel(string indicatorName) {
+   int totalObj = ObjectsTotal(),
+       labelObj = ObjectsTotal(OBJ_LABEL);
+
+   string name, substrings[0];
+   int legends, maxId;
+
+   for (int i=0; i < totalObj && labelObj > 0; i++) {
+      name = ObjectName(i);
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StringStartsWith(name, "Legend.")) {
+            legends++;
+            if (Explode(name, ".", substrings) != NO_ERROR)
+               return("");
+            maxId = MathMax(maxId, StrToInteger(substrings[1]));
+         }
+         labelObj--;
+      }
+   }
+
+   string label = StringConcatenate("Legend.", maxId+1, ".", indicatorName);
+   if (ObjectFind(label) >= 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE,  5);
+      ObjectSet(label, OBJPROP_YDISTANCE, 21 + legends*19);
+      RegisterChartObject(label, labels);
+   }
+   else GetLastError();
+   ObjectSetText(label, " ");
+
+   if (catch("AddLegendLabel()") != NO_ERROR)
+      return("");
+   return(label);
 }
 
 
@@ -215,12 +249,15 @@ int start() {
       }
    }
 
-   /*
    // Legende aktualisieren
-   if (iTrend[0] > 0) color fontColor = Color.UpTrend;
-                            fontColor = Color.DownTrend;
-   ObjectSetText(legendLabel, StringConcatenate(WindowExpertName(), "(", MA.Period, ")"), 10, "MS Sans Serif", fontColor);
-   */
+   if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
+   else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
+   else                          fontColor = Color.Reversal;
+   ObjectSetText(legend, indicatorName, 9, "Arial Fett", fontColor);
+   int error = GetLastError();
+   if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) {     // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("start(0)", error));
+   }
 
    // SoundAlerts (bei jedem Tick)
    if (SoundAlerts) /*&&*/ if (iTrend[1]!=iTrend[0]) {
@@ -244,7 +281,7 @@ int start() {
    if (startBar > 1) {
       //log("start()   ALMA("+ MA.Period +")   startBar: "+ startBar +"    time: "+ (GetTickCount()-tick) +" msec");
    }
-   return(catch("start()"));
+   return(catch("start(1)"));
 }
 
 

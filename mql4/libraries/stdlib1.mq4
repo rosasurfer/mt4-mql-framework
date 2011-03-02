@@ -3217,7 +3217,7 @@ int Explode(string object, string separator, string& lpResults[]) {
             lpResults[size] = StringSubstr(object, i);
             break;
          }
-         else if (i == pos) {
+         else if (pos == i) {
             lpResults[size] = "";
          }
          else {
@@ -3225,6 +3225,11 @@ int Explode(string object, string separator, string& lpResults[]) {
          }
          size++;
          i = pos + lenSeparator;
+      }
+
+      if (i == lenObject) {                  // bei abschlieﬂendem Separator Substrings mit Leerstring beenden
+         ArrayResize(lpResults, size+1);
+         lpResults[size] = "";
       }
    }
    return(catch("Explode()"));
