@@ -53,9 +53,11 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
+   /*
    MaxValues       = 1200;
    Color.UpTrend   = ForestGreen;
    Color.DownTrend = Red;
+   */
 
    // Buffer zuweisen
    IndicatorBuffers(6);
