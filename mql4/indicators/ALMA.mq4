@@ -79,6 +79,7 @@ int init() {
    SetIndexStyles();             // Workaround um die diversen Terminalbugs
 
    // Anzeigeoptionen
+   IndicatorShortName("ALMA("+ MA.Period +")");
    SetIndexLabel(0, "ALMA("+ MA.Period +")");
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
