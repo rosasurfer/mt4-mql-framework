@@ -22,24 +22,23 @@ extern int    AppliedPrice      = PRICE_CLOSE;     // price used for MA calculat
 extern string AppliedPrice.Help = "0=Close  1=Open  2=High  3=Low  4=Median  5=Typical  6=Weighted";
 extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0...1)
 extern double Sigma             = 6.0;
-extern double PctFilter         = 0.0;             // minimum percentage change of ALMA
-extern int    BarShift          = 0;               // indicator display shift
-extern int    MaxValues         = -1;              // maximum number of indicator values to calculate
-extern string MaxValues.Help    = "Max. ind. values to calculate (-1: all)";
-extern bool   TrendColoring     = true;            // enable/disable alternate trend colors
+extern double ReversalPctFilter = 0.0;             // minimum percentage MA change to indicate a completed trend reversal
+extern int    MaxValues         = -1;              // maximum number of indicator values to display
+extern string MaxValues.Help    = "Max. ind. values to display (-1: all)";
+extern int    BarShift          = 0;               // indicator display shifting
 extern bool   SoundAlerts       = false;           // enable/disable sound alerts on trend changes (intra-bar too)
 extern bool   TradeSignals      = false;           // enable/disable dialog box alerts on trend changes (only on bar-open)
 
-extern color  Color.Default     = Yellow;          // Farbverwaltung im Code
-extern color  Color.UpTrend     = DodgerBlue;      // LightBlue
-extern color  Color.DownTrend   = Orange;          // Tomato
+extern color  Color.UpTrend     = DodgerBlue;      // Farbverwaltung im Code
+extern color  Color.DownTrend   = Orange;
+extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double iALMA[], iUpTrend[], iDownTrend[];          // sichtbare Indikatorbuffer
-double iTrend[], iDel[];                           // nicht sichtbare Buffer
-double wALMA[];                                    // Gewichtung der einzelnen Bars
+double iUpTrend[], iDownTrend[], iReversal[];      // sichtbare Indikatorbuffer
+double iALMA[], iTrend[], iDel[];                  // nicht sichtbare Buffer
+double wALMA[];                                    // Gewichtung der einzelnen Bars des MA
 bool   tradeSignalUp, tradeSignalDown;
 
 string labels[], legendLabel;
@@ -55,19 +54,19 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    /*
-   MA.Period       = 192;
-   MaxValues       = 1000;
+   MaxValues       = 1200;
    Color.UpTrend   = ForestGreen;
    Color.DownTrend = Red;
    */
 
    // Buffer zuweisen
-   IndicatorBuffers(5);
-   SetIndexBuffer(0, iALMA     );
-   SetIndexBuffer(1, iUpTrend  );
-   SetIndexBuffer(2, iDownTrend);
-   SetIndexBuffer(3, iTrend    );
-   SetIndexBuffer(4, iDel      );
+   IndicatorBuffers(6);
+   SetIndexBuffer(0, iUpTrend  );
+   SetIndexBuffer(1, iDownTrend);
+   SetIndexBuffer(2, iReversal );
+   SetIndexBuffer(3, iALMA     );
+   SetIndexBuffer(4, iTrend    );
+   SetIndexBuffer(5, iDel      );
 
    // Zeichenoptionen
    int startDraw = MathMax(MA.Period-1, Bars-ifInt(MaxValues < 0, Bars, MaxValues));
@@ -80,7 +79,6 @@ int init() {
    SetIndexStyles();             // Workaround um die diversen Terminalbugs
 
    // Anzeigeoptionen
-   IndicatorShortName("ALMA("+ MA.Period +")");
    SetIndexLabel(0, "ALMA("+ MA.Period +")");
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
@@ -124,16 +122,6 @@ int init() {
 
 
 /**
- * IndexStyles hier setzen (Workaround um die diversen Terminalbugs)
- */
-void SetIndexStyles() {
-   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.Default  );
-   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-}
-
-
-/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
@@ -160,9 +148,10 @@ int start() {
    // bei Neuberechnung alles zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
-      ArrayInitialize(iTrend,               0);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
+      ArrayInitialize(iReversal,  EMPTY_VALUE);
+      ArrayInitialize(iTrend,               0);
       SetIndexStyles();                         // Workaround um die diversen Terminalbugs
    }
 
@@ -180,8 +169,8 @@ int start() {
          iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, AppliedPrice, bar+i);
       }
 
-      // Percentage-Filter: funktioniert nur mit TrendColoring und verdoppelt die Laufzeit
-      if (PctFilter > 0) {
+      // Percentage-Filter (verdoppelt die Laufzeit)
+      if (ReversalPctFilter > 0) {
          iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumDel = 0;
@@ -195,7 +184,7 @@ int start() {
             sumPow += MathPow(iDel[bar+j] - avgDel, 2);
          }
          double stdDev = MathSqrt(sumPow/MA.Period);
-         double filter = PctFilter * stdDev;
+         double filter = ReversalPctFilter * stdDev;
 
          if (MathAbs(iALMA[bar]-iALMA[bar+1]) < filter)
             iALMA[bar] = iALMA[bar+1];
@@ -204,45 +193,40 @@ int start() {
          filter = 0;
       }
 
-      // TrendColoring
-      if (TrendColoring) {
-       //if (iALMA[bar+1] != EMPTY_VALUE) {     // wenn nicht erste Bar
-       //   if (iTrend[bar+1] == 0)             // wenn zweite Bar
-       //      filter = 0;
-            if      (iALMA[bar  ]-iALMA[bar+1] > filter) iTrend[bar] =  1;
-            else if (iALMA[bar+1]-iALMA[bar  ] > filter) iTrend[bar] = -1;
-            else                                         iTrend[bar] = iTrend[bar+1];
-       //}
-         if (iTrend[bar] > 0) {
-            iUpTrend[bar] = iALMA[bar];
-            if (iTrend[bar+1] < 0)
-               iUpTrend[bar+1] = iALMA[bar+1];
-         }
-         else if (iTrend[bar] < 0) {
-            iDownTrend[bar] = iALMA[bar];
-            if (iTrend[bar+1] > 0)
-               iDownTrend[bar+1] = iALMA[bar+1];
-         }
-         else {
-            iUpTrend  [bar] = iALMA[bar];
-            iDownTrend[bar] = iALMA[bar];
-         }
+      // Trend coloring
+      if      (iALMA[bar  ]-iALMA[bar+1] > filter) iTrend[bar] =  1;
+      else if (iALMA[bar+1]-iALMA[bar  ] > filter) iTrend[bar] = -1;
+      else                                         iTrend[bar] = iTrend[bar+1];
+
+      if (iTrend[bar] > 0) {
+         iUpTrend[bar] = iALMA[bar];
+         if (iTrend[bar+1] < 0)
+            iUpTrend[bar+1] = iALMA[bar+1];
+      }
+      else if (iTrend[bar] < 0) {
+         iDownTrend[bar] = iALMA[bar];
+         if (iTrend[bar+1] > 0)
+            iDownTrend[bar+1] = iALMA[bar+1];
+      }
+      else {
+         iUpTrend  [bar] = iALMA[bar];
+         iDownTrend[bar] = iALMA[bar];
       }
    }
 
    /*
-   // Legende aktualisieren (funktioniert nur mit TrendColoring)
+   // Legende aktualisieren
    if (iTrend[0] > 0) color fontColor = Color.UpTrend;
                             fontColor = Color.DownTrend;
    ObjectSetText(legendLabel, StringConcatenate(WindowExpertName(), "(", MA.Period, ")"), 10, "MS Sans Serif", fontColor);
    */
 
-   // SoundAlerts bei jedem Tick (funktioniert nur mit TrendColoring)
+   // SoundAlerts (bei jedem Tick)
    if (SoundAlerts) /*&&*/ if (iTrend[1]!=iTrend[0]) {
       PlaySound("alert2.wav");
    }
 
-   // TradeSignals onBarOpen (funktioniert nur mit TrendColoring)
+   // TradeSignals (onBarOpen)
    if (TradeSignals) {
       if (iTrend[2] < 0) /*&&*/ if (iTrend[1] > 0) /*&&*/ if (!tradeSignalUp) {
          Alert(Symbol(), " M", Period(), ": ALMA trend change UP (buy signal)");
@@ -260,4 +244,14 @@ int start() {
       //log("start()   ALMA("+ MA.Period +")   startBar: "+ startBar +"    time: "+ (GetTickCount()-tick) +" msec");
    }
    return(catch("start()"));
+}
+
+
+/**
+ * IndexStyles hier setzen (Workaround um die diversen Terminalbugs)
+ */
+void SetIndexStyles() {
+   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
+   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.Reversal );
 }
