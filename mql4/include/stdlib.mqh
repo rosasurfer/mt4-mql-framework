@@ -13,6 +13,9 @@
    int      stdlib_PeekLastError();
 
    // Arrays
+   int      ArrayPushDouble(double& array[], double value);
+   int      ArrayPushInt(int& array[], int value);
+   int      ArrayPushString(string& array[], string value);
    string   JoinBools(bool& values[], string separator);
    string   JoinDoubles(double& values[], string separator);
    string   JoinInts(int& values[], string separator);

@@ -12,6 +12,7 @@
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
    int  GetEnvironmentStringsA();
    int  GetFileSize(int hFile, int lpFileSizeHigh);
+   int  GetFullPathNameA(string lpFileName, int bufferSize, string lpBuffer, int lpFilePart);
    void GetLocalTime(int lpSystemTime[]);
    int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);

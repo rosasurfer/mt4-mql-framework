@@ -83,6 +83,60 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Vergrößert ein Double-Array und fügt ein weiteres Element an.
+ *
+ * @param  double& array[] - Double-Array
+ * @param  double  value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushDouble(double& array[], double value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Vergrößert ein Integer-Array und fügt ein weiteres Element an.
+ *
+ * @param  int& array[] - Integer-Array
+ * @param  int  value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushInt(int& array[], int value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Vergrößert ein String-Array und fügt ein weiteres Element an.
+ *
+ * @param  string& array[] - String-Array
+ * @param  string  value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushString(string& array[], string value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
  * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
  *
  * @param  double& array[] - Double-Array
@@ -842,7 +896,7 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
    // --------------------------------------------------------------------------
-   // GetLongPathNameA() fails it the target file doesn't exist!
+   // GetLongPathNameA() fails if the target file doesn't exist!
    // --------------------------------------------------------------------------
    string lfnBuffer[1]; lfnBuffer[0] = StringConcatenate(MAX_STRING_LITERAL, ".....");    // 255 + 5 = MAX_PATH
 
@@ -5602,7 +5656,7 @@ bool IsFile(string pathName) {
 
       int hSearch = FindFirstFileA(pathName, wfd);
 
-      if (hSearch != INVALID_HANDLE_VALUE) {
+      if (hSearch != INVALID_HANDLE_VALUE) {          // TODO: konkreten Fehler prüfen
          FindClose(hSearch);
          result = !wfd.FileAttribute.Directory(wfd);
       }
