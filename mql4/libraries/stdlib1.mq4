@@ -83,6 +83,94 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Gibt den vollständigen Dateinamen der lokalen Konfigurationsdatei zurück.
+ * Existiert die Datei nicht, wird sie angelegt.
+ *
+ * @return string - Dateiname
+ */
+string GetLocalConfigPath() {
+   static string localConfigPath = "";
+
+   if (localConfigPath != "")
+      return(localConfigPath);
+
+   string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
+   bool createIniFile = false;
+
+   if (!IsFile(iniFile)) {
+      string lnkFile = StringConcatenate(iniFile, ".lnk");
+
+      if (IsFile(lnkFile)) {
+         iniFile = GetShortcutTarget(lnkFile);
+         createIniFile = !IsFile(iniFile);
+      }
+      else {
+         createIniFile = true;
+      }
+
+      if (createIniFile) {
+         int hFile = _lcreat(iniFile, 0);
+         if (hFile == HFILE_ERROR) {
+            catch("GetLocalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
+            return("");
+         }
+         _lclose(hFile);
+      }
+   }
+
+   localConfigPath = iniFile;
+
+   if (catch("GetLocalConfigPath(2)") != NO_ERROR)
+      return("");
+   return(localConfigPath);
+}
+
+
+/**
+ * Gibt den vollständigen Dateinamen der globalen Konfigurationsdatei zurück.
+ * Existiert die Datei nicht, wird sie angelegt.
+ *
+ * @return string - Dateiname
+ */
+string GetGlobalConfigPath() {
+   static string globalConfigPath = "";
+
+   if (globalConfigPath != "")
+      return(globalConfigPath);
+
+   string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
+   bool createIniFile = false;
+
+   if (!IsFile(iniFile)) {
+      string lnkFile = StringConcatenate(iniFile, ".lnk");
+
+      if (IsFile(lnkFile)) {
+         iniFile = GetShortcutTarget(lnkFile);
+         createIniFile = !IsFile(iniFile);
+      }
+      else {
+         createIniFile = true;
+      }
+
+      if (createIniFile) {
+         int hFile = _lcreat(iniFile, 0);
+         if (hFile == HFILE_ERROR) {
+            catch("GetGlobalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
+            return("");
+         }
+         _lclose(hFile);
+      }
+   }
+
+   globalConfigPath = iniFile;
+
+   if (catch("GetGlobalConfigPath(2)") != NO_ERROR)
+      return("");
+   return(globalConfigPath);
+}
+
+
+/**
  * Vergrößert ein Double-Array und fügt ein weiteres Element an.
  *
  * @param  double& array[] - Double-Array
@@ -3592,16 +3680,12 @@ string GetComputerName() {
  * @return bool - Konfigurationswert
  */
 bool GetConfigBool(string section, string key, bool defaultValue=false) {
-   string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-   string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    string strDefault = defaultValue;
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -3623,14 +3707,11 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetConfigDouble(string section, string key, double defaultValue=0) {
-   string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-   string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -3652,12 +3733,9 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
  * @return int - Konfigurationswert
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
-   string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-   string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    // zuerst globale, dann lokale Config auslesen
-   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigFile);   // gibt auch negative Werte richtig zurück
-       result = GetPrivateProfileIntA(section, key, result      , localConfigFile);
+   int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
+       result = GetPrivateProfileIntA(section, key, result      , GetLocalConfigPath());
 
    if (catch("GetConfigInt()") != NO_ERROR)
       return(0);
@@ -3677,14 +3755,11 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetConfigString(string section, string key, string defaultValue="") {
-   string localConfigFile  = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-   string globalConfigFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, globalConfigFile);
-   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LITERAL_LEN, localConfigFile);
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    if (catch("GetConfigString()") != NO_ERROR)
       return("");
@@ -3766,19 +3841,16 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
  * @return bool - Konfigurationswert
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
-   string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    string strDefault = defaultValue;
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
    if (catch("GetGlobalConfigBool()") != NO_ERROR)
       return(false);
-
    return(result);
 }
 
@@ -3793,17 +3865,14 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-   string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
    if (catch("GetGlobalConfigDouble()") != NO_ERROR)
       return(0);
-
    return(result);
 }
 
@@ -3818,13 +3887,10 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
  * @return int - Konfigurationswert
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-   string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
-   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
+   int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
 
    if (catch("GetGlobalConfigInt()") != NO_ERROR)
       return(0);
-
    return(result);
 }
 
@@ -3839,15 +3905,12 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   string configFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
    if (catch("GetGlobalConfigString()") != NO_ERROR)
       return("");
-
    return(buffer[0]);
 }
 
@@ -3959,12 +4022,10 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
  * @return bool - Konfigurationswert
  */
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
-   string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
    string strDefault = defaultValue;
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
@@ -3986,11 +4047,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
-   string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -4011,9 +4070,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
  * @return int - Konfigurationswert
  */
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-   string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-
-   int result = GetPrivateProfileIntA(section, key, defaultValue, configFile);   // gibt auch negative Werte richtig zurück
+   int result = GetPrivateProfileIntA(section, key, defaultValue, GetLocalConfigPath());     // gibt auch negative Werte richtig zurück
 
    if (catch("GetLocalConfigInt()") != NO_ERROR)
       return(0);
@@ -4032,11 +4089,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetLocalConfigString(string section, string key, string defaultValue="") {
-   string configFile = StringConcatenate(TerminalPath(), "\\experts\\config\\metatrader-local-config.ini");
-
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
 
-   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LITERAL_LEN, configFile);
+   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
    if (catch("GetLocalConfigString()") != NO_ERROR)
       return("");

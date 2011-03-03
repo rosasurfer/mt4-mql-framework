@@ -33,6 +33,8 @@
    string   ifString(bool condition, string strThen, string strElse);
 
    // Config
+   string   GetLocalConfigPath();
+   string   GetGlobalConfigPath();
    bool     GetConfigBool(string section, string key, bool defaultValue);
    double   GetConfigDouble(string section, string key, double defaultValue);
    int      GetConfigInt(string section, string key, int defaultValue);
