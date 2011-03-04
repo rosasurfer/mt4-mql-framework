@@ -115,7 +115,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 166);
+      ObjectSet(label, OBJPROP_YDISTANCE, 136);
       ObjectSetText(label, "g", 168, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
@@ -128,7 +128,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 390);
+      ObjectSet(label, OBJPROP_YDISTANCE, 360);
       ObjectSetText(label, "g", 168, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
@@ -141,14 +141,14 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 412);
+      ObjectSet(label, OBJPROP_YDISTANCE, 382);
       ObjectSetText(label, "g", 168, "Webdings", Background.Color);
       RegisterChartObject(label, labels);
    }
    else GetLastError();
 
    // Textlabel
-   int yCoord = 170;
+   int yCoord = 140;
    for (int i=0; i < ArraySize(names); i++) {
       c++;
       label = StringConcatenate(expertName, ".", c, ".", names[i]);
