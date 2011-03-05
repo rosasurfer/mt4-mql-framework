@@ -37,7 +37,6 @@
  */
 void stdlib_init(string scriptName) {
    __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
-   //__TRACE__  = traceMode;
 }
 
 
@@ -1008,8 +1007,6 @@ string GetShortcutTarget(string lnkFile) {
 }
 
 
-static int cache.wm_mt4[1];         // Cache für WM_MT4 (überdauert Timeframe-Wechsel)
-
 /**
  * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
  *
@@ -1021,11 +1018,8 @@ int SendTick(bool sound=false) {
    if (IsTesting())
       return(-1);
 
-   if (WM_MT4 == WM_NULL) {
-      if (cache.wm_mt4[0] == WM_NULL)
-         cache.wm_mt4[0] = RegisterWindowMessageA("MetaTrader4_Internal_Message");
-      WM_MT4 = cache.wm_mt4[0];
-   }
+   if (WM_MT4 == 0)
+      WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
    PostMessageA(hWnd, WM_MT4, 2, 1);
@@ -3299,51 +3293,38 @@ double EventTracker.bandLimits[3];
 
 
 /**
- * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
- * in der Library gespeichert.
+ * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
+ * in der Library gespeichert).
  *
  * @param  double& lpResults[3] - Zeiger auf Array für die Ergebnisse { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
- *                               FALSE andererseits (nicht existierende Daten)
+ *                               FALSE bei nicht existierenden Daten
  */
 bool EventTracker.GetBandLimits(double& lpResults[]) {
-   // falls keine Daten gespeichert sind ...
-   if (EventTracker.bandLimits[0]==0 || EventTracker.bandLimits[1]==0 || EventTracker.bandLimits[2]==0)
-      return(false);
-
    lpResults[0] = EventTracker.bandLimits[0];
    lpResults[1] = EventTracker.bandLimits[1];
    lpResults[2] = EventTracker.bandLimits[2];
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventTracker.GetBandLimits()", error);
-      return(false);
-   }
-   return(true);
+   if (EventTracker.bandLimits[0]!=0) /*&&*/ if (EventTracker.bandLimits[1]!=0) /*&&*/ if (EventTracker.bandLimits[2]!=0)
+      return(true);
+   return(false);
 }
 
 
 /**
- * Setzt die aktuellen BollingerBand-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
- * in der Library gespeichert.
+ * Setzt die aktuellen BollingerBand-Limite des EventTrackers (aus Performancegründen sind sie timeframe-übergreifend
+ * in der Library gespeichert).
  *
  * @param  double& lpLimits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
- * @return bool - Erfolgsstatus
+ * @return int - Fehlerstatus
  */
-bool EventTracker.SetBandLimits(double& lpLimits[]) {
+int EventTracker.SetBandLimits(double& lpLimits[]) {
    EventTracker.bandLimits[0] = lpLimits[0];
    EventTracker.bandLimits[1] = lpLimits[1];
    EventTracker.bandLimits[2] = lpLimits[2];
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventTracker.SetBandLimits()", error);
-      return(false);
-   }
-   return(true);
+   return(0);
 }
 
 
@@ -3351,8 +3332,8 @@ double EventTracker.rateGridLimits[2];
 
 
 /**
- * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
- * in der Library gespeichert.
+ * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
+ * in der Library gespeichert).
  *
  * @param  double& lpResults[2] - Zeiger auf Array für die Ergebnisse { LOWER_VALUE, UPPER_VALUE }
  *
@@ -3360,40 +3341,27 @@ double EventTracker.rateGridLimits[2];
  *                               FALSE andererseits (nicht existierende Daten)
  */
 bool EventTracker.GetRateGridLimits(double& lpResults[]) {
-   // falls keine Daten gespeichert sind ...
-   if (EventTracker.rateGridLimits[0]==0 || EventTracker.rateGridLimits[1]==0)
-      return(false);
-
    lpResults[0] = EventTracker.rateGridLimits[0];
    lpResults[1] = EventTracker.rateGridLimits[1];
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventTracker.GetRateGridLimits()", error);
-      return(false);
-   }
-   return(true);
+   if (EventTracker.rateGridLimits[0]!=0) /*&&*/ if (EventTracker.rateGridLimits[1]!=0)
+      return(true);
+   return(false);
 }
 
 
 /**
- * Setzt die aktuellen RateGrid-Limite des EventTrackers. Die Limite werden aus Performancegründen timeframe-übergreifend
- * in der Library gespeichert.
+ * Setzt die aktuellen RateGrid-Limite des EventTrackers (aus Performancegründen sind sie timeframe-übergreifend
+ * in der Library gespeichert).
  *
  * @param  double& lpLimits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
  *
- * @return bool - Erfolgsstatus
+ * @return int - Fehlerstatus
  */
-bool EventTracker.SetRateGridLimits(double& lpLimits[]) {
+int EventTracker.SetRateGridLimits(double& lpLimits[]) {
    EventTracker.rateGridLimits[0] = lpLimits[0];
    EventTracker.rateGridLimits[1] = lpLimits[1];
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventTracker.SetRateGridLimits()", error);
-      return(false);
-   }
-   return(true);
+   return(0);
 }
 
 
@@ -4836,10 +4804,7 @@ int GetServerToGmtOffset(datetime serverTime) {
 }
 
 
-int    hWndTerminal;                            // überlebt Timeframe-Wechsel
-string myString                      =  "a";    // überlebt Timeframe-Wechsel nicht
-string myStringArrayWInitializer [1] = {"a"};   // überlebt Timeframe-Wechsel nicht
-string myStringArrayWoInitializer[0];           // überlebt Timeframe-Wechsel
+int hWndTerminal;                               // überlebt Timeframe-Wechsel
 
 
 /**

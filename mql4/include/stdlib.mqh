@@ -133,8 +133,8 @@
    // EventTracker (Indikator)
    bool     EventTracker.GetBandLimits(double& lpLimits[3]);
    bool     EventTracker.SetBandLimits(double& lpLimits[3]);
-   bool     EventTracker.GetRateGridLimits(double& lpLimits[2]);
-   bool     EventTracker.SetRateGridLimits(double& lpLimits[2]);
+   int      EventTracker.GetRateGridLimits(double& lpLimits[2]);
+   int      EventTracker.SetRateGridLimits(double& lpLimits[2]);
 
    // Files, I/O
    int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
