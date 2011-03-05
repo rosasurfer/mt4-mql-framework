@@ -1056,13 +1056,13 @@ string GetTradeServerDirectory() {
    string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
    int /*WIN32_FIND_DATA*/ wfd[80];
 
-   int hFindDir=FindFirstFileA(pattern, wfd), result=hFindDir;
+   int hFindDir = FindFirstFileA(pattern, wfd), result=hFindDir;
    while (result > 0) {
       if (wfd.FileAttribute.Directory(wfd)) {
          string name = wfd.FileName(wfd);
          if (name != ".") /*&&*/ if (name != "..") {
             pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
-            int hFindFile=FindFirstFileA(pattern, wfd);
+            int hFindFile = FindFirstFileA(pattern, wfd);
             if (hFindFile != INVALID_HANDLE_VALUE) {     // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
                //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
 
