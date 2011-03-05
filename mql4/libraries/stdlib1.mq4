@@ -1752,15 +1752,15 @@ string FindSymbolLongName(string symbol, string defaultName="") {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD-Index © LiteForex"   );
-   if (symbol == "CADLFX"  ) return("CAD-Index © LiteForex"   );
-   if (symbol == "CHFLFX"  ) return("CHF-Index © LiteForex"   );
-   if (symbol == "EURLFX"  ) return("EUR-Index © LiteForex"   );
+   if (symbol == "AUDLFX"  ) return("AUD  (basket)"           );
+   if (symbol == "CADLFX"  ) return("CAD  (basket)"           );
+   if (symbol == "CHFLFX"  ) return("CHF  (basket)"           );
+   if (symbol == "EURLFX"  ) return("EUR  (basket)"           );
    if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
-   if (symbol == "GBPLFX"  ) return("GBP-Index © LiteForex"   );
-   if (symbol == "JPYLFX"  ) return("1/JPY-Index © LiteForex" );
+   if (symbol == "GBPLFX"  ) return("GBP  (basket)"           );
+   if (symbol == "JPYLFX"  ) return("1/JPY  (basket)"         );
    if (symbol == "NZDLFX"  ) return("NZD-Index © LiteForex"   );
-   if (symbol == "USDLFX"  ) return("USD-Index © LiteForex"   );
+   if (symbol == "USDLFX"  ) return("USD  (basket)"           );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    string prefix = StringLeft(symbol, -3);
