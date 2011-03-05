@@ -187,7 +187,7 @@
    string   FindSymbolName(string symbol, string defaultName);
    string   FindSymbolLongName(string symbol, string defaultName);
    string   GetAccountDirectory(int account);
-   int      GetMovingAverageMethod(string description);
+   int      GetMovingAverageCode(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
    int      GetTerminalWindow();

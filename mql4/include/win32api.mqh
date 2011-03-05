@@ -469,6 +469,8 @@
 #define WM_PENWINLAST                            0x038F
 #define WM_APP                                   0x8000
 
+int     WM_MT4                                = WM_NULL;    // wird bei der ersten Verwendung per RegisterWindowMessage() initialisiert
+
 
 // Mouse events
 #define MOUSEEVENTF_MOVE                         0x0001     // mouse move

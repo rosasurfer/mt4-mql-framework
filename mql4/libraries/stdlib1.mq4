@@ -89,11 +89,15 @@ int stdlib_PeekLastError() {
  * @return string - Dateiname
  */
 string GetLocalConfigPath() {
-   static string localConfigPath = "";
+   static string cache.localConfigPath[];             // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
+   if (ArraySize(cache.localConfigPath) == 0) {
+      ArrayResize(cache.localConfigPath, 1);
+      cache.localConfigPath[0] = "";
+   }
+   else if (cache.localConfigPath[0] != "")           // ... und möglichst gecachten Wert zurückgeben
+      return(cache.localConfigPath[0]);
 
-   if (localConfigPath != "")
-      return(localConfigPath);
-
+   // Cache-miss, aktuellen Wert ermitteln
    string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
    bool createIniFile = false;
 
@@ -118,11 +122,11 @@ string GetLocalConfigPath() {
       }
    }
 
-   localConfigPath = iniFile;
+   cache.localConfigPath[0] = iniFile;                // Ergebnis cachen
 
    if (catch("GetLocalConfigPath(2)") != NO_ERROR)
       return("");
-   return(localConfigPath);
+   return(iniFile);
 }
 
 
@@ -133,11 +137,15 @@ string GetLocalConfigPath() {
  * @return string - Dateiname
  */
 string GetGlobalConfigPath() {
-   static string globalConfigPath = "";
+   static string cache.globalConfigPath[];            // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
+   if (ArraySize(cache.globalConfigPath) == 0) {
+      ArrayResize(cache.globalConfigPath, 1);
+      cache.globalConfigPath[0] = "";
+   }
+   else if (cache.globalConfigPath[0] != "")          // ... und möglichst gecachten Wert zurückgeben
+      return(cache.globalConfigPath[0]);
 
-   if (globalConfigPath != "")
-      return(globalConfigPath);
-
+   // Cache-miss, aktuellen Wert ermitteln
    string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
    bool createIniFile = false;
 
@@ -162,11 +170,11 @@ string GetGlobalConfigPath() {
       }
    }
 
-   globalConfigPath = iniFile;
+   cache.globalConfigPath[0] = iniFile;               // Ergebnis cachen
 
    if (catch("GetGlobalConfigPath(2)") != NO_ERROR)
       return("");
-   return(globalConfigPath);
+   return(iniFile);
 }
 
 
@@ -529,7 +537,7 @@ string si.FlagsToStr(/*STARTUPINFO*/ int& si[]) {
 
 
 /**
- * Gibt die lesbare Version einer STARTUPINFO ShowWindow-Command-ID zurück.
+ * Gibt die lesbare Konstante einer STARTUPINFO ShowWindow command ID zurück.
  *
  * @param  int& si[] - STARTUPINFO structure
  *
@@ -1000,7 +1008,7 @@ string GetShortcutTarget(string lnkFile) {
 }
 
 
-int WM_MT4;    // überdauert Timeframe-Wechsel !!! Tut es nicht !!!
+static int cache.wm_mt4[1];         // Cache für WM_MT4 (überdauert Timeframe-Wechsel)
 
 /**
  * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
@@ -1013,8 +1021,11 @@ int SendTick(bool sound=false) {
    if (IsTesting())
       return(-1);
 
-   if (WM_MT4 == 0)
-      WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+   if (WM_MT4 == WM_NULL) {
+      if (cache.wm_mt4[0] == WM_NULL)
+         cache.wm_mt4[0] = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+      WM_MT4 = cache.wm_mt4[0];
+   }
 
    int hWnd = WindowHandle(Symbol(), Period());
    PostMessageA(hWnd, WM_MT4, 2, 1);
@@ -1027,11 +1038,14 @@ int SendTick(bool sound=false) {
 
 
 /**
- * Gibt das History-Verzeichnis des aktuellen Tradeservers zurück.
+ * Gibt das für den aktuellen Chart verwendete History-Verzeichnis zurück (das Tradeserver-Verzeichnis).
  *
  * @return string
  */
 string GetTradeServerDirectory() {
+
+   // TODO: bis zum Accountwechsel zwischenspeichern
+
    string serverDirectory = "";
 
    // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
@@ -1259,306 +1273,366 @@ string WaitForSingleObjectValueToStr(int value) {
  * @return string - allgemeingültiges Symbol oder "", wenn kein allgemeingültiges Symbol gefunden wurde
  */
 string NormalizeSymbol(string symbol) {
+   if (StringLen(symbol) == 0)
+      return("");
+
    symbol = StringToUpper(symbol);
 
    if      (StringEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
    else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
-   if (symbol == "#DAX.XEI" ) return("#DAX.X"  );
-   if (symbol == "#DJI.XDJ" ) return("#DJI.X"  );
-   if (symbol == "#DJT.XDJ" ) return("#DJT.X"  );
-   if (symbol == "#SPX.X.XP") return("#SPX.X"  );
-   if (symbol == "AUDCAD"   ) return("AUDCAD"  );
-   if (symbol == "AUDCADMA" ) return("AUDCAD"  );
-   if (symbol == "AUDCADMB" ) return("AUDCAD"  );
-   if (symbol == "AUDCADMC" ) return("AUDCAD"  );
-   if (symbol == "AUDCADMD" ) return("AUDCAD"  );
-   if (symbol == "AUDCADX"  ) return("AUDCAD"  );
-   if (symbol == "AUDCHF"   ) return("AUDCHF"  );
-   if (symbol == "AUDCHFMA" ) return("AUDCHF"  );
-   if (symbol == "AUDCHFMB" ) return("AUDCHF"  );
-   if (symbol == "AUDCHFMC" ) return("AUDCHF"  );
-   if (symbol == "AUDCHFMD" ) return("AUDCHF"  );
-   if (symbol == "AUDCHFX"  ) return("AUDCHF"  );
-   if (symbol == "AUDJPY"   ) return("AUDJPY"  );
-   if (symbol == "AUDJPYMA" ) return("AUDJPY"  );
-   if (symbol == "AUDJPYMB" ) return("AUDJPY"  );
-   if (symbol == "AUDJPYMC" ) return("AUDJPY"  );
-   if (symbol == "AUDJPYMD" ) return("AUDJPY"  );
-   if (symbol == "AUDJPYX"  ) return("AUDJPY"  );
-   if (symbol == "AUDLFX"   ) return("AUDLFX"  );
-   if (symbol == "AUDNZD"   ) return("AUDNZD"  );
-   if (symbol == "AUDNZDMA" ) return("AUDNZD"  );
-   if (symbol == "AUDNZDMB" ) return("AUDNZD"  );
-   if (symbol == "AUDNZDMC" ) return("AUDNZD"  );
-   if (symbol == "AUDNZDMD" ) return("AUDNZD"  );
-   if (symbol == "AUDNZDX"  ) return("AUDNZD"  );
-   if (symbol == "AUDUSD"   ) return("AUDUSD"  );
-   if (symbol == "AUDUSDMA" ) return("AUDUSD"  );
-   if (symbol == "AUDUSDMB" ) return("AUDUSD"  );
-   if (symbol == "AUDUSDMC" ) return("AUDUSD"  );
-   if (symbol == "AUDUSDMD" ) return("AUDUSD"  );
-   if (symbol == "AUDUSDX"  ) return("AUDUSD"  );
-   if (symbol == "CADCHF"   ) return("CADCHF"  );
-   if (symbol == "CADCHFMA" ) return("CADCHF"  );
-   if (symbol == "CADCHFMB" ) return("CADCHF"  );
-   if (symbol == "CADCHFMC" ) return("CADCHF"  );
-   if (symbol == "CADCHFMD" ) return("CADCHF"  );
-   if (symbol == "CADCHFX"  ) return("CADCHF"  );
-   if (symbol == "CADJPY"   ) return("CADJPY"  );
-   if (symbol == "CADJPYMA" ) return("CADJPY"  );
-   if (symbol == "CADJPYMB" ) return("CADJPY"  );
-   if (symbol == "CADJPYMC" ) return("CADJPY"  );
-   if (symbol == "CADJPYMD" ) return("CADJPY"  );
-   if (symbol == "CADJPYX"  ) return("CADJPY"  );
-   if (symbol == "CADLFX"   ) return("CADLFX"  );
-   if (symbol == "CHFJPY"   ) return("CHFJPY"  );
-   if (symbol == "CHFJPYMA" ) return("CHFJPY"  );
-   if (symbol == "CHFJPYMB" ) return("CHFJPY"  );
-   if (symbol == "CHFJPYMC" ) return("CHFJPY"  );
-   if (symbol == "CHFJPYMD" ) return("CHFJPY"  );
-   if (symbol == "CHFJPYX"  ) return("CHFJPY"  );
-   if (symbol == "CHFLFX"   ) return("CHFLFX"  );
-   if (symbol == "EURAUD"   ) return("EURAUD"  );
-   if (symbol == "EURAUDMA" ) return("EURAUD"  );
-   if (symbol == "EURAUDMB" ) return("EURAUD"  );
-   if (symbol == "EURAUDMC" ) return("EURAUD"  );
-   if (symbol == "EURAUDMD" ) return("EURAUD"  );
-   if (symbol == "EURAUDX"  ) return("EURAUD"  );
-   if (symbol == "EURCAD"   ) return("EURCAD"  );
-   if (symbol == "EURCADMA" ) return("EURCAD"  );
-   if (symbol == "EURCADMB" ) return("EURCAD"  );
-   if (symbol == "EURCADMC" ) return("EURCAD"  );
-   if (symbol == "EURCADMD" ) return("EURCAD"  );
-   if (symbol == "EURCADX"  ) return("EURCAD"  );
-   if (symbol == "EURCHF"   ) return("EURCHF"  );
-   if (symbol == "EURCHFMA" ) return("EURCHF"  );
-   if (symbol == "EURCHFMB" ) return("EURCHF"  );
-   if (symbol == "EURCHFMC" ) return("EURCHF"  );
-   if (symbol == "EURCHFMD" ) return("EURCHF"  );
-   if (symbol == "EURCHFX"  ) return("EURCHF"  );
-   if (symbol == "EURDKK"   ) return("EURDKK"  );
-   if (symbol == "EURDKKMA" ) return("EURDKK"  );
-   if (symbol == "EURDKKMB" ) return("EURDKK"  );
-   if (symbol == "EURDKKMC" ) return("EURDKK"  );
-   if (symbol == "EURDKKMD" ) return("EURDKK"  );
-   if (symbol == "EURDKKX"  ) return("EURDKK"  );
-   if (symbol == "EURGBP"   ) return("EURGBP"  );
-   if (symbol == "EURGBPMA" ) return("EURGBP"  );
-   if (symbol == "EURGBPMB" ) return("EURGBP"  );
-   if (symbol == "EURGBPMC" ) return("EURGBP"  );
-   if (symbol == "EURGBPMD" ) return("EURGBP"  );
-   if (symbol == "EURGBPX"  ) return("EURGBP"  );
-   if (symbol == "EURJPY"   ) return("EURJPY"  );
-   if (symbol == "EURJPYMA" ) return("EURJPY"  );
-   if (symbol == "EURJPYMB" ) return("EURJPY"  );
-   if (symbol == "EURJPYMC" ) return("EURJPY"  );
-   if (symbol == "EURJPYMD" ) return("EURJPY"  );
-   if (symbol == "EURJPYX"  ) return("EURJPY"  );
-   if (symbol == "EURLFX"   ) return("EURLFX"  );
-   if (symbol == "EURNOK"   ) return("EURNOK"  );
-   if (symbol == "EURNOKMA" ) return("EURNOK"  );
-   if (symbol == "EURNOKMB" ) return("EURNOK"  );
-   if (symbol == "EURNOKMC" ) return("EURNOK"  );
-   if (symbol == "EURNOKMD" ) return("EURNOK"  );
-   if (symbol == "EURNOKX"  ) return("EURNOK"  );
-   if (symbol == "EURNZD"   ) return("EURNZD"  );
-   if (symbol == "EURNZDMA" ) return("EURNZD"  );
-   if (symbol == "EURNZDMB" ) return("EURNZD"  );
-   if (symbol == "EURNZDMC" ) return("EURNZD"  );
-   if (symbol == "EURNZDMD" ) return("EURNZD"  );
-   if (symbol == "EURNZDX"  ) return("EURNZD"  );
-   if (symbol == "EURRUR"   ) return("EURRUR"  );
-   if (symbol == "EURRURMA" ) return("EURRUR"  );
-   if (symbol == "EURRURMB" ) return("EURRUR"  );
-   if (symbol == "EURRURMC" ) return("EURRUR"  );
-   if (symbol == "EURRURMD" ) return("EURRUR"  );
-   if (symbol == "EURRURX"  ) return("EURRUR"  );
-   if (symbol == "EURSEK"   ) return("EURSEK"  );
-   if (symbol == "EURSEKMA" ) return("EURSEK"  );
-   if (symbol == "EURSEKMB" ) return("EURSEK"  );
-   if (symbol == "EURSEKMC" ) return("EURSEK"  );
-   if (symbol == "EURSEKMD" ) return("EURSEK"  );
-   if (symbol == "EURSEKX"  ) return("EURSEK"  );
-   if (symbol == "EURUSD"   ) return("EURUSD"  );
-   if (symbol == "EURUSDMA" ) return("EURUSD"  );
-   if (symbol == "EURUSDMB" ) return("EURUSD"  );
-   if (symbol == "EURUSDMC" ) return("EURUSD"  );
-   if (symbol == "EURUSDMD" ) return("EURUSD"  );
-   if (symbol == "EURUSDX"  ) return("EURUSD"  );
-   if (symbol == "EURX"     ) return("EURX"    );
-   if (symbol == "GBPAUD"   ) return("GBPAUD"  );
-   if (symbol == "GBPAUDMA" ) return("GBPAUD"  );
-   if (symbol == "GBPAUDMB" ) return("GBPAUD"  );
-   if (symbol == "GBPAUDMC" ) return("GBPAUD"  );
-   if (symbol == "GBPAUDMD" ) return("GBPAUD"  );
-   if (symbol == "GBPAUDX"  ) return("GBPAUD"  );
-   if (symbol == "GBPCAD"   ) return("GBPCAD"  );
-   if (symbol == "GBPCADMA" ) return("GBPCAD"  );
-   if (symbol == "GBPCADMB" ) return("GBPCAD"  );
-   if (symbol == "GBPCADMC" ) return("GBPCAD"  );
-   if (symbol == "GBPCADMD" ) return("GBPCAD"  );
-   if (symbol == "GBPCADX"  ) return("GBPCAD"  );
-   if (symbol == "GBPCHF"   ) return("GBPCHF"  );
-   if (symbol == "GBPCHFMA" ) return("GBPCHF"  );
-   if (symbol == "GBPCHFMB" ) return("GBPCHF"  );
-   if (symbol == "GBPCHFMC" ) return("GBPCHF"  );
-   if (symbol == "GBPCHFMD" ) return("GBPCHF"  );
-   if (symbol == "GBPCHFX"  ) return("GBPCHF"  );
-   if (symbol == "GBPJPY"   ) return("GBPJPY"  );
-   if (symbol == "GBPJPYMA" ) return("GBPJPY"  );
-   if (symbol == "GBPJPYMB" ) return("GBPJPY"  );
-   if (symbol == "GBPJPYMC" ) return("GBPJPY"  );
-   if (symbol == "GBPJPYMD" ) return("GBPJPY"  );
-   if (symbol == "GBPJPYX"  ) return("GBPJPY"  );
-   if (symbol == "GBPLFX"   ) return("GBPLFX"  );
-   if (symbol == "GBPNZD"   ) return("GBPNZD"  );
-   if (symbol == "GBPNZDMA" ) return("GBPNZD"  );
-   if (symbol == "GBPNZDMB" ) return("GBPNZD"  );
-   if (symbol == "GBPNZDMC" ) return("GBPNZD"  );
-   if (symbol == "GBPNZDMD" ) return("GBPNZD"  );
-   if (symbol == "GBPNZDX"  ) return("GBPNZD"  );
-   if (symbol == "GBPRUR"   ) return("GBPRUR"  );
-   if (symbol == "GBPRURMA" ) return("GBPRUR"  );
-   if (symbol == "GBPRURMB" ) return("GBPRUR"  );
-   if (symbol == "GBPRURMC" ) return("GBPRUR"  );
-   if (symbol == "GBPRURMD" ) return("GBPRUR"  );
-   if (symbol == "GBPRURX"  ) return("GBPRUR"  );
-   if (symbol == "GBPUSD"   ) return("GBPUSD"  );
-   if (symbol == "GBPUSDMA" ) return("GBPUSD"  );
-   if (symbol == "GBPUSDMB" ) return("GBPUSD"  );
-   if (symbol == "GBPUSDMC" ) return("GBPUSD"  );
-   if (symbol == "GBPUSDMD" ) return("GBPUSD"  );
-   if (symbol == "GBPUSDX"  ) return("GBPUSD"  );
-   if (symbol == "GOLD"     ) return("XAUUSD"  );
-   if (symbol == "LFXJPY"   ) return("JPYLFX"  );
-   if (symbol == "NZDCAD"   ) return("NZDCAD"  );
-   if (symbol == "NZDCADMA" ) return("NZDCAD"  );
-   if (symbol == "NZDCADMB" ) return("NZDCAD"  );
-   if (symbol == "NZDCADMC" ) return("NZDCAD"  );
-   if (symbol == "NZDCADMD" ) return("NZDCAD"  );
-   if (symbol == "NZDCADX"  ) return("NZDCAD"  );
-   if (symbol == "NZDCHF"   ) return("NZDCHF"  );
-   if (symbol == "NZDCHFMA" ) return("NZDCHF"  );
-   if (symbol == "NZDCHFMB" ) return("NZDCHF"  );
-   if (symbol == "NZDCHFMC" ) return("NZDCHF"  );
-   if (symbol == "NZDCHFMD" ) return("NZDCHF"  );
-   if (symbol == "NZDCHFX"  ) return("NZDCHF"  );
-   if (symbol == "NZDJPY"   ) return("NZDJPY"  );
-   if (symbol == "NZDJPYMA" ) return("NZDJPY"  );
-   if (symbol == "NZDJPYMB" ) return("NZDJPY"  );
-   if (symbol == "NZDJPYMC" ) return("NZDJPY"  );
-   if (symbol == "NZDJPYMD" ) return("NZDJPY"  );
-   if (symbol == "NZDJPYX"  ) return("NZDJPY"  );
-   if (symbol == "NZDLFX"   ) return("NZDLFX"  );
-   if (symbol == "NZDUSD"   ) return("NZDUSD"  );
-   if (symbol == "NZDUSDMA" ) return("NZDUSD"  );
-   if (symbol == "NZDUSDMB" ) return("NZDUSD"  );
-   if (symbol == "NZDUSDMC" ) return("NZDUSD"  );
-   if (symbol == "NZDUSDMD" ) return("NZDUSD"  );
-   if (symbol == "NZDUSDX"  ) return("NZDUSD"  );
-   if (symbol == "SGDJPY"   ) return("SGDJPY"  );
-   if (symbol == "SGDJPYMA" ) return("SGDJPY"  );
-   if (symbol == "SGDJPYMB" ) return("SGDJPY"  );
-   if (symbol == "SGDJPYMC" ) return("SGDJPY"  );
-   if (symbol == "SGDJPYMD" ) return("SGDJPY"  );
-   if (symbol == "SGDJPYX"  ) return("SGDJPY"  );
-   if (symbol == "USDCAD"   ) return("USDCAD"  );
-   if (symbol == "USDCADMA" ) return("USDCAD"  );
-   if (symbol == "USDCADMB" ) return("USDCAD"  );
-   if (symbol == "USDCADMC" ) return("USDCAD"  );
-   if (symbol == "USDCADMD" ) return("USDCAD"  );
-   if (symbol == "USDCADX"  ) return("USDCAD"  );
-   if (symbol == "USDCHF"   ) return("USDCHF"  );
-   if (symbol == "USDCHFMA" ) return("USDCHF"  );
-   if (symbol == "USDCHFMB" ) return("USDCHF"  );
-   if (symbol == "USDCHFMC" ) return("USDCHF"  );
-   if (symbol == "USDCHFMD" ) return("USDCHF"  );
-   if (symbol == "USDCHFX"  ) return("USDCHF"  );
-   if (symbol == "USDCZK"   ) return("USDCZK"  );
-   if (symbol == "USDCZKMA" ) return("USDCZK"  );
-   if (symbol == "USDCZKMB" ) return("USDCZK"  );
-   if (symbol == "USDCZKMC" ) return("USDCZK"  );
-   if (symbol == "USDCZKMD" ) return("USDCZK"  );
-   if (symbol == "USDCZKX"  ) return("USDCZK"  );
-   if (symbol == "USDDKK"   ) return("USDDKK"  );
-   if (symbol == "USDDKKMA" ) return("USDDKK"  );
-   if (symbol == "USDDKKMB" ) return("USDDKK"  );
-   if (symbol == "USDDKKMC" ) return("USDDKK"  );
-   if (symbol == "USDDKKMD" ) return("USDDKK"  );
-   if (symbol == "USDDKKX"  ) return("USDDKK"  );
-   if (symbol == "USDHKD"   ) return("USDHKD"  );
-   if (symbol == "USDHKDMA" ) return("USDHKD"  );
-   if (symbol == "USDHKDMB" ) return("USDHKD"  );
-   if (symbol == "USDHKDMC" ) return("USDHKD"  );
-   if (symbol == "USDHKDMD" ) return("USDHKD"  );
-   if (symbol == "USDHKDX"  ) return("USDHKD"  );
-   if (symbol == "USDHUF"   ) return("USDHUF"  );
-   if (symbol == "USDHUFMA" ) return("USDHUF"  );
-   if (symbol == "USDHUFMB" ) return("USDHUF"  );
-   if (symbol == "USDHUFMC" ) return("USDHUF"  );
-   if (symbol == "USDHUFMD" ) return("USDHUF"  );
-   if (symbol == "USDHUFX"  ) return("USDHUF"  );
-   if (symbol == "USDJPY"   ) return("USDJPY"  );
-   if (symbol == "USDJPYMA" ) return("USDJPY"  );
-   if (symbol == "USDJPYMB" ) return("USDJPY"  );
-   if (symbol == "USDJPYMC" ) return("USDJPY"  );
-   if (symbol == "USDJPYMD" ) return("USDJPY"  );
-   if (symbol == "USDJPYX"  ) return("USDJPY"  );
-   if (symbol == "USDLFX"   ) return("USDLFX"  );
-   if (symbol == "USDMXN"   ) return("USDMXN"  );
-   if (symbol == "USDMXNMA" ) return("USDMXN"  );
-   if (symbol == "USDMXNMB" ) return("USDMXN"  );
-   if (symbol == "USDMXNMC" ) return("USDMXN"  );
-   if (symbol == "USDMXNMD" ) return("USDMXN"  );
-   if (symbol == "USDMXNX"  ) return("USDMXN"  );
-   if (symbol == "USDNOK"   ) return("USDNOK"  );
-   if (symbol == "USDNOKMA" ) return("USDNOK"  );
-   if (symbol == "USDNOKMB" ) return("USDNOK"  );
-   if (symbol == "USDNOKMC" ) return("USDNOK"  );
-   if (symbol == "USDNOKMD" ) return("USDNOK"  );
-   if (symbol == "USDNOKX"  ) return("USDNOK"  );
-   if (symbol == "USDPLN"   ) return("USDPLN"  );
-   if (symbol == "USDPLNMA" ) return("USDPLN"  );
-   if (symbol == "USDPLNMB" ) return("USDPLN"  );
-   if (symbol == "USDPLNMC" ) return("USDPLN"  );
-   if (symbol == "USDPLNMD" ) return("USDPLN"  );
-   if (symbol == "USDPLNX"  ) return("USDPLN"  );
-   if (symbol == "USDRUR"   ) return("USDRUR"  );
-   if (symbol == "USDRURMA" ) return("USDRUR"  );
-   if (symbol == "USDRURMB" ) return("USDRUR"  );
-   if (symbol == "USDRURMC" ) return("USDRUR"  );
-   if (symbol == "USDRURMD" ) return("USDRUR"  );
-   if (symbol == "USDRURX"  ) return("USDRUR"  );
-   if (symbol == "USDSEK"   ) return("USDSEK"  );
-   if (symbol == "USDSEKMA" ) return("USDSEK"  );
-   if (symbol == "USDSEKMB" ) return("USDSEK"  );
-   if (symbol == "USDSEKMC" ) return("USDSEK"  );
-   if (symbol == "USDSEKMD" ) return("USDSEK"  );
-   if (symbol == "USDSEKX"  ) return("USDSEK"  );
-   if (symbol == "USDSGD"   ) return("USDSGD"  );
-   if (symbol == "USDSGDMA" ) return("USDSGD"  );
-   if (symbol == "USDSGDMB" ) return("USDSGD"  );
-   if (symbol == "USDSGDMC" ) return("USDSGD"  );
-   if (symbol == "USDSGDMD" ) return("USDSGD"  );
-   if (symbol == "USDSGDX"  ) return("USDSGD"  );
-   if (symbol == "USDX"     ) return("USDX"    );
-   if (symbol == "USDZAR"   ) return("USDZAR"  );
-   if (symbol == "USDZARMA" ) return("USDZAR"  );
-   if (symbol == "USDZARMB" ) return("USDZAR"  );
-   if (symbol == "USDZARMC" ) return("USDZAR"  );
-   if (symbol == "USDZARMD" ) return("USDZAR"  );
-   if (symbol == "USDZARX"  ) return("USDZAR"  );
-   if (symbol == "XAGUSD"   ) return("XAGUSD"  );
-   if (symbol == "XAGUSDX"  ) return("XAGUSD"  );
-   if (symbol == "XAUUSD"   ) return("XAUUSD"  );
-   if (symbol == "XAUUSDX"  ) return("XAUUSD"  );
-   if (symbol == "_DJI"     ) return("#DJI.X"  );
-   if (symbol == "_DJT"     ) return("#DJT.X"  );
-   if (symbol == "_N225"    ) return("#NIK.X"  );
-   if (symbol == "_NQ100"   ) return("#N100.X" );
-   if (symbol == "_NQCOMP"  ) return("#NCOMP.X");
-   if (symbol == "_SP500"   ) return("#SPX.X"  );
+   switch (StringGetChar(symbol, 0)) {
+      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X"  );
+                if (symbol == "#DJI.XDJ" ) return("#DJI.X"  );
+                if (symbol == "#DJT.XDJ" ) return("#DJT.X"  );
+                if (symbol == "#SPX.X.XP") return("#SPX.X"  );
+                break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': break;
+
+      case 'A': if (symbol == "AUDCAD"   ) return("AUDCAD"  );
+                if (symbol == "AUDCADMA" ) return("AUDCAD"  );
+                if (symbol == "AUDCADMB" ) return("AUDCAD"  );
+                if (symbol == "AUDCADMC" ) return("AUDCAD"  );
+                if (symbol == "AUDCADMD" ) return("AUDCAD"  );
+                if (symbol == "AUDCADX"  ) return("AUDCAD"  );
+                if (symbol == "AUDCHF"   ) return("AUDCHF"  );
+                if (symbol == "AUDCHFMA" ) return("AUDCHF"  );
+                if (symbol == "AUDCHFMB" ) return("AUDCHF"  );
+                if (symbol == "AUDCHFMC" ) return("AUDCHF"  );
+                if (symbol == "AUDCHFMD" ) return("AUDCHF"  );
+                if (symbol == "AUDCHFX"  ) return("AUDCHF"  );
+                if (symbol == "AUDJPY"   ) return("AUDJPY"  );
+                if (symbol == "AUDJPYMA" ) return("AUDJPY"  );
+                if (symbol == "AUDJPYMB" ) return("AUDJPY"  );
+                if (symbol == "AUDJPYMC" ) return("AUDJPY"  );
+                if (symbol == "AUDJPYMD" ) return("AUDJPY"  );
+                if (symbol == "AUDJPYX"  ) return("AUDJPY"  );
+                if (symbol == "AUDLFX"   ) return("AUDLFX"  );
+                if (symbol == "AUDNZD"   ) return("AUDNZD"  );
+                if (symbol == "AUDNZDMA" ) return("AUDNZD"  );
+                if (symbol == "AUDNZDMB" ) return("AUDNZD"  );
+                if (symbol == "AUDNZDMC" ) return("AUDNZD"  );
+                if (symbol == "AUDNZDMD" ) return("AUDNZD"  );
+                if (symbol == "AUDNZDX"  ) return("AUDNZD"  );
+                if (symbol == "AUDUSD"   ) return("AUDUSD"  );
+                if (symbol == "AUDUSDMA" ) return("AUDUSD"  );
+                if (symbol == "AUDUSDMB" ) return("AUDUSD"  );
+                if (symbol == "AUDUSDMC" ) return("AUDUSD"  );
+                if (symbol == "AUDUSDMD" ) return("AUDUSD"  );
+                if (symbol == "AUDUSDX"  ) return("AUDUSD"  );
+                break;
+
+      case 'B': break;
+
+      case 'C': if (symbol == "CADCHF"   ) return("CADCHF"  );
+                if (symbol == "CADCHFMA" ) return("CADCHF"  );
+                if (symbol == "CADCHFMB" ) return("CADCHF"  );
+                if (symbol == "CADCHFMC" ) return("CADCHF"  );
+                if (symbol == "CADCHFMD" ) return("CADCHF"  );
+                if (symbol == "CADCHFX"  ) return("CADCHF"  );
+                if (symbol == "CADJPY"   ) return("CADJPY"  );
+                if (symbol == "CADJPYMA" ) return("CADJPY"  );
+                if (symbol == "CADJPYMB" ) return("CADJPY"  );
+                if (symbol == "CADJPYMC" ) return("CADJPY"  );
+                if (symbol == "CADJPYMD" ) return("CADJPY"  );
+                if (symbol == "CADJPYX"  ) return("CADJPY"  );
+                if (symbol == "CADLFX"   ) return("CADLFX"  );
+                if (symbol == "CHFJPY"   ) return("CHFJPY"  );
+                if (symbol == "CHFJPYMA" ) return("CHFJPY"  );
+                if (symbol == "CHFJPYMB" ) return("CHFJPY"  );
+                if (symbol == "CHFJPYMC" ) return("CHFJPY"  );
+                if (symbol == "CHFJPYMD" ) return("CHFJPY"  );
+                if (symbol == "CHFJPYX"  ) return("CHFJPY"  );
+                if (symbol == "CHFLFX"   ) return("CHFLFX"  );
+                break;
+
+      case 'D': break;
+
+      case 'E': if (symbol == "EURAUD"   ) return("EURAUD"  );
+                if (symbol == "EURAUDMA" ) return("EURAUD"  );
+                if (symbol == "EURAUDMB" ) return("EURAUD"  );
+                if (symbol == "EURAUDMC" ) return("EURAUD"  );
+                if (symbol == "EURAUDMD" ) return("EURAUD"  );
+                if (symbol == "EURAUDX"  ) return("EURAUD"  );
+                if (symbol == "EURCAD"   ) return("EURCAD"  );
+                if (symbol == "EURCADMA" ) return("EURCAD"  );
+                if (symbol == "EURCADMB" ) return("EURCAD"  );
+                if (symbol == "EURCADMC" ) return("EURCAD"  );
+                if (symbol == "EURCADMD" ) return("EURCAD"  );
+                if (symbol == "EURCADX"  ) return("EURCAD"  );
+                if (symbol == "EURCHF"   ) return("EURCHF"  );
+                if (symbol == "EURCHFMA" ) return("EURCHF"  );
+                if (symbol == "EURCHFMB" ) return("EURCHF"  );
+                if (symbol == "EURCHFMC" ) return("EURCHF"  );
+                if (symbol == "EURCHFMD" ) return("EURCHF"  );
+                if (symbol == "EURCHFX"  ) return("EURCHF"  );
+                if (symbol == "EURDKK"   ) return("EURDKK"  );
+                if (symbol == "EURDKKMA" ) return("EURDKK"  );
+                if (symbol == "EURDKKMB" ) return("EURDKK"  );
+                if (symbol == "EURDKKMC" ) return("EURDKK"  );
+                if (symbol == "EURDKKMD" ) return("EURDKK"  );
+                if (symbol == "EURDKKX"  ) return("EURDKK"  );
+                if (symbol == "EURGBP"   ) return("EURGBP"  );
+                if (symbol == "EURGBPMA" ) return("EURGBP"  );
+                if (symbol == "EURGBPMB" ) return("EURGBP"  );
+                if (symbol == "EURGBPMC" ) return("EURGBP"  );
+                if (symbol == "EURGBPMD" ) return("EURGBP"  );
+                if (symbol == "EURGBPX"  ) return("EURGBP"  );
+                if (symbol == "EURJPY"   ) return("EURJPY"  );
+                if (symbol == "EURJPYMA" ) return("EURJPY"  );
+                if (symbol == "EURJPYMB" ) return("EURJPY"  );
+                if (symbol == "EURJPYMC" ) return("EURJPY"  );
+                if (symbol == "EURJPYMD" ) return("EURJPY"  );
+                if (symbol == "EURJPYX"  ) return("EURJPY"  );
+                if (symbol == "EURLFX"   ) return("EURLFX"  );
+                if (symbol == "EURNOK"   ) return("EURNOK"  );
+                if (symbol == "EURNOKMA" ) return("EURNOK"  );
+                if (symbol == "EURNOKMB" ) return("EURNOK"  );
+                if (symbol == "EURNOKMC" ) return("EURNOK"  );
+                if (symbol == "EURNOKMD" ) return("EURNOK"  );
+                if (symbol == "EURNOKX"  ) return("EURNOK"  );
+                if (symbol == "EURNZD"   ) return("EURNZD"  );
+                if (symbol == "EURNZDMA" ) return("EURNZD"  );
+                if (symbol == "EURNZDMB" ) return("EURNZD"  );
+                if (symbol == "EURNZDMC" ) return("EURNZD"  );
+                if (symbol == "EURNZDMD" ) return("EURNZD"  );
+                if (symbol == "EURNZDX"  ) return("EURNZD"  );
+                if (symbol == "EURRUR"   ) return("EURRUR"  );
+                if (symbol == "EURRURMA" ) return("EURRUR"  );
+                if (symbol == "EURRURMB" ) return("EURRUR"  );
+                if (symbol == "EURRURMC" ) return("EURRUR"  );
+                if (symbol == "EURRURMD" ) return("EURRUR"  );
+                if (symbol == "EURRURX"  ) return("EURRUR"  );
+                if (symbol == "EURSEK"   ) return("EURSEK"  );
+                if (symbol == "EURSEKMA" ) return("EURSEK"  );
+                if (symbol == "EURSEKMB" ) return("EURSEK"  );
+                if (symbol == "EURSEKMC" ) return("EURSEK"  );
+                if (symbol == "EURSEKMD" ) return("EURSEK"  );
+                if (symbol == "EURSEKX"  ) return("EURSEK"  );
+                if (symbol == "EURUSD"   ) return("EURUSD"  );
+                if (symbol == "EURUSDMA" ) return("EURUSD"  );
+                if (symbol == "EURUSDMB" ) return("EURUSD"  );
+                if (symbol == "EURUSDMC" ) return("EURUSD"  );
+                if (symbol == "EURUSDMD" ) return("EURUSD"  );
+                if (symbol == "EURUSDX"  ) return("EURUSD"  );
+                if (symbol == "EURX"     ) return("EURX"    );
+                break;
+
+      case 'F': break;
+
+      case 'G': if (symbol == "GBPAUD"   ) return("GBPAUD"  );
+                if (symbol == "GBPAUDMA" ) return("GBPAUD"  );
+                if (symbol == "GBPAUDMB" ) return("GBPAUD"  );
+                if (symbol == "GBPAUDMC" ) return("GBPAUD"  );
+                if (symbol == "GBPAUDMD" ) return("GBPAUD"  );
+                if (symbol == "GBPAUDX"  ) return("GBPAUD"  );
+                if (symbol == "GBPCAD"   ) return("GBPCAD"  );
+                if (symbol == "GBPCADMA" ) return("GBPCAD"  );
+                if (symbol == "GBPCADMB" ) return("GBPCAD"  );
+                if (symbol == "GBPCADMC" ) return("GBPCAD"  );
+                if (symbol == "GBPCADMD" ) return("GBPCAD"  );
+                if (symbol == "GBPCADX"  ) return("GBPCAD"  );
+                if (symbol == "GBPCHF"   ) return("GBPCHF"  );
+                if (symbol == "GBPCHFMA" ) return("GBPCHF"  );
+                if (symbol == "GBPCHFMB" ) return("GBPCHF"  );
+                if (symbol == "GBPCHFMC" ) return("GBPCHF"  );
+                if (symbol == "GBPCHFMD" ) return("GBPCHF"  );
+                if (symbol == "GBPCHFX"  ) return("GBPCHF"  );
+                if (symbol == "GBPJPY"   ) return("GBPJPY"  );
+                if (symbol == "GBPJPYMA" ) return("GBPJPY"  );
+                if (symbol == "GBPJPYMB" ) return("GBPJPY"  );
+                if (symbol == "GBPJPYMC" ) return("GBPJPY"  );
+                if (symbol == "GBPJPYMD" ) return("GBPJPY"  );
+                if (symbol == "GBPJPYX"  ) return("GBPJPY"  );
+                if (symbol == "GBPLFX"   ) return("GBPLFX"  );
+                if (symbol == "GBPNZD"   ) return("GBPNZD"  );
+                if (symbol == "GBPNZDMA" ) return("GBPNZD"  );
+                if (symbol == "GBPNZDMB" ) return("GBPNZD"  );
+                if (symbol == "GBPNZDMC" ) return("GBPNZD"  );
+                if (symbol == "GBPNZDMD" ) return("GBPNZD"  );
+                if (symbol == "GBPNZDX"  ) return("GBPNZD"  );
+                if (symbol == "GBPRUR"   ) return("GBPRUR"  );
+                if (symbol == "GBPRURMA" ) return("GBPRUR"  );
+                if (symbol == "GBPRURMB" ) return("GBPRUR"  );
+                if (symbol == "GBPRURMC" ) return("GBPRUR"  );
+                if (symbol == "GBPRURMD" ) return("GBPRUR"  );
+                if (symbol == "GBPRURX"  ) return("GBPRUR"  );
+                if (symbol == "GBPUSD"   ) return("GBPUSD"  );
+                if (symbol == "GBPUSDMA" ) return("GBPUSD"  );
+                if (symbol == "GBPUSDMB" ) return("GBPUSD"  );
+                if (symbol == "GBPUSDMC" ) return("GBPUSD"  );
+                if (symbol == "GBPUSDMD" ) return("GBPUSD"  );
+                if (symbol == "GBPUSDX"  ) return("GBPUSD"  );
+                if (symbol == "GOLD"     ) return("XAUUSD"  );
+                break;
+
+      case 'H':
+      case 'I':
+      case 'J':
+      case 'K': break;
+
+      case 'L': if (symbol == "LFXJPY"   ) return("JPYLFX"  );
+                break;
+
+      case 'M': break;
+
+      case 'N': if (symbol == "NZDCADMB" ) return("NZDCAD"  );
+                if (symbol == "NZDCADMC" ) return("NZDCAD"  );
+                if (symbol == "NZDCADMD" ) return("NZDCAD"  );
+                if (symbol == "NZDCADX"  ) return("NZDCAD"  );
+                if (symbol == "NZDCHF"   ) return("NZDCHF"  );
+                if (symbol == "NZDCHFMA" ) return("NZDCHF"  );
+                if (symbol == "NZDCHFMB" ) return("NZDCHF"  );
+                if (symbol == "NZDCHFMC" ) return("NZDCHF"  );
+                if (symbol == "NZDCHFMD" ) return("NZDCHF"  );
+                if (symbol == "NZDCHFX"  ) return("NZDCHF"  );
+                if (symbol == "NZDJPY"   ) return("NZDJPY"  );
+                if (symbol == "NZDJPYMA" ) return("NZDJPY"  );
+                if (symbol == "NZDJPYMB" ) return("NZDJPY"  );
+                if (symbol == "NZDJPYMC" ) return("NZDJPY"  );
+                if (symbol == "NZDJPYMD" ) return("NZDJPY"  );
+                if (symbol == "NZDJPYX"  ) return("NZDJPY"  );
+                if (symbol == "NZDLFX"   ) return("NZDLFX"  );
+                if (symbol == "NZDUSD"   ) return("NZDUSD"  );
+                if (symbol == "NZDUSDMA" ) return("NZDUSD"  );
+                if (symbol == "NZDUSDMB" ) return("NZDUSD"  );
+                if (symbol == "NZDUSDMC" ) return("NZDUSD"  );
+                if (symbol == "NZDUSDMD" ) return("NZDUSD"  );
+                if (symbol == "NZDUSDX"  ) return("NZDUSD"  );
+                break;
+
+      case 'O':
+      case 'P':
+      case 'Q': break;
+
+      case 'S': if (symbol == "SGDJPY"   ) return("SGDJPY"  );
+                if (symbol == "SGDJPYMA" ) return("SGDJPY"  );
+                if (symbol == "SGDJPYMB" ) return("SGDJPY"  );
+                if (symbol == "SGDJPYMC" ) return("SGDJPY"  );
+                if (symbol == "SGDJPYMD" ) return("SGDJPY"  );
+                if (symbol == "SGDJPYX"  ) return("SGDJPY"  );
+                break;
+
+      case 'T': break;
+
+      case 'U': if (symbol == "USDCAD"   ) return("USDCAD"  );
+                if (symbol == "USDCADMA" ) return("USDCAD"  );
+                if (symbol == "USDCADMB" ) return("USDCAD"  );
+                if (symbol == "USDCADMC" ) return("USDCAD"  );
+                if (symbol == "USDCADMD" ) return("USDCAD"  );
+                if (symbol == "USDCADX"  ) return("USDCAD"  );
+                if (symbol == "USDCHF"   ) return("USDCHF"  );
+                if (symbol == "USDCHFMA" ) return("USDCHF"  );
+                if (symbol == "USDCHFMB" ) return("USDCHF"  );
+                if (symbol == "USDCHFMC" ) return("USDCHF"  );
+                if (symbol == "USDCHFMD" ) return("USDCHF"  );
+                if (symbol == "USDCHFX"  ) return("USDCHF"  );
+                if (symbol == "USDCZK"   ) return("USDCZK"  );
+                if (symbol == "USDCZKMA" ) return("USDCZK"  );
+                if (symbol == "USDCZKMB" ) return("USDCZK"  );
+                if (symbol == "USDCZKMC" ) return("USDCZK"  );
+                if (symbol == "USDCZKMD" ) return("USDCZK"  );
+                if (symbol == "USDCZKX"  ) return("USDCZK"  );
+                if (symbol == "USDDKK"   ) return("USDDKK"  );
+                if (symbol == "USDDKKMA" ) return("USDDKK"  );
+                if (symbol == "USDDKKMB" ) return("USDDKK"  );
+                if (symbol == "USDDKKMC" ) return("USDDKK"  );
+                if (symbol == "USDDKKMD" ) return("USDDKK"  );
+                if (symbol == "USDDKKX"  ) return("USDDKK"  );
+                if (symbol == "USDHKD"   ) return("USDHKD"  );
+                if (symbol == "USDHKDMA" ) return("USDHKD"  );
+                if (symbol == "USDHKDMB" ) return("USDHKD"  );
+                if (symbol == "USDHKDMC" ) return("USDHKD"  );
+                if (symbol == "USDHKDMD" ) return("USDHKD"  );
+                if (symbol == "USDHKDX"  ) return("USDHKD"  );
+                if (symbol == "USDHUF"   ) return("USDHUF"  );
+                if (symbol == "USDHUFMA" ) return("USDHUF"  );
+                if (symbol == "USDHUFMB" ) return("USDHUF"  );
+                if (symbol == "USDHUFMC" ) return("USDHUF"  );
+                if (symbol == "USDHUFMD" ) return("USDHUF"  );
+                if (symbol == "USDHUFX"  ) return("USDHUF"  );
+                if (symbol == "USDJPY"   ) return("USDJPY"  );
+                if (symbol == "USDJPYMA" ) return("USDJPY"  );
+                if (symbol == "USDJPYMB" ) return("USDJPY"  );
+                if (symbol == "USDJPYMC" ) return("USDJPY"  );
+                if (symbol == "USDJPYMD" ) return("USDJPY"  );
+                if (symbol == "USDJPYX"  ) return("USDJPY"  );
+                if (symbol == "USDLFX"   ) return("USDLFX"  );
+                if (symbol == "USDMXN"   ) return("USDMXN"  );
+                if (symbol == "USDMXNMA" ) return("USDMXN"  );
+                if (symbol == "USDMXNMB" ) return("USDMXN"  );
+                if (symbol == "USDMXNMC" ) return("USDMXN"  );
+                if (symbol == "USDMXNMD" ) return("USDMXN"  );
+                if (symbol == "USDMXNX"  ) return("USDMXN"  );
+                if (symbol == "USDNOK"   ) return("USDNOK"  );
+                if (symbol == "USDNOKMA" ) return("USDNOK"  );
+                if (symbol == "USDNOKMB" ) return("USDNOK"  );
+                if (symbol == "USDNOKMC" ) return("USDNOK"  );
+                if (symbol == "USDNOKMD" ) return("USDNOK"  );
+                if (symbol == "USDNOKX"  ) return("USDNOK"  );
+                if (symbol == "USDPLN"   ) return("USDPLN"  );
+                if (symbol == "USDPLNMA" ) return("USDPLN"  );
+                if (symbol == "USDPLNMB" ) return("USDPLN"  );
+                if (symbol == "USDPLNMC" ) return("USDPLN"  );
+                if (symbol == "USDPLNMD" ) return("USDPLN"  );
+                if (symbol == "USDPLNX"  ) return("USDPLN"  );
+                if (symbol == "USDRUR"   ) return("USDRUR"  );
+                if (symbol == "USDRURMA" ) return("USDRUR"  );
+                if (symbol == "USDRURMB" ) return("USDRUR"  );
+                if (symbol == "USDRURMC" ) return("USDRUR"  );
+                if (symbol == "USDRURMD" ) return("USDRUR"  );
+                if (symbol == "USDRURX"  ) return("USDRUR"  );
+                if (symbol == "USDSEK"   ) return("USDSEK"  );
+                if (symbol == "USDSEKMA" ) return("USDSEK"  );
+                if (symbol == "USDSEKMB" ) return("USDSEK"  );
+                if (symbol == "USDSEKMC" ) return("USDSEK"  );
+                if (symbol == "USDSEKMD" ) return("USDSEK"  );
+                if (symbol == "USDSEKX"  ) return("USDSEK"  );
+                if (symbol == "USDSGD"   ) return("USDSGD"  );
+                if (symbol == "USDSGDMA" ) return("USDSGD"  );
+                if (symbol == "USDSGDMB" ) return("USDSGD"  );
+                if (symbol == "USDSGDMC" ) return("USDSGD"  );
+                if (symbol == "USDSGDMD" ) return("USDSGD"  );
+                if (symbol == "USDSGDX"  ) return("USDSGD"  );
+                if (symbol == "USDX"     ) return("USDX"    );
+                if (symbol == "USDZAR"   ) return("USDZAR"  );
+                if (symbol == "USDZARMA" ) return("USDZAR"  );
+                if (symbol == "USDZARMB" ) return("USDZAR"  );
+                if (symbol == "USDZARMC" ) return("USDZAR"  );
+                if (symbol == "USDZARMD" ) return("USDZAR"  );
+                if (symbol == "USDZARX"  ) return("USDZAR"  );
+                break;
+
+      case 'V':
+      case 'W': break;
+
+      case 'X': if (symbol == "XAGUSD"   ) return("XAGUSD"  );
+                if (symbol == "XAGUSDX"  ) return("XAGUSD"  );
+                if (symbol == "XAUUSD"   ) return("XAUUSD"  );
+                if (symbol == "XAUUSDX"  ) return("XAUUSD"  );
+                break;
+
+      case 'Y':
+      case 'Z': break;
+
+      case '_': if (symbol == "_DJI"     ) return("#DJI.X"  );
+                if (symbol == "_DJT"     ) return("#DJT.X"  );
+                if (symbol == "_N225"    ) return("#NIK.X"  );
+                if (symbol == "_NQ100"   ) return("#N100.X" );
+                if (symbol == "_NQCOMP"  ) return("#NCOMP.X");
+                if (symbol == "_SP500"   ) return("#SPX.X"  );
+                break;
+   }
 
    return("");
 }
@@ -1575,7 +1649,7 @@ string NormalizeSymbol(string symbol) {
 string FindNormalizedSymbol(string symbol, string defaultValue="") {
    string normalized = NormalizeSymbol(symbol);
 
-   if (normalized == "")
+   if (StringLen(normalized) == 0)
       return(defaultValue);
    return(normalized);
 }
@@ -1744,6 +1818,8 @@ string BoolToStr(bool value) {
  * @return string
  */
 string BoolArrayToStr(bool& array[]) {
+   if (ArraySize(array) == 0)
+      return("{}");
    return(StringConcatenate("{", JoinBools(array, ", "), "}"));
 }
 
@@ -1787,7 +1863,7 @@ datetime TimeGMT() {
  *
  * @return string
  */
-string ifString(bool condition, string thenValue, string elseValue) {
+string ifString(bool condition, string& thenValue, string& elseValue) {
    if (condition)
       return(thenValue);
    return(elseValue);
@@ -1867,12 +1943,8 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringIStartsWith(string object, string prefix) {
-   //if (__TRACE__) trace(__SCRIPT__, "StringIStartsWith()");
-
    object = StringToLower(object);
    prefix = StringToLower(prefix);
-
-   //if (__TRACE__) trace(-1, 0);
    return(StringLeft(object, StringLen(prefix)) == prefix);
 }
 
@@ -1906,7 +1978,7 @@ bool StringIEndsWith(string object, string postfix) {
 
 
 /**
- * Gibt einen Substring eines Strings zurück.
+ * Gibt einen linken Teilstring eines Strings zurück.
  *
  * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
  *    z.B.  StringLeft("ABCDEFG",  2)  =>  "AB"
@@ -1927,12 +1999,12 @@ string StringLeft(string value, int n) {
 
 
 /**
- * Gibt einen Substring eines Strings zurück.
+ * Gibt einen rechten Teilstring eines Strings zurück.
  *
  * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
  *    z.B.  StringRight("ABCDEFG",  2)  =>  "FG"
  *
- * Ist N negativ, gibt StringLeft() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ * Ist N negativ, gibt StringRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
  *    z.B.  StringRight("ABCDEFG", -2)  =>  "CDEFG"
  *
  * @param  string value
@@ -3225,6 +3297,7 @@ bool EventListener.AccountChange(int& lpResults[], int flags=0) {
 
 double EventTracker.bandLimits[3];
 
+
 /**
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
  * in der Library gespeichert.
@@ -3275,6 +3348,7 @@ bool EventTracker.SetBandLimits(double& lpLimits[]) {
 
 
 double EventTracker.rateGridLimits[2];
+
 
 /**
  * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück. Die Limite werden aus Performancegründen timeframe-übergreifend
@@ -3515,8 +3589,9 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
  * @return int - Account-Nummer (positiver Wert) oder 0, falls ein Fehler aufgetreten ist.
  *
  *
- * NOTE:    Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
+ * NOTE:
  * ----
+ * Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
  */
 int GetAccountNumber() {
    int account = AccountNumber();
@@ -3557,7 +3632,6 @@ int GetAccountNumber() {
  * @return double - Spread
  */
 double GetAverageSpread(string symbol) {
-
    if      (symbol == "EURUSD") return(0.0001 );
    else if (symbol == "GBPJPY") return(0.05   );
    else if (symbol == "GBPCHF") return(0.0004 );
@@ -4245,7 +4319,7 @@ string ErrorDescription(int error) {
 
 
 /**
- * Gibt die lesbare Fehlerkonstante eines MQL-Fehlercodes zurück.
+ * Gibt die lesbare Konstante eines MQL-Fehlercodes zurück.
  *
  * @param  int error - MQL-Fehlercode
  *
@@ -4450,23 +4524,22 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
 /**
  * Gibt den numerischen Code einer MovingAverage-Methode zurück.
  *
- * @param  string description - MA-Methode (SMA, EMA, SMMA, LWMA, MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA)
+ * @param  string mode - MA-Methode: [MODE_]SMA | [MODE_]EMA | [MODE_]SMMA | [MODE_]LWMA
  *
  * @return int - MA-Code
  */
-int GetMovingAverageMethod(string description) {
-   description = StringToUpper(description);
+int GetMovingAverageCode(string mode) {
+   string id = StringToUpper(mode);
 
-   if (description == "SMA"      ) return(MODE_SMA );
-   if (description == "MODE_SMA" ) return(MODE_SMA );
-   if (description == "EMA"      ) return(MODE_EMA );
-   if (description == "MODE_EMA" ) return(MODE_EMA );
-   if (description == "SMMA"     ) return(MODE_SMMA);
-   if (description == "MODE_SMMA") return(MODE_SMMA);
-   if (description == "LWMA"     ) return(MODE_LWMA);
-   if (description == "MODE_LWMA") return(MODE_LWMA);
+   if (StringStartsWith(id, "MODE_"))
+      id = StringRight(id, -5);
 
-   catch("GetMovingAverageMethod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (id == "SMA" ) return(MODE_SMA );
+   if (id == "EMA" ) return(MODE_EMA );
+   if (id == "SMMA") return(MODE_SMMA);
+   if (id == "LWMA") return(MODE_LWMA);
+
+   catch("GetMovingAverageCode()  invalid parameter mode: \""+ mode +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -4763,7 +4836,11 @@ int GetServerToGmtOffset(datetime serverTime) {
 }
 
 
-int hWndTerminal;
+int    hWndTerminal;                            // überlebt Timeframe-Wechsel
+string myString                      =  "a";    // überlebt Timeframe-Wechsel nicht
+string myStringArrayWInitializer [1] = {"a"};   // überlebt Timeframe-Wechsel nicht
+string myStringArrayWoInitializer[0];           // überlebt Timeframe-Wechsel
+
 
 /**
  * Gibt das Handle des Hauptfensters des MetaTrader-Terminals zurück.
@@ -4771,19 +4848,21 @@ int hWndTerminal;
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTerminalWindow() {
-   if (hWndTerminal == 0) {
-      int hWndChild, hWndParent=WindowHandle(Symbol(), Period());
+   if (hWndTerminal != 0)
+      return(hWndTerminal);
 
-      while (hWndParent != 0) {
-         hWndChild  = hWndParent;
-         hWndParent = GetParent(hWndChild);
-      }
-      hWndTerminal = hWndChild;
+   int hWndParent = WindowHandle(Symbol(), Period());
+   if (hWndParent == 0)                         // in Indicator::init() ist WindowHandle() unbrauchbar
+      return(0);
 
-      if (catch("GetTerminalWindow()") != NO_ERROR)
-         return(0);
+   while (hWndParent != 0) {
+      int hWndChild  = hWndParent;
+      hWndParent = GetParent(hWndChild);
    }
+   hWndTerminal = hWndChild;
 
+   if (catch("GetTerminalWindow()") != NO_ERROR)
+      return(0);
    return(hWndTerminal);
 }
 
@@ -5127,7 +5206,7 @@ int IncreasePeriod(int period = 0) {
  *
  * @return string
  */
-string JoinBools(bool values[], string separator) {
+string JoinBools(bool& values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5150,7 +5229,7 @@ string JoinBools(bool values[], string separator) {
  *
  * @return string
  */
-string JoinDoubles(double values[], string separator) {
+string JoinDoubles(double& values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5172,6 +5251,8 @@ string JoinDoubles(double values[], string separator) {
  * @return string
  */
 string DoubleArrayToStr(double& array[]) {
+   if (ArraySize(array) == 0)
+      return("{}");
    return(StringConcatenate("{", JoinDoubles(array, ", "), "}"));
 }
 
@@ -5184,7 +5265,7 @@ string DoubleArrayToStr(double& array[]) {
  *
  * @return string
  */
-string JoinInts(int values[], string separator) {
+string JoinInts(int& values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5206,6 +5287,8 @@ string JoinInts(int values[], string separator) {
  * @return string
  */
 string IntArrayToStr(int& array[]) {
+   if (ArraySize(array) == 0)
+      return("{}");
    return(StringConcatenate("{", JoinInts(array, ", "), "}"));
 }
 
@@ -5218,7 +5301,7 @@ string IntArrayToStr(int& array[]) {
  *
  * @return string
  */
-string JoinStrings(string values[], string separator) {
+string JoinStrings(string& values[], string separator) {
    string result = "";
 
    int size = ArraySize(values);
@@ -5243,14 +5326,9 @@ string JoinStrings(string values[], string separator) {
  * @return string
  */
 string StringArrayToStr(string& array[]) {
-   string result = JoinStrings(array, "\", \"");
-
-   if (StringLen(result) > 0)
-      result = StringConcatenate("{\"", result, "\"}");
-   else
-      result = "{}";
-
-   return(result);
+   if (ArraySize(array) == 0)
+      return("{}");
+   return(StringConcatenate("{\"", JoinStrings(array, "\", \""), "\"}"));
 }
 
 
