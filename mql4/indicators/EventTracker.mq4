@@ -68,7 +68,7 @@ int init() {
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(RateGrid.Limits, 0);
-      ArrayInitialize(Band.Limits, 0);
+      ArrayInitialize(Band.Limits    , 0);
    }
 
 
@@ -152,13 +152,21 @@ int init() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   return(catch("deinit()"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int start() {
-   //debug("start()   enter");
-
    Tick++;
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
@@ -231,7 +239,6 @@ int start() {
       ArrayInitialize(Band.Limits, 0);
       EventTracker.SetBandLimits(Band.Limits);
    } */
-   //debug("start()   leave");
    return(catch("start(2)"));
 
    double destination[4]; iOHLCBar(destination, 0, 0, 0); iOHLCBarRange(destination, 0, 0, 0, 0); iOHLCTime(destination, 0, 0, 0); iOHLCTimeRange(destination, 0, 0, 0);
@@ -603,10 +610,6 @@ int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL*/, datetime from, 
 
    return(catch("iOHLCTimeRange(3)"));
 }
-
-
-
-
 
 
 /**

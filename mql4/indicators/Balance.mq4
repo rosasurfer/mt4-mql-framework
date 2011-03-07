@@ -33,12 +33,6 @@ int init() {
    SetIndexStyle (0, DRAW_LINE);
    IndicatorDigits(2);
 
-   // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
-      if (Bars > 0)
-         ArrayInitialize(iBufferBalance, EMPTY_VALUE);
-   }
-
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
@@ -61,6 +55,10 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
+   // bei Neuberechnung Indikatorwerte zurücksetzen
+   if (ValidBars == 0) {
+      ArrayInitialize(iBufferBalance, EMPTY_VALUE);
+   }
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()

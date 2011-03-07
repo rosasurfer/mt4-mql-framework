@@ -48,23 +48,11 @@ int init() {
       return(init_error);
    }
 
-
    // Puffer zuordnen
    SetIndexBuffer(0, UpperBand);
    SetIndexBuffer(1, MovingAvg);
    SetIndexBuffer(2, LowerBand);
    IndicatorDigits(Digits);
-
-
-   // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
-      if (Bars > 0) {
-         ArrayInitialize(UpperBand, EMPTY_VALUE);
-         ArrayInitialize(MovingAvg, EMPTY_VALUE);
-         ArrayInitialize(LowerBand, EMPTY_VALUE);
-      }
-   }
-
 
    // Parameter überprüfen
    if (Periods < 2) {
@@ -117,6 +105,16 @@ int init() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   return(catch("deinit()"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -126,6 +124,13 @@ int start() {
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
+
+   // vor Neuberechnung Indikatorbuffer zurücksetzen
+   if (ValidBars == 0) {
+      ArrayInitialize(UpperBand, EMPTY_VALUE);
+      ArrayInitialize(MovingAvg, EMPTY_VALUE);
+      ArrayInitialize(LowerBand, EMPTY_VALUE);
+   }
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()

@@ -1,7 +1,7 @@
 /**
  * Chart-Grid
  *
- * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der neuen Session.
+ * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der beginnenden Session.
  */
 #include <stdlib.mqh>
 
@@ -16,7 +16,7 @@ extern color Grid.Color = LightGray;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string labels[];
+string objectLabels[];
 
 
 /**
@@ -38,14 +38,26 @@ int init() {
    SetIndexLabel(0, NULL);
 
    // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE)
-      ArrayResize(labels, 0);
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      ArrayResize(objectLabels, 0);
+   }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
    return(catch("init()"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   RemoveChartObjects(objectLabels);
+   return(catch("deinit()"));
 }
 
 
@@ -85,17 +97,6 @@ int start() {
    }
 
    return(catch("start()"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   RemoveChartObjects(labels);
-   return(catch("deinit()"));
 }
 
 
@@ -184,7 +185,7 @@ int DrawGrid() {
          ObjectSet(label, OBJPROP_STYLE, sStyle);
          ObjectSet(label, OBJPROP_COLOR, sColor);
          ObjectSet(label, OBJPROP_BACK , true  );
-         RegisterChartObject(label, labels);
+         RegisterChartObject(label, objectLabels);
       }
       else GetLastError();
 

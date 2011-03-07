@@ -87,7 +87,7 @@ int init() {
    IndicatorDigits(Digits);
 
    // Legende
-   legend = AddLegendLabel(indicatorName);
+   legend = CreateLegend(indicatorName);
 
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Period);
@@ -118,7 +118,7 @@ int init() {
  *
  * @return string - vollständiger Name des erzeugten Labels
  */
-string AddLegendLabel(string indicatorName) {
+string CreateLegend(string indicatorName) {
    int totalObj = ObjectsTotal(),
        labelObj = ObjectsTotal(OBJ_LABEL);
 
@@ -150,7 +150,7 @@ string AddLegendLabel(string indicatorName) {
    else GetLastError();
    ObjectSetText(label, " ");
 
-   if (catch("AddLegendLabel()") != NO_ERROR)
+   if (catch("CreateLegend()") != NO_ERROR)
       return("");
    return(label);
 }
@@ -180,7 +180,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // bei Neuberechnung alles zurücksetzen
+   // bei Neuberechnung Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);

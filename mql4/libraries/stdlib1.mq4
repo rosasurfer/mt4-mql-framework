@@ -5399,7 +5399,7 @@ int RegisterChartObject(string label, string& lpObjects[]) {
 int RemoveChartObjects(string& lpLabels[]) {
    int size = ArraySize(lpLabels);
    if (size == 0)
-      return(0);
+      return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
       ObjectDelete(lpLabels[i]);
