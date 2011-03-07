@@ -104,7 +104,7 @@
    datetime GetServerNextSessionEndTime(datetime serverTime);
 
    string   GetDayOfWeek(datetime time, bool format);
-   string   GetServerTimezone();
+   string   GetTradeServerTimezone();
    datetime TimeGMT();
 
    // Eventlistener

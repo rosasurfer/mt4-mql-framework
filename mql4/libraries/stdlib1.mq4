@@ -2773,7 +2773,7 @@ datetime EasternToServerTime(datetime easternTime) {
       return(-1);
    }
 
-   string zone = GetServerTimezone();
+   string zone = GetTradeServerTimezone();
    if (zone == "")
       return(-1);
 
@@ -3850,7 +3850,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetServerTimezone();
+   string zone = GetTradeServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
 
@@ -4003,7 +4003,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    }
 
-   string timezone = GetServerTimezone();
+   string timezone = GetTradeServerTimezone();
    if (timezone == "")
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
@@ -4657,21 +4657,21 @@ string PeriodFlagToStr(int flags) {
  * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
  *                  oder ein Leerstring, falls ein Fehler auftrat
  */
-string GetServerTimezone() {
+string GetTradeServerTimezone() {
    string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
    if (account == "0")
       return("");
 
    string configValue = GetConfigString("Timezones", account, "");
    if (configValue == "") {
-      catch("GetServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
+      catch("GetTradeServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
       return("");
    }
 
    string values[];
    Explode(configValue, ",", values);
    if (ArraySize(values) > 2) {
-      catch("GetServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      catch("GetTradeServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    string zone = JoinStrings(values, ",");
@@ -4693,13 +4693,12 @@ string GetServerTimezone() {
    else if (zone == "EST,EDT" ) {}
 
    else {
-      catch("GetServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
+      catch("GetTradeServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
-   if (catch("GetServerTimezone(4)") != NO_ERROR)
+   if (catch("GetTradeServerTimezone(4)") != NO_ERROR)
       return("");
-
    return(zone);
 }
 
@@ -4717,7 +4716,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetServerTimezone();
+   string zone = GetTradeServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
 
@@ -4753,7 +4752,7 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetServerTimezone();
+   string zone = GetTradeServerTimezone();
    if (zone == "")
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
@@ -4938,7 +4937,7 @@ datetime GmtToServerTime(datetime gmtTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetServerTimezone() == "GMT")
+   if (GetTradeServerTimezone() == "GMT")
       return(gmtTime);
 
    int gmtToServerTimeOffset = GetGmtToServerTimeOffset(gmtTime);
@@ -5460,7 +5459,7 @@ datetime ServerToEasternTime(datetime serverTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetServerTimezone() == "EST,EDT")
+   if (GetTradeServerTimezone() == "EST,EDT")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
@@ -5493,7 +5492,7 @@ datetime ServerToGMT(datetime serverTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetServerTimezone() == "GMT")
+   if (GetTradeServerTimezone() == "GMT")
       return(serverTime);
 
    int serverToGmtOffset = GetServerToGmtOffset(serverTime);
