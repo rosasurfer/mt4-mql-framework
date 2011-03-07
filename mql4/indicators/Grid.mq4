@@ -5,16 +5,13 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
-
 
 //////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
 
 extern color Grid.Color = LightGray;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 string objectLabels[];
 
@@ -67,15 +64,11 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
-   Tick++;
-   ValidBars   = IndicatorCounted();
+   static bool redraw = false;
+   Tick++;                    // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
+   ValidBars   = ifInt(redraw, 0, IndicatorCounted());
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
-
-   // Neuzeichnen übergreifend merken (falls ERR_HISTORY_UPDATE)
-   static bool redraw = false;
-   if (ValidBars == 0) {                redraw = true;  }
-   else if (redraw)    { ValidBars = 0; redraw = false; }
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init) {                                      // Aufruf nach erstem init()
@@ -108,11 +101,14 @@ int start() {
 int DrawGrid() {
    //int tick = GetTickCount();
 
+   //log("DrawGrid()   account="+ AccountNumber() +" ("+ AccountCompany() +")   Bars="+ Bars +"   ValidBars="+ IndicatorCounted() +"   serverDirectory=\""+ GetTradeServerDirectory() +"\"   timezone=\""+ GetTradeServerTimezone() +"\"");
+
+
    if (Bars == 0)
       return(0);
 
    if (GetTradeServerTimezone() == "")
-      return(ERR_RUNTIME_ERROR);
+      return(stdlib_PeekLastError());
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();
    int      easternDow, bar, sColor, sStyle;
