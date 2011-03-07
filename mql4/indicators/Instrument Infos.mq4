@@ -7,7 +7,6 @@
 
 
 #property indicator_chart_window
-#property indicator_buffers 0
 
 
 //////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
@@ -76,9 +75,27 @@ int init() {
  */
 int start() {
    Tick++;
-   ValidBars   = IndicatorCounted();
+   if      (init_error!=NO_ERROR)                   ValidBars = 0;
+   else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else                                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
+
+   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
+      init();
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+
+   // Abschluß der Initialisierung beim Terminal-Start prüfen
+   if (Bars == 0) {
+      last_error = ERR_TERMINAL_NOT_YET_READY;
+      return(last_error);
+   }
+   last_error = 0;
+   // -----------------------------------------------------------------------------
+
 
    static int error = NO_ERROR;
 

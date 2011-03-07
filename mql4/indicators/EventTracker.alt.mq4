@@ -168,19 +168,26 @@ int deinit() {
  */
 int start() {
    Tick++;
-   ValidBars   = IndicatorCounted();
+   if      (init_error!=NO_ERROR)                   ValidBars = 0;
+   else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else                                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                        // Aufruf nach erstem init()
-      init = false;
-      if (init_error != NO_ERROR)                   return(0);
+   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
+      init();
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+
+   // Abschluß der Initialisierung beim Terminal-Start prüfen
+   if (Bars == 0) {
+      last_error = ERR_TERMINAL_NOT_YET_READY;
+      return(last_error);
    }
-   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
-      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != NO_ERROR)                   return(0);
-   }
+   last_error = 0;
+   // -----------------------------------------------------------------------------
 
 
    // Accountinitialiserung abfangen (bei Start und Accountwechsel)

@@ -113,6 +113,17 @@ int init() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   RemoveChartObjects(objectLabels);
+   return(catch("deinit()"));
+}
+
+
+/**
  * Erzeugt und positioniert ein neues Label für den angegebenen Namen.
  *
  * @param  string indicatorName - Indikatorname
@@ -157,28 +168,36 @@ string CreateLegendLabel(string indicatorName) {
 
 
 /**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   RemoveChartObjects(objectLabels);
-   return(catch("deinit()"));
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int start() {
-   int tick = GetTickCount();
-
    Tick++;
-   ValidBars   = IndicatorCounted();
+   if      (init_error!=NO_ERROR)                   ValidBars = 0;
+   else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else                                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
+
+   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
+      init();
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+
+   // Abschluß der Initialisierung beim Terminal-Start prüfen
+   if (Bars == 0 || ArraySize(iALMA) == 0) {
+      log("start()   ERR_TERMINAL_NOT_YET_READY");
+      last_error = ERR_TERMINAL_NOT_YET_READY;
+      return(last_error);
+   }
+   last_error = 0;
+   // -----------------------------------------------------------------------------
+
+
+   int tick = GetTickCount();
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {

@@ -47,46 +47,51 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
-   static int error = NO_ERROR;
-
    Tick++;
-   ValidBars   = ifInt(error!=NO_ERROR, 0, IndicatorCounted()); error = NO_ERROR;
+   if      (init_error!=NO_ERROR)                   ValidBars = 0;
+ //else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else if (last_error!=NO_ERROR                  ) ValidBars = 0;                     // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
+   else                                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
+
+   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
+      init();
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+
+   // Abschluß der Initialisierung beim Terminal-Start prüfen
+   if (Bars == 0 || ArraySize(iBufferBalance) == 0) {
+      last_error = ERR_TERMINAL_NOT_YET_READY;
+      return(last_error);
+   }
+   last_error = 0;
+   // -----------------------------------------------------------------------------
+
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }
 
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init) {                                      // Aufruf nach erstem init()
-      init = false;
-      if (init_error != NO_ERROR)                   return(0);
-   }
-   else if (init_error != NO_ERROR) {               // Aufruf nach Tick
-      if (init_error != ERR_TERMINAL_NOT_YET_READY) return(0);
-      if (init()     != NO_ERROR)                   return(0);
-   }
-
-
    // Entweder alle Werte ...
    if (ValidBars == 0) {
-      error = iBalanceSeries(AccountNumber(), iBufferBalance);
+      last_error = iBalanceSeries(AccountNumber(), iBufferBalance);
    }
    else {
       // ... oder nur die fehlenden berechnen
       for (int bar=ChangedBars; bar > 0;) {
          bar--;
-         error = iBalance(AccountNumber(), iBufferBalance, bar);
-         if (error != NO_ERROR)
+         last_error = iBalance(AccountNumber(), iBufferBalance, bar);
+         if (last_error != NO_ERROR)
             break;
       }
    }
 
-   if (error != NO_ERROR)
-      log("start()", error);
+   if (last_error != NO_ERROR)
+      log("start()", last_error);
 
    return(catch("start()"));
 }
