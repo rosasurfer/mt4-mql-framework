@@ -41,7 +41,7 @@ double iALMA[], iTrend[], iDel[];                  // nicht sichtbare Buffer
 double wALMA[];                                    // Gewichtung der einzelnen Bars des MA
 bool   tradeSignalUp, tradeSignalDown;
 
-string labels[], legend, indicatorName;
+string objectLabels[], legendLabel, indicatorName;
 
 
 /**
@@ -87,7 +87,8 @@ int init() {
    IndicatorDigits(Digits);
 
    // Legende
-   legend = CreateLegend(indicatorName);
+   legendLabel = CreateLegendLabel(indicatorName);
+   RegisterChartObject(legendLabel, objectLabels);
 
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Period);
@@ -118,7 +119,7 @@ int init() {
  *
  * @return string - vollständiger Name des erzeugten Labels
  */
-string CreateLegend(string indicatorName) {
+string CreateLegendLabel(string indicatorName) {
    int totalObj = ObjectsTotal(),
        labelObj = ObjectsTotal(OBJ_LABEL);
 
@@ -145,12 +146,11 @@ string CreateLegend(string indicatorName) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE,  5);
       ObjectSet(label, OBJPROP_YDISTANCE, 21 + legends*19);
-      RegisterChartObject(label, labels);
    }
    else GetLastError();
    ObjectSetText(label, " ");
 
-   if (catch("CreateLegend()") != NO_ERROR)
+   if (catch("CreateLegendLabel()") != NO_ERROR)
       return("");
    return(label);
 }
@@ -162,7 +162,7 @@ string CreateLegend(string indicatorName) {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(labels);
+   RemoveChartObjects(objectLabels);
    return(catch("deinit()"));
 }
 
@@ -255,7 +255,7 @@ int start() {
       if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
       else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
       else                          fontColor = Color.Reversal;
-      ObjectSetText(legend, indicatorName, 9, "Arial Fett", fontColor);
+      ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", fontColor);
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) {     // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("start(0)", error));

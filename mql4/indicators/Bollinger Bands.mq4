@@ -125,7 +125,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // vor Neuberechnung Indikatorbuffer zurücksetzen
+   // vor Neuberechnung alle Indikatorbuffer zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(UpperBand, EMPTY_VALUE);
       ArrayInitialize(MovingAvg, EMPTY_VALUE);

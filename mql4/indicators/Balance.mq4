@@ -47,15 +47,15 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
+   // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
    static int error = NO_ERROR;
 
-   // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
    Tick++;
    ValidBars   = ifInt(error!=NO_ERROR, 0, IndicatorCounted()); error = NO_ERROR;
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // bei Neuberechnung Indikatorwerte zurücksetzen
+   // bei Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }
