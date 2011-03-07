@@ -68,7 +68,7 @@ int init() {
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
       ArrayInitialize(RateGrid.Limits, 0);
-      ArrayInitialize(Band.Limits    , 0);
+      ArrayInitialize(Band.Limits, 0);
    }
 
 
@@ -610,6 +610,10 @@ int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL*/, datetime from, 
 
    return(catch("iOHLCTimeRange(3)"));
 }
+
+
+
+
 
 
 /**

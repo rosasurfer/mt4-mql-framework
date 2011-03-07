@@ -111,7 +111,7 @@ int DrawGrid() {
    if (Bars == 0)
       return(0);
 
-   if (GetServerTimezone() == "")
+   if (GetTradeServerTimezone() == "")
       return(ERR_RUNTIME_ERROR);
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();

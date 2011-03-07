@@ -55,7 +55,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // bei Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }

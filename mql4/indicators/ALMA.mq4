@@ -180,7 +180,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // bei Neuberechnung Indikatorwerte zurücksetzen
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
