@@ -42,12 +42,6 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // ERR_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber()) {
-      init_error = stdlib_GetLastError();
-      return(init_error);
-   }
-
    // Puffer zuordnen
    SetIndexBuffer(0, UpperBand);
    SetIndexBuffer(1, MovingAvg);
@@ -65,15 +59,15 @@ int init() {
       return(init_error);
    }
    switch (MA.Method) {
-      case 1: MA.Method = MODE_SMA ; break;
-      case 2: MA.Method = MODE_EMA ; break;
+      case 1: MA.Method = MODE_SMA;  break;
+      case 2: MA.Method = MODE_EMA;  break;
       case 3: MA.Method = MODE_SMMA; break;
       case 4: MA.Method = MODE_LWMA; break;
       default:
          init_error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
          return(init_error);
    }
-   if (Deviation < 0 || CompareDoubles(Deviation, 0)) {
+   if (Deviation <= 0) {
       init_error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
       return(init_error);
    }
@@ -134,7 +128,7 @@ int start() {
    if (init_error != NO_ERROR)
       return(init_error);
 
-   // Abschluß der Initialisierung beim Terminal-Start prüfen
+   // Abschluß der Initialisierung nach Terminal-Start prüfen
    if (Bars == 0 || ArraySize(UpperBand) == 0) {
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);

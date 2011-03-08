@@ -1746,15 +1746,15 @@ string FindSymbolLongName(string symbol, string defaultName="") {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD  (basket)"           );
-   if (symbol == "CADLFX"  ) return("CAD  (basket)"           );
-   if (symbol == "CHFLFX"  ) return("CHF  (basket)"           );
-   if (symbol == "EURLFX"  ) return("EUR  (basket)"           );
+   if (symbol == "AUDLFX"  ) return("AUD-Index (synthetic)"   );
+   if (symbol == "CADLFX"  ) return("CAD-Index (synthetic)"   );
+   if (symbol == "CHFLFX"  ) return("CHF-Index (synthetic)"   );
+   if (symbol == "EURLFX"  ) return("EUR-Index (synthetic)"   );
    if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
-   if (symbol == "GBPLFX"  ) return("GBP  (basket)"           );
-   if (symbol == "JPYLFX"  ) return("1/JPY  (basket)"         );
-   if (symbol == "NZDLFX"  ) return("NZD-Index © LiteForex"   );
-   if (symbol == "USDLFX"  ) return("USD  (basket)"           );
+   if (symbol == "GBPLFX"  ) return("GBP-Index (synthetic)"   );
+   if (symbol == "JPYLFX"  ) return("1/JPY-Index (synthetic)" );
+   if (symbol == "NZDLFX"  ) return("NZD-Index (synthetic)"   );
+   if (symbol == "USDLFX"  ) return("USD-Index (synthetic)"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    string prefix = StringLeft(symbol, -3);
@@ -3697,7 +3697,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
  * @return string - Name
  */
 string GetComputerName() {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
    int lpBufferSize[1]; lpBufferSize[0] = MAX_STRING_LITERAL_LEN;
 
    if (!GetComputerNameA(buffer[0], lpBufferSize)) {
@@ -3723,7 +3723,7 @@ string GetComputerName() {
  */
 bool GetConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
 
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
@@ -3733,7 +3733,6 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
    if (catch("GetConfigBool()") != NO_ERROR)
       return(false);
-
    return(result);
 }
 
@@ -3749,7 +3748,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
 
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
@@ -3759,7 +3758,6 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    if (catch("GetConfigDouble()") != NO_ERROR)
       return(0);
-
    return(result);
 }
 
@@ -3781,7 +3779,6 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
 
    if (catch("GetConfigInt()") != NO_ERROR)
       return(0);
-
    return(result);
 }
 
@@ -3797,7 +3794,7 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    // zuerst globale, dann lokale Config auslesen
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
@@ -3805,7 +3802,6 @@ string GetConfigString(string section, string key, string defaultValue="") {
 
    if (catch("GetConfigString()") != NO_ERROR)
       return("");
-
    return(buffer[0]);
 }
 
@@ -3832,7 +3828,6 @@ int GetEasternToGmtOffset(datetime easternTime) {
 
    if (catch("GetEasternToGmtOffset(2)") != NO_ERROR)
       return(EMPTY_VALUE);
-
    return(offset);
 }
 
@@ -3884,7 +3879,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
@@ -3907,7 +3902,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
@@ -3947,7 +3942,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
 
@@ -4065,7 +4060,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
  */
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
@@ -4089,7 +4084,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
@@ -4131,7 +4126,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetLocalConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
 
@@ -4886,7 +4881,7 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text
  */
 string GetWindowText(int hWnd) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // siehe MetaTrader.doc: Zeigerproblematik
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
    GetWindowTextA(hWnd, buffer[0], MAX_STRING_LITERAL_LEN);
 
