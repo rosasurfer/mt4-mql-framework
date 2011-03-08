@@ -1018,7 +1018,7 @@ int SendTick(bool sound=false) {
    if (IsTesting())
       return(-1);
 
-   if (WM_MT4 == 0)
+   if (WM_MT4 == 0)                                                        // @see <stddefine.mqh>
       WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
@@ -1086,7 +1086,7 @@ string GetTradeServerDirectory() {
                   FindClose(hFindFile);
                   serverDirectory = name;
                   if (!DeleteFileA(pattern))                // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(catch("GetTradeServerDirectory(2)   kernel32.DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
+                     return(catch("GetTradeServerDirectory(2)   kernel32::DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
                   break;
                }
             }
@@ -1094,7 +1094,7 @@ string GetTradeServerDirectory() {
          result = FindNextFileA(hFindDir, wfd);
       }
       if (result == INVALID_HANDLE_VALUE) {
-         catch("GetTradeServerDirectory(3)  kernel32.FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
+         catch("GetTradeServerDirectory(3)  kernel32::FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
          return("");
       }
       FindClose(hFindDir);
@@ -3726,7 +3726,7 @@ string GetComputerName() {
    int lpBufferSize[1]; lpBufferSize[0] = MAX_STRING_LITERAL_LEN;
 
    if (!GetComputerNameA(buffer[0], lpBufferSize)) {
-      catch("GetComputerName(1)   kernel32.GetComputerName(buffer, "+ lpBufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
+      catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ lpBufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
       return("");
    }
 
