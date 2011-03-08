@@ -181,7 +181,7 @@ int start() {
    if (init_error != NO_ERROR)
       return(init_error);
 
-   // Abschluß der Initialisierung nach Terminal-Start prüfen
+   // nach Terminal-Start Abschluß der Initialisierung überprüfen
    if (Bars == 0) {
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);

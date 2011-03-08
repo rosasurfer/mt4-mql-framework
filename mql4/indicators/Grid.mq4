@@ -1,7 +1,7 @@
 /**
  * Chart-Grid
  *
- * Die vertikalen Separatoren sind auf der ersten tatsächlichen Bar der Session positioniert und tragen im Label das Datum der beginnenden Session.
+ * Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen Session.
  */
 #include <stdlib.mqh>
 
@@ -81,7 +81,7 @@ int start() {
    if (init_error != NO_ERROR)
       return(init_error);
 
-   // Abschluß der Initialisierung nach Terminal-Start prüfen
+   // nach Terminal-Start Abschluß der Initialisierung überprüfen
    if (Bars == 0) {
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
@@ -90,9 +90,10 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
-   //HandleEvents(EVENT_POSITION_OPEN);
+   //log("start()   Bars="+ Bars + "   account="+ AccountNumber() +" (\""+ AccountCompany() +"\")   accountServer=\""+ AccountServer() +"\"   serverDirectory=\""+ GetTradeServerDirectory() +"\"   timezone=\""+ GetTradeServerTimezone() +"\"");
 
+
+   // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
    // Grid zeichnen
    if (ValidBars == 0) {
@@ -109,14 +110,6 @@ int start() {
  * @return int - Fehlerstatus
  */
 int DrawGrid() {
-   //int tick = GetTickCount();
-
-   //log("DrawGrid()   account="+ AccountNumber() +" ("+ AccountCompany() +")   Bars="+ Bars +"   ValidBars="+ IndicatorCounted() +"   serverDirectory=\""+ GetTradeServerDirectory() +"\"   timezone=\""+ GetTradeServerTimezone() +"\"");
-
-
-   if (Bars == 0)
-      return(0);
-
    if (GetTradeServerTimezone() == "")
       return(stdlib_PeekLastError());
 
@@ -199,6 +192,5 @@ int DrawGrid() {
       lastChartTime = chartTime;
    }
 
-   //Print("DrawGrid()    execution time: ", GetTickCount()-tick, " ms");
    return(catch("DrawGrid()"));
 }

@@ -42,18 +42,18 @@ void stdlib_init(string scriptName) {
 
 /**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
- * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
+ * oder eines neuen Ticks erfolgt (z.B. in EventListenern). Außerdem kann damit in der Library IndicatorCounted() emuliert werden.
  *
- * @param  int indicatorCounted - Rückgabewert von IndicatorCounted(), der direkte Aufruf in der Library gibt -1 zurück
+ * @param  int validBars - Anzahl der gültigen Bars *oder* Indikatorwerte (je nach Aufrufer)
  *
  * @return int - Fehlerstatus
  */
-int stdlib_onTick(int indicatorCounted) {
-   if (indicatorCounted < 0)
-      return(catch("stdlib_onTick()  invalid parameter indicatorCounted = "+ indicatorCounted, ERR_INVALID_FUNCTION_PARAMVALUE));
+int stdlib_onTick(int validBars) {
+   if (validBars < 0)
+      return(catch("stdlib_onTick()  invalid parameter validBars = "+ validBars, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   Tick++;                             // der Wert hat keine tatsächliche Bedeutung
-   ValidBars   = indicatorCounted;
+   Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   ValidBars   = validBars;
    ChangedBars = Bars - ValidBars;
    return(NO_ERROR);
 }
@@ -1032,66 +1032,91 @@ int SendTick(bool sound=false) {
 
 
 /**
- * Gibt das für den aktuellen Chart verwendete History-Verzeichnis zurück (das Tradeserver-Verzeichnis).
+ * Gibt das für den aktuellen Chart verwendete History-Verzeichnis zurück (Tradeserver-Verzeichnis).  Der Name dieses Verzeichnisses ist bei bestehender
+ * Verbindung identisch mit dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig
+ * ermitteln.
  *
  * @return string
  */
 string GetTradeServerDirectory() {
+   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
-   // TODO: bis zum Accountwechsel zwischenspeichern
+   static string cache.directory[];
+   static int    lastTick;                                  // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   string serverDirectory = "";
+   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+      ArrayResize(cache.directory, 0);
+   lastTick = Tick;
 
-   // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-   string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
+   if (ArraySize(cache.directory) > 0)
+      return(cache.directory[0]);
 
-   int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-   if (hFile < 0) {
-      catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")");
-      return("");
-   }
-   FileClose(hFile);
+   // 3.1) Wert ermitteln
+   string serverDirectory = AccountServer();
 
-   // Datei suchen und Tradeserver-Pfad auslesen
-   string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
-   int /*WIN32_FIND_DATA*/ wfd[80];
+   // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
+   if (StringLen(serverDirectory) == 0) {
+      // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
+      string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+      int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
+      if (hFile < 0) {
+         catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")");
+         return("");
+      }
+      FileClose(hFile);
 
-   int hFindDir = FindFirstFileA(pattern, wfd), result=hFindDir;
-   while (result > 0) {
-      if (wfd.FileAttribute.Directory(wfd)) {
-         string name = wfd.FileName(wfd);
-         if (name != ".") /*&&*/ if (name != "..") {
-            pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
-            int hFindFile = FindFirstFileA(pattern, wfd);
-            if (hFindFile != INVALID_HANDLE_VALUE) {     // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
-               //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
+      // Datei suchen und Tradeserver-Pfad auslesen
+      string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
+      int /*WIN32_FIND_DATA*/ wfd[80];
 
-               FindClose(hFindFile);
-               serverDirectory = name;
-               if (!DeleteFileA(pattern))                // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                  return(catch("GetTradeServerDirectory(2)   kernel32.DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
-               break;
+      int hFindDir = FindFirstFileA(pattern, wfd), result=hFindDir;
+      while (result > 0) {
+         if (wfd.FileAttribute.Directory(wfd)) {
+            string name = wfd.FileName(wfd);
+            if (name != ".") /*&&*/ if (name != "..") {
+               pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
+               int hFindFile = FindFirstFileA(pattern, wfd);
+               if (hFindFile != INVALID_HANDLE_VALUE) {     // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
+                  //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
+
+                  FindClose(hFindFile);
+                  serverDirectory = name;
+                  if (!DeleteFileA(pattern))                // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
+                     return(catch("GetTradeServerDirectory(2)   kernel32.DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
+                  break;
+               }
             }
          }
+         result = FindNextFileA(hFindDir, wfd);
       }
-      result = FindNextFileA(hFindDir, wfd);
+      if (result == INVALID_HANDLE_VALUE) {
+         catch("GetTradeServerDirectory(3)  kernel32.FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
+         return("");
+      }
+      FindClose(hFindDir);
+      //debug("GetTradeServerDirectory()   resolved serverDirectory = \""+ serverDirectory +"\"");
    }
-   if (result == INVALID_HANDLE_VALUE) {
-      catch("GetTradeServerDirectory(3)  kernel32.FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
-      return("");
-   }
-   FindClose(hFindDir);
-
-   //debug("GetTradeServerDirectory()   serverDirectory = "+ serverDirectory);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       catch("GetTradeServerDirectory(4)", error);
       return("");
    }
-   if (serverDirectory == "")
+   if (serverDirectory == "") {
       catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   // 3.3) Wert cachen
+   ArrayResize(cache.directory, 1);
+   cache.directory[0] = serverDirectory;
+
    return(serverDirectory);
+
 }
 
 
