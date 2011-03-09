@@ -5433,10 +5433,10 @@ int RemoveChartObjects(string& lpLabels[]) {
 
 
 /**
- * Verschickt eine SMS-Nachricht an eine Mobilfunknummer.
+ * Schickt eine SMS an die übergebene Telefonnummer.
  *
- * @param  string receiver - Mobilfunknummer des Empfängers im internationalen Format (49123456789)
- * @param  string message  - zu verschickende Nachricht
+ * @param  string receiver - Telefonnummer des Empfängers (internationales Format: 49123456789)
+ * @param  string message  - Text der SMS
  *
  * @return int - Fehlerstatus
  */
@@ -5446,20 +5446,17 @@ int SendTextMessage(string receiver, string message) {
 
    // TODO: Gateway-Zugangsdaten auslagern
 
-   message = UrlEncode(message);
-   string url = StringConcatenate("https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to=", receiver, "&text=", message);
+   // Befehlszeile für Shellaufruf zusammensetzen
+   string url          = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ UrlEncode(message);
+   string filesDir     = TerminalPath() +"\\experts\\files";
+   string time         = StringReplace(StringReplace(TimeToStr(TimeLocal(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ".", "-"), ":", ".");
+   string responseFile = filesDir +"\\sms_"+ time +"_"+ GetCurrentThreadId() +".response";
+   string logFile      = filesDir +"\\sms.log";
+   string cmdLine      = "wget.exe -b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
 
-   /*
-   string targetDir  = TerminalPath() +"\\experts\\files\\";
-   string targetFile = "sms.txt";
-   string logFile    = "sms.log";
-   string lpCmdLine  = "wget.exe -b --no-check-certificate \""+url+"\" -O \""+targetDir+targetFile+"\" -a \""+targetDir+logFile+"\"";
-   */
-   string lpCmdLine  = StringConcatenate("wget.exe -b --no-check-certificate \"", url, "\"");
-
-   int error = WinExec(lpCmdLine, SW_HIDE);     // SW_SHOWNORMAL|SW_HIDE
+   int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1)  execution of \""+ lpCmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1)  execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
    return(catch("SendTextMessage(2)"));
 }

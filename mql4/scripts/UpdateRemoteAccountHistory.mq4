@@ -210,7 +210,7 @@ int start() {
  * @return int - Serverresponse-Code (< ERR_RUNTIME_ERROR) oder MQL-Fehlerstatus (>= ERR_RUNTIME_ERROR)
  */
 int UploadDataFile(string filename, string& lpErrorMsg) {
-   // Command-Line zusammensetzen
+   // Befehlszeile für Shellaufruf zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
    string filesDir     = TerminalPath() +"\\experts\\files";
    string dataFile     = filesDir +"\\"+ filename;
