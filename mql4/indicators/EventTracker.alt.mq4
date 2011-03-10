@@ -1,7 +1,7 @@
 /**
  * EventTracker
  *
- * Überwacht ein Instrument auf verschiedene, konfigurierbare Signale und benachrichtigt optisch, akustisch und/oder per SMS.
+ * Überwacht ein Instrument auf verschiedene Signale und benachrichtigt akustisch und/oder per SMS.
  */
 #include <stdlib.mqh>
 
@@ -73,8 +73,8 @@ int init() {
 
 
    // Konfiguration auswerten
-   symbol        = FindNormalizedSymbol(Symbol(), Symbol());
-   symbolName    = FindSymbolName(symbol, symbol);
+   symbol        = FindStandardSymbol(Symbol(), Symbol());
+   symbolName    = GetSymbolName(symbol, symbol);
    symbolSection = StringConcatenate("EventTracker.", symbol);
 
    // Sound- und SMS-Einstellungen

@@ -65,8 +65,8 @@ int start() {
       symbols[n] = OrderSymbol();
          if (symbols[n] == "")
             units[n]= 0;
-         else {                                             // broker-spezifische Symbole normalisieren
-            symbols[n]  = FindNormalizedSymbol(OrderSymbol(), OrderSymbol());
+         else {
+            symbols[n]  = FindStandardSymbol(OrderSymbol(), OrderSymbol());   // möglichst das Standardsymbol verwenden
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {

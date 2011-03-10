@@ -177,15 +177,15 @@
    // sonstiges
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
+   string   FindStandardSymbol(string symbol, string defaultValue);
    int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
-   string   NormalizeSymbol(string symbol);
-   string   FindNormalizedSymbol(string symbol, string defaultValue);
-   string   FindSymbolName(string symbol, string defaultName);
-   string   FindSymbolLongName(string symbol, string defaultName);
+   string   GetStandardSymbol(string symbol);
+   string   GetSymbolName(string symbol, string defaultName);
+   string   GetSymbolLongName(string symbol, string defaultName);
    string   GetAccountDirectory(int account);
    int      GetMovingAverageCode(string description);
    int      GetPeriod(string description);

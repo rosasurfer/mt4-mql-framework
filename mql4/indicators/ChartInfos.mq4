@@ -40,7 +40,7 @@ int init() {
    SetIndexLabel(0, NULL);
 
    // Konfiguration auswerten
-   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ FindNormalizedSymbol(Symbol(), Symbol()) +",");
+   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ FindStandardSymbol(Symbol(), Symbol()) +",");
 
    // Label definieren und erzeugen
    string indicatorName = WindowExpertName();
@@ -134,8 +134,8 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   string symbol = FindNormalizedSymbol(Symbol(), Symbol());
-   string name   = FindSymbolLongName(symbol, FindSymbolName(symbol, symbol));
+   string symbol = FindStandardSymbol(Symbol(), Symbol());
+   string name   = GetSymbolLongName(symbol, GetSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird sofort (und nur hier) gesetzt

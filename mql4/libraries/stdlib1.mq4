@@ -1285,13 +1285,47 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
- * Gibt für ein broker-spezifisches das allgemeingültige Symbol zurück.
+ * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück oder den angegebenen Alternativwert, wenn kein Standardsymbol gefunden wurde.
+ * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
+ *
+ * @param  string symbol   - broker-spezifisches Symbol
+ * @param  string altValue - Rückgabewert, falls kein Standardsymbol gefunden wurde
+ *
+ * @return string - Standardsymbol oder alternativer Rückgabewert
+ *
+ *
+ * NOTE:
+ * -----
+ * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die (bequeme) Angabe eines Alternativwertes, dadurch läßt sich jedoch nicht mehr
+ * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.  Dafür sollte GetStandardSymbol() verwendet werden.
+ *
+ * @see GetStandardSymbol()
+ */
+string FindStandardSymbol(string symbol, string altValue="") {
+   symbol = GetStandardSymbol(symbol);
+
+   if (StringLen(symbol) == 0)            // unbekanntes Brokersymbol
+      return(altValue);
+   return(symbol);
+}
+
+
+/**
+ * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
+ * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
  *
  * @param  string symbol - broker-spezifisches Symbol
  *
- * @return string - allgemeingültiges Symbol oder "", wenn kein allgemeingültiges Symbol gefunden wurde
+ * @return string - Standardsymbol oder Leerstring, wenn das Brokersymbol unbekannt ist
+ *
+ *
+ * NOTE:
+ * -----
+ * Im Unterschied zu FindStandardSymbol() gibt diese Funktion einen Leerstring zurück, wenn kein Standardsymbol gefunden wurde.
+ *
+ * @see FindStandardSymbol()
  */
-string NormalizeSymbol(string symbol) {
+string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0)
       return("");
 
@@ -1301,10 +1335,10 @@ string NormalizeSymbol(string symbol) {
    else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
-      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X"  );
-                if (symbol == "#DJI.XDJ" ) return("#DJI.X"  );
-                if (symbol == "#DJT.XDJ" ) return("#DJT.X"  );
-                if (symbol == "#SPX.X.XP") return("#SPX.X"  );
+      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X");
+                if (symbol == "#DJI.XDJ" ) return("#DJI.X");
+                if (symbol == "#DJT.XDJ" ) return("#DJT.X");
+                if (symbol == "#SPX.X.XP") return("#SPX.X");
                 break;
 
       case '0':
@@ -1318,181 +1352,52 @@ string NormalizeSymbol(string symbol) {
       case '8':
       case '9': break;
 
-      case 'A': if (symbol == "AUDCAD"   ) return("AUDCAD"  );
-                if (symbol == "AUDCADMA" ) return("AUDCAD"  );
-                if (symbol == "AUDCADMB" ) return("AUDCAD"  );
-                if (symbol == "AUDCADMC" ) return("AUDCAD"  );
-                if (symbol == "AUDCADMD" ) return("AUDCAD"  );
-                if (symbol == "AUDCADX"  ) return("AUDCAD"  );
-                if (symbol == "AUDCHF"   ) return("AUDCHF"  );
-                if (symbol == "AUDCHFMA" ) return("AUDCHF"  );
-                if (symbol == "AUDCHFMB" ) return("AUDCHF"  );
-                if (symbol == "AUDCHFMC" ) return("AUDCHF"  );
-                if (symbol == "AUDCHFMD" ) return("AUDCHF"  );
-                if (symbol == "AUDCHFX"  ) return("AUDCHF"  );
-                if (symbol == "AUDJPY"   ) return("AUDJPY"  );
-                if (symbol == "AUDJPYMA" ) return("AUDJPY"  );
-                if (symbol == "AUDJPYMB" ) return("AUDJPY"  );
-                if (symbol == "AUDJPYMC" ) return("AUDJPY"  );
-                if (symbol == "AUDJPYMD" ) return("AUDJPY"  );
-                if (symbol == "AUDJPYX"  ) return("AUDJPY"  );
-                if (symbol == "AUDLFX"   ) return("AUDLFX"  );
-                if (symbol == "AUDNZD"   ) return("AUDNZD"  );
-                if (symbol == "AUDNZDMA" ) return("AUDNZD"  );
-                if (symbol == "AUDNZDMB" ) return("AUDNZD"  );
-                if (symbol == "AUDNZDMC" ) return("AUDNZD"  );
-                if (symbol == "AUDNZDMD" ) return("AUDNZD"  );
-                if (symbol == "AUDNZDX"  ) return("AUDNZD"  );
-                if (symbol == "AUDUSD"   ) return("AUDUSD"  );
-                if (symbol == "AUDUSDMA" ) return("AUDUSD"  );
-                if (symbol == "AUDUSDMB" ) return("AUDUSD"  );
-                if (symbol == "AUDUSDMC" ) return("AUDUSD"  );
-                if (symbol == "AUDUSDMD" ) return("AUDUSD"  );
-                if (symbol == "AUDUSDX"  ) return("AUDUSD"  );
+      case 'A': if (StringStartsWith(symbol, "AUDCAD")) return("AUDCAD");
+                if (StringStartsWith(symbol, "AUDCHF")) return("AUDCHF");
+                if (StringStartsWith(symbol, "AUDCHF")) return("AUDCHF");
+                if (StringStartsWith(symbol, "AUDJPY")) return("AUDJPY");
+                if (StringStartsWith(symbol, "AUDNZD")) return("AUDNZD");
+                if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
+                if (symbol == "AUDLFX")                 return("AUDLFX");
                 break;
 
       case 'B': break;
 
-      case 'C': if (symbol == "CADCHF"   ) return("CADCHF"  );
-                if (symbol == "CADCHFMA" ) return("CADCHF"  );
-                if (symbol == "CADCHFMB" ) return("CADCHF"  );
-                if (symbol == "CADCHFMC" ) return("CADCHF"  );
-                if (symbol == "CADCHFMD" ) return("CADCHF"  );
-                if (symbol == "CADCHFX"  ) return("CADCHF"  );
-                if (symbol == "CADJPY"   ) return("CADJPY"  );
-                if (symbol == "CADJPYMA" ) return("CADJPY"  );
-                if (symbol == "CADJPYMB" ) return("CADJPY"  );
-                if (symbol == "CADJPYMC" ) return("CADJPY"  );
-                if (symbol == "CADJPYMD" ) return("CADJPY"  );
-                if (symbol == "CADJPYX"  ) return("CADJPY"  );
-                if (symbol == "CADLFX"   ) return("CADLFX"  );
-                if (symbol == "CHFJPY"   ) return("CHFJPY"  );
-                if (symbol == "CHFJPYMA" ) return("CHFJPY"  );
-                if (symbol == "CHFJPYMB" ) return("CHFJPY"  );
-                if (symbol == "CHFJPYMC" ) return("CHFJPY"  );
-                if (symbol == "CHFJPYMD" ) return("CHFJPY"  );
-                if (symbol == "CHFJPYX"  ) return("CHFJPY"  );
-                if (symbol == "CHFLFX"   ) return("CHFLFX"  );
+      case 'C': if (StringStartsWith(symbol, "CADCHF")) return("CADCHF");
+                if (StringStartsWith(symbol, "CADJPY")) return("CADJPY");
+                if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
+                if (symbol == "CADLFX")                 return("CADLFX");
+                if (symbol == "CHFLFX")                 return("CHFLFX");
                 break;
 
       case 'D': break;
 
-      case 'E': if (symbol == "EURAUD"   ) return("EURAUD"  );
-                if (symbol == "EURAUDMA" ) return("EURAUD"  );
-                if (symbol == "EURAUDMB" ) return("EURAUD"  );
-                if (symbol == "EURAUDMC" ) return("EURAUD"  );
-                if (symbol == "EURAUDMD" ) return("EURAUD"  );
-                if (symbol == "EURAUDX"  ) return("EURAUD"  );
-                if (symbol == "EURCAD"   ) return("EURCAD"  );
-                if (symbol == "EURCADMA" ) return("EURCAD"  );
-                if (symbol == "EURCADMB" ) return("EURCAD"  );
-                if (symbol == "EURCADMC" ) return("EURCAD"  );
-                if (symbol == "EURCADMD" ) return("EURCAD"  );
-                if (symbol == "EURCADX"  ) return("EURCAD"  );
-                if (symbol == "EURCHF"   ) return("EURCHF"  );
-                if (symbol == "EURCHFMA" ) return("EURCHF"  );
-                if (symbol == "EURCHFMB" ) return("EURCHF"  );
-                if (symbol == "EURCHFMC" ) return("EURCHF"  );
-                if (symbol == "EURCHFMD" ) return("EURCHF"  );
-                if (symbol == "EURCHFX"  ) return("EURCHF"  );
-                if (symbol == "EURDKK"   ) return("EURDKK"  );
-                if (symbol == "EURDKKMA" ) return("EURDKK"  );
-                if (symbol == "EURDKKMB" ) return("EURDKK"  );
-                if (symbol == "EURDKKMC" ) return("EURDKK"  );
-                if (symbol == "EURDKKMD" ) return("EURDKK"  );
-                if (symbol == "EURDKKX"  ) return("EURDKK"  );
-                if (symbol == "EURGBP"   ) return("EURGBP"  );
-                if (symbol == "EURGBPMA" ) return("EURGBP"  );
-                if (symbol == "EURGBPMB" ) return("EURGBP"  );
-                if (symbol == "EURGBPMC" ) return("EURGBP"  );
-                if (symbol == "EURGBPMD" ) return("EURGBP"  );
-                if (symbol == "EURGBPX"  ) return("EURGBP"  );
-                if (symbol == "EURJPY"   ) return("EURJPY"  );
-                if (symbol == "EURJPYMA" ) return("EURJPY"  );
-                if (symbol == "EURJPYMB" ) return("EURJPY"  );
-                if (symbol == "EURJPYMC" ) return("EURJPY"  );
-                if (symbol == "EURJPYMD" ) return("EURJPY"  );
-                if (symbol == "EURJPYX"  ) return("EURJPY"  );
-                if (symbol == "EURLFX"   ) return("EURLFX"  );
-                if (symbol == "EURNOK"   ) return("EURNOK"  );
-                if (symbol == "EURNOKMA" ) return("EURNOK"  );
-                if (symbol == "EURNOKMB" ) return("EURNOK"  );
-                if (symbol == "EURNOKMC" ) return("EURNOK"  );
-                if (symbol == "EURNOKMD" ) return("EURNOK"  );
-                if (symbol == "EURNOKX"  ) return("EURNOK"  );
-                if (symbol == "EURNZD"   ) return("EURNZD"  );
-                if (symbol == "EURNZDMA" ) return("EURNZD"  );
-                if (symbol == "EURNZDMB" ) return("EURNZD"  );
-                if (symbol == "EURNZDMC" ) return("EURNZD"  );
-                if (symbol == "EURNZDMD" ) return("EURNZD"  );
-                if (symbol == "EURNZDX"  ) return("EURNZD"  );
-                if (symbol == "EURRUR"   ) return("EURRUR"  );
-                if (symbol == "EURRURMA" ) return("EURRUR"  );
-                if (symbol == "EURRURMB" ) return("EURRUR"  );
-                if (symbol == "EURRURMC" ) return("EURRUR"  );
-                if (symbol == "EURRURMD" ) return("EURRUR"  );
-                if (symbol == "EURRURX"  ) return("EURRUR"  );
-                if (symbol == "EURSEK"   ) return("EURSEK"  );
-                if (symbol == "EURSEKMA" ) return("EURSEK"  );
-                if (symbol == "EURSEKMB" ) return("EURSEK"  );
-                if (symbol == "EURSEKMC" ) return("EURSEK"  );
-                if (symbol == "EURSEKMD" ) return("EURSEK"  );
-                if (symbol == "EURSEKX"  ) return("EURSEK"  );
-                if (symbol == "EURUSD"   ) return("EURUSD"  );
-                if (symbol == "EURUSDMA" ) return("EURUSD"  );
-                if (symbol == "EURUSDMB" ) return("EURUSD"  );
-                if (symbol == "EURUSDMC" ) return("EURUSD"  );
-                if (symbol == "EURUSDMD" ) return("EURUSD"  );
-                if (symbol == "EURUSDX"  ) return("EURUSD"  );
-                if (symbol == "EURX"     ) return("EURX"    );
+      case 'E': if (StringStartsWith(symbol, "EURAUD")) return("EURAUD");
+                if (StringStartsWith(symbol, "EURCAD")) return("EURCAD");
+                if (StringStartsWith(symbol, "EURCHF")) return("EURCHF");
+                if (StringStartsWith(symbol, "EURDKK")) return("EURDKK");
+                if (StringStartsWith(symbol, "EURGBP")) return("EURGBP");
+                if (StringStartsWith(symbol, "EURJPY")) return("EURJPY");
+                if (StringStartsWith(symbol, "EURNOK")) return("EURNOK");
+                if (StringStartsWith(symbol, "EURNZD")) return("EURNZD");
+                if (StringStartsWith(symbol, "EURRUR")) return("EURRUR");
+                if (StringStartsWith(symbol, "EURSEK")) return("EURSEK");
+                if (StringStartsWith(symbol, "EURUSD")) return("EURUSD");
+                if (symbol == "EURLFX")                 return("EURLFX");
+                if (symbol == "EURX"  )                 return("EURX"  );
                 break;
 
       case 'F': break;
 
-      case 'G': if (symbol == "GBPAUD"   ) return("GBPAUD"  );
-                if (symbol == "GBPAUDMA" ) return("GBPAUD"  );
-                if (symbol == "GBPAUDMB" ) return("GBPAUD"  );
-                if (symbol == "GBPAUDMC" ) return("GBPAUD"  );
-                if (symbol == "GBPAUDMD" ) return("GBPAUD"  );
-                if (symbol == "GBPAUDX"  ) return("GBPAUD"  );
-                if (symbol == "GBPCAD"   ) return("GBPCAD"  );
-                if (symbol == "GBPCADMA" ) return("GBPCAD"  );
-                if (symbol == "GBPCADMB" ) return("GBPCAD"  );
-                if (symbol == "GBPCADMC" ) return("GBPCAD"  );
-                if (symbol == "GBPCADMD" ) return("GBPCAD"  );
-                if (symbol == "GBPCADX"  ) return("GBPCAD"  );
-                if (symbol == "GBPCHF"   ) return("GBPCHF"  );
-                if (symbol == "GBPCHFMA" ) return("GBPCHF"  );
-                if (symbol == "GBPCHFMB" ) return("GBPCHF"  );
-                if (symbol == "GBPCHFMC" ) return("GBPCHF"  );
-                if (symbol == "GBPCHFMD" ) return("GBPCHF"  );
-                if (symbol == "GBPCHFX"  ) return("GBPCHF"  );
-                if (symbol == "GBPJPY"   ) return("GBPJPY"  );
-                if (symbol == "GBPJPYMA" ) return("GBPJPY"  );
-                if (symbol == "GBPJPYMB" ) return("GBPJPY"  );
-                if (symbol == "GBPJPYMC" ) return("GBPJPY"  );
-                if (symbol == "GBPJPYMD" ) return("GBPJPY"  );
-                if (symbol == "GBPJPYX"  ) return("GBPJPY"  );
-                if (symbol == "GBPLFX"   ) return("GBPLFX"  );
-                if (symbol == "GBPNZD"   ) return("GBPNZD"  );
-                if (symbol == "GBPNZDMA" ) return("GBPNZD"  );
-                if (symbol == "GBPNZDMB" ) return("GBPNZD"  );
-                if (symbol == "GBPNZDMC" ) return("GBPNZD"  );
-                if (symbol == "GBPNZDMD" ) return("GBPNZD"  );
-                if (symbol == "GBPNZDX"  ) return("GBPNZD"  );
-                if (symbol == "GBPRUR"   ) return("GBPRUR"  );
-                if (symbol == "GBPRURMA" ) return("GBPRUR"  );
-                if (symbol == "GBPRURMB" ) return("GBPRUR"  );
-                if (symbol == "GBPRURMC" ) return("GBPRUR"  );
-                if (symbol == "GBPRURMD" ) return("GBPRUR"  );
-                if (symbol == "GBPRURX"  ) return("GBPRUR"  );
-                if (symbol == "GBPUSD"   ) return("GBPUSD"  );
-                if (symbol == "GBPUSDMA" ) return("GBPUSD"  );
-                if (symbol == "GBPUSDMB" ) return("GBPUSD"  );
-                if (symbol == "GBPUSDMC" ) return("GBPUSD"  );
-                if (symbol == "GBPUSDMD" ) return("GBPUSD"  );
-                if (symbol == "GBPUSDX"  ) return("GBPUSD"  );
-                if (symbol == "GOLD"     ) return("XAUUSD"  );
+      case 'G': if (StringStartsWith(symbol, "GBPAUD")) return("GBPAUD");
+                if (StringStartsWith(symbol, "GBPCAD")) return("GBPCAD");
+                if (StringStartsWith(symbol, "GBPCHF")) return("GBPCHF");
+                if (StringStartsWith(symbol, "GBPJPY")) return("GBPJPY");
+                if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
+                if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUR");
+                if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
+                if (symbol == "GBPLFX")                 return("GBPLFX");
+                if (symbol == "GOLD"  )                 return("XAUUSD");
                 break;
 
       case 'H':
@@ -1500,156 +1405,61 @@ string NormalizeSymbol(string symbol) {
       case 'J':
       case 'K': break;
 
-      case 'L': if (symbol == "LFXJPY"   ) return("JPYLFX"  );
+      case 'L': if (symbol == "LFXJPY") return("JPYLFX");
                 break;
 
       case 'M': break;
 
-      case 'N': if (symbol == "NZDCADMB" ) return("NZDCAD"  );
-                if (symbol == "NZDCADMC" ) return("NZDCAD"  );
-                if (symbol == "NZDCADMD" ) return("NZDCAD"  );
-                if (symbol == "NZDCADX"  ) return("NZDCAD"  );
-                if (symbol == "NZDCHF"   ) return("NZDCHF"  );
-                if (symbol == "NZDCHFMA" ) return("NZDCHF"  );
-                if (symbol == "NZDCHFMB" ) return("NZDCHF"  );
-                if (symbol == "NZDCHFMC" ) return("NZDCHF"  );
-                if (symbol == "NZDCHFMD" ) return("NZDCHF"  );
-                if (symbol == "NZDCHFX"  ) return("NZDCHF"  );
-                if (symbol == "NZDJPY"   ) return("NZDJPY"  );
-                if (symbol == "NZDJPYMA" ) return("NZDJPY"  );
-                if (symbol == "NZDJPYMB" ) return("NZDJPY"  );
-                if (symbol == "NZDJPYMC" ) return("NZDJPY"  );
-                if (symbol == "NZDJPYMD" ) return("NZDJPY"  );
-                if (symbol == "NZDJPYX"  ) return("NZDJPY"  );
-                if (symbol == "NZDLFX"   ) return("NZDLFX"  );
-                if (symbol == "NZDUSD"   ) return("NZDUSD"  );
-                if (symbol == "NZDUSDMA" ) return("NZDUSD"  );
-                if (symbol == "NZDUSDMB" ) return("NZDUSD"  );
-                if (symbol == "NZDUSDMC" ) return("NZDUSD"  );
-                if (symbol == "NZDUSDMD" ) return("NZDUSD"  );
-                if (symbol == "NZDUSDX"  ) return("NZDUSD"  );
+      case 'N': if (StringStartsWith(symbol, "NZDCAD")) return("NZDCAD");
+                if (StringStartsWith(symbol, "NZDCHF")) return("NZDCHF");
+                if (StringStartsWith(symbol, "NZDJPY")) return("NZDJPY");
+                if (StringStartsWith(symbol, "NZDUSD")) return("NZDUSD");
+                if (symbol == "NZDLFX")                 return("NZDLFX");
                 break;
 
       case 'O':
       case 'P':
       case 'Q': break;
 
-      case 'S': if (symbol == "SGDJPY"   ) return("SGDJPY"  );
-                if (symbol == "SGDJPYMA" ) return("SGDJPY"  );
-                if (symbol == "SGDJPYMB" ) return("SGDJPY"  );
-                if (symbol == "SGDJPYMC" ) return("SGDJPY"  );
-                if (symbol == "SGDJPYMD" ) return("SGDJPY"  );
-                if (symbol == "SGDJPYX"  ) return("SGDJPY"  );
+      case 'S': if (StringStartsWith(symbol, "SGDJPY")) return("SGDJPY");
                 break;
 
       case 'T': break;
 
-      case 'U': if (symbol == "USDCAD"   ) return("USDCAD"  );
-                if (symbol == "USDCADMA" ) return("USDCAD"  );
-                if (symbol == "USDCADMB" ) return("USDCAD"  );
-                if (symbol == "USDCADMC" ) return("USDCAD"  );
-                if (symbol == "USDCADMD" ) return("USDCAD"  );
-                if (symbol == "USDCADX"  ) return("USDCAD"  );
-                if (symbol == "USDCHF"   ) return("USDCHF"  );
-                if (symbol == "USDCHFMA" ) return("USDCHF"  );
-                if (symbol == "USDCHFMB" ) return("USDCHF"  );
-                if (symbol == "USDCHFMC" ) return("USDCHF"  );
-                if (symbol == "USDCHFMD" ) return("USDCHF"  );
-                if (symbol == "USDCHFX"  ) return("USDCHF"  );
-                if (symbol == "USDCZK"   ) return("USDCZK"  );
-                if (symbol == "USDCZKMA" ) return("USDCZK"  );
-                if (symbol == "USDCZKMB" ) return("USDCZK"  );
-                if (symbol == "USDCZKMC" ) return("USDCZK"  );
-                if (symbol == "USDCZKMD" ) return("USDCZK"  );
-                if (symbol == "USDCZKX"  ) return("USDCZK"  );
-                if (symbol == "USDDKK"   ) return("USDDKK"  );
-                if (symbol == "USDDKKMA" ) return("USDDKK"  );
-                if (symbol == "USDDKKMB" ) return("USDDKK"  );
-                if (symbol == "USDDKKMC" ) return("USDDKK"  );
-                if (symbol == "USDDKKMD" ) return("USDDKK"  );
-                if (symbol == "USDDKKX"  ) return("USDDKK"  );
-                if (symbol == "USDHKD"   ) return("USDHKD"  );
-                if (symbol == "USDHKDMA" ) return("USDHKD"  );
-                if (symbol == "USDHKDMB" ) return("USDHKD"  );
-                if (symbol == "USDHKDMC" ) return("USDHKD"  );
-                if (symbol == "USDHKDMD" ) return("USDHKD"  );
-                if (symbol == "USDHKDX"  ) return("USDHKD"  );
-                if (symbol == "USDHUF"   ) return("USDHUF"  );
-                if (symbol == "USDHUFMA" ) return("USDHUF"  );
-                if (symbol == "USDHUFMB" ) return("USDHUF"  );
-                if (symbol == "USDHUFMC" ) return("USDHUF"  );
-                if (symbol == "USDHUFMD" ) return("USDHUF"  );
-                if (symbol == "USDHUFX"  ) return("USDHUF"  );
-                if (symbol == "USDJPY"   ) return("USDJPY"  );
-                if (symbol == "USDJPYMA" ) return("USDJPY"  );
-                if (symbol == "USDJPYMB" ) return("USDJPY"  );
-                if (symbol == "USDJPYMC" ) return("USDJPY"  );
-                if (symbol == "USDJPYMD" ) return("USDJPY"  );
-                if (symbol == "USDJPYX"  ) return("USDJPY"  );
-                if (symbol == "USDLFX"   ) return("USDLFX"  );
-                if (symbol == "USDMXN"   ) return("USDMXN"  );
-                if (symbol == "USDMXNMA" ) return("USDMXN"  );
-                if (symbol == "USDMXNMB" ) return("USDMXN"  );
-                if (symbol == "USDMXNMC" ) return("USDMXN"  );
-                if (symbol == "USDMXNMD" ) return("USDMXN"  );
-                if (symbol == "USDMXNX"  ) return("USDMXN"  );
-                if (symbol == "USDNOK"   ) return("USDNOK"  );
-                if (symbol == "USDNOKMA" ) return("USDNOK"  );
-                if (symbol == "USDNOKMB" ) return("USDNOK"  );
-                if (symbol == "USDNOKMC" ) return("USDNOK"  );
-                if (symbol == "USDNOKMD" ) return("USDNOK"  );
-                if (symbol == "USDNOKX"  ) return("USDNOK"  );
-                if (symbol == "USDPLN"   ) return("USDPLN"  );
-                if (symbol == "USDPLNMA" ) return("USDPLN"  );
-                if (symbol == "USDPLNMB" ) return("USDPLN"  );
-                if (symbol == "USDPLNMC" ) return("USDPLN"  );
-                if (symbol == "USDPLNMD" ) return("USDPLN"  );
-                if (symbol == "USDPLNX"  ) return("USDPLN"  );
-                if (symbol == "USDRUR"   ) return("USDRUR"  );
-                if (symbol == "USDRURMA" ) return("USDRUR"  );
-                if (symbol == "USDRURMB" ) return("USDRUR"  );
-                if (symbol == "USDRURMC" ) return("USDRUR"  );
-                if (symbol == "USDRURMD" ) return("USDRUR"  );
-                if (symbol == "USDRURX"  ) return("USDRUR"  );
-                if (symbol == "USDSEK"   ) return("USDSEK"  );
-                if (symbol == "USDSEKMA" ) return("USDSEK"  );
-                if (symbol == "USDSEKMB" ) return("USDSEK"  );
-                if (symbol == "USDSEKMC" ) return("USDSEK"  );
-                if (symbol == "USDSEKMD" ) return("USDSEK"  );
-                if (symbol == "USDSEKX"  ) return("USDSEK"  );
-                if (symbol == "USDSGD"   ) return("USDSGD"  );
-                if (symbol == "USDSGDMA" ) return("USDSGD"  );
-                if (symbol == "USDSGDMB" ) return("USDSGD"  );
-                if (symbol == "USDSGDMC" ) return("USDSGD"  );
-                if (symbol == "USDSGDMD" ) return("USDSGD"  );
-                if (symbol == "USDSGDX"  ) return("USDSGD"  );
-                if (symbol == "USDX"     ) return("USDX"    );
-                if (symbol == "USDZAR"   ) return("USDZAR"  );
-                if (symbol == "USDZARMA" ) return("USDZAR"  );
-                if (symbol == "USDZARMB" ) return("USDZAR"  );
-                if (symbol == "USDZARMC" ) return("USDZAR"  );
-                if (symbol == "USDZARMD" ) return("USDZAR"  );
-                if (symbol == "USDZARX"  ) return("USDZAR"  );
+      case 'U': if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
+                if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
+                if (StringStartsWith(symbol, "USDCZK")) return("USDCZK");
+                if (StringStartsWith(symbol, "USDDKK")) return("USDDKK");
+                if (StringStartsWith(symbol, "USDHKD")) return("USDHKD");
+                if (StringStartsWith(symbol, "USDHUF")) return("USDHUF");
+                if (StringStartsWith(symbol, "USDJPY")) return("USDJPY");
+                if (StringStartsWith(symbol, "USDMXN")) return("USDMXN");
+                if (StringStartsWith(symbol, "USDNOK")) return("USDNOK");
+                if (StringStartsWith(symbol, "USDPLN")) return("USDPLN");
+                if (StringStartsWith(symbol, "USDRUR")) return("USDRUR");
+                if (StringStartsWith(symbol, "USDSEK")) return("USDSEK");
+                if (StringStartsWith(symbol, "USDSGD")) return("USDSGD");
+                if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
+                if (symbol == "USDLFX")                 return("USDLFX");
+                if (symbol == "USDX"  )                 return("USDX"  );
                 break;
 
       case 'V':
       case 'W': break;
 
-      case 'X': if (symbol == "XAGUSD"   ) return("XAGUSD"  );
-                if (symbol == "XAGUSDX"  ) return("XAGUSD"  );
-                if (symbol == "XAUUSD"   ) return("XAUUSD"  );
-                if (symbol == "XAUUSDX"  ) return("XAUUSD"  );
+      case 'X': if (StringStartsWith(symbol, "XAGUSD")) return("XAGUSD");
+                if (StringStartsWith(symbol, "XAUUSD")) return("XAUUSD");
                 break;
 
       case 'Y':
       case 'Z': break;
 
-      case '_': if (symbol == "_DJI"     ) return("#DJI.X"  );
-                if (symbol == "_DJT"     ) return("#DJT.X"  );
-                if (symbol == "_N225"    ) return("#NIK.X"  );
-                if (symbol == "_NQ100"   ) return("#N100.X" );
-                if (symbol == "_NQCOMP"  ) return("#NCOMP.X");
-                if (symbol == "_SP500"   ) return("#SPX.X"  );
+      case '_': if (symbol == "_DJI"   ) return("#DJI.X"  );
+                if (symbol == "_DJT"   ) return("#DJT.X"  );
+                if (symbol == "_N225"  ) return("#NIK.X"  );
+                if (symbol == "_NQ100" ) return("#N100.X" );
+                if (symbol == "_NQCOMP") return("#NCOMP.X");
+                if (symbol == "_SP500" ) return("#SPX.X"  );
                 break;
    }
 
@@ -1658,31 +1468,15 @@ string NormalizeSymbol(string symbol) {
 
 
 /**
- * Gibt die allgemeingültige Form eines Symbols zurück oder den angegebenen Defaultwert, wenn keine allgemeingültige dieses Symbols Form gefunden wurde.
+ * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Kurzname für dieses Symbol gefunden wurde.
+ * (z.B. GetSymbolName("EURUSD") => "EUR/USD")
  *
- * @param  string symbol       - broker-spezifisches Symbol
- * @param  string defaultValue - Default-Rückgabewert
- *
- * @return string - allgemeingültiger oder Default-Rückgabewert
- */
-string FindNormalizedSymbol(string symbol, string defaultValue="") {
-   string normalized = NormalizeSymbol(symbol);
-
-   if (StringLen(normalized) == 0)
-      return(defaultValue);
-   return(normalized);
-}
-
-
-/**
- * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Defaultwert, wenn kein Kurzname für dieses Symbol gefunden wurde.
- *
- * @param  string symbol      - Symbol
- * @param  string defaultName - Default-Rückgabewert
+ * @param  string symbol   - Symbol
+ * @param  string altValue - alternativer Rückgabewert
  *
  * @return string
  */
-string FindSymbolName(string symbol, string defaultName="") {
+string GetSymbolName(string symbol, string altValue="") {
    symbol = StringToUpper(symbol);
 
    if (symbol == "#DAX.X"  ) return("DAX"      );
@@ -1750,19 +1544,20 @@ string FindSymbolName(string symbol, string defaultName="") {
    if (symbol == "XAGUSD"  ) return("Silver"   );
    if (symbol == "XAUUSD"  ) return("Gold"     );
 
-   return(defaultName);
+   return(altValue);
 }
 
 
 /**
- * Gibt den Langnamen eines Symbols zurück oder den angegebenen Defaultwert, wenn kein Langname für dieses Symbol gefunden wurde.
+ * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
+ * (z.B. GetSymbolLongName("USDLFX") => "USD-Index (Liteforex)")
  *
- * @param  string symbol      - Symbol
- * @param  string defaultName - Default-Rückgabewert
+ * @param  string symbol   - Symbol
+ * @param  string altValue - alternativer Rückgabewert
  *
  * @return string
  */
-string FindSymbolLongName(string symbol, string defaultName="") {
+string GetSymbolLongName(string symbol, string altValue="") {
    symbol = StringToUpper(symbol);
 
    if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
@@ -1792,7 +1587,7 @@ string FindSymbolLongName(string symbol, string defaultName="") {
    else if (suffix == ".FM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Free Margin"     ));
    else if (suffix == ".UM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Used Margin"     ));
 
-   return(defaultName);
+   return(altValue);
 }
 
 
@@ -1882,7 +1677,7 @@ datetime TimeGMT() {
  *
  * @return string
  */
-string ifString(bool condition, string& thenValue, string& elseValue) {
+string ifString(bool condition, string thenValue, string elseValue) {
    if (condition)
       return(thenValue);
    return(elseValue);
@@ -1941,7 +1736,7 @@ int CountDecimals(double number) {
 
 
 /**
- * Ob ein String mit einem angegebenen Substring beginnt. Groß-/Kleinschreibung wird beachtet.
+ * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird beachtet.
  *
  * @param  string object - zu prüfender String
  * @param  string prefix - Substring
@@ -1949,12 +1744,16 @@ int CountDecimals(double number) {
  * @return bool
  */
 bool StringStartsWith(string object, string prefix) {
-   return(StringLeft(object, StringLen(prefix)) == prefix);
+   if (StringLen(prefix) == 0) {
+      catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   return(StringFind(object, prefix) == 0);
 }
 
 
 /**
- * Ob ein String mit einem angegebenen Substring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
+ * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object - zu prüfender String
  * @param  string prefix - Substring
@@ -1962,14 +1761,16 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringIStartsWith(string object, string prefix) {
-   object = StringToLower(object);
-   prefix = StringToLower(prefix);
-   return(StringLeft(object, StringLen(prefix)) == prefix);
+   if (StringLen(prefix) == 0) {
+      catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
 
 /**
- * Ob ein String mit einem angegebenen Substring endet. Groß-/Kleinschreibung wird beachtet.
+ * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird beachtet.
  *
  * @param  string object  - zu prüfender String
  * @param  string postfix - Substring
@@ -1977,12 +1778,17 @@ bool StringIStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringEndsWith(string object, string postfix) {
-   return(StringRight(object, StringLen(postfix)) == postfix);
+   int lenPostfix = StringLen(postfix);
+   if (lenPostfix == 0) {
+      catch("StringEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   return(StringFind(object, postfix) == StringLen(object)-lenPostfix);
 }
 
 
 /**
- * Ob ein String mit einem angegebenen Substring endet. Groß-/Kleinschreibung wird nicht beachtet.
+ * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object  - zu prüfender String
  * @param  string postfix - Substring
@@ -1990,9 +1796,12 @@ bool StringEndsWith(string object, string postfix) {
  * @return bool
  */
 bool StringIEndsWith(string object, string postfix) {
-   object  = StringToLower(object);
-   postfix = StringToLower(postfix);
-   return(StringRight(object, StringLen(postfix)) == postfix);
+   int lenPostfix = StringLen(postfix);
+   if (lenPostfix == 0) {
+      catch("StringIEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   return(StringFind(StringToUpper(object), StringToUpper(postfix)) == StringLen(object)-lenPostfix);
 }
 
 
@@ -5555,6 +5364,10 @@ int SetWindowText(int hWnd, string text) {
  * @return bool
  */
 bool StringContains(string object, string substring) {
+   if (StringLen(substring) == 0) {
+      catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
    return(StringFind(object, substring) != -1);
 }
 
@@ -5568,9 +5381,11 @@ bool StringContains(string object, string substring) {
  * @return bool
  */
 bool StringIContains(string object, string substring) {
-   object    = StringToUpper(object);
-   substring = StringToUpper(substring);
-   return(StringFind(object, substring) != -1);
+   if (StringLen(substring) == 0) {
+      catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
 
 

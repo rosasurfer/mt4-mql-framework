@@ -131,7 +131,7 @@ int start() {
 
       tickets        [i] = ticket;
       types          [i] = type;
-      symbols        [i] = FindNormalizedSymbol(OrderSymbol(), OrderSymbol());
+      symbols        [i] = FindStandardSymbol(OrderSymbol(), OrderSymbol());
       sizes          [i] = ifDouble(OrderSymbol()=="", 0, OrderLots());
       openTimes      [i] = OrderOpenTime();
       closeTimes     [i] = OrderCloseTime();
