@@ -1771,15 +1771,15 @@ string FindSymbolLongName(string symbol, string defaultName="") {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD-Index (synthetic)"   );
-   if (symbol == "CADLFX"  ) return("CAD-Index (synthetic)"   );
-   if (symbol == "CHFLFX"  ) return("CHF-Index (synthetic)"   );
-   if (symbol == "EURLFX"  ) return("EUR-Index (synthetic)"   );
+   if (symbol == "AUDLFX"  ) return("AUD-Index (Liteforex)"   );
+   if (symbol == "CADLFX"  ) return("CAD-Index (Liteforex)"   );
+   if (symbol == "CHFLFX"  ) return("CHF-Index (Liteforex)"   );
+   if (symbol == "EURLFX"  ) return("EUR-Index (Liteforex)"   );
    if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
-   if (symbol == "GBPLFX"  ) return("GBP-Index (synthetic)"   );
-   if (symbol == "JPYLFX"  ) return("1/JPY-Index (synthetic)" );
-   if (symbol == "NZDLFX"  ) return("NZD-Index (synthetic)"   );
-   if (symbol == "USDLFX"  ) return("USD-Index (synthetic)"   );
+   if (symbol == "GBPLFX"  ) return("GBP-Index (Liteforex)"   );
+   if (symbol == "JPYLFX"  ) return("1/JPY-Index (Liteforex)" );
+   if (symbol == "NZDLFX"  ) return("NZD-Index (Liteforex)"   );
+   if (symbol == "USDLFX"  ) return("USD-Index (Liteforex)"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    string prefix = StringLeft(symbol, -3);
