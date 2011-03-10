@@ -1285,19 +1285,19 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
- * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück oder den angegebenen Alternativwert, wenn kein Standardsymbol gefunden wurde.
- * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
+ * Gibt für ein broker-spezifisches Symbol das Standardsymbol oder den angegebenen Alternativwert zurück.
+ * (z.B. FindStandardSymbol("EURUSDm") => "EURUSD")
  *
  * @param  string symbol   - broker-spezifisches Symbol
  * @param  string altValue - Rückgabewert, falls kein Standardsymbol gefunden wurde
  *
- * @return string - Standardsymbol oder alternativer Rückgabewert
+ * @return string - Ergebnis
  *
  *
  * NOTE:
  * -----
- * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die (bequeme) Angabe eines Alternativwertes, dadurch läßt sich jedoch nicht mehr
- * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.  Dafür sollte GetStandardSymbol() verwendet werden.
+ * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die (bequeme) Angabe eines Alternativwertes, läßt jedoch nicht mehr so
+ * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.  Dafür ist GetStandardSymbol() zu verwenden.
  *
  * @see GetStandardSymbol()
  */
@@ -3162,40 +3162,44 @@ int EventTracker.SetBandLimits(double& lpLimits[]) {
 }
 
 
-double EventTracker.rateGridLimits[2];
+double EventTracker.gridLimits[2];
 
 
 /**
- * Gibt die aktuellen RateGrid-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
- * in der Library gespeichert).
+ * Speichert die übergebenen Grid-Limite des EventTrackers in der Library (timeframe-übergreifend).
  *
- * @param  double& lpResults[2] - Zeiger auf Array für die Ergebnisse { LOWER_VALUE, UPPER_VALUE }
+ * @param  double& limits[2] - Array mit zu speichernden Limiten
  *
- * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
- *                               FALSE andererseits (nicht existierende Daten)
+ * @return int - Fehlerstatus
  */
-bool EventTracker.GetRateGridLimits(double& lpResults[]) {
-   lpResults[0] = EventTracker.rateGridLimits[0];
-   lpResults[1] = EventTracker.rateGridLimits[1];
+int EventTracker.SaveGridLimits(double& limits[]) {
+   if (ArraySize(limits) != 2)
+      return(catch("EventTracker.SaveGridLimits()   illegal parameter limits = "+ DoubleArrayToStr(limits), ERR_INCOMPATIBLE_ARRAYS));
 
-   if (EventTracker.rateGridLimits[0]!=0) /*&&*/ if (EventTracker.rateGridLimits[1]!=0)
-      return(true);
-   return(false);
+   EventTracker.gridLimits[0] = limits[0];
+   EventTracker.gridLimits[1] = limits[1];
+   return(0);
 }
 
 
 /**
- * Setzt die aktuellen RateGrid-Limite des EventTrackers (aus Performancegründen sind sie timeframe-übergreifend
- * in der Library gespeichert).
+ * Gibt die gespeicherten Grid-Limite des EventTrackers zurück.
  *
- * @param  double& lpLimits[2] - Array mit den aktuellen Limiten { UPPER_VALUE, LOWER_VALUE }
+ * @param  double& lpLimits[2] - Zeiger auf Array für die Ergebnisse
  *
- * @return int - Fehlerstatus
+ * @return bool - TRUE, wenn Daten in der Library gespeichert waren,
+ *                FALSE andererseits
  */
-int EventTracker.SetRateGridLimits(double& lpLimits[]) {
-   EventTracker.rateGridLimits[0] = lpLimits[0];
-   EventTracker.rateGridLimits[1] = lpLimits[1];
-   return(0);
+bool EventTracker.GetGridLimits(double& lpLimits[]) {
+   if (ArraySize(lpLimits) != 2)
+      ArrayResize(lpLimits, 2);
+
+   lpLimits[0] = EventTracker.gridLimits[0];
+   lpLimits[1] = EventTracker.gridLimits[1];
+
+   if (EventTracker.gridLimits[0]!=0) /*&&*/ if (EventTracker.gridLimits[1]!=0)
+      return(true);
+   return(false);
 }
 
 

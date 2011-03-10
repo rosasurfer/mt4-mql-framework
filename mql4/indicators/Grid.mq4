@@ -31,7 +31,7 @@ int init() {
       return(init_error);
    }
 
-   // DataBox-Anzeige ausschalten
+   // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
    // nach Recompilation statische Arrays zurücksetzen
