@@ -40,7 +40,6 @@ double BollingerBands.MA.Deviation  = 0;
 // sonstige Variablen
 string symbol, symbolName, symbolSection;
 
-double gridLimits[2];
 double gridSize;              // ie. 0.0020 (20 pip)
 int    gridDigits;            // ie. 4
 
@@ -61,7 +60,6 @@ int init() {
 
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayInitialize(gridLimits  , 0);
       ArrayInitialize(bbandLimits, 0);
    }
 
@@ -346,7 +344,7 @@ int onPositionClose(int tickets[]) {
 
 
 /**
- * Prüft, ob die normalen Kurslimite verletzt wurden und benachrichtigt entsprechend.
+ * Prüft, ob die normalen Kurslimite erreicht wurden und benachrichtigt entsprechend.
  *
  * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
  */
@@ -354,73 +352,75 @@ int CheckGridLimits() {
    if (!Track.Grid)
       return(0);
 
-   // aktuelle Limite ermitteln, ggf. neu berechnen
-   if (gridLimits[0] == 0) if (!EventTracker.GetGridLimits(gridLimits)) {
-      if (InitializeGridLimits() == ERR_HISTORY_UPDATE)
-         return(ERR_HISTORY_UPDATE);
+   static double upperLimit, lowerLimit;
 
-      EventTracker.SaveGridLimits(gridLimits);           // Limite in Library timeframe-übergreifend speichern
-      return(catch("CheckGridLimits(1)"));               // nach Initialisierung ist Test überflüssig
+   // aktuelle Limite ermitteln, ggf. neu berechnen
+   if (upperLimit == 0) if (!EventTracker.GetGridLimits(upperLimit, lowerLimit)) {
+      if (InitializeGridLimits(upperLimit, lowerLimit) == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
+      EventTracker.SaveGridLimits(upperLimit, lowerLimit);     // Limite in Library timeframe-übergreifend speichern
+      return(catch("CheckGridLimits(1)"));                     // nach Initialisierung ist Test überflüssig
    }
 
-   double bid = NormalizeDouble(Bid, Digits),            // Bid und Ask enthalten keine normalisierten Doubles
-          ask = NormalizeDouble(Ask, Digits);
+   bool eventTriggered = false;
+   string message="", price="";
 
    // Limite überprüfen
-   if (ask >= gridLimits[1]) {
-      string message = symbolName +" => "+ DoubleToStr(gridLimits[1], gridDigits);
-      string strAsk  = NumberToStr(ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
+   if (Ask >= upperLimit) {
+      eventTriggered = true;
+      message        = symbolName +" => "+ DoubleToStr(upperLimit, gridDigits);
+      price          = "(Ask: "+ NumberToStr(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
 
       // SMS verschicken
       if (SMS.Alerts) {
          if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
-            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Ask: ", strAsk, ")");
+            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   ", price);
       }
-      else  message = StringConcatenate("CheckGridLimits()   ", message, "   (Ask: ", strAsk, ")");
+      else  message = StringConcatenate("CheckGridLimits()   ", message, "   ", price);
 
       // Sound abspielen
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", gridLimits[1]);
+      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(upperLimit, gridDigits));
       GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
-      while (ask >= gridLimits[1]) {
-         gridLimits[1] = NormalizeDouble(gridLimits[1] + gridSize, gridDigits);
-      }
-      gridLimits[0] = NormalizeDouble(gridLimits[1] - gridSize - gridSize, gridDigits);
-      EventTracker.SaveGridLimits(gridLimits);
-      Print(message, "   grid adjusted: ", DoubleToStr(gridLimits[0], gridDigits), "  <=>  ", DoubleToStr(gridLimits[1], gridDigits));
+      while (Ask >= upperLimit)
+         upperLimit = NormalizeDouble(upperLimit + gridSize           , gridDigits) - 0.000000001;
+      lowerLimit    = NormalizeDouble(upperLimit - gridSize - gridSize, gridDigits) + 0.000000001;
    }
 
-   else if (bid <= gridLimits[0]) {
-      message = symbolName +" <= "+ DoubleToStr(gridLimits[0], gridDigits);
-      string strBid = NumberToStr(bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'"));
+   else if (Bid <= lowerLimit) {
+      eventTriggered = true;
+      message        = symbolName +" <= "+ DoubleToStr(lowerLimit, gridDigits);
+      price          = "(Bid: "+ NumberToStr(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
 
       // SMS verschicken
       if (SMS.Alerts) {
          if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
-            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   (Bid: ", strBid, ")");
+            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   ", price);
       }
-      else  message = StringConcatenate("CheckGridLimits()   ", message, "   (Bid: ", strBid, ")");
+      else  message = StringConcatenate("CheckGridLimits()   ", message, "   ", price);
 
       // Sound abspielen
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
 
       // Signal speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", gridLimits[0]);
+      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit, gridDigits));
       GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
-      while (bid <= gridLimits[0]) {
-         gridLimits[0] = NormalizeDouble(gridLimits[0] - gridSize, gridDigits);
-      }
-      gridLimits[1] = NormalizeDouble(gridLimits[0] + gridSize + gridSize, gridDigits);
-      EventTracker.SaveGridLimits(gridLimits);
-      Print(message, "   grid adjusted: ", DoubleToStr(gridLimits[0], gridDigits), "  <=>  ", DoubleToStr(gridLimits[1], gridDigits));
+      while (Bid <= lowerLimit)
+         lowerLimit = NormalizeDouble(lowerLimit - gridSize           , gridDigits) + 0.000000001;
+      upperLimit    = NormalizeDouble(lowerLimit + gridSize + gridSize, gridDigits) - 0.000000001;
+   }
+
+   if (eventTriggered) {
+      EventTracker.SaveGridLimits(upperLimit, lowerLimit);
+      Print(message, "   grid adjusted: ", DoubleToStr(lowerLimit, gridDigits), "  <=>  ", DoubleToStr(upperLimit, gridDigits));
    }
 
    return(catch("CheckGridLimits(4)"));
@@ -430,22 +430,24 @@ int CheckGridLimits() {
 /**
  * Initialisiert die aktuellen Grid-Limite.
  *
+ * @param  double& upperLimit - Zeiger auf Variable für das obere Limit
+ * @param  double& lowerLimit - Zeiger auf Variable für das untere Limit
+ *
  * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
  */
-int InitializeGridLimits() {
-   static double limits[2];
-   int cells = (Bid + Ask)/2 / gridSize;
-   limits[0] = NormalizeDouble(gridSize *  cells,    gridDigits);    // unteres Limit
-   limits[1] = NormalizeDouble(limits[0] + gridSize, gridDigits);    // oberes Limit (Abstand: 1 x GridSize)
-   //debug("InitializeGridLimits()   starting with "+ DoubleToStr(limits[0], gridDigits) +" <=> "+ DoubleToStr(limits[1], gridDigits));
+int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
+   int    cells = (Bid + Ask)/2 / gridSize;
+   double low   = NormalizeDouble(gridSize * cells, gridDigits) + 0.000000001;      // unteres Limit
+   double high  = NormalizeDouble(low + gridSize  , gridDigits) - 0.000000001;      // oberes Limit (Abstand: 1 x GridSize)
+   //debug("InitializeGridLimits()   starting with "+ DoubleToStr(low, gridDigits) +" <=> "+ DoubleToStr(high, gridDigits));
 
    // wenn vorhanden, letztes Signal auslesen
    string varLastSignalValue = "EventTracker."+ symbol +".Grid.LastSignal",
           varLastSignalTime  = "EventTracker."+ symbol +".Grid.LastTime";
 
    bool     lastSignal;
-   double   lastSignalValue = GlobalVariableGet(varLastSignalValue);
-   datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime );
+   double   lastSignalValue = NormalizeDouble(GlobalVariableGet(varLastSignalValue), gridDigits);
+   datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime);
    int      lastSignalBar   = -1;
 
    int error = GetLastError();
@@ -453,7 +455,7 @@ int InitializeGridLimits() {
       return(catch("InitializeGridLimits(1)", error));
 
    if (lastSignalValue > 0) /*&&*/ if (lastSignalTime > 0) {
-      if (lastSignalValue <= limits[0] || lastSignalValue >= limits[1]) {
+      if (lastSignalValue <= low || lastSignalValue >= high) {
          //debug("InitializeGridLimits()   stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" is ignored (not inside of cells)");
       }
       else {
@@ -484,12 +486,12 @@ int InitializeGridLimits() {
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
-            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= limits[0]);
-            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= limits[1]);
+            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= low );
+            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= high);
          }
          else {
-            down = (iLow (NULL, period, bar) <= limits[0]);
-            up   = (iHigh(NULL, period, bar) >= limits[1]);
+            down = (iLow (NULL, period, bar) <= low );
+            up   = (iHigh(NULL, period, bar) >= high);
          }
 
          error = GetLastError();
@@ -518,13 +520,13 @@ int InitializeGridLimits() {
    else                   debug("InitializeGridLimits()    no bar ever touched a limit");
    */
 
-   if (down) limits[0] = NormalizeDouble(limits[0] - gridSize, gridDigits);
-   if (up  ) limits[1] = NormalizeDouble(limits[1] + gridSize, gridDigits);
+   if (up  ) high = NormalizeDouble(high + gridSize, gridDigits);
+   if (down) low  = NormalizeDouble(low  - gridSize, gridDigits);
 
-   gridLimits[0] = limits[0];
-   gridLimits[1] = limits[1];
+   upperLimit = high - 0.000000001;       // minimale Abweichung, um später nicht ständig NormalizeDouble() benutzen zu müssen
+   lowerLimit = low  + 0.000000001;
 
-   Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(gridLimits[0], gridDigits), "  <=>  ", DoubleToStr(gridLimits[1], gridDigits));
+   Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(lowerLimit, gridDigits), "  <=>  ", DoubleToStr(upperLimit, gridDigits));
    return(catch("InitializeGridLimits(3)"));
 }
 

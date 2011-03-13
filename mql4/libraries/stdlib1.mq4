@@ -55,6 +55,7 @@ int stdlib_onTick(int validBars) {
    Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    ValidBars   = validBars;
    ChangedBars = Bars - ValidBars;
+
    return(NO_ERROR);
 }
 
@@ -3162,44 +3163,45 @@ int EventTracker.SetBandLimits(double& lpLimits[]) {
 }
 
 
-double EventTracker.gridLimits[2];
+double EventTracker.gridLimit.High,    // sind Timeframe-übergreifend gespeichert
+       EventTracker.gridLimit.Low;
+
+
+/**
+ * Gibt die in der Library gespeicherten Grid-Limite des EventTrackers zurück.
+ *
+ * @param  double& upperLimit - Zeiger auf Variable für das obere Limit
+ * @param  double& lowerLimit - Zeiger auf Variable für das untere Limit
+ *
+ * @return bool - TRUE, wenn Daten in der Library gespeichert waren; FALSE andererseits
+ */
+bool EventTracker.GetGridLimits(double& upperLimit, double& lowerLimit) {
+   if (EventTracker.gridLimit.High == 0) return(false);
+   if (EventTracker.gridLimit.Low  == 0) return(false);
+
+   upperLimit = EventTracker.gridLimit.High;
+   lowerLimit = EventTracker.gridLimit.Low;
+
+   return(true);
+}
 
 
 /**
  * Speichert die übergebenen Grid-Limite des EventTrackers in der Library (timeframe-übergreifend).
  *
- * @param  double& limits[2] - Array mit zu speichernden Limiten
+ * @param  double upperLimit - oberes Limit
+ * @param  double lowerLimit - unteres Limit
  *
  * @return int - Fehlerstatus
  */
-int EventTracker.SaveGridLimits(double& limits[]) {
-   if (ArraySize(limits) != 2)
-      return(catch("EventTracker.SaveGridLimits()   illegal parameter limits = "+ DoubleArrayToStr(limits), ERR_INCOMPATIBLE_ARRAYS));
+int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
+   if (upperLimit == 0) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (lowerLimit == 0) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   EventTracker.gridLimits[0] = limits[0];
-   EventTracker.gridLimits[1] = limits[1];
+   EventTracker.gridLimit.High = upperLimit;
+   EventTracker.gridLimit.Low  = lowerLimit;
+
    return(0);
-}
-
-
-/**
- * Gibt die gespeicherten Grid-Limite des EventTrackers zurück.
- *
- * @param  double& lpLimits[2] - Zeiger auf Array für die Ergebnisse
- *
- * @return bool - TRUE, wenn Daten in der Library gespeichert waren,
- *                FALSE andererseits
- */
-bool EventTracker.GetGridLimits(double& lpLimits[]) {
-   if (ArraySize(lpLimits) != 2)
-      ArrayResize(lpLimits, 2);
-
-   lpLimits[0] = EventTracker.gridLimits[0];
-   lpLimits[1] = EventTracker.gridLimits[1];
-
-   if (EventTracker.gridLimits[0]!=0) /*&&*/ if (EventTracker.gridLimits[1]!=0)
-      return(true);
-   return(false);
 }
 
 
