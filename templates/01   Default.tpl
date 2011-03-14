@@ -8764,7 +8764,7 @@ name=ChartInfos
 flags=347
 window_num=0
 <inputs>
-H1.Close.Symbols=GBPJPY
+H1.Close.Symbols=
 </inputs>
 </expert>
 shift_0=0
