@@ -3163,24 +3163,26 @@ int EventTracker.SetBandLimits(double& lpLimits[]) {
 }
 
 
-double EventTracker.gridLimit.High,    // sind Timeframe-übergreifend gespeichert
+double EventTracker.gridLimit.High,       // sind Timeframe-übergreifend gespeichert
        EventTracker.gridLimit.Low;
 
 
 /**
  * Gibt die in der Library gespeicherten Grid-Limite des EventTrackers zurück.
  *
- * @param  double& upperLimit - Zeiger auf Variable für das obere Limit
- * @param  double& lowerLimit - Zeiger auf Variable für das untere Limit
+ * @param  double& lpLimits[2] - Zeiger auf Array für die zu speichernden Limite { LOWER_LIMIT, UPPER_LIMIT }
  *
  * @return bool - TRUE, wenn Daten in der Library gespeichert waren; FALSE andererseits
  */
-bool EventTracker.GetGridLimits(double& upperLimit, double& lowerLimit) {
-   if (EventTracker.gridLimit.High == 0) return(false);
-   if (EventTracker.gridLimit.Low  == 0) return(false);
+bool EventTracker.GetGridLimits(double& lpLimits[]) {
+   if (ArraySize(lpLimits) != 2)
+      return(catch("EventTracker.GetGridLimits()   illegal parameter limits = "+ DoubleArrayToStr(lpLimits), ERR_INCOMPATIBLE_ARRAYS));
 
-   upperLimit = EventTracker.gridLimit.High;
-   lowerLimit = EventTracker.gridLimit.Low;
+   if (CompareDoubles(EventTracker.gridLimit.High, 0)) return(false);
+   if (CompareDoubles(EventTracker.gridLimit.Low , 0)) return(false);
+
+   lpLimits[0] = EventTracker.gridLimit.Low;
+   lpLimits[1] = EventTracker.gridLimit.High;
 
    return(true);
 }
@@ -3195,8 +3197,8 @@ bool EventTracker.GetGridLimits(double& upperLimit, double& lowerLimit) {
  * @return int - Fehlerstatus
  */
 int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
-   if (upperLimit == 0) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (lowerLimit == 0) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (CompareDoubles(upperLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (CompareDoubles(lowerLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    EventTracker.gridLimit.High = upperLimit;
    EventTracker.gridLimit.Low  = lowerLimit;

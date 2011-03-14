@@ -63,7 +63,6 @@ int init() {
       ArrayInitialize(bbandLimits, 0);
    }
 
-
    // Konfiguration auslesen
    symbol        = FindStandardSymbol(Symbol(), Symbol());
    symbolName    = GetSymbolName(symbol, symbol);
@@ -185,7 +184,6 @@ int start() {
    // Accountinitialiserung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
-
 
    // aktuelle Accountdaten holen und alte Ticks abfangen, sämtliche Events werden nur nach neuen Ticks überprüft
    static int accountData[3];                                  // { last_account_number, current_account_number, current_account_init_servertime }
@@ -352,65 +350,43 @@ int CheckGridLimits() {
    if (!Track.Grid)
       return(0);
 
-   static double upperLimit, lowerLimit;
+   static double upperLimit, lowerLimit, limits[2];
 
    // aktuelle Limite ermitteln, ggf. neu berechnen
-   if (upperLimit == 0) if (!EventTracker.GetGridLimits(upperLimit, lowerLimit)) {
+   if (upperLimit == 0) /*&&*/ if (!EventTracker.GetGridLimits(limits)) {
       if (InitializeGridLimits(upperLimit, lowerLimit) == ERR_HISTORY_UPDATE)
          return(ERR_HISTORY_UPDATE);
-      EventTracker.SaveGridLimits(upperLimit, lowerLimit);     // Limite in Library timeframe-übergreifend speichern
-      return(catch("CheckGridLimits(1)"));                     // nach Initialisierung ist Test überflüssig
+      EventTracker.SaveGridLimits(upperLimit, lowerLimit);  // Limite timeframe-übergreifend speichern
+      return(catch("CheckGridLimits(1)"));                  // nach Initialisierung ist Test überflüssig
+   }
+   else {
+      lowerLimit = limits[0];                               // aus Library zurückgegebene Limite lokal speichern
+      upperLimit = limits[1];
    }
 
    bool eventTriggered = false;
-   string message="", price="";
 
    // Limite überprüfen
    if (Ask >= upperLimit) {
       eventTriggered = true;
-      message        = symbolName +" => "+ DoubleToStr(upperLimit, gridDigits);
-      price          = "(Ask: "+ NumberToStr(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
-
-      // SMS verschicken
-      if (SMS.Alerts) {
-         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
-            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   ", price);
-      }
-      else  message = StringConcatenate("CheckGridLimits()   ", message, "   ", price);
+      string message = symbolName +" => "+ DoubleToStr(upperLimit, gridDigits) +" (Ask: "+ NumberToStr(Ask, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
          PlaySound(Sound.File.Up);
-
-      // Signal speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(upperLimit, gridDigits));
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Ask >= upperLimit)
          upperLimit = NormalizeDouble(upperLimit + gridSize           , gridDigits) - 0.000000001;
       lowerLimit    = NormalizeDouble(upperLimit - gridSize - gridSize, gridDigits) + 0.000000001;
    }
-
    else if (Bid <= lowerLimit) {
       eventTriggered = true;
-      message        = symbolName +" <= "+ DoubleToStr(lowerLimit, gridDigits);
-      price          = "(Bid: "+ NumberToStr(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
-
-      // SMS verschicken
-      if (SMS.Alerts) {
-         if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
-            message = StringConcatenate("CheckGridLimits()   SMS sent to ", SMS.Receiver, ":  ", message, "   ", price);
-      }
-      else  message = StringConcatenate("CheckGridLimits()   ", message, "   ", price);
+      message = symbolName +" <= "+ DoubleToStr(lowerLimit, gridDigits) +" (Bid: "+ NumberToStr(Bid, "."+ gridDigits + ifString(gridDigits==Digits, "", "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
          PlaySound(Sound.File.Down);
-
-      // Signal speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit, gridDigits));
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime" , ServerToGMT(TimeCurrent()));
 
       // Limite nachziehen
       while (Bid <= lowerLimit)
@@ -419,11 +395,18 @@ int CheckGridLimits() {
    }
 
    if (eventTriggered) {
+      // SMS verschicken
+      if (SMS.Alerts) /*&&*/ if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
+         message = "SMS sent to "+ SMS.Receiver +":  "+ message;
+
+      // letzten tatsächlich verletzten Level und neue Limite speichern
+      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit + gridSize, gridDigits));
+      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime", ServerToGMT(TimeCurrent()));    // GMT, um Signale Account-übergreifend auswerten zu können
       EventTracker.SaveGridLimits(upperLimit, lowerLimit);
-      Print(message, "   grid adjusted: ", DoubleToStr(lowerLimit, gridDigits), "  <=>  ", DoubleToStr(upperLimit, gridDigits));
+      Print("CheckGridLimits()   ", message, ", grid adjusted: ", DoubleToStr(lowerLimit, gridDigits), "  <=>  ", DoubleToStr(upperLimit, gridDigits));
    }
 
-   return(catch("CheckGridLimits(4)"));
+   return(catch("CheckGridLimits(2)"));
 }
 
 
