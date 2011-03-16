@@ -9,18 +9,11 @@
 #property indicator_chart_window
 
 
-//////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
-
-extern string Font.Name    = "Tahoma";
-extern int    Font.Size    = 9;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 color  Background.Color    = C'212,208,200';
-color  Font.Color.Active   = Blue;
-color  Font.Color.Inactive = Gray;
-
+color  Font.Color.Enabled  = Blue;
+color  Font.Color.Disabled = Gray;
+string Font.Name           = "Tahoma";
+int    Font.Size           = 9;
 
 string names[] = { "TRADEALLOWED","POINT","TICKSIZE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","TICKVALUE","MINLOT","MAXLOT","LOTSTEP","MARGINCALCMODE","MARGINREQUIRED","MARGININIT","MARGINMAINTENANCE","MARGINHEDGED","SWAPTYPE","SWAPLONG","SWAPSHORT","PROFITCALCMODE","STARTING","EXPIRATION","ACCOUNT_LEVERAGE","STOPOUT_MODE","STOPOUT_LEVEL" };
 
@@ -203,7 +196,7 @@ int UpdateInfos() {
    string accountCurrency = AccountCurrency();
 
    bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);
-   color  Font.Color = ifInt(tradeAllowed, Font.Color.Active, Font.Color.Inactive);
+   color  Font.Color = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
    string format = ifString(Digits==3 || Digits==5, StringConcatenate(", .", Digits-1, "'"), StringConcatenate(", .", Digits)) ;
 
                                                             ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
