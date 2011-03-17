@@ -40,8 +40,8 @@ double BollingerBands.MA.Deviation  = 0;
 // sonstige Variablen
 string symbol, symbolName, symbolSection;
 
-double gridSize;              // ie. 0.0020 (20 pip)
-int    gridDigits;            // ie. 4
+double gridSize;           // z.B. 0.0020 (20 pip)
+int    gridDigits;         // z.B. 4
 
 double bbandLimits[3];
 
@@ -66,7 +66,7 @@ int init() {
    // Konfiguration auslesen
    symbol        = FindStandardSymbol(Symbol(), Symbol());
    symbolName    = GetSymbolName(symbol, symbol);
-   symbolSection = StringConcatenate("EventTracker.", symbol);
+   symbolSection = "EventTracker."+ symbol;
 
    // Sound- und SMS-Einstellungen
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
@@ -205,7 +205,7 @@ int start() {
    if (Track.Grid) {                                           // TODO: Limite nach Config-Änderungen reinitialisieren
       if (CheckGridLimits() == ERR_HISTORY_UPDATE) {
          last_error = ERR_HISTORY_UPDATE;
-         debug("start()    CheckGridLimits() => ERR_HISTORY_UPDATE");
+         //debug("start()    CheckGridLimits() => ERR_HISTORY_UPDATE");
          return(ERR_HISTORY_UPDATE);
       }
    }
@@ -420,15 +420,14 @@ int CheckGridLimits() {
  */
 int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
    int    cells = (Bid + Ask)/2 / gridSize;
-   double low   = NormalizeDouble(gridSize * cells, gridDigits) + 0.000000001;      // unteres Limit
+   double low   = NormalizeDouble(cells * gridSize, gridDigits) + 0.000000001;      // unteres Limit
    double high  = NormalizeDouble(low + gridSize  , gridDigits) - 0.000000001;      // oberes Limit (Abstand: 1 x GridSize)
    //debug("InitializeGridLimits()   starting with "+ DoubleToStr(low, gridDigits) +" <=> "+ DoubleToStr(high, gridDigits));
 
-   // wenn vorhanden, letztes Signal auslesen
+   // letztes Signal auslesen
    string varLastSignalValue = "EventTracker."+ symbol +".Grid.LastSignal",
           varLastSignalTime  = "EventTracker."+ symbol +".Grid.LastTime";
-
-   bool     lastSignal;
+   bool     lastSignal      = false;
    double   lastSignalValue = NormalizeDouble(GlobalVariableGet(varLastSignalValue), gridDigits);
    datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime);
    int      lastSignalBar   = -1;
@@ -438,76 +437,65 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
       return(catch("InitializeGridLimits(1)", error));
 
    if (lastSignalValue > 0) /*&&*/ if (lastSignalTime > 0) {
-      if (lastSignalValue <= low || lastSignalValue >= high) {
-         //debug("InitializeGridLimits()   stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" is ignored (not inside of cells)");
-      }
-      else {
-         lastSignal     = true;
-         lastSignalTime = GmtToServerTime(lastSignalTime);
-         //debug("InitializeGridLimits()   stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at ServerTime="+ TimeToStr(lastSignalTime));
-      }
+      lastSignal     = true;
+      lastSignalTime = GmtToServerTime(lastSignalTime);
+      //debug("InitializeGridLimits()   stored signal: "+ DoubleToStr(lastSignalValue, gridDigits) +" at ServerTime="+ TimeToStr(lastSignalTime));
    }
 
-   bool up, down;
+   // tatsächliches letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
+   bool increase=false, decrease=false;
    int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
 
-   // tatsächliches, letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
-   while (!up && !down) {
-      //Print("InitializeGridLimits()    looking for last signal in timeframe "+ PeriodToStr(period) +" and lastSignal="+ lastSignal);
+   while (!increase && !decrease) {
       if (lastSignal) {
          lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_UPDATE auslösen (return=EMPTY_VALUE)
-         if (lastSignalBar == EMPTY_VALUE) {
-            error = stdlib_GetLastError();
-            if (error == ERR_HISTORY_UPDATE)
-               return(error);
-            if (error == NO_ERROR)
-               error = ERR_RUNTIME_ERROR;
-            return(catch("InitializeGridLimits(2)", error));
-         }
+         if (lastSignalBar == EMPTY_VALUE)
+            return(stdlib_GetLastError());
       }
       //debug("InitializeGridLimits()    looking for last signal in timeframe "+ PeriodToStr(period) +" with lastSignalBar="+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
-            down = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= low );
-            up   = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= high);
+            increase = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= high);
+            decrease = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= low );
          }
          else {
-            down = (iLow (NULL, period, bar) <= low );
-            up   = (iHigh(NULL, period, bar) >= high);
+            increase = (iHigh(NULL, period, bar) >= high);
+            decrease = (iLow (NULL, period, bar) <= low );
          }
 
          error = GetLastError();
          if (error == ERR_HISTORY_UPDATE) return(error);
          if (error != NO_ERROR          ) return(catch("InitializeGridLimits(2)", error));
 
-         if (up || down) {
+         if (increase || decrease) {
             //debug("InitializeGridLimits()    last signal found in timeframe "+ PeriodToStr(period) +" at bar="+ bar);
             break;
          }
       }
-      if (!up && !down)                                                       // Grid ist zu groß: Limite bleiben bei Abstand = 1 x GridSize
+      if (!increase && !decrease)                                             // Grid ist zu groß: Limite bleiben bei Abstand = 1 x GridSize
          break;
 
-      if (up && down) {                                                       // Bar hat beide Limite berührt
+      if (increase && decrease) {                                             // Bar hat beide Limite berührt
          if (period == PERIOD_M1)
             break;
          //debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits, decreasing timeframe");
-         period = DecreasePeriod(period);                                     // Timeframe verringern
-         up = false; down = false;
+         period   = DecreasePeriod(period);                                   // Timeframe verringern
+         increase = false;
+         decrease = false;
       }
    }
    /*
-   if      ( up &&  down) debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits");
-   else if (!up || !down) debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched one limit");
-   else                   debug("InitializeGridLimits()    no bar ever touched a limit");
+   if      (increase && decrease) debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits");
+   else if (increase || decrease) debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched one limit");
+   else                           debug("InitializeGridLimits()    no bar ever touched a limit");
    */
 
-   if (up  ) high = NormalizeDouble(high + gridSize, gridDigits);
-   if (down) low  = NormalizeDouble(low  - gridSize, gridDigits);
+   if (increase) high += gridSize;
+   if (decrease) low  -= gridSize;
 
-   upperLimit = high - 0.000000001;       // minimale Abweichung, um später nicht ständig NormalizeDouble() benutzen zu müssen
-   lowerLimit = low  + 0.000000001;
+   upperLimit = NormalizeDouble(high, gridDigits) - 0.000000001;
+   lowerLimit = NormalizeDouble(low , gridDigits) + 0.000000001;
 
    Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(lowerLimit, gridDigits), "  <=>  ", DoubleToStr(upperLimit, gridDigits));
    return(catch("InitializeGridLimits(3)"));

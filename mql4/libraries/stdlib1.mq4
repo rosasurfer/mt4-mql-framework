@@ -4879,7 +4879,7 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  *
- * NOTE:    Kann ERR_HISTORY_UPDATE auslösen.
+ * NOTE:  Kann ERR_HISTORY_UPDATE auslösen.
  * ----
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
