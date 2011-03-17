@@ -1359,7 +1359,6 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "AUDJPY")) return("AUDJPY");
                 if (StringStartsWith(symbol, "AUDNZD")) return("AUDNZD");
                 if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
-                if (symbol == "AUDLFX")                 return("AUDLFX");
                 break;
 
       case 'B': break;
@@ -1367,8 +1366,6 @@ string GetStandardSymbol(string symbol) {
       case 'C': if (StringStartsWith(symbol, "CADCHF")) return("CADCHF");
                 if (StringStartsWith(symbol, "CADJPY")) return("CADJPY");
                 if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
-                if (symbol == "CADLFX")                 return("CADLFX");
-                if (symbol == "CHFLFX")                 return("CHFLFX");
                 break;
 
       case 'D': break;
@@ -1384,7 +1381,6 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "EURRUR")) return("EURRUR");
                 if (StringStartsWith(symbol, "EURSEK")) return("EURSEK");
                 if (StringStartsWith(symbol, "EURUSD")) return("EURUSD");
-                if (symbol == "EURLFX")                 return("EURLFX");
                 if (symbol == "EURX"  )                 return("EURX"  );
                 break;
 
@@ -1397,25 +1393,20 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
                 if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUR");
                 if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
-                if (symbol == "GBPLFX")                 return("GBPLFX");
                 if (symbol == "GOLD"  )                 return("XAUUSD");
                 break;
 
       case 'H':
       case 'I':
       case 'J':
-      case 'K': break;
-
-      case 'L': if (symbol == "LFXJPY") return("JPYLFX");
-                break;
-
+      case 'K':
+      case 'L':
       case 'M': break;
 
       case 'N': if (StringStartsWith(symbol, "NZDCAD")) return("NZDCAD");
                 if (StringStartsWith(symbol, "NZDCHF")) return("NZDCHF");
                 if (StringStartsWith(symbol, "NZDJPY")) return("NZDJPY");
                 if (StringStartsWith(symbol, "NZDUSD")) return("NZDUSD");
-                if (symbol == "NZDLFX")                 return("NZDLFX");
                 break;
 
       case 'O':
@@ -1441,7 +1432,6 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "USDSEK")) return("USDSEK");
                 if (StringStartsWith(symbol, "USDSGD")) return("USDSGD");
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
-                if (symbol == "USDLFX")                 return("USDLFX");
                 if (symbol == "USDX"  )                 return("USDX"  );
                 break;
 
@@ -1519,7 +1509,7 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
    if (symbol == "GBPRUR"  ) return("GBP/RUR"  );
    if (symbol == "GBPUSD"  ) return("GBP/USD"  );
-   if (symbol == "JPYLFX"  ) return("JPY-Index");
+   if (symbol == "LFXJPY"  ) return("JPY-Index");
    if (symbol == "NZDCAD"  ) return("NZD/CAD"  );
    if (symbol == "NZDCHF"  ) return("NZD/CHF"  );
    if (symbol == "NZDJPY"  ) return("NZD/JPY"  );
@@ -1573,7 +1563,7 @@ string GetSymbolLongName(string symbol, string altValue="") {
    if (symbol == "EURLFX"  ) return("EUR-Index (Liteforex)"   );
    if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
    if (symbol == "GBPLFX"  ) return("GBP-Index (Liteforex)"   );
-   if (symbol == "JPYLFX"  ) return("1/JPY-Index (Liteforex)" );
+   if (symbol == "LFXJPY"  ) return("1/JPY-Index (Liteforex)" );
    if (symbol == "NZDLFX"  ) return("NZD-Index (Liteforex)"   );
    if (symbol == "USDLFX"  ) return("USD-Index (Liteforex)"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
