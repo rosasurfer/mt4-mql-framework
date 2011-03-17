@@ -1541,7 +1541,7 @@ string GetSymbolName(string symbol, string altValue="") {
 
 /**
  * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetSymbolLongName("USDLFX") => "USD-Index (Liteforex)")
+ * (z.B. GetSymbolLongName("USDLFX") => "USD-Index (LiteForex)")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
@@ -1557,15 +1557,15 @@ string GetSymbolLongName(string symbol, string altValue="") {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD-Index (Liteforex)"   );
-   if (symbol == "CADLFX"  ) return("CAD-Index (Liteforex)"   );
-   if (symbol == "CHFLFX"  ) return("CHF-Index (Liteforex)"   );
-   if (symbol == "EURLFX"  ) return("EUR-Index (Liteforex)"   );
+   if (symbol == "AUDLFX"  ) return("AUD-Index (LiteForex)"   );
+   if (symbol == "CADLFX"  ) return("CAD-Index (LiteForex)"   );
+   if (symbol == "CHFLFX"  ) return("CHF-Index (LiteForex)"   );
+   if (symbol == "EURLFX"  ) return("EUR-Index (LiteForex)"   );
    if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
-   if (symbol == "GBPLFX"  ) return("GBP-Index (Liteforex)"   );
-   if (symbol == "LFXJPY"  ) return("1/JPY-Index (Liteforex)" );
-   if (symbol == "NZDLFX"  ) return("NZD-Index (Liteforex)"   );
-   if (symbol == "USDLFX"  ) return("USD-Index (Liteforex)"   );
+   if (symbol == "GBPLFX"  ) return("GBP-Index (LiteForex)"   );
+   if (symbol == "LFXJPY"  ) return("1/JPY-Index (LiteForex)" );
+   if (symbol == "NZDLFX"  ) return("NZD-Index (LiteForex)"   );
+   if (symbol == "USDLFX"  ) return("USD-Index (LiteForex)"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    string prefix = StringLeft(symbol, -3);
