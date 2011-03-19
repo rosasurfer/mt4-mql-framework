@@ -2,7 +2,7 @@
  * Zeigt im Chart verschiedene Informationen an:
  *
  * - oben links:     der Name des Instruments
- * - oben rechts:    der aktuelle Kurs: (Bid+Ask) / 2
+ * - oben rechts:    der aktuelle Kurs
  * - unter dem Kurs: der Spread
  * - unten rechts:   der Schlußkurs der letzten H1-Bar, wenn das Chartsymbol in Last.H1.Close.Symbols aufgeführt ist
  * - unten Mitte:    die Größe einer Handels-Unit
@@ -12,6 +12,10 @@
 
 
 #property indicator_chart_window
+
+
+#define PRICE_BID    1
+#define PRICE_ASK    2
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -24,6 +28,7 @@ extern string H1.Close.Symbols = "";         // Symbole, für die der Schlußkurs 
 string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
+int  appliedPrice = PRICE_MEDIAN;            // Bid | Ask | Median (default)
 bool showH1Close, positionChecked;
 
 
@@ -40,7 +45,16 @@ int init() {
    SetIndexLabel(0, NULL);
 
    // Konfiguration auswerten
-   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ FindStandardSymbol(Symbol(), Symbol()) +",");
+   string symbol = FindStandardSymbol(Symbol(), Symbol());
+   string price  = StringToLower(GetGlobalConfigString("AppliedPrice", symbol, "median"));
+   if      (price == "median") appliedPrice = PRICE_MEDIAN;
+   else if (price == "bid"   ) appliedPrice = PRICE_BID;
+   else if (price == "ask"   ) appliedPrice = PRICE_ASK;
+   else {
+      catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+   }
+
+   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ symbol +",");
 
    // Label definieren und erzeugen
    string indicatorName = WindowExpertName();
@@ -138,7 +152,7 @@ int CreateLabels() {
    string name   = GetSymbolLongName(symbol, GetSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);       // Anzeige wird sofort (und nur hier) gesetzt
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);             // Anzeige wird sofort (und nur hier) gesetzt
 
    // aktueller Kurs
    if (ObjectFind(priceLabel) >= 0)
@@ -212,17 +226,21 @@ int CreateLabels() {
  * @return int - Fehlerstatus
  */
 int UpdatePriceLabel() {
-   if (Bid == 0) {                  // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+   if (Bid == 0) {                           // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
       string strPrice = " ";
    }
    else {
       static double lastBid, lastAsk;
       if (lastBid==Bid) /*&&*/ if (lastAsk==Ask)
-         return(0);
+         return(NO_ERROR);
       lastBid = Bid;
       lastAsk = Ask;
 
-      double price = (Bid + Ask) / 2;
+      switch (appliedPrice) {
+         case PRICE_MEDIAN: double price = (Bid + Ask)/2; break;
+         case PRICE_BID:           price =  Bid;          break;
+         case PRICE_ASK:           price =  Ask;          break;
+      }
 
       if (Digits==3 || Digits==5) strPrice = NumberToStr(price, StringConcatenate(",,.", Digits-1, "'"));
       else                        strPrice = NumberToStr(price, StringConcatenate(",,.", Digits));

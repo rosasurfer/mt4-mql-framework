@@ -45,7 +45,7 @@ double BollingerBands.MA.Deviation  = 0;
 
 // sonstige Variablen
 string symbol, symbolName, symbolSection;
-int    Grid.Digits;
+int    Grid.Digits;                                   // ie. für Digits==5 => 4
 
 double bbandLimits[3];
 
@@ -78,7 +78,7 @@ int init() {
    if (SMS.Alerts) {
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
-         catch("init(2)  Invalid or missing config value SMS.Receiver \""+ SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(2)  Invalid or missing configuration value SMS.Receiver \""+ SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE);
          SMS.Alerts = false;
       }
    }
@@ -93,13 +93,13 @@ int init() {
       Grid.Digits = Digits -  Digits % 2;
       Grid.Size   = NormalizeDouble(Grid.Size * Point * MathPow(10, Digits-Grid.Digits), Grid.Digits);   // ie. Grid.Size = 0.0020
 
-      string appliedPrice = StringToLower(GetConfigString(symbolSection, "Grid.AppliedPrice", "spread"));
+      string appliedPrice = StringToLower(GetGlobalConfigString("AppliedPrice", symbol, "spread"));
       if      (appliedPrice == "spread") Grid.AppliedPrice = PRICE_SPREAD;
       else if (appliedPrice == "bid"   ) Grid.AppliedPrice = PRICE_BID;
       else if (appliedPrice == "ask"   ) Grid.AppliedPrice = PRICE_ASK;
       else if (appliedPrice == "median") Grid.AppliedPrice = PRICE_MEDIAN;
       else {
-         catch("init(3)  Invalid config value Grid.AppliedPrice \""+ appliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(3)  Invalid configuration value Grid.AppliedPrice \""+ appliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE);
          Track.Grid = false;
       }
    }
