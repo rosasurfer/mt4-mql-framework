@@ -23,7 +23,8 @@ extern int    Periods        = 75;           // Anzahl der zu verwendenden Perio
 extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern double Deviation      = 1.65;         // Standardabweichung
 extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
-extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
+//extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
+extern string MA.Method.Help = "SMA | EMA | SMMA | LWMA";
 extern int    Max.Values     = 0;            // Anzahl der maximal zu berechnenden Werte (nochmalige Performancesteigerung)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

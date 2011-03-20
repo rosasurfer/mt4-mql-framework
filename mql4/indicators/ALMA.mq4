@@ -18,14 +18,13 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Period         = 200;             // averaging period
-extern string AppliedPrice      = "C";             // price used for MA calculation
-extern string AppliedPrice.Help = "C(lose) | O(pen) | H(igh) | L(ow) | M(edian) | T(ypical) | W(eighted)";
+extern string AppliedPrice      = "Close";         // price used for MA calculation
+extern string AppliedPrice.Help = "Close | Open | High | Low | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;
-extern double ReversalPctFilter = 0.0;             // minimum percentage MA change to indicate a completed trend reversal
-extern int    MaxValues         = -1;              // maximum number of indicator values to display
-extern string MaxValues.Help    = "Max. ind. values to display: -1 = all";
+extern double PctReversalFilter = 0.0;             // minimum percentage MA change to indicate a completed trend reversal
 extern int    BarShift          = 0;               // indicator display shifting
+extern int    Max.Values        = -1;              // maximum number of indicator values to display: -1 = all
 extern bool   SoundAlerts       = false;           // enable/disable sound alerts on trend changes (intra-bar too)
 extern bool   TradeSignals      = false;           // enable/disable dialog box alerts on trend changes (only on bar-open)
 
@@ -79,7 +78,7 @@ int init() {
    SetIndexBuffer(5, iDel      );
 
    // Zeichenoptionen
-   int startDraw = MathMax(MA.Period-1, Bars-ifInt(MaxValues < 0, Bars, MaxValues));
+   int startDraw = MathMax(MA.Period-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
@@ -178,8 +177,8 @@ int start() {
    static int lastTrend;
 
    // Startbar ermitteln
-   if (ChangedBars > MaxValues) /*&&*/ if (MaxValues >= 0)
-      ChangedBars = MaxValues;
+   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+      ChangedBars = Max.Values;
    int startBar = MathMin(ChangedBars-1, Bars-MA.Period);
 
    // Schleife über alle zu berechnenden Bars
@@ -191,7 +190,7 @@ int start() {
       }
 
       // Percentage-Filter (verdoppelt die Laufzeit)
-      if (ReversalPctFilter > 0) {
+      if (PctReversalFilter > 0) {
          iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
 
          double sumDel = 0;
@@ -205,7 +204,7 @@ int start() {
             sumPow += MathPow(iDel[bar+j] - avgDel, 2);
          }
          double stdDev = MathSqrt(sumPow/MA.Period);
-         double filter = ReversalPctFilter * stdDev;
+         double filter = PctReversalFilter * stdDev;
 
          if (MathAbs(iALMA[bar]-iALMA[bar+1]) < filter)
             iALMA[bar] = iALMA[bar+1];
