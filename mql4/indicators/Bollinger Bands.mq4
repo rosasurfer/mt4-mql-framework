@@ -22,16 +22,15 @@
 extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
 extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
 extern double Deviation      = 1.65;         // Standardabweichung
-extern int    MA.Method      = 2;            // MA-Methode, siehe MODE_SMA, MODE_EMA, MODE_SMMA, MODE_LWMA
-//extern string MA.Method.Help = "1: Simple, 2: Exponential, 3: Smoothed, 4: Linear Weighted";
+extern string MA.Method      = "SMA";        // MA-Methode
 extern string MA.Method.Help = "SMA | EMA | SMMA | LWMA";
-extern int    Max.Values     = 0;            // Anzahl der maximal zu berechnenden Werte (nochmalige Performancesteigerung)
+extern int    Max.Values     = -1;           // Anzahl der maximal anzuzeigenden Werte: -1 = all
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
-int    period;                                     // Period-Code zum angegebenen Timeframe
+int    maTimeframe, maMethod;
 
 
 /**
@@ -43,46 +42,44 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Puffer zuordnen
+   // Konfiguration auswerten
+   if (Periods < 2)
+      return(catch("init(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE));
+
+   maTimeframe = GetPeriod(Timeframe);
+   if (maTimeframe == 0)
+      return(catch("init(2)  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE));
+
+   string method = StringToUpper(MA.Method);
+   if      (method == "SMA" ) maMethod = MODE_SMA;
+   else if (method == "EMA" ) maMethod = MODE_EMA;
+   else if (method == "SMMA") maMethod = MODE_SMMA;
+   else if (method == "LWMA") maMethod = MODE_LWMA;
+   else {
+      return(catch("init(3)  Invalid input parameter MA.Method: \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   }
+
+   if (Deviation <= 0)
+      return(catch("init(4)  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE));
+
+   if (Max.Values < 0)
+      Max.Values = Bars;
+
+   // Puffer zuweisen
    SetIndexBuffer(0, UpperBand);
    SetIndexBuffer(1, MovingAvg);
    SetIndexBuffer(2, LowerBand);
    IndicatorDigits(Digits);
 
-   // Parameter überprüfen
-   if (Periods < 2)
-      return(catch("init(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE));
-
-   period = GetPeriod(Timeframe);
-   if (period == 0)
-      return(catch("init(2)  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE));
-
-   switch (MA.Method) {
-      case 1: MA.Method = MODE_SMA;  break;
-      case 2: MA.Method = MODE_EMA;  break;
-      case 3: MA.Method = MODE_SMMA; break;
-      case 4: MA.Method = MODE_LWMA; break;
-      default:
-         return(catch("init(3)  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE));
-   }
-   if (Deviation <= 0)
-      return(catch("init(4)  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE));
-
-   if (Max.Values < 0)
-      return(catch("init(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
-
-   if (Max.Values == 0)
-      Max.Values = Bars;
-
-   // Indikatorlabel setzen
+   // Anzeigeoptionen
    SetIndexLabel(0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
    SetIndexLabel(1, StringConcatenate("MovingAvg(", Periods, "x", Timeframe, ")"));
    SetIndexLabel(2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
 
-   // nach Setzen der Label Parameter auf aktuellen Zeitrahmen umrechnen
-   if (Period() != period) {
-      double minutes = period * Periods;           // Timeframe * Anzahl Bars = Range in Minuten
-      Periods = MathRound(minutes/Period());
+   // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
+   if (Period() != maTimeframe) {
+      double minutes = maTimeframe * Periods;        // Timeframe * Anzahl Bars = Range in Minuten
+      Periods = MathRound(minutes / Period());
    }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
@@ -169,9 +166,9 @@ int start() {
    /**
     * MovingAverage und Bänder berechnen
     *
-    * Folgende Beobachtungen und Überlegungen wurden für die verschiedenen MA-Methoden gemacht:
-    * -----------------------------------------------------------------------------------------
-    * 1) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=Median) stimmen zu beinahe 100% überein.
+    * Folgende Beobachtungen und Schlußfolgerungen wurden für die verschiedenen MA-Methoden gemacht:
+    * ----------------------------------------------------------------------------------------------
+    * 1) Die Ergebnisse von stdDev(appliedPrice=Close) und stdDev(appliedPrice=Median) stimmen nahezu zu 100% überein.
     *
     * 2) Die Ergebnisse von stdDev(appliedPrice=Median) und stdDev(appliedPrice=High|Low) lassen sich durch Anpassung des Faktors Deviation zu 90-95%
     *    in Übereinstimmung bringen.  Der Wert von stdDev(appliedPrice=Close)*1.65 entspricht nahezu dem Wert von stdDev(appliedPrice=High|Low)*1.4.
@@ -179,15 +176,15 @@ int start() {
     * 3) Die Verwendung von appliedPrice=High|Low ist sehr langsam, die von appliedPrice=Close am schnellsten.
     *
     * 4) Zur Performancesteigerung wird appliedPrice=Median verwendet, auch wenn appliedPrice=High|Low geringfügig exakter scheint.  Denn was ist
-    *    im Sinne dieses Indikators "exakt"?  Die konkreten, berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein
-    *    weiteres Bollinger-Band auf SMA-Basis verwendet (dessen konkrete Werte ebenfalls keine tatsächliche Aussagekraft haben).  Beide Indikatoren
-    *    zusammen dienen zur Orientierung im Trend, "exakt messen" können beide nichts.
+    *    im Sinne dieses Indikators "exakt"?  Die einzelnen berechneten Werte haben keine tatsächliche Aussagekraft.  Aus diesem Grunde wird ein
+    *    weiteres Bollinger-Band auf SMA-Basis verwendet (dessen einzelne Werte ebenfalls keine tatsächliche Aussagekraft haben).  Beide Indikatoren
+    *    zusammen dienen zur Orientierung, "exakt messen" können beide nichts.
     */
    double ma, dev;
 
    for (i=bars-1; i >= 0; i--) {
-      ma  = iMA    (NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i);
-      dev = iStdDev(NULL, 0, Periods, 0, MA.Method, PRICE_MEDIAN, i) * Deviation;
+      ma  = iMA    (NULL, 0, Periods, 0, maMethod, PRICE_MEDIAN, i);
+      dev = iStdDev(NULL, 0, Periods, 0, maMethod, PRICE_MEDIAN, i) * Deviation;
       UpperBand[i] = ma + dev;
       MovingAvg[i] = ma;
       LowerBand[i] = ma - dev;
