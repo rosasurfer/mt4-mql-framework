@@ -8,7 +8,7 @@
 
    // Laufzeitfunktionen
    void     stdlib_init(string scriptName);
-   int      stdlib_onTick(int indicatorCounted);
+   void     stdlib_onTick(int validBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 

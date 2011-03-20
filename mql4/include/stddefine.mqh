@@ -352,6 +352,7 @@
 #define ERR_FUNCTION_NOT_IMPLEMENTED                 5001   // function not implemented
 #define ERR_INVALID_INPUT_PARAMVALUE                 5002   // invalid input parameter value
 #define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready
+#define ERR_INVALID_TIMEZONE_CONFIG                  5004   // invalid or missing timezone configuration
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung

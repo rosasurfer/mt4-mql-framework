@@ -213,11 +213,9 @@ int start() {
 
    // Kursänderungen
    if (Track.Grid) {                                           // TODO: Limite nach Config-Änderungen reinitialisieren
-      if (CheckGridLimits() == ERR_HISTORY_UPDATE) {
-         last_error = ERR_HISTORY_UPDATE;
-         //debug("start()    CheckGridLimits() => ERR_HISTORY_UPDATE");
-         return(ERR_HISTORY_UPDATE);
-      }
+      last_error = CheckGridLimits();
+      if (last_error == ERR_HISTORY_UPDATE)
+         return(last_error);
    }
 
    /*

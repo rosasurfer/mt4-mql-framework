@@ -45,18 +45,16 @@ void stdlib_init(string scriptName) {
  * oder eines neuen Ticks erfolgt (z.B. in EventListenern). Außerdem kann damit in der Library IndicatorCounted() emuliert werden.
  *
  * @param  int validBars - Anzahl der gültigen Bars *oder* Indikatorwerte (je nach Aufrufer)
- *
- * @return int - Fehlerstatus
  */
-int stdlib_onTick(int validBars) {
-   if (validBars < 0)
-      return(catch("stdlib_onTick()  invalid parameter validBars = "+ validBars, ERR_INVALID_FUNCTION_PARAMVALUE));
+void stdlib_onTick(int validBars) {
+   if (validBars < 0) {
+      catch("stdlib_onTick()  invalid parameter validBars = "+ validBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return;
+   }
 
    Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    ValidBars   = validBars;
    ChangedBars = Bars - ValidBars;
-
-   return(NO_ERROR);
 }
 
 
@@ -1023,6 +1021,8 @@ int SendTick(bool sound=false) {
       WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
+   if (hWnd == 0)
+      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodToStr(Period()) +") => 0", ERR_RUNTIME_ERROR));
    PostMessageA(hWnd, WM_MT4, 2, 1);
 
    if (sound)
@@ -2603,7 +2603,7 @@ datetime EasternToServerTime(datetime easternTime) {
       return(-1);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "EST,EDT")
+   if (zone == "America/New_York")
       return(easternTime);
 
    // Offset Eastern zu GMT
@@ -3673,7 +3673,7 @@ int GetEasternToGmtOffset(datetime easternTime) {
  */
 int GetEasternToServerTimeOffset(datetime easternTime) {
    if (easternTime < 1) {
-      catch("GetEasternToServerTimeOffset(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetEasternToServerTimeOffset(1)   invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -3682,7 +3682,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
       return(EMPTY_VALUE);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "EST,EDT")
+   if (zone == "America/New_York")
       return(0);
 
    // Offset Eastern zu GMT
@@ -3826,7 +3826,7 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) {
    if (gmtTime < 1) {
-      catch("GetGmtToServerTimeOffset(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetGmtToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -3835,42 +3835,34 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
 
-   // Europe/Kiev                                   GMT+0200[,GMT+0300]
-   if      (timezone == "EET"     )                 offset = -2 * HOURS;
-   else if (timezone == "EET,EEST") {
+   if (timezone == "Europe/Kiev") {              // GMT+0200,GMT+0300
       if      (gmtTime < EEST_transitions[year][2]) offset = -2 * HOURS;
       else if (gmtTime < EEST_transitions[year][3]) offset = -3 * HOURS;
       else                                          offset = -2 * HOURS;
    }
 
-   // Europe/Berlin                                 GMT+0100[,GMT+0200]
-   else if (timezone == "CET"     )                 offset = -1 * HOUR;
-   else if (timezone == "CET,CEST") {
+   else if (timezone == "Europe/Berlin") {       // GMT+0100,GMT+0200
       if      (gmtTime < CEST_transitions[year][2]) offset = -1 * HOUR;
       else if (gmtTime < CEST_transitions[year][3]) offset = -2 * HOURS;
       else                                          offset = -1 * HOUR;
    }
-
-   // GMT                                           GMT+0000
+                                                 // GMT+0000
    else if (timezone == "GMT")                      offset =  0;
 
-   // Europe/London                                 GMT+0000[,GMT+0100]
-   else if (timezone == "GMT,BST") {
+   else if (timezone == "Europe/London") {       // GMT+0000,GMT+0100
       if      (gmtTime < BST_transitions[year][2])  offset =  0;
       else if (gmtTime < BST_transitions[year][3])  offset = -1 * HOUR;
       else                                          offset =  0;
    }
 
-   // America/New_York                              GMT-0500[,GMT-0400]
-   else if (timezone == "EST"    )                  offset = 5 * HOURS;
-   else if (timezone == "EST,EDT") {
+   else if (timezone == "America/New_York") {    // GMT-0500,GMT-0400
       if      (gmtTime < EDT_transitions[year][2])  offset = 5 * HOURS;
       else if (gmtTime < EDT_transitions[year][3])  offset = 4 * HOURS;
       else                                          offset = 5 * HOURS;
    }
 
    else {
-      catch("GetGmtToServerTimeOffset(2)  unknown timezone for account "+ GetAccountNumber() +": \""+ timezone +"\"", ERR_RUNTIME_ERROR);
+      catch("GetGmtToServerTimeOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
@@ -4015,7 +4007,7 @@ string ErrorDescription(int error) {
       case ERR_NO_CONNECTION              : return("no connection to trade server"                                 ); //    6
       case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                             ); //    7
       case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                         ); //    8
-      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation (never returned error)"          ); //    9
+      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                                 ); //    9    never returned error
       case ERR_ACCOUNT_DISABLED           : return("account disabled"                                              ); //   64
       case ERR_INVALID_ACCOUNT            : return("invalid account"                                               ); //   65
       case ERR_TRADE_TIMEOUT              : return("trade timeout"                                                 ); //  128
@@ -4040,7 +4032,7 @@ string ErrorDescription(int error) {
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                      ); //  150
 
       // runtime errors
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000       common runtime error (no mql error)
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000    common runtime error (no mql error)
       case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                        ); // 4001
       case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                      ); // 4002
       case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                             ); // 4003
@@ -4062,14 +4054,14 @@ string ErrorDescription(int error) {
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
-      case ERR_SYSTEM_BUSY                : return("system busy (never generated error)"                           ); // 4022
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050       invalid parameters count
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051       invalid parameter value
+      case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022    never generated error
+      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050    invalid parameters count
+      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051    invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
-      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053       some array error
+      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053    some array error
       case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                                  ); // 4054
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055       custom indicator error
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056       incompatible arrays
+      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055    custom indicator error
+      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056    incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
       case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                             ); // 4059
@@ -4079,10 +4071,10 @@ string ErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                    ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                     ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                      ); // 4065
-      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066       history in update state
-      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067       error in trading function
-      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099       end of file
-      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100       some file error
+      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066    history in update state
+      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067    error in trading function
+      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099    end of file
+      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100    some file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                               ); // 4101
       case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                         ); // 4102
       case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                              ); // 4103
@@ -4096,7 +4088,7 @@ string ErrorDescription(int error) {
       case ERR_SHORTS_NOT_ALLOWED         : return("short trades are not enabled"                                  ); // 4111
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                         ); // 4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                       ); // 4201
-      case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn\'t exist"                                         ); // 4202
+      case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                          ); // 4202
       case ERR_UNKNOWN_OBJECT_TYPE        : return("unknown object type"                                           ); // 4203
       case ERR_NO_OBJECT_NAME             : return("no object name"                                                ); // 4204
       case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                      ); // 4205
@@ -4104,10 +4096,11 @@ string ErrorDescription(int error) {
       case ERR_SOME_OBJECT_ERROR          : return("object error"                                                  ); // 4207
 
       // custom errors
-      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000       Windows error
-      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001       function not implemented
-      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002       invalid input parameter value
-      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5003       terminal not yet ready
+      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000
+      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002
+      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5003
+      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5004
    }
    return("unknown error");
 }
@@ -4479,54 +4472,61 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
- * Gibt die Zeitzone des Tradeservers zurück.
+ * Gibt die Zeitzone des aktuellen Tradeservers zurück.
  *
- * @return string - 1 oder 2 Zeitzonenkürzel ("Standard-Zeitzone[,DaylightSaving-Zeitzone]")
- *                  oder ein Leerstring, falls ein Fehler auftrat
+ * @return string - Zeitzonen-Identifier nach "Olson" TZ Database
+ *
+ * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetTradeServerTimezone() {
-   string account = GetAccountNumber();      // evt. ERR_TERMINAL_NOT_YET_READY
-   if (account == "0")
-      return("");
+   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
+   // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
 
-   string configValue = GetConfigString("Timezones", account, "");
-   if (configValue == "") {
-      catch("GetTradeServerTimezone(1)  timezone configuration not found for account: "+ account, ERR_RUNTIME_ERROR);
-      return("");
-   }
+   static string cache.timezone[];
+   static int    lastTick;                               // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   string values[];
-   Explode(configValue, ",", values);
-   if (ArraySize(values) > 2) {
-      catch("GetTradeServerTimezone(2)  invalid timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
-   string zone = JoinStrings(values, ",");
+   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+      ArrayResize(cache.timezone, 0);
+   lastTick = Tick;
 
-   if      (zone == "EET"     ) {} // Europe/Kiev        GMT+0200[,GMT+0300]
-   else if (zone == "EET,EET" ) {  zone = "EET"; }
-   else if (zone == "EET,EEST") {}
+   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
+   if (ArraySize(cache.timezone) > 0)
+      return(cache.timezone[0]);
 
-   else if (zone == "CET"     ) {} // Europe/Berlin      GMT+0100[,GMT+0200]
-   else if (zone == "CET,CET" ) {  zone = "CET"; }
-   else if (zone == "CET,CEST") {}
+   // 3) Timezone-ID ermitteln
+   string timezone, directory=StringToLower(GetTradeServerDirectory());
 
-   else if (zone == "GMT"     ) {} // GMT                GMT+0000[,GMT+0100]
-   else if (zone == "GMT,GMT" ) {  zone = "GMT"; }
-   else if (zone == "GMT,BST" ) {}
-
-   else if (zone == "EST"     ) {} // America/New_York   GMT-0500[,GMT-0400]
-   else if (zone == "EST,EST" ) {  zone = "EST"; }
-   else if (zone == "EST,EDT" ) {}
-
+   if      (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "America/New_York";
+   else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
+   else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
+   else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
+   else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
+   else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
+   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
-      catch("GetTradeServerTimezone(3)  unknown timezone configuration for account "+ account +": \""+ configValue +"\"", ERR_RUNTIME_ERROR);
-      return("");
+      timezone = GetGlobalConfigString("Timezones", directory, "");
+      if (timezone == "") {
+         catch("GetTradeServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+         return("");
+      }
    }
 
-   if (catch("GetTradeServerTimezone(4)") != NO_ERROR)
+   // 4) Timezone-ID cachen
+   ArrayResize(cache.timezone, 1);
+   cache.timezone[0] = timezone;
+
+   if (catch("GetTradeServerTimezone(2)") != NO_ERROR)
       return("");
-   return(zone);
+   return(timezone);
 }
 
 
@@ -4539,7 +4539,7 @@ string GetTradeServerTimezone() {
  */
 int GetServerToEasternTimeOffset(datetime serverTime) {
    if (serverTime < 1) {
-      catch("GetServerToEasternTimeOffset(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetServerToEasternTimeOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -4548,7 +4548,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
       return(EMPTY_VALUE);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "EST,EDT")
+   if (zone == "America/New_York")
       return(0);
 
    // Offset Server zu GMT
@@ -4575,7 +4575,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
  */
 int GetServerToGmtOffset(datetime serverTime) {
    if (serverTime < 1) {
-      catch("GetServerToGmtOffset(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetServerToGmtOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -4584,42 +4584,34 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 
-   // Europe/Kiev                                      GMT+0200[,GMT+0300]
-   if      (zone == "EET"     )                        offset = 2 * HOURS;
-   else if (zone == "EET,EEST") {
+   if (zone == "Europe/Kiev") {                     // GMT+0200,GMT+0300
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
 
-   // Europe/Berlin                                    GMT+0100[,GMT+0200]
-   else if (zone == "CET"     )                        offset = 1 * HOUR;
-   else if (zone == "CET,CEST") {
+   else if (zone == "Europe/Berlin") {              // GMT+0100,GMT+0200
       if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
       else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
       else                                             offset = 1 * HOURS;
    }
+                                                    // GMT+0000
+   else if (zone == "GMT")                             offset = 0;
 
-   // GMT                                              GMT+0000
-   else if (zone == "GMT"    )                         offset = 0;
-
-   // Europe/London                                    GMT+0000[,GMT+0100]
-   else if (zone == "GMT,BST") {
+   else if (zone == "Europe/London") {              // GMT+0000,GMT+0100
       if      (serverTime < BST_transitions[year][0])  offset = 0;
       else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
       else                                             offset = 0;
    }
 
-   // America/New_York                                 GMT-0500[,GMT-0400]
-   else if (zone == "EST"    )                         offset = -5 * HOURS;
-   else if (zone == "EST,EDT") {
+   else if (zone == "America/New_York") {           // GMT-0500,GMT-0400
       if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
       else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
       else                                             offset = -5 * HOURS;
    }
 
    else {
-      catch("GetServerToGmtOffset(2)  unknown timezone for account "+ GetAccountNumber() +": \""+ zone +"\"", ERR_RUNTIME_ERROR);
+      catch("GetServerToGmtOffset(2)  unknown timezone \""+ zone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
@@ -5283,7 +5275,7 @@ datetime ServerToEasternTime(datetime serverTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetTradeServerTimezone() == "EST,EDT")
+   if (GetTradeServerTimezone() == "America/New_York")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
@@ -5311,7 +5303,7 @@ datetime ServerToEasternTime(datetime serverTime) {
  */
 datetime ServerToGMT(datetime serverTime) {
    if (serverTime < 1) {
-      catch("ServerToGMT(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("ServerToGMT(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
@@ -5325,7 +5317,7 @@ datetime ServerToGMT(datetime serverTime) {
 
    datetime gmtTime = serverTime - serverToGmtOffset;
    if (gmtTime < 0) {
-      catch("ServerToGMT(2)   invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("ServerToGMT(2)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 

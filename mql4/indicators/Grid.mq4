@@ -5,9 +5,11 @@
  */
 #include <stdlib.mqh>
 
+
 #property indicator_chart_window
 
-//////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////// Externe Konfiguration //////////////////////////////////////////////////////////////
 
 extern color Grid.Color = LightGray;
 
@@ -24,12 +26,6 @@ string objectLabels[];
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
-
-   // ERR_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber()) {
-      init_error = stdlib_GetLastError();
-      return(init_error);
-   }
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -64,13 +60,11 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
-   static bool redraw = false;                                       // Neuzeichnen merken (falls ERR_HISTORY_UPDATE)
-
    Tick++;
-   if      (init_error!=NO_ERROR)                   ValidBars = 0;
-   else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
-   else if (redraw)                                 ValidBars = 0;
-   else                                             ValidBars = IndicatorCounted();
+   if      (init_error != NO_ERROR)                   ValidBars = 0;
+   else if (last_error == ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else if (last_error == ERR_HISTORY_UPDATE)         ValidBars = 0;
+   else                                               ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
@@ -90,15 +84,12 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   //log("start()   Bars="+ Bars + "   account="+ AccountNumber() +" (\""+ AccountCompany() +"\")   accountServer=\""+ AccountServer() +"\"   serverDirectory=\""+ GetTradeServerDirectory() +"\"   timezone=\""+ GetTradeServerTimezone() +"\"");
-
-
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
+
    // Grid zeichnen
-   if (ValidBars == 0) {
-      redraw = (DrawGrid() == ERR_HISTORY_UPDATE);
-   }
+   if (ValidBars == 0)
+      last_error = DrawGrid();
 
    return(catch("start()"));
 }
@@ -132,7 +123,7 @@ int DrawGrid() {
       }
       else if (Period() == PERIOD_MN1) {                       // Quartalsseparatoren
       }                                                        // => easternTo ist der 1. Handelstag des nächsten Quartals
-   //Print("DrawGrid()   Grid from: "+ GetDayOfWeek(easternFrom, false) +" "+ TimeToStr(easternFrom) +"     to: "+ GetDayOfWeek(easternTo, false) +" "+ TimeToStr(easternTo));
+   //debug("DrawGrid()   Grid from: "+ GetDayOfWeek(easternFrom, false) +" "+ TimeToStr(easternFrom) +"     to: "+ GetDayOfWeek(easternTo, false) +" "+ TimeToStr(easternTo));
 
 
    // Separatoren zeichnen

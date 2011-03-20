@@ -48,10 +48,9 @@ int init() {
  */
 int start() {
    Tick++;
-   if      (init_error!=NO_ERROR)                   ValidBars = 0;
- //else if (last_error==ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
-   else if (last_error!=NO_ERROR                  ) ValidBars = 0;                     // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
-   else                                             ValidBars = IndicatorCounted();
+   if      (init_error != NO_ERROR) ValidBars = 0;
+   else if (last_error != NO_ERROR) ValidBars = 0;                   // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
+   else                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
@@ -71,7 +70,7 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor Neuberechnung Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iBufferBalance, EMPTY_VALUE);
    }
