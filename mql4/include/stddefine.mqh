@@ -385,9 +385,9 @@ int catch(string message="", int error=NO_ERROR) {
       if (message == "")
          message = "???";
       Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
-      last_error = error;
+      if (init) init_error = error;
+      else      last_error = error;
    }
-
    return(error);
 
    // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen

@@ -50,35 +50,29 @@ int init() {
    IndicatorDigits(Digits);
 
    // Parameter überprüfen
-   if (Periods < 2) {
-      init_error = catch("init()  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE);
-      return(init_error);
-   }
+   if (Periods < 2)
+      return(catch("init(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE));
+
    period = GetPeriod(Timeframe);
-   if (period == 0) {
-      init_error = catch("init()  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE);
-      return(init_error);
-   }
+   if (period == 0)
+      return(catch("init(2)  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE));
+
    switch (MA.Method) {
       case 1: MA.Method = MODE_SMA;  break;
       case 2: MA.Method = MODE_EMA;  break;
       case 3: MA.Method = MODE_SMMA; break;
       case 4: MA.Method = MODE_LWMA; break;
       default:
-         init_error = catch("init()  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE);
-         return(init_error);
+         return(catch("init(3)  Invalid input parameter MA.Method: "+ MA.Method, ERR_INVALID_INPUT_PARAMVALUE));
    }
-   if (Deviation <= 0) {
-      init_error = catch("init()  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE);
-      return(init_error);
-   }
-   if (Max.Values < 0) {
-      init_error = catch("init()  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE);
-      return(init_error);
-   }
-   else if (Max.Values == 0) {
+   if (Deviation <= 0)
+      return(catch("init(4)  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE));
+
+   if (Max.Values < 0)
+      return(catch("init(5)  Invalid input parameter Max.Values: "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
+
+   if (Max.Values == 0)
       Max.Values = Bars;
-   }
 
    // Indikatorlabel setzen
    SetIndexLabel(0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
@@ -95,7 +89,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init()"));
+   return(catch("init(6)"));
 }
 
 

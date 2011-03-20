@@ -24,7 +24,7 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
-      init_error = stdlib_GetLastError();
+      init_error = stdlib_PeekLastError();
       return(init_error);
    }
 
