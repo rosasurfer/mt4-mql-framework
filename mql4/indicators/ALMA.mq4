@@ -18,13 +18,13 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Period         = 200;             // averaging period
-extern int    AppliedPrice      = PRICE_CLOSE;     // price used for MA calculation
-extern string AppliedPrice.Help = "0=Close  1=Open  2=High  3=Low  4=Median  5=Typical  6=Weighted";
-extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0...1)
+extern string AppliedPrice      = "C";             // price used for MA calculation
+extern string AppliedPrice.Help = "C(lose) | O(pen) | H(igh) | L(ow) | M(edian) | T(ypical) | W(eighted)";
+extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;
 extern double ReversalPctFilter = 0.0;             // minimum percentage MA change to indicate a completed trend reversal
 extern int    MaxValues         = -1;              // maximum number of indicator values to display
-extern string MaxValues.Help    = "Max. ind. values to display (-1: all)";
+extern string MaxValues.Help    = "Max. ind. values to display: -1 = all";
 extern int    BarShift          = 0;               // indicator display shifting
 extern bool   SoundAlerts       = false;           // enable/disable sound alerts on trend changes (intra-bar too)
 extern bool   TradeSignals      = false;           // enable/disable dialog box alerts on trend changes (only on bar-open)
@@ -39,7 +39,10 @@ extern color  Color.Reversal    = Yellow;
 double iUpTrend[], iDownTrend[], iReversal[];      // sichtbare Indikatorbuffer
 double iALMA[], iTrend[], iDel[];                  // nicht sichtbare Buffer
 double wALMA[];                                    // Gewichtung der einzelnen Bars des MA
-bool   tradeSignalUp, tradeSignalDown;
+
+int  appliedPrice = PRICE_CLOSE;
+
+bool tradeSignalUp, tradeSignalDown;
 
 string objectLabels[], legendLabel, indicatorName;
 
@@ -53,11 +56,18 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   /*
-   MaxValues       = 1200;
-   Color.UpTrend   = ForestGreen;
-   Color.DownTrend = Red;
-   */
+   // Konfiguration auswerten
+   string price = StringToUpper(StringLeft(AppliedPrice, 1));
+   if      (price == "C") appliedPrice = PRICE_CLOSE;
+   else if (price == "O") appliedPrice = PRICE_OPEN;
+   else if (price == "H") appliedPrice = PRICE_HIGH;
+   else if (price == "L") appliedPrice = PRICE_LOW;
+   else if (price == "M") appliedPrice = PRICE_MEDIAN;
+   else if (price == "T") appliedPrice = PRICE_TYPICAL;
+   else if (price == "W") appliedPrice = PRICE_WEIGHTED;
+   else {
+      return(catch("init(1)  Invalid configuration value AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   }
 
    // Buffer zuweisen
    IndicatorBuffers(6);
@@ -124,50 +134,6 @@ int deinit() {
 
 
 /**
- * Erzeugt und positioniert ein neues Label für den angegebenen Namen.
- *
- * @param  string indicatorName - Indikatorname
- *
- * @return string - vollständiger Name des erzeugten Labels
- */
-string CreateLegendLabel(string indicatorName) {
-   int totalObj = ObjectsTotal(),
-       labelObj = ObjectsTotal(OBJ_LABEL);
-
-   string name, substrings[0];
-   int legends, maxId;
-
-   for (int i=0; i < totalObj && labelObj > 0; i++) {
-      name = ObjectName(i);
-      if (ObjectType(name) == OBJ_LABEL) {
-         if (StringStartsWith(name, "Legend.")) {
-            legends++;
-            if (Explode(name, ".", substrings) != NO_ERROR)
-               return("");
-            maxId = MathMax(maxId, StrToInteger(substrings[1]));
-         }
-         labelObj--;
-      }
-   }
-
-   string label = StringConcatenate("Legend.", maxId+1, ".", indicatorName);
-   if (ObjectFind(label) >= 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,  5);
-      ObjectSet(label, OBJPROP_YDISTANCE, 21 + legends*19);
-   }
-   else GetLastError();
-   ObjectSetText(label, " ");
-
-   if (catch("CreateLegendLabel()") != NO_ERROR)
-      return("");
-   return(label);
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -221,7 +187,7 @@ int start() {
       // Moving Average
       iALMA[bar] = 0;
       for (int i=0; i < MA.Period; i++) {
-         iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, AppliedPrice, bar+i);
+         iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 
       // Percentage-Filter (verdoppelt die Laufzeit)
@@ -316,4 +282,48 @@ void SetIndexStyles() {
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
    SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.Reversal );
+}
+
+
+/**
+ * Erzeugt und positioniert ein neues Label für den angegebenen Namen.
+ *
+ * @param  string indicatorName - Indikatorname
+ *
+ * @return string - vollständiger Name des erzeugten Labels
+ */
+string CreateLegendLabel(string indicatorName) {
+   int totalObj = ObjectsTotal(),
+       labelObj = ObjectsTotal(OBJ_LABEL);
+
+   string name, substrings[0];
+   int legends, maxId;
+
+   for (int i=0; i < totalObj && labelObj > 0; i++) {
+      name = ObjectName(i);
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StringStartsWith(name, "Legend.")) {
+            legends++;
+            if (Explode(name, ".", substrings) != NO_ERROR)
+               return("");
+            maxId = MathMax(maxId, StrToInteger(substrings[1]));
+         }
+         labelObj--;
+      }
+   }
+
+   string label = StringConcatenate("Legend.", maxId+1, ".", indicatorName);
+   if (ObjectFind(label) >= 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE,  5);
+      ObjectSet(label, OBJPROP_YDISTANCE, 21 + legends*19);
+   }
+   else GetLastError();
+   ObjectSetText(label, " ");
+
+   if (catch("CreateLegendLabel()") != NO_ERROR)
+      return("");
+   return(label);
 }
