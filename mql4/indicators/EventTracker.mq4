@@ -370,7 +370,7 @@ int CheckGridLimits() {
 
    // für die Prüfung zu verwendende Kurse und deren Namen bestimmen
    double upperPrice, lowerPrice;
-   string upperPriceName, lowerPriceName, format="";
+   string upperPriceName="", lowerPriceName="", format="";
    switch (Grid.AppliedPrice) {
       case PRICE_SPREAD: if (Grid.Size > 4*(Ask-Bid)) {
                             lowerPrice = Bid; lowerPriceName = "Bid: ";
@@ -379,17 +379,17 @@ int CheckGridLimits() {
                          }
                          debug("CheckGridLimits()   spread to large, falling back to PRICE_MEDIAN");
 
-      case PRICE_MEDIAN: lowerPrice = (Bid+Ask)/2; lowerPriceName = "";
-                         upperPrice = lowerPrice;  upperPriceName = "";
+      case PRICE_MEDIAN: lowerPrice = (Bid+Ask)/2; lowerPriceName = "Median: ";
+                         upperPrice = lowerPrice;  upperPriceName = "Median: ";
                          format = "'";
                          break;
 
-      case PRICE_BID:    lowerPrice = Bid; lowerPriceName = "Bid: ";
-                         upperPrice = Bid; upperPriceName = "Bid: ";
+      case PRICE_BID:    lowerPrice = Bid;
+                         upperPrice = Bid;
                          break;
 
-      case PRICE_ASK:    lowerPrice = Ask; lowerPriceName = "Ask: ";
-                         upperPrice = Ask; upperPriceName = "Ask: ";
+      case PRICE_ASK:    lowerPrice = Ask;
+                         upperPrice = Ask;
                          break;
    }
 
@@ -398,7 +398,9 @@ int CheckGridLimits() {
    // Limite überprüfen
    if (upperPrice >= upperLimit) {
       eventTriggered = true;
-      string message = symbolName +" => "+ DoubleToStr(upperLimit, Grid.Digits) +" ("+ upperPriceName + NumberToStr(upperPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      string message = symbolName +" => "+ DoubleToStr(upperLimit, Grid.Digits);
+      if (StringLen(lowerPriceName) > 0)
+         message = message +" ("+ upperPriceName + NumberToStr(upperPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -411,7 +413,9 @@ int CheckGridLimits() {
    }
    else if (lowerPrice <= lowerLimit) {
       eventTriggered = true;
-      message = symbolName +" <= "+ DoubleToStr(lowerLimit, Grid.Digits) +" ("+ lowerPriceName + NumberToStr(lowerPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      message = symbolName +" <= "+ DoubleToStr(lowerLimit, Grid.Digits);
+      if (StringLen(lowerPriceName) > 0)
+         message = message +" ("+ lowerPriceName + NumberToStr(lowerPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
