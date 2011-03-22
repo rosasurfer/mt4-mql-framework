@@ -174,6 +174,14 @@
    int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
 
+
+   // Trade-Funktionen
+   bool     IsPermanentTradeError(int error);
+   bool     IsTemporaryTradeError(int error);
+   bool     IsTradeOperationType(int value);
+   int      OrderSendEx(string symbol, int operation, double volume, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expiration, color marker);
+
+
    // sonstiges
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);

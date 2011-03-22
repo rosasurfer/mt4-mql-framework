@@ -177,6 +177,74 @@ string GetGlobalConfigPath() {
 
 
 /**
+ * Ob ein Tradeserver-Error vorübergehend (temporär) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
+ * die Order auszuführen, erfolgreich sein.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return bool
+ *
+ * @see IsPermanentTradeError()
+ */
+bool IsTemporaryTradeError(int error) {
+   switch (error) {
+      // temporary errors
+      case ERR_COMMON_ERROR:                 //        2   common error
+      case ERR_SERVER_BUSY:                  //        4   trade server is busy
+      case ERR_NO_CONNECTION:                //        6   no connection to trade server
+      case ERR_TRADE_TIMEOUT:                //      128   trade timeout
+      case ERR_INVALID_PRICE:                //      129   invalid price
+      case ERR_INVALID_STOPS:                //      130   invalid stop
+      case ERR_MARKET_CLOSED:                //      132   market is closed
+      case ERR_PRICE_CHANGED:                //      135   price changed
+      case ERR_OFF_QUOTES:                   //      136   off quotes
+      case ERR_BROKER_BUSY:                  //      137   broker is busy (never returned error)
+      case ERR_REQUOTE:                      //      138   requote
+      case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context is busy
+         return(true);
+
+      // permanent errors
+      case ERR_NO_RESULT:                    //        1   no result
+      case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
+      case ERR_OLD_VERSION:                  //        5   old version of client terminal
+      case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
+      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests
+      case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation (never returned error)
+      case ERR_ACCOUNT_DISABLED:             //       64   account disabled
+      case ERR_INVALID_ACCOUNT:              //       65   invalid account
+      case ERR_INVALID_TRADE_VOLUME:         //      131   invalid trade volume
+      case ERR_TRADE_DISABLED:               //      133   trading is disabled
+      case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
+      case ERR_ORDER_LOCKED:                 //      139   order is locked
+      case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
+      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests
+      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market
+      case ERR_TRADE_EXPIRATION_DENIED:      //      147   expiration settings denied by broker
+      case ERR_TRADE_TOO_MANY_ORDERS:        //      148   number of open and pending orders has reached the broker limit
+      case ERR_TRADE_HEDGE_PROHIBITED:       //      149   hedging prohibited
+      case ERR_TRADE_PROHIBITED_BY_FIFO:     //      150   prohibited by FIFO rules
+         return(false);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob ein Tradeserver-Error permanent ist oder nicht. Bei einem permanenten Fehler wird auch der erneute Versuch,
+ * die Order auszuführen, fehlschlagen.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return bool
+ *
+ * @see IsTemporaryTradeError()
+ */
+bool IsPermanentTradeError(int error) {
+   return(!IsTemporaryTradeError(error));
+}
+
+
+/**
  * Vergrößert ein Double-Array und fügt ein weiteres Element an.
  *
  * @param  double& array[] - Double-Array
@@ -4329,6 +4397,27 @@ int GetMovingAverageCode(string mode) {
 
    catch("GetMovingAverageCode()  invalid parameter mode: \""+ mode +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
+}
+
+
+/**
+ * Ob der übergebene Parameter ein gültiger Tradeserver-Operationtype ist.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsTradeOperationType(int value) {
+   switch (value) {
+      case OP_BUY:
+      case OP_SELL:
+      case OP_BUYLIMIT:
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP:
+      case OP_SELLSTOP:
+         return(true);
+   }
+   return(false);
 }
 
 
