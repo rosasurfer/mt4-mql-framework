@@ -5321,7 +5321,7 @@ int RemoveChartObjects(string& lpLabels[]) {
 
 
 /**
- * Schickt eine SMS an die übergebene Telefonnummer.
+ * Schickt eine SMS an die angegebene Telefonnummer.
  *
  * @param  string receiver - Telefonnummer des Empfängers (internationales Format: 49123456789)
  * @param  string message  - Text der SMS
@@ -5345,6 +5345,14 @@ int SendTextMessage(string receiver, string message) {
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
       return(catch("SendTextMessage(1)  execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+
+   /**
+    * TODO: Fehlerauswertung nach dem Versand
+    *
+    * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to={receiver}&text={text}
+    * Resolving api.clickatell.com... failed: Unknown host.
+    * wget: unable to resolve host address `api.clickatell.com'
+    */
 
    return(catch("SendTextMessage(2)"));
 }
