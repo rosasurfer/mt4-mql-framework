@@ -146,6 +146,8 @@
    // Math
    double   MathRoundFix(double number, int decimals);
    int      MathSign(double number);
+   int      SignificantDigits(double number);
+
 
    // Numbers
    bool     CompareDoubles(double double1, double double2);

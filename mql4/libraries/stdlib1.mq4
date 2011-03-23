@@ -2549,6 +2549,23 @@ bool CompareDoubles(double double1, double double2) {
 
 
 /**
+ * Gibt die Anzahl der signifikanten Nachkommastellen eines Doubles zurück.
+ *
+ * @param  double number
+ *
+ * @return int - Anzahl der signifikanten Nachkommastellen, jedoch höchstens 8
+ */
+int SignificantDigits(double number) {
+   int digits = 0;
+
+   while (!CompareDoubles(NormalizeDouble(number, digits), NormalizeDouble(number, digits+1))) {
+      digits++;
+   }
+   return(digits);
+}
+
+
+/**
  * Gibt die hexadezimale Representation eines Integers zurück.
  *
  * @param  int i - Integer
@@ -6455,15 +6472,6 @@ int StrToColor(string str) {
    }
 
    return(0);
-}
-
-
-/**
- *
- */
-bool StrToBool(string str) {
-   str = StringToLower(StringSubstr(str, 0, 1));
-   return(str=="t" || str=="y" || str=="1");
 }
 
 
