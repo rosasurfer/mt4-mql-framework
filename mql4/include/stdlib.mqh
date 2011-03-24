@@ -16,6 +16,9 @@
    int      ArrayPushDouble(double& array[], double value);
    int      ArrayPushInt(int& array[], int value);
    int      ArrayPushString(string& array[], string value);
+   bool     IsReverseIndexedDoubleArray(double& array[]);
+   bool     IsReverseIndexedIntArray(int& array[]);
+   bool     IsReverseIndexedSringArray(string& array[]);
    string   JoinBools(bool& values[], string separator);
    string   JoinDoubles(double& values[], string separator);
    string   JoinInts(int& values[], string separator);
@@ -23,9 +26,6 @@
    bool     ReverseDoubleArray(double& array[]);
    bool     ReverseIntArray(int& array[]);
    bool     ReverseStringArray(string& array[]);
-   bool     IsReverseIndexedDoubleArray(double& array[]);
-   bool     IsReverseIndexedIntArray(int& array[]);
-   bool     IsReverseIndexedSringArray(string& array[]);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
@@ -59,8 +59,8 @@
  //datetime LocalToGMT(datetime localTime);
  //datetime LocalToServerTime(datetime localTime);
    datetime ServerToEasternTime(datetime serverTime);
- //datetime ServerToLocalTime(datetime serverTime);
    datetime ServerToGMT(datetime serverTime);
+ //datetime ServerToLocalTime(datetime serverTime);
 
    int      GetEasternToGmtOffset(datetime easternTime);
  //int      GetEasternToLocalTimeOffset(datetime easternTime);
@@ -75,33 +75,33 @@
    int      GetServerToGmtOffset(datetime serverTime);
  //int      GetServerToLocalTimeOffset(datetime serverTime);
 
-   datetime GetEasternPrevSessionStartTime(datetime easternTime);
-   datetime GetEasternPrevSessionEndTime(datetime easternTime);
-   datetime GetEasternSessionStartTime(datetime easternTime);
-   datetime GetEasternSessionEndTime(datetime easternTime);
-   datetime GetEasternNextSessionStartTime(datetime easternTime);
    datetime GetEasternNextSessionEndTime(datetime easternTime);
+   datetime GetEasternNextSessionStartTime(datetime easternTime);
+   datetime GetEasternPrevSessionEndTime(datetime easternTime);
+   datetime GetEasternPrevSessionStartTime(datetime easternTime);
+   datetime GetEasternSessionEndTime(datetime easternTime);
+   datetime GetEasternSessionStartTime(datetime easternTime);
 
-   datetime GetGmtPrevSessionStartTime(datetime gtmTime);
-   datetime GetGmtPrevSessionEndTime(datetime gtmTime);
-   datetime GetGmtSessionStartTime(datetime gmtTime);
-   datetime GetGmtSessionEndTime(datetime gmtTime);
-   datetime GetGmtNextSessionStartTime(datetime gtmTime);
    datetime GetGmtNextSessionEndTime(datetime gtmTime);
+   datetime GetGmtNextSessionStartTime(datetime gtmTime);
+   datetime GetGmtPrevSessionEndTime(datetime gtmTime);
+   datetime GetGmtPrevSessionStartTime(datetime gtmTime);
+   datetime GetGmtSessionEndTime(datetime gmtTime);
+   datetime GetGmtSessionStartTime(datetime gmtTime);
 
- //datetime GetLocalPrevSessionStartTime(datetime localTime);
- //datetime GetLocalPrevSessionEndTime(datetime localTime);
- //datetime GetLocalSessionStartTime(datetime localTime);
- //datetime GetLocalSessionEndTime(datetime localTime);
- //datetime GetLocalNextSessionStartTime(datetime localTime);
  //datetime GetLocalNextSessionEndTime(datetime localTime);
+ //datetime GetLocalNextSessionStartTime(datetime localTime);
+ //datetime GetLocalPrevSessionEndTime(datetime localTime);
+ //datetime GetLocalPrevSessionStartTime(datetime localTime);
+ //datetime GetLocalSessionEndTime(datetime localTime);
+ //datetime GetLocalSessionStartTime(datetime localTime);
 
-   datetime GetServerPrevSessionStartTime(datetime serverTime);
-   datetime GetServerPrevSessionEndTime(datetime serverTime);
-   datetime GetServerSessionStartTime(datetime serverTime);
-   datetime GetServerSessionEndTime(datetime serverTime);
-   datetime GetServerNextSessionStartTime(datetime serverTime);
    datetime GetServerNextSessionEndTime(datetime serverTime);
+   datetime GetServerNextSessionStartTime(datetime serverTime);
+   datetime GetServerPrevSessionEndTime(datetime serverTime);
+   datetime GetServerPrevSessionStartTime(datetime serverTime);
+   datetime GetServerSessionEndTime(datetime serverTime);
+   datetime GetServerSessionStartTime(datetime serverTime);
 
    string   GetDayOfWeek(datetime time, bool format);
    string   GetTradeServerTimezone();
@@ -113,22 +113,22 @@
    bool     EventListener.AccountPayment(int& lpResults[], int flags);
    bool     EventListener.BarOpen(int& lpResults[], int flags);
    bool     EventListener.HistoryChange(int& lpResults[], int flags);
-   bool     EventListener.OrderPlace(int& lpResults[], int flags);
-   bool     EventListener.OrderChange(int& lpResults[], int flags);
    bool     EventListener.OrderCancel(int& lpResults[], int flags);
-   bool     EventListener.PositionOpen(int& lpResults[], int flags);
+   bool     EventListener.OrderChange(int& lpResults[], int flags);
+   bool     EventListener.OrderPlace(int& lpResults[], int flags);
    bool     EventListener.PositionClose(int& lpResults[], int flags);
+   bool     EventListener.PositionOpen(int& lpResults[], int flags);
 
    // Eventhandler
    int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
    int      onBarOpen(int details[]);
    int      onHistoryChange(int tickets[]);
-   int      onOrderPlace(int tickets[]);
    int      onOrderCancel(int tickets[]);
    int      onOrderChange(int tickets[]);
-   int      onPositionOpen(int tickets[]);
+   int      onOrderPlace(int tickets[]);
    int      onPositionClose(int tickets[]);
+   int      onPositionOpen(int tickets[]);
 
    // EventTracker (Indikator)
    bool     EventTracker.GetBandLimits(double& lpLimits[3]);
@@ -142,38 +142,34 @@
    bool     IsDir(string pathName);
    bool     IsFile(string pathName);
 
-
-   // Math
-   double   MathRoundFix(double number, int decimals);
-   int      MathSign(double number);
-   int      SignificantDigits(double number);
-
-
-   // Numbers
+   // Math, Numbers
    bool     CompareDoubles(double double1, double double2);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
    string   FormatNumber(double number, string mask);
+   double   MathModFix(double a, double b);
+   double   MathRoundFix(double number, int decimals);
+   int      MathSign(double number);
 
    // Strings
-   bool     StringStartsWith(string object, string prefix);
-   bool     StringIStartsWith(string object, string prefix);
+   int      Explode(string object, string separator, string& lpResults[]);
    bool     StringContains(string object, string substring);
-   bool     StringIContains(string object, string substring);
    bool     StringEndsWith(string object, string postfix);
-   bool     StringIEndsWith(string object, string postfix);
    int      StringFindR(string object, string search);
    bool     StringICompare(string string1, string string2);
+   bool     StringIContains(string object, string substring);
+   bool     StringIEndsWith(string object, string postfix);
+   bool     StringIStartsWith(string object, string prefix);
    bool     StringIsDigit(string value);
    string   StringLeft(string value, int n);
-   string   StringRight(string value, int n);
    string   StringRepeat(string input, int times);
    string   StringReplace(string object, string search, string replace);
+   string   StringRight(string value, int n);
+   bool     StringStartsWith(string object, string prefix);
    string   StringSubstrFix(string object, int start, int length);
    string   StringToLower(string value);
    string   StringToUpper(string value);
    string   StringTrim(string value);
-   int      Explode(string object, string separator, string& lpResults[]);
    string   UrlEncode(string value);
 
 
@@ -188,37 +184,37 @@
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
+   string   GetAccountDirectory(int account);
    int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
-   string   GetStandardSymbol(string symbol);
-   string   GetSymbolName(string symbol, string defaultName);
-   string   GetSymbolLongName(string symbol, string defaultName);
-   string   GetAccountDirectory(int account);
    int      GetMovingAverageCode(string description);
    int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
+   string   GetStandardSymbol(string symbol);
+   string   GetSymbolLongName(string symbol, string defaultName);
+   string   GetSymbolName(string symbol, string defaultName);
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
+   int      IncreasePeriod(int period);
+   int      RegisterChartObject(string label, string& lpObjects[]);
+   int      RemoveChartObjects(string& lpObjects[]);
+   int      SendTextMessage(string receiver, string message);
+   int      SendTick(bool sound);
+   int      SetWindowText(int hWnd, string text);
+   string   UninitializeReasonDescription(int reason);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
    int      iBalance(int account, double& lpBuffer[], int bar);
    int      iBalanceSeries(int account, double& lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
-   int      IncreasePeriod(int period);
-   int      RegisterChartObject(string label, string& lpObjects[]);
-   int      RemoveChartObjects(string& lpObjects[]);
-   int      SendTick(bool sound);
-   int      SendTextMessage(string receiver, string message);
-   int      SetWindowText(int hWnd, string text);
-   string   UninitializeReasonDescription(int reason);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
 
    // toString-Funktionen
-   string   BoolToStr(bool value);
    string   BoolArrayToStr(bool& values[]);
+   string   BoolToStr(bool value);
    string   DoubleArrayToStr(double& values[]);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
@@ -232,9 +228,9 @@
    string   ShellExecuteErrorToStr(int error);
    string   StringArrayToStr(string& values[]);
    string   StructCharToStr(int& lpStruct[], int from, int len);
-   string   StructWCharToStr(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
+   string   StructWCharToStr(int& lpStruct[], int from, int len);
    string   TimeframeToStr(int timeframe);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
@@ -315,7 +311,7 @@
    //
    // Diese Funktionen sind teilweise noch fehlerhaft.
    // ----------------------------------------------------------------------------------
-   int      RGB(int red, int green, int blue);
    string   DoubleToStrMorePrecision(double number, int precision);
+   int      RGB(int red, int green, int blue);
 
 #import

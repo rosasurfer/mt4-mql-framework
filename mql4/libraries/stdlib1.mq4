@@ -189,7 +189,7 @@ string GetGlobalConfigPath() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   common error
+      case ERR_COMMON_ERROR:                 //        2   common error (e.g. manual confirmation was denied)
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_NO_CONNECTION:                //        6   no connection to trade server
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
@@ -1780,7 +1780,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
  *
  * @param  double number
  *
- * @return int
+ * @return int - Anzahl der Nachkommastellen, höchstens jedoch 8
  */
 int CountDecimals(double number) {
    string str = number;
@@ -1791,6 +1791,22 @@ int CountDecimals(double number) {
          break;
    }
    return(i - dot);
+}
+
+
+/**
+ * Gibt den Divisionsrest zweier Doubles zurück (fehlerbereinigter Ersatz für MathMod()).
+ *
+ * @param  double a
+ * @param  double b
+ *
+ * @return double - Divisionsrest
+ */
+double MathModFix(double a, double b) {
+   double remainder = MathMod(a, b);
+   if (CompareDoubles(remainder, b))
+      remainder = 0;
+   return(remainder);
 }
 
 
@@ -2545,23 +2561,6 @@ datetime GetEasternNextSessionEndTime(datetime easternTime) {
  */
 bool CompareDoubles(double double1, double double2) {
    return(NormalizeDouble(double1 - double2, 8) == 0);
-}
-
-
-/**
- * Gibt die Anzahl der signifikanten Nachkommastellen eines Doubles zurück.
- *
- * @param  double number
- *
- * @return int - Anzahl der signifikanten Nachkommastellen, jedoch höchstens 8
- */
-int SignificantDigits(double number) {
-   int digits = 0;
-
-   while (!CompareDoubles(NormalizeDouble(number, digits), NormalizeDouble(number, digits+1))) {
-      digits++;
-   }
-   return(digits);
 }
 
 
@@ -4085,7 +4084,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
-      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2
+      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2    manual confirmation was denied
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
       case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
       case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
@@ -5911,7 +5910,7 @@ string FormatNumber(double number, string mask) {
 
 
 /**
- * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierneden String zurück.
+ * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
  * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
  *
  * Mask parameters:
@@ -5926,8 +5925,7 @@ string FormatNumber(double number, string mask) {
  *    R       = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
  *    ;       = Separatoren tauschen (Europäisches Format), e.g. FormatNumber(123456.789, "6.2;") => "123456,78"
  *    ,       = Tausender-Separatoren einfügen, e.g. FormatNumber(123456.789, "6.2,") => "123,456.78"
- *              ein dem Komma folgendes Zeichen wird als User-spezifischer Separator interpretiert, siehe ,<char>
- *    ,<char> = Tausender-Separator auf <char> setzen, e.g. FormatNumber(123456.789, ", 6.2") => "123 456.78",
+ *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. FormatNumber(123456.789, ", 6.2") => "123 456.78"
  *
  * @param  double number
  * @param  string mask
@@ -6675,7 +6673,7 @@ string DateToStr(datetime mt4date, string mask) {
    if (hr > 12)
       ampm = "pm";
 
-   switch (MathMod(dd, 10)) {
+   switch (dd % 10) {
       case 1: string d10 = "st"; break;
       case 2:        d10 = "nd"; break;
       case 3:        d10 = "rd"; break;
@@ -6740,7 +6738,7 @@ string NumberToBase(int n, int base, int pad) {
    string cnvstr = "0123456789ABCDEF";
    string outstr = "";
    while (n > 0) {
-      int x = MathMod(n, base);
+      int x = n % base;
       outstr = StringSubstr(cnvstr, x, 1) + outstr;
       n /= base;
    }
