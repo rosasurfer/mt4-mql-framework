@@ -101,7 +101,7 @@ int init() {
 
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Period);
-   int    m = GaussianOffset * (MA.Period-1);   // (int) double
+   int    m = NormalizeDouble(GaussianOffset * (MA.Period-1), 8);   // (int) double
    double s = MA.Period / Sigma;
    double wSum;
    for (int i=0; i < MA.Period; i++) {
