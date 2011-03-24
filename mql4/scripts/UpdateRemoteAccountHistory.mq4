@@ -147,7 +147,7 @@ int start() {
       return(catch("start(6)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
-      string strType        = OperationTypeToStr(types[i]);
+      string strType        = OperationTypeDescription(types[i]);
 
       string strOpenTime    = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
       string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);

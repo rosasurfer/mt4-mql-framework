@@ -200,6 +200,7 @@
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
    int      IncreasePeriod(int period);
+   string   OperationTypeDescription(int type);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
    int      SendTextMessage(string receiver, string message);

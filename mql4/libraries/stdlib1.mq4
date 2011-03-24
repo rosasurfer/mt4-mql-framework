@@ -2941,7 +2941,7 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
          ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
-         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeToStr(type));
+         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
       }
 
       // offene Positionen überprüfen und ggf. aktualisieren
@@ -2984,7 +2984,7 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
 
          ArrayResize(knownPositions, positions+1);
          knownPositions[positions] = ticket;
-         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeToStr(type));
+         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeDescription(type));
       }
    }
 
@@ -3086,7 +3086,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
          noOfKnownPositions++;
          ArrayResize(knownPositions, noOfKnownPositions);
          knownPositions[noOfKnownPositions-1] = OrderTicket();
-         //Print("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeToStr(OrderType()));
+         //Print("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeDescription(OrderType()));
       }
    }
 
@@ -4438,13 +4438,36 @@ bool IsTradeOperationType(int value) {
 
 
 /**
- * Gibt die lesbare Version eines Operation-Types zurück.
+ * Gibt die lesbare Konstante eines Operation-Types zurück.
  *
  * @param  int type - Operation-Type
  *
  * @return string
  */
 string OperationTypeToStr(int type) {
+   switch (type) {
+      case OP_BUY      : return("OP_BUY"      );
+      case OP_SELL     : return("OP_SELL"     );
+      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
+      case OP_SELLLIMIT: return("OP_SELLLIMIT");
+      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
+      case OP_SELLSTOP : return("OP_SELLSTOP" );
+      case OP_BALANCE  : return("OP_BALANCE"  );
+      case OP_CREDIT   : return("OP_CREDIT"   );
+   }
+   catch("OperationTypeToStr()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
+ * Gibt die Beschreibung eines Operation-Types zurück.
+ *
+ * @param  int type - Operation-Type
+ *
+ * @return string
+ */
+string OperationTypeDescription(int type) {
    switch (type) {
       case OP_BUY      : return("Buy"       );
       case OP_SELL     : return("Sell"      );
@@ -4455,8 +4478,7 @@ string OperationTypeToStr(int type) {
       case OP_BALANCE  : return("Balance"   );
       case OP_CREDIT   : return("Credit"    );
    }
-
-   catch("OperationTypeToStr()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("OperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 

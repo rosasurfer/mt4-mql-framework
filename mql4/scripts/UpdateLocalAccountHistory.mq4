@@ -244,7 +244,7 @@ int start() {
       if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
          continue;
 
-      string strType         = OperationTypeToStr(types[i]);
+      string strType         = OperationTypeDescription(types[i]);
       string strSize         = ifString(sizes[i]==0, "", NumberToStr(sizes[i], ".+"));
 
       string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);

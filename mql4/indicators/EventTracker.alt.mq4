@@ -275,7 +275,7 @@ int onPositionOpen(int tickets[]) {
 
       // alle Positionen werden im aktuellen Instrument gehalten
       string format  = StringConcatenate(".", Digits - Digits%2, ifString(Digits%2 > 0, "'", ""));
-      string type    = OperationTypeToStr(OrderType());
+      string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
       string price   = NumberToStr(OrderOpenPrice(), format);
       string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " @ ", price);
@@ -319,7 +319,7 @@ int onPositionClose(int tickets[]) {
 
       // alle Positionen wurden im aktuellen Instrument gehalten
       string format     = StringConcatenate(".", Digits - Digits%2, ifString(Digits%2 > 0, "'", ""));
-      string type       = OperationTypeToStr(OrderType());
+      string type       = OperationTypeDescription(OrderType());
       string lots       = NumberToStr(OrderLots(), ".+");
       string openPrice  = NumberToStr(OrderOpenPrice(), format);
       string closePrice = NumberToStr(OrderClosePrice(), format);
