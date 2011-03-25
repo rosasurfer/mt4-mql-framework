@@ -413,7 +413,7 @@ int log(string message="", int error=NO_ERROR) {
    if (message == "")
       message = "???";
 
-   message = StringConcatenate("LOG:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message);
+   message = StringConcatenate(__SCRIPT__, "::", message);
 
    if (error != NO_ERROR)
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
