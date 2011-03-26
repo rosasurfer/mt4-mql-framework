@@ -435,8 +435,7 @@ int log(string message="", int error=NO_ERROR) {
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  */
 void debug(string message) {
-   message = StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message);
-   OutputDebugStringA(message);
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message));
    return(NO_ERROR);
 }
 

@@ -19,18 +19,22 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    Periods        = 75;           // Anzahl der zu verwendenden Perioden
-extern string Timeframe      = "H1";         // zu verwendender Zeitrahmen (M1, M5, M15, M30 etc.)
-extern double Deviation      = 1.65;         // Standardabweichung
-extern string MA.Method      = "SMA";        // MA-Methode
+extern int    MA.Periods     = 200;                         // Anzahl der zu verwendenden Perioden
+extern string MA.Timeframe   = "";                          // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+extern string MA.Method      = "SMA";                       // MA-Methode
 extern string MA.Method.Help = "SMA | EMA | SMMA | LWMA";
-extern int    Max.Values     = -1;           // Anzahl der maximal anzuzeigenden Werte: -1 = all
+extern double Deviation      = 1.65;                        // Abweichung der Bollinger-Bänder vom MA
+extern int    Max.Values     = -1;                          // Anzahl der maximal anzuzeigenden Werte: -1 = alle
+
+extern color  Color.Bands    = C'102,135,232';
+extern color  Color.MA       = C'163,183,241';              // Farben hier konfigurieren, damit der Code zur Laufzeit Zugriff hat
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 double UpperBand[], MovingAvg[], LowerBand[];      // Indikatorpuffer
-int    maTimeframe, maMethod;
+int    maMethod;
+string objectLabels[];
 
 
 /**
@@ -43,24 +47,25 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    // Konfiguration auswerten
-   if (Periods < 2)
-      return(catch("init(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (MA.Periods < 2)
+      return(catch("init(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
 
-   maTimeframe = GetPeriod(Timeframe);
+   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
+   if (MA.Timeframe == "") int maTimeframe = Period();
+   else                        maTimeframe = StringToPeriod(MA.Timeframe);
    if (maTimeframe == 0)
-      return(catch("init(2)  Invalid input parameter Timeframe: \'"+ Timeframe +"\'", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
-   string method = StringToUpper(MA.Method);
+   string method = StringToUpper(StringTrim(MA.Method));
    if      (method == "SMA" ) maMethod = MODE_SMA;
    else if (method == "EMA" ) maMethod = MODE_EMA;
    else if (method == "SMMA") maMethod = MODE_SMMA;
    else if (method == "LWMA") maMethod = MODE_LWMA;
-   else {
-      return(catch("init(3)  Invalid input parameter MA.Method: \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   }
+   else
+      return(catch("init(3)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    if (Deviation <= 0)
-      return(catch("init(4)  Invalid input parameter Deviation: "+ Deviation, ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(4)  Invalid input parameter Deviation = "+ NumberToStr(Deviation, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    if (Max.Values < 0)
       Max.Values = Bars;
@@ -69,17 +74,29 @@ int init() {
    SetIndexBuffer(0, UpperBand);
    SetIndexBuffer(1, MovingAvg);
    SetIndexBuffer(2, LowerBand);
-   IndicatorDigits(Digits);
 
    // Anzeigeoptionen
-   SetIndexLabel(0, StringConcatenate("UpperBand(", Periods, "x", Timeframe, ")"));
-   SetIndexLabel(1, StringConcatenate("MovingAvg(", Periods, "x", Timeframe, ")"));
-   SetIndexLabel(2, StringConcatenate("LowerBand(", Periods, "x", Timeframe, ")"));
+   if (MA.Timeframe != "")
+      MA.Timeframe = StringConcatenate("x", MA.Timeframe);
+   string indicatorName = StringConcatenate("BollingerBands(", MA.Periods, MA.Timeframe, ")");
+   IndicatorShortName(indicatorName);
+   SetIndexLabel(0, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));
+   SetIndexLabel(1, NULL);
+   SetIndexLabel(2, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
+   IndicatorDigits(Digits);
+
+   // Legende
+   string legendLabel = CreateLegendLabel(indicatorName);
+   RegisterChartObject(legendLabel, objectLabels);
+   ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Color.Bands);
+   int error = GetLastError();
+   if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("init(5)", error));
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
-   if (Period() != maTimeframe) {
-      double minutes = maTimeframe * Periods;        // Timeframe * Anzahl Bars = Range in Minuten
-      Periods = MathRound(minutes / Period());
+   if (maTimeframe != Period()) {
+      double minutes = maTimeframe * MA.Periods;      // Timeframe * Anzahl Bars = Range in Minuten
+      MA.Periods = MathRound(minutes / Period());
    }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
@@ -96,6 +113,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   RemoveChartObjects(objectLabels);
    return(catch("deinit()"));
 }
 
@@ -136,10 +154,10 @@ int start() {
       ArrayInitialize(LowerBand, EMPTY_VALUE);
    }
 
-   if (Periods < 2)                             // Abbruch bei Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+   if (MA.Periods < 2)                          // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(0);
 
-   int iLastIndBar = Bars - Periods,            // Index der letzten Indikator-Bar
+   int iLastIndBar = Bars - MA.Periods,         // Index der letzten Indikator-Bar
        bars,                                    // Anzahl der zu berechnenden Bars
        i, k;
 
@@ -183,8 +201,8 @@ int start() {
    double ma, dev;
 
    for (i=bars-1; i >= 0; i--) {
-      ma  = iMA    (NULL, 0, Periods, 0, maMethod, PRICE_MEDIAN, i);
-      dev = iStdDev(NULL, 0, Periods, 0, maMethod, PRICE_MEDIAN, i) * Deviation;
+      ma  = iMA    (NULL, 0, MA.Periods, 0, maMethod, PRICE_MEDIAN, i);
+      dev = iStdDev(NULL, 0, MA.Periods, 0, maMethod, PRICE_MEDIAN, i) * Deviation;
       UpperBand[i] = ma + dev;
       MovingAvg[i] = ma;
       LowerBand[i] = ma - dev;

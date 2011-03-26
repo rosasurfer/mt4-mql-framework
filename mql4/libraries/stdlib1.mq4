@@ -177,6 +177,50 @@ string GetGlobalConfigPath() {
 
 
 /**
+ * Erzeugt und positioniert ein neues Legendenlabel für den angegebenen Namen. Das erzeugte Label hat keinen Text.
+ *
+ * @param  string name - Indikatorname
+ *
+ * @return string - vollständiger Name des erzeugten Labels
+ */
+string CreateLegendLabel(string name) {
+   int totalObj = ObjectsTotal(),
+       labelObj = ObjectsTotal(OBJ_LABEL);
+
+   string substrings[0], objName;
+   int legendLabels, maxId;
+
+   for (int i=0; i < totalObj && labelObj > 0; i++) {
+      objName = ObjectName(i);
+      if (ObjectType(objName) == OBJ_LABEL) {
+         if (StringStartsWith(objName, "Legend.")) {
+            legendLabels++;
+            if (Explode(objName, ".", substrings) != NO_ERROR)
+               return("");
+            maxId = MathMax(maxId, StrToInteger(substrings[1]));
+         }
+         labelObj--;
+      }
+   }
+
+   string label = StringConcatenate("Legend.", maxId+1, ".", name);
+   if (ObjectFind(label) >= 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE,  5);
+      ObjectSet(label, OBJPROP_YDISTANCE, 21 + legendLabels*19);
+   }
+   else GetLastError();
+   ObjectSetText(label, " ");
+
+   if (catch("CreateLegendLabel()") != NO_ERROR)
+      return("");
+   return(label);
+}
+
+
+/**
  * Ob ein Tradeserver-Error vorübergehend (temporär) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
  * die Order auszuführen, erfolgreich sein.
  *
@@ -4484,42 +4528,34 @@ string OperationTypeDescription(int type) {
 
 
 /**
- * Gibt den Code einer Timeframe-Beschreibung zurück.
+ * Gibt den Integer-Wert einer Timeframe-Bezeichnung zurück.
  *
- * @param  string description - Timeframe-Beschreibung (M1, M5, M15, M30 etc.)
+ * @param  string timeframe - M1, M5, M15, M30 etc.
  *
- * @return int - Timeframe-Code
+ * @return int - Timeframe-Code oder 0, wenn die Bezeichnung ungültig ist
  */
-int GetPeriod(string description) {
-   description = StringToUpper(description);
+int StringToPeriod(string timeframe) {
+   timeframe = StringToUpper(timeframe);
 
-   if (description == "M1" ) return(PERIOD_M1 );      //     1  1 minute
-   if (description == "M5" ) return(PERIOD_M5 );      //     5  5 minutes
-   if (description == "M15") return(PERIOD_M15);      //    15  15 minutes
-   if (description == "M30") return(PERIOD_M30);      //    30  30 minutes
-   if (description == "H1" ) return(PERIOD_H1 );      //    60  1 hour
-   if (description == "H4" ) return(PERIOD_H4 );      //   240  4 hour
-   if (description == "D1" ) return(PERIOD_D1 );      //  1440  daily
-   if (description == "W1" ) return(PERIOD_W1 );      // 10080  weekly
-   if (description == "MN1") return(PERIOD_MN1);      // 43200  monthly
+   if (timeframe == "M1" ) return(PERIOD_M1 );     //     1  1 minute
+   if (timeframe == "M5" ) return(PERIOD_M5 );     //     5  5 minutes
+   if (timeframe == "M15") return(PERIOD_M15);     //    15  15 minutes
+   if (timeframe == "M30") return(PERIOD_M30);     //    30  30 minutes
+   if (timeframe == "H1" ) return(PERIOD_H1 );     //    60  1 hour
+   if (timeframe == "H4" ) return(PERIOD_H4 );     //   240  4 hour
+   if (timeframe == "D1" ) return(PERIOD_D1 );     //  1440  daily
+   if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
+   if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   catch("GetPeriod()  invalid parameter description: "+ description, ERR_INVALID_FUNCTION_PARAMVALUE);
+   log("StringToPeriod()  invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
-}
-
-
-/**
- * Alias für PeriodToStr().
- */
-string TimeframeToStr(int timeframe=0) {
-   return(PeriodToStr(timeframe));
 }
 
 
 /**
  * Gibt die lesbare Version eines Timeframe-Codes zurück.
  *
- * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: Periode des aktuellen Charts)
+ * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
  *
  * @return string
  */

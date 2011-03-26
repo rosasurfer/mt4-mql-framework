@@ -125,7 +125,7 @@ int init() {
       string strValue = GetConfigString("BollingerBands."+ symbol, "Slow.Timeframe", "");
       if (strValue == "")
          strValue = GetConfigString("BollingerBands", "Slow.Timeframe", strValue);
-      BollingerBands.Timeframe = GetPeriod(strValue);
+      BollingerBands.Timeframe = StringToPeriod(strValue);
       if (BollingerBands.Timeframe == 0) {
          catch("init(5)  Invalid config value value Slow.Timeframe \""+ strValue +"\"", ERR_INVALID_INPUT_PARAMVALUE);
          Track.BollingerBands = false;
@@ -372,12 +372,12 @@ int CheckGridLimits() {
    double upperPrice, lowerPrice;
    string upperPriceName="", lowerPriceName="", format="";
    switch (Grid.AppliedPrice) {
-      case PRICE_SPREAD: if (Grid.Size > 4*(Ask-Bid)) {
+      case PRICE_SPREAD: if (Grid.Size > 4 * (Ask-Bid)) {
                             lowerPrice = Bid; lowerPriceName = "Bid: ";
                             upperPrice = Ask; upperPriceName = "Ask: ";
                             break;
                          }
-                         debug("CheckGridLimits()   spread to large, falling back to PRICE_MEDIAN");
+                         //debug("CheckGridLimits()   spread to large, falling back to PRICE_MEDIAN");
 
       case PRICE_MEDIAN: lowerPrice = (Bid+Ask)/2; lowerPriceName = "Median: ";
                          upperPrice = lowerPrice;  upperPriceName = "Median: ";
@@ -398,9 +398,7 @@ int CheckGridLimits() {
    // Limite überprüfen
    if (upperPrice >= upperLimit) {
       eventTriggered = true;
-      string message = symbolName +" => "+ DoubleToStr(upperLimit, Grid.Digits);
-      if (StringLen(lowerPriceName) > 0)
-         message = message +" ("+ upperPriceName + NumberToStr(upperPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      string message = symbolName +" => "+ DoubleToStr(upperLimit, Grid.Digits) +" ("+ upperPriceName + NumberToStr(upperPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -413,9 +411,7 @@ int CheckGridLimits() {
    }
    else if (lowerPrice <= lowerLimit) {
       eventTriggered = true;
-      message = symbolName +" <= "+ DoubleToStr(lowerLimit, Grid.Digits);
-      if (StringLen(lowerPriceName) > 0)
-         message = message +" ("+ lowerPriceName + NumberToStr(lowerPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      message = symbolName +" <= "+ DoubleToStr(lowerLimit, Grid.Digits) +" ("+ lowerPriceName + NumberToStr(lowerPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -455,18 +451,18 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
    // ausgehend vom Preistyp Ausgangsrange der Limite berechnen
    double price;
    switch (Grid.AppliedPrice) {
-      case PRICE_SPREAD: if (Grid.Size > 4*(Ask-Bid)) {
+      case PRICE_SPREAD: if (Grid.Size > 4 * (Ask-Bid)) {
                             price = Bid;
                             break;
                          }
-                         debug("InitializeGridLimits()   spread to large, falling back to PRICE_MEDIAN");
+                         //debug("InitializeGridLimits()   spread to large, falling back to PRICE_MEDIAN");
       case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
       case PRICE_BID   : price =  Bid;        break;
       case PRICE_ASK   : price =  Ask;        break;
    }
    double low   = NormalizeDouble(MathFloor(price/Grid.Size) * Grid.Size, Grid.Digits) + 0.000000001;    // unteres Limit
    double high  = NormalizeDouble(low + Grid.Size                       , Grid.Digits) - 0.000000001;    // oberes Limit (Abstand: 1 x GridSize)
-   debug("InitializeGridLimits()   Price: "+ DoubleToStr(price, Grid.Digits) +", starting with "+ DoubleToStr(low, Grid.Digits) +" <=> "+ DoubleToStr(high, Grid.Digits));
+   //debug("InitializeGridLimits()   Price: "+ DoubleToStr(price, Grid.Digits) +", starting with "+ DoubleToStr(low, Grid.Digits) +" <=> "+ DoubleToStr(high, Grid.Digits));
 
    // letztes gespeichertes Signal auslesen
    string varLastSignalValue = "EventTracker."+ symbol +".Grid.LastSignal",
@@ -483,7 +479,7 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
    if (lastSignalValue > 0) /*&&*/ if (lastSignalTime > 0) {
       lastSignal     = true;
       lastSignalTime = GmtToServerTime(lastSignalTime);
-      debug("InitializeGridLimits()   stored signal "+ DoubleToStr(lastSignalValue, Grid.Digits) +" at server time "+ TimeToStr(lastSignalTime));
+      //debug("InitializeGridLimits()   stored signal "+ DoubleToStr(lastSignalValue, Grid.Digits) +" at server time "+ TimeToStr(lastSignalTime));
    }
 
    // tatsächliches letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
@@ -496,7 +492,7 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
          if (lastSignalBar == EMPTY_VALUE)
             return(stdlib_GetLastError());
       }
-      debug("InitializeGridLimits()   looking for last signal in timeframe "+ PeriodToStr(period) +" with storedSignalBar = "+ lastSignalBar);
+      //debug("InitializeGridLimits()   looking for last signal in timeframe "+ PeriodToStr(period) +" with storedSignalBar = "+ lastSignalBar);
 
       for (int bar=0; bar <= Bars-1; bar++) {
          if (bar == lastSignalBar) {
@@ -513,8 +509,8 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
          if (error != NO_ERROR          ) return(catch("InitializeGridLimits(2)", error));
 
          if (increase || decrease) {
-            if (increase) debug("InitializeGridLimits()   touch up   signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
-            if (decrease) debug("InitializeGridLimits()   touch down signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
+            //if (increase) debug("InitializeGridLimits()   touch up   signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
+            //if (decrease) debug("InitializeGridLimits()   touch down signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
             break;
          }
       }
@@ -524,15 +520,15 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
       if (increase && decrease) {                                             // Bar hat beide Limite berührt
          if (period == PERIOD_M1)
             break;
-         debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits, decreasing to lower timeframe");
+         //debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits, decreasing to lower timeframe");
          period   = DecreasePeriod(period);                                   // Timeframe verringern
          increase = false;
          decrease = false;
       }
    }
 
-   if (increase) { high += Grid.Size; debug("InitializeGridLimits()   increasing upper limit to "+ DoubleToStr(high, Grid.Digits)); }
-   if (decrease) { low  -= Grid.Size; debug("InitializeGridLimits()   decreasing lower limit to "+ DoubleToStr(low , Grid.Digits)); }
+   if (increase) { high += Grid.Size; } //debug("InitializeGridLimits()   increasing upper limit to "+ DoubleToStr(high, Grid.Digits)); }
+   if (decrease) { low  -= Grid.Size; } //debug("InitializeGridLimits()   decreasing lower limit to "+ DoubleToStr(low , Grid.Digits)); }
 
    upperLimit = NormalizeDouble(high, Grid.Digits) - 0.000000001;
    lowerLimit = NormalizeDouble(low , Grid.Digits) + 0.000000001;

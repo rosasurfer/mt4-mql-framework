@@ -181,6 +181,7 @@
 
 
    // sonstiges
+   string   CreateLegendLabel(string name);
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
@@ -191,7 +192,6 @@
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
    int      GetMovingAverageCode(string description);
-   int      GetPeriod(string description);
    int      GetPeriodFlag(int period);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolLongName(string symbol, string defaultName);
@@ -206,6 +206,7 @@
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
+   int      StringToPeriod(string description);
    string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
    int      iBalance(int account, double& lpBuffer[], int bar);
@@ -232,7 +233,6 @@
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);
    string   StructWCharToStr(int& lpStruct[], int from, int len);
-   string   TimeframeToStr(int timeframe);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
 
