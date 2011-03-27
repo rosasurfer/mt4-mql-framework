@@ -19,6 +19,16 @@ int init() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   return(catch("deinit()"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus

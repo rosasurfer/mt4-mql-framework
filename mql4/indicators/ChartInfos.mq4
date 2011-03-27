@@ -28,8 +28,9 @@ extern string H1.Close.Symbols = "";         // Symbole, für die der Schlußkurs 
 string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
-int  appliedPrice = PRICE_MEDIAN;            // Bid | Ask | Median (default)
-bool showH1Close, positionChecked;
+int    appliedPrice = PRICE_MEDIAN;          // Median(default) | Bid | Ask
+double leverage;                             // Hebel zur UnitSize-Berechnung
+bool   showH1Close, positionChecked;
 
 
 /**
@@ -50,9 +51,12 @@ int init() {
    if      (price == "median") appliedPrice = PRICE_MEDIAN;
    else if (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
-   else {
+   else
       catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
-   }
+
+   leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 1.0);
+   if (leverage < 1)
+      return(catch("init(2)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ symbol +",");
 
@@ -362,10 +366,7 @@ int UpdateUnitSizeLabel() {
 
       if (equity > 0) {                                     // Accountequity wird mit 'leverage' gehebelt
          double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
-         int    leverage = 35;                              // leverage war bis 11/2010 = 7, ab dann mit GBP/JPY,H1-Scalper = 35
          unitSize = equity / lotValue * leverage;           // unitSize = equity/lotValue entspricht Hebel von 1
-
-         // TODO: Volatilität oder ATR berücksichtigen
 
          if      (unitSize <=    0.02) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfache von   0.001
          else if (unitSize <=    0.04) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfache von   0.002
