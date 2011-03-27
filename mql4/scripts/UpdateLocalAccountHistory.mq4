@@ -214,7 +214,7 @@ int start() {
 
 
    // (7) CSV-Datei erzeugen
-   string filename = GetAccountDirectory(account) +"/"+ account +"_account_history.csv";
+   string filename = GetTradeServerDirectory() +"/"+ account +"_account_history.csv";
 
    if (ArrayRange(history, 0) == 0) {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)

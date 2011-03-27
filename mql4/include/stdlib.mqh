@@ -185,7 +185,6 @@
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
-   string   GetAccountDirectory(int account);
    int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);

@@ -1229,34 +1229,6 @@ string GetTradeServerDirectory() {
    cache.directory[0] = serverDirectory;
 
    return(serverDirectory);
-
-}
-
-
-/**
- * Gibt das files-Verzeichnis des angegebenen Accounts zurück.
- *
- * @param  int account - Account-Nummer
- *
- * @return string - Verzeichnisname, relativ zu "{terminal-directory}\experts\files"
- */
-string GetAccountDirectory(int account) {
-   switch (account) {
-      case     {account-no}: return("AlpariUK-Demo"        );
-      case    {account-no}: return("AlpariUK-Demo"        );
-      case    {account-no}: return("AlpariUK-Micro-2"     );
-      case    {account-no}: return("AlpariUK-Micro-1"     );
-      case   {account-no}: return("APBGTrading-Server"   );
-      case      {account-no}: return("ATCBrokers-Demo"      );
-      case     {account-no}: return("ATCBrokers-Live"      );
-      case      {account-no}: return("ForexBaltic-Server"   );
-      case {account-no}: return("MBTrading-Demo Server");
-      case     {account-no}: return("SIG-Real.com"         );
-      case    {account-no}: return("FOREX-Server"         );
-   }
-
-   log("GetAccountDirectory()   unknown files directory for account #"+ AccountNumber());
-   return(AccountNumber());
 }
 
 
@@ -3406,7 +3378,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-   string filename = GetAccountDirectory(account) +"/"+ account + "_account_history.csv";
+   string filename = GetTradeServerDirectory() +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
