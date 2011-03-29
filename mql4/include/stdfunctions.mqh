@@ -331,10 +331,10 @@
 #define ERR_TOO_MANY_OPENED_FILES                    4102
 #define ERR_CANNOT_OPEN_FILE                         4103
 #define ERR_INCOMPATIBLE_FILEACCESS                  4104
-#define ERR_NO_ORDER_SELECTED                        4105
+#define ERR_NO_ORDER_SELECTED                        4105   // no order selected
 #define ERR_UNKNOWN_SYMBOL                           4106
 #define ERR_INVALID_PRICE_PARAM                      4107
-#define ERR_INVALID_TICKET                           4108
+#define ERR_INVALID_TICKET                           4108   // invalid ticket
 #define ERR_TRADE_NOT_ALLOWED                        4109
 #define ERR_LONGS_NOT_ALLOWED                        4110
 #define ERR_SHORTS_NOT_ALLOWED                       4111
@@ -348,7 +348,7 @@
 #define ERR_SOME_OBJECT_ERROR                        4207
 
 // custom errors
-#define ERR_WINDOWS_ERROR                            5000   // Windows error
+#define ERR_WINDOWS_ERROR                            5000   // win32 api error
 #define ERR_FUNCTION_NOT_IMPLEMENTED                 5001   // function not implemented
 #define ERR_INVALID_INPUT_PARAMVALUE                 5002   // invalid input parameter value
 #define ERR_TERMINAL_NOT_YET_READY                   5003   // terminal not yet ready

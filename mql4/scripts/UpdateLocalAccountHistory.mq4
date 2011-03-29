@@ -132,8 +132,12 @@ int start() {
 
    for (i=0; i < orders; i++) {
       int ticket = ticketData[i][2];
-      if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_HISTORY))
-         return(catch("start(6)  OrderSelect(ticket="+ ticket +")"));
+      if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("start(6)  OrderSelect(ticket="+ ticket +")", error));
+      }
 
       int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)

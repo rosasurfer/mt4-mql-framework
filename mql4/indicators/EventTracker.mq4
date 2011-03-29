@@ -269,7 +269,7 @@ int onPositionOpen(int tickets[]) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
          if (error == NO_ERROR)
-            error = ERR_RUNTIME_ERROR;
+            error = ERR_INVALID_TICKET;
          return(catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error));
       }
 
@@ -314,8 +314,12 @@ int onPositionClose(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET))
-         continue;                        // TODO: Meldung ausgeben, daß der History-Tab-Filter aktuelle Transaktionen ausfiltert
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         int error = GetLastError();
+         if (error == NO_ERROR) log("onPositionClose()  error selectiong closed position #"+ tickets[i]);
+         else                   catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
+         continue;
+      }
 
       // alle Positionen wurden im aktuellen Instrument gehalten
       string format     = StringConcatenate(".", Digits - Digits%2, ifString(Digits%2 > 0, "'", ""));
@@ -327,9 +331,9 @@ int onPositionClose(int tickets[]) {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(catch("onPositionClose(1)   error sending text message to "+ SMS.Receiver, error));
+            return(catch("onPositionClose(2)   error sending text message to "+ SMS.Receiver, error));
          Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
       }
       else {
@@ -341,7 +345,7 @@ int onPositionClose(int tickets[]) {
    if (Sound.Alerts)
       PlaySound(Sound.File.PositionClose);
 
-   return(catch("onPositionClose(2)"));
+   return(catch("onPositionClose(3)"));
 }
 
 

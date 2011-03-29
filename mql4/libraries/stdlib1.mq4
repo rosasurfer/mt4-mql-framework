@@ -3,7 +3,7 @@
  *
  *
  * Datentypen und Speichergrößen in C, Win32-API (16-bit word size) und MQL:
- * ========================================================================
+ * =========================================================================
  *
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
@@ -3054,7 +3054,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
          if (!OrderSelect(knownPositions[i], SELECT_BY_TICKET)) {
             int error = GetLastError();
             if (error == NO_ERROR)
-               error = ERR_RUNTIME_ERROR;
+               error = ERR_INVALID_TICKET;
             catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
             // TODO: bei offenen Orders in einem Account und dem ersten Login in einen neuen Account crasht alles (erster Login dauert länger)
             return(false);
