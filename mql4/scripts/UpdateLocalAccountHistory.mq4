@@ -13,7 +13,7 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   __SCRIPT__ = WindowExpertName();
+   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
    return(catch("init()"));
 }
@@ -35,6 +35,11 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+   // -----------------------------------------------------------------------------
+
    int account = AccountNumber();
    if (account == 0) {
       log("start()  no trade server connection");
@@ -50,7 +55,7 @@ int start() {
    ArrayResize(ticketData, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE ist rein theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE ist hier nur theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
          ArrayResize(ticketData, i);
          orders = i;
          break;

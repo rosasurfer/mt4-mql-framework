@@ -8,14 +8,17 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    Close.Ticket      = 0;
-
 extern string Close.Symbol      = "";     // <leer> | Symbol
-extern string Close.Direction   = "";     // <leer> | Long | Short
+extern string Close.Direction   = "";     // <leer> | Buy | Long | Sell | Short
 extern string Close.MagicNumber = "";     // <leer> | MagicNumber
 extern string Close.Comment     = "";     // <leer> | Kommentar, Prüfung per StringStartsWith(OrderComment(), Close.Comment)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+string orderSymbol  = "";
+int    orderType    = -1;
+int    orderMagic   = -1;
+string orderComment = "";
 
 
 /**
@@ -24,9 +27,35 @@ extern string Close.Comment     = "";     // <leer> | Kommentar, Prüfung per Str
  * @return int - Fehlerstatus
  */
 int init() {
-   __SCRIPT__ = WindowExpertName();
+   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
-   return(catch("init()"));
+
+   // Parametervalidierung
+   orderSymbol = StringToUpper(StringTrim(Close.Symbol));
+
+   string direction = StringToUpper(StringTrim(Close.Direction));
+   if (StringLen(direction) > 0) {
+      switch (StringGetChar(direction, 0)) {
+         case 'B':
+         case 'L': orderType = OP_BUY;  break;
+         case 'S': orderType = OP_SELL; break;
+         default:
+            return(catch("init(1)  Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      }
+   }
+
+   string magic = StringTrim(Close.MagicNumber);
+   if (StringLen(magic) > 0) {
+      if (!StringIsDigit(magic))
+         return(catch("init(2)  Invalid input parameter Close.MagicNumber = \""+ Close.MagicNumber +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      orderMagic = StrToInteger(magic);
+      if (orderMagic <= 0)
+         return(catch("init(3)  Invalid input parameter Close.MagicNumber = \""+ Close.MagicNumber +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   }
+
+   orderComment = StringTrim(Close.Comment);
+
+   return(catch("init(4)"));
 }
 
 
@@ -46,17 +75,53 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+   // -----------------------------------------------------------------------------
 
-   int result = OrderCloseEx(Close.Ticket);
+
+   int orders = OrdersTotal();
+   int tickets[];
+   ArrayResize(tickets, 0);
+
+   // zu schließende Positionen selektieren
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE ist hier nur theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
+         break;
+
+      bool close = true;
+      if (close) close = (orderSymbol=="" || orderSymbol==OrderSymbol());
+      if (close) close = (orderType==-1   || orderType==OrderType());
+      if (close) close = (orderMagic==-1  || orderMagic==OrderMagicNumber());
+
+      if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))  // Workaround um MQL-Conditions-Bug
+         close = false;
+
+      if (close) ArrayPushInt(tickets, OrderTicket());
+   }
+
+   // Positionen schließen
+   int selected = ArraySize(tickets);
+   if (selected > 0) {
+      PlaySound("notify.wav");
+      int answer = MessageBox("Do you really want to close the specified positions?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
+      if (answer == IDOK) {
+         for (i=0; i < selected; i++) {
+            if (!OrderCloseEx(tickets[i]))
+               break;
+         }
+         SendTick(false);
+      }
+   }
+   else {
+      PlaySound("notify.wav");
+      if (orderSymbol=="" && orderType==-1 && orderMagic==-1 && orderComment=="") string message = "No positions to close.";
+      else                                                                               message = "No matching positions found.";
+      MessageBox(message, WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+   }
 
    return(catch("start()"));
-
-   /*
-   PlaySound("notify.wav");
-   int answer = MessageBox("Do you really want to close the specified positions?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
-   if (answer == IDOK)
-      SendTick(false);
-   */
 }
 
 

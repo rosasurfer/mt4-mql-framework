@@ -12,7 +12,7 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   __SCRIPT__ = WindowExpertName();
+   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
    return(catch("init()"));
 }
@@ -34,6 +34,11 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   init = false;
+   if (init_error != NO_ERROR)
+      return(init_error);
+   // -----------------------------------------------------------------------------
+
    SendTick(true);
    return(catch("start()"));
 }
