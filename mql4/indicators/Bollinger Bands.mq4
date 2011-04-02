@@ -114,6 +114,7 @@ int init() {
  */
 int deinit() {
    RemoveChartObjects(objectLabels);
+   RepositionLegend();
    return(catch("deinit()"));
 }
 

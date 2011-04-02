@@ -17,27 +17,27 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;             // averaging period
-extern string MA.Timeframe      = "";              // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string AppliedPrice      = "Close";         // price used for MA calculation
+extern int    MA.Periods        = 200;                // averaging period
+extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+extern string AppliedPrice      = "Close";            // price used for MA calculation
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted"; // Median = (H+L)/2, Typical = (H+L+C)/3, Weighted = (H+L+C+C)/4
-extern double GaussianOffset    = 0.85;            // Gaussian distribution offset (0..1)
+extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;
-extern double PctReversalFilter = 0.0;             // minimum percentage MA change to indicate a trend change
-extern int    Max.Values        = -1;              // maximum number of indicator values to display: -1 = all
+extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
+extern int    Max.Values        = -1;                 // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;      // Farben hier konfigurieren, damit der Code zur Laufzeit Zugriff hat
+extern color  Color.UpTrend     = DodgerBlue;         // Farben hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 extern color  Color.DownTrend   = Orange;
 extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double iUpTrend[], iDownTrend[], iReversal[];      // sichtbare Indikatorbuffer
-double iALMA[], iTrend[], iDel[];                  // nicht sichtbare Buffer
-double wALMA[];                                    // Gewichtung der einzelnen Bars des MA
+double iALMA[], iUpTrend[], iDownTrend[];             // sichtbare Indikatorbuffer
+double iTrend[], iBarDiff[];                          // nicht sichtbare Buffer
+double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
 
-int    appliedPrice = PRICE_CLOSE;
+int    appliedPrice = PRICE_CLOSE;                    // default (wenn in Parametern nicht anders angegeben)
 string objectLabels[], legendLabel, indicatorName;
 
 
@@ -72,13 +72,12 @@ int init() {
       return(catch("init(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // Buffer zuweisen
-   IndicatorBuffers(6);
-   SetIndexBuffer(0, iUpTrend  );
-   SetIndexBuffer(1, iDownTrend);
-   SetIndexBuffer(2, iReversal );
-   SetIndexBuffer(3, iALMA     );
-   SetIndexBuffer(4, iTrend    );
-   SetIndexBuffer(5, iDel      );
+   IndicatorBuffers(5);
+   SetIndexBuffer(0, iALMA     );      // nur für DataBox-Anzeige der aktuellen Werte (im Chart unsichtbar)
+   SetIndexBuffer(1, iUpTrend  );
+   SetIndexBuffer(2, iDownTrend);
+   SetIndexBuffer(3, iTrend    );      // Trend (-1/+1) für jede einzelne Bar
+   SetIndexBuffer(4, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
 
    // Anzeigeoptionen
    if (MA.Timeframe != "")
@@ -105,7 +104,7 @@ int init() {
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
-   SetIndicatorStyles();            // Workaround um die diversen Terminalbugs
+   SetIndicatorStyles();            // Workaround um diverse Terminalbugs (siehe dort)
 
    // Gewichtungen berechnen
    ArrayResize(wALMA, MA.Periods);
@@ -136,6 +135,7 @@ int init() {
  */
 int deinit() {
    RemoveChartObjects(objectLabels);
+   RepositionLegend();
    return(catch("deinit()"));
 }
 
@@ -176,9 +176,8 @@ int start() {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
-      ArrayInitialize(iReversal,  EMPTY_VALUE);
       ArrayInitialize(iTrend,               0);
-      SetIndicatorStyles();                        // Workaround um die diversen Terminalbugs
+      SetIndicatorStyles();                     // Workaround um diverse Terminalbugs (siehe dort)
    }
 
    double filter;
@@ -191,29 +190,29 @@ int start() {
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
-      // Moving Average
+      // der eigentliche Moving Average
       iALMA[bar] = 0;
       for (int i=0; i < MA.Periods; i++) {
          iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 
-      // Percentage-Filter (verdoppelt die Laufzeit)
+      // Percentage-Filter für Reversal-Smoothing (verdoppelt Laufzeit und ist unsinnig implementiert)
       if (PctReversalFilter > 0) {
-         iDel[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);
+         iBarDiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);         // ALMA-Änderung gegenüber der vorherigen Bar
 
          double sumDel = 0;
          for (int j=0; j < MA.Periods; j++) {
-            sumDel += iDel[bar+j];
+            sumDel += iBarDiff[bar+j];
          }
-         double avgDel = sumDel/MA.Periods;
+         double avgDel = sumDel/MA.Periods;                          // durchschnittliche ALMA-Änderung von Bar zu Bar
 
          double sumPow = 0;
          for (j=0; j < MA.Periods; j++) {
-            sumPow += MathPow(iDel[bar+j] - avgDel, 2);
+            sumPow += MathPow(iBarDiff[bar+j] - avgDel, 2);
          }
          filter = PctReversalFilter * MathSqrt(sumPow/MA.Periods);   // PctReversalFilter * stdDev
 
-         if (MathAbs(iALMA[bar]-iALMA[bar+1]) < filter)
+         if (iBarDiff[bar] < filter)
             iALMA[bar] = iALMA[bar+1];
       }
 
@@ -256,10 +255,11 @@ int start() {
 
 
 /**
- * Indikator-Styles hier setzen. Workaround um die diversen Terminalbugs: init(), Recompile etc.
+ * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farbänderungen nach Recompile, Parameteränderung etc.), die erfordern,
+ * daß die Styles manchmal in init() und manchmal in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.Reversal );
+   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
 }

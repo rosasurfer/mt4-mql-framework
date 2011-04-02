@@ -188,7 +188,7 @@ string CreateLegendLabel(string name) {
        labelObj = ObjectsTotal(OBJ_LABEL);
 
    string substrings[0], objName;
-   int legendLabels, maxId;
+   int legendLabels, maxLegendId, maxYDistance=2;
 
    for (int i=0; i < totalObj && labelObj > 0; i++) {
       objName = ObjectName(i);
@@ -197,19 +197,20 @@ string CreateLegendLabel(string name) {
             legendLabels++;
             if (Explode(objName, ".", substrings) != NO_ERROR)
                return("");
-            maxId = MathMax(maxId, StrToInteger(substrings[1]));
+            maxLegendId  = MathMax(maxLegendId, StrToInteger(substrings[1]));
+            maxYDistance = MathMax(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));
          }
          labelObj--;
       }
    }
 
-   string label = StringConcatenate("Legend.", maxId+1, ".", name);
+   string label = StringConcatenate("Legend.", maxLegendId+1, ".", name);
    if (ObjectFind(label) >= 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,  5);
-      ObjectSet(label, OBJPROP_YDISTANCE, 21 + legendLabels*19);
+      ObjectSet(label, OBJPROP_CORNER,    CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE,               5);
+      ObjectSet(label, OBJPROP_YDISTANCE, maxYDistance+19);
    }
    else GetLastError();
    ObjectSetText(label, " ");
@@ -217,6 +218,45 @@ string CreateLegendLabel(string name) {
    if (catch("CreateLegendLabel()") != NO_ERROR)
       return("");
    return(label);
+}
+
+
+/**
+ * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
+ *
+ * @return int - Fehlerstatus
+ */
+int RepositionLegend() {
+   int objects = ObjectsTotal(),
+       labels  = ObjectsTotal(OBJ_LABEL);
+
+   string legends[];       ArrayResize(legends,    0);   // Namen der gefundenen Label
+   int    yDistances[][2]; ArrayResize(yDistances, 0);   // Y-Distance und legends[]-Index, um Label nach Position sortieren zu können
+
+   int legendLabels;
+
+   for (int i=0; i < objects && labels > 0; i++) {
+      string objName = ObjectName(i);
+      if (ObjectType(objName) == OBJ_LABEL) {
+         if (StringStartsWith(objName, "Legend.")) {
+            legendLabels++;
+            ArrayResize(legends,    legendLabels);
+            ArrayResize(yDistances, legendLabels);
+            legends   [legendLabels-1]    = objName;
+            yDistances[legendLabels-1][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
+            yDistances[legendLabels-1][1] = legendLabels-1;
+         }
+         labels--;
+      }
+   }
+
+   if (legendLabels > 0) {
+      ArraySort(yDistances);
+      for (i=0; i < legendLabels; i++) {
+         ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
+      }
+   }
+   return(catch("RepositionLegend()"));
 }
 
 
@@ -4635,7 +4675,8 @@ string GetTradeServerTimezone() {
 
    if      (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "America/New_York";
+   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
@@ -5204,10 +5245,36 @@ string JoinInts(int& values[], string separator) {
  *
  * @return string
  */
-string IntArrayToStr(int& array[]) {
-   if (ArraySize(array) == 0)
-      return("{}");
-   return(StringConcatenate("{", JoinInts(array, ", "), "}"));
+string IntArrayToStr(int& array[][]) {
+   int dimensions = ArrayDimension(array);
+
+   // ein-dimensionales Array
+   if (dimensions == 1) {
+      if (ArraySize(array) == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinInts(array, ", "), "}"));
+   }
+
+   // zwei-dimensionales Array
+   if (dimensions == 2) {
+      int size1=ArrayRange(array, 0), size2=ArrayRange(array, 1);
+      if (size2 == 0)
+         return("{}");
+
+      string strTmp[]; ArrayResize(strTmp, size1);
+      int    iTmp[];   ArrayResize(iTmp,   size2);
+
+      for (int i=0; i < size1; i++) {
+         for (int z=0; z < size2; z++) {
+            iTmp[z] = array[i][z];
+         }
+         strTmp[i] = IntArrayToStr(iTmp);
+      }
+      return(StringConcatenate("{", JoinStrings(strTmp, ", "), "}"));
+   }
+
+   // multi-dimensional
+   return("{too many dimensions}");
 }
 
 

@@ -181,6 +181,7 @@
 
    // sonstiges
    string   CreateLegendLabel(string name);
+   int      RepositionLegend();
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
