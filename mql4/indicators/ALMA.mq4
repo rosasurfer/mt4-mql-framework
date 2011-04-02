@@ -82,7 +82,7 @@ int init() {
    // Anzeigeoptionen
    if (MA.Timeframe != "")
       MA.Timeframe = StringConcatenate("x", MA.Timeframe);
-   indicatorName = StringConcatenate("ALMA(", MA.Periods, MA.Timeframe, ")");
+   indicatorName = StringConcatenate("ALMA(", MA.Periods, MA.Timeframe, " / ", AppliedPriceDescription(appliedPrice), ")");
    IndicatorShortName(indicatorName);
    SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL);
