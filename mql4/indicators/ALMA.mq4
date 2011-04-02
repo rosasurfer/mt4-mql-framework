@@ -25,8 +25,6 @@ extern double GaussianOffset    = 0.85;            // Gaussian distribution offs
 extern double Sigma             = 6.0;
 extern double PctReversalFilter = 0.0;             // minimum percentage MA change to indicate a trend change
 extern int    Max.Values        = -1;              // maximum number of indicator values to display: -1 = all
-extern int    BarShift          = 0;               // indicator display shifting
-extern bool   SoundAlerts       = false;           // enable/disable sound alerts on trend change (intra-bar too)
 
 extern color  Color.UpTrend     = DodgerBlue;      // Farben hier konfigurieren, damit der Code zur Laufzeit Zugriff hat
 extern color  Color.DownTrend   = Orange;
@@ -107,9 +105,6 @@ int init() {
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
-   SetIndexShift(0, BarShift);
-   SetIndexShift(1, BarShift);
-   SetIndexShift(2, BarShift);
    SetIndicatorStyles();            // Workaround um die diversen Terminalbugs
 
    // Gewichtungen berechnen
@@ -186,6 +181,7 @@ int start() {
       SetIndicatorStyles();                        // Workaround um die diversen Terminalbugs
    }
 
+   double filter;
    static int lastTrend;
 
    // Startbar ermitteln
@@ -215,14 +211,10 @@ int start() {
          for (j=0; j < MA.Periods; j++) {
             sumPow += MathPow(iDel[bar+j] - avgDel, 2);
          }
-         double stdDev = MathSqrt(sumPow/MA.Periods);
-         double filter = PctReversalFilter * stdDev;
+         filter = PctReversalFilter * MathSqrt(sumPow/MA.Periods);   // PctReversalFilter * stdDev
 
          if (MathAbs(iALMA[bar]-iALMA[bar+1]) < filter)
             iALMA[bar] = iALMA[bar+1];
-      }
-      else {
-         filter = 0;
       }
 
       // Trend coloring
@@ -258,18 +250,13 @@ int start() {
    }
    lastTrend = iTrend[0];
 
-   // SoundAlerts bei Trendwechsel (bei jedem Tick möglich)
-   if (SoundAlerts) /*&&*/ if (iTrend[1]!=iTrend[0])
-      PlaySound("alert2.wav");
-
    //if (startBar > 1) debug("start()   ALMA("+ MA.Periods +")   startBar: "+ startBar +"    time: "+ (GetTickCount()-tick) +" msec");
-
    return(catch("start(2)"));
 }
 
 
 /**
- * IndexStyles hier setzen (Workaround um die diversen Terminalbugs)
+ * Indikator-Styles hier setzen. Workaround um die diversen Terminalbugs: init(), Recompile etc.
  */
 void SetIndicatorStyles() {
    SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
