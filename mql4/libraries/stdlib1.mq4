@@ -4450,24 +4450,62 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
 
 
 /**
- * Gibt den numerischen Code einer MovingAverage-Methode zurück.
+ * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string mode - MA-Methode: [MODE_]SMA | [MODE_]EMA | [MODE_]SMMA | [MODE_]LWMA
+ * @param  int type - MA-Methode
  *
- * @return int - MA-Code
+ * @return string
  */
-int GetMovingAverageCode(string mode) {
-   string id = StringToUpper(mode);
+string MovingAverageToStr(int method) {
+   switch (method) {
+      case MODE_SMA : return("MODE_SMA" );
+      case MODE_EMA : return("MODE_EMA" );
+      case MODE_SMMA: return("MODE_SMMA");
+      case MODE_LWMA: return("MODE_LWMA");
+   }
+   catch("MovingAverageToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
 
-   if (StringStartsWith(id, "MODE_"))
-      id = StringRight(id, -5);
 
-   if (id == "SMA" ) return(MODE_SMA );
-   if (id == "EMA" ) return(MODE_EMA );
-   if (id == "SMMA") return(MODE_SMMA);
-   if (id == "LWMA") return(MODE_LWMA);
+/**
+ * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
+ *
+ * @param  int type - MA-Methode
+ *
+ * @return string
+ */
+string MovingAverageDescription(int method) {
+   switch (method) {
+      case MODE_SMA : return("SMA" );
+      case MODE_EMA : return("EMA" );
+      case MODE_SMMA: return("SMMA");
+      case MODE_LWMA: return("LWMA");
+   }
+   catch("MovingAverageDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
 
-   catch("GetMovingAverageCode()  invalid parameter mode: \""+ mode +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+
+/**
+ * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
+ *
+ * @param  string method - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA]
+ *
+ * @return int - MA-Konstante
+ */
+int MovingAverageToId(string method) {
+   string value = StringToUpper(method);
+
+   if (StringStartsWith(value, "MODE_"))
+      value = StringRight(value, -5);
+
+   if (value == "SMA" ) return(MODE_SMA );
+   if (value == "EMA" ) return(MODE_EMA );
+   if (value == "SMMA") return(MODE_SMMA);
+   if (value == "LWMA") return(MODE_LWMA);
+
+   catch("MovingAverageToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -4540,24 +4578,47 @@ string OperationTypeDescription(int type) {
 
 
 /**
+ * Gibt die lesbare Konstante eines Price-Identifiers zurück.
+ *
+ * @param  int appliedPrice - Price-Typ, siehe: iMA(symbol, timeframe, period, ma_shift, ma_method, int *APPLIED_PRICE*, bar)
+ *
+ * @return string
+ */
+string AppliedPriceToStr(int appliedPrice) {
+   switch (appliedPrice) {
+      case PRICE_CLOSE   : return("PRICE_CLOSE"   );     // Close price
+      case PRICE_OPEN    : return("PRICE_OPEN"    );     // Open price
+      case PRICE_HIGH    : return("PRICE_HIGH"    );     // High price
+      case PRICE_LOW     : return("PRICE_LOW"     );     // Low price
+      case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // Median price:         (High+Low)/2
+      case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
+   }
+
+   catch("AppliedPriceToStr()  invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
  * Gibt die lesbare Version eines Price-Identifiers zurück.
  *
  * @param  int appliedPrice - Price-Typ, siehe: iMA(symbol, timeframe, period, ma_shift, ma_method, int *APPLIED_PRICE*, bar)
  *
  * @return string
  */
-string AppliedPriceToStr(int price) {
-   switch (price) {
-      case PRICE_CLOSE   : return("Close"   );  // Close price
-      case PRICE_OPEN    : return("Open"    );  // Open price
-      case PRICE_HIGH    : return("High"    );  // High price
-      case PRICE_LOW     : return("Low"     );  // Low price
-      case PRICE_MEDIAN  : return("Median"  );  // Median price:         (High+Low)/2
-      case PRICE_TYPICAL : return("Typical" );  // Typical price:        (High+Low+Close)/3
-      case PRICE_WEIGHTED: return("Weighted");  // Weighted close price: (High+Low+Close+Close)/4
+string AppliedPriceDescription(int appliedPrice) {
+   switch (appliedPrice) {
+      case PRICE_CLOSE   : return("Close"   );     // Close price
+      case PRICE_OPEN    : return("Open"    );     // Open price
+      case PRICE_HIGH    : return("High"    );     // High price
+      case PRICE_LOW     : return("Low"     );     // Low price
+      case PRICE_MEDIAN  : return("Median"  );     // Median price:         (High+Low)/2
+      case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
    }
 
-   catch("AppliedPriceToStr()  invalid parameter price = "+ price, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("AppliedPriceDescription()  invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 

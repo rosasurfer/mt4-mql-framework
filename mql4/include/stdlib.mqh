@@ -180,6 +180,7 @@
 
 
    // sonstiges
+   string   AppliedPriceDescription(int appliedPrice);
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    int      DecreasePeriod(int period);
@@ -190,7 +191,6 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
-   int      GetMovingAverageCode(string description);
    int      GetPeriodFlag(int period);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolLongName(string symbol, string defaultName);
@@ -199,6 +199,8 @@
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
    int      IncreasePeriod(int period);
+   string   MovingAverageDescription(int method);
+   int      MovingAverageToId(string method);
    string   OperationTypeDescription(int type);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
@@ -214,7 +216,7 @@
    int      iBarShiftPrevious(string symbol, int period, datetime time);
 
    // toString-Funktionen
-   string   AppliedPriceToStr(int price);
+   string   AppliedPriceToStr(int appliedPrice);
    string   BoolArrayToStr(bool& values[]);
    string   BoolToStr(bool value);
    string   DoubleArrayToStr(double& values[]);
@@ -223,6 +225,7 @@
    string   IntArrayToStr(int& values[]);
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                            // MetaQuotes-Alias
+   string   MovingAverageToStr(int method);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);

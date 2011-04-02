@@ -26,7 +26,7 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern double Deviation         = 1.65;                        // Faktor der Std.-Abweichung der Bollinger-Bänder
 extern int    Max.Values        = -1;                          // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 
-extern color  Color.Bands       = C'102,135,232';              // Farben hier konfigurieren, damit Code zur Laufzeit Zugriff hat
+extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -86,7 +86,7 @@ int init() {
    // Anzeigeoptionen
    if (MA.Timeframe != "")
       MA.Timeframe = StringConcatenate("x", MA.Timeframe);
-   string indicatorName = StringConcatenate("BollingerBands(", MA.Periods, MA.Timeframe, "/", AppliedPriceToStr(appliedPrice), "/", NumberToStr(Deviation, ".1+"), ")");
+   string indicatorName = StringConcatenate("BollingerBands(", MA.Periods, MA.Timeframe, " / ", MovingAverageDescription(maMethod), " / ", AppliedPriceDescription(appliedPrice), " / ", NumberToStr(Deviation, ".1+"), ")");
    IndicatorShortName(indicatorName);
    SetIndexLabel(0, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));
    SetIndexLabel(1, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
