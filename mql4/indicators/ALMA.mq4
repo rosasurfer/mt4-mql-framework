@@ -19,8 +19,8 @@
 
 extern int    MA.Periods        = 200;                // averaging period
 extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string AppliedPrice      = "Close";            // price used for MA calculation
-extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted"; // Median = (H+L)/2, Typical = (H+L+C)/3, Weighted = (H+L+C+C)/4
+extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;
 extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
@@ -95,7 +95,7 @@ int init() {
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
-      double minutes = maTimeframe * MA.Periods;      // Timeframe * Anzahl Bars = Range in Minuten
+      double minutes = maTimeframe * MA.Periods;   // Timeframe * Anzahl Bars = Range in Minuten
       MA.Periods = MathRound(minutes / Period());
    }
 
@@ -104,21 +104,23 @@ int init() {
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
-   SetIndicatorStyles();            // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorStyles();                           // Workaround um diverse Terminalbugs (siehe dort)
 
    // Gewichtungen berechnen
-   ArrayResize(wALMA, MA.Periods);
-   int    m = NormalizeDouble(GaussianOffset * (MA.Periods-1), 8);   // (int) double
-   double s = MA.Periods / Sigma;
-   double wSum;
-   for (int i=0; i < MA.Periods; i++) {
-      wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
-      wSum += wALMA[i];
+   if (MA.Periods > 1) {                           // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+      ArrayResize(wALMA, MA.Periods);
+      int    m = NormalizeDouble(GaussianOffset * (MA.Periods-1), 8);   // (int) double
+      double s = MA.Periods / Sigma;
+      double wSum;
+      for (int i=0; i < MA.Periods; i++) {
+         wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+         wSum += wALMA[i];
+      }
+      for (i=0; i < MA.Periods; i++) {
+         wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
+      }
+      ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
    }
-   for (i=0; i < MA.Periods; i++) {
-      wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
-   }
-   ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
@@ -177,8 +179,11 @@ int start() {
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
       ArrayInitialize(iTrend,               0);
-      SetIndicatorStyles();                     // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorStyles();                        // Workaround um diverse Terminalbugs (siehe dort)
    }
+
+   if (MA.Periods < 2)                             // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+      return(NO_ERROR);
 
    double filter;
    static int lastTrend;

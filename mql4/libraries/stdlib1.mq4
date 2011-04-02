@@ -4540,6 +4540,29 @@ string OperationTypeDescription(int type) {
 
 
 /**
+ * Gibt die lesbare Version eines Price-Identifiers zurück.
+ *
+ * @param  int appliedPrice - Price-Typ, siehe: iMA(symbol, timeframe, period, ma_shift, ma_method, int *APPLIED_PRICE*, bar)
+ *
+ * @return string
+ */
+string AppliedPriceToStr(int price) {
+   switch (price) {
+      case PRICE_CLOSE   : return("Close"   );  // Close price
+      case PRICE_OPEN    : return("Open"    );  // Open price
+      case PRICE_HIGH    : return("High"    );  // High price
+      case PRICE_LOW     : return("Low"     );  // Low price
+      case PRICE_MEDIAN  : return("Median"  );  // Median price:         (High+Low)/2
+      case PRICE_TYPICAL : return("Typical" );  // Typical price:        (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("Weighted");  // Weighted close price: (High+Low+Close+Close)/4
+   }
+
+   catch("AppliedPriceToStr()  invalid parameter price = "+ price, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
  * Gibt den Integer-Wert einer Timeframe-Bezeichnung zurück.
  *
  * @param  string timeframe - M1, M5, M15, M30 etc.

@@ -214,6 +214,7 @@
    int      iBarShiftPrevious(string symbol, int period, datetime time);
 
    // toString-Funktionen
+   string   AppliedPriceToStr(int price);
    string   BoolArrayToStr(bool& values[]);
    string   BoolToStr(bool value);
    string   DoubleArrayToStr(double& values[]);
