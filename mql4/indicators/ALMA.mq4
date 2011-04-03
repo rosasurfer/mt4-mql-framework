@@ -24,7 +24,7 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;
 extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
-extern int    Max.Values        = -1;                 // maximum number of indicator values to display: -1 = all
+extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
 
 extern color  Color.UpTrend     = DodgerBlue;         // Farben hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 extern color  Color.DownTrend   = Orange;
@@ -264,7 +264,7 @@ int start() {
  * daß die Styles manchmal in init() und manchmal in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(0, DRAW_LINE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(1, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
 }
