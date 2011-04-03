@@ -205,6 +205,7 @@
    string   OperationTypeDescription(int type);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
+   color    RGBColor(int red, int green, int blue);
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
@@ -317,6 +318,5 @@
    // Diese Funktionen sind teilweise noch fehlerhaft.
    // ----------------------------------------------------------------------------------
    string   DoubleToStrMorePrecision(double number, int precision);
-   int      RGB(int red, int green, int blue);
 
 #import

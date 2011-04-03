@@ -10,6 +10,10 @@
 #define MAX_STRING_LITERAL_LEN 255
 
 
+// Mathematische Konstanten
+#define Math.PI                  3.14159265358979323846264338327950288419716939937510  // intern 3.1415926535897931 (15 korrekte Dezimalstellen)
+
+
 // Zeitkonstanten
 #define SECOND                   1
 #define MINUTE                  60
