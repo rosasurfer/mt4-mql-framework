@@ -161,6 +161,7 @@
    bool     StringIEndsWith(string object, string postfix);
    bool     StringIStartsWith(string object, string prefix);
    bool     StringIsDigit(string value);
+   bool     StringIsNumeric(string value);
    string   StringLeft(string value, int n);
    string   StringRepeat(string input, int times);
    string   StringReplace(string object, string search, string replace);

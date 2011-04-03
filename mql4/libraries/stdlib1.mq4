@@ -195,8 +195,7 @@ string CreateLegendLabel(string name) {
       if (ObjectType(objName) == OBJ_LABEL) {
          if (StringStartsWith(objName, "Legend.")) {
             legendLabels++;
-            if (Explode(objName, ".", substrings) != NO_ERROR)
-               return("");
+            Explode(objName, ".", substrings);
             maxLegendId  = MathMax(maxLegendId, StrToInteger(substrings[1]));
             maxYDistance = MathMax(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));
          }
@@ -3344,7 +3343,7 @@ int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
  * @param  string  separator   - Trennstring
  * @param  string& lpResults[] - Zielarray für die Teilstrings
  *
- * @return int - Fehlerstatus
+ * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
 int Explode(string object, string separator, string& lpResults[]) {
    int lenObject    = StringLen(object),
@@ -3388,7 +3387,13 @@ int Explode(string object, string separator, string& lpResults[]) {
          lpResults[size] = "";
       }
    }
-   return(catch("Explode()"));
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("Explode()", error);
+      return(-1);
+   }
+   return(ArraySize(lpResults));
 }
 
 
@@ -5687,22 +5692,57 @@ bool StringICompare(string string1, string string2) {
 
 
 /**
- * Prüft, ob ein String nur numerische Zeichen enthält.
+ * Prüft, ob ein String nur Ziffern enthält.
  *
  * @param  string value - zu prüfender String
  *
  * @return bool
  */
 bool StringIsDigit(string value) {
-   int len = StringLen(value);
+   int chr, len=StringLen(value);
 
    if (len == 0)
       return(false);
 
    for (int i=0; i < len; i++) {
-      int char = StringGetChar(value, i);
-      if (char < '0') return(false);
-      if (char > '9') return(false);    // Conditions für MQL optimiert
+      chr = StringGetChar(value, i);
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);       // Conditions für MQL optimiert
+   }
+
+   return(true);
+}
+
+
+/**
+ * Prüft, ob ein String einen gültigen numerischen Wert darstellt (Zeichen 0123456789.-)
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsNumeric(string value) {
+   int chr, len=StringLen(value);
+
+   if (len == 0)
+      return(false);
+
+   bool period = false;
+
+   for (int i=0; i < len; i++) {
+      chr = StringGetChar(value, i);
+
+      if (chr == '-') {
+         if (i != 0) return(false);
+         continue;
+      }
+      if (chr == '.') {
+         if (period) return(false);
+         period = true;
+         continue;
+      }
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);       // Conditions für MQL optimiert
    }
 
    return(true);
