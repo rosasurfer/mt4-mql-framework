@@ -5971,42 +5971,130 @@ string IntToHexStr(int integer) {
 
 
 /**
- * Konvertiert drei R-G-B-Farbwerte in eine RGB-Farbe.
+ * MetaQuotes-Alias
  *
- * @param  int red
- * @param  int green
- * @param  int blue
+ * @see RGBColor()
+ */
+int RGB(int red, int green, int blue) {
+   return(RGBColor(red, green, blue));
+}
+
+
+/**
+ * Konvertiert drei R-G-B-Farbwerte in eine Farbe.
+ *
+ * @param  int red   - Rotanteil (0-255)
+ * @param  int green - Gr¸nanteil (0-255)
+ * @param  int blue  - Blauanteil (0-255)
  *
  * @return color - Farbe oder -1, wenn ein Fehler auftrat
  *
  * Beispiel: RGBColor(255, 255, 255) => 0x00FFFFFF (weiﬂ)
  */
 color RGBColor(int red, int green, int blue) {
-   for (;;) {
-      if (0 <= red && red <= 255) {
-         if (0 <= green && green <= 255) {
-            if (0 <= blue && blue <= 255) {
-               green <<=  8;
-               blue  <<= 16;
-               return(red + green + blue);
-            }
-            else {
-               catch("RGBColor(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
-               break;
-            }
+   if (0 <= red && red <= 255) {
+      if (0 <= green && green <= 255) {
+         if (0 <= blue && blue <= 255) {
+
+            green <<=  8;
+            blue  <<= 16;
+            return(red + green + blue);
+
          }
-         else {
-            catch("RGBColor(2)  invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
-            break;
-         }
+         else catch("RGBColor(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else {
-         catch("RGBColor(3)  invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
-         break;
-      }
+      else catch("RGBColor(2)  invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
+   else catch("RGBColor(3)  invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
+
    return(-1);
 }
+
+
+/**
+ * Konvertiert eine Farbe in ihre HTML-Representation.
+ *
+ * @param  color rgb
+ *
+ * @return string - HTML-Farbwert
+ *
+ * Beispiel: ColorToHtmlStr(C'255,255,255') => "#FFFFFF"
+ */
+string ColorToHtmlStr(color rgb) {
+   int red   = rgb & 0x0000FF;
+   int green = rgb & 0x00FF00;
+   int blue  = rgb & 0xFF0000;
+
+   int value = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu kˆnnen
+
+   return(StringConcatenate("#", StringRight(IntToHexStr(value), 6)));
+}
+
+
+/**
+ * Konvertiert drei RGB-Farbwerte in den HSV-Farbraum (Hue-Saturation-Value).
+ *
+ * @param  int     red     - Rotanteil  (0-255)
+ * @param  int     green   - Gr¸nanteil (0-255)
+ * @param  int     blue    - Blauanteil (0-255)
+ * @param  double& lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ *
+ * @return int - Fehlerstatus
+ */
+int RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]) {
+   return(RGBToHSVColor(RGBColor(red, green, blue), lpHSV));
+}
+
+
+/**
+ * Konvertiert eine RGB-Farbe in den HSV-Farbraum (Hue-Saturation-Value).
+ *
+ * @param  color   rgb     - Farbe
+ * @param  double& lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ *
+ * @return int - Fehlerstatus
+ */
+int RGBToHSVColor(color rgb, double& lpHSV[]) {
+   int red   = rgb     & 0xFF;
+   int green = rgb>> 8 & 0xFF;
+   int blue  = rgb>>16 & 0xFF;
+
+   double r=red/255.0, g=green/255.0, b=blue/255.0;      // scale to unity (0-1)
+
+   double dMin   = MathMin(r, MathMin(g, b)); int iMin   = MathMin(red, MathMin(green, blue));
+   double dMax   = MathMax(r, MathMax(g, b)); int iMax   = MathMax(red, MathMax(green, blue));
+   double dDelta = dMax - dMin;               int iDelta = iMax - iMin;
+
+   double hue, sat, val=dMax;
+
+   if (iDelta == 0) {
+      hue = 0;
+      sat = 0;
+   }
+   else {
+      sat = dDelta / dMax;
+      double del_R = ((dMax-r)/6 + dDelta/2) / dDelta;
+      double del_G = ((dMax-g)/6 + dDelta/2) / dDelta;
+      double del_B = ((dMax-b)/6 + dDelta/2) / dDelta;
+
+      if      (red   == iMax) { hue =       del_B - del_G; }
+      else if (green == iMax) { hue = 1/3 + del_R - del_B; }
+      else if (blue  == iMax) { hue = 2/3 + del_G - del_R; }
+
+      if      (hue < 0) { hue += 1; }
+      else if (hue > 1) { hue -= 1; }
+   }
+
+   if (ArraySize(lpHSV) != 3)
+      ArrayResize(lpHSV, 3);
+
+   lpHSV[0] = hue * 360;
+   lpHSV[1] = sat;
+   lpHSV[2] = val;
+
+   return(catch("RGBToHSVColor()"));
+}
+
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
@@ -7039,49 +7127,6 @@ color HSVToRGB(double h, double s, double v) {
 }
  */
 
-
-/**
- * Konvertiert eine Farbe aus dem RGB- in den HSV-Farbraum (Hue-Saturation-Value = Farbton-S‰ttigung-Helligkeit).
- *
- * @param  int red
- * @param  int green
- * @param  int blue
- *
- * @return int - HSV-Farbe
- *
- * (based on C code in "Computer Graphics - Principles and Practice", Foley et al, 1996, p. 594)
- */
-int RGBToHSVColor(int red, int green, int blue) {
-   int result.h, result.s, result.v;
-
-   result.v = MathMax(red, MathMax(green, blue));
-   double delta = result.v - MathMin(red, MathMin(green, blue));
-
-   // Calculate saturation: saturation is 0 if r, g and b are all 0
-   if (result.v == 0) result.s = 0;
-   else               result.s = delta/result.v;
-
-   if (result.s == 0) {
-      result.h = 0;                    // achromatic
-   }
-   else {
-      if (red == result.v) {           // winkel zwischen gelb und magenta
-         result.h = (green-blue) / delta * (2 * Math.PI/6);
-      }
-      else if (green == result.v) {    // winkel zwischen cyan und gelb
-         result.h = (2 + (blue-red) / delta) * (2 * Math.PI/6);
-      }
-      else if (blue == result.v) {     // ...
-         result.h = (4 + (red-green) / delta) * (2 * Math.PI/6);
-      }
-      if (result.h < 0)
-         result.h = result.h + 2 * Math.PI;
-   }
-
-   debug("RGBToHSVColor()   h = "+ result.h +"   s = "+ result.s +"   v = "+ result.v);
-
-   return(result.h);
-}
 
 /*
 function RGB2HSV (RGB, HSV) {

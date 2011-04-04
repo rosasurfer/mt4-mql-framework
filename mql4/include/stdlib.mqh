@@ -136,6 +136,13 @@
    bool     EventTracker.GetGridLimits(double& lpLimits[2]);
    int      EventTracker.SaveGridLimits(double upperLimit, double lowerLimit);
 
+   // Farben
+   string   ColorToHtmlStr(color rgb);
+   int      RGB(int red, int green, int blue);                       // MetaQuotes-Alias
+   color    RGBColor(int red, int green, int blue);
+   int      RGBToHSVColor(color rgb, double& lpHSV[]);
+   int      RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]);
+
    // Files, I/O
    int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
    string   GetShortcutTarget(string lnkFile);
@@ -205,7 +212,6 @@
    string   OperationTypeDescription(int type);
    int      RegisterChartObject(string label, string& lpObjects[]);
    int      RemoveChartObjects(string& lpObjects[]);
-   color    RGBColor(int red, int green, int blue);
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);

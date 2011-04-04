@@ -76,74 +76,15 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   color test = C'210,160,19';
+   /*
+   color  rgb = RGBColor(210, 160, 19);
+   double hsv[];
 
-   double hsv[]; RGBValuesToHSVColor(210, 160, 19, hsv);
-   log("init()   HSV("+ ColorToHexStr(test) +") = "+ DoubleArrayToStr(hsv));
+   RGBToHSVColor(rgb, hsv);
+   debug("init()   RGBToHSVColor("+ ColorToHtmlStr(rgb) +") = "+ DoubleArrayToStr(hsv));
+   */
 
    return(catch("init()"));
-}
-
-
-/**
- * Konvertiert drei RGB-Farbwerte in den HSV-Farbraum (Hue-Saturation-Value).
- *
- * @param  int     red
- * @param  int     green
- * @param  int     blue
- * @param  double& lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
- *
- * @return int - Fehlerstatus
- */
-int RGBValuesToHSVColor(int red, int green, int blue, double& hsv[3]) {
-   double r=red/255.0, g=green/255.0, b=blue/255.0;      // scale to unity
-
-   double dMin   = MathMin(r, MathMin(g, b)); int iMin   = MathMin(red, MathMin(green, blue));
-   double dMax   = MathMax(r, MathMax(g, b)); int iMax   = MathMax(red, MathMax(green, blue));
-   double dDelta = dMax - dMin;               int iDelta = iMax - iMin;
-
-   double hue, sat, val=dMax;
-
-   if (iDelta == 0) {
-      hue = 0;
-      sat = 0;
-   }
-   else {
-      sat = dDelta / dMax;
-      double del_R = ((dMax-r)/6 + dDelta/2) / dDelta;
-      double del_G = ((dMax-g)/6 + dDelta/2) / dDelta;
-      double del_B = ((dMax-b)/6 + dDelta/2) / dDelta;
-
-      if      (red   == iMax) { hue =       del_B - del_G; }
-      else if (green == iMax) { hue = 1/3 + del_R - del_B; }
-      else if (blue  == iMax) { hue = 2/3 + del_G - del_R; }
-
-      if      (hue < 0) { hue += 1; }
-      else if (hue > 1) { hue -= 1; }
-   }
-
-   if (ArraySize(hsv) != 3)
-      ArrayResize(hsv, 3);
-
-   hsv[0] = hue * 360;
-   hsv[1] = sat;
-   hsv[2] = val;
-
-   return(catch("RGBValuesToHSVColor()"));
-}
-
-
-/**
- * Konvertiert eine Farbe in ihre hexadezimale HTML-Representation.
- *
- * @param  color value
- *
- * @return string - HTML-Farbwert
- *
- * Beispiel: ColorToHexStr(C'255,255,255') => "#FFFFFF"
- */
-string ColorToHexStr(color value) {
-   return(StringConcatenate("#", StringRight(IntToHexStr(value), 6)));
 }
 
 
