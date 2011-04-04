@@ -138,8 +138,7 @@
 
    // Farben
    string   ColorToHtmlStr(color rgb);
-   int      RGB(int red, int green, int blue);                       // MetaQuotes-Alias
-   color    RGBColor(int red, int green, int blue);
+   color    RGB(int red, int green, int blue);
    int      RGBToHSVColor(color rgb, double& lpHSV[]);
    int      RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]);
 

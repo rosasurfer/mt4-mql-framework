@@ -77,7 +77,7 @@ int init() {
       SendTick(false);
 
    /*
-   color  rgb = RGBColor(210, 160, 19);
+   color  rgb = RGB(210, 160, 19);
    double hsv[];
 
    RGBToHSVColor(rgb, hsv);

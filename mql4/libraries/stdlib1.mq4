@@ -5971,16 +5971,6 @@ string IntToHexStr(int integer) {
 
 
 /**
- * MetaQuotes-Alias
- *
- * @see RGBColor()
- */
-int RGB(int red, int green, int blue) {
-   return(RGBColor(red, green, blue));
-}
-
-
-/**
  * Konvertiert drei R-G-B-Farbwerte in eine Farbe.
  *
  * @param  int red   - Rotanteil (0-255)
@@ -5989,9 +5979,9 @@ int RGB(int red, int green, int blue) {
  *
  * @return color - Farbe oder -1, wenn ein Fehler auftrat
  *
- * Beispiel: RGBColor(255, 255, 255) => 0x00FFFFFF (weiﬂ)
+ * Beispiel: RGB(255, 255, 255) => 0x00FFFFFF (weiﬂ)
  */
-color RGBColor(int red, int green, int blue) {
+color RGB(int red, int green, int blue) {
    if (0 <= red && red <= 255) {
       if (0 <= green && green <= 255) {
          if (0 <= blue && blue <= 255) {
@@ -6001,11 +5991,11 @@ color RGBColor(int red, int green, int blue) {
             return(red + green + blue);
 
          }
-         else catch("RGBColor(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("RGB(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("RGBColor(2)  invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("RGB(2)  invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("RGBColor(3)  invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("RGB(3)  invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -6042,7 +6032,7 @@ string ColorToHtmlStr(color rgb) {
  * @return int - Fehlerstatus
  */
 int RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]) {
-   return(RGBToHSVColor(RGBColor(red, green, blue), lpHSV));
+   return(RGBToHSVColor(RGB(red, green, blue), lpHSV));
 }
 
 
