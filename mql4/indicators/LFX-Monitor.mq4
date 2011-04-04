@@ -99,8 +99,8 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 80);
-      ObjectSet(label, OBJPROP_YDISTANCE, 70);
+      ObjectSet(label, OBJPROP_XDISTANCE, 33);
+      ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
       RegisterChartObject(label, labels);
    }
@@ -112,15 +112,15 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 60);
-      ObjectSet(label, OBJPROP_YDISTANCE, 70);
+      ObjectSet(label, OBJPROP_XDISTANCE, 13);
+      ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
       RegisterChartObject(label, labels);
    }
    else GetLastError();
 
    // Textlabel
-   int yCoord = 74;
+   int yCoord = 58;
    for (int i=0; i < ArraySize(symbols); i++) {
       c++;
       label = StringConcatenate(expertName, ".", c, ".", StringLeft(symbols[i], 3));
@@ -128,7 +128,7 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE,  166);
+         ObjectSet(label, OBJPROP_XDISTANCE,  119);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, StringLeft(symbols[i], 3) +":", fontSize, fontName, fontColor);
          RegisterChartObject(label, labels);
@@ -141,7 +141,7 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE,  106);
+         ObjectSet(label, OBJPROP_XDISTANCE, 59);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
          RegisterChartObject(label, labels);
@@ -153,7 +153,7 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE,  66);
+         ObjectSet(label, OBJPROP_XDISTANCE, 19);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
          RegisterChartObject(label, labels);
