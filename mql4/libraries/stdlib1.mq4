@@ -1504,7 +1504,8 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "EURRUR")) return("EURRUR");
                 if (StringStartsWith(symbol, "EURSEK")) return("EURSEK");
                 if (StringStartsWith(symbol, "EURUSD")) return("EURUSD");
-                if (symbol == "EURX"  )                 return("EURX"  );
+                if (symbol == "ECX" )                   return("EURX"  );
+                if (symbol == "EURX")                   return("EURX"  );
                 break;
 
       case 'F': break;
@@ -1684,12 +1685,12 @@ string GetSymbolLongName(string symbol, string altValue="") {
    if (symbol == "CADLFX"  ) return("CAD-Index (LiteForex)"   );
    if (symbol == "CHFLFX"  ) return("CHF-Index (LiteForex)"   );
    if (symbol == "EURLFX"  ) return("EUR-Index (LiteForex)"   );
-   if (symbol == "EURX"    ) return("EUR-Index (Eurex)"       );
+   if (symbol == "EURX"    ) return("EUR-Index (NYBOT)"       );
    if (symbol == "GBPLFX"  ) return("GBP-Index (LiteForex)"   );
    if (symbol == "LFXJPY"  ) return("1/JPY-Index (LiteForex)" );
    if (symbol == "NZDLFX"  ) return("NZD-Index (LiteForex)"   );
    if (symbol == "USDLFX"  ) return("USD-Index (LiteForex)"   );
-   if (symbol == "USDX"    ) return("USD-Index (CME)"         );
+   if (symbol == "USDX"    ) return("USD-Index (NYBOT)"       );
 
    string prefix = StringLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);
