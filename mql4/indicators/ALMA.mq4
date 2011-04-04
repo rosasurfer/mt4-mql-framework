@@ -37,7 +37,7 @@ double iALMA[], iUpTrend[], iDownTrend[];             // sichtbare Indikatorbuff
 double iTrend[], iBarDiff[];                          // nicht sichtbare Buffer
 double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
 
-int    appliedPrice = PRICE_CLOSE;                    // default (wenn in Parametern nicht anders angegeben)
+int    appliedPrice;
 string objectLabels[], legendLabel, indicatorName;
 
 
@@ -70,6 +70,7 @@ int init() {
    else if (price == "W") appliedPrice = PRICE_WEIGHTED;
    else
       return(catch("init(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+
 
    // Buffer zuweisen
    IndicatorBuffers(5);
@@ -171,8 +172,6 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   int tick = GetTickCount();
-
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
@@ -193,10 +192,14 @@ int start() {
       ChangedBars = Max.Values;
    int startBar = MathMin(ChangedBars-1, Bars-MA.Periods);
 
+
+   int tick = GetTickCount();
+
+
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
-      // der eigentliche Moving Average
-      iALMA[bar] = 0;
+      // der eigentliche Moving Average                              // Die verschachtelte Schleife kostet die meiste Laufzeit.
+      iALMA[bar] = 0;                                                // Bsp.: ALMA(350xM30) für 2000 Bars bei PERIOD_M1 = 2000 * 10500 = 21.000.000 Durchläufe
       for (int i=0; i < MA.Periods; i++) {
          iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
@@ -254,7 +257,7 @@ int start() {
    }
    lastTrend = iTrend[0];
 
-   //if (startBar > 1) debug("start()   ALMA("+ MA.Periods +")   startBar: "+ startBar +"    time: "+ (GetTickCount()-tick) +" msec");
+   //if (startBar > 1) debug("start()  ALMA("+ MA.Periods +")   startBar: "+ startBar +"   time: "+ (GetTickCount()-tick) +" msec");
    return(catch("start(2)"));
 }
 
