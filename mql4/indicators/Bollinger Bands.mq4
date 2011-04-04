@@ -38,7 +38,7 @@ extern string MA.Methods.Help   = "SMA | EMA | SMMA | LWMA";
 extern string AppliedPrice      = "Close";                     // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern string Deviations        = "2.0";                       // bis zu zwei Multiplikatoren für die Std.-Abweichung
-extern int    Max.Values        = -1;                          // Anzahl der maximal anzuzeigenden Werte: -1 = alle
+extern int    Max.Values        = 2000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 
 extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 
