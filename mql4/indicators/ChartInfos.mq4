@@ -76,13 +76,13 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   /*
-   color  rgb = RGB(210, 160, 19);
-   double hsv[];
 
-   RGBToHSVColor(rgb, hsv);
-   debug("init()   RGBToHSVColor("+ ColorToHtmlStr(rgb) +") = "+ DoubleArrayToStr(hsv));
+   /*
+   color rgb = RGB(210, 160, 19);
+   double hsv[]; RGBToHSVColor(rgb, hsv);
+   debug("init()   RGBToHSVColor("+ ColorToHtmlStr(rgb) +") = "+ DoubleArrayToStr(hsv) +"   HSVToRGBColor() = "+ ColorToHtmlStr(HSVToRGBColor(hsv[0], hsv[1], hsv[2])));
    */
+
 
    return(catch("init()"));
 }
@@ -385,13 +385,13 @@ int UpdateUnitSizeLabel() {
          else if (unitSize <=    2   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfache von   0.1
          else if (unitSize <=    4   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfache von   0.2
          else if (unitSize <=    7   ) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfache von   0.5
-         else if (unitSize <=   20   ) unitSize = NormalizeDouble(MathRound(unitSize/  1    ) *   1    , 0);   //       7-20: Vielfache von   1
-         else if (unitSize <=   40   ) unitSize = NormalizeDouble(MathRound(unitSize/  2    ) *   2    , 0);   //      20-40: Vielfache von   2
-         else if (unitSize <=   70   ) unitSize = NormalizeDouble(MathRound(unitSize/  5    ) *   5    , 0);   //      40-70: Vielfache von   5
-         else if (unitSize <=  200   ) unitSize = NormalizeDouble(MathRound(unitSize/ 10    ) *  10    , 0);   //     70-200: Vielfache von  10
-         else if (unitSize <=  400   ) unitSize = NormalizeDouble(MathRound(unitSize/ 20    ) *  20    , 0);   //    200-400: Vielfache von  20
-         else if (unitSize <=  700   ) unitSize = NormalizeDouble(MathRound(unitSize/ 50    ) *  50    , 0);   //    400-700: Vielfache von  50
-         else if (unitSize <= 2000   ) unitSize = NormalizeDouble(MathRound(unitSize/100    ) * 100    , 0);   //   700-2000: Vielfache von 100
+         else if (unitSize <=   20   ) unitSize = MathRound      (MathRound(unitSize/  1    ) *   1);          //       7-20: Vielfache von   1
+         else if (unitSize <=   40   ) unitSize = MathRound      (MathRound(unitSize/  2    ) *   2);          //      20-40: Vielfache von   2
+         else if (unitSize <=   70   ) unitSize = MathRound      (MathRound(unitSize/  5    ) *   5);          //      40-70: Vielfache von   5
+         else if (unitSize <=  200   ) unitSize = MathRound      (MathRound(unitSize/ 10    ) *  10);          //     70-200: Vielfache von  10
+         else if (unitSize <=  400   ) unitSize = MathRound      (MathRound(unitSize/ 20    ) *  20);          //    200-400: Vielfache von  20
+         else if (unitSize <=  700   ) unitSize = MathRound      (MathRound(unitSize/ 50    ) *  50);          //    400-700: Vielfache von  50
+         else if (unitSize <= 2000   ) unitSize = MathRound      (MathRound(unitSize/100    ) * 100);          //   700-2000: Vielfache von 100
       }
       strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " Lot");
    }

@@ -5985,11 +5985,7 @@ color RGB(int red, int green, int blue) {
    if (0 <= red && red <= 255) {
       if (0 <= green && green <= 255) {
          if (0 <= blue && blue <= 255) {
-
-            green <<=  8;
-            blue  <<= 16;
-            return(red + green + blue);
-
+            return(red + green<<8 + blue<<16);
          }
          else catch("RGB(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
@@ -6086,6 +6082,67 @@ int RGBToHSVColor(color rgb, double& lpHSV[]) {
 }
 
 
+/**
+ * Umrechnung einer Farbe aus dem HSV- in den RGB-Farbraum.
+ *
+ * @param  double hue        - Farbton    (0.0 - 360.0)
+ * @param  double saturation - Sättigung  (0.0 - 1.0)
+ * @param  double value      - Helligkeit (0.0 - 1.0)
+ *
+ * @return color - Farbe oder -1, wenn ein Fehler auftrat
+ */
+color HSVToRGBColor(double hue, double saturation, double value) {
+   if (hue < 0.0 || hue > 360.0) {
+      catch("HSVToRGBColor(1)  invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   if (saturation < 0.0 || saturation > 1.0) {
+      catch("HSVToRGBColor(2)  invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   if (value < 0.0 || value > 1.0) {
+      catch("HSVToRGBColor(3)  invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+
+   double red, green, blue;
+
+   if (CompareDoubles(saturation, 0)) {
+      red   = value;
+      green = value;
+      blue  = value;
+   }
+   else {
+      double h  = hue / 60;                           // h = hue / 360 * 6
+      int    i  = MathFloor(h);
+      double f  = h - i;                              // f(ract) = MathMod(h, 1)
+      double d1 = value * (1 - saturation        );
+      double d2 = value * (1 - saturation *    f );
+      double d3 = value * (1 - saturation * (1-f));
+
+      if      (i == 0) { red = value; green = d3;    blue = d1;    }
+      else if (i == 1) { red = d2;    green = value; blue = d1;    }
+      else if (i == 2) { red = d1;    green = value; blue = d3;    }
+      else if (i == 3) { red = d1;    green = d2;    blue = value; }
+      else if (i == 4) { red = d3;    green = d1;    blue = value; }
+      else             { red = value; green = d1;    blue = d2;    }
+   }
+
+   int r = MathRound(red   * 255);
+   int g = MathRound(green * 255);
+   int b = MathRound(blue  * 255);
+
+   color rgb = r + g<<8 + b<<16;
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("HSVToRGBColor(4)", error);
+      return(-1);
+   }
+   return(rgb);
+}
+
+
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 // Original-MetaQuotes Funktionen             !!! NICHT VERWENDEN !!!                 //
@@ -6140,7 +6197,7 @@ string DoubleToStrMorePrecision(double number, int precision) {
 
    for (int i=0; i<precision; i++) {
       integer2 = MathFloor(rem/10);
-      rem2 = NormalizeDouble(rem-integer2 * 10, 0);
+      rem2 = MathRound(rem-integer2 * 10);
       remstring = rem2 + remstring;
       rem = integer2;
    }
@@ -7068,110 +7125,3 @@ string NumberToBase(int n, int base, int pad) {
       outstr = StringRepeat("0", pad-x) + outstr;
    return(outstr);
 }
-
-
-/**
- * Umrechnung einer Farbe aus dem HSV- in den RGB-Farbraum.
- *
- * @param  h
- * @param  s
- * @param  v
- *
- * @return color - RGB-Farbe
- *
- * (based on C code in "Computer Graphics - Principles and Practice", Foley et al, 1996, p. 593)
-color HSVToRGB(double h, double s, double v) {
-   double f, hTemp, p, q, t;
-   int i;
-   RGB Result = new RGB();
-   if (s == 0) {
-      //Achromatic
-      Result.R = v;
-      Result.G = v;
-      Result.B = v;
-      return Result;
-   }
-   if (h < 0)
-      h = Math.PI * 2 - h;
-
-   if (h > 2 * Math.PI)
-      h = h - Math.Truncate(1.0 / (Math.PI * 2) *h)* (Math.PI * 2);
-
-   hTemp = h / (2*Math.PI / 6);
-   i = (int) Math.Truncate(hTemp);  // largest integer <= h
-   f = hTemp - i;                   // fractional part of h
-
-   p = v * (1.0 - s);
-   q = v * (1.0 - (s * f));
-   t = v * (1.0 - (s * (1.0 - f)));
-
-   switch (i) {
-      case 0: { Result.R = v; Result.G = t; Result.B = p; break; }
-      case 1: { Result.R = q; Result.G = v; Result.B = p; break; }
-      case 2: { Result.R = p; Result.G = v; Result.B = t; break; }
-      case 3: { Result.R = p; Result.G = q; Result.B = v; break; }
-      case 4: { Result.R = t; Result.G = p; Result.B = v; break; }
-      case 5: { Result.R = v; Result.G = p; Result.B = q; break; }
-   }
-   return Result;
-}
- */
-
-
-/*
-function RGB2HSV (RGB, HSV) {
-   r = RGB.r / 255; g = RGB.g / 255; b = RGB.b / 255; // Scale to unity.
-
-   var minVal = Math.min(r, g, b);
-   var maxVal = Math.max(r, g, b);
-   var delta = maxVal - minVal;
-
-   HSV.v = maxVal;
-
-   if (delta == 0) {
-      HSV.h = 0;
-      HSV.s = 0;
-   } else {
-      HSV.s = delta / maxVal;
-      var del_R = (((maxVal - r) / 6) + (delta / 2)) / delta;
-      var del_G = (((maxVal - g) / 6) + (delta / 2)) / delta;
-      var del_B = (((maxVal - b) / 6) + (delta / 2)) / delta;
-
-      if (r == maxVal) {HSV.h = del_B - del_G;}
-      else if (g == maxVal) {HSV.h = (1 / 3) + del_R - del_B;}
-      else if (b == maxVal) {HSV.h = (2 / 3) + del_G - del_R;}
-
-      if (HSV.h < 0) {HSV.h += 1;}
-      if (HSV.h > 1) {HSV.h -= 1;}
-   }
-   HSV.h *= 360;
-   HSV.s *= 100;
-   HSV.v *= 100;
-}
-
-function HSV2RGB (HSV, RGB) {
-   var h = HSV.h / 360; var s = HSV.s / 100; var v = HSV.v / 100;
-   if (s == 0) {
-      RGB.r = v * 255;
-      RGB.g = v * 255;
-      RGB.b = v * 255;
-   } else {
-      var_h = h * 6;
-      var_i = Math.floor(var_h);
-      var_1 = v * (1 - s);
-      var_2 = v * (1 - s * (var_h - var_i));
-      var_3 = v * (1 - s * (1 - (var_h - var_i)));
-
-      if (var_i == 0) {var_r = v; var_g = var_3; var_b = var_1}
-      else if (var_i == 1) {var_r = var_2; var_g = v; var_b = var_1}
-      else if (var_i == 2) {var_r = var_1; var_g = v; var_b = var_3}
-      else if (var_i == 3) {var_r = var_1; var_g = var_2; var_b = v}
-      else if (var_i == 4) {var_r = var_3; var_g = var_1; var_b = v}
-      else {var_r = v; var_g = var_1; var_b = var_2};
-
-      RGB.r = var_r * 255;
-      RGB.g = var_g * 255;
-      RGB.b = var_b * 255;
-   }
-}
-*/

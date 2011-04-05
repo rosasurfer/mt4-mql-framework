@@ -96,7 +96,7 @@ int init() {
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
-      double minutes = maTimeframe * MA.Periods;   // Timeframe * Anzahl Bars = Range in Minuten
+      double minutes = maTimeframe * MA.Periods;               // Timeframe * Anzahl Bars = Range in Minuten
       MA.Periods = MathRound(minutes / Period());
    }
 
@@ -105,12 +105,12 @@ int init() {
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
-   SetIndicatorStyles();                           // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorStyles();                                       // Workaround um diverse Terminalbugs (siehe dort)
 
    // Gewichtungen berechnen
-   if (MA.Periods > 1) {                           // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+   if (MA.Periods > 1) {                                       // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, MA.Periods);
-      int    m = NormalizeDouble(GaussianOffset * (MA.Periods-1), 8);   // (int) double
+      int    m = MathRound(GaussianOffset * (MA.Periods-1));   // (int) double
       double s = MA.Periods / Sigma;
       double wSum;
       for (int i=0; i < MA.Periods; i++) {
@@ -118,9 +118,9 @@ int init() {
          wSum += wALMA[i];
       }
       for (i=0; i < MA.Periods; i++) {
-         wALMA[i] /= wSum;                         // Gewichtungen der einzelnen Bars (Summe = 1)
+         wALMA[i] /= wSum;                                     // Gewichtungen der einzelnen Bars (Summe = 1)
       }
-      ReverseDoubleArray(wALMA);                   // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
+      ReverseDoubleArray(wALMA);                               // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
    }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)

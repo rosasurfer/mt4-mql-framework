@@ -1,7 +1,7 @@
 /**
  * stdlib.mqh
  */
-#include <stddefine.mqh>         // constants definition etc.
+#include <stddefine.mqh>
 
 
 #import "stdlib.ex4"
@@ -138,12 +138,13 @@
 
    // Farben
    string   ColorToHtmlStr(color rgb);
+   color    HSVToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
    int      RGBToHSVColor(color rgb, double& lpHSV[]);
    int      RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]);
 
    // Files, I/O
-   int      FileReadLines(string filename, string& lpResult[], bool skipEmptyLines);
+   int      FileReadLines(string filename, string& lpLines[], bool skipEmptyLines);
    string   GetShortcutTarget(string lnkFile);
    bool     IsDir(string pathName);
    bool     IsFile(string pathName);
