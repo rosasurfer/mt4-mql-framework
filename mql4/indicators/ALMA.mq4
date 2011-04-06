@@ -19,6 +19,10 @@
 
 extern int    MA.Periods        = 200;                // averaging period
 extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+
+//extern int    MA.Periods        = 350;
+//extern string MA.Timeframe      = "M30";
+
 extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
@@ -34,7 +38,7 @@ extern color  Color.Reversal    = Yellow;
 
 
 double iALMA[], iUpTrend[], iDownTrend[];             // sichtbare Indikatorbuffer
-double iTrend[], iBarDiff[];                          // nicht sichtbare Buffer
+double iSMA[], iTrend[], iBarDiff[];                  // nicht sichtbare Buffer
 double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
 
 int    appliedPrice;
@@ -71,14 +75,14 @@ int init() {
    else
       return(catch("init(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
-
    // Buffer zuweisen
-   IndicatorBuffers(5);
+   IndicatorBuffers(6);
    SetIndexBuffer(0, iALMA     );      // nur für DataBox-Anzeige der aktuellen Werte (im Chart unsichtbar)
    SetIndexBuffer(1, iUpTrend  );
    SetIndexBuffer(2, iDownTrend);
-   SetIndexBuffer(3, iTrend    );      // Trend (-1/+1) für jede einzelne Bar
-   SetIndexBuffer(4, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
+   SetIndexBuffer(3, iSMA      );      // SMA-Zwischenspeicher für ALMA-Berechnung
+   SetIndexBuffer(4, iTrend    );      // Trend (-1/+1) für jede einzelne Bar
+   SetIndexBuffer(5, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
 
    // Anzeigeoptionen
    if (MA.Timeframe != "")
@@ -177,6 +181,7 @@ int start() {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
+      ArrayInitialize(iSMA,       EMPTY_VALUE);
       ArrayInitialize(iTrend,               0);
       SetIndicatorStyles();                        // Workaround um diverse Terminalbugs (siehe dort)
    }
@@ -193,14 +198,20 @@ int start() {
    int startBar = MathMin(ChangedBars-1, Bars-MA.Periods);
 
 
-   int tick = GetTickCount();
+   // Laufzeitverteilung:  Schleife          -  5%
+   // -------------------  iMA()             - 80%
+   //                      Rechenoperationen - 15%
+   //
+   // Laptop vor Optimierung:
+   // M5 - ALMA(350xM30)::start()   ALMA(2100)    startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
+   // M1 - ALMA(350xM30)::start()   ALMA(10500)   startBar=1999   loop passes=20.989.500   time1=953 msec   time2=16094 msec   time3=18969 msec
 
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
-      // der eigentliche Moving Average                              // Die verschachtelte Schleife kostet die meiste Laufzeit.
-      iALMA[bar] = 0;                                                // Bsp.: ALMA(350xM30) für 2000 Bars bei PERIOD_M1 = 2000 * 10500 = 21.000.000 Durchläufe
-      for (int i=0; i < MA.Periods; i++) {
+      // der eigentliche Moving Average
+      iALMA[bar] = 0;
+      for (int i=0; i < MA.Periods; i++) {                           // Verwendung von iMA() ist nur für appliedPrice in (MEDIAN, TYPICAL, WEIGHTED) notwendig
          iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 
