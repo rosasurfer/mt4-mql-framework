@@ -196,9 +196,9 @@ int start() {
    static int lastTrend;
 
 
-   // Laufzeitverteilung:  Schleife          -  5%
-   // -------------------  iMA()             - 80%    Verwendung von Close[] etc. halbiert Laufzeit
-   //                      Rechenoperationen - 15%
+   // Laufzeitverteilung:  Schleife          -  5%                                               5%    10%
+   // -------------------  iMA()             - 80%    Verwendung von Close[] etc. reduziert auf 30% -> 60%
+   //                      Rechenoperationen - 15%                                              15%    30%
    //
    // Laptop vor Optimierung:
    // M5 - ALMA(350xM30)::start()   ALMA(2100)    startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
