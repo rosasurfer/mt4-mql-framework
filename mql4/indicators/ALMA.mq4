@@ -19,7 +19,6 @@
 
 extern int    MA.Periods        = 200;                // averaging period
 extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-
 //extern int    MA.Periods        = 350;
 //extern string MA.Timeframe      = "M30";
 
@@ -189,47 +188,55 @@ int start() {
    if (MA.Periods < 2)                             // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
-   double filter;
-   static int lastTrend;
-
    // Startbar ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = MathMin(ChangedBars-1, Bars-MA.Periods);
 
+   static int lastTrend;
+
 
    // Laufzeitverteilung:  Schleife          -  5%
-   // -------------------  iMA()             - 80%
+   // -------------------  iMA()             - 80%    Verwendung von Close[] etc. halbiert Laufzeit
    //                      Rechenoperationen - 15%
    //
    // Laptop vor Optimierung:
    // M5 - ALMA(350xM30)::start()   ALMA(2100)    startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
    // M1 - ALMA(350xM30)::start()   ALMA(10500)   startBar=1999   loop passes=20.989.500   time1=953 msec   time2=16094 msec   time3=18969 msec
 
+   int time0 = GetTickCount();
+
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       iALMA[bar] = 0;
-      for (int i=0; i < MA.Periods; i++) {                           // Verwendung von iMA() ist nur für appliedPrice in (MEDIAN, TYPICAL, WEIGHTED) notwendig
-         iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
+      switch (appliedPrice) {
+         case PRICE_OPEN:  for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
+         case PRICE_HIGH:  for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * High [bar+i]; break;
+         case PRICE_LOW:   for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Low  [bar+i]; break;
+         case PRICE_CLOSE: for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Close[bar+i]; break;
+         default:
+            for (i=0; i < MA.Periods; i++) {
+               iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
+            }
       }
 
       // Percentage-Filter für Reversal-Smoothing (verdoppelt Laufzeit und ist unsinnig implementiert)
       if (PctReversalFilter > 0) {
-         iBarDiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);         // ALMA-Änderung gegenüber der vorherigen Bar
+         iBarDiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);               // ALMA-Änderung gegenüber der vorherigen Bar
 
          double sumDel = 0;
          for (int j=0; j < MA.Periods; j++) {
             sumDel += iBarDiff[bar+j];
          }
-         double avgDel = sumDel/MA.Periods;                          // durchschnittliche ALMA-Änderung von Bar zu Bar
+         double avgDel = sumDel/MA.Periods;                                // durchschnittliche ALMA-Änderung von Bar zu Bar
 
          double sumPow = 0;
          for (j=0; j < MA.Periods; j++) {
             sumPow += MathPow(iBarDiff[bar+j] - avgDel, 2);
          }
-         filter = PctReversalFilter * MathSqrt(sumPow/MA.Periods);   // PctReversalFilter * stdDev
+         double filter = PctReversalFilter * MathSqrt(sumPow/MA.Periods);  // PctReversalFilter * stdDev
 
          if (iBarDiff[bar] < filter)
             iALMA[bar] = iALMA[bar+1];
@@ -268,7 +275,9 @@ int start() {
    }
    lastTrend = iTrend[0];
 
-   //if (startBar > 1) debug("start()  ALMA("+ MA.Periods +")   startBar: "+ startBar +"   time: "+ (GetTickCount()-tick) +" msec");
+   int time1 = GetTickCount();
+   //if (startBar > 1) debug("start()  ALMA("+ MA.Periods +")   startBar="+ startBar +"   loop passes="+ NumberToStr(startBar * MA.Periods, ",.")+"   time1="+ (time1-time0) +" msec");
+
    return(catch("start(2)"));
 }
 
