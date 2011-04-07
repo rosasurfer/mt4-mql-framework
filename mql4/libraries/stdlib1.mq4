@@ -6146,18 +6146,18 @@ color HSVToRGBColor(double hue, double saturation, double value) {
 /**
  * Modifiziert die HSV-Werte einer Farbe.
  *
- * @param  color  rgb        - zu modifizierende Farbe
- * @param  double hue        - Farbtonänderung: +/-360.0°
- * @param  double saturation - Sättigung:       +/-100%
- * @param  double value      - Helligkeit:      +/-100%
+ * @param  color  rgb            - zu modifizierende Farbe
+ * @param  double mod_hue        - Farbtonänderung: +/-360.0°
+ * @param  double mod_saturation - Sättigung:       +/-100%
+ * @param  double mod_value      - Helligkeit:      +/-100%
  *
  * @return color - modifizierte Farbe oder -1, wenn ein Fehler auftrat
  *
  * Beispiel: C'90,128,162' (Helligkeit 64%) wird um 30% aufgehellt (auf 83%), die anderen Farbkomponenten bleiben unverändert
  *
- *           Color.modifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
+ *           Color.ModifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
  */
-color Color.modifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value) {
+color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value) {
    if (0 <= rgb) {
       if (-360 <= mod_hue && mod_hue <= 360) {
          if (-100 <= mod_saturation && mod_saturation <= 100) {
@@ -6191,18 +6191,18 @@ color Color.modifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 
                int error = GetLastError();
                if (error != NO_ERROR) {
-                  catch("Color.modifyHSV(1)", error);
+                  catch("Color.ModifyHSV(1)", error);
                   return(-1);
                }
                return(result);
             }
-            else catch("Color.modifyHSV(2)  invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+            else catch("Color.ModifyHSV(2)  invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
          }
-         else catch("Color.modifyHSV(3)  invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("Color.ModifyHSV(3)  invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("Color.modifyHSV(4)  invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("Color.ModifyHSV(4)  invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("Color.modifyHSV(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("Color.ModifyHSV(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
