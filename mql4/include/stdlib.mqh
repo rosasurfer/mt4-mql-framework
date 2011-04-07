@@ -138,6 +138,7 @@
 
    // Farben
    string   ColorToHtmlStr(color rgb);
+   color    Color.modifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value);
    color    HSVToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
    int      RGBToHSVColor(color rgb, double& lpHSV[]);

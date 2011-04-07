@@ -6063,9 +6063,9 @@ int RGBToHSVColor(color rgb, double& lpHSV[]) {
       double del_G = ((dMax-g)/6 + dDelta/2) / dDelta;
       double del_B = ((dMax-b)/6 + dDelta/2) / dDelta;
 
-      if      (red   == iMax) { hue =       del_B - del_G; }
-      else if (green == iMax) { hue = 1/3 + del_R - del_B; }
-      else if (blue  == iMax) { hue = 2/3 + del_G - del_R; }
+      if      (red   == iMax) { hue =         del_B - del_G; }
+      else if (green == iMax) { hue = 1.0/3 + del_R - del_B; }
+      else if (blue  == iMax) { hue = 2.0/3 + del_G - del_R; }
 
       if      (hue < 0) { hue += 1; }
       else if (hue > 1) { hue -= 1; }
@@ -6140,6 +6140,71 @@ color HSVToRGBColor(double hue, double saturation, double value) {
       return(-1);
    }
    return(rgb);
+}
+
+
+/**
+ * Modifiziert die HSV-Werte einer Farbe.
+ *
+ * @param  color  rgb        - zu modifizierende Farbe
+ * @param  double hue        - Farbtonänderung: +/-360.0°
+ * @param  double saturation - Sättigung:       +/-100%
+ * @param  double value      - Helligkeit:      +/-100%
+ *
+ * @return color - modifizierte Farbe oder -1, wenn ein Fehler auftrat
+ *
+ * Beispiel: C'90,128,162' (Helligkeit 64%) wird um 30% aufgehellt (auf 83%), die anderen Farbkomponenten bleiben unverändert
+ *
+ *           Color.modifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
+ */
+color Color.modifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value) {
+   if (0 <= rgb) {
+      if (-360 <= mod_hue && mod_hue <= 360) {
+         if (-100 <= mod_saturation && mod_saturation <= 100) {
+            if (-100 <= mod_value && mod_value <= 100) {
+               // nach HSV konvertieren
+               double hsv[]; RGBToHSVColor(rgb, hsv);
+
+               // Farbton anpassen
+               if (!CompareDoubles(mod_hue, 0)) {
+                  hsv[0] += mod_hue;
+                  if      (hsv[0] <   0) hsv[0] += 360;
+                  else if (hsv[0] > 360) hsv[0] -= 360;
+               }
+
+               // Sättigung anpassen
+               if (!CompareDoubles(mod_saturation, 0)) {
+                  hsv[1] = hsv[1] * (1 + mod_saturation/100);
+                  if (hsv[1] > 1)
+                     hsv[1] = 1;
+               }
+
+               // Helligkeit anpassen
+               if (!CompareDoubles(mod_value, 0)) {
+                  hsv[2] = hsv[2] * (1 + mod_value/100);
+                  if (hsv[2] > 1)
+                     hsv[2] = 1;
+               }
+
+               // zurück nach RGB konvertieren
+               color result = HSVToRGBColor(hsv[0], hsv[1], hsv[2]);
+
+               int error = GetLastError();
+               if (error != NO_ERROR) {
+                  catch("Color.modifyHSV(1)", error);
+                  return(-1);
+               }
+               return(result);
+            }
+            else catch("Color.modifyHSV(2)  invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+         }
+         else catch("Color.modifyHSV(3)  invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      }
+      else catch("Color.modifyHSV(4)  invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+   }
+   else catch("Color.modifyHSV(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
+
+   return(-1);
 }
 
 

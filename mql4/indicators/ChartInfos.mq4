@@ -76,14 +76,6 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-
-   /*
-   color rgb = RGB(210, 160, 19);
-   double hsv[]; RGBToHSVColor(rgb, hsv);
-   debug("init()   RGBToHSVColor("+ ColorToHtmlStr(rgb) +") = "+ DoubleArrayToStr(hsv) +"   HSVToRGBColor() = "+ ColorToHtmlStr(HSVToRGBColor(hsv[0], hsv[1], hsv[2])));
-   */
-
-
    return(catch("init()"));
 }
 
