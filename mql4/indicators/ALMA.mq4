@@ -212,10 +212,10 @@ int start() {
       // der eigentliche Moving Average
       iALMA[bar] = 0;
       switch (appliedPrice) {
-         case PRICE_OPEN:  for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
+         case PRICE_CLOSE: for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Close[bar+i]; break;
+         case PRICE_OPEN:  for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
          case PRICE_HIGH:  for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * High [bar+i]; break;
          case PRICE_LOW:   for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Low  [bar+i]; break;
-         case PRICE_CLOSE: for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Close[bar+i]; break;
          default:
             for (i=0; i < MA.Periods; i++) {
                iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
