@@ -26,7 +26,7 @@
 
 #property indicator_chart_window
 
-#property indicator_buffers 4
+#property indicator_buffers 6
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -45,8 +45,9 @@ extern color  Color.Bands       = RoyalBlue;                   // Farbe hier kon
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double iUpperBand1[], iLowerBand1[];           // sichtbare Indikatorbuffer
-double iUpperBand2[], iLowerBand2[];
+double iUpperBand1  [], iLowerBand1[];       // sichtbare Indikatorbuffer: erstes Band
+double iUpperBand2  [], iLowerBand2[];       //                            zweites Band als Histogramm
+double iUpperBand2_1[], iLowerBand2_1[];     //                            zweites Band als Linie
 
 int    maMethod1=-1, maMethod2=-1;
 double deviation1,   deviation2;
@@ -144,6 +145,8 @@ int init() {
    if (maMethod2 != -1) {
       SetIndexBuffer(1, iUpperBand2);
       SetIndexBuffer(3, iLowerBand2);
+      SetIndexBuffer(4, iUpperBand2_1);
+      SetIndexBuffer(5, iLowerBand2_1);
    }
 
    // Anzeigeoptionen
@@ -170,6 +173,8 @@ int init() {
       SetIndexLabel(2, NULL);
       SetIndexLabel(3, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
    }
+   SetIndexLabel(4, NULL);
+   SetIndexLabel(5, NULL);
    IndicatorDigits(Digits);
 
    // Legende
@@ -192,6 +197,8 @@ int init() {
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
    SetIndexDrawBegin(3, startDraw);
+   SetIndexDrawBegin(4, startDraw);
+   SetIndexDrawBegin(5, startDraw);
    SetIndicatorStyles();                           // Workaround um diverse Terminalbugs (siehe dort)
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
@@ -264,26 +271,22 @@ int start() {
 
    double ma, dev;
 
-   // Bollinger-Bänder berechnen: Schleife über alle zu berechnenden Bars
-   if (maMethod2 == -1) {
-      for (int bar=startBar; bar >= 0; bar--) {
-         ma  = iMA    (NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar);
-         dev = iStdDev(NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar) * deviation1;
-         iUpperBand1[bar] = ma + dev;
-         iLowerBand1[bar] = ma - dev;
-      }
-   }
-   else {
-      for (bar=startBar; bar >= 0; bar--) {     // MA-1-Code doppelt, um Laufzeit zu verbessern
+   // Schleife über alle zu berechnenden Bars
+   for (int bar=startBar; bar >= 0; bar--) {
+         // erstes Band
          ma  = iMA    (NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar);
          dev = iStdDev(NULL, NULL, MA.Periods, 0, maMethod1, appliedPrice, bar) * deviation1;
          iUpperBand1[bar] = ma + dev;
          iLowerBand1[bar] = ma - dev;
 
+      if (maMethod2 != -1) {
+         // zweites Band
          ma  = iMA    (NULL, NULL, MA.Periods, 0, maMethod2, appliedPrice, bar);
          dev = iStdDev(NULL, NULL, MA.Periods, 0, maMethod2, appliedPrice, bar) * deviation2;
-         iUpperBand2[bar] = ma + dev;
-         iLowerBand2[bar] = ma - dev;
+         iUpperBand2  [bar] = ma + dev;
+         iLowerBand2  [bar] = ma - dev;
+         iUpperBand2_1[bar] = iUpperBand2[bar];
+         iLowerBand2_1[bar] = iLowerBand2[bar];
       }
    }
 
@@ -301,11 +304,25 @@ void SetIndicatorStyles() {
       SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
       SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.Bands);
       SetIndexStyle(3, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
+      SetIndexStyle(4, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
+      SetIndexStyle(5, DRAW_NONE, EMPTY, EMPTY, CLR_NONE   );
    }
    else {
-      SetIndexStyle(0, DRAW_HISTOGRAM, EMPTY, EMPTY, Color.Bands);
-      SetIndexStyle(1, DRAW_HISTOGRAM, EMPTY, EMPTY, Color.Bands);
-      SetIndexStyle(2, DRAW_HISTOGRAM, EMPTY, EMPTY, Color.Bands);
-      SetIndexStyle(3, DRAW_HISTOGRAM, EMPTY, EMPTY, Color.Bands);
+      static color histogramColor;
+      if (histogramColor == 0) {
+         double hsv[3]; RGBToHSVColor(Color.Bands, hsv);
+         hsv[2] *= 5;                                    // Helligkeit des Histogramms erhöhen
+         if (hsv[2] > 1) {
+            hsv[1] /= hsv[2];
+            hsv[2] = 1;
+         }
+         histogramColor = HSVToRGBColor(hsv);
+      }
+      SetIndexStyle(0, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
+      SetIndexStyle(1, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
+      SetIndexStyle(2, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
+      SetIndexStyle(3, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
+      SetIndexStyle(4, DRAW_LINE,      EMPTY, EMPTY, Color.Bands   );
+      SetIndexStyle(5, DRAW_LINE,      EMPTY, EMPTY, Color.Bands   );
    }
 }

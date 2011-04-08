@@ -5998,7 +5998,7 @@ color RGB(int red, int green, int blue) {
 
 
 /**
- * Konvertiert eine Farbe in ihre HTML-Representation.
+ * Konvertiert eine Farbe in ihre HTML-Repräsentation.
  *
  * @param  color rgb
  *
@@ -6014,6 +6014,24 @@ string ColorToHtmlStr(color rgb) {
    int value = red<<16 + green + blue>>16;   // rot und blau vertauschen, um IntToHexStr() benutzen zu können
 
    return(StringConcatenate("#", StringRight(IntToHexStr(value), 6)));
+}
+
+
+/**
+ * Konvertiert eine Farbe in ihre RGB-Repräsentation.
+ *
+ * @param  color rgb
+ *
+ * @return string
+ *
+ * Beispiel: ColorToRGBStr(White) => "255,255,255"
+ */
+string ColorToRGBStr(color rgb) {
+   int red   = rgb     & 0xFF;
+   int green = rgb>> 8 & 0xFF;
+   int blue  = rgb>>16 & 0xFF;
+
+   return(StringConcatenate(red, ",", green, ",", blue));
 }
 
 
@@ -6085,23 +6103,40 @@ int RGBToHSVColor(color rgb, double& lpHSV[]) {
 /**
  * Umrechnung einer Farbe aus dem HSV- in den RGB-Farbraum.
  *
+ * @param  double hsv - HSV-Farbwerte
+ *
+ * @return color - Farbe oder -1, wenn ein Fehler auftrat
+ */
+color HSVToRGBColor(double hsv[3]) {
+   if (ArrayDimension(hsv) != 1)
+      return(catch("HSVToRGBColor(1)   illegal parameter hsv = "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(hsv) != 3)
+      return(catch("HSVToRGBColor(2)   illegal parameter hsv = "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+
+   return(HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]));
+}
+
+
+/**
+ * Konvertiert drei HSV-Farbwerte in eine RGB-Farbe.
+ *
  * @param  double hue        - Farbton    (0.0 - 360.0)
  * @param  double saturation - Sättigung  (0.0 - 1.0)
  * @param  double value      - Helligkeit (0.0 - 1.0)
  *
  * @return color - Farbe oder -1, wenn ein Fehler auftrat
  */
-color HSVToRGBColor(double hue, double saturation, double value) {
+color HSVValuesToRGBColor(double hue, double saturation, double value) {
    if (hue < 0.0 || hue > 360.0) {
-      catch("HSVToRGBColor(1)  invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(1)  invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (saturation < 0.0 || saturation > 1.0) {
-      catch("HSVToRGBColor(2)  invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(2)  invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (value < 0.0 || value > 1.0) {
-      catch("HSVToRGBColor(3)  invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(3)  invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
@@ -6136,7 +6171,7 @@ color HSVToRGBColor(double hue, double saturation, double value) {
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      catch("HSVToRGBColor(4)", error);
+      catch("HSVValuesToRGBColor(4)", error);
       return(-1);
    }
    return(rgb);
@@ -6187,7 +6222,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                }
 
                // zurück nach RGB konvertieren
-               color result = HSVToRGBColor(hsv[0], hsv[1], hsv[2]);
+               color result = HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]);
 
                int error = GetLastError();
                if (error != NO_ERROR) {

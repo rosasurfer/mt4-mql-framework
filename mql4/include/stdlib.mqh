@@ -138,8 +138,10 @@
 
    // Farben
    string   ColorToHtmlStr(color rgb);
+   string   ColorToRGBStr(color rgb);
    color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
-   color    HSVToRGBColor(double hue, double saturation, double value);
+   color    HSVToRGBColor(double hsv[3]);
+   color    HSVValuesToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
    int      RGBToHSVColor(color rgb, double& lpHSV[]);
    int      RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]);
