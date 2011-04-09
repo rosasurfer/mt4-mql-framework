@@ -33,14 +33,15 @@
 
 extern int    MA.Periods        = 200;                         // Anzahl der zu verwendenden Perioden
 extern string MA.Timeframe      = "";                          // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string MA.Methods        = "SMA";                       // bis zu zwei MA-Methoden
+extern string MA.Methods        = "SMA";                       // ein oder zwei MA-Methoden
 extern string MA.Methods.Help   = "SMA | EMA | SMMA | LWMA";
 extern string AppliedPrice      = "Close";                     // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern string Deviations        = "2.0";                       // bis zu zwei Multiplikatoren für die Std.-Abweichung
+extern string Deviations        = "2.0";                       // ein oder zwei Multiplikatoren für die Std.-Abweichung
 extern int    Max.Values        = 2000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
-
 extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
+extern string ___________________________;
+extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,17 +66,38 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Konfiguration auswerten
+   // Konfiguration einlesen
+   bool   externalConfig = false;
+   string configSection, configLabel;
+
+   // externe symbolspezifische Konfiguration?
+   configLabel = StringToLower(StringTrim(Per.Symbol.Configuration));
+   if (configLabel != "") {
+      if (!StringContains(configLabel, "{symbol}"))
+         return(catch("init(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      configSection  = WindowExpertName();
+      configLabel    = StringReplace(configLabel, "{symbol}", FindStandardSymbol(Symbol(), Symbol()));
+      externalConfig = true;
+   }
+
+   // Periodenanzahl
+   if (externalConfig)
+      MA.Periods = GetGlobalConfigInt(configSection, configLabel +".MA.Periods", MA.Periods);
    if (MA.Periods < 2)
-      return(catch("init(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(2)  Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
+   if (externalConfig)
+      MA.Timeframe = GetGlobalConfigString(configSection, configLabel +".MA.Timeframe", MA.Timeframe);
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = StringToPeriod(MA.Timeframe);
    if (maTimeframe == 0)
-      return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(3)  Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
+   // MA-Methoden
+   if (externalConfig)
+      MA.Methods = GetGlobalConfigString(configSection, configLabel +".MA.Methods", MA.Methods);
    string values[];
    int size = Explode(StringToUpper(MA.Methods), ",", values);
 
@@ -86,7 +108,7 @@ int init() {
    else if (value == "SMMA") maMethod1 = MODE_SMMA;
    else if (value == "LWMA") maMethod1 = MODE_LWMA;
    else
-      return(catch("init(3)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(4)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methode 2
    if (size == 2) {
@@ -96,48 +118,55 @@ int init() {
       else if (value == "SMMA") maMethod2 = MODE_SMMA;
       else if (value == "LWMA") maMethod2 = MODE_LWMA;
       else
-         return(catch("init(4)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         return(catch("init(5)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    else if (size > 2)
-      return(catch("init(5)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(6)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // AppliedPrice
-   string price = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
-   if      (price == "O") appliedPrice = PRICE_OPEN;
-   else if (price == "H") appliedPrice = PRICE_HIGH;
-   else if (price == "L") appliedPrice = PRICE_LOW;
-   else if (price == "C") appliedPrice = PRICE_CLOSE;
-   else if (price == "M") appliedPrice = PRICE_MEDIAN;
-   else if (price == "T") appliedPrice = PRICE_TYPICAL;
-   else if (price == "W") appliedPrice = PRICE_WEIGHTED;
+   if (externalConfig)
+      AppliedPrice = GetGlobalConfigString(configSection, configLabel +".AppliedPrice", AppliedPrice);
+   string chr = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
+   if      (chr == "O") appliedPrice = PRICE_OPEN;
+   else if (chr == "H") appliedPrice = PRICE_HIGH;
+   else if (chr == "L") appliedPrice = PRICE_LOW;
+   else if (chr == "C") appliedPrice = PRICE_CLOSE;
+   else if (chr == "M") appliedPrice = PRICE_MEDIAN;
+   else if (chr == "T") appliedPrice = PRICE_TYPICAL;
+   else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
    else
-      return(catch("init(6)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(7)  Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
+   // Deviations
+   if (externalConfig)
+      Deviations = GetGlobalConfigString(configSection, configLabel +".Deviations", Deviations);
    size = Explode(Deviations, ",", values);
    if (size > 2)
-      return(catch("init(7)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(8)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
    if (!StringIsNumeric(value))
-      return(catch("init(8)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(9)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
    if (deviation1 <= 0)
-      return(catch("init(9)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(10)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
          if (!StringIsNumeric(value))
-            return(catch("init(10)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("init(11)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
          if (deviation2 <= 0)
-            return(catch("init(11)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("init(12)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
    }
+
+   // TODO: Color.Bands überprüfen
 
    // Buffer zuweisen
    SetIndexBuffer(0, iUpperBand1);
@@ -162,14 +191,14 @@ int init() {
    IndicatorShortName(indicatorName);
 
    if (maMethod2 == -1) {
-      SetIndexLabel(0, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));
+      SetIndexLabel(0, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));   // Daten-Anzeige von MA-1
       SetIndexLabel(1, NULL);
       SetIndexLabel(2, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
       SetIndexLabel(3, NULL);
    }
    else {
       SetIndexLabel(0, NULL);
-      SetIndexLabel(1, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));
+      SetIndexLabel(1, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));   // Daten-Anzeige von MA-2
       SetIndexLabel(2, NULL);
       SetIndexLabel(3, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
    }
@@ -183,7 +212,7 @@ int init() {
    ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("init(12)", error));
+      return(catch("init(13)", error));
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
@@ -205,7 +234,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(13)"));
+   return(catch("init(14)"));
 }
 
 
@@ -215,6 +244,9 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+
+   // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
+
    RemoveChartObjects(objectLabels);
    RepositionLegend();
    return(catch("deinit()"));
@@ -313,7 +345,7 @@ void SetIndicatorStyles() {
       static color histogramColor;
       if (histogramColor == 0) {
          double hsv[3]; RGBToHSVColor(Color.Bands, hsv);
-         hsv[2] *= 5;                                    // Helligkeit des Histogramms erhöhen
+         hsv[2] *= 4;                                    // Helligkeit des Histogramms erhöhen
          if (hsv[2] > 1) {
             hsv[1] /= hsv[2];
             hsv[2] = 1;

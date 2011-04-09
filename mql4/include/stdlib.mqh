@@ -197,18 +197,22 @@
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
-   int      GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]);
+   int      GetAccountHistory(int account, string& lpResults[]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
    int      GetPeriodFlag(int period);
    string   GetStandardSymbol(string symbol);
-   string   GetSymbolLongName(string symbol, string defaultName);
    string   GetSymbolName(string symbol, string defaultName);
+   string   GetSymbolLongName(string symbol, string defaultName);
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
+   int      iBalance(int account, double& lpBuffer[], int bar);
+   int      iBalanceSeries(int account, double& lpBuffer[]);
+   int      iBarShiftNext(string symbol, int period, datetime time);
+   int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
    string   MovingAverageDescription(int method);
    int      MovingAverageToId(string method);
@@ -221,10 +225,6 @@
    int      StringToPeriod(string description);
    string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      iBalance(int account, double& lpBuffer[], int bar);
-   int      iBalanceSeries(int account, double& lpBuffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);
-   int      iBarShiftPrevious(string symbol, int period, datetime time);
 
    // toString-Funktionen
    string   AppliedPriceToStr(int appliedPrice);
@@ -251,53 +251,53 @@
    string   WaitForSingleObjectValueToStr(int value);
 
    // Win32-Structs Getter und Setter
-   int      pi.hProcess          (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.hThread           (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ProcessId         (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ThreadId          (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hProcess                   (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hThread                    (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ProcessId                  (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.ThreadId                   (/*PROCESS_INFORMATION*/ int& pi[]);
 
-   int      sa.Length            (/*SECURITY_ATTRIBUTES*/ int& sa[]);
-   int      sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]);
-   bool     sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   int      sa.Length                     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/ int& sa[]);
 
-   int      si.cb                (/*STARTUPINFO*/ int& si[]);
-   int      si.Desktop           (/*STARTUPINFO*/ int& si[]);
-   int      si.Title             (/*STARTUPINFO*/ int& si[]);
-   int      si.X                 (/*STARTUPINFO*/ int& si[]);
-   int      si.Y                 (/*STARTUPINFO*/ int& si[]);
-   int      si.XSize             (/*STARTUPINFO*/ int& si[]);
-   int      si.YSize             (/*STARTUPINFO*/ int& si[]);
-   int      si.XCountChars       (/*STARTUPINFO*/ int& si[]);
-   int      si.YCountChars       (/*STARTUPINFO*/ int& si[]);
-   int      si.FillAttribute     (/*STARTUPINFO*/ int& si[]);
-   int      si.Flags             (/*STARTUPINFO*/ int& si[]);
-   string   si.FlagsToStr        (/*STARTUPINFO*/ int& si[]);
-   int      si.ShowWindow        (/*STARTUPINFO*/ int& si[]);
-   string   si.ShowWindowToStr   (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdInput         (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdOutput        (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdError         (/*STARTUPINFO*/ int& si[]);
+   int      si.cb                         (/*STARTUPINFO*/ int& si[]);
+   int      si.Desktop                    (/*STARTUPINFO*/ int& si[]);
+   int      si.Title                      (/*STARTUPINFO*/ int& si[]);
+   int      si.X                          (/*STARTUPINFO*/ int& si[]);
+   int      si.Y                          (/*STARTUPINFO*/ int& si[]);
+   int      si.XSize                      (/*STARTUPINFO*/ int& si[]);
+   int      si.YSize                      (/*STARTUPINFO*/ int& si[]);
+   int      si.XCountChars                (/*STARTUPINFO*/ int& si[]);
+   int      si.YCountChars                (/*STARTUPINFO*/ int& si[]);
+   int      si.FillAttribute              (/*STARTUPINFO*/ int& si[]);
+   int      si.Flags                      (/*STARTUPINFO*/ int& si[]);
+   string   si.FlagsToStr                 (/*STARTUPINFO*/ int& si[]);
+   int      si.ShowWindow                 (/*STARTUPINFO*/ int& si[]);
+   string   si.ShowWindowToStr            (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdInput                  (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdOutput                 (/*STARTUPINFO*/ int& si[]);
+   int      si.hStdError                  (/*STARTUPINFO*/ int& si[]);
 
-   int      si.setCb             (/*STARTUPINFO*/ int& si[], int size);
-   int      si.setFlags          (/*STARTUPINFO*/ int& si[], int flags);
-   int      si.setShowWindow     (/*STARTUPINFO*/ int& si[], int cmdShow);
+   int      si.setCb                      (/*STARTUPINFO*/ int& si[], int size);
+   int      si.setFlags                   (/*STARTUPINFO*/ int& si[], int flags);
+   int      si.setShowWindow              (/*STARTUPINFO*/ int& si[], int cmdShow);
 
-   int      st.Year              (/*SYSTEMTIME*/ int& st[]);
-   int      st.Month             (/*SYSTEMTIME*/ int& st[]);
-   int      st.DayOfWeek         (/*SYSTEMTIME*/ int& st[]);
-   int      st.Day               (/*SYSTEMTIME*/ int& st[]);
-   int      st.Hour              (/*SYSTEMTIME*/ int& st[]);
-   int      st.Minute            (/*SYSTEMTIME*/ int& st[]);
-   int      st.Second            (/*SYSTEMTIME*/ int& st[]);
-   int      st.MilliSec          (/*SYSTEMTIME*/ int& st[]);
+   int      st.Year                       (/*SYSTEMTIME*/ int& st[]);
+   int      st.Month                      (/*SYSTEMTIME*/ int& st[]);
+   int      st.DayOfWeek                  (/*SYSTEMTIME*/ int& st[]);
+   int      st.Day                        (/*SYSTEMTIME*/ int& st[]);
+   int      st.Hour                       (/*SYSTEMTIME*/ int& st[]);
+   int      st.Minute                     (/*SYSTEMTIME*/ int& st[]);
+   int      st.Second                     (/*SYSTEMTIME*/ int& st[]);
+   int      st.MilliSec                   (/*SYSTEMTIME*/ int& st[]);
 
-   int      tzi.Bias             (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.StandardName     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.StandardDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.StandardBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.DaylightName     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.DaylightDate     (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.DaylightBias     (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
+   int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
 
    int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int& wfd[]);
    string   wdf.FileAttributesToStr       (/*WIN32_FIND_DATA*/ int& wdf[]);
