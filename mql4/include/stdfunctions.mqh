@@ -100,6 +100,7 @@
 #define MODE_EMA                 1     // exponential moving average
 #define MODE_SMMA                2     // smoothed moving average
 #define MODE_LWMA                3     // linear weighted moving average
+#define MODE_ALMA                4     // Arnaud Legoux moving average
 
 
 // Price identifiers, siehe iMA()

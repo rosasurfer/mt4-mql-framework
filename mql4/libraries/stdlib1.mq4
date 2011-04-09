@@ -4471,6 +4471,7 @@ string MovingAverageToStr(int method) {
       case MODE_EMA : return("MODE_EMA" );
       case MODE_SMMA: return("MODE_SMMA");
       case MODE_LWMA: return("MODE_LWMA");
+      case MODE_ALMA: return("MODE_ALMA");
    }
    catch("MovingAverageToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
@@ -4490,6 +4491,7 @@ string MovingAverageDescription(int method) {
       case MODE_EMA : return("EMA" );
       case MODE_SMMA: return("SMMA");
       case MODE_LWMA: return("LWMA");
+      case MODE_ALMA: return("ALMA");
    }
    catch("MovingAverageDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
@@ -4513,6 +4515,7 @@ int MovingAverageToId(string method) {
    if (value == "EMA" ) return(MODE_EMA );
    if (value == "SMMA") return(MODE_SMMA);
    if (value == "LWMA") return(MODE_LWMA);
+   if (value == "ALMA") return(MODE_ALMA);
 
    catch("MovingAverageToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
