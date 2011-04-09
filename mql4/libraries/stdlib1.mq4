@@ -6182,21 +6182,22 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
  * Modifiziert die HSV-Werte einer Farbe.
  *
  * @param  color  rgb            - zu modifizierende Farbe
- * @param  double mod_hue        - Farbtonänderung: +/-360.0°
- * @param  double mod_saturation - Sättigung:       +/-100%
- * @param  double mod_value      - Helligkeit:      +/-100%
+ * @param  double mod_hue        - Änderung des Farbtons: +/-360.0°
+ * @param  double mod_saturation - Änderung der Sättigung in %
+ * @param  double mod_value      - Änderung der Helligkeit in %
  *
  * @return color - modifizierte Farbe oder -1, wenn ein Fehler auftrat
  *
- * Beispiel: C'90,128,162' (Helligkeit 64%) wird um 30% aufgehellt (auf 83%), die anderen Farbkomponenten bleiben unverändert
- *
- *           Color.ModifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
+ * Beispiel:
+ * ---------
+ *   C'90,128,162' wird um 30% aufgehellt
+ *   Color.ModifyHSV(C'90,128,162', NULL, NULL, 30) => C'119,168,212'
  */
 color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double mod_value) {
    if (0 <= rgb) {
       if (-360 <= mod_hue && mod_hue <= 360) {
-         if (-100 <= mod_saturation && mod_saturation <= 100) {
-            if (-100 <= mod_value && mod_value <= 100) {
+         if (-100 <= mod_saturation) {
+            if (-100 <= mod_value) {
                // nach HSV konvertieren
                double hsv[]; RGBToHSVColor(rgb, hsv);
 
@@ -6211,11 +6212,14 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                if (!CompareDoubles(mod_saturation, 0)) {
                   hsv[1] = hsv[1] * (1 + mod_saturation/100);
                   if (hsv[1] > 1)
-                     hsv[1] = 1;
+                     hsv[1] = 1;    // mehr als 100% geht nicht
                }
 
-               // Helligkeit anpassen
+               // Helligkeit anpassen (modifiziert HSV.value *und* HSV.saturation)
                if (!CompareDoubles(mod_value, 0)) {
+
+                  // TODO: HSV.sat und HSV.val zu gleichen Teilen ändern
+
                   hsv[2] = hsv[2] * (1 + mod_value/100);
                   if (hsv[2] > 1)
                      hsv[2] = 1;

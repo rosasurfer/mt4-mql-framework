@@ -255,8 +255,10 @@ int start() {
       ArrayInitialize(iUpperBand1, EMPTY_VALUE);
       ArrayInitialize(iLowerBand1, EMPTY_VALUE);
       if (maMethod2 != -1) {
-         ArrayInitialize(iUpperBand2, EMPTY_VALUE);
-         ArrayInitialize(iLowerBand2, EMPTY_VALUE);
+         ArrayInitialize(iUpperBand2,   EMPTY_VALUE);
+         ArrayInitialize(iLowerBand2,   EMPTY_VALUE);
+         ArrayInitialize(iUpperBand2_1, EMPTY_VALUE);
+         ArrayInitialize(iLowerBand2_1, EMPTY_VALUE);
       }
       SetIndicatorStyles();                     // Workaround um diverse Terminalbugs (siehe dort)
    }
