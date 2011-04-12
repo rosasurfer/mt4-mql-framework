@@ -8784,7 +8784,7 @@ window_num=0
 <inputs>
 PivotType=D
 PivotPeriods=0
-Mark.TradingRanges=5
+Mark.TradingRanges=20
 </inputs>
 </expert>
 shift_0=0
