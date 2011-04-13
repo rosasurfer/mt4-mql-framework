@@ -5414,6 +5414,114 @@ string StringArrayToStr(string& array[]) {
 
 
 /**
+ * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  int needle     - zu suchender Wert
+ * @param  int haystack[] - zu durchsuchendes Array
+ *
+ * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ */
+int ArraySearchInt(int needle, int &haystack[]) {
+   if (ArrayDimension(haystack) > 1) {
+      catch("ArraySearchInt()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
+      return(-1);
+   }
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Prüft, ob ein Integer in einem Array enthalten ist.
+ *
+ * @param  int needle     - zu suchender Wert
+ * @param  int haystack[] - zu durchsuchendes Array
+ *
+ * @return bool
+ */
+bool IntInArray(int needle, int &haystack[]) {
+   return(ArraySearchInt(needle, haystack) > -1);
+}
+
+
+/**
+ * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  double needle     - zu suchender Wert
+ * @param  double haystack[] - zu durchsuchendes Array
+ *
+ * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ */
+int ArraySearchDouble(double needle, double &haystack[]) {
+   if (ArrayDimension(haystack) > 1) {
+      catch("ArraySearchDouble()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
+      return(-1);
+   }
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (CompareDoubles(haystack[i], needle))
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Prüft, ob ein Double in einem Array enthalten ist.
+ *
+ * @param  double needle     - zu suchender Wert
+ * @param  double haystack[] - zu durchsuchendes Array
+ *
+ * @return bool
+ */
+bool DoubleInArray(double needle, double &haystack[]) {
+   return(ArraySearchDouble(needle, haystack) > -1);
+}
+
+
+/**
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  string needle     - zu suchender Wert
+ * @param  string haystack[] - zu durchsuchendes Array
+ *
+ * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ */
+int ArraySearchString(string needle, string &haystack[]) {
+   if (ArrayDimension(haystack) > 1) {
+      catch("ArraySearchString()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
+      return(-1);
+   }
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Prüft, ob ein String in einem Array enthalten ist.
+ *
+ * @param  string needle     - zu suchender Wert
+ * @param  string haystack[] - zu durchsuchendes Array
+ *
+ * @return bool
+ */
+bool StringInArray(string needle, string &haystack[]) {
+   return(ArraySearchString(needle, haystack) > -1);
+}
+
+
+/**
  *
  *
 abstract*/ int onBarOpen(int details[]) {

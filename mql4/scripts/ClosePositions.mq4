@@ -8,17 +8,16 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string Close.Symbol      = "";     // <leer> | Symbol
-extern string Close.Direction   = "";     // <leer> | Buy | Long | Sell | Short
-extern string Close.MagicNumber = "";     // <leer> | MagicNumber
-extern string Close.Comment     = "";     // <leer> | Kommentar, Prüfung per StringStartsWith(OrderComment(), Close.Comment)
+extern string Close.Symbols      = "";    // <leer> | Symbols                    (kommagetrennt)
+extern string Close.Direction    = "";    // <leer> | Buy | Long | Sell | Short
+extern string Close.Tickets      = "";    // <leer> | Tickets                    (kommagetrennt)
+extern string Close.MagicNumbers = "";    // <leer> | MagicNumbers               (kommagetrennt)
+extern string Close.Comment      = "";    // <leer> | Kommentar                  (Prüfung per OrderComment().StartsWith(value))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-string orderSymbol  = "";
-int    orderType    = -1;
-int    orderMagic   = -1;
-string orderComment = "";
+string orderSymbols[], orderComment;
+int    orderTickets[], orderMagics[], orderType=-1;
 
 
 /**
@@ -30,9 +29,18 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Parametervalidierung
-   orderSymbol = StringToUpper(StringTrim(Close.Symbol));
+   // Parameter auswerten
 
+   // Close.Symbols
+   string values[];
+   int size = Explode(StringToUpper(Close.Symbols), ",", values);
+   for (int i=0; i < size; i++) {
+      string strValue = StringTrim(values[i]);
+      if (StringLen(strValue) > 0)
+         ArrayPushString(orderSymbols, strValue);
+   }
+
+   // Close.Direction
    string direction = StringToUpper(StringTrim(Close.Direction));
    if (StringLen(direction) > 0) {
       switch (StringGetChar(direction, 0)) {
@@ -44,18 +52,38 @@ int init() {
       }
    }
 
-   string magic = StringTrim(Close.MagicNumber);
-   if (StringLen(magic) > 0) {
-      if (!StringIsDigit(magic))
-         return(catch("init(2)  Invalid input parameter Close.MagicNumber = \""+ Close.MagicNumber +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-      orderMagic = StrToInteger(magic);
-      if (orderMagic <= 0)
-         return(catch("init(3)  Invalid input parameter Close.MagicNumber = \""+ Close.MagicNumber +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   // Close.Tickets
+   size = Explode(Close.Tickets, ",", values);
+   for (i=0; i < size; i++) {
+      strValue = StringTrim(values[i]);
+      if (StringLen(strValue) > 0) {
+         if (!StringIsDigit(strValue))
+            return(catch("init(2)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         int iValue = StrToInteger(strValue);
+         if (iValue <= 0)
+            return(catch("init(3)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         ArrayPushInt(orderTickets, iValue);
+      }
    }
 
+   // Close.MagicNumbers
+   size = Explode(Close.MagicNumbers, ",", values);
+   for (i=0; i < size; i++) {
+      strValue = StringTrim(values[i]);
+      if (StringLen(strValue) > 0) {
+         if (!StringIsDigit(strValue))
+            return(catch("init(4)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         iValue = StrToInteger(strValue);
+         if (iValue <= 0)
+            return(catch("init(5)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         ArrayPushInt(orderMagics, iValue);
+      }
+   }
+
+   // Close.Comment
    orderComment = StringTrim(Close.Comment);
 
-   return(catch("init(4)"));
+   return(catch("init(6)"));
 }
 
 
@@ -91,9 +119,10 @@ int start() {
          break;
 
       bool close = true;
-      if (close) close = (orderSymbol=="" || orderSymbol==OrderSymbol());
-      if (close) close = (orderType==-1   || orderType==OrderType());
-      if (close) close = (orderMagic==-1  || orderMagic==OrderMagicNumber());
+      if (close) close = (ArraySize(orderSymbols)== 0 || StringInArray(OrderSymbol(),   orderSymbols));
+      if (close) close = (orderType              ==-1 || OrderType() == orderType                    );
+      if (close) close = (ArraySize(orderTickets)== 0 || IntInArray(OrderTicket(),      orderTickets));
+      if (close) close = (ArraySize(orderMagics) == 0 || IntInArray(OrderMagicNumber(), orderMagics ));
 
       if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))  // Workaround um MQL-Conditions-Bug
          close = false;
@@ -101,11 +130,15 @@ int start() {
       if (close) ArrayPushInt(tickets, OrderTicket());
    }
 
+
+   bool filtered = !(ArraySize(orderSymbols)+orderType+ArraySize(orderTickets)+ArraySize(orderMagics)==-1 && orderComment=="");
+
+
    // Positionen schließen
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int answer = MessageBox("Do you really want to close the specified positions?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
+      int answer = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
       if (answer == IDOK) {
          for (i=0; i < selected; i++) {
             if (!OrderCloseEx(tickets[i]))
@@ -116,9 +149,7 @@ int start() {
    }
    else {
       PlaySound("notify.wav");
-      if (orderSymbol=="" && orderType==-1 && orderMagic==-1 && orderComment=="") string message = "No positions to close.";
-      else                                                                               message = "No matching positions found.";
-      MessageBox(message, WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(filtered, "matching", "open") +" positions found.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start()"));
