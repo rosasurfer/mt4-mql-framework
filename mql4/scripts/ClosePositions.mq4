@@ -228,7 +228,7 @@ bool OrderCloseEx(int ticket, double volume=-1, int slippage=1, color marker=CLR
             time = GetTickCount()-time;
 
             // akustische Rückmeldung und ausführliche Logmessage
-            PlaySound("PositionClosed.wav");
+            PlaySound("OrderOk.wav");
             log("OrderCloseEx()   closed "+ OrderCloseEx.CreateLogMessage(ticket, volume, price, digits, time));
 
             error = GetLastError();
