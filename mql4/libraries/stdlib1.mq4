@@ -1517,7 +1517,7 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
                 if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUR");
                 if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
-                if (symbol == "GOLD"  )                 return("XAUUSD");
+                if (symbol == "GOLD")                   return("XAUUSD");
                 break;
 
       case 'H':
@@ -1556,7 +1556,7 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "USDSEK")) return("USDSEK");
                 if (StringStartsWith(symbol, "USDSGD")) return("USDSGD");
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
-                if (symbol == "USDX"  )                 return("USDX"  );
+                if (symbol == "USDX")                   return("USDX"  );
                 break;
 
       case 'V':
