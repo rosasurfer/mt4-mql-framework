@@ -7,7 +7,6 @@
 
 
 #property indicator_chart_window
-#property indicator_buffers 0
 
 
 string text            = " jagt im komplett verwahrlost Taxi 1 234,567,890.50";
@@ -26,8 +25,10 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   CreateLabels();
+   // Datenanzeige ausschalten
+   SetIndexLabel(0, NULL);
 
+   CreateLabels();
    return(catch("init()"));
 }
 

@@ -56,6 +56,9 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
+   // Datenanzeige ausschalten
+   SetIndexLabel(0, NULL);
+
    CreateLabels();
    return(catch("init()"));
 }
