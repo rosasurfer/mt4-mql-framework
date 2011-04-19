@@ -4561,7 +4561,7 @@ string OperationTypeToStr(int type) {
       case OP_BALANCE  : return("OP_BALANCE"  );
       case OP_CREDIT   : return("OP_CREDIT"   );
    }
-   catch("OperationTypeToStr()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("OperationTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -4584,7 +4584,7 @@ string OperationTypeDescription(int type) {
       case OP_BALANCE  : return("Balance"   );
       case OP_CREDIT   : return("Credit"    );
    }
-   catch("OperationTypeDescription()  invalid paramter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("OperationTypeDescription()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 

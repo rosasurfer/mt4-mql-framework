@@ -45,7 +45,7 @@ double BollingerBands.MA.Deviation  = 0;
 
 // sonstige Variablen
 string symbol, symbolName, symbolSection;
-int    Grid.Digits;                                   // ie. für Digits==5 => 4
+int    Grid.Digits;                                   // z.B. für 5 Digits => 4
 
 double bbandLimits[3];
 

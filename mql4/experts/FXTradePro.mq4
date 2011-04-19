@@ -5,252 +5,206 @@
  *      FXTradePro Journal:      http://www.forexfactory.com/showthread.php?t=82544
  *      FXTradePro Swing Trades: http://www.forexfactory.com/showthread.php?t=87564
  *
- *      PowerSM:                 http://www.forexfactory.com/showthread.php?t=75394
+ *      PowerSM EA:              http://www.forexfactory.com/showthread.php?t=75394
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
  */
 #include <stdlib.mqh>
 
 
-extern string __________________________      = "==== EA Identity Settings =========";
-extern int    MagicNumber                     = 21354;
-extern bool   Disable.Comments                = false;
-extern string ___________________________     = "==== TP and SL Settings ========";
-extern int    TakeProfit                      = 40;
-extern int    Stoploss                        = 10;
-double gd_120 = 0.1;
+//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string ____________________________    = "==== Entry Options =============";
-extern bool   FirstOrder.Long                 = true;
-extern bool   Hibernation                     = true;
+extern string _1____________________________ = "==== EA Settings ===============";
+extern int    MagicNumber                    = 21354;
+extern bool   Enable.Comments                = true;
+extern string _2____________________________ = "==== TP and SL Settings =========";
+extern int    TakeProfit                     = 40;
+extern int    Stoploss                       = 10;
+
+extern string _3____________________________ = "==== Entry Options ==============";
+extern bool   FirstOrder.Long                = true;
+extern bool   PriceEntry                     = false;
+extern double Price                          = 0;
+extern bool   Hibernation                    = true;
 bool gb_01 = false;
 
-extern string _____________________________   = "==== Time Entry Option ==========";
-extern bool   TimeEntry                       = false;
-extern int    EntryHour                       =  0;
-extern int    EntryMinute                     = 55;
-extern string ______________________________  = "==== Price Entry Option ========";
-extern bool   PriceEntry                      = false;
-extern double Price                           = 0.0;
-extern string _______________________________ = "==== MultiLot Settings ======";
-extern double MLot1                           = 0.1;
-extern double MLot2                           = 0.1;
-extern double MLot3                           = 0.2;
-extern double MLot4                           = 0.3;
-extern double MLot5                           = 0.4;
-extern double MLot6                           = 0.6;
-extern double MLot7                           = 0.8;
-extern double MLot8                           = 1.1;
-extern double MLot9                           = 1.5;
-extern double MLot10                          = 2.0;
-extern double MLot11                          = 2.7;
-extern double MLot12                          = 3.6;
-extern double MLot13                          = 4.7;
-extern double MLot14                          = 6.2;
-extern double MLot15                          = 8.0;
-extern double MLot16                          = 10.2;
-extern double MLot17                          = 13.0;
-extern double MLot18                          = 16.5;
-extern double MLot19                          = 20.8;
-extern double MLot20                          = 26.3;
-extern double MLot21                          = 33.1;
-extern double MLot22                          = 41.6;
-extern double MLot23                          = 52.2;
-extern double MLot24                          = 65.5;
+extern string _4____________________________ = "==== Lotsizes ==================";
+extern double Lotsize.Level.1                =  0.1;
+extern double Lotsize.Level.2                =  0.1;
+extern double Lotsize.Level.3                =  0.2;
+extern double Lotsize.Level.4                =  0.3;
+extern double Lotsize.Level.5                =  0.4;
+extern double Lotsize.Level.6                =  0.6;
+extern double Lotsize.Level.7                =  0.8;
+extern double Lotsize.Level.8                =  1.1;
+extern double Lotsize.Level.9                =  1.5;
+extern double Lotsize.Level.10               =  2.0;
+extern double Lotsize.Level.11               =  2.7;
+extern double Lotsize.Level.12               =  3.6;
+extern double Lotsize.Level.13               =  4.7;
+extern double Lotsize.Level.14               =  6.2;
+extern double Lotsize.Level.15               =  8.0;
+extern double Lotsize.Level.16               = 10.2;
+extern double Lotsize.Level.17               = 13.0;
+extern double Lotsize.Level.18               = 16.5;
+extern double Lotsize.Level.19               = 20.8;
+extern double Lotsize.Level.20               = 26.3;
+extern double Lotsize.Level.21               = 33.1;
+extern double Lotsize.Level.22               = 41.6;
+extern double Lotsize.Level.23               = 52.2;
+extern double Lotsize.Level.24               = 65.5;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+string gs_508;
 
 int gi_388 = 0;
 int gi_392 = 0;
-int gi_396 = 0;
+
+int  gi_396 = 0;
 bool gb_400 = false;
+
 bool gb_404 = false;
 bool gb_408 = false;
-bool gb_412 = true;
-bool gb_416 = true;
+
 int gi_420 = 0;
 int gi_424 = 0;
-int g_count_428 = 0;
-int g_count_432 = 0;
-int g_count_436 = 0;
-int g_count_440 = 0;
-int g_count_444 = 0;
-int g_count_448 = 0;
-int gi_452 = 0;
-int gi_456 = 0;
-int gi_460 = 0;
-int gi_464 = 0;
-int gi_468 = 0;
-int gi_472 = 0;
-int gi_476 = 0;
+
+int openPositions;
+
 int gi_480;
 int gi_484;
+
 int gia_488[1];
 int gia_492[1];
+
 double gda_496[1];
+
 int gi_500;
 int gi_504;
-string gs_508;
+
 bool gb_516 = false;
 bool gb_520 = false;
 bool gb_524 = false;
-double gd_528 = 0.0;
 
+
+/**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   dynaReset();
-   makeGlobals();
-   onScreenComment(91);
+   DynaReset();
+   MakeGlobals();
+   ShowComment(91);
    return(catch("init()"));
 }
 
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
 int deinit() {
-   onScreenComment(99);
+   ShowComment(99);
    return(catch("deinit()"));
 }
 
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
 int start() {
    init = false;
 
-   houseKeeper();
-   onScreenComment(98);
-   if (newClosing() && progressing()) updateProgression();
-   if (gia_492[0] == 2 || gi_480 == 0) resetProgression();
-   if (!gb_412 && gi_460 > 0) {
-   }
-   if (!gb_416 && gi_464 > 0) {
-   }
-   if (newOrderPermitted(1)) {
-      findMyOrders();
-      if (gi_468 == 0) {
-         if (lastOrderType() == 9 && FirstOrder.Long) sendLongOrder();
-         if (lastOrderType() == 1 && progressing()) sendLongOrder();
-         if (lastOrderType() == 0 && newSeries()) sendLongOrder();
+   HouseKeeper();
+   ShowComment(98);
+
+   if (NewClosing() && Progressing())
+      IncreaseProgressionLevel();
+
+   if (gia_492[0]==2 || gi_480==0)
+      ResetProgressionLevel();
+
+   if (NewOrderPermitted(1)) {
+      CountOpenPositions();
+      if (openPositions == 0) {
+         if (LastOrderType()==9 && FirstOrder.Long) SendLongOrder();
+         if (LastOrderType()==1 && Progressing()  ) SendLongOrder();
+         if (LastOrderType()==0 && NewSeries()    ) SendLongOrder();
       }
    }
-   if (newOrderPermitted(2)) {
-      findMyOrders();
-      if (gi_468 == 0) {
-         if (lastOrderType() == 9) sendShortOrder();
-         if (lastOrderType() == 0 && progressing()) sendShortOrder();
-         if (lastOrderType() == 1 && newSeries()) sendShortOrder();
+
+   if (NewOrderPermitted(2)) {
+      CountOpenPositions();
+      if (openPositions == 0) {
+         if (LastOrderType()==9                 ) SendShortOrder();
+         if (LastOrderType()==0 && Progressing()) SendShortOrder();
+         if (LastOrderType()==1 && NewSeries()  ) SendShortOrder();
       }
       gi_484 = gi_480;
-      onScreenComment(98);
+      ShowComment(98);
    }
+
    return(catch("start()"));
 }
 
-void sendLongOrder() {
-   versatileOrderTaker(1, -1, Ask);
-   catch("sendLongOrder()");
-}
 
-void sendShortOrder() {
-   versatileOrderTaker(2, -1, Bid);
-   catch("sendShortOrder()");
-}
-
-
-void onScreenComment(int ai_0) {
-   if (Disable.Comments)
-      return;
-
-   string ls_44 = __SCRIPT__ +" is trading.";
-
-   if (gb_01) string ls_36 = "Dynamic";
-   else               ls_36 = "Regular";
-
-   string ls_52 = LF
-                + LF + "Date and Time:  " + TimeToStr(TimeCurrent())
-                + LF + ls_36 + " TakeProfit:  " + gi_504
-                + LF + ls_36 + " Stoploss:  " + gi_500
-                + LF + "Progression Level:  " + getProgression()
-                + LF + "Lot Size:  " + DoubleToStr(getLotForProgression(), 2);
-
-   switch (ai_0) {
-      case 91: Comment(__SCRIPT__ + " is waiting for the next tick to begin trading.");             break;
-      case 98: Comment(ls_44 + ls_52);                                                              break;
-      case 99: Comment(" ");                                                                        break;
-      case 11: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User option");                    break;
-      case 12: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User Settings");                  break;
-      case 13: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Equity below minumum");           break;
-      case 14: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Balance below minimum");          break;
-      case 15: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Existing orders at maximum");     break;
-      case 21: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  User option");               break;
-      case 22: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  Internal calculation");      break;
-      case 31: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  User option");              break;
-      case 32: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  Internal calculation");     break;
-      case 41: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Hibernation");                    break;
-      case 42: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Time Range");              break;
-      case 43: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Price Range");             break;
-      case 44: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Progression has been exhausted"); break;
-   }
-   catch("onScreenComment()");
-}
-
-void houseKeeper() {
-   g_count_428 = 0;
-   g_count_432 = 0;
-   g_count_436 = 0;
-   g_count_440 = 0;
-   g_count_444 = 0;
-   g_count_448 = 0;
-   gi_452 = 0;
-   gi_456 = 0;
-   gi_460 = 0;
-   gi_464 = 0;
-   gi_468 = 0;
-   gi_472 = 0;
-   gi_476 = 0;
+/**
+ *
+ */
+void HouseKeeper() {
    gb_516 = false;
    gb_520 = false;
-   gd_528 = Ask - Bid;
-   findMyOrders();
-   findMyOrders_HISTORIC();
-   historyLogger();
-   if (gi_468 > 0) {
-      if (gi_388 > 0) breakEvenManager();
-      if (gi_396 > 0) trailingStopManager();
+   openPositions = 0;
+
+   CountOpenPositions();
+   FindMyOrders_HISTORIC();
+   HistoryLogger();
+
+   if (openPositions > 0) {
+      if (gi_388 > 0) BreakEvenManager();
+      if (gi_396 > 0) TrailingStopManager();
    }
-   catch("houseKeeper()");
+   catch("HouseKeeper()");
 }
 
-bool orderBelongsToMe() {
+
+/**
+ *
+ */
+bool IsMyOrder() {
    return(OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber);
 }
 
-void findMyOrders() {
-   for (int l_pos_0 = OrdersTotal() - 1; l_pos_0 >= 0; l_pos_0--) {
-      OrderSelect(l_pos_0, SELECT_BY_POS, MODE_TRADES);
-      if (orderBelongsToMe()) {
-         if (OrderType() == OP_BUY) g_count_428++;
-         else {
-            if (OrderType() == OP_SELL) g_count_432++;
-            else {
-               if (OrderType() == OP_BUYSTOP) g_count_436++;
-               else {
-                  if (OrderType() == OP_SELLSTOP) g_count_440++;
-                  else {
-                     if (OrderType() == OP_BUYLIMIT) g_count_444++;
-                     else
-                        if (OrderType() == OP_SELLLIMIT) g_count_448++;
-                  }
-               }
-            }
-         }
+
+/**
+ * Zählt die offenen Positionen, die vom EA verwaltet werden. Sollte eigentlich immer 0 oder 1 sein
+ *
+ * @return int - Fehlerstatus
+ */
+int CountOpenPositions() {
+   for (int i=OrdersTotal()-1; i >= 0; i--) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (IsMyOrder()) {
+         if (OrderType()==OP_BUY || OrderType()==OP_SELL) openPositions++;
+         else                                             catch("CountOpenPositions()   ignoring "+ OperationTypeDescription(OrderType()) +" order #"+ OrderTicket(), ERR_RUNTIME_ERROR);
       }
    }
-   gi_452 = g_count_436 + g_count_444;
-   gi_456 = g_count_440 + g_count_448;
-   gi_472 = gi_452 + gi_456;
-   gi_468 = g_count_428 + g_count_432;
-   gi_460 = g_count_436 + g_count_444 + g_count_428;
-   gi_464 = g_count_440 + g_count_448 + g_count_432;
-   gi_476 = gi_468 + gi_472;
-   catch("findMyOrders()");
+   return(catch("CountOpenPositions()"));
 }
 
-void findMyOrders_HISTORIC() {
+
+/**
+ *
+ */
+void FindMyOrders_HISTORIC() {
    gi_480 = 0;
    int li_0 = 0;
    int li_4 = 1;
@@ -259,65 +213,94 @@ void findMyOrders_HISTORIC() {
    if (OrdersHistoryTotal() > 0) {
       for (int l_pos_16 = li_8; l_pos_16 < l_hist_total_12; l_pos_16++) {
          OrderSelect(l_pos_16, li_0, li_4);
-         if (orderBelongsToMe()) gi_480++;
+         if (IsMyOrder()) gi_480++;
       }
    }
-   catch("findMyOrders_HISTORIC()");
+   catch("FindMyOrders_HISTORIC()");
 }
 
-bool newOrderPermitted(int ai_0) {
+
+/**
+ *
+ */
+void HistoryLogger() {
+   if (gi_480 > 0) {
+      if (gi_480 > 1) {
+         ArrayResize(gia_488, gi_480);
+         ArrayResize(gda_496, gi_480);
+         ArrayResize(gia_492, gi_480);
+      }
+
+      int n;
+
+      for (int i=OrdersHistoryTotal()-1; i >= 0; i--) {
+         OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+         if (IsMyOrder()) {
+            gia_488[n] = i;
+            gda_496[n] = OrderLots();
+            if      (CompareDoubles(OrderClosePrice(), OrderTakeProfit())) gia_492[n] =  2;
+            else if (CompareDoubles(OrderClosePrice(), OrderStopLoss()))   gia_492[n] = -2;
+            else if (OrderProfit() > 0)                                    gia_492[n] =  1;
+            else if (OrderProfit() < 0)                                    gia_492[n] = -1;
+            else                                                           gia_492[n] =  0;
+            n++;
+         }
+      }
+   }
+   catch("HistoryLogger()");
+}
+
+
+/**
+ *
+ */
+bool NewOrderPermitted(int ai_0) {
    if (gb_404 && gb_408) {
-      onScreenComment(11);
+      ShowComment(11);
       return(false);
    }
    if (gb_516 && gb_520) {
-      onScreenComment(12);
+      ShowComment(12);
       return(false);
    }
    if (AccountEquity() < gi_420) {
-      onScreenComment(13);
+      ShowComment(13);
       return(false);
    }
    if (AccountBalance() < gi_424) {
-      onScreenComment(14);
+      ShowComment(14);
       return(false);
    }
    if (Hibernation) {
       if (gia_492[0] == 2) {
-         onScreenComment(41);
-         return(false);
-      }
-   }
-   if (TimeEntry) {
-      if (!(Hour() == EntryHour && Minute() >= EntryMinute) && progressing() == 0) {
-         onScreenComment(42);
+         ShowComment(41);
          return(false);
       }
    }
    if (PriceEntry) {
-      if (Ask != Price && progressing() == 0) {
-         onScreenComment(43);
+      if (Ask != Price && Progressing() == 0) {
+         ShowComment(43);
          return(false);
       }
    }
    if (ai_0 == 1) {
       if (gb_404) {
-         onScreenComment(21);
+         ShowComment(21);
          return(false);
       }
       if (gb_516) {
-         onScreenComment(22);
+         ShowComment(22);
          return(false);
       }
       return(true);
    }
    if (ai_0 == 2) {
       if (gb_408) {
-         onScreenComment(31);
+         ShowComment(31);
          return(false);
       }
       if (gb_520) {
-         onScreenComment(32);
+         ShowComment(32);
          return(false);
       }
       return(true);
@@ -325,235 +308,324 @@ bool newOrderPermitted(int ai_0) {
    return(false);
 }
 
-double lotMaker() {
-   double ld_ret_0 = gd_120;
-   ld_ret_0 = getLotForProgression();
-   if (ld_ret_0 <= 0.0) ld_ret_0 = 0.1;
-   if (ld_ret_0 > 100.0) ld_ret_0 = 100;
-   return(ld_ret_0);
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+void SendLongOrder() {
+   VersatileOrderTaker(OP_BUY, -1, Ask);
+   return(catch("SendLongOrder()"));
 }
 
-void breakEvenManager() {
-   for (int l_pos_0 = 0; l_pos_0 < OrdersTotal(); l_pos_0++) {
-      OrderSelect(l_pos_0, SELECT_BY_POS, MODE_TRADES);
-      if (gi_388 > 0 && orderBelongsToMe()) {
-         if (OrderType() == OP_BUY) {
-            if (Bid - OrderOpenPrice() >= Point * gi_388)
-               if (OrderStopLoss() < OrderOpenPrice() + gi_392 * Point) OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() + gi_392 * Point, OrderTakeProfit(), 0, Green);
-         } else {
-            if (OrderType() == OP_SELL) {
-               if (OrderOpenPrice() - Ask >= Point * gi_388)
-                  if (OrderStopLoss() > OrderOpenPrice() - gi_392 * Point) OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() - gi_392 * Point, OrderTakeProfit(), 0, Red);
-            }
-         }
-      }
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+void SendShortOrder() {
+   VersatileOrderTaker(OP_SELL, -1, Bid);
+   return(catch("SendShortOrder()"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int VersatileOrderTaker(int type, int ai_4, double price) {
+   if (type!=OP_BUY && type==OP_SELL)
+      return(catch("VersatileOrderTaker(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   double sl, tp, lotsize;
+
+   if (ai_4 < 0) lotsize = CurrentLotSize();
+   else          lotsize = ai_4;
+
+   if (NewClosing())
+      DynaAdjust();
+
+   if (gia_492[0]==2 || gi_480==0)
+      DynaReset();
+
+   switch (type) {
+      case OP_BUY:  price = Ask;
+                    if (Stoploss   > 0) sl = price - gi_500*Point;
+                    if (TakeProfit > 0) tp = price + gi_504*Point;
+                    break;
+
+      case OP_SELL: price = Bid;
+                    if (Stoploss   > 0) sl = price + gi_500*Point;
+                    if (TakeProfit > 0) tp = price - gi_504*Point;
+                    break;
    }
-   catch("breakEvenManager()");
-}
 
-void trailingStopManager() {
-   int l_ord_total_4 = OrdersTotal();
-   for (int l_pos_0 = 0; l_pos_0 < l_ord_total_4; l_pos_0++) {
-      OrderSelect(l_pos_0, SELECT_BY_POS, MODE_TRADES);
-      if (gi_396 > 0 && orderBelongsToMe()) {
-         if (OrderType() == OP_BUY) {
-            if (Bid - OrderOpenPrice() > Point * gi_396 || !gb_400)
-               if (OrderStopLoss() < Bid - Point * gi_396) OrderModify(OrderTicket(), OrderOpenPrice(), Bid - Point * gi_396, OrderTakeProfit(), 0, Green);
-         } else {
-            if (OrderType() == OP_SELL) {
-               if (OrderOpenPrice() - Ask > Point * gi_396 || !gb_400)
-                  if (OrderStopLoss() > Ask + Point * gi_396 || OrderStopLoss() == 0.0) OrderModify(OrderTicket(), OrderOpenPrice(), Ask + Point * gi_396, OrderTakeProfit(), 0, Red);
-            }
-         }
-      }
-   }
-   catch("trailingStopManager()");
-}
-
-string commentString() {
-   return(__SCRIPT__ +" "+ Symbol());
-}
-
-void versatileOrderTaker(int ai_0, int ai_4, double a_price_8) {
-   int l_ticket_48;
-   int l_cmd_52;
-   string ls_56;
-   double l_price_16 = 0;
-   double l_price_24 = 0;
-   double l_lots_32 = 0;
-   int l_slippage_40 = 3;
-   int l_datetime_44 = 0;
-   if (ai_4 < 0) l_lots_32 = lotMaker();
-   else l_lots_32 = ai_4;
-   string l_dbl2str_64 = DoubleToStr(l_lots_32, 2);
-   if (newClosing()) dynaAdjust();
-   if (gia_492[0] == 2 || gi_480 == 0) dynaReset();
-   switch (ai_0) {
-   case 2:
-      l_cmd_52 = 1;
-      ls_56 = "SELL";
-      a_price_8 = Bid;
-      if (Stoploss > 0) l_price_16 = a_price_8 + gi_500 * Point;
-      if (TakeProfit > 0) l_price_24 = a_price_8 - gi_504 * Point;
-      break;
-   case 1:
-      l_cmd_52 = 0;
-      ls_56 = "BUY";
-      a_price_8 = Ask;
-      if (Stoploss > 0) l_price_16 = a_price_8 - gi_500 * Point;
-      if (TakeProfit > 0) l_price_24 = a_price_8 + gi_504 * Point;
-      break;
-   default:
-      Print("versatileOrderTaker has been passed an invalid SimpleType parameter: " + ai_0);
-   }
    if (!gb_524) {
-      l_ticket_48 = OrderSend(Symbol(), l_cmd_52, l_lots_32, a_price_8, l_slippage_40, l_price_16, l_price_24, commentString(), MagicNumber, l_datetime_44, Green);
-      if (l_ticket_48 > 0) {
-         if (OrderSelect(l_ticket_48, SELECT_BY_TICKET, MODE_TRADES)) Print(__SCRIPT__ + " " + Symbol() + " - Progression Level " + getProgression() + " @ " + l_dbl2str_64 + " Lots - " + ls_56 + " order at ", OrderOpenPrice());
-      } else Print("Error opening " + ls_56 + " order: ", GetLastError());
+      int      slippage   = 3;
+      string   comment    = __SCRIPT__ +" "+ Symbol();
+      datetime expiration = 0;
+
+      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber, expiration, Green);
+
+      if (ticket > 0) {
+         if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
+            log("VersatileOrderTaker()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lots) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), ".+"));
+      }
+      else return(catch("VersatileOrderTaker(2)   error opening "+ OperationTypeDescription(type) +" order"));
    }
-   catch("versatileOrderTaker()");
+   return(catch("VersatileOrderTaker(3)"));
 }
 
-void historyLogger() {
-   string ls_8;
-   int l_index_4 = gi_480 - 1;
-   l_index_4 = 0;
-   if (gi_480 > 0) {
-      if (gi_480 > 1) {
-         ArrayResize(gia_488, gi_480);
-         ArrayResize(gda_496, gi_480);
-         ArrayResize(gia_492, gi_480);
-      }
-      for (int l_pos_0 = OrdersHistoryTotal() - 1; l_pos_0 >= 0; l_pos_0--) {
-         OrderSelect(l_pos_0, SELECT_BY_POS, MODE_HISTORY);
-         if (orderBelongsToMe()) {
-            gia_488[l_index_4] = l_pos_0;
-            gda_496[l_index_4] = OrderLots();
-            if (OrderClosePrice() == OrderTakeProfit()) gia_492[l_index_4] = 2;
-            else {
-               if (OrderClosePrice() == OrderStopLoss()) gia_492[l_index_4] = -2;
-               else {
-                  if (OrderProfit() > 0.0) gia_492[l_index_4] = 1;
-                  else {
-                     if (OrderProfit() < 0.0) gia_492[l_index_4] = -1;
-                     else gia_492[l_index_4] = 0;
-                  }
-               }
-            }
-            l_index_4++;
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int BreakEvenManager() {
+   if (gi_388 <= 0)
+      return(NO_ERROR);
+
+   for (int i=0; i < OrdersTotal(); i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (IsMyOrder()) {
+         if (OrderType() == OP_BUY) {
+            if (Bid - OrderOpenPrice() >= Point*gi_388)
+               if (OrderStopLoss() < OrderOpenPrice() + gi_392*Point)
+                  OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() + gi_392*Point, OrderTakeProfit(), 0, Green);
+         }
+         else if (OrderType() == OP_SELL) {
+            if (OrderOpenPrice() - Ask >= Point*gi_388)
+               if (OrderStopLoss() > OrderOpenPrice() - gi_392*Point)
+                  OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() - gi_392*Point, OrderTakeProfit(), 0, Red);
          }
       }
    }
-   for (l_pos_0 = 0; l_pos_0 < gi_480; l_pos_0++) {
-      ls_8 = ls_8 + gia_488[l_pos_0] + " " + gia_492[l_pos_0] + " " + gda_496[l_pos_0] + LF;
-   }
-   catch("historyLogger()");
+   return(catch("BreakEvenManager()"));
 }
 
-int lastOrderType() {
-   if (gi_480 == 0) return(9);
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int TrailingStopManager() {
+   int orders = OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (gi_396 > 0 && IsMyOrder()) {
+         if (OrderType() == OP_BUY) {
+            if (Bid - OrderOpenPrice() > Point*gi_396 || !gb_400)
+               if (OrderStopLoss() < Bid - Point*gi_396)
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - Point*gi_396, OrderTakeProfit(), 0, Green);
+         }
+         else if (OrderType() == OP_SELL) {
+            if (OrderOpenPrice() - Ask > Point*gi_396 || !gb_400)
+               if (OrderStopLoss() > Ask + Point*gi_396 || CompareDoubles(OrderStopLoss(), 0))
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + Point*gi_396, OrderTakeProfit(), 0, Red);
+         }
+      }
+   }
+   return(catch("TrailingStopManager()"));
+}
+
+
+/**
+ *
+ */
+int LastOrderType() {
+   if (gi_480 == 0)
+      return(9);
+
    OrderSelect(gia_488[0], SELECT_BY_POS, MODE_HISTORY);
-   if (OrderType() == OP_BUY || OrderType() == OP_SELL) return(OrderType());
+   if (OrderType()==OP_BUY || OrderType()==OP_SELL)
+      return(OrderType());
+
    return(9);
 }
 
-void dynaAdjust() {
+
+/**
+ *
+ */
+void DynaAdjust() {
    if (gb_01) {
       gi_504++;
       gi_500--;
    }
 }
 
-void dynaReset() {
+
+/**
+ *
+ */
+void DynaReset() {
    gi_504 = TakeProfit;
    gi_500 = Stoploss;
 }
 
-bool newClosing() {
+
+/**
+ *
+ */
+bool NewClosing() {
    return(gi_480 != gi_484);
 }
 
-int progressing() {
-   if (getLotForProgression() == 0.0) {
-      onScreenComment(44);
+
+/**
+ *
+ */
+int Progressing() {
+   if (CompareDoubles(CurrentLotSize(), 0)) {
+      ShowComment(44);
       return(0);
    }
-   if (gia_492[0] == -2) return(1);
+   if (gia_492[0] == -2)
+      return(1);
+
    return(0);
 }
 
-int newSeries() {
+
+/**
+ *
+ */
+int NewSeries() {
    return(gia_492[0] == 2);
 }
 
-void updateProgression() {
-   GlobalVariableSet(gs_508, getProgression() + 1);
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int MakeGlobals() {
+   gs_508 = AccountNumber() +"_"+ Symbol() +"_Progression";
+   if (!GlobalVariableCheck(gs_508))
+      ResetProgressionLevel();
+
+   return(catch("MakeGlobals()"));
 }
 
-void resetProgression() {
-   GlobalVariableSet(gs_508, 1);
-}
 
-int getProgression() {
-   return(GlobalVariableGet(gs_508));
-}
+/**
+ * Gibt den aktuellen Progression-Level zurück.
+ *
+ * @return int - Level oder -1, wenn ein Fehler auftrat
+ */
+int CurrentLevel() {
+   int level = GlobalVariableGet(gs_508);
 
-double getLotForProgression() {
-   switch (getProgression()) {
-   case 1:
-      return(MLot1);
-   case 2:
-      return(MLot2);
-   case 3:
-      return(MLot3);
-   case 4:
-      return(MLot4);
-   case 5:
-      return(MLot5);
-   case 6:
-      return(MLot6);
-   case 7:
-      return(MLot7);
-   case 8:
-      return(MLot8);
-   case 9:
-      return(MLot9);
-   case 10:
-      return(MLot10);
-   case 11:
-      return(MLot11);
-   case 12:
-      return(MLot12);
-   case 13:
-      return(MLot13);
-   case 14:
-      return(MLot14);
-   case 15:
-      return(MLot15);
-   case 16:
-      return(MLot16);
-   case 17:
-      return(MLot17);
-   case 18:
-      return(MLot18);
-   case 19:
-      return(MLot19);
-   case 20:
-      return(MLot20);
-   case 21:
-      return(MLot21);
-   case 22:
-      return(MLot22);
-   case 23:
-      return(MLot23);
-   case 24:
-      return(MLot24);
+   int error = GetLastError();
+   if (error == NO_ERROR) {
+      catch("CurrentLevel()", error);
+      return(-1);
    }
-   return(MLot1);
+   return(level);
 }
 
-void makeGlobals() {
-   gs_508 = AccountNumber() + "_" + Symbol() + "_Progression";
-   if (!GlobalVariableCheck(gs_508)) resetProgression();
+
+/**
+ * Setzt den aktuellen Progression-Level auf die nächste Stufe.
+ *
+ * @return int - Fehlerstatus
+ */
+int IncreaseProgressionLevel() {
+   GlobalVariableSet(gs_508, CurrentLevel() + 1);
+   return(catch("IncreaseProgressionLevel()"));
+}
+
+
+/**
+ * Setzt den aktuellen Progression-Level zurück auf die erste Stufe.
+ *
+ * @return int - Fehlerstatus
+ */
+int ResetProgressionLevel() {
+   GlobalVariableSet(gs_508, 1);
+   return(catch("ResetProgressionLevel()"));
+}
+
+
+/**
+ * Gibt die Lotsize des aktuellen Progression-Levels zurück.
+ *
+ * @return double - Lotsize oder -1, wenn ein Fehler auftrat
+ */
+double CurrentLotSize() {
+   int level = CurrentLevel();
+
+   switch (level) {
+      case -1: return(-1);                   // bei Fehler in CurrentLevel()
+      case  1: return(Lotsize.Level.1);
+      case  2: return(Lotsize.Level.2);
+      case  3: return(Lotsize.Level.3);
+      case  4: return(Lotsize.Level.4);
+      case  5: return(Lotsize.Level.5);
+      case  6: return(Lotsize.Level.6);
+      case  7: return(Lotsize.Level.7);
+      case  8: return(Lotsize.Level.8);
+      case  9: return(Lotsize.Level.9);
+      case 10: return(Lotsize.Level.10);
+      case 11: return(Lotsize.Level.11);
+      case 12: return(Lotsize.Level.12);
+      case 13: return(Lotsize.Level.13);
+      case 14: return(Lotsize.Level.14);
+      case 15: return(Lotsize.Level.15);
+      case 16: return(Lotsize.Level.16);
+      case 17: return(Lotsize.Level.17);
+      case 18: return(Lotsize.Level.18);
+      case 19: return(Lotsize.Level.19);
+      case 20: return(Lotsize.Level.20);
+      case 21: return(Lotsize.Level.21);
+      case 22: return(Lotsize.Level.22);
+      case 23: return(Lotsize.Level.23);
+      case 24: return(Lotsize.Level.24);
+   }
+
+   catch("CurrentLotSize()   illegal progression level = "+ level, ERR_RUNTIME_ERROR);
+   return(-1);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int ShowComment(int ai_0) {
+   if (!Enable.Comments)
+      return(NO_ERROR);
+
+   string ls_44 = __SCRIPT__ +" is trading.";
+
+   if (gb_01) string ls_36 = "Dynamic";
+   else              ls_36 = "Regular";
+
+   string ls_52 = LF
+                + LF + "Date and Time:  "+ TimeToStr(TimeCurrent())
+                + LF + ls_36 + " TakeProfit:  "+ gi_504
+                + LF + ls_36 + " Stoploss:  "+ gi_500
+                + LF + "Progression Level:  "+ CurrentLevel()
+                + LF + "Lot Size:  "+ DoubleToStr(CurrentLotSize(), 2);
+
+   switch (ai_0) {
+      case 91: Comment(__SCRIPT__ + " is waiting for the next tick to begin trading."            ); break;
+      case 98: Comment(ls_44 + ls_52                                                             ); break;
+      case 99: Comment(" "                                                                       ); break;
+      case 11: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User option"                   ); break;
+      case 12: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User Settings"                 ); break;
+      case 13: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Equity below minumum"          ); break;
+      case 14: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Balance below minimum"         ); break;
+      case 15: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
+      case 21: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  User option"              ); break;
+      case 22: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  Internal calculation"     ); break;
+      case 31: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  User option"             ); break;
+      case 32: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  Internal calculation"    ); break;
+      case 41: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Hibernation"                   ); break;
+      case 43: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Price Range"            ); break;
+      case 44: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Progression has been exhausted"); break;
+   }
+
+   return(catch("ShowComment()"));
 }
