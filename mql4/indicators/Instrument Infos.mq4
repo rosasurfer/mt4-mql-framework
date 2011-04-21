@@ -257,8 +257,8 @@ int UpdateInfos() {
 MODE_TRADEALLOWED       Trade is allowed for the symbol.
 MODE_DIGITS             Count of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits
 
-MODE_POINT              Point size in the quote currency. For the current symbol, it is stored in the predefined variable Point
-MODE_TICKSIZE           Tick size in the quote currency.
+MODE_POINT              Point size in the quote currency.   => Auflösung des Preises
+MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von POINT
 
 MODE_SPREAD             Spread value in points.
 MODE_STOPLEVEL          Stop level in points.

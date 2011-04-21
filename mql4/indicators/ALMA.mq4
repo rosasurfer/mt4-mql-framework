@@ -103,6 +103,8 @@ int init() {
       MA.Periods = MathRound(minutes / Period());
    }
 
+   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
+
    // Zeichenoptionen
    int startDraw = MathMax(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
@@ -193,19 +195,20 @@ int start() {
       ChangedBars = Max.Values;
    int startBar = MathMin(ChangedBars-1, Bars-MA.Periods);
 
-   static int lastTrend;
+   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
 
 
-   // Laufzeitverteilung:  Schleife          -  5%                                               5%    10%
-   // -------------------  iMA()             - 80%    Verwendung von Close[] etc. reduziert auf 30% -> 60%
-   //                      Rechenoperationen - 15%                                              15%    30%
+   int time0 = GetTickCount();
+   // Laufzeitverteilung:  Schleife          -  5%                                   5%    10%
+   // -------------------  iMA()             - 80%  bei Verwendung von OHLC-Arrays  30% -> 60%
+   //                      Rechenoperationen - 15%                                  15%    30%
    //
    // Laptop vor Optimierung:
    // M5 - ALMA(350xM30)::start()   ALMA(2100)    startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
    // M1 - ALMA(350xM30)::start()   ALMA(10500)   startBar=1999   loop passes=20.989.500   time1=953 msec   time2=16094 msec   time3=18969 msec
 
-   int time0 = GetTickCount();
 
+   static int lastTrend;
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {

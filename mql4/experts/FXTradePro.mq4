@@ -18,11 +18,10 @@
 
 extern string _1____________________________ = "==== EA Settings ===============";
 extern int    MagicNumber                    = 21354;
-extern bool   Enable.Comments                = true;
+
 extern string _2____________________________ = "==== TP and SL Settings =========";
 extern int    TakeProfit                     = 40;
 extern int    Stoploss                       = 10;
-bool gb_01 = false;
 
 extern string _3____________________________ = "==== Entry Options ==============";
 extern bool   FirstOrder.Long                = true;
@@ -58,34 +57,30 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string gs_508;
+#define RESULT_UNKNOWN     0
+#define RESULT_TAKEPROFIT  1
+#define RESULT_STOPLOSS    2
+#define RESULT_WINNER      3
+#define RESULT_LOOSER      4
+#define RESULT_BREAKEVEN   5
+#define OP_NONE           -1
 
-int gi_388 = 0;
-int gi_392 = 0;
 
-int  gi_396 = 0;
-bool gb_400 = false;
+string globalVarName;
 
-bool gb_404 = false;
-bool gb_408 = false;
+double minAccountBalance;                 // Balance-Minimum, um zu traden
+double minAccountEquity;                  // Equity-Minimum, um zu traden
 
-int gi_420 = 0;
-int gi_424 = 0;
+int    breakEvenDistance    = 0;          // Gewinnschwelle in Point (nicht Pip), an der der StopLoss der Position auf BreakEven gesetzt wird
+int    trailingStop         = 0;          // TrailingStop in Point (nicht Pip)
+bool   trailStopImmediately = true;       // TrailingStop sofort starten oder warten, bis Position <trailingStop> Points im Gewinn ist
 
-int openPositions, closedPositions;
-int gi_484;
+int    openPositions, closedPositions;
 
-int gia_488[1];
-int gia_492[1];
-
-double gda_496[1];
-
-int gi_500;
-int gi_504;
-
-bool gb_516 = false;
-bool gb_520 = false;
-bool gb_524 = false;
+int    lastPosition.ticket, last_ticket;  // !!! last_ticket ist nicht statisch und verursacht dadurch Fehler bei Timeframe-Wechseln etc.
+int    lastPosition.type;
+double lastPosition.lots;
+int    lastPosition.result;
 
 
 /**
@@ -97,9 +92,8 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   DynaReset();
-   MakeGlobals();
-   ShowComment(91);
+   InitGlobalVars();
+   ShowComment(1);
    return(catch("init()"));
 }
 
@@ -123,35 +117,37 @@ int deinit() {
 int start() {
    init = false;
 
-   HouseKeeper();
-   ShowComment(98);
+   CountOpenPositions();
+   ReadOrderHistory();
+   /*
+   if (openPositions > 0) {
+      if (breakEvenDistance > 0) BreakEvenManager();
+      if (trailingStop > 0) TrailingStopManager();
+   }
+   */
+   ShowComment(2);
 
-   if (NewClosing() && Progressing())
+   if (NewClosedPosition() && Progressing())
       IncreaseProgressionLevel();
 
-   if (gia_492[0]==2 || closedPositions==0)
+   if (closedPositions==0 || lastPosition.result==RESULT_TAKEPROFIT)
       ResetProgressionLevel();
 
-   if (NewOrderPermitted(1)) {
-      CountOpenPositions();
+   if (NewOrderPermitted()) {
       if (openPositions == 0) {
-         if (LastOrderType()==9 && FirstOrder.Long) SendLongOrder();
-         if (LastOrderType()==1 && Progressing()  ) SendLongOrder();
-         if (LastOrderType()==0 && NewSeries()    ) SendLongOrder();
+         if (lastPosition.type==OP_NONE) {
+            if (FirstOrder.Long) SendOrder(OP_BUY);
+            else                 SendOrder(OP_SELL);
+         }
+         else if (Progressing()) {
+            if (lastPosition.type==OP_BUY ) SendOrder(OP_SELL);
+            if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
+         }
       }
+      ShowComment(2);
    }
 
-   if (NewOrderPermitted(2)) {
-      CountOpenPositions();
-      if (openPositions == 0) {
-         if (LastOrderType()==9                 ) SendShortOrder();
-         if (LastOrderType()==0 && Progressing()) SendShortOrder();
-         if (LastOrderType()==1 && NewSeries()  ) SendShortOrder();
-      }
-      gi_484 = closedPositions;
-      ShowComment(98);
-   }
-
+   last_ticket = lastPosition.ticket;
    return(catch("start()"));
 }
 
@@ -159,20 +155,25 @@ int start() {
 /**
  *
  */
-void HouseKeeper() {
-   gb_516 = false;
-   gb_520 = false;
-   openPositions = 0;
-
-   CountOpenPositions();
-   CountClosedPositions();
-   HistoryLogger();
-
-   if (openPositions > 0) {
-      if (gi_388 > 0) BreakEvenManager();
-      if (gi_396 > 0) TrailingStopManager();
+bool NewOrderPermitted() {
+   if (AccountBalance() < minAccountBalance) {
+      ShowComment(14);
+      return(false);
    }
-   catch("HouseKeeper()");
+
+   if (AccountEquity() < minAccountEquity) {
+      ShowComment(13);
+      return(false);
+   }
+
+   if (PriceEntry) {
+      if (Ask != Price && !Progressing()) {  // Blödsinn
+         ShowComment(43);
+         return(false);
+      }
+   }
+
+   return(true);
 }
 
 
@@ -190,6 +191,8 @@ bool IsMyOrder() {
  * @return int - Fehlerstatus
  */
 int CountOpenPositions() {
+   openPositions = 0;
+
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (IsMyOrder()) {
@@ -202,102 +205,28 @@ int CountOpenPositions() {
 
 
 /**
- * Zählt die geschlossenen (ausgestoppt + final) Positionen der aktuellen Sequenz.
+ * Zählt die geschlossenen Positionen und speichert die Daten der letzten Postion der aktuellen Sequenz.
  *
+ * @return int - Fehlerstatus
  */
-void CountClosedPositions() {
+int ReadOrderHistory() {
    closedPositions = 0;
-   int orders = OrdersHistoryTotal();
 
-   for (int i=0; i < orders; i++) {
+   for (int i=OrdersHistoryTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-      if (IsMyOrder())
+      if (IsMyOrder()) {
          closedPositions++;
-   }
-   catch("CountClosedPositions()");
-}
-
-
-/**
- *
- */
-void HistoryLogger() {
-   if (closedPositions > 0) {
-      if (closedPositions > 1) {
-         ArrayResize(gia_488, closedPositions);
-         ArrayResize(gda_496, closedPositions);
-         ArrayResize(gia_492, closedPositions);
-      }
-
-      int n;
-
-      for (int i=OrdersHistoryTotal()-1; i >= 0; i--) {
-         OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-         if (IsMyOrder()) {
-            gia_488[n] = i;
-            gda_496[n] = OrderLots();
-            if      (CompareDoubles(OrderClosePrice(), OrderTakeProfit())) gia_492[n] =  2;
-            else if (CompareDoubles(OrderClosePrice(), OrderStopLoss()))   gia_492[n] = -2;
-            else if (OrderProfit() > 0)                                    gia_492[n] =  1;
-            else if (OrderProfit() < 0)                                    gia_492[n] = -1;
-            else                                                           gia_492[n] =  0;
-            n++;
-         }
+                                                                        lastPosition.ticket = OrderTicket();
+                                                                        lastPosition.type   = OrderType();
+                                                                        lastPosition.lots   = OrderLots();
+         if      (CompareDoubles(OrderClosePrice(), OrderTakeProfit())) lastPosition.result = RESULT_TAKEPROFIT;
+         else if (CompareDoubles(OrderClosePrice(), OrderStopLoss()))   lastPosition.result = RESULT_STOPLOSS;
+         else if (OrderProfit() > 0)                                    lastPosition.result = RESULT_WINNER;
+         else if (OrderProfit() < 0)                                    lastPosition.result = RESULT_LOOSER;
+         else                                                           lastPosition.result = RESULT_BREAKEVEN;
       }
    }
-   catch("HistoryLogger()");
-}
-
-
-/**
- *
- */
-bool NewOrderPermitted(int ai_0) {
-   if (gb_404 && gb_408) {
-      ShowComment(11);
-      return(false);
-   }
-   if (gb_516 && gb_520) {
-      ShowComment(12);
-      return(false);
-   }
-   if (AccountEquity() < gi_420) {
-      ShowComment(13);
-      return(false);
-   }
-   if (AccountBalance() < gi_424) {
-      ShowComment(14);
-      return(false);
-   }
-   if (PriceEntry) {
-      if (Ask != Price && Progressing() == 0) {
-         ShowComment(43);
-         return(false);
-      }
-   }
-   if (ai_0 == 1) {
-      if (gb_404) {
-         ShowComment(21);
-         return(false);
-      }
-      if (gb_516) {
-         ShowComment(22);
-         return(false);
-      }
-      return(true);
-   }
-   if (ai_0 == 2) {
-      if (gb_408) {
-         ShowComment(31);
-         return(false);
-      }
-      if (gb_520) {
-         ShowComment(32);
-         return(false);
-      }
-      return(true);
-   }
-   return(false);
+   return(catch("ReadOrderHistory()"));
 }
 
 
@@ -305,69 +234,40 @@ bool NewOrderPermitted(int ai_0) {
  *
  * @return int - Fehlerstatus
  */
-void SendLongOrder() {
-   VersatileOrderTaker(OP_BUY, -1, Ask);
-   return(catch("SendLongOrder()"));
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-void SendShortOrder() {
-   VersatileOrderTaker(OP_SELL, -1, Bid);
-   return(catch("SendShortOrder()"));
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int VersatileOrderTaker(int type, int ai_4, double price) {
+int SendOrder(int type) {
    if (type!=OP_BUY && type!=OP_SELL)
-      return(catch("VersatileOrderTaker(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("SendOrder(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   double sl, tp, lotsize;
-
-   if (ai_4 < 0) lotsize = CurrentLotSize();
-   else          lotsize = ai_4;
-
-   if (NewClosing())
-      DynaAdjust();
-
-   if (gia_492[0]==2 || closedPositions==0)
-      DynaReset();
+   double price, sl, tp;
 
    switch (type) {
       case OP_BUY:  price = Ask;
-                    if (Stoploss   > 0) sl = price - gi_500*Point;
-                    if (TakeProfit > 0) tp = price + gi_504*Point;
+                    if (Stoploss   > 0) sl = price - Stoploss  *Point;
+                    if (TakeProfit > 0) tp = price + TakeProfit*Point;
                     break;
 
       case OP_SELL: price = Bid;
-                    if (Stoploss   > 0) sl = price + gi_500*Point;
-                    if (TakeProfit > 0) tp = price - gi_504*Point;
+                    if (Stoploss   > 0) sl = price + Stoploss  *Point;
+                    if (TakeProfit > 0) tp = price - TakeProfit*Point;
                     break;
    }
 
-   if (!gb_524) {
-      int      slippage   = 3;
-      string   comment    = __SCRIPT__ +" "+ Symbol();
-      datetime expiration = 0;
+   double   lotsize    = CurrentLotSize();
+   int      slippage   = 3;
+   string   comment    = __SCRIPT__ +" "+ Symbol();
+   datetime expiration = 0;
 
-      debug("VersatileOrderTaker()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ MagicNumber +", expires="+ expiration +", Green)");
+   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ MagicNumber +", expires="+ expiration +", Green)");
 
-      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber, expiration, Green);
+   int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber, expiration, Green);
 
-      if (ticket > 0) {
-         if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
-            log("VersatileOrderTaker()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lots) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), ".+"));
-      }
-      else return(catch("VersatileOrderTaker(2)   error opening "+ OperationTypeDescription(type) +" order"));
+   if (ticket > 0) {
+      if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
+         log("SendOrder()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), ".+"));
    }
-   return(catch("VersatileOrderTaker(3)"));
+   else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
+
+   return(catch("SendOrder(3)"));
 }
 
 
@@ -376,21 +276,21 @@ int VersatileOrderTaker(int type, int ai_4, double price) {
  * @return int - Fehlerstatus
  */
 int BreakEvenManager() {
-   if (gi_388 <= 0)
+   if (breakEvenDistance <= 0)
       return(NO_ERROR);
 
    for (int i=0; i < OrdersTotal(); i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (IsMyOrder()) {
-         if (OrderType() == OP_BUY) {
-            if (Bid - OrderOpenPrice() >= Point*gi_388)
-               if (OrderStopLoss() < OrderOpenPrice() + gi_392*Point)
-                  OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() + gi_392*Point, OrderTakeProfit(), 0, Green);
+
+         if (OrderType()==OP_BUY) /*&&*/ if (OrderStopLoss() < OrderOpenPrice()) {
+            if (Bid - OrderOpenPrice() >= breakEvenDistance*Point)
+               OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Green);
          }
-         else if (OrderType() == OP_SELL) {
-            if (OrderOpenPrice() - Ask >= Point*gi_388)
-               if (OrderStopLoss() > OrderOpenPrice() - gi_392*Point)
-                  OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice() - gi_392*Point, OrderTakeProfit(), 0, Red);
+
+         if (OrderType()==OP_SELL) /*&&*/ if (OrderStopLoss() > OrderOpenPrice()) {
+            if (OrderOpenPrice() - Ask >= breakEvenDistance*Point)
+               OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Red);
          }
       }
    }
@@ -407,16 +307,17 @@ int TrailingStopManager() {
 
    for (int i=0; i < orders; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (gi_396 > 0 && IsMyOrder()) {
+      if (IsMyOrder()) {
          if (OrderType() == OP_BUY) {
-            if (Bid - OrderOpenPrice() > Point*gi_396 || !gb_400)
-               if (OrderStopLoss() < Bid - Point*gi_396)
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - Point*gi_396, OrderTakeProfit(), 0, Green);
+            if (trailStopImmediately || Bid - OrderOpenPrice() > trailingStop*Point)
+               if (OrderStopLoss() < Bid - trailingStop*Point)
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - trailingStop*Point, OrderTakeProfit(), 0, Green);
          }
-         else if (OrderType() == OP_SELL) {
-            if (OrderOpenPrice() - Ask > Point*gi_396 || !gb_400)
-               if (OrderStopLoss() > Ask + Point*gi_396 || CompareDoubles(OrderStopLoss(), 0))
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + Point*gi_396, OrderTakeProfit(), 0, Red);
+
+         if (OrderType() == OP_SELL) {
+            if (trailStopImmediately || OrderOpenPrice() - Ask > trailingStop*Point)
+               if (OrderStopLoss() > Ask + trailingStop*Point || CompareDoubles(OrderStopLoss(), 0))
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + trailingStop*Point, OrderTakeProfit(), 0, Red);
          }
       }
    }
@@ -427,66 +328,24 @@ int TrailingStopManager() {
 /**
  *
  */
-int LastOrderType() {
-   if (closedPositions == 0)
-      return(9);
-
-   OrderSelect(gia_488[0], SELECT_BY_POS, MODE_HISTORY);
-   if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-      return(OrderType());
-
-   return(9);
+bool NewClosedPosition() {
+   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
 }
 
 
 /**
  *
  */
-void DynaAdjust() {
-   if (gb_01) {
-      gi_504++;
-      gi_500--;
-   }
-}
-
-
-/**
- *
- */
-void DynaReset() {
-   gi_504 = TakeProfit;
-   gi_500 = Stoploss;
-}
-
-
-/**
- *
- */
-bool NewClosing() {
-   return(closedPositions != gi_484);
-}
-
-
-/**
- *
- */
-int Progressing() {
+bool Progressing() {
    if (CompareDoubles(CurrentLotSize(), 0)) {
       ShowComment(44);
-      return(0);
+      return(false);
    }
-   if (gia_492[0] == -2)
-      return(1);
 
-   return(0);
-}
+   if (lastPosition.result == RESULT_STOPLOSS)
+      return(true);
 
-
-/**
- *
- */
-int NewSeries() {
-   return(gia_492[0] == 2);
+   return(false);
 }
 
 
@@ -494,40 +353,12 @@ int NewSeries() {
  *
  * @return int - Fehlerstatus
  */
-int MakeGlobals() {
-   gs_508 = AccountNumber() +"_"+ Symbol() +"_Progression";
-   if (!GlobalVariableCheck(gs_508))
+int InitGlobalVars() {
+   globalVarName = AccountNumber() +"_"+ Symbol() +"_Progression";
+   if (!GlobalVariableCheck(globalVarName))
       ResetProgressionLevel();
 
-   return(catch("MakeGlobals()"));
-}
-
-
-/**
- * Gibt den aktuellen Progression-Level zurück.
- *
- * @return int - Level oder -1, wenn ein Fehler auftrat
- */
-int CurrentLevel() {
-   int level = GlobalVariableGet(gs_508);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("CurrentLevel()", error);
-      return(-1);
-   }
-   return(level);
-}
-
-
-/**
- * Setzt den aktuellen Progression-Level auf die nächste Stufe.
- *
- * @return int - Fehlerstatus
- */
-int IncreaseProgressionLevel() {
-   GlobalVariableSet(gs_508, CurrentLevel() + 1);
-   return(catch("IncreaseProgressionLevel()"));
+   return(catch("InitGlobalVars()"));
 }
 
 
@@ -537,8 +368,36 @@ int IncreaseProgressionLevel() {
  * @return int - Fehlerstatus
  */
 int ResetProgressionLevel() {
-   GlobalVariableSet(gs_508, 1);
+   GlobalVariableSet(globalVarName, 1);
    return(catch("ResetProgressionLevel()"));
+}
+
+
+/**
+ * Setzt den aktuellen Progression-Level auf die nächste Stufe.
+ *
+ * @return int - Fehlerstatus
+ */
+int IncreaseProgressionLevel() {
+   GlobalVariableSet(globalVarName, CurrentLevel() + 1);
+   return(catch("IncreaseProgressionLevel()"));
+}
+
+
+/**
+ * Gibt den aktuellen Progression-Level zurück.
+ *
+ * @return int - Level oder -1, wenn ein Fehler auftrat
+ */
+int CurrentLevel() {
+   int level = GlobalVariableGet(globalVarName);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("CurrentLevel()", error);
+      return(-1);
+   }
+   return(level);
 }
 
 
@@ -587,36 +446,28 @@ double CurrentLotSize() {
  *
  * @return int - Fehlerstatus
  */
-int ShowComment(int ai_0) {
-   if (!Enable.Comments)
-      return(NO_ERROR);
+int ShowComment(int id) {
+   string status = __SCRIPT__ +" is trading."
+                 + LF
+                 + LF + "TakeProfit:  "+ TakeProfit
+                 + LF + "Stoploss:  "+ Stoploss
+                 + LF + "Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
 
-   string ls_44 = __SCRIPT__ +" is trading.";
-
-   if (gb_01) string ls_36 = "Dynamic";
-   else              ls_36 = "Regular";
-
-   string ls_52 = LF
-                + LF + ls_36 + " TakeProfit:  "+ gi_504
-                + LF + ls_36 + " Stoploss:  "+ gi_500
-                + LF + "Progression Level:  "+ CurrentLevel() +" ("+ NumberToStr(CurrentLotSize(), ".+") + lot")";
-
-   switch (ai_0) {
-      case 91: Comment(LF+LF+ __SCRIPT__ + " is waiting for the next tick."                             ); break;
-      case 98: Comment(LF+LF+ ls_44 + ls_52                                                             ); break;
-      case 11: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  User option"                   ); break;
-      case 12: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  User Settings"                 ); break;
-      case 13: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Equity below minumum"          ); break;
-      case 14: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Balance below minimum"         ); break;
-      case 15: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
-      case 21: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Long Orders Disabled:  User option"              ); break;
-      case 22: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Long Orders Disabled:  Internal calculation"     ); break;
-      case 31: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Short Orders Disabled:  User option"             ); break;
-      case 32: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Short Orders Disabled:  Internal calculation"    ); break;
-      case 43: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Price Range"            ); break;
-      case 44: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Progression has been exhausted"); break;
-      case 99: Comment(" "                                                                              ); break;
+   switch (id) {
+      case  1: Comment(LF+LF+ __SCRIPT__ + " is waiting for the next tick."                     ); break;
+      case  2: Comment(LF+LF+ status                                                            ); break;
+      case 13: Comment(LF+LF+ status +LF +"New Orders Disabled:  Equity below minumum"          ); break;
+      case 14: Comment(LF+LF+ status +LF +"New Orders Disabled:  Balance below minimum"         ); break;
+      case 15: Comment(LF+LF+ status +LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
+      case 43: Comment(LF+LF+ status +LF +"New Orders Disabled:  Out of Price Range"            ); break;
+      case 44: Comment(LF+LF+ status +LF +"New Orders Disabled:  Progression has been exhausted"); break;
+      case 99: Comment(" "                                                                      ); break;
    }
 
    return(catch("ShowComment()"));
+
+   if (false) {
+      BreakEvenManager();
+      TrailingStopManager();
+   }
 }

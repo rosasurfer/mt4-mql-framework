@@ -158,13 +158,13 @@ int CreateLabels() {
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);             // Anzeige wird sofort (und nur hier) gesetzt
 
-   // aktueller Kurs
+   // Kurs
    if (ObjectFind(priceLabel) >= 0)
       ObjectDelete(priceLabel);
    if (ObjectCreate(priceLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(priceLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(priceLabel, OBJPROP_XDISTANCE, 11);
-      ObjectSet(priceLabel, OBJPROP_YDISTANCE, 9);
+      ObjectSet(priceLabel, OBJPROP_XDISTANCE, 14);
+      ObjectSet(priceLabel, OBJPROP_YDISTANCE, 15);
       ObjectSetText(priceLabel, " ", 1);
       RegisterChartObject(priceLabel, labels);
    }
@@ -175,8 +175,8 @@ int CreateLabels() {
       ObjectDelete(spreadLabel);
    if (ObjectCreate(spreadLabel, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(spreadLabel, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 30);
-      ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 32);
+      ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 33);
+      ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 38);
       ObjectSetText(spreadLabel, " ", 1);
       RegisterChartObject(spreadLabel, labels);
    }
