@@ -1,6 +1,9 @@
 /**
  * FXTradePro Martingale EA
  *
+ * Für jede neue Sequenz muß eine andere Magic-Number angegeben werden.
+ *
+ *
  * @see FXTradePro Strategy:     http://www.forexfactory.com/showthread.php?t=43221
  *      FXTradePro Journal:      http://www.forexfactory.com/showthread.php?t=82544
  *      FXTradePro Swing Trades: http://www.forexfactory.com/showthread.php?t=87564
@@ -19,13 +22,12 @@ extern bool   Enable.Comments                = true;
 extern string _2____________________________ = "==== TP and SL Settings =========";
 extern int    TakeProfit                     = 40;
 extern int    Stoploss                       = 10;
+bool gb_01 = false;
 
 extern string _3____________________________ = "==== Entry Options ==============";
 extern bool   FirstOrder.Long                = true;
 extern bool   PriceEntry                     = false;
 extern double Price                          = 0;
-extern bool   Hibernation                    = true;
-bool gb_01 = false;
 
 extern string _4____________________________ = "==== Lotsizes ==================";
 extern double Lotsize.Level.1                =  0.1;
@@ -70,9 +72,7 @@ bool gb_408 = false;
 int gi_420 = 0;
 int gi_424 = 0;
 
-int openPositions;
-
-int gi_480;
+int openPositions, closedPositions;
 int gi_484;
 
 int gia_488[1];
@@ -129,7 +129,7 @@ int start() {
    if (NewClosing() && Progressing())
       IncreaseProgressionLevel();
 
-   if (gia_492[0]==2 || gi_480==0)
+   if (gia_492[0]==2 || closedPositions==0)
       ResetProgressionLevel();
 
    if (NewOrderPermitted(1)) {
@@ -148,7 +148,7 @@ int start() {
          if (LastOrderType()==0 && Progressing()) SendShortOrder();
          if (LastOrderType()==1 && NewSeries()  ) SendShortOrder();
       }
-      gi_484 = gi_480;
+      gi_484 = closedPositions;
       ShowComment(98);
    }
 
@@ -165,7 +165,7 @@ void HouseKeeper() {
    openPositions = 0;
 
    CountOpenPositions();
-   FindMyOrders_HISTORIC();
+   CountClosedPositions();
    HistoryLogger();
 
    if (openPositions > 0) {
@@ -185,7 +185,7 @@ bool IsMyOrder() {
 
 
 /**
- * Zählt die offenen Positionen, die vom EA verwaltet werden. Sollte eigentlich immer 0 oder 1 sein
+ * Zählt die offenen Positionen der aktuellen Sequenz.  =>  Sollte eigentlich immer 0 oder 1 sein.
  *
  * @return int - Fehlerstatus
  */
@@ -202,21 +202,19 @@ int CountOpenPositions() {
 
 
 /**
+ * Zählt die geschlossenen (ausgestoppt + final) Positionen der aktuellen Sequenz.
  *
  */
-void FindMyOrders_HISTORIC() {
-   gi_480 = 0;
-   int li_0 = 0;
-   int li_4 = 1;
-   bool li_8 = false;
-   int l_hist_total_12 = OrdersHistoryTotal();
-   if (OrdersHistoryTotal() > 0) {
-      for (int l_pos_16 = li_8; l_pos_16 < l_hist_total_12; l_pos_16++) {
-         OrderSelect(l_pos_16, li_0, li_4);
-         if (IsMyOrder()) gi_480++;
-      }
+void CountClosedPositions() {
+   closedPositions = 0;
+   int orders = OrdersHistoryTotal();
+
+   for (int i=0; i < orders; i++) {
+      OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+      if (IsMyOrder())
+         closedPositions++;
    }
-   catch("FindMyOrders_HISTORIC()");
+   catch("CountClosedPositions()");
 }
 
 
@@ -224,11 +222,11 @@ void FindMyOrders_HISTORIC() {
  *
  */
 void HistoryLogger() {
-   if (gi_480 > 0) {
-      if (gi_480 > 1) {
-         ArrayResize(gia_488, gi_480);
-         ArrayResize(gda_496, gi_480);
-         ArrayResize(gia_492, gi_480);
+   if (closedPositions > 0) {
+      if (closedPositions > 1) {
+         ArrayResize(gia_488, closedPositions);
+         ArrayResize(gda_496, closedPositions);
+         ArrayResize(gia_492, closedPositions);
       }
 
       int n;
@@ -270,12 +268,6 @@ bool NewOrderPermitted(int ai_0) {
    if (AccountBalance() < gi_424) {
       ShowComment(14);
       return(false);
-   }
-   if (Hibernation) {
-      if (gia_492[0] == 2) {
-         ShowComment(41);
-         return(false);
-      }
    }
    if (PriceEntry) {
       if (Ask != Price && Progressing() == 0) {
@@ -334,7 +326,7 @@ void SendShortOrder() {
  * @return int - Fehlerstatus
  */
 int VersatileOrderTaker(int type, int ai_4, double price) {
-   if (type!=OP_BUY && type==OP_SELL)
+   if (type!=OP_BUY && type!=OP_SELL)
       return(catch("VersatileOrderTaker(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    double sl, tp, lotsize;
@@ -345,7 +337,7 @@ int VersatileOrderTaker(int type, int ai_4, double price) {
    if (NewClosing())
       DynaAdjust();
 
-   if (gia_492[0]==2 || gi_480==0)
+   if (gia_492[0]==2 || closedPositions==0)
       DynaReset();
 
    switch (type) {
@@ -364,6 +356,8 @@ int VersatileOrderTaker(int type, int ai_4, double price) {
       int      slippage   = 3;
       string   comment    = __SCRIPT__ +" "+ Symbol();
       datetime expiration = 0;
+
+      debug("VersatileOrderTaker()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ MagicNumber +", expires="+ expiration +", Green)");
 
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber, expiration, Green);
 
@@ -434,7 +428,7 @@ int TrailingStopManager() {
  *
  */
 int LastOrderType() {
-   if (gi_480 == 0)
+   if (closedPositions == 0)
       return(9);
 
    OrderSelect(gia_488[0], SELECT_BY_POS, MODE_HISTORY);
@@ -469,7 +463,7 @@ void DynaReset() {
  *
  */
 bool NewClosing() {
-   return(gi_480 != gi_484);
+   return(closedPositions != gi_484);
 }
 
 
@@ -518,7 +512,7 @@ int CurrentLevel() {
    int level = GlobalVariableGet(gs_508);
 
    int error = GetLastError();
-   if (error == NO_ERROR) {
+   if (error != NO_ERROR) {
       catch("CurrentLevel()", error);
       return(-1);
    }
@@ -603,28 +597,25 @@ int ShowComment(int ai_0) {
    else              ls_36 = "Regular";
 
    string ls_52 = LF
-                + LF + "Date and Time:  "+ TimeToStr(TimeCurrent())
                 + LF + ls_36 + " TakeProfit:  "+ gi_504
                 + LF + ls_36 + " Stoploss:  "+ gi_500
-                + LF + "Progression Level:  "+ CurrentLevel()
-                + LF + "Lot Size:  "+ DoubleToStr(CurrentLotSize(), 2);
+                + LF + "Progression Level:  "+ CurrentLevel() +" ("+ NumberToStr(CurrentLotSize(), ".+") + lot")";
 
    switch (ai_0) {
-      case 91: Comment(__SCRIPT__ + " is waiting for the next tick to begin trading."            ); break;
-      case 98: Comment(ls_44 + ls_52                                                             ); break;
-      case 99: Comment(" "                                                                       ); break;
-      case 11: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User option"                   ); break;
-      case 12: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  User Settings"                 ); break;
-      case 13: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Equity below minumum"          ); break;
-      case 14: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Balance below minimum"         ); break;
-      case 15: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
-      case 21: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  User option"              ); break;
-      case 22: Comment(ls_44 + ls_52 + LF +"New Long Orders Disabled:  Internal calculation"     ); break;
-      case 31: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  User option"             ); break;
-      case 32: Comment(ls_44 + ls_52 + LF +"New Short Orders Disabled:  Internal calculation"    ); break;
-      case 41: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Hibernation"                   ); break;
-      case 43: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Price Range"            ); break;
-      case 44: Comment(ls_44 + ls_52 + LF +"New Orders Disabled:  Progression has been exhausted"); break;
+      case 91: Comment(LF+LF+ __SCRIPT__ + " is waiting for the next tick."                             ); break;
+      case 98: Comment(LF+LF+ ls_44 + ls_52                                                             ); break;
+      case 11: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  User option"                   ); break;
+      case 12: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  User Settings"                 ); break;
+      case 13: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Equity below minumum"          ); break;
+      case 14: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Balance below minimum"         ); break;
+      case 15: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
+      case 21: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Long Orders Disabled:  User option"              ); break;
+      case 22: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Long Orders Disabled:  Internal calculation"     ); break;
+      case 31: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Short Orders Disabled:  User option"             ); break;
+      case 32: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Short Orders Disabled:  Internal calculation"    ); break;
+      case 43: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Out of Price Range"            ); break;
+      case 44: Comment(LF+LF+ ls_44 + ls_52 + LF +"New Orders Disabled:  Progression has been exhausted"); break;
+      case 99: Comment(" "                                                                              ); break;
    }
 
    return(catch("ShowComment()"));
