@@ -57,13 +57,14 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+#define OP_NONE           -1
+
 #define RESULT_UNKNOWN     0
 #define RESULT_TAKEPROFIT  1
 #define RESULT_STOPLOSS    2
 #define RESULT_WINNER      3
 #define RESULT_LOOSER      4
 #define RESULT_BREAKEVEN   5
-#define OP_NONE           -1
 
 
 string globalVarName;
@@ -77,7 +78,7 @@ bool   trailStopImmediately = true;       // TrailingStop sofort starten oder wa
 
 int    openPositions, closedPositions;
 
-int    lastPosition.ticket, last_ticket;  // !!! last_ticket ist nicht statisch und verursacht dadurch Fehler bei Timeframe-Wechseln etc.
+int    lastPosition.ticket, last_ticket;  // !!! last_ticket ist nicht statisch und verursacht Fehler bei Timeframe-Wechseln etc.
 int    lastPosition.type;
 double lastPosition.lots;
 int    lastPosition.result;
@@ -122,7 +123,7 @@ int start() {
    /*
    if (openPositions > 0) {
       if (breakEvenDistance > 0) BreakEvenManager();
-      if (trailingStop > 0) TrailingStopManager();
+      if (trailingStop      > 0) TrailingStopManager();
    }
    */
    ShowComment(2);
@@ -140,8 +141,8 @@ int start() {
             else                 SendOrder(OP_SELL);
          }
          else if (Progressing()) {
-            if (lastPosition.type==OP_BUY ) SendOrder(OP_SELL);
             if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
+            else                            SendOrder(OP_SELL);
          }
       }
       ShowComment(2);
@@ -281,8 +282,8 @@ int BreakEvenManager() {
 
    for (int i=0; i < OrdersTotal(); i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (IsMyOrder()) {
 
+      if (IsMyOrder()) {
          if (OrderType()==OP_BUY) /*&&*/ if (OrderStopLoss() < OrderOpenPrice()) {
             if (Bid - OrderOpenPrice() >= breakEvenDistance*Point)
                OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Green);
@@ -448,17 +449,16 @@ double CurrentLotSize() {
  */
 int ShowComment(int id) {
    string status = __SCRIPT__ +" is trading."
-                 + LF
-                 + LF + "TakeProfit:  "+ TakeProfit
-                 + LF + "Stoploss:  "+ Stoploss
-                 + LF + "Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
+                 +LF
+                 +LF +"TakeProfit:  "+ TakeProfit
+                 +LF +"Stoploss:  "+ Stoploss
+                 +LF +"Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
 
    switch (id) {
       case  1: Comment(LF+LF+ __SCRIPT__ + " is waiting for the next tick."                     ); break;
       case  2: Comment(LF+LF+ status                                                            ); break;
       case 13: Comment(LF+LF+ status +LF +"New Orders Disabled:  Equity below minumum"          ); break;
       case 14: Comment(LF+LF+ status +LF +"New Orders Disabled:  Balance below minimum"         ); break;
-      case 15: Comment(LF+LF+ status +LF +"New Orders Disabled:  Existing orders at maximum"    ); break;
       case 43: Comment(LF+LF+ status +LF +"New Orders Disabled:  Out of Price Range"            ); break;
       case 44: Comment(LF+LF+ status +LF +"New Orders Disabled:  Progression has been exhausted"); break;
       case 99: Comment(" "                                                                      ); break;
