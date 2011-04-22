@@ -18,13 +18,13 @@ int EA.uniqueId = 1001;       // EA-spezifische eindeutige ID im Bereich 0-4095 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string _1____________________________ = "==== TP and SL Settings =========";
-extern int    TakeProfit                     = 40;
-extern int    Stoploss                       = 10;
-
-extern string _2____________________________ = "==== Entry Options ==============";
+extern string _1____________________________ = "==== Entry Options ==============";
 extern bool   FirstOrder.Long                = true;
 extern double EntryLimit                     = 0;
+
+extern string _2____________________________ = "==== TP and SL Settings =========";
+extern int    TakeProfit                     = 40;
+extern int    Stoploss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes ==================";
 extern double Lotsize.Level.1                =  0.1;
@@ -101,9 +101,9 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Ausgangswert für MagicNumber berechnen (20 bit werden für Strategie-/Trade-spezifische Werte reserviert)
+   // Ausgangswert für MagicNumber berechnen (20 bit sind für strategie- bzw. trade-spezifische Werte reserviert)
    if (EA.uniqueId < 0 || EA.uniqueId > 0xFFF)
-      return(catch("init(1)  Invalid variable value for EA.uniqueId = "+ EA.uniqueId +"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(1)  Invalid variable value for EA.uniqueId = "+ EA.uniqueId, ERR_INVALID_INPUT_PARAMVALUE));
    magicNumber = EA.uniqueId << 20;
 
 
@@ -457,19 +457,20 @@ int ShowComment(int id) {
 
    switch (id) {
       case STATUS_CLEAR               : Comment(""); return(catch("ShowComment(1)"));
-      case STATUS_CURRENT             : msg = "";                                              break;
-      case STATUS_INITIALIZED         : msg = " - initialized";                                break;
-      case STATUS_UNSUFFICIENT_BALANCE: msg = " - new orders disabled: Balance below minimum"; break;
-      case STATUS_UNSUFFICIENT_EQUITY : msg = " - new orders disabled: Equity below minimum" ; break;
-      case STATUS_ENTRYLIMIT_WAIT     : msg = " - waiting for entry limit to reach";           break;
-      case STATUS_FINISHED            : msg = " - trading sequence finished";                  break;
+      case STATUS_CURRENT             : msg = "";                                                break;
+      case STATUS_INITIALIZED         : msg = " initialized.";                                   break;
+      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit to reach.";              break;
+      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  New orders disabled (balance below minimum)."; break;
+      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  New orders disabled (equity below minimum)." ; break;
+      case STATUS_FINISHED            : msg = ":  Trading sequence finished.";                   break;
    }
 
    string status = __SCRIPT__ + msg
               +LF
-              +LF+ "TakeProfit:  "+ TakeProfit
-              +LF+ "Stoploss:  "+ Stoploss
-              +LF+ "Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
+              +LF+ "TakeProfit:            "+ TakeProfit +" points"
+              +LF+ "Stoploss:               "+ Stoploss +" points"
+              +LF+ "Progression Level:  "+ CurrentLevel() +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot"
+              +LF+ "Profit / Loss:          "+ DoubleToStr(AccountProfit(), 2);
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(LF+LF+ status);
 
