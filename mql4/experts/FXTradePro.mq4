@@ -13,22 +13,20 @@
  */
 #include <stdlib.mqh>
 
+int EA.uniqueId = 1001;       // EA-spezifische eindeutige ID im Bereich 0-4095 (wird in den oberen 12 bit von MagicNumber gespeichert)
+
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string _1____________________________ = "==== EA Settings ===============";
-extern int    MagicNumber                    = 21354;
-
-extern string _2____________________________ = "==== TP and SL Settings =========";
+extern string _1____________________________ = "==== TP and SL Settings =========";
 extern int    TakeProfit                     = 40;
 extern int    Stoploss                       = 10;
 
-extern string _3____________________________ = "==== Entry Options ==============";
+extern string _2____________________________ = "==== Entry Options ==============";
 extern bool   FirstOrder.Long                = true;
-extern bool   PriceEntry                     = false;
-extern double Price                          = 0;
+extern double EntryLimit                     = 0;
 
-extern string _4____________________________ = "==== Lotsizes ==================";
+extern string _3____________________________ = "==== Lotsizes ==================";
 extern double Lotsize.Level.1                =  0.1;
 extern double Lotsize.Level.2                =  0.1;
 extern double Lotsize.Level.3                =  0.2;
@@ -57,16 +55,6 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#define OP_NONE           -1
-
-#define RESULT_UNKNOWN     0
-#define RESULT_TAKEPROFIT  1
-#define RESULT_STOPLOSS    2
-#define RESULT_WINNER      3
-#define RESULT_LOOSER      4
-#define RESULT_BREAKEVEN   5
-
-
 string globalVarName;
 
 double minAccountBalance;                 // Balance-Minimum, um zu traden
@@ -83,6 +71,26 @@ int    lastPosition.type;
 double lastPosition.lots;
 int    lastPosition.result;
 
+int    magicNumber;
+
+
+#define OP_NONE                       -1
+
+#define RESULT_UNKNOWN                 0
+#define RESULT_TAKEPROFIT              1
+#define RESULT_STOPLOSS                2
+#define RESULT_WINNER                  3
+#define RESULT_LOOSER                  4
+#define RESULT_BREAKEVEN               5
+
+#define STATUS_CURRENT                 1
+#define STATUS_INITIALIZED             2
+#define STATUS_ENTRYLIMIT_WAIT         3
+#define STATUS_UNSUFFICIENT_BALANCE    4
+#define STATUS_UNSUFFICIENT_EQUITY     5
+#define STATUS_FINISHED                6
+#define STATUS_CLEAR                   7
+
 
 /**
  * Initialisierung
@@ -93,8 +101,15 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
+   // Ausgangswert für MagicNumber berechnen (20 bit werden für Strategie-/Trade-spezifische Werte reserviert)
+   if (EA.uniqueId < 0 || EA.uniqueId > 0xFFF)
+      return(catch("init(1)  Invalid variable value for EA.uniqueId = "+ EA.uniqueId +"", ERR_INVALID_INPUT_PARAMVALUE));
+   magicNumber = EA.uniqueId << 20;
+
+
    InitGlobalVars();
-   ShowComment(1);
+   ShowComment(STATUS_INITIALIZED);
+
    return(catch("init()"));
 }
 
@@ -105,7 +120,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   ShowComment(99);
+   ShowComment(STATUS_CLEAR);
    return(catch("deinit()"));
 }
 
@@ -118,15 +133,15 @@ int deinit() {
 int start() {
    init = false;
 
-   CountOpenPositions();
-   ReadOrderHistory();
+   ReadOrderStatus();            // aktualisiert openPositions, closedPositions und lastPosition.*
+   ShowComment(STATUS_CURRENT);
+
    /*
    if (openPositions > 0) {
       if (breakEvenDistance > 0) BreakEvenManager();
       if (trailingStop      > 0) TrailingStopManager();
    }
    */
-   ShowComment(2);
 
    if (NewClosedPosition() && Progressing())
       IncreaseProgressionLevel();
@@ -145,7 +160,7 @@ int start() {
             else                            SendOrder(OP_SELL);
          }
       }
-      ShowComment(2);
+      ShowComment(STATUS_CURRENT);
    }
 
    last_ticket = lastPosition.ticket;
@@ -154,66 +169,23 @@ int start() {
 
 
 /**
- *
- */
-bool NewOrderPermitted() {
-   if (AccountBalance() < minAccountBalance) {
-      ShowComment(14);
-      return(false);
-   }
-
-   if (AccountEquity() < minAccountEquity) {
-      ShowComment(13);
-      return(false);
-   }
-
-   if (PriceEntry) {
-      if (Ask != Price && !Progressing()) {  // Blödsinn
-         ShowComment(43);
-         return(false);
-      }
-   }
-
-   return(true);
-}
-
-
-/**
- *
- */
-bool IsMyOrder() {
-   return(OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber);
-}
-
-
-/**
- * Zählt die offenen Positionen der aktuellen Sequenz.  =>  Sollte eigentlich immer 0 oder 1 sein.
+ * Liest die Daten der offenen und geschlossenen Positionen der aktuellen Sequenz ein.
  *
  * @return int - Fehlerstatus
  */
-int CountOpenPositions() {
-   openPositions = 0;
+int ReadOrderStatus() {
+   openPositions   = 0;
+   closedPositions = 0;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (IsMyOrder()) {
          if (OrderType()==OP_BUY || OrderType()==OP_SELL) openPositions++;
-         else                                             catch("CountOpenPositions()   ignoring "+ OperationTypeDescription(OrderType()) +" order #"+ OrderTicket(), ERR_RUNTIME_ERROR);
+         else                                             catch("ReadOrderStatus(1)   ignoring "+ OperationTypeDescription(OrderType()) +" order #"+ OrderTicket(), ERR_RUNTIME_ERROR);
       }
    }
-   return(catch("CountOpenPositions()"));
-}
 
-
-/**
- * Zählt die geschlossenen Positionen und speichert die Daten der letzten Postion der aktuellen Sequenz.
- *
- * @return int - Fehlerstatus
- */
-int ReadOrderHistory() {
-   closedPositions = 0;
-
-   for (int i=OrdersHistoryTotal()-1; i >= 0; i--) {
+   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
       if (IsMyOrder()) {
          closedPositions++;
@@ -227,7 +199,64 @@ int ReadOrderHistory() {
          else                                                           lastPosition.result = RESULT_BREAKEVEN;
       }
    }
-   return(catch("ReadOrderHistory()"));
+   return(catch("ReadOrderStatus(2)"));
+}
+
+
+/**
+ *
+ */
+bool IsMyOrder() {
+   return(OrderSymbol()==Symbol() && OrderMagicNumber()==magicNumber);
+}
+
+
+/**
+ *
+ */
+bool NewOrderPermitted() {
+   if (AccountBalance() < minAccountBalance) {
+      ShowComment(STATUS_UNSUFFICIENT_BALANCE);
+      return(false);
+   }
+
+   if (AccountEquity() < minAccountEquity) {
+      ShowComment(STATUS_UNSUFFICIENT_EQUITY);
+      return(false);
+   }
+
+   if (!CompareDoubles(EntryLimit, 0)) {
+      if (Ask != EntryLimit && !Progressing()) {  // Blödsinn
+         ShowComment(STATUS_ENTRYLIMIT_WAIT);
+         return(false);
+      }
+   }
+
+   return(true);
+}
+
+
+/**
+ *
+ */
+bool NewClosedPosition() {
+   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
+}
+
+
+/**
+ *
+ */
+bool Progressing() {
+   if (CompareDoubles(CurrentLotSize(), 0)) {
+      ShowComment(STATUS_FINISHED);
+      return(false);
+   }
+
+   if (lastPosition.result == RESULT_STOPLOSS)
+      return(true);
+
+   return(false);
 }
 
 
@@ -258,9 +287,9 @@ int SendOrder(int type) {
    string   comment    = __SCRIPT__ +" "+ Symbol();
    datetime expiration = 0;
 
-   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ MagicNumber +", expires="+ expiration +", Green)");
+   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
 
-   int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber, expiration, Green);
+   int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, magicNumber, expiration, Green);
 
    if (ticket > 0) {
       if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
@@ -323,30 +352,6 @@ int TrailingStopManager() {
       }
    }
    return(catch("TrailingStopManager()"));
-}
-
-
-/**
- *
- */
-bool NewClosedPosition() {
-   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
-}
-
-
-/**
- *
- */
-bool Progressing() {
-   if (CompareDoubles(CurrentLotSize(), 0)) {
-      ShowComment(44);
-      return(false);
-   }
-
-   if (lastPosition.result == RESULT_STOPLOSS)
-      return(true);
-
-   return(false);
 }
 
 
@@ -448,23 +453,27 @@ double CurrentLotSize() {
  * @return int - Fehlerstatus
  */
 int ShowComment(int id) {
-   string status = __SCRIPT__ +" is trading."
-                 +LF
-                 +LF +"TakeProfit:  "+ TakeProfit
-                 +LF +"Stoploss:  "+ Stoploss
-                 +LF +"Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
+   string msg = "";
 
    switch (id) {
-      case  1: Comment(LF+LF+ __SCRIPT__ + " is waiting for the next tick."                     ); break;
-      case  2: Comment(LF+LF+ status                                                            ); break;
-      case 13: Comment(LF+LF+ status +LF +"New Orders Disabled:  Equity below minumum"          ); break;
-      case 14: Comment(LF+LF+ status +LF +"New Orders Disabled:  Balance below minimum"         ); break;
-      case 43: Comment(LF+LF+ status +LF +"New Orders Disabled:  Out of Price Range"            ); break;
-      case 44: Comment(LF+LF+ status +LF +"New Orders Disabled:  Progression has been exhausted"); break;
-      case 99: Comment(" "                                                                      ); break;
+      case STATUS_CLEAR               : Comment(""); return(catch("ShowComment(1)"));
+      case STATUS_CURRENT             : msg = "";                                              break;
+      case STATUS_INITIALIZED         : msg = " - initialized";                                break;
+      case STATUS_UNSUFFICIENT_BALANCE: msg = " - new orders disabled: Balance below minimum"; break;
+      case STATUS_UNSUFFICIENT_EQUITY : msg = " - new orders disabled: Equity below minimum" ; break;
+      case STATUS_ENTRYLIMIT_WAIT     : msg = " - waiting for entry limit to reach";           break;
+      case STATUS_FINISHED            : msg = " - trading sequence finished";                  break;
    }
 
-   return(catch("ShowComment()"));
+   string status = __SCRIPT__ + msg
+              +LF
+              +LF+ "TakeProfit:  "+ TakeProfit
+              +LF+ "Stoploss:  "+ Stoploss
+              +LF+ "Progression Level:  "+ CurrentLevel() +"  ("+ NumberToStr(CurrentLotSize(), ".+") +" lot)";
+   // 2 Zeilen Abstand nach oben für Instrumentanzeige
+   Comment(LF+LF+ status);
+
+   return(catch("ShowComment(2)"));
 
    if (false) {
       BreakEvenManager();
