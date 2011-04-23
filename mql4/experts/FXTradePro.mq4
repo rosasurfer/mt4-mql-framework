@@ -11,7 +11,7 @@
 #include <stdlib.mqh>
 
 
-int EA.uniqueId = 101;     // eindeutige ID des EA's im Bereich 0-1023
+int EA.uniqueId = 101;           // eindeutige ID des EA's im Bereich 0-1023
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ int start() {
    init = false;
 
    ReadOrderStatus();            // aktualisiert openPositions, closedPositions und lastPosition.*
-   ShowStatus(NULL);
+   ShowStatus();
 
    /*
    if (openPositions > 0) {
@@ -146,15 +146,15 @@ int start() {
    if (NewOrderPermitted()) {
       if (openPositions == 0) {
          if (lastPosition.type==OP_NONE) {
-            if (FirstOrder.Long) SendOrder(OP_BUY);
-            else                 SendOrder(OP_SELL);
+            if (FirstOrder.Long)            SendOrder(OP_BUY);
+            else                            SendOrder(OP_SELL);
          }
          else if (Progressing()) {
             if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
             else                            SendOrder(OP_SELL);
          }
       }
-      ShowStatus(NULL);
+      ShowStatus();
    }
 
    last_ticket = lastPosition.ticket;
@@ -446,7 +446,7 @@ double CurrentLotSize() {
  *
  * @return int - Fehlerstatus
  */
-int ShowStatus(int id) {
+int ShowStatus(int id=NULL) {
    string msg = "";
 
    switch (id) {
