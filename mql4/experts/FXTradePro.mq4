@@ -70,11 +70,25 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Pip;
-int    PipDigits;
-string PriceFormat;
+double   Pip;
+int      PipDigits;
+string   PriceFormat;
 
-int    entryDirection;
+int      entryDirection;
+
+int      open.ticket;
+int      open.type;
+datetime open.time;
+double   open.price;
+double   open.lots;
+double   open.swap;
+double   open.commission;
+double   open.profit;
+int      open.magic;
+string   open.comment;
+
+
+// -------------------------------------------------------------
 int    openPositions, closedPositions;
 
 int    lastPosition.ticket, last_ticket;  // !!! last_ticket ist nicht statisch und verursacht Fehler bei Timeframe-Wechseln etc.
@@ -82,9 +96,9 @@ int    lastPosition.type = OP_NONE;
 double lastPosition.lots;
 int    lastPosition.result;
 
-int    breakevenDistance    = 0;          // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
-int    trailingStop         = 0;          // TrailingStop in Pip
-bool   trailStopImmediately = true;       // TrailingStop sofort starten oder warten, bis Position <trailingStop> Points im Gewinn ist
+int    breakevenDistance;                 // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
+int    trailingStop;                      // TrailingStop in Pip
+bool   trailStopImmediately = true;       // TrailingStop sofort starten oder warten, bis Position <trailingStop> Pip im Gewinn ist
 
 double minAccountBalance;                 // Balance-Minimum, um zu traden
 double minAccountEquity;                  // Equity-Minimum, um zu traden
@@ -156,6 +170,8 @@ int start() {
    init = false;
 
    // 1) aktuellen Status einlesen
+   //ReadOrderStatus();
+   log("start()   ReadOrderStatus() = "+ ReadOrderStatus());
 
    // 2) -> im Markt ?
 
@@ -167,9 +183,6 @@ int start() {
 
    // 2.2) ja, im Markt, Sequenz übernehmen und fortsetzen
 
-
-
-   ReadOrderStatus();
    ShowStatus();
 
    if (NewOrderPermitted()) {
@@ -191,20 +204,42 @@ int start() {
 
 
 /**
- * Liest die Orderdaten der aktuellen Sequenz ein.
+ * Liest die Orderdaten der im Moment laufenden Sequenzen im aktuellen Instrument ein.
  *
- * @return int - Fehlerstatus
+ * @return int - Anzahl der gefundenen Sequenzen
  */
 int ReadOrderStatus() {
-   // openPositions
    openPositions = 0;
 
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (IsMyOrder())
+   int orders = OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE ist rein theoretisch: während des Auslesens wird eine Order geschlossen/gestrichen und verschwindet
+         break;
+      if (IsMyOrder()) {
          openPositions++;
+         open.ticket     = OrderTicket();
+         open.type       = OrderType();
+         open.time       = OrderOpenTime();
+         open.price      = OrderOpenPrice();
+         open.lots       = OrderLots();
+         open.swap       = OrderSwap();
+         open.commission = OrderCommission();
+         open.profit     = OrderProfit();
+         open.magic      = OrderMagicNumber();
+         open.comment    = OrderComment();
+
+         sequenceId       = 0;
+         sequenceLength   = 7;
+         progressionLevel = 1;
+         break;
+      }
    }
 
+
+
+
+   // --------------------------------------------------------------
    // closedPositions
    closedPositions = 0;
 
@@ -223,15 +258,53 @@ int ReadOrderStatus() {
       }
    }
 
-   return(catch("ReadOrderStatus()"));
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("ReadOrderStatus()", error);
+      return(0);
+   }
+   return(openPositions);
 }
 
 
 /**
+ * Ob die aktuell selektierte Order von diesem EA erzeugt wurde.
  *
+ * @return bool
  */
 bool IsMyOrder() {
-   return(OrderSymbol()==Symbol() && (OrderType()==OP_BUY || OrderType()==OP_SELL) && OrderMagicNumber()==MagicNumber());
+   if (OrderSymbol()==Symbol()) {
+      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+
+         return(true);
+
+         int number = OrderMagicNumber() >> 22;
+         return(number == EA.uniqueId);
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Generiert aus den übergebenen Daten und der ID des EA's einen Wert für OrderMagicNumber()
+ *
+ * @param  int sequenceId - eindeutige ID der Trade-Sequenz
+ * @param  int length     - Anzahl der Schritte der Sequenz (Länge)
+ * @param  int level      - Progression-Level
+ *
+ * @return int - magic number
+ */
+int MagicNumber(int sequenceId, int length, int level) {
+   // 10 Bit für EA.uniqueId, 22 Bit für Laufzeit-spezifische Werte
+   int magicNumber = EA.uniqueId << 22;
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("MagicNumber()", error);
+      return(0);
+   }
+   return(magicNumber);
 }
 
 
@@ -286,23 +359,6 @@ bool Progressing() {
 
 /**
  *
- * @return int - magic number
- */
-int MagicNumber() {
-   // 10 Bit für EA.uniqueId, 22 Bit für Laufzeit-spezifische Werte
-   int magicNumber = EA.uniqueId << 22;
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("MagicNumber()", error);
-      return(0);
-   }
-   return(magicNumber);
-}
-
-
-/**
- *
  * @return int - Fehlerstatus
  */
 int SendOrder(int type) {
@@ -328,7 +384,7 @@ int SendOrder(int type) {
    string   comment    = "FTP."+ MagicNumber() +"."+ CurrentLevel();
    datetime expiration = 0;
 
-   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
+   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
 
    if (false) {
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(), expiration, Green);
