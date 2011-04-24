@@ -9,6 +9,10 @@
 #property indicator_chart_window
 
 
+double Pip;
+int    PipDigits;
+string PriceFormat;
+
 color  Background.Color    = C'212,208,200';
 color  Font.Color.Enabled  = Blue;
 color  Font.Color.Disabled = Gray;
@@ -54,6 +58,10 @@ string labels[];
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits - Digits%2;
+   Pip         = 1 / MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -198,28 +206,22 @@ int UpdateInfos() {
 
    bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);
    color  Font.Color = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
-   string format = ifString(Digits==3 || Digits==5, StringConcatenate(", .", Digits-1, "'"), StringConcatenate(", .", Digits)) ;
 
                                                             ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
-   double point        = Point;                             ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", NumberToStr(point, format)), Font.Size, Font.Name, Font.Color);
-   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE); ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", NumberToStr(tickSize, format)), Font.Size, Font.Name, Font.Color);
+                                                            ObjectSetText(names[POINT       ], StringConcatenate("Point size: ", NumberToStr(Point, PriceFormat)), Font.Size, Font.Name, Font.Color);
+   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE); ObjectSetText(names[TICKSIZE    ], StringConcatenate("Tick size: ", NumberToStr(tickSize, PriceFormat)), Font.Size, Font.Name, Font.Color);
 
-   int    spread       = MarketInfo(symbol, MODE_SPREAD);
-   int    stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL);
-   int    freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL);
-      string strSpread=spread, strStopLevel=stopLevel, strFreezeLevel=freezeLevel;
-      if (Digits==3 || Digits==5) {
-         strSpread      = DoubleToStr(spread     /10.0, 1);
-         strStopLevel   = DoubleToStr(stopLevel  /10.0, 1);
-         strFreezeLevel = DoubleToStr(freezeLevel/10.0, 1);
-      }
-      ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: "      , strSpread     , " pip"), Font.Size, Font.Name, Font.Color);
-      ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
-      ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
+   double spread       = MarketInfo(symbol, MODE_SPREAD     ) / MathPow(10, Digits-PipDigits);
+   double stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL  ) / MathPow(10, Digits-PipDigits);
+   double freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL) / MathPow(10, Digits-PipDigits);
+      string strSpread      = DoubleToStr(spread,      Digits-PipDigits); ObjectSetText(names[SPREAD     ], StringConcatenate("Spread: "      , strSpread     , " pip"), Font.Size, Font.Name, Font.Color);
+      string strStopLevel   = DoubleToStr(stopLevel,   Digits-PipDigits); ObjectSetText(names[STOPLEVEL  ], StringConcatenate("Stop level: "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
+      string strFreezeLevel = DoubleToStr(freezeLevel, Digits-PipDigits); ObjectSetText(names[FREEZELEVEL], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
    double lotSize           = MarketInfo(symbol, MODE_LOTSIZE          ); ObjectSetText(names[LOTSIZE          ], StringConcatenate("Lot size: ", NumberToStr(lotSize, ", .+"), " units"), Font.Size, Font.Name, Font.Color);
    double tickValue         = MarketInfo(symbol, MODE_TICKVALUE        );
-   double pipValue = tickValue * ifInt(Digits==3 || Digits==5, 10, 1);    ObjectSetText(names[TICKVALUE        ], StringConcatenate("Pip value: ", NumberToStr(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
+   double pointValue        = tickValue / (tickSize/Point);
+   double pipValue = pointValue * MathPow(10, Digits-PipDigits);           ObjectSetText(names[TICKVALUE        ], StringConcatenate("Pip value: ", NumberToStr(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
 
    double minLot            = MarketInfo(symbol, MODE_MINLOT           ); ObjectSetText(names[MINLOT           ], StringConcatenate("Min lot: ", NumberToStr(minLot, ", .+")), Font.Size, Font.Name, Font.Color);
    double maxLot            = MarketInfo(symbol, MODE_MAXLOT           ); ObjectSetText(names[MAXLOT           ], StringConcatenate("Max lot: ", NumberToStr(maxLot, ", .+")), Font.Size, Font.Name, Font.Color);
@@ -258,7 +260,7 @@ MODE_TRADEALLOWED       Trade is allowed for the symbol.
 MODE_DIGITS             Count of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits
 
 MODE_POINT              Point size in the quote currency.   => Auflösung des Preises
-MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von POINT
+MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von MODE_POINT
 
 MODE_SPREAD             Spread value in points.
 MODE_STOPLEVEL          Stop level in points.

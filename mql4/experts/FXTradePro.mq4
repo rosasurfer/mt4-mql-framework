@@ -8,10 +8,26 @@
  *      PowerSM EA:              http://www.forexfactory.com/showthread.php?t=75394
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
  */
+
+int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <stdlib.mqh>
 
 
-int EA.uniqueId = 101;           // eindeutige ID des EA's im Bereich 0-1023
+#define OP_NONE                       -1
+
+#define RESULT_UNKNOWN                 0
+#define RESULT_TAKEPROFIT              1
+#define RESULT_STOPLOSS                2
+#define RESULT_WINNER                  3
+#define RESULT_LOOSER                  4
+#define RESULT_BREAKEVEN               5
+
+#define STATUS_ENTRYLIMIT_WAIT         1
+#define STATUS_FINISHED                2
+#define STATUS_UNSUFFICIENT_BALANCE    3
+#define STATUS_UNSUFFICIENT_EQUITY     4
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -54,35 +70,24 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+double Pip;
+int    PipDigits;
+string PriceFormat;
+
 int    entryDirection;
 int    openPositions, closedPositions;
 
 int    lastPosition.ticket, last_ticket;  // !!! last_ticket ist nicht statisch und verursacht Fehler bei Timeframe-Wechseln etc.
-int    lastPosition.type;
+int    lastPosition.type = OP_NONE;
 double lastPosition.lots;
 int    lastPosition.result;
 
-int    breakevenDistance    = 0;          // Gewinnschwelle in Point (nicht Pip), an der der StopLoss der Position auf BreakEven gesetzt wird
-int    trailingStop         = 0;          // TrailingStop in Point (nicht Pip)
+int    breakevenDistance    = 0;          // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
+int    trailingStop         = 0;          // TrailingStop in Pip
 bool   trailStopImmediately = true;       // TrailingStop sofort starten oder warten, bis Position <trailingStop> Points im Gewinn ist
 
 double minAccountBalance;                 // Balance-Minimum, um zu traden
 double minAccountEquity;                  // Equity-Minimum, um zu traden
-
-
-#define OP_NONE                       -1
-
-#define RESULT_UNKNOWN                 0
-#define RESULT_TAKEPROFIT              1
-#define RESULT_STOPLOSS                2
-#define RESULT_WINNER                  3
-#define RESULT_LOOSER                  4
-#define RESULT_BREAKEVEN               5
-
-#define STATUS_ENTRYLIMIT_WAIT         1
-#define STATUS_FINISHED                2
-#define STATUS_UNSUFFICIENT_BALANCE    3
-#define STATUS_UNSUFFICIENT_EQUITY     4
 
 
 /**
@@ -94,8 +99,11 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Parameter überprüfen
+   PipDigits   = Digits - Digits%2;
+   Pip         = 1 / MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
+   // Parameter überprüfen
    // Entry.Direction
    string direction = StringToUpper(StringTrim(Entry.Direction));
    if (StringLen(direction) == 0)
@@ -161,11 +169,6 @@ int start() {
 
 
 
-
-
-
-
-
    ReadOrderStatus();
    ShowStatus();
 
@@ -220,7 +223,7 @@ int ReadOrderStatus() {
       }
    }
 
-   return(catch("ReadOrderStatus(2)"));
+   return(catch("ReadOrderStatus()"));
 }
 
 
@@ -246,7 +249,7 @@ bool NewOrderPermitted() {
       return(false);
    }
 
-   if (!CompareDoubles(Entry.Limit, 0)) {
+   if (Entry.Limit != 0) {
       if (Ask != Entry.Limit && !Progressing()) {  // Blödsinn
          ShowStatus(STATUS_ENTRYLIMIT_WAIT);
          return(false);
@@ -286,7 +289,7 @@ bool Progressing() {
  * @return int - magic number
  */
 int MagicNumber() {
-   // 10 Bit für EA.uniqueId, 22 Bit für Expert-spezifische Werte
+   // 10 Bit für EA.uniqueId, 22 Bit für Laufzeit-spezifische Werte
    int magicNumber = EA.uniqueId << 22;
 
    int error = GetLastError();
@@ -310,30 +313,31 @@ int SendOrder(int type) {
 
    switch (type) {
       case OP_BUY:  price = Ask;
-                    if (Stoploss   > 0) sl = price - Stoploss  *Point;
-                    if (TakeProfit > 0) tp = price + TakeProfit*Point;
+                    if (Stoploss   > 0) sl = price - Stoploss  *Pip;
+                    if (TakeProfit > 0) tp = price + TakeProfit*Pip;
                     break;
 
       case OP_SELL: price = Bid;
-                    if (Stoploss   > 0) sl = price + Stoploss  *Point;
-                    if (TakeProfit > 0) tp = price - TakeProfit*Point;
+                    if (Stoploss   > 0) sl = price + Stoploss  *Pip;
+                    if (TakeProfit > 0) tp = price - TakeProfit*Pip;
                     break;
    }
 
    double   lotsize    = CurrentLotSize();
-   int      slippage   = 3;
+   int      slippage   = 1;
    string   comment    = "FTP."+ MagicNumber() +"."+ CurrentLevel();
    datetime expiration = 0;
 
-   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lots, price="+ NumberToStr(price, ".+") +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, ".+") +", tp="+ NumberToStr(tp, ".+") +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
+   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
 
-   int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(), expiration, Green);
-
-   if (ticket > 0) {
-      if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
-         log("SendOrder()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), ".+"));
+   if (false) {
+      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(), expiration, Green);
+      if (ticket > 0) {
+         if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
+            log("SendOrder()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
+      }
+      else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
    }
-   else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
 
    return(catch("SendOrder(3)"));
 }
@@ -352,12 +356,12 @@ int BreakevenManager() {
 
       if (IsMyOrder()) {
          if (OrderType()==OP_BUY) /*&&*/ if (OrderStopLoss() < OrderOpenPrice()) {
-            if (Bid - OrderOpenPrice() >= breakevenDistance*Point)
+            if (Bid - OrderOpenPrice() >= breakevenDistance*Pip)
                OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Green);
          }
 
          if (OrderType()==OP_SELL) /*&&*/ if (OrderStopLoss() > OrderOpenPrice()) {
-            if (OrderOpenPrice() - Ask >= breakevenDistance*Point)
+            if (OrderOpenPrice() - Ask >= breakevenDistance*Pip)
                OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Red);
          }
       }
@@ -377,15 +381,15 @@ int TrailingStopManager() {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (IsMyOrder()) {
          if (OrderType() == OP_BUY) {
-            if (trailStopImmediately || Bid - OrderOpenPrice() > trailingStop*Point)
-               if (OrderStopLoss() < Bid - trailingStop*Point)
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - trailingStop*Point, OrderTakeProfit(), 0, Green);
+            if (trailStopImmediately || Bid - OrderOpenPrice() > trailingStop*Pip)
+               if (OrderStopLoss() < Bid - trailingStop*Pip)
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - trailingStop*Pip, OrderTakeProfit(), 0, Green);
          }
 
          if (OrderType() == OP_SELL) {
-            if (trailStopImmediately || OrderOpenPrice() - Ask > trailingStop*Point)
-               if (OrderStopLoss() > Ask + trailingStop*Point || CompareDoubles(OrderStopLoss(), 0))
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + trailingStop*Point, OrderTakeProfit(), 0, Red);
+            if (trailStopImmediately || OrderOpenPrice() - Ask > trailingStop*Pip)
+               if (OrderStopLoss() > Ask + trailingStop*Pip || CompareDoubles(OrderStopLoss(), 0))
+                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + trailingStop*Pip, OrderTakeProfit(), 0, Red);
          }
       }
    }
@@ -478,11 +482,11 @@ int ShowStatus(int id=NULL) {
 
    string status = __SCRIPT__ + msg + LF
                  + LF
-                 + "Progression Level:  "+ CurrentLevel() +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot"    + LF
-                 + "TakeProfit:            "+ TakeProfit +" points"                                                + LF
-                 + "Stoploss:               "+ Stoploss +" points"                                                 + LF
-                 + "Breakeven:           "+ NumberToStr(Bid, "."+ (Digits-Digits%2) + ifString(Digits%2, "'", "")) + LF
-                 + "Profit / Loss:          "+ DoubleToStr(0, 2)                                                   + LF;
+                 + "Progression Level:  "+ CurrentLevel() +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
+                 + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
+                 + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
+                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
+                 + "Profit / Loss:          "+ DoubleToStr(0, 2)                                                + LF;
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(LF+LF+ status);
 

@@ -229,7 +229,7 @@ bool OrderCloseEx(int ticket, double volume=-1, int slippage=1, color marker=CLR
 
             // akustische Rückmeldung und ausführliche Logmessage
             PlaySound("OrderOk.wav");
-            log("OrderCloseEx()   closed "+ OrderCloseEx.CreateLogMessage(ticket, volume, price, digits, time));
+            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, volume, price, digits, time));
 
             error = GetLastError();
             if (error != NO_ERROR) {
@@ -257,12 +257,14 @@ bool OrderCloseEx(int ticket, double volume=-1, int slippage=1, color marker=CLR
 /**
  *
  */
-string OrderCloseEx.CreateLogMessage(int ticket, double volume, double price, int digits, int time) {
+string OrderCloseEx.LogMessage(int ticket, double volume, double price, int digits, int time) {
+   int pipDigits = digits - digits%2;
+
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       int error = GetLastError();
       if (error == NO_ERROR)
          error = ERR_INVALID_TICKET;
-      catch("OrderCloseEx.CreateLogMessage(1)   error selecting ticket #"+ ticket, error);
+      catch("OrderCloseEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
       return("");
    }
 
@@ -271,7 +273,7 @@ string OrderCloseEx.CreateLogMessage(int ticket, double volume, double price, in
 
    string strPrice = DoubleToStr(OrderClosePrice(), digits);
    if (!CompareDoubles(price, OrderClosePrice())) {
-      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price) * MathPow(10, digits-digits%2), ".+");
+      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price) * MathPow(10, pipDigits), ".+");
       bool plus = (OrderClosePrice() > price);
       if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
       else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
@@ -281,7 +283,7 @@ string OrderCloseEx.CreateLogMessage(int ticket, double volume, double price, in
 
    error = GetLastError();
    if (error != NO_ERROR) {
-      catch("OrderSendEx.CreateLogMessage(2)", error);
+      catch("OrderCloseEx.LogMessage(2)", error);
       return("");
    }
    return(message);

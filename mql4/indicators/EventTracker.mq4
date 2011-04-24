@@ -43,9 +43,11 @@ double BollingerBands.MA.Deviation  = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// sonstige Variablen
+double Pip;
+int    PipDigits;
+string PriceFormat;
+
 string symbol, symbolName, symbolSection;
-int    Grid.Digits;                                   // z.B. für 5 Digits => 4
 
 double bbandLimits[3];
 
@@ -58,6 +60,10 @@ double bbandLimits[3];
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits - Digits%2;
+   Pip         = 1 / MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -87,11 +93,10 @@ int init() {
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
 
    // Kursänderungen
-   Grid.Size = GetConfigInt(symbolSection, "Grid.Size", Grid.Size);                                      // in Konfiguration wird Grid.Size in Pip erwartet
+   Grid.Size = GetConfigInt(symbolSection, "Grid.Size", Grid.Size);           // in Konfiguration wird Grid.Size in Pip erwartet
    if (Grid.Size > 0) {
       Track.Grid  = true;
-      Grid.Digits = Digits -  Digits % 2;
-      Grid.Size   = NormalizeDouble(Grid.Size * Point * MathPow(10, Digits-Grid.Digits), Grid.Digits);   // ie. Grid.Size = 0.0020
+      Grid.Size   = NormalizeDouble(Grid.Size * Pip, PipDigits);              // ie. Grid.Size = 0.0020
 
       string appliedPrice = StringToLower(GetGlobalConfigString("AppliedPrice", symbol, "spread"));
       if      (appliedPrice == "spread") Grid.AppliedPrice = PRICE_SPREAD;
@@ -274,10 +279,9 @@ int onPositionOpen(int tickets[]) {
       }
 
       // alle Positionen werden im aktuellen Instrument gehalten
-      string format  = StringConcatenate(".", Digits - Digits%2, ifString(Digits%2 > 0, "'", ""));
       string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
-      string price   = NumberToStr(OrderOpenPrice(), format);
+      string price   = NumberToStr(OrderOpenPrice(), PriceFormat);
       string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " @ ", price);
 
       // ggf. SMS verschicken
@@ -322,11 +326,10 @@ int onPositionClose(int tickets[]) {
       }
 
       // alle Positionen wurden im aktuellen Instrument gehalten
-      string format     = StringConcatenate(".", Digits - Digits%2, ifString(Digits%2 > 0, "'", ""));
       string type       = OperationTypeDescription(OrderType());
       string lots       = NumberToStr(OrderLots(), ".+");
-      string openPrice  = NumberToStr(OrderOpenPrice(), format);
-      string closePrice = NumberToStr(OrderClosePrice(), format);
+      string openPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
+      string closePrice = NumberToStr(OrderClosePrice(), PriceFormat);
       string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", symbolName, " @ ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
@@ -374,7 +377,7 @@ int CheckGridLimits() {
 
    // für die Prüfung zu verwendende Kurse und deren Namen bestimmen
    double upperPrice, lowerPrice;
-   string upperPriceName="", lowerPriceName="", format="";
+   string upperPriceName="", lowerPriceName="";
    switch (Grid.AppliedPrice) {
       case PRICE_SPREAD: if (Grid.Size > 4 * (Ask-Bid)) {
                             lowerPrice = Bid; lowerPriceName = "Bid: ";
@@ -385,7 +388,6 @@ int CheckGridLimits() {
 
       case PRICE_MEDIAN: lowerPrice = (Bid+Ask)/2; lowerPriceName = "Median: ";
                          upperPrice = lowerPrice;  upperPriceName = "Median: ";
-                         format = "'";
                          break;
 
       case PRICE_BID:    lowerPrice = Bid;
@@ -402,7 +404,7 @@ int CheckGridLimits() {
    // Limite überprüfen
    if (upperPrice >= upperLimit) {
       eventTriggered = true;
-      string message = symbolName +" => "+ DoubleToStr(upperLimit, Grid.Digits) +" ("+ upperPriceName + NumberToStr(upperPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      string message = symbolName +" => "+ DoubleToStr(upperLimit, PipDigits) +" ("+ upperPriceName + NumberToStr(upperPrice, PriceFormat) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -410,12 +412,12 @@ int CheckGridLimits() {
 
       // Limite nachziehen
       while (upperPrice >= upperLimit)
-         upperLimit = NormalizeDouble(upperLimit + Grid.Size            , Grid.Digits) - 0.000000001;
-      lowerLimit    = NormalizeDouble(upperLimit - Grid.Size - Grid.Size, Grid.Digits) + 0.000000001;
+         upperLimit = NormalizeDouble(upperLimit + Grid.Size            , PipDigits) - 0.000000001;
+      lowerLimit    = NormalizeDouble(upperLimit - Grid.Size - Grid.Size, PipDigits) + 0.000000001;
    }
    else if (lowerPrice <= lowerLimit) {
       eventTriggered = true;
-      message = symbolName +" <= "+ DoubleToStr(lowerLimit, Grid.Digits) +" ("+ lowerPriceName + NumberToStr(lowerPrice, "."+ Grid.Digits + ifString(Grid.Digits==Digits, format, "'")) +")";
+      message = symbolName +" <= "+ DoubleToStr(lowerLimit, PipDigits) +" ("+ lowerPriceName + NumberToStr(lowerPrice, PriceFormat) +")";
 
       // Sound abspielen
       if (Sound.Alerts)
@@ -423,8 +425,8 @@ int CheckGridLimits() {
 
       // Limite nachziehen
       while (lowerPrice <= lowerLimit)
-         lowerLimit = NormalizeDouble(lowerLimit - Grid.Size            , Grid.Digits) + 0.000000001;
-      upperLimit    = NormalizeDouble(lowerLimit + Grid.Size + Grid.Size, Grid.Digits) - 0.000000001;
+         lowerLimit = NormalizeDouble(lowerLimit - Grid.Size            , PipDigits) + 0.000000001;
+      upperLimit    = NormalizeDouble(lowerLimit + Grid.Size + Grid.Size, PipDigits) - 0.000000001;
    }
 
    if (eventTriggered) {
@@ -433,10 +435,10 @@ int CheckGridLimits() {
          message = "SMS sent to "+ SMS.Receiver +":  "+ message;
 
       // letzten tatsächlich verletzten Level und neue Limite speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit + Grid.Size, Grid.Digits));
+      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit + Grid.Size, PipDigits));
       GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime", ServerToGMT(TimeCurrent()));    // GMT, um Signale Account-übergreifend auswerten zu können
       EventTracker.SaveGridLimits(upperLimit, lowerLimit);
-      Print("CheckGridLimits()   ", message, ", grid adjusted: ", DoubleToStr(lowerLimit, Grid.Digits), "  <=>  ", DoubleToStr(upperLimit, Grid.Digits));
+      Print("CheckGridLimits()   ", message, ", grid adjusted: ", DoubleToStr(lowerLimit, PipDigits), "  <=>  ", DoubleToStr(upperLimit, PipDigits));
    }
 
    return(catch("CheckGridLimits(2)"));
@@ -464,15 +466,15 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
       case PRICE_BID   : price =  Bid;        break;
       case PRICE_ASK   : price =  Ask;        break;
    }
-   double low   = NormalizeDouble(MathFloor(price/Grid.Size) * Grid.Size, Grid.Digits) + 0.000000001;    // unteres Limit
-   double high  = NormalizeDouble(low + Grid.Size                       , Grid.Digits) - 0.000000001;    // oberes Limit (Abstand: 1 x GridSize)
-   //debug("InitializeGridLimits()   Price: "+ DoubleToStr(price, Grid.Digits) +", starting with "+ DoubleToStr(low, Grid.Digits) +" <=> "+ DoubleToStr(high, Grid.Digits));
+   double low   = NormalizeDouble(MathFloor(price/Grid.Size) * Grid.Size, PipDigits) + 0.000000001;      // unteres Limit
+   double high  = NormalizeDouble(low + Grid.Size                       , PipDigits) - 0.000000001;      // oberes Limit (Abstand: 1 x GridSize)
+   //debug("InitializeGridLimits()   Price: "+ DoubleToStr(price, PipDigits) +", starting with "+ DoubleToStr(low, PipDigits) +" <=> "+ DoubleToStr(high, PipDigits));
 
    // letztes gespeichertes Signal auslesen
    string varLastSignalValue = "EventTracker."+ symbol +".Grid.LastSignal",
           varLastSignalTime  = "EventTracker."+ symbol +".Grid.LastTime";
    bool     lastSignal      = false;
-   double   lastSignalValue = NormalizeDouble(GlobalVariableGet(varLastSignalValue), Grid.Digits);
+   double   lastSignalValue = NormalizeDouble(GlobalVariableGet(varLastSignalValue), PipDigits);
    datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime);
    int      lastSignalBar   = -1;
 
@@ -531,13 +533,13 @@ int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
       }
    }
 
-   if (increase) { high += Grid.Size; } //debug("InitializeGridLimits()   increasing upper limit to "+ DoubleToStr(high, Grid.Digits)); }
-   if (decrease) { low  -= Grid.Size; } //debug("InitializeGridLimits()   decreasing lower limit to "+ DoubleToStr(low , Grid.Digits)); }
+   if (increase) { high += Grid.Size; } //debug("InitializeGridLimits()   increasing upper limit to "+ DoubleToStr(high, PipDigits)); }
+   if (decrease) { low  -= Grid.Size; } //debug("InitializeGridLimits()   decreasing lower limit to "+ DoubleToStr(low , PipDigits)); }
 
-   upperLimit = NormalizeDouble(high, Grid.Digits) - 0.000000001;
-   lowerLimit = NormalizeDouble(low , Grid.Digits) + 0.000000001;
+   upperLimit = NormalizeDouble(high, PipDigits) - 0.000000001;
+   lowerLimit = NormalizeDouble(low , PipDigits) + 0.000000001;
 
-   Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(lowerLimit, Grid.Digits), "  <=>  ", DoubleToStr(upperLimit, Grid.Digits));
+   Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(lowerLimit, PipDigits), "  <=>  ", DoubleToStr(upperLimit, PipDigits));
    return(catch("InitializeGridLimits(3)"));
 }
 
@@ -941,8 +943,7 @@ int CheckBollingerBands() {
       EventTracker.SetBandLimits(bbandLimits);                 // Limite in Library timeframe-übergreifend speichern
    }
 
-   string mask = StringConcatenate(".", Digits);
-   Print("CheckBollingerBands()   checking bands ...    ", NumberToStr(bbandLimits[2], mask), "  <=  ", NumberToStr(bbandLimits[1], mask), "  =>  ", NumberToStr(bbandLimits[0], mask));
+   Print("CheckBollingerBands()   checking bands ...    ", NumberToStr(bbandLimits[2], PriceFormat), "  <=  ", NumberToStr(bbandLimits[1], PriceFormat), "  =>  ", NumberToStr(bbandLimits[0], PriceFormat));
 
    double upperBand = bbandLimits[0]-0.000001,                 // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
           movingAvg = bbandLimits[1]+0.000001,
@@ -974,8 +975,7 @@ int InitializeBandLimits() {
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
-   string mask = StringConcatenate(".", Digits);
-   Print("InitializeBandLimits()   Bollinger band limits calculated: ", NumberToStr(bbandLimits[2], mask), "  <=  ", NumberToStr(bbandLimits[1], mask), "  =>  ", NumberToStr(bbandLimits[0], mask));
+   Print("InitializeBandLimits()   Bollinger band limits calculated: ", NumberToStr(bbandLimits[2], PriceFormat), "  <=  ", NumberToStr(bbandLimits[1], PriceFormat), "  =>  ", NumberToStr(bbandLimits[0], PriceFormat));
    return(error);
 }
 

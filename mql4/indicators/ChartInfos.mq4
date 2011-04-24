@@ -25,6 +25,10 @@ extern string H1.Close.Symbols = "";         // Symbole, für die der Schlußkurs 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+double Pip;
+int    PipDigits;
+string PriceFormat;
+
 string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
@@ -41,6 +45,10 @@ bool   showH1Close, positionChecked;
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits - Digits%2;
+   Pip         = 1 / MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -245,9 +253,7 @@ int UpdatePriceLabel() {
          case PRICE_BID:           price =  Bid;          break;
          case PRICE_ASK:           price =  Ask;          break;
       }
-
-      if (Digits==3 || Digits==5) strPrice = NumberToStr(price, StringConcatenate(",,.", Digits-1, "'"));
-      else                        strPrice = NumberToStr(price, StringConcatenate(",,.", Digits));
+      strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
    }
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
@@ -265,7 +271,7 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   int spread = MarketInfo(Symbol(), MODE_SPREAD);
+   int spread = MathRound(MarketInfo(Symbol(), MODE_SPREAD));
    int error  = GetLastError();
 
    if (error==ERR_UNKNOWN_SYMBOL || Bid==0) {               // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
@@ -276,9 +282,7 @@ int UpdateSpreadLabel() {
       if (lastSpread == spread)
          return(0);
       lastSpread = spread;
-
-      if (Digits==3 || Digits==5) strSpread = DoubleToStr(spread/10.0, 1);
-      else                        strSpread = spread;
+      strSpread  = DoubleToStr(spread / MathPow(10, Digits-PipDigits), Digits-PipDigits);
    }
 
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
@@ -311,11 +315,7 @@ int UpdateH1CloseLabel() {
       if (lastClose == close)
          return(0);
       lastClose = close;
-
-      if (Digits==3 || Digits==5) strClose = NumberToStr(close, StringConcatenate(", .", Digits-1, "'"));
-      else                        strClose = NumberToStr(close, StringConcatenate(", .", Digits));
-
-      strClose = StringConcatenate("H1:  ", strClose);
+      strClose  = StringConcatenate("H1:  ", NumberToStr(close, StringConcatenate(", ", PriceFormat)));
    }
 
    ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
@@ -474,8 +474,8 @@ int UpdateMarginLevels() {
       /*
       Print("UpdateMarginLevels()"
                                   +"    equity="+ NumberToStr(equity, ", .2")
-                            +"    equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
-                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, "."+ ifString(Digits==3 || Digits==5, (Digits-1)+"\'", Digits)) +")"
+                            +"    equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, PriceFormat) +")"
+                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, PriceFormat) +")"
       );
       */
 
