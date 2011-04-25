@@ -70,11 +70,11 @@ extern double Lotsize.Level.24               = 65.5;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double   Pip;
-int      PipDigits;
-string   PriceFormat;
+double Pip;
+int    PipDigits;
+string PriceFormat;
 
-int      entryDirection;
+int    entryDirection;
 
 int      open.ticket;
 int      open.type;
@@ -262,7 +262,7 @@ int ReadOrderStatus() {
    if (error != NO_ERROR) {
       catch("ReadOrderStatus()", error);
       return(0);
-   }
+}
    return(openPositions);
 }
 
@@ -384,7 +384,7 @@ int SendOrder(int type) {
    string   comment    = "FTP."+ MagicNumber() +"."+ CurrentLevel();
    datetime expiration = 0;
 
-   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
+   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber() +", expires="+ expiration +", Green)");
 
    if (false) {
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(), expiration, Green);
