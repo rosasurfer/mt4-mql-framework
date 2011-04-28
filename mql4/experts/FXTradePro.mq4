@@ -208,19 +208,26 @@ int deinit() {
 int start() {
    init = false;
 
-   // 1) aktuellen Status einlesen
-   ReadOrderStatus();
+   // aktuellen Status einlesen und auswerten
+   if (ReadOrderStatus()) {
+      // im Markt, Position managen
+   }
+   else {
+      // nicht im Markt
+      if (CompareDoubles(Entry.Limit, 0)) {
+         // kein Limit definiert
+
+         // in Entry.Direction in den Markt gehen
+      }
+      else {
+         // Limit definiert, Limit erreicht ?
+
+         // nein) warten
+         // ja)   in Entry.Direction in den Markt gehen
+      }
+   }
 
 
-   // 2) -> im Markt ?
-
-   // 2.1) nein, nicht im Markt -> Entry.Limit definiert ?
-   //    nein) in Entry.Direction in den Markt gehen
-   //    ja)   -> Limit erreicht ?
-   //       nein) warten
-   //       ja)   in Entry.Direction in den Markt gehen
-
-   // 2.2) ja, im Markt, Sequenz übernehmen und fortsetzen
 
    ShowStatus();
 
@@ -248,10 +255,10 @@ int start() {
  *
  * Liest die Orderdaten der im Moment laufenden Sequenzen im aktuellen Instrument ein.
  *
- * @return int - Anzahl der gefundenen Sequenzen
+ * @return bool - ob im Moment eine Sequenz aktiv ist oder nicht
  */
-int ReadOrderStatus() {
-   openPositions = 0;
+bool ReadOrderStatus() {
+   sequenceId = 0;
 
    int orders = OrdersTotal();
 
@@ -259,7 +266,6 @@ int ReadOrderStatus() {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE ist rein theoretisch: während des Auslesens wird eine Order geschlossen/gestrichen und verschwindet
          break;
       if (IsMyOrder()) {
-         openPositions++;
          open.ticket      = OrderTicket();
          open.type        = OrderType();
          open.time        = OrderOpenTime();
@@ -277,7 +283,6 @@ int ReadOrderStatus() {
          break;
       }
    }
-
 
    /*
    // closedPositions
@@ -301,9 +306,9 @@ int ReadOrderStatus() {
    int error = GetLastError();
    if (error != NO_ERROR) {
       catch("ReadOrderStatus()", error);
-      return(0);
+      return(false);
    }
-   return(openPositions);
+   return(sequenceId != 0);
 }
 
 
@@ -315,7 +320,7 @@ int ReadOrderStatus() {
 bool IsMyOrder() {
    if (OrderSymbol()==Symbol()) {
       if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-         return(OrderMagicNumber()>>22 == EA.uniqueId);
+         return(OrderMagicNumber() >> 22 == EA.uniqueId);
    }
    return(false);
 }
@@ -329,12 +334,12 @@ bool IsMyOrder() {
  * @return int - magic number
  */
 int MagicNumber(int sequenceId) {
-   int eaId   = EA.uniqueId << 22;                 // 10 bit: 0-1023                                       | in MagicNumber: Bits 23-32
-   sequenceId = sequenceId  << 18 >> 10;           // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
-   int length = sequenceLength << 4;               // 4 bit, 1-12: auf 8 bit erweitern                     | in MagicNumber: Bits  5-8
-   int level  = progressionLevel;                  // 4 bit, 1-12                                          | in MagicNumber: Bits  1-4
+   int ea       = EA.uniqueId << 22;               // 10 bit (0-1023)                                      | in MagicNumber: Bits 23-32
+   int sequence = sequenceId  << 18 >> 10;         // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
+   int length   = sequenceLength << 4;             // 4 bit (1-12), auf 8 bit erweitern                    | in MagicNumber: Bits  5-8
+   int level    = progressionLevel;                // 4 bit (1-12)                                         | in MagicNumber: Bits  1-4
 
-   return(eaId + sequenceId + length + level);     // alles addieren
+   return(ea + sequence + length + level);         // alles addieren
 }
 
 
@@ -432,7 +437,7 @@ int SendOrder(int type) {
    string   comment    = "FTP."+ SequenceId() +"."+ CurrentLevel();
    datetime expiration = 0;
 
-   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber(SequenceId()) +", expires="+ expiration +", Green)");
+   //debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber(SequenceId()) +", expires="+ expiration +", Green)");
 
    if (false) {
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(SequenceId()), expiration, Green);
@@ -561,7 +566,7 @@ int ShowStatus(int id=NULL) {
 
    switch (id) {
       case NULL                       : msg = "";                                                break;
-      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit to reach";               break;
+      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit";                        break;
       case STATUS_FINISHED            : msg = ":  Trading sequence finished.";                   break;
       case STATUS_UNSUFFICIENT_BALANCE: msg = ":  New orders disabled (balance below minimum)."; break;
       case STATUS_UNSUFFICIENT_EQUITY : msg = ":  New orders disabled (equity below minimum)." ; break;
@@ -569,7 +574,7 @@ int ShowStatus(int id=NULL) {
 
    string status = __SCRIPT__ + msg + LF
                  + LF
-                 + "Progression Level:  "+ CurrentLevel() +" of "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
+                 + "Progression Level:  "+ CurrentLevel() +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
                  + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
                  + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
                  + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
