@@ -232,8 +232,8 @@ int UpdateInfos() {
          else if (swapType == SCM_MARGIN_CURRENCY) {     // Deposit-Currency
          }
       }
-      ObjectSetText(names[SWAPLONG         ], StringConcatenate("Swap long:  ", NumberToStr(swapLongD, "+.2"), " pip  =  ", NumberToStr(swapLongY, "+.2"), "%/y"), Font.Size, Font.Name, Font.Color);
-      ObjectSetText(names[SWAPSHORT        ], StringConcatenate("Swap short: ", NumberToStr(swapShortD, "+.2"), " pip  =  ", NumberToStr(swapShortY, "+.2"), "%/y"), Font.Size, Font.Name, Font.Color);
+      ObjectSetText(names[SWAPLONG         ], StringConcatenate("Swap long:  ", NumberToStr(swapLongD, "+.2"), " pip = ", NumberToStr(swapLongY, "+.2"), "% p.a."), Font.Size, Font.Name, Font.Color);
+      ObjectSetText(names[SWAPSHORT        ], StringConcatenate("Swap short: ", NumberToStr(swapShortD, "+.2"), " pip = ", NumberToStr(swapShortY, "+.2"), "% p.a."), Font.Size, Font.Name, Font.Color);
 
    double starts            = MarketInfo(symbol, MODE_STARTING         ); if (starts  > 0) ObjectSetText(names[STARTING  ], StringConcatenate("Future starts: ", TimeToStr(starts)), Font.Size, Font.Name, Font.Color);
    double expires           = MarketInfo(symbol, MODE_EXPIRATION       ); if (expires > 0) ObjectSetText(names[EXPIRATION], StringConcatenate("Future expires: ", TimeToStr(expires)), Font.Size, Font.Name, Font.Color);
