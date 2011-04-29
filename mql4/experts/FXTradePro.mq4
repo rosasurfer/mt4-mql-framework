@@ -213,38 +213,35 @@ int start() {
       // im Markt, Position managen
    }
    else {
-      // nicht im Markt
-      if (CompareDoubles(Entry.Limit, 0)) {
-         // kein Limit definiert
-
-         // in Entry.Direction in den Markt gehen
+      // nicht im Markt, Entry.Limit prüfen
+      if (CompareDoubles(Entry.Limit, 0)) {  // kein Limit definiert
+         StartSequence();
       }
       else {
          // Limit definiert, Limit erreicht ?
-
-         // nein) warten
-         // ja)   in Entry.Direction in den Markt gehen
+         //    nein) warten
+         //    ja)   in Entry.Direction in den Markt gehen
       }
    }
-
-
-
    ShowStatus();
 
-   if (NewOrderPermitted()) {
+
+
+
+   if (false && NewOrderPermitted()) {
       if (openPositions == 0) {
          if (lastPosition.type==OP_UNDEFINED) {
-                                            SendOrder(entryDirection);
+                                            // SendOrder(entryDirection);
          }
          else if (Progressing()) {
-            if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
-            else                            SendOrder(OP_SELL);
+            // if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
+            // else                            SendOrder(OP_SELL);
          }
       }
       ShowStatus();
    }
-
    last_ticket = lastPosition.ticket;
+
    return(catch("start()"));
 }
 
@@ -280,6 +277,8 @@ bool ReadOrderStatus() {
          sequenceId       = OrderMagicNumber() << 10 >> 18;       // in MagicNumber: 14 Bits  9-22
          sequenceLength   = OrderMagicNumber() << 24 >> 28;       // in MagicNumber:  4 Bits  5-8
          progressionLevel = OrderMagicNumber() << 28 >> 32;       // in MagicNumber:  4 Bits  1-4
+
+         log("ReadOrderStatus()   active sequence found = "+ sequenceId);
          break;
       }
    }
@@ -362,52 +361,47 @@ int SequenceId() {
 
 
 /**
+ * Beginnt eine neue Trade-Sequenz (Progression-Level 1).
  *
+ * @return int - Fehlerstatus
+ */
+int StartSequence() {
+   if (sequenceId != 0)
+      return(catch("StartSequence(1)  Cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
+
+   if (NewOrderPermitted())
+      SendOrder(entryDirection);    // Position in Entry.Direction öffnen
+
+   return(catch("StartSequence()"));
+}
+
+
+/**
+ * Prüft den Account nach Moneymanagement-Gesichtspunkten (Balance, Equity, Marginanforderungen, Leverage) und gibt an,
+ * ob die nächste Order ausgeführt werden darf.
  */
 bool NewOrderPermitted() {
    if (AccountBalance() < minAccountBalance) {
       ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
       return(false);
    }
-
    if (AccountEquity() < minAccountEquity) {
       ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
       return(false);
    }
-
-   if (Entry.Limit != 0) {
-      if (Ask != Entry.Limit && !Progressing()) {  // Blödsinn
-         ShowStatus(STATUS_ENTRYLIMIT_WAIT);
-         return(false);
-      }
-   }
-
    return(true);
 }
 
 
-/**
- *
- */
-bool NewClosedPosition() {
-   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
-}
 
 
-/**
- *
- */
-bool Progressing() {
-   if (CompareDoubles(CurrentLotSize(), 0)) {
-      ShowStatus(STATUS_FINISHED);
-      return(false);
-   }
 
-   if (lastPosition.result == RESULT_STOPLOSS)
-      return(true);
 
-   return(false);
-}
+
+
+
+
+
 
 
 /**
@@ -418,32 +412,25 @@ int SendOrder(int type) {
    if (type!=OP_BUY && type!=OP_SELL)
       return(catch("SendOrder(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   double price, sl, tp;
+   int sequenceId  = SequenceId();
+   int level       = CurrentLevel();
+   int magicNumber = MagicNumber(sequenceId);
 
-   switch (type) {
-      case OP_BUY:  price = Ask;
-                    if (Stoploss   > 0) sl = price - Stoploss  *Pip;
-                    if (TakeProfit > 0) tp = price + TakeProfit*Pip;
-                    break;
-
-      case OP_SELL: price = Bid;
-                    if (Stoploss   > 0) sl = price + Stoploss  *Pip;
-                    if (TakeProfit > 0) tp = price - TakeProfit*Pip;
-                    break;
-   }
-
+   double   price      = ifDouble(type==OP_SELL, Bid, Ask);
    double   lotsize    = CurrentLotSize();
    int      slippage   = 1;
-   string   comment    = "FTP."+ SequenceId() +"."+ CurrentLevel();
+   double   sl         = 0;
+   double   tp         = 0;
+   string   comment    = "FTP."+ sequenceId +"."+ level;
    datetime expiration = 0;
 
-   //debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ MagicNumber(SequenceId()) +", expires="+ expiration +", Green)");
+   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
 
-   if (false) {
-      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, MagicNumber(SequenceId()), expiration, Green);
+   if (true) {
+      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, magicNumber, expiration, Green);
       if (ticket > 0) {
          if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
-            log("SendOrder()   Progression level "+ CurrentLevel() +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
+            log("SendOrder()   Progression level "+ level +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
       }
       else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
    }
@@ -590,4 +577,28 @@ int ShowStatus(int id=NULL) {
       NewClosedPosition();
       IncreaseProgressionLevel();
    }
+}
+
+
+/**
+ *
+ */
+bool NewClosedPosition() {
+   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
+}
+
+
+/**
+ *
+ */
+bool Progressing() {
+   if (CompareDoubles(CurrentLotSize(), 0)) {
+      ShowStatus(STATUS_FINISHED);
+      return(false);
+   }
+
+   if (lastPosition.result == RESULT_STOPLOSS)
+      return(true);
+
+   return(false);
 }
