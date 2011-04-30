@@ -124,7 +124,7 @@ int init() {
    }
 
    // Entry.Limit
-   if (Entry.Limit < 0)
+   if (LT(Entry.Limit, 0))
       return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    // TakeProfit
@@ -136,41 +136,41 @@ int init() {
       return(catch("init(5)  Invalid input parameter Stoploss = "+ Stoploss, ERR_INVALID_INPUT_PARAMVALUE));
 
    // Lotsizes
-   if (Lotsize.Level.1 <= 0) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
-   if (Lotsize.Level.2 <  0) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-   if (Lotsize.Level.2 == 0) sequenceLength = 1;
+   if (LT(Lotsize.Level.2, 0)) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   if (EQ(Lotsize.Level.2, 0)) sequenceLength = 1;
    else {
-      if (Lotsize.Level.3 <  0) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      if (Lotsize.Level.3 == 0) sequenceLength = 2;
+      if (LT(Lotsize.Level.3, 0)) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      if (EQ(Lotsize.Level.3, 0)) sequenceLength = 2;
       else {
-         if (Lotsize.Level.4 <  0) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-         if (Lotsize.Level.4 == 0) sequenceLength = 3;
+         if (LT(Lotsize.Level.4, 0)) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+         if (EQ(Lotsize.Level.4, 0)) sequenceLength = 3;
          else {
-            if (Lotsize.Level.5 <  0) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-            if (Lotsize.Level.5 == 0) sequenceLength = 4;
+            if (LT(Lotsize.Level.5, 0)) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+            if (EQ(Lotsize.Level.5, 0)) sequenceLength = 4;
             else {
-               if (Lotsize.Level.6 <  0) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-               if (Lotsize.Level.6 == 0) sequenceLength = 5;
+               if (LT(Lotsize.Level.6, 0)) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+               if (EQ(Lotsize.Level.6, 0)) sequenceLength = 5;
                else {
-                  if (Lotsize.Level.7 <  0) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                  if (Lotsize.Level.7 == 0) sequenceLength = 6;
+                  if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                  if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
                   else {
-                     if (Lotsize.Level.8 <  0) return(catch("init(13)  Invalid input parameter Lotsize.Level.8 = "+ NumberToStr(Lotsize.Level.8, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                     if (Lotsize.Level.8 == 0) sequenceLength = 7;
+                     if (LT(Lotsize.Level.8, 0)) return(catch("init(13)  Invalid input parameter Lotsize.Level.8 = "+ NumberToStr(Lotsize.Level.8, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                     if (EQ(Lotsize.Level.8, 0)) sequenceLength = 7;
                      else {
-                        if (Lotsize.Level.9 <  0) return(catch("init(14)  Invalid input parameter Lotsize.Level.9 = "+ NumberToStr(Lotsize.Level.9, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                        if (Lotsize.Level.9 == 0) sequenceLength = 8;
+                        if (LT(Lotsize.Level.9, 0)) return(catch("init(14)  Invalid input parameter Lotsize.Level.9 = "+ NumberToStr(Lotsize.Level.9, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                        if (EQ(Lotsize.Level.9, 0)) sequenceLength = 8;
                         else {
-                           if (Lotsize.Level.10 <  0) return(catch("init(15)  Invalid input parameter Lotsize.Level.10 = "+ NumberToStr(Lotsize.Level.10, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                           if (Lotsize.Level.10 == 0) sequenceLength = 9;
+                           if (LT(Lotsize.Level.10, 0)) return(catch("init(15)  Invalid input parameter Lotsize.Level.10 = "+ NumberToStr(Lotsize.Level.10, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                           if (EQ(Lotsize.Level.10, 0)) sequenceLength = 9;
                            else {
-                              if (Lotsize.Level.11 <  0) return(catch("init(16)  Invalid input parameter Lotsize.Level.11 = "+ NumberToStr(Lotsize.Level.11, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                              if (Lotsize.Level.11 == 0) sequenceLength = 10;
+                              if (LT(Lotsize.Level.11, 0)) return(catch("init(16)  Invalid input parameter Lotsize.Level.11 = "+ NumberToStr(Lotsize.Level.11, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                              if (EQ(Lotsize.Level.11, 0)) sequenceLength = 10;
                               else {
-                                 if (Lotsize.Level.12 <  0) return(catch("init(17)  Invalid input parameter Lotsize.Level.12 = "+ NumberToStr(Lotsize.Level.12, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                                 if (Lotsize.Level.12 == 0) sequenceLength = 11;
-                                 else                       sequenceLength = 12;
+                                 if (LT(Lotsize.Level.12, 0)) return(catch("init(17)  Invalid input parameter Lotsize.Level.12 = "+ NumberToStr(Lotsize.Level.12, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                                 if (EQ(Lotsize.Level.12, 0)) sequenceLength = 11;
+                                 else                         sequenceLength = 12;
                               }
                            }
                         }
@@ -208,7 +208,7 @@ int deinit() {
 int start() {
    init = false;
 
-   debug("start()   Lotsize.Level.10 = "+ DoubleToStrEx(Lotsize.Level.10, 16));
+   log("start()   Lotsize.Level.10 = "+ DoubleToStrEx(Lotsize.Level.10, 16));
 
 
    // aktuellen Status einlesen und auswerten
