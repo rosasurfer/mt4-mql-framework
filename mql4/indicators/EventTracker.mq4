@@ -138,7 +138,7 @@ int init() {
    }
    if (Track.BollingerBands) {
       BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands."+ symbol, "Deviation.EMA", BollingerBands.MA.Deviation);
-      if (CompareDoubles(BollingerBands.MA.Deviation, 0))
+      if (EQ(BollingerBands.MA.Deviation, 0))
          BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
       if (BollingerBands.MA.Deviation <= 0) {
          catch("init(6)  Invalid or missing config value Deviation.EMA \""+ BollingerBands.MA.Deviation +"\"", ERR_INVALID_INPUT_PARAMVALUE);

@@ -208,13 +208,16 @@ int deinit() {
 int start() {
    init = false;
 
+   debug("start()   Lotsize.Level.10 = "+ DoubleToStrEx(Lotsize.Level.10, 16));
+
+
    // aktuellen Status einlesen und auswerten
    if (ReadOrderStatus()) {
       // im Markt, Position managen
    }
    else {
       // nicht im Markt, Entry.Limit prüfen
-      if (CompareDoubles(Entry.Limit, 0)) {  // kein Limit definiert
+      if (EQ(Entry.Limit, 0)) {                 // kein Limit definiert
          StartSequence();
       }
       else {
@@ -226,14 +229,6 @@ int start() {
    ShowStatus();
 
 
-   /*
-   DoublesLE      DoublesLowerOrEqual
-   DoublesLT      DoublesLowerThen
-   DoublesEQ      DoublesEqual            CompareDoubles
-   DoublesNE      DoublesNotEqual
-   DoublesGE      DoublesGreaterOrEqual
-   DoublesGT      DoublesGreaterThen
-   */
 
    if (false && NewOrderPermitted()) {
       if (openPositions == 0) {
@@ -296,14 +291,14 @@ bool ReadOrderStatus() {
       OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
       if (IsMyOrder()) {
          closedPositions++;
-                                                                        lastPosition.ticket = OrderTicket();
-                                                                        lastPosition.type   = OrderType();
-                                                                        lastPosition.lots   = OrderLots();
-         if      (CompareDoubles(OrderClosePrice(), OrderTakeProfit())) lastPosition.result = RESULT_TAKEPROFIT;
-         else if (CompareDoubles(OrderClosePrice(), OrderStopLoss()))   lastPosition.result = RESULT_STOPLOSS;
-         else if (OrderProfit() > 0)                                    lastPosition.result = RESULT_WINNER;
-         else if (OrderProfit() < 0)                                    lastPosition.result = RESULT_LOOSER;
-         else                                                           lastPosition.result = RESULT_BREAKEVEN;
+                                                            lastPosition.ticket = OrderTicket();
+                                                            lastPosition.type   = OrderType();
+                                                            lastPosition.lots   = OrderLots();
+         if      (EQ(OrderClosePrice(), OrderTakeProfit())) lastPosition.result = RESULT_TAKEPROFIT;
+         else if (EQ(OrderClosePrice(), OrderStopLoss()))   lastPosition.result = RESULT_STOPLOSS;
+         else if (OrderProfit() > 0)                        lastPosition.result = RESULT_WINNER;
+         else if (OrderProfit() < 0)                        lastPosition.result = RESULT_LOOSER;
+         else                                               lastPosition.result = RESULT_BREAKEVEN;
       }
    }
    */
@@ -490,7 +485,7 @@ int TrailingStopManager() {
 
          if (OrderType() == OP_SELL) {
             if (trailStopImmediately || OrderOpenPrice() - Ask > trailingStop*Pip)
-               if (OrderStopLoss() > Ask + trailingStop*Pip || CompareDoubles(OrderStopLoss(), 0))
+               if (OrderStopLoss() > Ask + trailingStop*Pip || EQ(OrderStopLoss(), 0))
                   OrderModify(OrderTicket(), OrderOpenPrice(), Ask + trailingStop*Pip, OrderTakeProfit(), 0, Red);
          }
       }
@@ -599,7 +594,7 @@ bool NewClosedPosition() {
  *
  */
 bool Progressing() {
-   if (CompareDoubles(CurrentLotSize(), 0)) {
+   if (EQ(CurrentLotSize(), 0)) {
       ShowStatus(STATUS_FINISHED);
       return(false);
    }

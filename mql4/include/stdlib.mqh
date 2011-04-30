@@ -159,7 +159,13 @@
    bool     IsFile(string pathName);
 
    // Math, Numbers
-   bool     CompareDoubles(double double1, double double2);
+   bool     CompareDoubles(double double1, double double2);                   // MetaQuotes-Alias für EQ()
+   bool     LT(double double1, double double2);
+   bool     LE(double double1, double double2);
+   bool     EQ(double double1, double double2);
+   bool     NE(double double1, double double2);
+   bool     GE(double double1, double double2);
+   bool     GT(double double1, double double2);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
    string   FormatNumber(double number, string mask);
@@ -236,12 +242,14 @@
    string   AppliedPriceToStr(int appliedPrice);
    string   BoolArrayToStr(bool& values[]);
    string   BoolToStr(bool value);
+   string   DoubleToStrEx(double value, int digits);
+   string   DoubleToStrMorePrecision(double number, int precision);           // MetaQuotes-Alias für DoubleToStrEx()
    string   DoubleArrayToStr(double& values[]);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
    string   IntArrayToStr(int& values[]);
    string   IntToHexStr(int integer);
-   string   IntegerToHexStr(int integer);                            // MetaQuotes-Alias
+   string   IntegerToHexStr(int integer);                                     // MetaQuotes-Alias für IntToHexStr()
    string   MovingAverageToStr(int method);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
@@ -324,14 +332,5 @@
    bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int& wfd[]);
    string   wfd.FileName                  (/*WIN32_FIND_DATA*/ int& wfd[]);
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
-
-
-
-   // ----------------------------------------------------------------------------------
-   // Original-MetaQuotes Funktionen   !!! NICHT VERWENDEN !!!
-   //
-   // Diese Funktionen sind teilweise noch fehlerhaft.
-   // ----------------------------------------------------------------------------------
-   string   DoubleToStrMorePrecision(double number, int precision);
 
 #import

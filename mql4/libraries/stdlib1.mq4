@@ -1860,7 +1860,7 @@ int CountDecimals(double number) {
  */
 double MathModFix(double a, double b) {
    double remainder = MathMod(a, b);
-   if (CompareDoubles(remainder, b))
+   if (EQ(remainder, b))
       remainder = 0;
    return(remainder);
 }
@@ -2608,15 +2608,106 @@ datetime GetEasternNextSessionEndTime(datetime easternTime) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles.
+ * Korrekter Vergleich zweier Doubles auf "Lower-Then": (double1 < double2)
  *
  * @param  double1 - erster Wert
  * @param  double2 - zweiter Wert
  *
- * @return bool - TRUE, wenn die Werte gleich sind; FALSE andererseits
+ * @return bool
+ */
+bool LT(double double1, double double2) {
+   if (EQ(double1, double2))
+      return(false);
+   return(double1 < double2);
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Lower-Or-Equal": (double1 <= double2)
+ *
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
+ *
+ * @return bool
+ */
+bool LE(double double1, double double2) {
+   if (double1 < double2)
+      return(true);
+   return(EQ(double1, double2));
+
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf Gleichheit "Equal": (double1 == double2)
+ *
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
+ *
+ * @return bool
+ */
+bool EQ(double double1, double double2) {
+   double diff = double1 - double2;
+
+   if (diff < 0)                             // Wir prüfen die Differenz anhand der 14. Nachkommastelle und nicht wie
+      diff = -diff;                          // die Original-MetaQuotes-Funktion anhand der 8. (benutzt NormalizeDouble()).
+
+   return(diff <= 0.00000000000001);         // siehe auch: NormalizeDouble() in MQL.doc
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf Ungleichheit "Not-Equal": (double1 != double2)
+ *
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
+ *
+ * @return bool
+ */
+bool NE(double double1, double double2) {
+   return(!EQ(double1, double2));
+
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Greater-Or-Equal": (double1 >= double2)
+ *
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
+ *
+ * @return bool
+ */
+bool GE(double double1, double double2) {
+   if (double1 > double2)
+      return(true);
+   return(EQ(double1, double2));
+
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Greater-Then": (double1 > double2)
+ *
+ * @param  double1 - erster Wert
+ * @param  double2 - zweiter Wert
+ *
+ * @return bool
+ */
+bool GT(double double1, double double2) {
+   if (EQ(double1, double2))
+      return(false);
+   return(double1 > double2);
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles.
+ *
+ * MetaQuotes-Alias für EQ()
  */
 bool CompareDoubles(double double1, double double2) {
-   return(NormalizeDouble(double1 - double2, 8) == 0);
+   return(EQ(double1, double2));
 }
 
 
@@ -3308,8 +3399,8 @@ bool EventTracker.GetGridLimits(double& lpLimits[]) {
    if (ArraySize(lpLimits) != 2)
       return(catch("EventTracker.GetGridLimits()   illegal parameter limits = "+ DoubleArrayToStr(lpLimits), ERR_INCOMPATIBLE_ARRAYS));
 
-   if (CompareDoubles(EventTracker.gridLimit.High, 0)) return(false);
-   if (CompareDoubles(EventTracker.gridLimit.Low , 0)) return(false);
+   if (EQ(EventTracker.gridLimit.High, 0)) return(false);
+   if (EQ(EventTracker.gridLimit.Low , 0)) return(false);
 
    lpLimits[0] = EventTracker.gridLimit.Low;
    lpLimits[1] = EventTracker.gridLimit.High;
@@ -3327,8 +3418,8 @@ bool EventTracker.GetGridLimits(double& lpLimits[]) {
  * @return int - Fehlerstatus
  */
 int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
-   if (CompareDoubles(upperLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (CompareDoubles(lowerLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (EQ(upperLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (EQ(lowerLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    EventTracker.gridLimit.High = upperLimit;
    EventTracker.gridLimit.Low  = lowerLimit;
@@ -5466,7 +5557,7 @@ int ArraySearchDouble(double needle, double &haystack[]) {
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
-      if (CompareDoubles(haystack[i], needle))
+      if (EQ(haystack[i], needle))
          return(i);
    }
    return(-1);
@@ -6257,7 +6348,7 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
 
    double red, green, blue;
 
-   if (CompareDoubles(saturation, 0)) {
+   if (EQ(saturation, 0)) {
       red   = value;
       green = value;
       blue  = value;
@@ -6317,21 +6408,21 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                double hsv[]; RGBToHSVColor(rgb, hsv);
 
                // Farbton anpassen
-               if (!CompareDoubles(mod_hue, 0)) {
+               if (NE(mod_hue, 0)) {
                   hsv[0] += mod_hue;
                   if      (hsv[0] <   0) hsv[0] += 360;
                   else if (hsv[0] > 360) hsv[0] -= 360;
                }
 
                // Sättigung anpassen
-               if (!CompareDoubles(mod_saturation, 0)) {
+               if (NE(mod_saturation, 0)) {
                   hsv[1] = hsv[1] * (1 + mod_saturation/100);
                   if (hsv[1] > 1)
                      hsv[1] = 1;    // mehr als 100% geht nicht
                }
 
                // Helligkeit anpassen (modifiziert HSV.value *und* HSV.saturation)
-               if (!CompareDoubles(mod_value, 0)) {
+               if (NE(mod_value, 0)) {
 
                   // TODO: HSV.sat und HSV.val zu gleichen Teilen ändern
 
@@ -6362,76 +6453,79 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 }
 
 
+/**
+ * Konvertiert einen Double in einen String mit bis zu 16 Nachkommastellen.
+ *
+ * @param double value  - zu konvertierender Wert
+ * @param int    digits - Anzahl von Nachkommastellen
+ *
+ * @return string
+ */
+string DoubleToStrEx(double value, int digits) {
+   if (digits < 0 || digits > 16) {
+      catch("DoubleToStrEx()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+   /*
+   double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
+                          10.0,     // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
+                         100.0,
+                        1000.0,
+                       10000.0,
+                      100000.0,
+                     1000000.0,
+                    10000000.0,
+                   100000000.0,
+                  1000000000.0,
+                 10000000000.0,
+                100000000000.0,
+               1000000000000.0,
+              10000000000000.0,
+             100000000000000.0,
+            1000000000000000.0,
+           10000000000000000.0 };
+   */
+   double decimals[17] = { 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0, 100000000000.0, 1000000000000.0, 10000000000000.0, 100000000000000.0, 1000000000000000.0, 10000000000000000.0 };
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
-// Original-MetaQuotes Funktionen             !!! NICHT VERWENDEN !!!                 //
-//                                                                                    //
-// Diese Funktionen stehen hier nur zur Dokumentation. Sie sind teilweise fehlerhaft. //
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+   bool isNegative = false;
+   if (value < 0.0) {
+      isNegative = true;
+      value = -value;
+   }
+
+   double integer    = MathFloor(value);
+   string strInteger = DoubleToStr(integer + 0.1, 0);
+
+   double remainder    = MathRound((value-integer) * decimals[digits]);
+   string strRemainder = "";
+
+   for (int i=0; i < digits; i++) {
+      double fraction  = MathFloor(remainder/10);
+      int    digit     = MathRound(remainder - fraction*10) + 0.1;
+      strRemainder = digit + strRemainder;
+      remainder    = fraction;
+   }
+
+   string result = strInteger;
+
+   if (digits > 0)
+      result = StringConcatenate(result, ".", strRemainder);
+
+   if (isNegative)
+      result = StringConcatenate("-", result);
+
+   return(result);
+}
 
 
 /**
- * up to 16 digits after decimal point
+ * MetaQuotes-Alias für DoubleToStrEx()
+ *
+ * Konvertiert einen Double in einen String mit bis zu 16 Nachkommastellen.
  */
 string DoubleToStrMorePrecision(double number, int precision) {
-   double rem, integer, integer2;
-   /*
-   Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
-   double DecimalArray[17] = { 1.0,
-                              10.0,
-                             100.0,
-                            1000.0,
-                           10000.0,
-                          100000.0,
-                         1000000.0,
-                        10000000.0,
-                       100000000.0,
-                      1000000000.0,
-                     10000000000.0,
-                    100000000000.0,
-                   1000000000000.0,
-                  10000000000000.0,
-                 100000000000000.0,
-                1000000000000000.0,
-               10000000000000000.0 };
-   */
-   double DecimalArray[17] = { 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0, 100000000000.0, 1000000000000.0, 10000000000000.0, 100000000000000.0, 1000000000000000.0, 10000000000000000.0 };
-
-   string intstring, remstring, retstring;
-   bool   isnegative = false;
-   int    rem2;
-
-   if (precision <  0) precision =  0;
-   if (precision > 16) precision = 16;
-
-   double p = DecimalArray[precision];
-   if (number < 0.0) {
-      isnegative = true;
-      number = -number;
-   }
-
-   integer = MathFloor(number);
-   rem = MathRound((number-integer) * p);
-   remstring = "";
-
-   for (int i=0; i<precision; i++) {
-      integer2 = MathFloor(rem/10);
-      rem2 = MathRound(rem-integer2 * 10);
-      remstring = rem2 + remstring;
-      rem = integer2;
-   }
-
-   intstring = DoubleToStr(integer, 0);
-
-   if (isnegative) retstring = "-"+ intstring;
-   else            retstring = intstring;
-
-   if (precision > 0)
-      retstring = retstring +"."+ remstring;
-
-   return(retstring);
+   return(DoubleToStrEx(number, precision));
 }
-
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //

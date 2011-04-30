@@ -189,10 +189,10 @@ bool OrderCloseEx(int ticket, double volume=-1, int slippage=1, color marker=CLR
       catch("OrderCloseEx(3)   symbol=\""+ OrderSymbol() +"\"", error);
       return(false);
    }
-   if (CompareDoubles(volume, -1)) {
+   if (EQ(volume, -1)) {
       volume = OrderLots();
    }
-   else if (!CompareDoubles(volume, OrderLots())) {
+   else if (NE(volume, OrderLots())) {
       if (NormalizeDouble(volume-minLot, 8) < 0) {
          catch("OrderCloseEx(4)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
          return(false);
@@ -201,7 +201,7 @@ bool OrderCloseEx(int ticket, double volume=-1, int slippage=1, color marker=CLR
          catch("OrderCloseEx(5)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
          return(false);
       }
-      if (!CompareDoubles(MathModFix(volume, lotStep), 0)) {
+      if (NE(MathModFix(volume, lotStep), 0)) {
          catch("OrderCloseEx(6)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
          return(false);
       }
@@ -272,7 +272,7 @@ string OrderCloseEx.LogMessage(int ticket, double volume, double price, int digi
    string strVolume = NumberToStr(OrderLots(), ".+");
 
    string strPrice = DoubleToStr(OrderClosePrice(), digits);
-   if (!CompareDoubles(price, OrderClosePrice())) {
+   if (NE(price, OrderClosePrice())) {
       string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price) * MathPow(10, pipDigits), ".+");
       bool plus = (OrderClosePrice() > price);
       if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
