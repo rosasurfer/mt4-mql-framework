@@ -226,7 +226,14 @@ int start() {
    ShowStatus();
 
 
-
+   /*
+   DoublesLE      DoublesLowerOrEqual
+   DoublesLT      DoublesLowerThen
+   DoublesEQ      DoublesEqual            CompareDoubles
+   DoublesNE      DoublesNotEqual
+   DoublesGE      DoublesGreaterOrEqual
+   DoublesGT      DoublesGreaterThen
+   */
 
    if (false && NewOrderPermitted()) {
       if (openPositions == 0) {
@@ -256,7 +263,6 @@ int start() {
  */
 bool ReadOrderStatus() {
    sequenceId = 0;
-
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
@@ -278,7 +284,7 @@ bool ReadOrderStatus() {
          sequenceLength   = OrderMagicNumber() << 24 >> 28;       // in MagicNumber:  4 Bits  5-8
          progressionLevel = OrderMagicNumber() << 28 >> 32;       // in MagicNumber:  4 Bits  1-4
 
-         log("ReadOrderStatus()   active sequence found = "+ sequenceId);
+         //debug("ReadOrderStatus()   active sequence found = "+ sequenceId);
          break;
       }
    }
@@ -424,9 +430,9 @@ int SendOrder(int type) {
    string   comment    = "FTP."+ sequenceId +"."+ level;
    datetime expiration = 0;
 
-   log("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
+   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
 
-   if (true) {
+   if (false) {
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, magicNumber, expiration, Green);
       if (ticket > 0) {
          if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
@@ -565,7 +571,8 @@ int ShowStatus(int id=NULL) {
                  + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
                  + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
                  + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
-                 + "Profit / Loss:          "+ DoubleToStr(0, 2)                                                + LF;
+                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)        + LF;
+
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(LF+LF+ status);
 
