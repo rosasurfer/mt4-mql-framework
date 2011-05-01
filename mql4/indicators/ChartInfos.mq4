@@ -47,7 +47,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits - Digits%2;
-   Pip         = 1 / MathPow(10, PipDigits);
+   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Datenanzeige ausschalten

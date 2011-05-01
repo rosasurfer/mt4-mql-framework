@@ -30,16 +30,16 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string _1____________________________ = "==== Entry Options ==============";
+extern string _1____________________________ = "==== Entry Options ===================";
 //extern string Entry.Direction                = "{ long | short }";
 extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 0;
 
-extern string _2____________________________ = "==== TP and SL Settings =========";
+extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 40;
 extern int    Stoploss                       = 10;
 
-extern string _3____________________________ = "==== Lotsizes ==================";
+extern string _3____________________________ = "==== Lotsizes =======================";
 extern double Lotsize.Level.1                =  0.1;
 extern double Lotsize.Level.2                =  0.1;
 extern double Lotsize.Level.3                =  0.2;
@@ -62,9 +62,8 @@ string   PriceFormat;
 
 int      sequenceId;
 int      sequenceLength;
-int      progressionLevel;
-
-int      entryDirection = OP_UNDEFINED;
+int      progressionLevel = 1;
+int      entryDirection   = OP_UNDEFINED;
 
 int      open.ticket;
 int      open.type;
@@ -77,24 +76,14 @@ double   open.profit;
 int      open.magic;
 string   open.comment;
 
-
-
-
-
 // -------------------------------------------------------------
-int    openPositions, closedPositions;
 
-int    lastPosition.ticket, last_ticket;     // !!! last_ticket ist nicht statisch und verursacht Fehler bei Timeframe-Wechseln etc.
-int    lastPosition.type = OP_UNDEFINED;
-double lastPosition.lots;
-int    lastPosition.result;
+int      breakevenDistance;                  // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
+int      trailingStop;                       // TrailingStop in Pip
+bool     trailStopImmediately = true;        // TrailingStop sofort starten oder warten, bis Position <trailingStop> Pip im Gewinn ist
 
-int    breakevenDistance;                    // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
-int    trailingStop;                         // TrailingStop in Pip
-bool   trailStopImmediately = true;          // TrailingStop sofort starten oder warten, bis Position <trailingStop> Pip im Gewinn ist
-
-double minAccountBalance;                    // Balance-Minimum, um zu traden
-double minAccountEquity;                     // Equity-Minimum, um zu traden
+double   minAccountBalance;                  // Balance-Minimum, um zu traden
+double   minAccountEquity;                   // Equity-Minimum, um zu traden
 
 
 /**
@@ -107,7 +96,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits - Digits%2;
-   Pip         = 1 / MathPow(10, PipDigits);
+   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Parameter überprüfen
@@ -208,41 +197,23 @@ int deinit() {
 int start() {
    init = false;
 
-   log("start()   Lotsize.Level.10 = "+ DoubleToStrEx(Lotsize.Level.10, 16));
-
+   log("start()   sequenceLength = "+ sequenceLength);
 
    // aktuellen Status einlesen und auswerten
    if (ReadOrderStatus()) {
       // im Markt, Position managen
    }
-   else {
-      // nicht im Markt, Entry.Limit prüfen
-      if (EQ(Entry.Limit, 0)) {                 // kein Limit definiert
+   else if (EQ(Entry.Limit, 0)) {               // nicht im Markt, Entry.Limit prüfen
+      StartSequence();                          // kein Limit definiert
+   }
+   else if (entryDirection == OP_BUY) {         // Limit definiert, Limit erreicht ?
+      if (LE(Ask, Entry.Limit))                 // Entry long
          StartSequence();
-      }
-      else {
-         // Limit definiert, Limit erreicht ?
-         //    nein) warten
-         //    ja)   in Entry.Direction in den Markt gehen
-      }
+   }
+   else if (GE(Bid, Entry.Limit)) {             // Entry short
+      StartSequence();
    }
    ShowStatus();
-
-
-
-   if (false && NewOrderPermitted()) {
-      if (openPositions == 0) {
-         if (lastPosition.type==OP_UNDEFINED) {
-                                            // SendOrder(entryDirection);
-         }
-         else if (Progressing()) {
-            // if (lastPosition.type==OP_SELL) SendOrder(OP_BUY);
-            // else                            SendOrder(OP_SELL);
-         }
-      }
-      ShowStatus();
-   }
-   last_ticket = lastPosition.ticket;
 
    return(catch("start()"));
 }
@@ -296,8 +267,8 @@ bool ReadOrderStatus() {
                                                             lastPosition.lots   = OrderLots();
          if      (EQ(OrderClosePrice(), OrderTakeProfit())) lastPosition.result = RESULT_TAKEPROFIT;
          else if (EQ(OrderClosePrice(), OrderStopLoss()))   lastPosition.result = RESULT_STOPLOSS;
-         else if (OrderProfit() > 0)                        lastPosition.result = RESULT_WINNER;
-         else if (OrderProfit() < 0)                        lastPosition.result = RESULT_LOOSER;
+         else if (GT(OrderProfit(), 0))                     lastPosition.result = RESULT_WINNER;
+         else if (LT(OrderProfit(), 0))                     lastPosition.result = RESULT_LOOSER;
          else                                               lastPosition.result = RESULT_BREAKEVEN;
       }
    }
@@ -349,10 +320,10 @@ int MagicNumber(int sequenceId) {
  * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
  */
 int SequenceId() {
-   if (sequenceId == 0) {              // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() anhand der offenen Postion gesetzt.
-      MathSrand(GetTickCount());       // Ohne Position kann sie problemlos jedesmal neu generiert werden.
+   if (sequenceId == 0) {              // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() aus der offenen Position ausgelesen.
+      MathSrand(GetTickCount());       // Ohne offene Position kann sie problemlos jedesmal neu generiert werden.
 
-      while (sequenceId < 2002) {      // das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID
+      while (sequenceId < 2002) {      // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
          sequenceId = MathRand();
       }
       sequenceId >>= 1;
@@ -394,17 +365,6 @@ bool NewOrderPermitted() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 /**
  *
  * @return int - Fehlerstatus
@@ -414,7 +374,6 @@ int SendOrder(int type) {
       return(catch("SendOrder(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    int sequenceId  = SequenceId();
-   int level       = CurrentLevel();
    int magicNumber = MagicNumber(sequenceId);
 
    double   price      = ifDouble(type==OP_SELL, Bid, Ask);
@@ -422,7 +381,7 @@ int SendOrder(int type) {
    int      slippage   = 1;
    double   sl         = 0;
    double   tp         = 0;
-   string   comment    = "FTP."+ sequenceId +"."+ level;
+   string   comment    = "FTP."+ sequenceId +"."+ progressionLevel +"/"+ NumberToStr((Bid+Ask)/2, PriceFormat);
    datetime expiration = 0;
 
    debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
@@ -431,12 +390,73 @@ int SendOrder(int type) {
       int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, magicNumber, expiration, Green);
       if (ticket > 0) {
          if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
-            log("SendOrder()   Progression level "+ level +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
+            log("SendOrder()   Progression level "+ progressionLevel +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
       }
       else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
    }
 
    return(catch("SendOrder(3)"));
+}
+
+
+/**
+ * Gibt die Lotsize des aktuellen Progression-Levels zurück.
+ *
+ * @return double - Lotsize oder -1, wenn ein Fehler auftrat
+ */
+double CurrentLotSize() {
+   switch (progressionLevel) {
+      case  1: return(Lotsize.Level.1);
+      case  2: return(Lotsize.Level.2);
+      case  3: return(Lotsize.Level.3);
+      case  4: return(Lotsize.Level.4);
+      case  5: return(Lotsize.Level.5);
+      case  6: return(Lotsize.Level.6);
+      case  7: return(Lotsize.Level.7);
+      case  8: return(Lotsize.Level.8);
+      case  9: return(Lotsize.Level.9);
+      case 10: return(Lotsize.Level.10);
+      case 11: return(Lotsize.Level.11);
+      case 12: return(Lotsize.Level.12);
+   }
+
+   catch("CurrentLotSize()   illegal progression level = "+ progressionLevel, ERR_RUNTIME_ERROR);
+   return(-1);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int ShowStatus(int id=NULL) {
+   string msg = "";
+
+   switch (id) {
+      case NULL                       : msg = ifString(sequenceId, " managing trade sequence "+ sequenceId, "");  break;
+      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
+      case STATUS_FINISHED            : msg = ":  Trading sequence finished.";                                    break;
+      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  New orders disabled (balance below minimum).";                  break;
+      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  New orders disabled (equity below minimum)." ;                  break;
+   }
+
+   string status = __SCRIPT__ + msg + LF
+                 + LF
+                 + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
+                 + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
+                 + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
+                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
+                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)        + LF;
+
+   // 2 Zeilen Abstand nach oben für Instrumentanzeige
+   Comment(LF+LF+ status);
+
+   return(catch("ShowStatus(2)"));
+
+   if (false) {
+      BreakevenManager();
+      TrailingStopManager();
+   }
 }
 
 
@@ -491,116 +511,4 @@ int TrailingStopManager() {
       }
    }
    return(catch("TrailingStopManager()"));
-}
-
-
-/**
- * Gibt den aktuellen Progression-Level zurück.
- *
- * @return int - Progression-Level
- */
-int CurrentLevel() {
-   int level = 1;
-   return(level);
-}
-
-
-/**
- * Setzt den aktuellen Progression-Level auf die nächste Stufe.
- *
- * @return int - der resultierende Progression-Level
- */
-int IncreaseProgressionLevel() {
-   int level = 1;
-   level++;
-   return(level);
-}
-
-
-/**
- * Gibt die Lotsize des aktuellen Progression-Levels zurück.
- *
- * @return double - Lotsize oder -1, wenn ein Fehler auftrat
- */
-double CurrentLotSize() {
-   int level = CurrentLevel();
-
-   switch (level) {
-      case  1: return(Lotsize.Level.1);
-      case  2: return(Lotsize.Level.2);
-      case  3: return(Lotsize.Level.3);
-      case  4: return(Lotsize.Level.4);
-      case  5: return(Lotsize.Level.5);
-      case  6: return(Lotsize.Level.6);
-      case  7: return(Lotsize.Level.7);
-      case  8: return(Lotsize.Level.8);
-      case  9: return(Lotsize.Level.9);
-      case 10: return(Lotsize.Level.10);
-      case 11: return(Lotsize.Level.11);
-      case 12: return(Lotsize.Level.12);
-   }
-
-   catch("CurrentLotSize()   illegal progression level = "+ level, ERR_RUNTIME_ERROR);
-   return(-1);
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int ShowStatus(int id=NULL) {
-   string msg = "";
-
-   switch (id) {
-      case NULL                       : msg = "";                                                break;
-      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit";                        break;
-      case STATUS_FINISHED            : msg = ":  Trading sequence finished.";                   break;
-      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  New orders disabled (balance below minimum)."; break;
-      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  New orders disabled (equity below minimum)." ; break;
-   }
-
-   string status = __SCRIPT__ + msg + LF
-                 + LF
-                 + "Progression Level:  "+ CurrentLevel() +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
-                 + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
-                 + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
-                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
-                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)        + LF;
-
-   // 2 Zeilen Abstand nach oben für Instrumentanzeige
-   Comment(LF+LF+ status);
-
-   return(catch("ShowStatus(2)"));
-
-   if (false) {
-      BreakevenManager();
-      TrailingStopManager();
-      NewClosedPosition();
-      IncreaseProgressionLevel();
-   }
-}
-
-
-/**
- *
- */
-bool NewClosedPosition() {
-   return(lastPosition.ticket!=last_ticket && last_ticket!=0);
-}
-
-
-/**
- *
- */
-bool Progressing() {
-   if (EQ(CurrentLotSize(), 0)) {
-      ShowStatus(STATUS_FINISHED);
-      return(false);
-   }
-
-   if (lastPosition.result == RESULT_STOPLOSS)
-      return(true);
-
-   return(false);
 }
