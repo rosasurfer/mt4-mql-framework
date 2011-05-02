@@ -6757,6 +6757,213 @@ string NumberToStr(double number, string mask) {
 }
 
 
+/**
+ * TODO: Zur Zeit werden nur Market-Orders unterstützt !!!
+ *
+ * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ *
+ * @param  string   symbol      - Symbol des Instruments          (default: aktuelles Instrument)
+ * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
+ * @param  double   volume      - Transaktionsvolumen in Lot
+ * @param  double   price       - Preis (nur bei pending Orders)
+ * @param  int      slippage    - Slippage in Points              (default: 1          )
+ * @param  double   stopLoss    - Stoploss-Level                  (default: - kein -   )
+ * @param  double   takeProfit  - TakeProfit-Level                (default: - kein -   )
+ * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: - kein -   )
+ * @param  int      magicNumber - magic number                    (default: 0          )
+ * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
+ * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
+ *
+ * @return int - Ticket-Nummer oder -1, wenn ein Fehler auftrat
+ */
+int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0, int slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // symbol
+   if (symbol == "0")         // = NULL
+      symbol = Symbol();
+   int    digits  = MarketInfo(symbol, MODE_DIGITS);
+   double minLot  = MarketInfo(symbol, MODE_MINLOT);
+   double maxLot  = MarketInfo(symbol, MODE_MAXLOT);
+   double lotStep = MarketInfo(symbol, MODE_LOTSTEP);
+   int error  = GetLastError();
+   if (error != NO_ERROR) {
+      catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error);
+      return(-1);
+   }
+   // type
+   if (!IsTradeOperationType(type)) {
+      catch("OrderSendEx(2)   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // volume
+   if (LT(volume, minLot)) {
+      catch("OrderSendEx(3)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   if (GT(volume, maxLot)) {
+      catch("OrderSendEx(4)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   if (NE(MathModFix(volume, lotStep), 0)) {
+      catch("OrderSendEx(5)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   volume = NormalizeDouble(volume, CountDecimals(lotStep));
+   // price
+   if (LT(price, 0)) {
+      catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // slippage
+   if (slippage < 0) {
+      catch("OrderSendEx(7)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // stopLoss
+   if (NE(stopLoss, 0)) {
+      catch("OrderSendEx(8)   submission of stoploss orders is not implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
+      return(-1);
+   }
+   stopLoss = NormalizeDouble(stopLoss, digits);
+   // takeProfit
+   if (NE(takeProfit, 0)) {
+      catch("OrderSendEx(9)   submission of take-profit orders is not implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
+      return(-1);
+   }
+   takeProfit = NormalizeDouble(takeProfit, digits);
+   // comment
+   if (StringLen(comment) > 27) {
+      catch("OrderSendEx(10)   too long parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // expires
+   if (expires!= 0 && expires <= TimeCurrent()) {
+      catch("OrderSendEx(11)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // markerColor
+   if (markerColor < 0) {
+      catch("OrderSendEx(12)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   // -- Ende Parametervalidierung --
+
+
+   // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
+      else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
+      price = NormalizeDouble(price, digits);
+
+      if (IsTradeContextBusy()) {
+         log("OrderSendEx()   trade context busy, waiting...");
+      }
+      else {
+         int time = GetTickCount();
+
+         int ticket = OrderSend(symbol, type, volume, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+         if (ticket > 0) {
+            time = GetTickCount()-time;
+            PlaySound("OrderOk.wav");
+
+            // ausführliche Logmessage generieren
+            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, volume, price, digits, time));
+            catch("OrderSendEx(13)");
+            return(ticket);                        // regular exit
+         }
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))        // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+      }
+      error = NO_ERROR;
+      Sleep(300);                                  // 0.3 Sekunden warten
+   }
+
+   catch("OrderSendEx(14)   permanent trade error", error);
+   return(-1);
+}
+
+
+/**
+ * Generiert eine ausführliche Logmessage für eine erfolgreich abgeschickte oder ausgeführte Order.
+ *
+ * @param  int    ticket - Ticket-Nummer der Order
+ * @param  int    type   - gewünschter Ordertyp
+ * @param  double volume - gewünschtes Ordervolumen
+ * @param  double price  - gewünschter Orderpreis
+ * @param  int    digits - Nachkommastellen des Ordersymbols
+ * @param  int    time   - zur Orderausführung benötigte Zeit
+ *
+ * @return string - Logmessage
+ */
+/*private*/ string OrderSendEx.LogMessage(int ticket, int type, double volume, double price, int digits, int time) {
+   int    pipDigits   = digits - digits%2;
+   double pip         = 1/MathPow(10, pipDigits);
+   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      catch("OrderSendEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
+      return("");
+   }
+
+   string strType = OperationTypeDescription(OrderType());
+   if (type != OrderType())
+      strType = StringConcatenate(strType, " (instead of ", OperationTypeDescription(type), ")");
+
+   string strVolume = NumberToStr(OrderLots(), ".+");
+   if (NE(volume, OrderLots()))
+      strVolume = StringConcatenate(strVolume, " (instead of ", NumberToStr(volume, ".+"), ")");
+
+   string strPrice = NumberToStr(OrderOpenPrice(), priceFormat);
+   if (type == OrderType()) {
+      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+         if (NE(price, OrderOpenPrice())) {
+            string strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
+            bool plus = (OrderOpenPrice() > price);
+            if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
+            else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
+         }
+      }
+      else if (NE(price, OrderOpenPrice())) {
+         strPrice = StringConcatenate(strPrice, " (instead of ", NumberToStr(price, priceFormat), ")");
+      }
+   }
+
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strVolume, " ", OrderSymbol(), " at ", strPrice, ", used time: ", time, " ms");
+
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("OrderSendEx.LogMessage(2)", error);
+      return("");
+   }
+   return(message);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 
 

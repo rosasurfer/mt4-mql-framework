@@ -40,18 +40,18 @@ extern int    TakeProfit                     = 40;
 extern int    Stoploss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes =======================";
-extern double Lotsize.Level.1                =  0.1;
-extern double Lotsize.Level.2                =  0.1;
-extern double Lotsize.Level.3                =  0.2;
-extern double Lotsize.Level.4                =  0.3;
-extern double Lotsize.Level.5                =  0.4;
-extern double Lotsize.Level.6                =  0.6;
-extern double Lotsize.Level.7                =  0.8;
-extern double Lotsize.Level.8                =  1.1;
-extern double Lotsize.Level.9                =  1.5;
-extern double Lotsize.Level.10               =  2.0;
-extern double Lotsize.Level.11               =  2.7;
-extern double Lotsize.Level.12               =  3.6;
+extern double Lotsize.Level.1                = 0.1;
+extern double Lotsize.Level.2                = 0.1;
+extern double Lotsize.Level.3                = 0.2;
+extern double Lotsize.Level.4                = 0.3;
+extern double Lotsize.Level.5                = 0.4;
+extern double Lotsize.Level.6                = 0.6;
+extern double Lotsize.Level.7                = 0.8;
+extern double Lotsize.Level.8                = 1.1;
+extern double Lotsize.Level.9                = 1.5;
+extern double Lotsize.Level.10               = 2.0;
+extern double Lotsize.Level.11               = 2.7;
+extern double Lotsize.Level.12               = 3.6;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -197,8 +197,6 @@ int deinit() {
 int start() {
    init = false;
 
-   log("start()   sequenceLength = "+ sequenceLength);
-
    // aktuellen Status einlesen und auswerten
    if (ReadOrderStatus()) {
       // im Markt, Position managen
@@ -247,10 +245,8 @@ bool ReadOrderStatus() {
          open.comment     = OrderComment();
                                                                   // in MagicNumber: 10 Bits 23-32 => EA.uniqueId
          sequenceId       = OrderMagicNumber() << 10 >> 18;       // in MagicNumber: 14 Bits  9-22
-         sequenceLength   = OrderMagicNumber() << 24 >> 28;       // in MagicNumber:  4 Bits  5-8
-         progressionLevel = OrderMagicNumber() << 28 >> 32;       // in MagicNumber:  4 Bits  1-4
-
-         //debug("ReadOrderStatus()   active sequence found = "+ sequenceId);
+         sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     // in MagicNumber:  4 Bits  5-8
+         progressionLevel = OrderMagicNumber() & 0x000F;          // in MagicNumber:  4 Bits  1-4
          break;
       }
    }
@@ -305,12 +301,12 @@ bool IsMyOrder() {
  * @return int - magic number
  */
 int MagicNumber(int sequenceId) {
-   int ea       = EA.uniqueId << 22;               // 10 bit (0-1023)                                      | in MagicNumber: Bits 23-32
-   int sequence = sequenceId  << 18 >> 10;         // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
-   int length   = sequenceLength << 4;             // 4 bit (1-12), auf 8 bit erweitern                    | in MagicNumber: Bits  5-8
-   int level    = progressionLevel;                // 4 bit (1-12)                                         | in MagicNumber: Bits  1-4
+   int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
+   int sequence = sequenceId  << 18 >> 10;            // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
+   int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0x000F;          // 4 bit (Bereich 1-12)                                 | in MagicNumber: Bits  1-4
 
-   return(ea + sequence + length + level);         // alles addieren
+   return(ea + sequence + length + level);            // alles addieren
 }
 
 
@@ -373,29 +369,19 @@ int SendOrder(int type) {
    if (type!=OP_BUY && type!=OP_SELL)
       return(catch("SendOrder(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   int sequenceId  = SequenceId();
-   int magicNumber = MagicNumber(sequenceId);
+   int    sequenceId  = SequenceId();
+   int    magicNumber = MagicNumber(sequenceId);
+   double lotsize     = CurrentLotSize();
+   string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
+   int    slippage    = 1;
 
-   double   price      = ifDouble(type==OP_SELL, Bid, Ask);
-   double   lotsize    = CurrentLotSize();
-   int      slippage   = 1;
-   double   sl         = 0;
-   double   tp         = 0;
-   string   comment    = "FTP."+ sequenceId +"."+ progressionLevel +"/"+ NumberToStr((Bid+Ask)/2, PriceFormat);
-   datetime expiration = 0;
-
-   debug("SendOrder()   OrderSend("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, price="+ NumberToStr(price, PriceFormat) +", slippage="+ NumberToStr(slippage, ".+") +", sl="+ NumberToStr(sl, PriceFormat) +", tp="+ NumberToStr(tp, PriceFormat) +", comment=\""+ comment +"\", magic="+ magicNumber +", expires="+ expiration +", Green)");
-
-   if (false) {
-      int ticket = OrderSend(Symbol(), type, lotsize, price, slippage, sl, tp, comment, magicNumber, expiration, Green);
-      if (ticket > 0) {
-         if (OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES))
-            log("SendOrder()   Progression level "+ progressionLevel +" ("+ NumberToStr(lotsize, ".+") +" lot) - "+ OperationTypeDescription(type) +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat));
-      }
-      else return(catch("SendOrder(2)   error opening "+ OperationTypeDescription(type) +" order"));
+   if (true) {
+      int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
    }
-
-   return(catch("SendOrder(3)"));
+   else {
+      debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", comment=\""+ comment +"\", magic="+ magicNumber +", Green)");
+   }
+   return(catch("SendOrder(2)"));
 }
 
 
@@ -433,20 +419,23 @@ int ShowStatus(int id=NULL) {
    string msg = "";
 
    switch (id) {
-      case NULL                       : msg = ifString(sequenceId, " managing trade sequence "+ sequenceId, "");  break;
-      case STATUS_ENTRYLIMIT_WAIT     : msg = " waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
-      case STATUS_FINISHED            : msg = ":  Trading sequence finished.";                                    break;
-      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  New orders disabled (balance below minimum).";                  break;
-      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  New orders disabled (equity below minimum)." ;                  break;
+      case NULL:   if (sequenceId != 0) msg = ":  managing trade sequence "+ sequenceId;                            break;
+      case STATUS_ENTRYLIMIT_WAIT     : msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
+      case STATUS_FINISHED            : msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
+      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  new orders disabled (balance below minimum).";                    break;
+      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  new orders disabled (equity below minimum)." ;                    break;
    }
 
    string status = __SCRIPT__ + msg + LF
                  + LF
                  + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
-                 + "TakeProfit:            "+ TakeProfit +" pip"                                                + LF
-                 + "Stoploss:               "+ Stoploss +" pip"                                                 + LF
-                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                       + LF
-                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)        + LF;
+                 + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + LF
+                 + "Stoploss:               "+ Stoploss +" pip"                                                                          + LF;
+   if (sequenceId != 0) {
+          status = status
+                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + LF
+                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)                                 + LF;
+   }
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(LF+LF+ status);

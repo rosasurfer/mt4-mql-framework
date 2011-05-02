@@ -195,12 +195,11 @@
    string   StringTrim(string value);
    string   UrlEncode(string value);
 
-
    // Trade-Funktionen
    bool     IsPermanentTradeError(int error);
    bool     IsTemporaryTradeError(int error);
    bool     IsTradeOperationType(int value);
-
+   int      OrderSendEx(string symbol, int type, double volume, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
 
    // sonstiges
    string   AppliedPriceDescription(int appliedPrice);
