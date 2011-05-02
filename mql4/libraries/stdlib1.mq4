@@ -6767,7 +6767,7 @@ string NumberToStr(double number, string mask) {
  * @param  double   volume      - Transaktionsvolumen in Lot
  * @param  double   price       - Preis (nur bei pending Orders)
  * @param  int      slippage    - Slippage in Points              (default: 1          )
- * @param  double   stopLoss    - Stoploss-Level                  (default: - kein -   )
+ * @param  double   stopLoss    - StopLoss-Level                  (default: - kein -   )
  * @param  double   takeProfit  - TakeProfit-Level                (default: - kein -   )
  * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: - kein -   )
  * @param  int      magicNumber - magic number                    (default: 0          )

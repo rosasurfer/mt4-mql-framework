@@ -15,13 +15,6 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
 #include <stdlib.mqh>
 
 
-#define RESULT_UNKNOWN                 0
-#define RESULT_TAKEPROFIT              1
-#define RESULT_STOPLOSS                2
-#define RESULT_WINNER                  3
-#define RESULT_LOOSER                  4
-#define RESULT_BREAKEVEN               5
-
 #define STATUS_ENTRYLIMIT_WAIT         1
 #define STATUS_FINISHED                2
 #define STATUS_UNSUFFICIENT_BALANCE    3
@@ -37,7 +30,7 @@ extern double Entry.Limit                    = 0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 40;
-extern int    Stoploss                       = 10;
+extern int    StopLoss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes =======================";
 extern double Lotsize.Level.1                = 0.1;
@@ -120,9 +113,9 @@ int init() {
    if (TakeProfit < 1)
       return(catch("init(4)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE));
 
-   // Stoploss
-   if (Stoploss < 1)
-      return(catch("init(5)  Invalid input parameter Stoploss = "+ Stoploss, ERR_INVALID_INPUT_PARAMVALUE));
+   // StopLoss
+   if (StopLoss < 1)
+      return(catch("init(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
 
    // Lotsizes
    if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
@@ -197,20 +190,29 @@ int deinit() {
 int start() {
    init = false;
 
-   // aktuellen Status einlesen und auswerten
-   if (ReadOrderStatus()) {
-      // im Markt, Position managen
-   }
-   else if (EQ(Entry.Limit, 0)) {               // nicht im Markt, Entry.Limit prüfen
-      StartSequence();                          // kein Limit definiert
-   }
-   else if (entryDirection == OP_BUY) {         // Limit definiert, Limit erreicht ?
-      if (LE(Ask, Entry.Limit))                 // Entry long
+   if (!ReadOrderStatus()) {                    // keine laufende Sequenz gefunden
+      if (EQ(Entry.Limit, 0)) {                 // kein Limit definiert
          StartSequence();
+      }
+      else if (entryDirection == OP_BUY) {      // Limit definiert
+         if (LE(Ask, Entry.Limit))              // Buy-Limit erreicht
+            StartSequence();
+      }
+      else if (GE(Bid, Entry.Limit)) {          // Sell-Limit erreicht
+         StartSequence();
+      }
    }
-   else if (GE(Bid, Entry.Limit)) {             // Entry short
-      StartSequence();
+   else {                                       // laufende Sequenz gefunden, Position managen
+      if (open.type == OP_BUY) {
+         if (GE(Bid, open.price + TakeProfit*Pip)) takeProfit();
+         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();
+      }
+      else {
+         if (LE(Ask, open.price - TakeProfit*Pip)) takeProfit();
+         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();
+      }
    }
+
    ShowStatus();
 
    return(catch("start()"));
@@ -250,25 +252,6 @@ bool ReadOrderStatus() {
          break;
       }
    }
-
-   /*
-   // closedPositions
-   closedPositions = 0;
-   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
-      OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-      if (IsMyOrder()) {
-         closedPositions++;
-                                                            lastPosition.ticket = OrderTicket();
-                                                            lastPosition.type   = OrderType();
-                                                            lastPosition.lots   = OrderLots();
-         if      (EQ(OrderClosePrice(), OrderTakeProfit())) lastPosition.result = RESULT_TAKEPROFIT;
-         else if (EQ(OrderClosePrice(), OrderStopLoss()))   lastPosition.result = RESULT_STOPLOSS;
-         else if (GT(OrderProfit(), 0))                     lastPosition.result = RESULT_WINNER;
-         else if (LT(OrderProfit(), 0))                     lastPosition.result = RESULT_LOOSER;
-         else                                               lastPosition.result = RESULT_BREAKEVEN;
-      }
-   }
-   */
 
    int error = GetLastError();
    if (error != NO_ERROR) {
@@ -345,19 +328,20 @@ int StartSequence() {
 
 
 /**
- * Prüft den Account nach Moneymanagement-Gesichtspunkten (Balance, Equity, Marginanforderungen, Leverage) und gibt an,
- * ob die nächste Order ausgeführt werden darf.
+ *
+ * @return int - Fehlerstatus
  */
-bool NewOrderPermitted() {
-   if (AccountBalance() < minAccountBalance) {
-      ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
-      return(false);
-   }
-   if (AccountEquity() < minAccountEquity) {
-      ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
-      return(false);
-   }
-   return(true);
+int takeProfit() {
+   return(catch("takeProfit()"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int IncreaseProgression() {
+   return(catch("IncreaseProgression()"));
 }
 
 
@@ -382,6 +366,23 @@ int SendOrder(int type) {
       debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", comment=\""+ comment +"\", magic="+ magicNumber +", Green)");
    }
    return(catch("SendOrder(2)"));
+}
+
+
+/**
+ * Prüft den Account nach Moneymanagement-Gesichtspunkten (Balance, Equity, Marginanforderungen, Leverage) und gibt an,
+ * ob die nächste Order ausgeführt werden darf.
+ */
+bool NewOrderPermitted() {
+   if (AccountBalance() < minAccountBalance) {
+      ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
+      return(false);
+   }
+   if (AccountEquity() < minAccountEquity) {
+      ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
+      return(false);
+   }
+   return(true);
 }
 
 
@@ -419,7 +420,7 @@ int ShowStatus(int id=NULL) {
    string msg = "";
 
    switch (id) {
-      case NULL:   if (sequenceId != 0) msg = ":  managing trade sequence "+ sequenceId;                            break;
+      case NULL:   if (sequenceId != 0) msg = ":  managing trade sequence "+ sequenceId +", #"+ open.ticket;        break;
       case STATUS_ENTRYLIMIT_WAIT     : msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
       case STATUS_FINISHED            : msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
       case STATUS_UNSUFFICIENT_BALANCE: msg = ":  new orders disabled (balance below minimum).";                    break;
@@ -430,7 +431,7 @@ int ShowStatus(int id=NULL) {
                  + LF
                  + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
                  + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + LF
-                 + "Stoploss:               "+ Stoploss +" pip"                                                                          + LF;
+                 + "StopLoss:              "+ StopLoss +" pip"                                                                           + LF;
    if (sequenceId != 0) {
           status = status
                  + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + LF
