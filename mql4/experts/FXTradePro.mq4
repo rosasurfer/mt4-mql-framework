@@ -190,26 +190,26 @@ int deinit() {
 int start() {
    init = false;
 
-   if (!ReadOrderStatus()) {                    // keine laufende Sequenz gefunden
-      if (EQ(Entry.Limit, 0)) {                 // kein Limit definiert
+   if (!ReadOrderStatus()) {                       // keine laufende Sequenz gefunden
+      if (EQ(Entry.Limit, 0)) {                    // kein Limit definiert
          StartSequence();
       }
-      else if (entryDirection == OP_BUY) {      // Limit definiert
-         if (LE(Ask, Entry.Limit))              // Buy-Limit erreicht
+      else if (entryDirection == OP_BUY) {         // Limit definiert
+         if (LE(Ask, Entry.Limit))                 // Buy-Limit erreicht
             StartSequence();
       }
-      else if (GE(Bid, Entry.Limit)) {          // Sell-Limit erreicht
+      else if (GE(Bid, Entry.Limit)) {             // Sell-Limit erreicht
          StartSequence();
       }
    }
-   else {                                       // laufende Sequenz gefunden, Position managen
+   else {                                          // laufende Sequenz gefunden, Position managen
       if (open.type == OP_BUY) {
-         if (GE(Bid, open.price + TakeProfit*Pip)) takeProfit();
-         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();
+         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();     // close existing and open next progression level position
+         if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();          // close existing position and end this sequence
       }
       else {
-         if (LE(Ask, open.price - TakeProfit*Pip)) takeProfit();
-         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();
+         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();     // close existing and open next progression level position
+         if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();          // close existing position and end this sequence
       }
    }
 
@@ -245,10 +245,10 @@ bool ReadOrderStatus() {
          open.profit      = OrderProfit();
          open.magic       = OrderMagicNumber();
          open.comment     = OrderComment();
-                                                                  // in MagicNumber: 10 Bits 23-32 => EA.uniqueId
-         sequenceId       = OrderMagicNumber() << 10 >> 18;       // in MagicNumber: 14 Bits  9-22
-         sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     // in MagicNumber:  4 Bits  5-8
-         progressionLevel = OrderMagicNumber() & 0x000F;          // in MagicNumber:  4 Bits  1-4
+                                                                  // 10 Bits 23-32 => EA.uniqueId
+         sequenceId       = OrderMagicNumber() << 10 >> 18;       // 14 Bits  9-22 => sequenceId
+         sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     //  4 Bits  5-8  => sequenceLength
+         progressionLevel = OrderMagicNumber() & 0x000F;          //  4 Bits  1-4  => progressionLevel
          break;
       }
    }
@@ -331,8 +331,12 @@ int StartSequence() {
  *
  * @return int - Fehlerstatus
  */
-int takeProfit() {
-   return(catch("takeProfit()"));
+int IncreaseProgression() {
+
+   // ClosePosition();
+   // OpenOppositePosition();
+
+   return(catch("IncreaseProgression()"));
 }
 
 
@@ -340,8 +344,12 @@ int takeProfit() {
  *
  * @return int - Fehlerstatus
  */
-int IncreaseProgression() {
-   return(catch("IncreaseProgression()"));
+int FinishSequence() {
+
+   // ClosePosition();
+   // CleanUp();
+
+   return(catch("FinishSequence()"));
 }
 
 
@@ -359,12 +367,9 @@ int SendOrder(int type) {
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
 
-   if (true) {
-      int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
-   }
-   else {
-      debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", comment=\""+ comment +"\", magic="+ magicNumber +", Green)");
-   }
+   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
+   debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
+
    return(catch("SendOrder(2)"));
 }
 
@@ -420,7 +425,7 @@ int ShowStatus(int id=NULL) {
    string msg = "";
 
    switch (id) {
-      case NULL:   if (sequenceId != 0) msg = ":  managing trade sequence "+ sequenceId +", #"+ open.ticket;        break;
+      case NULL:   if (sequenceId != 0) msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;                 break;
       case STATUS_ENTRYLIMIT_WAIT     : msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
       case STATUS_FINISHED            : msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
       case STATUS_UNSUFFICIENT_BALANCE: msg = ":  new orders disabled (balance below minimum).";                    break;
