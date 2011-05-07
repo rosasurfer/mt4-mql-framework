@@ -193,14 +193,14 @@ int start() {
    if (!ReadOrderStatus()) {                       // keine laufende Sequenz gefunden
       if (EQ(Entry.Limit, 0)) {                    // kein Limit definiert
          StartSequence();
-      }
+   }
       else if (entryDirection == OP_BUY) {         // Limit definiert
          if (LE(Ask, Entry.Limit))                 // Buy-Limit erreicht
-            StartSequence();
-      }
-      else if (GE(Bid, Entry.Limit)) {             // Sell-Limit erreicht
          StartSequence();
-      }
+   }
+      else if (GE(Bid, Entry.Limit)) {             // Sell-Limit erreicht
+      StartSequence();
+   }
    }
    else {                                          // laufende Sequenz gefunden, Position managen
       if (open.type == OP_BUY) {
@@ -337,7 +337,7 @@ int IncreaseProgression() {
    // OpenOppositePosition();
 
    return(catch("IncreaseProgression()"));
-}
+   }
 
 
 /**
@@ -350,7 +350,7 @@ int FinishSequence() {
    // CleanUp();
 
    return(catch("FinishSequence()"));
-}
+   }
 
 
 /**
@@ -367,11 +367,11 @@ int SendOrder(int type) {
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
 
-   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
+      int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
    debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
 
    return(catch("SendOrder(2)"));
-}
+   }
 
 
 /**
@@ -386,7 +386,7 @@ bool NewOrderPermitted() {
    if (AccountEquity() < minAccountEquity) {
       ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
       return(false);
-   }
+}
    return(true);
 }
 
@@ -432,19 +432,19 @@ int ShowStatus(int id=NULL) {
       case STATUS_UNSUFFICIENT_EQUITY : msg = ":  new orders disabled (equity below minimum)." ;                    break;
    }
 
-   string status = __SCRIPT__ + msg + LF
-                 + LF
-                 + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + LF
-                 + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + LF
-                 + "StopLoss:              "+ StopLoss +" pip"                                                                           + LF;
+   string status = __SCRIPT__ + msg + NL
+                 + NL
+                 + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + NL
+                 + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + NL
+                 + "Stoploss:               "+ Stoploss +" pip"                                                                          + NL;
    if (sequenceId != 0) {
           status = status
-                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + LF
-                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)                                 + LF;
+                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + NL
+                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)                                 + NL;
    }
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
-   Comment(LF+LF+ status);
+   Comment(NL+NL+ status);
 
    return(catch("ShowStatus(2)"));
 

@@ -8,7 +8,7 @@
 // String maximaler Länge
 #define MAX_STRING_LITERAL     "..............................................................................................................................................................................................................................................................."
 #define MAX_STRING_LITERAL_LEN 255
-#define LF                     "\n"    // line feed, entspricht CR+LF in MQL
+#define NL                     "\n"    // new line, entspricht CR+LF in MQL
 
 
 // Mathematische Konstanten
