@@ -15,10 +15,9 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
 #include <stdlib.mqh>
 
 
-#define STATUS_ENTRYLIMIT_WAIT         1
-#define STATUS_FINISHED                2
-#define STATUS_UNSUFFICIENT_BALANCE    3
-#define STATUS_UNSUFFICIENT_EQUITY     4
+#define STATUS_FINISHED                1
+#define STATUS_UNSUFFICIENT_BALANCE    2
+#define STATUS_UNSUFFICIENT_EQUITY     3
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -190,26 +189,26 @@ int deinit() {
 int start() {
    init = false;
 
-   if (!ReadOrderStatus()) {                       // keine laufende Sequenz gefunden
-      if (EQ(Entry.Limit, 0)) {                    // kein Limit definiert
+   if (!ReadOrderStatus()) {                                                  // keine laufende Sequenz gefunden
+      if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert
          StartSequence();
-   }
-      else if (entryDirection == OP_BUY) {         // Limit definiert
-         if (LE(Ask, Entry.Limit))                 // Buy-Limit erreicht
+      }
+      else if (entryDirection == OP_BUY) {                                    // Limit definiert
+         if (LE(Ask, Entry.Limit))                                            // Buy-Limit erreicht
+            StartSequence();
+      }
+      else if (GE(Bid, Entry.Limit)) {                                        // Sell-Limit erreicht
          StartSequence();
+      }
    }
-      else if (GE(Bid, Entry.Limit)) {             // Sell-Limit erreicht
-      StartSequence();
-   }
-   }
-   else {                                          // laufende Sequenz gefunden, Position managen
+   else {                                                                     // laufende Sequenz gefunden
       if (open.type == OP_BUY) {
-         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();     // close existing and open next progression level position
-         if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();          // close existing position and end this sequence
+         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();     // Position schließen und auf nächsten Level wechseln
+         if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();          // Position schließen und Sequenz beenden
       }
       else {
-         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();     // close existing and open next progression level position
-         if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();          // close existing position and end this sequence
+         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();     // Position schließen und auf nächsten Level wechseln
+         if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();          // Position schließen und Sequenz beenden
       }
    }
 
@@ -318,10 +317,14 @@ int SequenceId() {
  */
 int StartSequence() {
    if (sequenceId != 0)
-      return(catch("StartSequence(1)  Cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
+      return(catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
+
+   if (EQ(Entry.Limit, 0)) {           // kein Limit definiert, also Aufruf direkt nach Start
+      // TODO: Sicherheitsabfrage
+   }
 
    if (NewOrderPermitted())
-      SendOrder(entryDirection);    // Position in Entry.Direction öffnen
+      SendOrder(entryDirection);       // Position in Entry.Direction öffnen
 
    return(catch("StartSequence()"));
 }
@@ -332,12 +335,10 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-
    // ClosePosition();
    // OpenOppositePosition();
-
    return(catch("IncreaseProgression()"));
-   }
+}
 
 
 /**
@@ -345,12 +346,10 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-
    // ClosePosition();
    // CleanUp();
-
    return(catch("FinishSequence()"));
-   }
+}
 
 
 /**
@@ -367,11 +366,12 @@ int SendOrder(int type) {
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
 
-      int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
-   debug("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
+   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
+
+   log("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
 
    return(catch("SendOrder(2)"));
-   }
+}
 
 
 /**
@@ -386,7 +386,7 @@ bool NewOrderPermitted() {
    if (AccountEquity() < minAccountEquity) {
       ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
       return(false);
-}
+   }
    return(true);
 }
 
@@ -425,18 +425,20 @@ int ShowStatus(int id=NULL) {
    string msg = "";
 
    switch (id) {
-      case NULL:   if (sequenceId != 0) msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;                 break;
-      case STATUS_ENTRYLIMIT_WAIT     : msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
+      case NULL:   if (sequenceId == 0) msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat);
+                   else                 msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;                 break;
       case STATUS_FINISHED            : msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
       case STATUS_UNSUFFICIENT_BALANCE: msg = ":  new orders disabled (balance below minimum).";                    break;
       case STATUS_UNSUFFICIENT_EQUITY : msg = ":  new orders disabled (equity below minimum)." ;                    break;
+      default:
+         return(catch("ShowStatus(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
 
    string status = __SCRIPT__ + msg + NL
                  + NL
                  + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + NL
                  + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + NL
-                 + "Stoploss:               "+ Stoploss +" pip"                                                                          + NL;
+                 + "Stoploss:               "+ StopLoss +" pip"                                                                          + NL;
    if (sequenceId != 0) {
           status = status
                  + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + NL
@@ -447,11 +449,7 @@ int ShowStatus(int id=NULL) {
    Comment(NL+NL+ status);
 
    return(catch("ShowStatus(2)"));
-
-   if (false) {
-      BreakevenManager();
-      TrailingStopManager();
-   }
+   BreakevenManager(); TrailingStopManager();
 }
 
 
