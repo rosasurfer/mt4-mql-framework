@@ -189,6 +189,9 @@ int deinit() {
 int start() {
    init = false;
 
+   if (last_error != NO_ERROR)
+      return(last_error);
+
    if (!ReadOrderStatus()) {                                                  // keine laufende Sequenz gefunden
       if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert
          StartSequence();
@@ -220,7 +223,6 @@ int start() {
 
 /**
  * TODO: Im Moment wird nach der ersten gefundenen Order des EA's abgebrochen !!!
- *
  *
  * Liest die Orderdaten der im Moment laufenden Sequenzen im aktuellen Instrument ein.
  *
@@ -316,17 +318,26 @@ int SequenceId() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (sequenceId != 0)
-      return(catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
-
-   if (EQ(Entry.Limit, 0)) {           // kein Limit definiert, also Aufruf direkt nach Start
-      // TODO: Sicherheitsabfrage
+   if (sequenceId != 0) {
+      catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR);
+      return(-1);
    }
 
-   if (NewOrderPermitted())
-      SendOrder(entryDirection);       // Position in Entry.Direction öffnen
+   int error, answer=IDOK;
 
-   return(catch("StartSequence()"));
+   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
+      PlaySound("notify.wav");
+      answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   }
+
+   if      (answer != IDOK      ) error = ERR_COMMON_ERROR;             // manual confirmation was denied
+   else if (!NewOrderPermitted()) error = ERR_NOT_ENOUGH_MONEY;         // MM verbietet weitere Orders
+   else                           error = SendOrder(entryDirection);    // Position in Entry.Direction öffnen
+
+   last_error = error;
+   if (error == NO_ERROR)
+      error = catch("StartSequence(2)");
+   return(error);
 }
 
 
