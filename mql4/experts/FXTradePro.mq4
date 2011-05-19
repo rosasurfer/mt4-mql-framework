@@ -188,30 +188,29 @@ int deinit() {
  */
 int start() {
    init = false;
+   if (last_error != NO_ERROR) return(last_error);
 
-   if (last_error != NO_ERROR)
-      return(last_error);
 
-   if (!ReadOrderStatus()) {                                                  // keine laufende Sequenz gefunden
-      if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert
+   if (!ReadOrderStatus()) {                                                     // keine laufende Sequenz gefunden
+      if (EQ(Entry.Limit, 0)) {                                                  // kein Limit definiert
          StartSequence();
       }
-      else if (entryDirection == OP_BUY) {                                    // Limit definiert
-         if (LE(Ask, Entry.Limit))                                            // Buy-Limit erreicht
+      else if (entryDirection == OP_BUY) {                                       // Limit definiert
+         if (LE(Ask, Entry.Limit))                                               // Buy-Limit erreicht
             StartSequence();
       }
-      else if (GE(Bid, Entry.Limit)) {                                        // Sell-Limit erreicht
+      else if (GE(Bid, Entry.Limit)) {                                           // Sell-Limit erreicht
          StartSequence();
       }
    }
-   else {                                                                     // laufende Sequenz gefunden
-      if (open.type == OP_BUY) {
-         if (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();     // Position schließen und auf nächsten Level wechseln
-         if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();          // Position schließen und Sequenz beenden
+   else {                                                                        // laufende Sequenz gefunden
+      if (open.type == OP_BUY) {                                                 // Long-Position
+         if      (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_SELL)
+         else if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
       }
-      else {
-         if (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();     // Position schließen und auf nächsten Level wechseln
-         if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();          // Position schließen und Sequenz beenden
+      else {                                                                     // Short-Position
+         if      (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_BUY)
+         else if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
       }
    }
 
@@ -222,39 +221,82 @@ int start() {
 
 
 /**
- * TODO: Im Moment wird nach der ersten gefundenen Order des EA's abgebrochen !!!
+ * TODO: Ohne Angabe einer Ticket-Nr. wird noch nach der ersten gefundenen Position des EA's abgebrochen, theoretisch
+ *       sind aber mehrere aktive Sequenzen im selben Instrument möglich !!!
  *
- * Liest die Orderdaten der im Moment laufenden Sequenzen im aktuellen Instrument ein.
+ * Liest den Status der im Moment laufenden Sequenz im aktuellen Instrument ein. Wird *keine* Ticket-Nr. angegeben,
+ * werden alle offenen Positionen auf eine aktive Sequenz überprüft. Wird eine Ticket-Nr. angegeben, wird nur der Status
+ * der Sequenz, zu der dieses Ticket gehört, eingelesen.
  *
- * @return bool - ob im Moment eine Sequenz aktiv ist oder nicht
+ * @param  int ticket - Ticket-Nr. der offenen Position einer einzulesenden Sequenz (default: NULL)
+ *
+ * @return bool - ob momentan eine Sequenz aktiv ist oder nicht
  */
-bool ReadOrderStatus() {
-   sequenceId = 0;
-   int orders = OrdersTotal();
+bool ReadOrderStatus(int ticket = NULL) {
+   open.ticket = 0;
 
-   for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE ist rein theoretisch: während des Auslesens wird eine Order geschlossen/gestrichen und verschwindet
-         break;
-      if (IsMyOrder()) {
-         open.ticket      = OrderTicket();
-         open.type        = OrderType();
-         open.time        = OrderOpenTime();
-         open.price       = OrderOpenPrice();
-         open.lots        = OrderLots();
-         open.swap        = OrderSwap();
-         open.commission  = OrderCommission();
-         open.profit      = OrderProfit();
-         open.magic       = OrderMagicNumber();
-         open.comment     = OrderComment();
-                                                                  // 10 Bits 23-32 => EA.uniqueId
-         sequenceId       = OrderMagicNumber() << 10 >> 18;       // 14 Bits  9-22 => sequenceId
-         sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     //  4 Bits  5-8  => sequenceLength
-         progressionLevel = OrderMagicNumber() & 0x000F;          //  4 Bits  1-4  => progressionLevel
-         break;
+   if (ticket == NULL) {
+      int orders = OrdersTotal();
+
+      for (int i=0; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE ist rein theoretisch: während des Auslesens wird eine Order geschlossen/gestrichen und verschwindet
+            break;
+         if (IsMyOrder()) {
+            open.ticket = OrderTicket();
+            break;
+         }
       }
    }
+   else {
+      if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
+         int error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         catch("ReadOrderStatus()   cannot select ticket #"+ ticket, error);
+         return(-1);
+      }
+      if (!IsMyOrder()) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         catch("ReadOrderStatus()   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
+         return(-1);
+      }
+      open.ticket = ticket;
+   }
 
-   int error = GetLastError();
+   if (open.ticket == 0) {
+      open.type        = 0;
+      open.time        = 0;
+      open.price       = 0;
+      open.lots        = 0;
+      open.swap        = 0;
+      open.commission  = 0;
+      open.profit      = 0;
+      open.magic       = 0;
+      open.comment     = "";
+
+      sequenceId       = 0;
+      sequenceLength   = 0;
+      progressionLevel = 1;
+   }
+   else {
+      open.type        = OrderType();
+      open.time        = OrderOpenTime();
+      open.price       = OrderOpenPrice();
+      open.lots        = OrderLots();
+      open.swap        = OrderSwap();
+      open.commission  = OrderCommission();
+      open.profit      = OrderProfit();
+      open.magic       = OrderMagicNumber();
+      open.comment     = OrderComment();
+                                                               // 10 Bits 23-32 => EA.uniqueId
+      sequenceId       = OrderMagicNumber() << 10 >> 18;       // 14 Bits  9-22 => sequenceId
+      sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     //  4 Bits  5-8  => sequenceLength
+      progressionLevel = OrderMagicNumber() & 0x000F;          //  4 Bits  1-4  => progressionLevel
+   }
+
+   error = GetLastError();
    if (error != NO_ERROR) {
       catch("ReadOrderStatus()", error);
       return(false);
@@ -323,21 +365,25 @@ int StartSequence() {
       return(-1);
    }
 
-   int error, answer=IDOK;
+   int answer = IDOK;
 
-   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
       answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    }
 
-   if      (answer != IDOK      ) error = ERR_COMMON_ERROR;             // manual confirmation was denied
-   else if (!NewOrderPermitted()) error = ERR_NOT_ENOUGH_MONEY;         // MM verbietet weitere Orders
-   else                           error = SendOrder(entryDirection);    // Position in Entry.Direction öffnen
+   last_error = NO_ERROR;
 
-   last_error = error;
-   if (error == NO_ERROR)
-      error = catch("StartSequence(2)");
-   return(error);
+   if      (answer != IDOK      ) last_error = ERR_COMMON_ERROR;           // manual confirmation was denied
+   else if (!NewOrderPermitted()) last_error = ERR_NOT_ENOUGH_MONEY;       // MM verbietet weitere Orders
+   else {
+      int ticket = SendOrder(entryDirection);                              // Position in Entry.Direction öffnen
+      if (ticket != -1) ReadOrderStatus(ticket);                           // bei Erfolg Status neu einlesen
+   }
+
+   if (last_error == NO_ERROR)
+      catch("StartSequence(2)");
+   return(last_error);
 }
 
 
@@ -346,9 +392,23 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
+   log("IncreaseProgression()");
+
    // ClosePosition();
-   // OpenOppositePosition();
-   return(catch("IncreaseProgression()"));
+
+   progressionLevel++;
+
+   last_error = NO_ERROR;
+
+   if (!NewOrderPermitted()) last_error = ERR_NOT_ENOUGH_MONEY;            // MM verbietet weitere Orders
+   else {
+      int ticket = SendOrder(ifInt(open.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
+      if (ticket != -1) ReadOrderStatus(ticket);                           // bei Erfolg Status neu einlesen
+   }
+
+   if (last_error == NO_ERROR)
+      catch("IncreaseProgression()");
+   return(last_error);
 }
 
 
@@ -357,6 +417,9 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
+
+   log("FinishSequence()");
+
    // ClosePosition();
    // CleanUp();
    return(catch("FinishSequence()"));
@@ -365,7 +428,7 @@ int FinishSequence() {
 
 /**
  *
- * @return int - Fehlerstatus
+ * @return int - Ticket-Nr. der neuen Position oder -1, falls ein Fehler auftrat
  */
 int SendOrder(int type) {
    if (type!=OP_BUY && type!=OP_SELL)
@@ -379,9 +442,11 @@ int SendOrder(int type) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
 
-   log("SendOrder()   OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
+   log("SendOrder()   "+ ticket +" = OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
 
-   return(catch("SendOrder(2)"));
+   if (ticket!=-1) /*&&*/ if (catch("SendOrder(2)")!=NO_ERROR)
+      ticket = -1;
+   return(ticket);
 }
 
 

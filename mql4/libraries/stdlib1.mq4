@@ -4998,8 +4998,9 @@ int GetTerminalWindow() {
    if (hWndTerminal != 0)
       return(hWndTerminal);
 
+   // TODO: in Indicator::init() ist WindowHandle() unbrauchbar
    int hWndParent = WindowHandle(Symbol(), Period());
-   if (hWndParent == 0)                         // in Indicator::init() ist WindowHandle() unbrauchbar
+   if (hWndParent == 0)
       return(0);
 
    while (hWndParent != 0) {

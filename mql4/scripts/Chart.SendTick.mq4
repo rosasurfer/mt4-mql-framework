@@ -35,9 +35,8 @@ int deinit() {
  */
 int start() {
    init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // -----------------------------------------------------------------------------
+   if (init_error != NO_ERROR) return(init_error);
+
 
    SendTick(true);
    return(catch("start()"));
