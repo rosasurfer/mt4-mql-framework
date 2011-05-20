@@ -15,9 +15,10 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
 #include <stdlib.mqh>
 
 
-#define STATUS_FINISHED                1
-#define STATUS_UNSUFFICIENT_BALANCE    2
-#define STATUS_UNSUFFICIENT_EQUITY     3
+#define STATUS_INACTIVE                1
+#define STATUS_FINISHED                2
+#define STATUS_UNSUFFICIENT_BALANCE    3
+#define STATUS_UNSUFFICIENT_EQUITY     4
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -190,17 +191,18 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
+   if (ReadOrderStatus() == -1)
+      return(last_error);
 
-   if (!ReadOrderStatus()) {                                                     // keine laufende Sequenz gefunden
+   if (sequenceId == 0) {                                                        // keine laufende Sequenz gefunden
       if (EQ(Entry.Limit, 0)) {                                                  // kein Limit definiert
          StartSequence();
       }
       else if (entryDirection == OP_BUY) {                                       // Limit definiert
-         if (LE(Ask, Entry.Limit))                                               // Buy-Limit erreicht
-            StartSequence();
+         if (LE(Ask, Entry.Limit)) StartSequence();                              // Buy-Limit erreicht
       }
-      else if (GE(Bid, Entry.Limit)) {                                           // Sell-Limit erreicht
-         StartSequence();
+      else {
+         if (GE(Bid, Entry.Limit)) StartSequence();                              // Sell-Limit erreicht
       }
    }
    else {                                                                        // laufende Sequenz gefunden
@@ -214,21 +216,19 @@ int start() {
       }
    }
 
-   ShowStatus();
-
    return(catch("start()"));
 }
 
 
 /**
- * TODO: Ohne Angabe einer Ticket-Nr. wird noch nach der ersten gefundenen Position des EA's abgebrochen, theoretisch
+ * TODO: Ohne Angabe eines Tickets wird noch nach der ersten gefundenen Position des EA's abgebrochen, theoretisch
  *       sind aber mehrere aktive Sequenzen im selben Instrument möglich !!!
  *
- * Liest den Status der im Moment laufenden Sequenz im aktuellen Instrument ein. Wird *keine* Ticket-Nr. angegeben,
- * werden alle offenen Positionen auf eine aktive Sequenz überprüft. Wird eine Ticket-Nr. angegeben, wird nur der Status
+ * Liest den Status der im Moment laufenden Sequenz im aktuellen Instrument ein. Wird *kein* Ticket angegeben,
+ * werden alle offenen Positionen auf eine aktive Sequenz überprüft. Wird ein Ticket angegeben, wird nur der Status
  * der Sequenz, zu der dieses Ticket gehört, eingelesen.
  *
- * @param  int ticket - Ticket-Nr. der offenen Position einer einzulesenden Sequenz (default: NULL)
+ * @param  int ticket - Ticket der offenen Position einer einzulesenden Sequenz (default: NULL)
  *
  * @return int - Sequenz-ID einer ativen Sequenz oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
  */
@@ -333,10 +333,10 @@ int MagicNumber(int sequenceId) {
  * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
  */
 int SequenceId() {
-   if (sequenceId == 0) {              // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() aus der offenen Position ausgelesen.
-      MathSrand(GetTickCount());       // Ohne offene Position kann sie problemlos jedesmal neu generiert werden.
+   if (sequenceId == 0) {                    // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() aus der offenen Position ausgelesen.
+      MathSrand(GetTickCount());             // Ohne offene Position kann sie jedesmal problemlos neu generiert werden.
 
-      while (sequenceId < 2000) {      // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
+      while (sequenceId < 2000) {            // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
          sequenceId = MathRand();
       }
       sequenceId >>= 1;
@@ -354,10 +354,11 @@ int StartSequence() {
    if (sequenceId != 0)
       return(catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
 
-   if (EQ(Entry.Limit, 0)) {                                // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
       int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer != IDOK) {
+         ShowStatus(STATUS_INACTIVE);
          last_error = ERR_COMMON_ERROR;
          return(last_error);
       }
@@ -386,7 +387,7 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   log("IncreaseProgression()");
+   debug("IncreaseProgression()");
 
    // ClosePosition();
 
@@ -414,17 +415,20 @@ int IncreaseProgression() {
  */
 int FinishSequence() {
 
-   log("FinishSequence()");
+   debug("FinishSequence()");
 
    // ClosePosition();
    // CleanUp();
+
+   ShowStatus(STATUS_FINISHED);
+
    return(catch("FinishSequence()"));
 }
 
 
 /**
  *
- * @return int - Ticket-Nr. der neuen Position oder -1, falls ein Fehler auftrat
+ * @return int - Ticket der neuen Position oder -1, falls ein Fehler auftrat
  */
 int SendOrder(int type) {
    if (type!=OP_BUY && type!=OP_SELL)
@@ -438,7 +442,7 @@ int SendOrder(int type) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
 
-   log("SendOrder()   "+ ticket +" = OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
+   debug("SendOrder()   "+ ticket +" = OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
 
    if (ticket!=-1) /*&&*/ if (catch("SendOrder(2)")!=NO_ERROR)
       ticket = -1;
@@ -494,31 +498,42 @@ double CurrentLotSize() {
  * @return int - Fehlerstatus
  */
 int ShowStatus(int id=NULL) {
-   string msg = "";
+   string status=__SCRIPT__, msg="";
 
    switch (id) {
-      case NULL:   if (sequenceId == 0) msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat);
-                   else                 msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;                 break;
-      case STATUS_FINISHED            : msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
-      case STATUS_UNSUFFICIENT_BALANCE: msg = ":  new orders disabled (balance below minimum).";                    break;
-      case STATUS_UNSUFFICIENT_EQUITY : msg = ":  new orders disabled (equity below minimum)." ;                    break;
+      case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;
+                 else if (EQ(Entry.Limit, 0)) msg = ":  waiting";
+                 else                         msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
+      case STATUS_INACTIVE            :       msg = ":  inactive";                                                        break;
+      case STATUS_FINISHED            :       msg = ":  trade sequence "+ sequenceId +" finished.";                       break;
+      case STATUS_UNSUFFICIENT_BALANCE:       msg = ":  new orders disabled (balance below minimum).";                    break;
+      case STATUS_UNSUFFICIENT_EQUITY :       msg = ":  new orders disabled (equity below minimum)." ;                    break;
       default:
          return(catch("ShowStatus(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
 
-   string status = __SCRIPT__ + msg + NL
-                 + NL
-                 + "Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + NL
-                 + "TakeProfit:            "+ TakeProfit +" pip"                                                                         + NL
-                 + "Stoploss:               "+ StopLoss +" pip"                                                                          + NL;
+      status = status + msg + NL + NL;
+
+   if (progressionLevel == 0) {
+      status = status
+             +"Progression Level:  "+ progressionLevel +" / "+ sequenceLength + NL;
+   }
+   else {
+      status = status
+             +"Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + NL;
+   }
+      status = status
+             +"TakeProfit:            "+ TakeProfit +" pip" + NL
+             +"Stoploss:               "+ StopLoss +" pip"  + NL;
+
    if (sequenceId != 0) {
-          status = status
-                 + "Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                                                + NL
-                 + "Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2)                                 + NL;
+      status = status
+             +"Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                + NL
+             +"Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2) + NL;
    }
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
-   Comment(NL+NL+ status);
+   Comment(NL + NL + status);
 
    return(catch("ShowStatus(2)"));
    BreakevenManager(); TrailingStopManager();
