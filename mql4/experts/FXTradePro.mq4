@@ -194,7 +194,7 @@ int start() {
    if (ReadStatus() == -1)
       return(last_error);
 
-   if (sequenceId == 0) {                                                        // keine aktive Sequenz gefunden
+   if (sequenceId == 0) {                                                        // keine Sequenz aktiv
       if (EQ(Entry.Limit, 0)) {                                                  // kein Limit definiert
          StartSequence();
       }
