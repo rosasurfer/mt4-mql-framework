@@ -54,8 +54,8 @@ string   PriceFormat;
 
 int      sequenceId;
 int      sequenceLength;
-int      progressionLevel = 1;
-int      entryDirection   = OP_UNDEFINED;
+int      progressionLevel;
+int      entryDirection = OP_UNDEFINED;
 
 int      open.ticket;
 int      open.type;
@@ -230,9 +230,9 @@ int start() {
  *
  * @param  int ticket - Ticket-Nr. der offenen Position einer einzulesenden Sequenz (default: NULL)
  *
- * @return bool - ob momentan eine Sequenz aktiv ist oder nicht
+ * @return int - Sequenz-ID einer ativen Sequenz oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
  */
-bool ReadOrderStatus(int ticket = NULL) {
+int ReadOrderStatus(int ticket = NULL) {
    open.ticket = 0;
 
    if (ticket == NULL) {
@@ -252,33 +252,22 @@ bool ReadOrderStatus(int ticket = NULL) {
          int error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         catch("ReadOrderStatus()   cannot select ticket #"+ ticket, error);
+         catch("ReadOrderStatus(1)   cannot select ticket #"+ ticket, error);
          return(-1);
       }
       if (!IsMyOrder()) {
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         catch("ReadOrderStatus()   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
+         catch("ReadOrderStatus(2)   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
          return(-1);
       }
       open.ticket = ticket;
    }
 
    if (open.ticket == 0) {
-      open.type        = 0;
-      open.time        = 0;
-      open.price       = 0;
-      open.lots        = 0;
-      open.swap        = 0;
-      open.commission  = 0;
-      open.profit      = 0;
-      open.magic       = 0;
-      open.comment     = "";
-
       sequenceId       = 0;
-      sequenceLength   = 0;
-      progressionLevel = 1;
+      progressionLevel = 0;
    }
    else {
       open.type        = OrderType();
@@ -296,12 +285,14 @@ bool ReadOrderStatus(int ticket = NULL) {
       progressionLevel = OrderMagicNumber() & 0x000F;          //  4 Bits  1-4  => progressionLevel
    }
 
+   ShowStatus();
+
    error = GetLastError();
    if (error != NO_ERROR) {
-      catch("ReadOrderStatus()", error);
-      return(false);
+      catch("ReadOrderStatus(3)", error);
+      return(-1);
    }
-   return(sequenceId != 0);
+   return(sequenceId);
 }
 
 
@@ -332,7 +323,7 @@ int MagicNumber(int sequenceId) {
    int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
    int level    = progressionLevel & 0x000F;          // 4 bit (Bereich 1-12)                                 | in MagicNumber: Bits  1-4
 
-   return(ea + sequence + length + level);            // alles addieren
+   return(ea + sequence + length + level);
 }
 
 
@@ -345,7 +336,7 @@ int SequenceId() {
    if (sequenceId == 0) {              // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() aus der offenen Position ausgelesen.
       MathSrand(GetTickCount());       // Ohne offene Position kann sie problemlos jedesmal neu generiert werden.
 
-      while (sequenceId < 2002) {      // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
+      while (sequenceId < 2000) {      // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
          sequenceId = MathRand();
       }
       sequenceId >>= 1;
@@ -360,30 +351,33 @@ int SequenceId() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (sequenceId != 0) {
-      catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (sequenceId != 0)
+      return(catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
 
-   int answer = IDOK;
-
-   if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
-      answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      if (answer != IDOK) {
+         last_error = ERR_COMMON_ERROR;
+         return(last_error);
+      }
    }
 
-   last_error = NO_ERROR;
-
-   if      (answer != IDOK      ) last_error = ERR_COMMON_ERROR;           // manual confirmation was denied
-   else if (!NewOrderPermitted()) last_error = ERR_NOT_ENOUGH_MONEY;       // MM verbietet weitere Orders
-   else {
-      int ticket = SendOrder(entryDirection);                              // Position in Entry.Direction öffnen
-      if (ticket != -1) ReadOrderStatus(ticket);                           // bei Erfolg Status neu einlesen
+   if (!NewOrderPermitted()) {                                          // MM verbietet weitere Orders
+      last_error = ERR_NOT_ENOUGH_MONEY;
+      return(last_error);
    }
 
-   if (last_error == NO_ERROR)
-      catch("StartSequence(2)");
-   return(last_error);
+   progressionLevel = 1;
+
+   int ticket = SendOrder(entryDirection);                              // Position in Entry.Direction öffnen
+   if (ticket == -1)
+      return(last_error);
+
+   if (ReadOrderStatus(ticket) == -1)                                   // Status neu einlesen
+      return(last_error);
+
+   return(catch("StartSequence(2)"));
 }
 
 
@@ -396,19 +390,21 @@ int IncreaseProgression() {
 
    // ClosePosition();
 
-   progressionLevel++;
-
-   last_error = NO_ERROR;
-
-   if (!NewOrderPermitted()) last_error = ERR_NOT_ENOUGH_MONEY;            // MM verbietet weitere Orders
-   else {
-      int ticket = SendOrder(ifInt(open.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
-      if (ticket != -1) ReadOrderStatus(ticket);                           // bei Erfolg Status neu einlesen
+   if (!NewOrderPermitted()) {                                          // MM verbietet weitere Orders
+      last_error = ERR_NOT_ENOUGH_MONEY;
+      return(last_error);
    }
 
-   if (last_error == NO_ERROR)
-      catch("IncreaseProgression()");
-   return(last_error);
+   progressionLevel++;
+
+   int ticket = SendOrder(ifInt(open.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
+   if (ticket == -1)
+      return(last_error);
+
+   if (ReadOrderStatus(ticket) == -1)                                   // Status neu einlesen
+      return(last_error);
+
+   return(catch("IncreaseProgression()"));
 }
 
 
