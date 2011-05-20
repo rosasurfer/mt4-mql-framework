@@ -191,10 +191,10 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   if (ReadOrderStatus() == -1)
+   if (ReadStatus() == -1)
       return(last_error);
 
-   if (sequenceId == 0) {                                                        // keine laufende Sequenz gefunden
+   if (sequenceId == 0) {                                                        // keine aktive Sequenz gefunden
       if (EQ(Entry.Limit, 0)) {                                                  // kein Limit definiert
          StartSequence();
       }
@@ -205,7 +205,7 @@ int start() {
          if (GE(Bid, Entry.Limit)) StartSequence();                              // Sell-Limit erreicht
       }
    }
-   else {                                                                        // laufende Sequenz gefunden
+   else {                                                                        // aktive Sequenz gefunden
       if (open.type == OP_BUY) {                                                 // Long-Position
          if      (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_SELL)
          else if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
@@ -224,15 +224,15 @@ int start() {
  * TODO: Ohne Angabe eines Tickets wird noch nach der ersten gefundenen Position des EA's abgebrochen, theoretisch
  *       sind aber mehrere aktive Sequenzen im selben Instrument möglich !!!
  *
- * Liest den Status der im Moment laufenden Sequenz im aktuellen Instrument ein. Wird *kein* Ticket angegeben,
- * werden alle offenen Positionen auf eine aktive Sequenz überprüft. Wird ein Ticket angegeben, wird nur der Status
- * der Sequenz, zu der dieses Ticket gehört, eingelesen.
+ * Liest den Status der im Moment aktiven Sequenz im aktuellen Instrument ein. Wird *kein* Ticket angegeben, werden
+ * alle offenen Positionen auf eine aktive Sequenz überprüft. Wird ein Ticket angegeben, wird nur der Status der Sequenz,
+ * zu der dieses Ticket gehört, eingelesen.
  *
- * @param  int ticket - Ticket der offenen Position einer einzulesenden Sequenz (default: NULL)
+ * @param  int ticket - Ticket der offenen Position einer aktiven Sequenz (default: NULL)
  *
- * @return int - Sequenz-ID einer ativen Sequenz oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
+ * @return int - ID einer aktiven Sequenz oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
  */
-int ReadOrderStatus(int ticket = NULL) {
+int ReadStatus(int ticket = NULL) {
    open.ticket = 0;
 
    if (ticket == NULL) {
@@ -252,14 +252,14 @@ int ReadOrderStatus(int ticket = NULL) {
          int error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         catch("ReadOrderStatus(1)   cannot select ticket #"+ ticket, error);
+         catch("ReadStatus(1)   cannot select ticket #"+ ticket, error);
          return(-1);
       }
       if (!IsMyOrder()) {
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         catch("ReadOrderStatus(2)   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
+         catch("ReadStatus(2)   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
          return(-1);
       }
       open.ticket = ticket;
@@ -289,7 +289,7 @@ int ReadOrderStatus(int ticket = NULL) {
 
    error = GetLastError();
    if (error != NO_ERROR) {
-      catch("ReadOrderStatus(3)", error);
+      catch("ReadStatus(3)", error);
       return(-1);
    }
    return(sequenceId);
@@ -333,7 +333,7 @@ int MagicNumber(int sequenceId) {
  * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
  */
 int SequenceId() {
-   if (sequenceId == 0) {                    // Bei Timeframe-Wechseln wird die ID durch ReadOrderStatus() aus der offenen Position ausgelesen.
+   if (sequenceId == 0) {                    // Bei Timeframe-Wechseln wird die ID durch ReadStatus() aus der offenen Position ausgelesen.
       MathSrand(GetTickCount());             // Ohne offene Position kann sie jedesmal problemlos neu generiert werden.
 
       while (sequenceId < 2000) {            // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
@@ -375,7 +375,7 @@ int StartSequence() {
    if (ticket == -1)
       return(last_error);
 
-   if (ReadOrderStatus(ticket) == -1)                                   // Status neu einlesen
+   if (ReadStatus(ticket) == -1)                                        // Status neu einlesen
       return(last_error);
 
    return(catch("StartSequence(2)"));
@@ -402,7 +402,7 @@ int IncreaseProgression() {
    if (ticket == -1)
       return(last_error);
 
-   if (ReadOrderStatus(ticket) == -1)                                   // Status neu einlesen
+   if (ReadStatus(ticket) == -1)                                        // Status neu einlesen
       return(last_error);
 
    return(catch("IncreaseProgression()"));
