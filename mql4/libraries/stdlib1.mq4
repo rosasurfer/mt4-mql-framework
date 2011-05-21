@@ -3490,7 +3490,7 @@ int Explode(string object, string separator, string& lpResults[]) {
 
 
 /**
- * Liest die History eines Accounts aus dem Dateisystem in das angegebene Ergebnisarray ein (Daten werden als Strings gespeichert).
+ * Liest die History eines Accounts aus dem Dateisystem in das angegebene Array ein (Daten werden als Strings gespeichert).
  *
  * @param  int     account                      - Account-Nummer
  * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray

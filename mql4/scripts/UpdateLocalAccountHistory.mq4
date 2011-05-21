@@ -55,7 +55,7 @@ int start() {
    ArrayResize(ticketData, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE ist hier nur theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE ist rein theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
          ArrayResize(ticketData, i);
          orders = i;
          break;
@@ -68,10 +68,10 @@ int start() {
 
 
    // (2) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
-   string history[][HISTORY_COLUMNS]; ArrayResize(history, 0);
+   string history[][HISTORY_COLUMNS];
 
-   int error = GetAccountHistory(account, history);            // ERR_CANNOT_OPEN_FILE ignorieren => History leer
-   if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)
+   int error = GetAccountHistory(account, history);
+   if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)         // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
       return(catch("start(1)", error));
 
    int    lastTicket;
