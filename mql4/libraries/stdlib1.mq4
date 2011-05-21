@@ -3495,7 +3495,7 @@ int Explode(string object, string separator, string& lpResults[]) {
  * @param  int     account                      - Account-Nummer
  * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
  *
- * @return int - Fehlerstatus: ERR_CANNOT_OPEN_FILE, wenn die Datei nicht gefunden wurde
+ * @return int - Fehlerstatus
  */
 int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    if (ArrayRange(lpResults, 1) != HISTORY_COLUMNS)
@@ -3562,7 +3562,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
       value = StringTrim(value);
 
       // Kommentarzeilen überspringen
-      if (newLine) /*&&*/ if (StringGetChar(value, 0)==35)     // char(35) = #
+      if (newLine) /*&&*/ if (StringGetChar(value, 0)=='#')
          continue;
 
       // Zeilen- und Spaltenindex aktualisieren und Bereich überprüfen
@@ -3580,7 +3580,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
             error = catch("GetAccountHistory(5)   data format error in \""+ filename +"\", unexpected column header \""+ value +"\"", ERR_RUNTIME_ERROR);
             break;
          }
-         continue;   // jmp
+         continue;            // jmp
       }
 
       // Ergebnisarray vergrößern und Rohdaten speichern (als String)
@@ -3603,7 +3603,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // vor evt. Fehler-Rückkehr auf jeden Fall Datei schließen
    FileClose(hFile);
 
-   if (error != NO_ERROR)    // ret
+   if (error != NO_ERROR)     // ret
       return(error);
 
 
@@ -3612,8 +3612,9 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
       ArrayCopy(lpResults, result);
 
       cache.account[0] = account;
-      ArrayResize(cache, 0); ArrayCopy(cache, result);
-      log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
+      ArrayResize(cache, 0);
+      ArrayCopy(cache, result);
+      //log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
 
    return(catch("GetAccountHistory(7)"));

@@ -44,7 +44,7 @@ int start() {
    if (account == 0) {
       log("start()  no trade server connection");
       PlaySound("notify.wav");
-      MessageBox("No trade server connection.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       return(ERR_NO_CONNECTION);
    }
 
@@ -86,11 +86,11 @@ int start() {
    if (orders == 0) {
       if (lastBalance != AccountBalance()) {
          PlaySound("notify.wav");
-         MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+         MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
          return(catch("start(2)"));
       }
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
       return(catch("start(3)"));
    }
 
@@ -109,7 +109,7 @@ int start() {
       if (lastBalance != AccountBalance())
          return(catch("start(4)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
       return(catch("start(5)"));
    }
    //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
@@ -217,7 +217,7 @@ int start() {
    if (lastBalance != AccountBalance()) {
       log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
-      MessageBox("Balance mismatch, more history data needed.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("start(9)"));
    }
 
@@ -294,7 +294,7 @@ int start() {
    FileClose(hFile);
 
    PlaySound("ding.wav");
-   MessageBox("History successfully updated.", WindowExpertName(), MB_ICONINFORMATION|MB_OK);
+   MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
    return(catch("start(16)"));
 }
 
