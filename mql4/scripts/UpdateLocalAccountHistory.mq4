@@ -95,31 +95,11 @@ int start() {
    }
 
 
-   // (3) Index des ersten, neu zu speichernden Tickets ermitteln
-   int iFirstTicketToSave = 0;
-   if (histSize > 0) {
-      for (i=0; i < orders; i++) {
-         if (ticketData[i][2] == lastTicket) {
-            iFirstTicketToSave = i+1;
-            break;
-         }
-      }
-   }
-   if (iFirstTicketToSave == orders) {
-      if (lastBalance != AccountBalance())
-         return(catch("start(4)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
-      PlaySound("ding.wav");
-      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(5)"));
-   }
-   //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
-
-
-   // (4) Orderdaten sortiert einlesen
+   // (3) verfügbare Tickets sortiert einlesen
    int      tickets        []; ArrayResize(tickets,         0); ArrayResize(tickets,         orders);
    int      types          []; ArrayResize(types,           0); ArrayResize(types,           orders);
    string   symbols        []; ArrayResize(symbols,         0); ArrayResize(symbols,         orders);
-   double   sizes          []; ArrayResize(sizes,           0); ArrayResize(sizes,           orders);
+   double   lotSizes       []; ArrayResize(lotSizes,        0); ArrayResize(lotSizes,        orders);
    datetime openTimes      []; ArrayResize(openTimes,       0); ArrayResize(openTimes,       orders);
    datetime closeTimes     []; ArrayResize(closeTimes,      0); ArrayResize(closeTimes,      orders);
    double   openPrices     []; ArrayResize(openPrices,      0); ArrayResize(openPrices,      orders);
@@ -137,21 +117,21 @@ int start() {
 
    for (i=0; i < orders; i++) {
       int ticket = ticketData[i][2];
-      if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      if (!OrderSelect(ticket, SELECT_BY_TICKET)) {                        // FALSE ist rein theoretisch: während der Verarbeitung wird Anzeigezeitraum geändert
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_INVALID_TICKET;
-         return(catch("start(6)  OrderSelect(ticket="+ ticket +")", error));
+         return(catch("start(4)  OrderSelect(ticket="+ ticket +")", error));
       }
 
-      int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
+      int type = OrderType();                                              // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
 
       tickets        [i] = ticket;
       types          [i] = type;
       symbols        [i] = FindStandardSymbol(OrderSymbol(), OrderSymbol());
-      sizes          [i] = ifDouble(OrderSymbol()=="", 0, OrderLots());
+      lotSizes       [i] = ifDouble(OrderSymbol()=="", 0, OrderLots());    // OP_BALANCE: OrderLots() enthält fälschlich 0.01
       openTimes      [i] = OrderOpenTime();
       closeTimes     [i] = OrderCloseTime();
       openPrices     [i] = OrderOpenPrice();
@@ -167,16 +147,16 @@ int start() {
    }
 
 
-   // (5) Hedges korrigieren (alle relevanten Daten der 1. Position zuordnen, hedgende Position verwerfen)
-   for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // markierte Orders überspringen
+   // (4) Hedges korrigieren (relevante Daten der ersten Position zuordnen, hedgende Position verwerfen)
+   for (i=0; i < orders; i++) {
+      if (tickets[i] == 0)                                                 // markierte (= korrigierte) Tickets überspringen
          continue;
 
-      if ((types[i]==OP_BUY || types[i]==OP_SELL) && sizes[i]==0) {
+      if ((types[i]==OP_BUY || types[i]==OP_SELL) && lotSizes[i]==0) {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("start(7)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(5)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -184,14 +164,20 @@ int start() {
             if (tickets[n] == ticket)
                break;
          if (n == orders)
-            return(catch("start(8)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(6)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+         if (i == n)
+            return(catch("start(7)  hedged and counterpart position are the same #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
-         int first  = MathMin(i, n);
-         int second = MathMax(i, n);
+         // Reihenfolge beider Positionen bestimmen
+         int first;
+         if      (closeTimes[i] != closeTimes[n]) first = ifInt(closeTimes[i] < closeTimes[n], i, n);
+         else if ( openTimes[i] != openTimes[n] ) first = ifInt( openTimes[i] < openTimes[n] , i, n);
+         else                                     first = ifInt(   tickets[i] < tickets[n]   , i, n);
+         int second = ifInt(first==n, i, n);
 
          // Orderdaten korrigieren
          if (i == first) {
-            sizes      [first] = sizes      [second];                      // alle Transaktionsdaten in der 1. Order speichern
+            lotSizes   [first] = lotSizes   [second];                      // alle Transaktionsdaten in der 1. Order speichern
             closePrices[first] = openPrices [second];
             commissions[first] = commissions[second];
             swaps      [first] = swaps      [second];
@@ -199,18 +185,43 @@ int start() {
          }
          closeTimes[first] = openTimes[second];
          comments  [first] = ifString(comments[first]=="partial close" || comments[second]=="partial close", "partial closed by hedge", "closed by hedge");
-         tickets  [second] = 0;                                            // erste Order enthält jetzt alle Daten, hedgende Order verwerfen
+         tickets  [second] = 0;                                            // erste Order enthält jetzt alle Daten, hedgende Order markieren (wird später verworfen)
       }
    }
 
 
+   // TODO: wenn Hedges korrigiert wurden (closeTimes[first] wurde geändert), müssen die Tickets jetzt neu sortiert werden
+
+
+   // (5) Index des ersten, neu zu speichernden Tickets ermitteln
+   int iFirstTicketToSave = 0;
+   if (histSize > 0) {
+      for (i=0; i < orders; i++) {
+         if (ticketData[i][2] == lastTicket) {
+            iFirstTicketToSave = i+1;
+            break;
+            // TODO: iFirstTicketToSave ist nicht unbedingt korrekt, durch Anpassung der Hedges kann es sich ändern
+         }
+      }
+   }
+   if (iFirstTicketToSave == orders) {          // alle Tickets sind bereits in der CSV-Datei vorhanden
+      if (lastBalance != AccountBalance())
+         return(catch("start(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+      PlaySound("ding.wav");
+      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+      return(catch("start(9)"));
+   }
+   //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
+
+
+
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // verworfene Orders überspringen
+      if (tickets[i] == 0)                                              // verworfene Orders überspringen
          continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       if (types[i] == OP_CREDIT)
-         grossProfits[i] = 0;                                              // Credit-Beträge ignorieren (falls sie hier überhaupt auftauchen)
+         grossProfits[i] = 0;                                           // Credit-Beträge ignorieren (falls sie hier überhaupt auftauchen)
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
@@ -218,7 +229,7 @@ int start() {
       log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(catch("start(9)"));
+      return(catch("start(10)"));
    }
 
 
@@ -229,7 +240,7 @@ int start() {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(10)  FileOpen()"));
+         return(catch("start(11)  FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n"
@@ -237,34 +248,34 @@ int start() {
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(11)  FileWrite()", error));
+         return(catch("start(12)  FileWrite()", error));
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(12)  FileWrite()", error));
+         return(catch("start(13)  FileWrite()", error));
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(13)  FileOpen()"));
+         return(catch("start(14)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(14)  FileSeek()", error));
+         return(catch("start(15)  FileSeek()", error));
       }
    }
 
 
    // (8) Orderdaten schreiben
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                                 // verworfene Hedge-Orders überspringen
+      if (tickets[i] == 0)                                              // verworfene Hedge-Orders überspringen
          continue;
 
       string strType         = OperationTypeDescription(types[i]);
-      string strSize         = ifString(sizes[i]==0, "", NumberToStr(sizes[i], ".+"));
+      string strSize         = ifString(lotSizes[i]==0, "", NumberToStr(lotSizes[i], ".+"));
 
       string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
       string strCloseTime    = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
@@ -288,14 +299,14 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(15)  FileWrite()", error));
+         return(catch("start(16)  FileWrite()", error));
       }
    }
    FileClose(hFile);
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-   return(catch("start(16)"));
+   return(catch("start(17)"));
 }
 
 
