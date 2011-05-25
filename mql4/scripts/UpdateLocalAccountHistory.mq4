@@ -49,7 +49,7 @@ int start() {
    }
 
 
-   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Daten sortieren
+   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Tickets sortieren
    int orders = OrdersHistoryTotal();
    int ticketData[][3];
    ArrayResize(ticketData, orders);
@@ -168,7 +168,7 @@ int start() {
          if (i == n)
             return(catch("start(7)  hedged and counterpart position are the same #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
-         // Reihenfolge beider Positionen bestimmen
+         // Reihenfolge der beiden Positionen bestimmen
          int first;
          if      (closeTimes[i] != closeTimes[n]) first = ifInt(closeTimes[i] < closeTimes[n], i, n);
          else if ( openTimes[i] != openTimes[n] ) first = ifInt( openTimes[i] < openTimes[n] , i, n);
@@ -177,7 +177,7 @@ int start() {
 
          // Orderdaten korrigieren
          if (i == first) {
-            lotSizes   [first] = lotSizes   [second];                      // alle Transaktionsdaten in der 1. Order speichern
+            lotSizes   [first] = lotSizes   [second];                      // alle Transaktionsdaten in der ersten Order speichern
             closePrices[first] = openPrices [second];
             commissions[first] = commissions[second];
             swaps      [first] = swaps      [second];
@@ -190,10 +190,59 @@ int start() {
    }
 
 
-   // TODO: wenn Hedges korrigiert wurden (closeTimes[first] wurde geändert), müssen die Tickets jetzt neu sortiert werden
+   // (5) markierte Orders löschen und Daten sortieren
+   int ids[]; ArrayResize(ids, orders);
+
+   for (i=0, n=0; i < orders; i++) {
+      if (tickets[i] != 0) {
+         tickets        [n] = tickets        [i];
+         types          [n] = types          [i];
+         symbols        [n] = symbols        [i];
+         lotSizes       [n] = lotSizes       [i];
+         openTimes      [n] = openTimes      [i];
+         closeTimes     [n] = closeTimes     [i];
+         openPrices     [n] = openPrices     [i];
+         closePrices    [n] = closePrices    [i];
+         stopLosses     [n] = stopLosses     [i];
+         takeProfits    [n] = takeProfits    [i];
+         expirationTimes[n] = expirationTimes[i];
+         commissions    [n] = commissions    [i];
+         swaps          [n] = swaps          [i];
+         netProfits     [n] = netProfits     [i];
+         magicNumbers   [n] = magicNumbers   [i];
+         comments       [n] = comments       [i];
+         ids            [n] = n;
+         n++;
+      }
+   }
+   if (n < orders) {
+      ArrayResize(tickets,         n);
+      ArrayResize(types,           n);
+      ArrayResize(symbols,         n);
+      ArrayResize(lotSizes,        n);
+      ArrayResize(openTimes,       n);
+      ArrayResize(closeTimes,      n);
+      ArrayResize(openPrices,      n);
+      ArrayResize(closePrices,     n);
+      ArrayResize(stopLosses,      n);
+      ArrayResize(takeProfits,     n);
+      ArrayResize(expirationTimes, n);
+      ArrayResize(commissions,     n);
+      ArrayResize(swaps,           n);
+      ArrayResize(netProfits,      n);
+      ArrayResize(grossProfits,    n);
+      ArrayResize(balances,        n);
+      ArrayResize(magicNumbers,    n);
+      ArrayResize(comments,        n);
+      ArrayResize(ids,             n);
+      orders = n;
+   }
+
+   //IntArrayMultiSort(closeTimes, MODE_ASCEND, openTimes, MODE_ASCEND, tickets, MODE_ASCEND, ids);
 
 
-   // (5) Index des ersten, neu zu speichernden Tickets ermitteln
+
+   // (6) Index des ersten, neu zu speichernden Tickets ermitteln
    int iFirstTicketToSave = 0;
    if (histSize > 0) {
       for (i=0; i < orders; i++) {
@@ -215,7 +264,7 @@ int start() {
 
 
 
-   // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
+   // (7) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
    for (i=iFirstTicketToSave; i < orders; i++) {
       if (tickets[i] == 0)                                              // verworfene Orders überspringen
          continue;
@@ -233,7 +282,7 @@ int start() {
    }
 
 
-   // (7) CSV-Datei erzeugen
+   // (8) CSV-Datei erzeugen
    string filename = GetTradeServerDirectory() +"/"+ account +"_account_history.csv";
 
    if (ArrayRange(history, 0) == 0) {
@@ -269,7 +318,7 @@ int start() {
    }
 
 
-   // (8) Orderdaten schreiben
+   // (9) Orderdaten schreiben
    for (i=iFirstTicketToSave; i < orders; i++) {
       if (tickets[i] == 0)                                              // verworfene Hedge-Orders überspringen
          continue;

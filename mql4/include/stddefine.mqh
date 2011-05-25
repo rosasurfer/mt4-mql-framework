@@ -105,6 +105,11 @@
 #define MODE_ALMA                4     // Arnaud Legoux moving average
 
 
+// Sorting modes , siehe ArraySort()
+#define MODE_ASCEND              1     // aufsteigend
+#define MODE_DESCEND             2     // absteigend
+
+
 // Price identifiers, siehe iMA()
 #define PRICE_CLOSE              0     // close price
 #define PRICE_OPEN               1     // open price
