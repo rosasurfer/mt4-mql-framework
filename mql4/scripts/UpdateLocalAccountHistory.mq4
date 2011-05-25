@@ -49,105 +49,76 @@ int start() {
    }
 
 
-   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Tickets sortieren
+   // (1) verfügbare Tickets einlesen
    int orders = OrdersHistoryTotal();
-   int ticketData[][3];
-   ArrayResize(ticketData, orders);
 
-   for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE ist rein theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
-         ArrayResize(ticketData, i);
-         orders = i;
+   int      tickets        []; ArrayResize(tickets,         orders);
+   int      types          []; ArrayResize(types,           orders);
+   string   symbols        []; ArrayResize(symbols,         orders);
+   double   lotSizes       []; ArrayResize(lotSizes,        orders);
+   datetime openTimes      []; ArrayResize(openTimes,       orders);
+   datetime closeTimes     []; ArrayResize(closeTimes,      orders);
+   double   openPrices     []; ArrayResize(openPrices,      orders);
+   double   closePrices    []; ArrayResize(closePrices,     orders);
+   double   stopLosses     []; ArrayResize(stopLosses,      orders);
+   double   takeProfits    []; ArrayResize(takeProfits,     orders);
+   datetime expirationTimes[]; ArrayResize(expirationTimes, orders);
+   double   commissions    []; ArrayResize(commissions,     orders);
+   double   swaps          []; ArrayResize(swaps,           orders);
+   double   netProfits     []; ArrayResize(netProfits,      orders);
+   double   grossProfits   []; ArrayResize(grossProfits,    orders);
+   double   balances       []; ArrayResize(balances,        orders);
+   int      magicNumbers   []; ArrayResize(magicNumbers,    orders);
+   string   comments       []; ArrayResize(comments,        orders);
+
+   for (int i, n=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE ist rein theoretisch: während der Verarbeitung wird Anzeigezeitraum geändert
          break;
-      }
-      ticketData[i][0] = OrderCloseTime();
-      ticketData[i][1] = OrderOpenTime();
-      ticketData[i][2] = OrderTicket();
-   }
-   SortTickets(ticketData);
-
-
-   // (2) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
-   string history[][HISTORY_COLUMNS];
-
-   int error = GetAccountHistory(account, history);
-   if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)         // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
-      return(catch("start(1)", error));
-
-   int    lastTicket;
-   double lastBalance;
-   int    histSize = ArrayRange(history, 0);
-
-   if (histSize > 0) {
-      lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
-      lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
-      //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
-   }
-   if (orders == 0) {
-      if (lastBalance != AccountBalance()) {
-         PlaySound("notify.wav");
-         MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-         return(catch("start(2)"));
-      }
-      PlaySound("ding.wav");
-      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(3)"));
-   }
-
-
-   // (3) verfügbare Tickets sortiert einlesen
-   int      tickets        []; ArrayResize(tickets,         0); ArrayResize(tickets,         orders);
-   int      types          []; ArrayResize(types,           0); ArrayResize(types,           orders);
-   string   symbols        []; ArrayResize(symbols,         0); ArrayResize(symbols,         orders);
-   double   lotSizes       []; ArrayResize(lotSizes,        0); ArrayResize(lotSizes,        orders);
-   datetime openTimes      []; ArrayResize(openTimes,       0); ArrayResize(openTimes,       orders);
-   datetime closeTimes     []; ArrayResize(closeTimes,      0); ArrayResize(closeTimes,      orders);
-   double   openPrices     []; ArrayResize(openPrices,      0); ArrayResize(openPrices,      orders);
-   double   closePrices    []; ArrayResize(closePrices,     0); ArrayResize(closePrices,     orders);
-   double   stopLosses     []; ArrayResize(stopLosses,      0); ArrayResize(stopLosses,      orders);
-   double   takeProfits    []; ArrayResize(takeProfits,     0); ArrayResize(takeProfits,     orders);
-   datetime expirationTimes[]; ArrayResize(expirationTimes, 0); ArrayResize(expirationTimes, orders);
-   double   commissions    []; ArrayResize(commissions,     0); ArrayResize(commissions,     orders);
-   double   swaps          []; ArrayResize(swaps,           0); ArrayResize(swaps,           orders);
-   double   netProfits     []; ArrayResize(netProfits,      0); ArrayResize(netProfits,      orders);
-   double   grossProfits   []; ArrayResize(grossProfits,    0); ArrayResize(grossProfits,    orders);
-   double   balances       []; ArrayResize(balances,        0); ArrayResize(balances,        orders);
-   int      magicNumbers   []; ArrayResize(magicNumbers,    0); ArrayResize(magicNumbers,    orders);
-   string   comments       []; ArrayResize(comments,        0); ArrayResize(comments,        orders);
-
-   for (i=0; i < orders; i++) {
-      int ticket = ticketData[i][2];
-      if (!OrderSelect(ticket, SELECT_BY_TICKET)) {                        // FALSE ist rein theoretisch: während der Verarbeitung wird Anzeigezeitraum geändert
-         error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_INVALID_TICKET;
-         return(catch("start(4)  OrderSelect(ticket="+ ticket +")", error));
-      }
-
-      int type = OrderType();                                              // gecancelte Orders und Margin Credits überspringen (0-Tickets werden später verworfen)
+      int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
-
-      tickets        [i] = ticket;
-      types          [i] = type;
-      symbols        [i] = FindStandardSymbol(OrderSymbol(), OrderSymbol());
-      lotSizes       [i] = ifDouble(OrderSymbol()=="", 0, OrderLots());    // OP_BALANCE: OrderLots() enthält fälschlich 0.01
-      openTimes      [i] = OrderOpenTime();
-      closeTimes     [i] = OrderCloseTime();
-      openPrices     [i] = OrderOpenPrice();
-      closePrices    [i] = OrderClosePrice();
-      stopLosses     [i] = OrderStopLoss();
-      takeProfits    [i] = OrderTakeProfit();
-      expirationTimes[i] = OrderExpiration();
-      commissions    [i] = OrderCommission();
-      swaps          [i] = OrderSwap();
-      netProfits     [i] = OrderProfit();
-      magicNumbers   [i] = OrderMagicNumber();
-      comments       [i] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
+      tickets        [n] = OrderTicket();
+      types          [n] = type;
+      symbols        [n] = FindStandardSymbol(OrderSymbol(), OrderSymbol());
+      lotSizes       [n] = ifDouble(OrderSymbol()=="", 0, OrderLots());    // OP_BALANCE: OrderLots() enthält fälschlich 0.01
+      openTimes      [n] = OrderOpenTime();
+      closeTimes     [n] = OrderCloseTime();
+      openPrices     [n] = OrderOpenPrice();
+      closePrices    [n] = OrderClosePrice();
+      stopLosses     [n] = OrderStopLoss();
+      takeProfits    [n] = OrderTakeProfit();
+      expirationTimes[n] = OrderExpiration();
+      commissions    [n] = OrderCommission();
+      swaps          [n] = OrderSwap();
+      netProfits     [n] = OrderProfit();
+      magicNumbers   [n] = OrderMagicNumber();
+      comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
+      n++;
+   }
+   if (n < orders) {
+      ArrayResize(tickets,         n);
+      ArrayResize(types,           n);
+      ArrayResize(symbols,         n);
+      ArrayResize(lotSizes,        n);
+      ArrayResize(openTimes,       n);
+      ArrayResize(closeTimes,      n);
+      ArrayResize(openPrices,      n);
+      ArrayResize(closePrices,     n);
+      ArrayResize(stopLosses,      n);
+      ArrayResize(takeProfits,     n);
+      ArrayResize(expirationTimes, n);
+      ArrayResize(commissions,     n);
+      ArrayResize(swaps,           n);
+      ArrayResize(netProfits,      n);
+      ArrayResize(grossProfits,    n);
+      ArrayResize(balances,        n);
+      ArrayResize(magicNumbers,    n);
+      ArrayResize(comments,        n);
+      orders = n;
    }
 
 
-   // (4) Hedges korrigieren (relevante Daten der ersten Position zuordnen, hedgende Position verwerfen)
+   // (2) Hedges korrigieren (relevante Daten der ersten Position zuordnen, hedgende Position verwerfen)
    for (i=0; i < orders; i++) {
       if (tickets[i] == 0)                                                 // markierte (= korrigierte) Tickets überspringen
          continue;
@@ -156,17 +127,15 @@ int start() {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("start(5)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
+            return(catch("start(1)  ticket #"+ tickets[i] +" - unknown comment for assumed hedged position: "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
-         ticket = StrToInteger(StringSubstr(comments[i], 16));
-         for (int n=0; n < orders; n++)
+         int ticket = StrToInteger(StringSubstr(comments[i], 16));
+         for (n=0; n < orders; n++)
             if (tickets[n] == ticket)
                break;
-         if (n == orders)
-            return(catch("start(6)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
-         if (i == n)
-            return(catch("start(7)  hedged and counterpart position are the same #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+         if (n == orders) return(catch("start(2)  cannot find counterpart for hedged position #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
+         if (i == n     ) return(catch("start(3)  hedged and counterpart position are the same #"+ tickets[i] +": "+ comments[i], ERR_RUNTIME_ERROR));
 
          // Reihenfolge der beiden Positionen bestimmen
          int first;
@@ -190,9 +159,7 @@ int start() {
    }
 
 
-   // (5) markierte Orders löschen und Daten sortieren
-   int ids[]; ArrayResize(ids, orders);
-
+   // (3) markierte (= korrigierte) Tickets löschen
    for (i=0, n=0; i < orders; i++) {
       if (tickets[i] != 0) {
          tickets        [n] = tickets        [i];
@@ -211,7 +178,6 @@ int start() {
          netProfits     [n] = netProfits     [i];
          magicNumbers   [n] = magicNumbers   [i];
          comments       [n] = comments       [i];
-         ids            [n] = n;
          n++;
       }
    }
@@ -234,26 +200,53 @@ int start() {
       ArrayResize(balances,        n);
       ArrayResize(magicNumbers,    n);
       ArrayResize(comments,        n);
-      ArrayResize(ids,             n);
       orders = n;
    }
 
-   //IntArrayMultiSort(closeTimes, MODE_ASCEND, openTimes, MODE_ASCEND, tickets, MODE_ASCEND, ids);
 
+   // (4) Daten sortieren
+   SortTickets(tickets, types, symbols, lotSizes, openTimes, closeTimes, openPrices, closePrices, stopLosses, takeProfits, expirationTimes, commissions, swaps, netProfits, magicNumbers, comments);
+
+
+   // (5) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
+   string history[][HISTORY_COLUMNS];
+
+   int error = GetAccountHistory(account, history);
+   if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)                     // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
+      return(catch("start(1)", error));
+
+   int    lastTicket;
+   double lastBalance;
+   int    histSize = ArrayRange(history, 0);
+
+   if (histSize > 0) {
+      lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
+      lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
+      //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
+   }
+   if (orders == 0) {
+      if (lastBalance != AccountBalance()) {
+         PlaySound("notify.wav");
+         MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+         return(catch("start(2)"));
+      }
+      PlaySound("ding.wav");
+      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+      return(catch("start(3)"));
+   }
 
 
    // (6) Index des ersten, neu zu speichernden Tickets ermitteln
    int iFirstTicketToSave = 0;
    if (histSize > 0) {
       for (i=0; i < orders; i++) {
-         if (ticketData[i][2] == lastTicket) {
+         if (tickets[i] == lastTicket) {
             iFirstTicketToSave = i+1;
             break;
-            // TODO: iFirstTicketToSave ist nicht unbedingt korrekt, durch Anpassung der Hedges kann es sich ändern
          }
       }
    }
-   if (iFirstTicketToSave == orders) {          // alle Tickets sind bereits in der CSV-Datei vorhanden
+   if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
       if (lastBalance != AccountBalance())
          return(catch("start(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
@@ -263,14 +256,11 @@ int start() {
    //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
 
 
-
    // (7) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                              // verworfene Orders überspringen
-         continue;
       grossProfits[i] = NormalizeDouble(netProfits[i] + commissions[i] + swaps[i], 2);
       if (types[i] == OP_CREDIT)
-         grossProfits[i] = 0;                                           // Credit-Beträge ignorieren (falls sie hier überhaupt auftauchen)
+         grossProfits[i] = 0;                                              // Credit-Beträge ignorieren (falls sie hier überhaupt auftauchen)
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
@@ -360,27 +350,64 @@ int start() {
 
 
 /**
- * Sortiert die übergebenen Ticketdaten nach { CloseTime, OpenTime, Ticket }.
+ * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
+ *
+ * @return int - Fehlerstatus
+ */
+int SortTickets(int& tickets[], int& types[], string& symbols[], double& lotSizes[], datetime& openTimes[], datetime& closeTimes[], double& openPrices[], double& closePrices[], double& stopLosses[], double& takeProfits[], datetime& expirationTimes[], double& commissions[], double& swaps[], double& netProfits[], int& magicNumbers[], string& comments[]) {
+   int rows = ArraySize(tickets);
+
+   if (ArraySize(types          ) != rows) return(catch("SortTickets(1)   different number of rows in arrays tickets["+ rows +"] and types["          + ArraySize(types          ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(symbols        ) != rows) return(catch("SortTickets(2)   different number of rows in arrays tickets["+ rows +"] and symbols["        + ArraySize(symbols        ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(lotSizes       ) != rows) return(catch("SortTickets(3)   different number of rows in arrays tickets["+ rows +"] and lotSizes["       + ArraySize(lotSizes       ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(openTimes      ) != rows) return(catch("SortTickets(4)   different number of rows in arrays tickets["+ rows +"] and openTimes["      + ArraySize(openTimes      ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(closeTimes     ) != rows) return(catch("SortTickets(5)   different number of rows in arrays tickets["+ rows +"] and closeTimes["     + ArraySize(closeTimes     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(openPrices     ) != rows) return(catch("SortTickets(6)   different number of rows in arrays tickets["+ rows +"] and openPrices["     + ArraySize(openPrices     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(closePrices    ) != rows) return(catch("SortTickets(7)   different number of rows in arrays tickets["+ rows +"] and closePrices["    + ArraySize(closePrices    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(stopLosses     ) != rows) return(catch("SortTickets(8)   different number of rows in arrays tickets["+ rows +"] and stopLosses["     + ArraySize(stopLosses     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(takeProfits    ) != rows) return(catch("SortTickets(9)   different number of rows in arrays tickets["+ rows +"] and takeProfits["    + ArraySize(takeProfits    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(expirationTimes) != rows) return(catch("SortTickets(10)   different number of rows in arrays tickets["+ rows +"] and expirationTimes["+ ArraySize(expirationTimes) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(commissions    ) != rows) return(catch("SortTickets(11)   different number of rows in arrays tickets["+ rows +"] and commissions["    + ArraySize(commissions    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(swaps          ) != rows) return(catch("SortTickets(12)   different number of rows in arrays tickets["+ rows +"] and swaps["          + ArraySize(swaps          ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(netProfits     ) != rows) return(catch("SortTickets(13)   different number of rows in arrays tickets["+ rows +"] and netProfits["     + ArraySize(netProfits     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(magicNumbers   ) != rows) return(catch("SortTickets(14)   different number of rows in arrays tickets["+ rows +"] and magicNumbers["   + ArraySize(magicNumbers   ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(comments       ) != rows) return(catch("SortTickets(15)   different number of rows in arrays tickets["+ rows +"] and comments["       + ArraySize(comments       ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (rows < 2)
+      return(catch("SortTickets(16)"));                   // single row, nothing to do
+
+   // (1) Sortierspalten extrahieren
+   int data[][4];
+   ArrayResize(data, rows);
+   for (int i=0; i < rows; i++) {
+      data[i][0] = OrderCloseTime();
+      data[i][1] = OrderOpenTime();
+      data[i][2] = OrderTicket();
+      data[i][3] = i;               // Spalte mit Arraykeys (werden mitsortiert)
+   }
+
+   // (2) alles nach CloseTime sortieren
+   ArraySort(data);
+
+
+   return(catch("SortTickets(17)"));
+}
+
+
+/**
+ * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
  *
  * @param  int& lpTickets[] - Zeiger auf Array mit Ausgangsdaten
  *
  * @return int - Fehlerstatus
  */
-int SortTickets(int& lpTickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   if (ArrayRange(lpTickets, 1) != 3)
-      return(catch("SortTickets(1)  invalid parameter tickets["+ ArrayRange(lpTickets, 0) +"]["+ ArrayRange(lpTickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
-
-   int count = ArrayRange(lpTickets, 0);
-   if (count < 2)
-      return(catch("SortTickets(2)"));                   // one element only, nothing to do
-
-
+int SortTickets.Old(int& lpTickets[][]) {
    // (1) alles nach CloseTime sortieren
    ArraySort(lpTickets);
 
 
    // (2) Datensätze mit derselben CloseTime nach OpenTime sortieren
-   int close, open, ticket, lastClose, n;
+   int close, open, ticket, lastClose, n, count=ArrayRange(lpTickets, 0);
    int sameClose[][3]; ArrayResize(sameClose, 1);        // { OpenTime, Ticket, index }
 
    for (int i=0; i < count; i++) {
@@ -441,7 +468,7 @@ int SortTickets(int& lpTickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
       SortSameCloseOpenTickets(sameCloseOpen, lpTickets);
    }
 
-   return(catch("SortTickets(3)"));
+   return(catch("SortTickets.Old(3)"));
 }
 
 
