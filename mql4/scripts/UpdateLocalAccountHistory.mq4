@@ -7,6 +7,26 @@
 #include <win32api.mqh>
 
 
+int      tickets        [];
+int      types          [];
+string   symbols        [];
+double   lotSizes       [];
+datetime openTimes      [];
+datetime closeTimes     [];
+double   openPrices     [];
+double   closePrices    [];
+double   stopLosses     [];
+double   takeProfits    [];
+datetime expirationTimes[];
+double   commissions    [];
+double   swaps          [];
+double   netProfits     [];
+double   grossProfits   [];
+double   balances       [];
+int      magicNumbers   [];
+string   comments       [];
+
+
 /**
  * Initialisierung
  *
@@ -52,24 +72,24 @@ int start() {
    // (1) verfügbare Tickets einlesen
    int orders = OrdersHistoryTotal();
 
-   int      tickets        []; ArrayResize(tickets,         orders);
-   int      types          []; ArrayResize(types,           orders);
-   string   symbols        []; ArrayResize(symbols,         orders);
-   double   lotSizes       []; ArrayResize(lotSizes,        orders);
-   datetime openTimes      []; ArrayResize(openTimes,       orders);
-   datetime closeTimes     []; ArrayResize(closeTimes,      orders);
-   double   openPrices     []; ArrayResize(openPrices,      orders);
-   double   closePrices    []; ArrayResize(closePrices,     orders);
-   double   stopLosses     []; ArrayResize(stopLosses,      orders);
-   double   takeProfits    []; ArrayResize(takeProfits,     orders);
-   datetime expirationTimes[]; ArrayResize(expirationTimes, orders);
-   double   commissions    []; ArrayResize(commissions,     orders);
-   double   swaps          []; ArrayResize(swaps,           orders);
-   double   netProfits     []; ArrayResize(netProfits,      orders);
-   double   grossProfits   []; ArrayResize(grossProfits,    orders);
-   double   balances       []; ArrayResize(balances,        orders);
-   int      magicNumbers   []; ArrayResize(magicNumbers,    orders);
-   string   comments       []; ArrayResize(comments,        orders);
+   ArrayResize(tickets,         orders);
+   ArrayResize(types,           orders);
+   ArrayResize(symbols,         orders);
+   ArrayResize(lotSizes,        orders);
+   ArrayResize(openTimes,       orders);
+   ArrayResize(closeTimes,      orders);
+   ArrayResize(openPrices,      orders);
+   ArrayResize(closePrices,     orders);
+   ArrayResize(stopLosses,      orders);
+   ArrayResize(takeProfits,     orders);
+   ArrayResize(expirationTimes, orders);
+   ArrayResize(commissions,     orders);
+   ArrayResize(swaps,           orders);
+   ArrayResize(netProfits,      orders);
+   ArrayResize(grossProfits,    orders);
+   ArrayResize(balances,        orders);
+   ArrayResize(magicNumbers,    orders);
+   ArrayResize(comments,        orders);
 
    for (int i, n=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE ist rein theoretisch: während der Verarbeitung wird Anzeigezeitraum geändert
@@ -95,27 +115,6 @@ int start() {
       comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
       n++;
    }
-   if (n < orders) {
-      ArrayResize(tickets,         n);
-      ArrayResize(types,           n);
-      ArrayResize(symbols,         n);
-      ArrayResize(lotSizes,        n);
-      ArrayResize(openTimes,       n);
-      ArrayResize(closeTimes,      n);
-      ArrayResize(openPrices,      n);
-      ArrayResize(closePrices,     n);
-      ArrayResize(stopLosses,      n);
-      ArrayResize(takeProfits,     n);
-      ArrayResize(expirationTimes, n);
-      ArrayResize(commissions,     n);
-      ArrayResize(swaps,           n);
-      ArrayResize(netProfits,      n);
-      ArrayResize(grossProfits,    n);
-      ArrayResize(balances,        n);
-      ArrayResize(magicNumbers,    n);
-      ArrayResize(comments,        n);
-      orders = n;
-   }
 
 
    // (2) Hedges korrigieren (relevante Daten der ersten Position zuordnen, hedgende Position verwerfen)
@@ -123,7 +122,7 @@ int start() {
       if (tickets[i] == 0)                                                 // markierte (= korrigierte) Tickets überspringen
          continue;
 
-      if ((types[i]==OP_BUY || types[i]==OP_SELL) && lotSizes[i]==0) {
+      if ((types[i]==OP_BUY || types[i]==OP_SELL) && EQ(lotSizes[i], 0)) {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
@@ -205,7 +204,7 @@ int start() {
 
 
    // (4) Daten sortieren
-   SortTickets(tickets, types, symbols, lotSizes, openTimes, closeTimes, openPrices, closePrices, stopLosses, takeProfits, expirationTimes, commissions, swaps, netProfits, magicNumbers, comments);
+   SortTickets();
 
 
    // (5) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
@@ -253,7 +252,7 @@ int start() {
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
       return(catch("start(9)"));
    }
-   //log("start()   firstTicketToSave = "+ ticketData[iFirstTicketToSave][2]);
+   log("start()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
 
    // (7) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
@@ -350,179 +349,214 @@ int start() {
 
 
 /**
- * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
+ * Sortiert die Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
  *
  * @return int - Fehlerstatus
  */
-int SortTickets(int& tickets[], int& types[], string& symbols[], double& lotSizes[], datetime& openTimes[], datetime& closeTimes[], double& openPrices[], double& closePrices[], double& stopLosses[], double& takeProfits[], datetime& expirationTimes[], double& commissions[], double& swaps[], double& netProfits[], int& magicNumbers[], string& comments[]) {
+int SortTickets() {
    int rows = ArraySize(tickets);
-
-   if (ArraySize(types          ) != rows) return(catch("SortTickets(1)   different number of rows in arrays tickets["+ rows +"] and types["          + ArraySize(types          ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(symbols        ) != rows) return(catch("SortTickets(2)   different number of rows in arrays tickets["+ rows +"] and symbols["        + ArraySize(symbols        ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(lotSizes       ) != rows) return(catch("SortTickets(3)   different number of rows in arrays tickets["+ rows +"] and lotSizes["       + ArraySize(lotSizes       ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(openTimes      ) != rows) return(catch("SortTickets(4)   different number of rows in arrays tickets["+ rows +"] and openTimes["      + ArraySize(openTimes      ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(closeTimes     ) != rows) return(catch("SortTickets(5)   different number of rows in arrays tickets["+ rows +"] and closeTimes["     + ArraySize(closeTimes     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(openPrices     ) != rows) return(catch("SortTickets(6)   different number of rows in arrays tickets["+ rows +"] and openPrices["     + ArraySize(openPrices     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(closePrices    ) != rows) return(catch("SortTickets(7)   different number of rows in arrays tickets["+ rows +"] and closePrices["    + ArraySize(closePrices    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(stopLosses     ) != rows) return(catch("SortTickets(8)   different number of rows in arrays tickets["+ rows +"] and stopLosses["     + ArraySize(stopLosses     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(takeProfits    ) != rows) return(catch("SortTickets(9)   different number of rows in arrays tickets["+ rows +"] and takeProfits["    + ArraySize(takeProfits    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(expirationTimes) != rows) return(catch("SortTickets(10)   different number of rows in arrays tickets["+ rows +"] and expirationTimes["+ ArraySize(expirationTimes) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(commissions    ) != rows) return(catch("SortTickets(11)   different number of rows in arrays tickets["+ rows +"] and commissions["    + ArraySize(commissions    ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(swaps          ) != rows) return(catch("SortTickets(12)   different number of rows in arrays tickets["+ rows +"] and swaps["          + ArraySize(swaps          ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(netProfits     ) != rows) return(catch("SortTickets(13)   different number of rows in arrays tickets["+ rows +"] and netProfits["     + ArraySize(netProfits     ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(magicNumbers   ) != rows) return(catch("SortTickets(14)   different number of rows in arrays tickets["+ rows +"] and magicNumbers["   + ArraySize(magicNumbers   ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (ArraySize(comments       ) != rows) return(catch("SortTickets(15)   different number of rows in arrays tickets["+ rows +"] and comments["       + ArraySize(comments       ) +"]", ERR_INVALID_FUNCTION_PARAMVALUE));
-
    if (rows < 2)
-      return(catch("SortTickets(16)"));                   // single row, nothing to do
+      return(catch("SortTickets(1)"));                // single row, nothing to do
 
    // (1) Sortierspalten extrahieren
-   int data[][4];
-   ArrayResize(data, rows);
+   int sortData[][4];
+   ArrayResize(sortData, rows);
    for (int i=0; i < rows; i++) {
-      data[i][0] = OrderCloseTime();
-      data[i][1] = OrderOpenTime();
-      data[i][2] = OrderTicket();
-      data[i][3] = i;               // Spalte mit Arraykeys (werden mitsortiert)
+      sortData[i][0] = closeTimes[i];
+      sortData[i][1] = openTimes [i];
+      sortData[i][2] = tickets   [i];
+      sortData[i][3] = i;                             // Spalte mit Original-Keys (werden mitsortiert)
    }
 
-   // (2) alles nach CloseTime sortieren
-   ArraySort(data);
+
+   // (2) alle Zeilen nach CloseTime sortieren
+   ArraySort(sortData);
 
 
-   return(catch("SortTickets(17)"));
-}
+   // (3) Zeilen mit derselben CloseTime nach OpenTime sortieren
+   int close, lastClose, open, ticket, index, n, sameCloses[][4];
+   ArrayResize(sameCloses, 1);
 
-
-/**
- * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
- *
- * @param  int& lpTickets[] - Zeiger auf Array mit Ausgangsdaten
- *
- * @return int - Fehlerstatus
- */
-int SortTickets.Old(int& lpTickets[][]) {
-   // (1) alles nach CloseTime sortieren
-   ArraySort(lpTickets);
-
-
-   // (2) Datensätze mit derselben CloseTime nach OpenTime sortieren
-   int close, open, ticket, lastClose, n, count=ArrayRange(lpTickets, 0);
-   int sameClose[][3]; ArrayResize(sameClose, 1);        // { OpenTime, Ticket, index }
-
-   for (int i=0; i < count; i++) {
-      close  = lpTickets[i][0];
-      open   = lpTickets[i][1];
-      ticket = lpTickets[i][2];
+   for (i=0; i < rows; i++) {
+      close  = sortData[i][0];
+      open   = sortData[i][1];
+      ticket = sortData[i][2];
+      index  = sortData[i][3];
 
       if (close == lastClose) {
          n++;
-         ArrayResize(sameClose, n+1);
+         ArrayResize(sameCloses, n+1);
       }
       else if (n > 0) {
-         // in sameClose angesammelte Werte nach OpenTime sortieren und zurück nach lpTickets schreiben
-         SortSameCloseTickets(sameClose, lpTickets);
-         ArrayResize(sameClose, 1);
+         // in sameCloses[] angesammelte Zeilen nach OpenTime sortieren und zurück nach sortData[] schreiben
+         SortTickets.SameClose(sameCloses, sortData);
+         ArrayResize(sameCloses, 1);
          n = 0;
       }
-      sameClose[n][0] = open;
-      sameClose[n][1] = ticket;
-      sameClose[n][2] = i;                               // Original-Position des Datensatzes in lpTickets
+      sameCloses[n][0] = open;
+      sameCloses[n][1] = ticket;
+      sameCloses[n][2] = index;
+      sameCloses[n][3] = i;                           // Originalposition der Zeile in sortData[]
 
       lastClose = close;
    }
    if (n > 0) {
-      // im letzten Schleifendurchlauf in sameClose ggf. angesammelte Werte müssen auch verarbeitet werden
-      SortSameCloseTickets(sameClose, lpTickets);
+      // im letzten Schleifendurchlauf in sameCloses[] angesammelte Zeilen müssen auch verarbeitet werden
+      SortTickets.SameClose(sameCloses, sortData);
       n = 0;
    }
 
 
-   // (3) Datensätze mit derselben Close- und OpenTime nach Ticket sortieren
-   int lastOpen, sameCloseOpen[][2]; ArrayResize(sameCloseOpen, 1);  // { Ticket, index }
+   // (4) Zeilen mit derselben Close- und OpenTime nach Ticket sortieren
+   int lastOpen, sameOpens[][3];
+   ArrayResize(sameOpens, 1);
    lastClose = 0;
 
-   for (i=0; i < count; i++) {
-      close  = lpTickets[i][0];
-      open   = lpTickets[i][1];
-      ticket = lpTickets[i][2];
+   for (i=0; i < rows; i++) {
+      close  = sortData[i][0];
+      open   = sortData[i][1];
+      ticket = sortData[i][2];
+      index  = sortData[i][3];
 
       if (close==lastClose && open==lastOpen) {
          n++;
-         ArrayResize(sameCloseOpen, n+1);
+         ArrayResize(sameOpens, n+1);
       }
       else if (n > 0) {
-         // in sameCloseOpen angesammelte Werte nach Ticket sortieren und zurück nach lpTickets schreiben
-         SortSameCloseOpenTickets(sameCloseOpen, lpTickets);
-         ArrayResize(sameCloseOpen, 1);
+         // in sameOpens[] angesammelte Werte nach Ticket sortieren und zurück nach sortData[] schreiben
+         SortTickets.SameOpens(sameOpens, sortData);
+         ArrayResize(sameOpens, 1);
          n = 0;
       }
-      sameCloseOpen[n][0] = ticket;
-      sameCloseOpen[n][1] = i;                           // Original-Position des Datensatzes in lpTickets
+      sameOpens[n][0] = ticket;
+      sameOpens[n][1] = index;
+      sameOpens[n][2] = i;                            // Originalposition der Zeile in sortData[]
 
       lastClose = close;
       lastOpen  = open;
    }
    if (n > 0) {
-      // im letzten Schleifendurchlauf in sameCloseOpen ggf. angesammelte Werte müssen auch verarbeitet werden
-      SortSameCloseOpenTickets(sameCloseOpen, lpTickets);
+      // im letzten Schleifendurchlauf in sameOpens[] angesammelte Werte müssen auch verarbeitet werden
+      SortTickets.SameOpens(sameOpens, sortData);
    }
 
-   return(catch("SortTickets.Old(3)"));
+
+   // (5) Datenarrays nach Sortierreihenfolge in sortData[][3] sortieren
+   int      tmp_tickets        []; ArrayResize(tmp_tickets,         rows);
+   int      tmp_types          []; ArrayResize(tmp_types,           rows);
+   string   tmp_symbols        []; ArrayResize(tmp_symbols,         rows);
+   double   tmp_lotSizes       []; ArrayResize(tmp_lotSizes,        rows);
+   datetime tmp_openTimes      []; ArrayResize(tmp_openTimes,       rows);
+   datetime tmp_closeTimes     []; ArrayResize(tmp_closeTimes,      rows);
+   double   tmp_openPrices     []; ArrayResize(tmp_openPrices,      rows);
+   double   tmp_closePrices    []; ArrayResize(tmp_closePrices,     rows);
+   double   tmp_stopLosses     []; ArrayResize(tmp_stopLosses,      rows);
+   double   tmp_takeProfits    []; ArrayResize(tmp_takeProfits,     rows);
+   datetime tmp_expirationTimes[]; ArrayResize(tmp_expirationTimes, rows);
+   double   tmp_commissions    []; ArrayResize(tmp_commissions,     rows);
+   double   tmp_swaps          []; ArrayResize(tmp_swaps,           rows);
+   double   tmp_netProfits     []; ArrayResize(tmp_netProfits,      rows);
+   int      tmp_magicNumbers   []; ArrayResize(tmp_magicNumbers,    rows);
+   string   tmp_comments       []; ArrayResize(tmp_comments,        rows);
+
+   for (i=0; i < rows; i++) {
+      n = sortData[i][3];
+
+      tmp_tickets        [i] = tickets        [n];
+      tmp_types          [i] = types          [n];
+      tmp_symbols        [i] = symbols        [n];
+      tmp_lotSizes       [i] = lotSizes       [n];
+      tmp_openTimes      [i] = openTimes      [n];
+      tmp_closeTimes     [i] = closeTimes     [n];
+      tmp_openPrices     [i] = openPrices     [n];
+      tmp_closePrices    [i] = closePrices    [n];
+      tmp_stopLosses     [i] = stopLosses     [n];
+      tmp_takeProfits    [i] = takeProfits    [n];
+      tmp_expirationTimes[i] = expirationTimes[n];
+      tmp_commissions    [i] = commissions    [n];
+      tmp_swaps          [i] = swaps          [n];
+      tmp_netProfits     [i] = netProfits     [n];
+      tmp_magicNumbers   [i] = magicNumbers   [n];
+      tmp_comments       [i] = comments       [n];
+   }
+
+   ArrayCopy(tickets        , tmp_tickets        );
+   ArrayCopy(types          , tmp_types          );
+   ArrayCopy(symbols        , tmp_symbols        );
+   ArrayCopy(lotSizes       , tmp_lotSizes       );
+   ArrayCopy(openTimes      , tmp_openTimes      );
+   ArrayCopy(closeTimes     , tmp_closeTimes     );
+   ArrayCopy(openPrices     , tmp_openPrices     );
+   ArrayCopy(closePrices    , tmp_closePrices    );
+   ArrayCopy(stopLosses     , tmp_stopLosses     );
+   ArrayCopy(takeProfits    , tmp_takeProfits    );
+   ArrayCopy(expirationTimes, tmp_expirationTimes);
+   ArrayCopy(commissions    , tmp_commissions    );
+   ArrayCopy(swaps          , tmp_swaps          );
+   ArrayCopy(netProfits     , tmp_netProfits     );
+   ArrayCopy(magicNumbers   , tmp_magicNumbers   );
+   ArrayCopy(comments       , tmp_comments       );
+
+   return(catch("SortTickets(2)"));
 }
 
 
 /**
- * Sortiert die in sameClose[] übergebenen Ticketdaten nach OpenTime und aktualisiert die entsprechenden Einträge in lpTickets.
+ * Sortiert die in sameCloses[] übergebenen Daten und aktualisiert die entsprechenden Einträge in lpData[].
  *
- * @param  int& sameClose[] - Zeiger auf Array mit Ausgangsdaten
- * @param  int& lpTickets[] - Zeiger auf das zu aktualiserende Array
+ * @param  int& sameCloses[] - Zeiger auf Array mit Ausgangsdaten
+ * @param  int& lpData[]     - Zeiger auf das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortSameCloseTickets(int sameClose[][/*{OpenTime, Ticket, index}*/], int& lpTickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   int open, ticket, i;
+int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, Index, i}*/], int& lpData[][/*{CloseTime, OpenTime, Ticket, Index}*/]) {
+   int sameClosesCopy[][4]; ArrayResize(sameClosesCopy, 0);
+   ArrayCopy(sameClosesCopy, sameCloses);                // Originalreihenfolge der Indizes in Kopie speichern
 
-   int sameCloseCopy[][3]; ArrayResize(sameCloseCopy, 0);
-   ArrayCopy(sameCloseCopy, sameClose);                  // Original-Reihenfolge der Indizes in Kopie speichern
-   ArraySort(sameClose);                                 // und nach OpenTime sortieren...
+   // Zeilen nach OpenTime sortieren
+   ArraySort(sameCloses);
 
-   int count = ArrayRange(sameClose, 0);
+   // Original-Daten mit den sortierten Werten überschreiben
+   int open, ticket, index, i, rows=ArrayRange(sameCloses, 0);
 
-   for (int n=0; n < count; n++) {
-      open   = sameClose    [n][0];
-      ticket = sameClose    [n][1];
-      i      = sameCloseCopy[n][2];
-      lpTickets[i][1] = open;                            // Original-Daten mit den sortierten Werten überschreiben
-      lpTickets[i][2] = ticket;
+   for (int n=0; n < rows; n++) {
+      open   = sameCloses    [n][0];
+      ticket = sameCloses    [n][1];
+      index  = sameCloses    [n][2];
+      i      = sameClosesCopy[n][3];
+      lpData[i][1] = open;                               // Originaldaten mit den sortierten Werten überschreiben
+      lpData[i][2] = ticket;
+      lpData[i][3] = index;
    }
 
-   return(catch("SortSameCloseTickets()"));
+   return(catch("SortTickets.SameClose()"));
 }
 
 
 /**
- * Sortiert die in sameCloseOpen[] übergebenen Ticketdaten nach Ticket# und aktualisiert die entsprechenden Einträge in lpTickets.
+ * Sortiert die in sameOpens[] übergebenen Daten nach Ticket und aktualisiert die entsprechenden Einträge in lpData[].
  *
- * @param  int& sameCloseOpen[] - Zeiger auf Array mit Ausgangsdaten
- * @param  int& lpTickets[]     - Zeiger auf das zu aktualiserende Array
+ * @param  int& sameOpens[] - Zeiger auf Array mit Ausgangsdaten
+ * @param  int& lpData[]    - Zeiger auf das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortSameCloseOpenTickets(int sameCloseOpen[][/*{Ticket, index}*/], int& lpTickets[][/*{OpenTime, CloseTime, Ticket}*/]) {
-   int ticket=0, i=0;
+int SortTickets.SameOpens(int sameOpens[][/*{Ticket, Index, i}*/], int& lpData[][/*{OpenTime, CloseTime, Ticket, Index}*/]) {
+   int sameOpensCopy[][3]; ArrayResize(sameOpensCopy, 0);
+   ArrayCopy(sameOpensCopy, sameOpens);                  // Originalreihenfolge der Indizes in Kopie speichern
 
-   int sameCloseOpenCopy[][2]; ArrayResize(sameCloseOpenCopy, 0);
-   ArrayCopy(sameCloseOpenCopy, sameCloseOpen);          // Original-Reihenfolge der Indizes in Kopie speichern
-   ArraySort(sameCloseOpen);                             // und nach Ticket sortieren...
+   // alle Zeilen nach Ticket sortieren
+   ArraySort(sameOpens);
 
-   int count = ArrayRange(sameCloseOpen, 0);
+   int ticket, index, i, rows=ArrayRange(sameOpens, 0);
 
-   for (int n=0; n < count; n++) {
-      ticket = sameCloseOpen    [n][0];
-      i      = sameCloseOpenCopy[n][1];
-      lpTickets[i][2] = ticket;                          // Original-Daten mit den sortierten Werten überschreiben
+   for (int n=0; n < rows; n++) {
+      ticket = sameOpens    [n][0];
+      index  = sameOpens    [n][1];
+      i      = sameOpensCopy[n][2];
+      lpData[i][2] = ticket;                             // Originaldaten mit den sortierten Werten überschreiben
+      lpData[i][3] = index;
    }
 
-   return(catch("SortSameCloseOpenTickets()"));
+   return(catch("SortTickets.SameOpens()"));
 }
