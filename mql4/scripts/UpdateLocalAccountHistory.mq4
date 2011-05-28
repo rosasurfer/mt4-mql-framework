@@ -212,7 +212,7 @@ int start() {
 
    int error = GetAccountHistory(account, history);
    if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)                     // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
-      return(catch("start(1)", error));
+      return(catch("start(4)", error));
 
    int    lastTicket;
    double lastBalance;
@@ -224,14 +224,14 @@ int start() {
       //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (orders == 0) {
-      if (lastBalance != AccountBalance()) {
+      if (NE(lastBalance, AccountBalance())) {
          PlaySound("notify.wav");
          MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-         return(catch("start(2)"));
+         return(catch("start(5)"));
       }
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(3)"));
+      return(catch("start(6)"));
    }
 
 
@@ -246,13 +246,13 @@ int start() {
       }
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
-      if (lastBalance != AccountBalance())
-         return(catch("start(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+      if (NE(lastBalance, AccountBalance()))
+         return(catch("start(7)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(9)"));
+      return(catch("start(8)"));
    }
-   log("start()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
+   //log("start()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
 
    // (7) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
@@ -263,11 +263,11 @@ int start() {
       balances[i]     = NormalizeDouble(lastBalance + grossProfits[i], 2);
       lastBalance     = balances[i];
    }
-   if (lastBalance != AccountBalance()) {
+   if (NE(lastBalance, AccountBalance())) {
       log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(catch("start(10)"));
+      return(catch("start(9)"));
    }
 
 
@@ -278,7 +278,7 @@ int start() {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(11)  FileOpen()"));
+         return(catch("start(10)  FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n"
@@ -286,23 +286,23 @@ int start() {
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(12)  FileWrite()", error));
+         return(catch("start(11)  FileWrite()", error));
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(13)  FileWrite()", error));
+         return(catch("start(12)  FileWrite()", error));
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(14)  FileOpen()"));
+         return(catch("start(13)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(15)  FileSeek()", error));
+         return(catch("start(14)  FileSeek()", error));
       }
    }
 
@@ -313,15 +313,15 @@ int start() {
          continue;
 
       string strType         = OperationTypeDescription(types[i]);
-      string strSize         = ifString(lotSizes[i]==0, "", NumberToStr(lotSizes[i], ".+"));
+      string strSize         = ifString(EQ(lotSizes[i], 0), "", NumberToStr(lotSizes[i], ".+"));
 
       string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
       string strCloseTime    = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
 
-      string strOpenPrice    = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
-      string strClosePrice   = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
-      string strStopLoss     = ifString(stopLosses [i]==0, "", NumberToStr(stopLosses [i], ".2+"));
-      string strTakeProfit   = ifString(takeProfits[i]==0, "", NumberToStr(takeProfits[i], ".2+"));
+      string strOpenPrice    = ifString(EQ(openPrices [i], 0), "", NumberToStr(openPrices [i], ".2+"));
+      string strClosePrice   = ifString(EQ(closePrices[i], 0), "", NumberToStr(closePrices[i], ".2+"));
+      string strStopLoss     = ifString(EQ(stopLosses [i], 0), "", NumberToStr(stopLosses [i], ".2+"));
+      string strTakeProfit   = ifString(EQ(takeProfits[i], 0), "", NumberToStr(takeProfits[i], ".2+"));
 
       string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       string strExpTimestamp = ifString(expirationTimes[i]==0, "", expirationTimes[i]);
@@ -337,14 +337,14 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(16)  FileWrite()", error));
+         return(catch("start(15)  FileWrite()", error));
       }
    }
    FileClose(hFile);
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-   return(catch("start(17)"));
+   return(catch("start(16)"));
 }
 
 
