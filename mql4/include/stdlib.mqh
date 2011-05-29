@@ -220,8 +220,8 @@
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
-   int      iBalance(int account, double& lpBuffer[], int bar);
-   int      iBalanceSeries(int account, double& lpBuffer[]);
+   int      iAccountBalance(int account, double& lpBuffer[], int bar);
+   int      iAccountBalanceSeries(int account, double& lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);

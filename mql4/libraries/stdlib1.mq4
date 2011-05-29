@@ -5143,21 +5143,21 @@ datetime GmtToServerTime(datetime gmtTime) {
  * Berechnet den Balancewert eines Accounts am angegebenen Offset des aktuellen Charts und schreibt ihn in das Ergebnisarray.
  *
  * @param  int     account  - Account, für den der Wert berechnet werden soll
- * @param  double& lpBuffer - Zeiger auf Ergebnisarray (kann Indikatorpuffer sein)
+ * @param  double& lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
  * @param  int     bar      - Barindex des zu berechnenden Wertes (Chart-Offset)
  *
  * @return int - Fehlerstatus
  */
-int iBalance(int account, double& lpBuffer[], int bar) {
-   // TODO: iBalance(int account, double& lpBuffer, int bar) implementieren
+int iAccountBalance(int account, double& lpBuffer[], int bar) {
 
-   // zur Zeit wird der Indikator hier noch komplett neuberechnet
-   if (iBalanceSeries(account, lpBuffer) == ERR_HISTORY_UPDATE) {
-      catch("iBalance(1)");
+   // TODO: Berechnung einzelner Bar implementieren (zur Zeit wird der Indikator hier noch komplett neuberechnet)
+
+   if (iAccountBalanceSeries(account, lpBuffer) == ERR_HISTORY_UPDATE) {
+      catch("iAccountBalance(1)");
       return(ERR_HISTORY_UPDATE);
    }
 
-   return(catch("iBalance(2)"));
+   return(catch("iAccountBalance(2)"));
 }
 
 
@@ -5165,23 +5165,23 @@ int iBalance(int account, double& lpBuffer[], int bar) {
  * Berechnet den Balanceverlauf eines Accounts für alle Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
  * @param  int     account  - Account-Nummer
- * @param  double& lpBuffer - Zeiger auf Ergebnisarray (kann Indikatorpuffer sein)
+ * @param  double& lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
  *
  * @return int - Fehlerstatus
  */
-int iBalanceSeries(int account, double& lpBuffer[]) {
-   if (ArrayRange(lpBuffer, 0) != Bars) {
+int iAccountBalanceSeries(int account, double& lpBuffer[]) {
+   if (ArraySize(lpBuffer) != Bars) {
       ArrayResize(lpBuffer, Bars);
       ArrayInitialize(lpBuffer, EMPTY_VALUE);
    }
 
    // Balance-History holen
-   datetime times[];  ArrayResize(times , 0);
+   datetime times []; ArrayResize(times , 0);
    double   values[]; ArrayResize(values, 0);
 
-   int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (times[0], values[0] sind älteste Werte)
+   int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (in times[0] stehen die ältesten Werte)
    if (error != NO_ERROR) {
-      catch("iBalanceSeries(1)");
+      catch("iAccountBalanceSeries(1)");
       return(error);
    }
 
@@ -5213,7 +5213,7 @@ int iBalanceSeries(int account, double& lpBuffer[]) {
       lpBuffer[bar] = lpBuffer[lastBar];
    }
 
-   return(catch("iBalanceSeries(2)"));
+   return(catch("iAccountBalanceSeries(2)"));
 }
 
 

@@ -19,8 +19,6 @@
 
 extern int    MA.Periods        = 200;                // averaging period
 extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-//extern int    MA.Periods        = 350;
-//extern string MA.Timeframe      = "M30";
 
 extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";

@@ -1,16 +1,17 @@
 /**
- * Balance-Verlauf des aktuellen Accounts als Linienchart im Indikator-Subfenster.
+ * Balance-Verlauf des aktuellen Accounts als Linienchart im Indikator-Subfenster
  */
 #include <stdlib.mqh>
 
 #property indicator_separate_window
+
 #property indicator_buffers 1
 
 #property indicator_color1  Blue
 #property indicator_width1  2
 
 
-double iBufferBalance[];
+double iBalance[];
 
 
 /**
@@ -24,13 +25,13 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber()) {
-      init_error = stdlib_PeekLastError();
+      init_error = stdlib_GetLastError();
       return(init_error);
    }
 
-   SetIndexBuffer(0, iBufferBalance);
+   SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");
-   SetIndexStyle (0, DRAW_LINE);
+   IndicatorShortName("Balance");
    IndicatorDigits(2);
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
@@ -42,6 +43,16 @@ int init() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   return(catch("deinit()"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -49,7 +60,7 @@ int init() {
 int start() {
    Tick++;
    if      (init_error != NO_ERROR) ValidBars = 0;
-   else if (last_error != NO_ERROR) ValidBars = 0;                   // Trat beim letzten Aufruf ein Fehler auf, wird der Indikator neuberechnet.
+   else if (last_error != NO_ERROR) ValidBars = 0;
    else                             ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
@@ -62,7 +73,7 @@ int start() {
       return(init_error);
 
    // nach Terminal-Start Abschluß der Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iBufferBalance) == 0) {
+   if (Bars == 0 || ArraySize(iBalance) == 0) {
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
    }
@@ -70,27 +81,18 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   // vor Neuberechnung Indikatorwerte zurücksetzen
+   // Alle Werte komplett ...
    if (ValidBars == 0) {
-      ArrayInitialize(iBufferBalance, EMPTY_VALUE);
+      ArrayInitialize(iBalance, EMPTY_VALUE);      // vor Neuberechnung alte Werte zurücksetzen
+      last_error = iAccountBalanceSeries(AccountNumber(), iBalance);
    }
-
-   // Entweder alle Werte ...
-   if (ValidBars == 0) {
-      last_error = iBalanceSeries(AccountNumber(), iBufferBalance);
-   }
-   else {
-      // ... oder nur die fehlenden berechnen
-      for (int bar=ChangedBars; bar > 0;) {
-         bar--;
-         last_error = iBalance(AccountNumber(), iBufferBalance, bar);
+   else {                                          // ... oder nur die fehlenden Werte berechnen
+      for (int bar=ChangedBars-1; bar >= 0; bar--) {
+         last_error = iAccountBalance(AccountNumber(), iBalance, bar);
          if (last_error != NO_ERROR)
             break;
       }
    }
-
-   if (last_error != NO_ERROR)
-      log("start()", last_error);
 
    return(catch("start()"));
 }
