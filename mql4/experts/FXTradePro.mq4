@@ -58,22 +58,16 @@ int      sequenceLength;
 int      progressionLevel;
 int      entryDirection = OP_UNDEFINED;
 
-int      open.ticket;
-int      open.type;
-datetime open.time;
-double   open.price;
-double   open.lots;
-double   open.swap;
-double   open.commission;
-double   open.profit;
-int      open.magic;
-string   open.comment;
+int      levels.ticket[],     current.ticket;
+int      levels.type[],       current.type;
+double   levels.price[],      current.price;
+double   levels.lots[],       current.lots;
+double   levels.swap[],       current.swap,       all.swaps;
+double   levels.commission[], current.commission, all.commissions;
+double   levels.profit[],     current.profit,     all.profits;
+datetime levels.closeTime[],  current.closeTime;
 
 // -------------------------------------------------------------
-
-int      breakevenDistance;                  // Gewinnschwelle in Pip, ab der der StopLoss der Position auf BreakEven gesetzt wird
-int      trailingStop;                       // TrailingStop in Pip
-bool     trailStopImmediately = true;        // TrailingStop sofort starten oder warten, bis Position <trailingStop> Pip im Gewinn ist
 
 double   minAccountBalance;                  // Balance-Minimum, um zu traden
 double   minAccountEquity;                   // Equity-Minimum, um zu traden
@@ -177,7 +171,8 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   Comment("");
+   if (UninitializeReason() != REASON_CHARTCHANGE)
+      Comment("");
    return(catch("deinit()"));
 }
 
@@ -191,28 +186,28 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   if (ReadStatus() == -1)
+   if (ReadStatus(sequenceId) == -1)
       return(last_error);
 
-   if (sequenceId == 0) {                                                        // keine Sequenz aktiv
-      if (EQ(Entry.Limit, 0)) {                                                  // kein Limit definiert
+   if (sequenceId == 0) {                                                           // keine Sequenz aktiv
+      if (EQ(Entry.Limit, 0)) {                                                     // kein Limit definiert
          StartSequence();
       }
-      else if (entryDirection == OP_BUY) {                                       // Limit definiert
-         if (LE(Ask, Entry.Limit)) StartSequence();                              // Buy-Limit erreicht
+      else if (entryDirection == OP_BUY) {                                          // Limit definiert
+         if (LE(Ask, Entry.Limit)) StartSequence();                                 // Buy-Limit erreicht
       }
       else {
-         if (GE(Bid, Entry.Limit)) StartSequence();                              // Sell-Limit erreicht
+         if (GE(Bid, Entry.Limit)) StartSequence();                                 // Sell-Limit erreicht
       }
    }
-   else {                                                                        // aktive Sequenz gefunden
-      if (open.type == OP_BUY) {                                                 // Long-Position
-         if      (LE(Bid, open.price - StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_SELL)
-         else if (GE(Bid, open.price + TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
+   else {                                                                           // aktive Sequenz gefunden
+      if (current.type == OP_BUY) {                                                 // Long-Position
+         if      (LE(Bid, current.price - StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_SELL)
+         else if (GE(Bid, current.price + TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
       }
-      else {                                                                     // Short-Position
-         if      (GT(Ask, open.price + StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_BUY)
-         else if (LE(Ask, open.price - TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
+      else {                                                                        // Short-Position
+         if      (GT(Ask, current.price + StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf nächsten Level wechseln (OP_BUY)
+         else if (LE(Ask, current.price - TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schließen und Sequenz beenden
       }
    }
 
@@ -221,73 +216,92 @@ int start() {
 
 
 /**
- * TODO: Ohne Angabe eines Tickets wird noch nach der ersten gefundenen Position des EA's abgebrochen, theoretisch
- *       sind aber mehrere aktive Sequenzen im selben Instrument möglich !!!
+ * TODO: Ohne Angabe eines Tickets wird nach der ersten gefundenen Sequenz des EA's abgebrochen, theoretisch sind aber mehrere
+ *       aktive Sequenzen je Instrument möglich!
  *
- * Liest den Status der im Moment aktiven Sequenz im aktuellen Instrument ein. Wird *kein* Ticket angegeben, werden
- * alle offenen Positionen auf eine aktive Sequenz überprüft. Wird ein Ticket angegeben, wird nur der Status der Sequenz,
- * zu der dieses Ticket gehört, eingelesen.
+ * Liest den Status einer aktiven Sequenz im aktuellen Instrument ein. Wird *keine* ID angegeben, werden alle offenen Positionen
+ * auf eine aktive Sequenz überprüft. Wird eine ID angegeben, wird nur der Status dieser Sequenz eingelesen.
  *
- * @param  int ticket - Ticket der offenen Position einer aktiven Sequenz (default: NULL)
+ * @param  int sequence - ID einer aktiven Sequenz (default: NULL)
  *
- * @return int - ID einer aktiven Sequenz oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
+ * @return int - Sequenz-ID oder 0, wenn keine Sequenz aktiv ist bzw. -1, wenn ein Fehler auftrat
  */
-int ReadStatus(int ticket = NULL) {
-   open.ticket = 0;
+int ReadStatus(int sequence = NULL) {
+   int orders = OrdersTotal();
 
-   if (ticket == NULL) {
-      int orders = OrdersTotal();
-
+   // falls keine Sequenz angegeben wurde, erste aktive Sequenz finden
+   if (sequence == NULL) {
       for (int i=0; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE ist rein theoretisch: während des Auslesens wird eine Order geschlossen/gestrichen und verschwindet
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE ist rein theoretisch: während des Auslesens wird eine aktive Order geschlossen oder gestrichen
             break;
          if (IsMyOrder()) {
-            open.ticket = OrderTicket();
+            sequence = OrderMagicNumber() << 10 >> 18;            // 14 Bits  9-22 => sequenceId
             break;
          }
       }
    }
-   else {
-      if (!OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-         int error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_RUNTIME_ERROR;
-         catch("ReadStatus(1)   cannot select ticket #"+ ticket, error);
-         return(-1);
-      }
-      if (!IsMyOrder()) {
-         error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_RUNTIME_ERROR;
-         catch("ReadStatus(2)   requested ticket #"+ ticket +" doesn't belong to "+ __SCRIPT__, error);
-         return(-1);
-      }
-      open.ticket = ticket;
-   }
 
-   if (open.ticket == 0) {
+   if (sequence == NULL) {                                        // keine Sequenz angegeben und auch keine aktive Sequenz gefunden
+      // globale Variablen zurücksetzen
       sequenceId       = 0;
       progressionLevel = 0;
    }
    else {
-      open.type        = OrderType();
-      open.time        = OrderOpenTime();
-      open.price       = OrderOpenPrice();
-      open.lots        = OrderLots();
-      open.swap        = OrderSwap();
-      open.commission  = OrderCommission();
-      open.profit      = OrderProfit();
-      open.magic       = OrderMagicNumber();
-      open.comment     = OrderComment();
-                                                               // 10 Bits 23-32 => EA.uniqueId
-      sequenceId       = OrderMagicNumber() << 10 >> 18;       // 14 Bits  9-22 => sequenceId
-      sequenceLength   = OrderMagicNumber() & 0x00F0 >> 4;     //  4 Bits  5-8  => sequenceLength
-      progressionLevel = OrderMagicNumber() & 0x000F;          //  4 Bits  1-4  => progressionLevel
+      // alle offenen Positionen der Sequenz einlesen
+      sequenceId      = sequence;
+      all.swaps       = 0;
+      all.commissions = 0;
+      all.profits     = 0;
+
+      for (i=0; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE ist rein theoretisch: während des Auslesens wird eine aktive Order geschlossen oder gestrichen
+            break;
+         if (IsMyOrder(sequenceId)) {
+            sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;    //  4 Bits  5-8
+            int n          = OrderMagicNumber() & 0x000F;         //  4 Bits  1-4
+            if (n > progressionLevel)
+               progressionLevel = n;
+
+            if (ArraySize(levels.ticket) != sequenceLength) {
+               ArrayResize(levels.ticket    , sequenceLength);
+               ArrayResize(levels.type      , sequenceLength);
+               ArrayResize(levels.price     , sequenceLength);
+               ArrayResize(levels.lots      , sequenceLength);
+               ArrayResize(levels.swap      , sequenceLength);
+               ArrayResize(levels.commission, sequenceLength);
+               ArrayResize(levels.profit    , sequenceLength);
+               ArrayResize(levels.closeTime , sequenceLength);
+            }
+            n--;
+            levels.ticket    [n] = OrderTicket();
+            levels.type      [n] = OrderType();
+            levels.price     [n] = OrderOpenPrice();
+            levels.lots      [n] = OrderLots();
+            levels.swap      [n] = OrderSwap();       all.swaps       += levels.swap      [n];
+            levels.commission[n] = OrderCommission(); all.commissions += levels.commission[n];
+            levels.profit    [n] = OrderProfit();     all.profits     += levels.profit    [n];
+            levels.closeTime [n] = OrderCloseTime();              // Unterscheidung zwischen offenen und geschlossenen Positionen
+
+         }
+      }
+      if (progressionLevel > 0) {
+         i = progressionLevel-1;
+         current.ticket     = levels.ticket    [i];
+         current.type       = levels.type      [i];
+         current.price      = levels.price     [i];
+         current.lots       = levels.lots      [i];
+         current.swap       = levels.swap      [i];
+         current.commission = levels.commission[i];
+         current.profit     = levels.profit    [i];
+         current.closeTime  = levels.closeTime [i];
+      }
+
+      // versuchen, fehlende Positionen aus der Trade-History auszulesen
    }
 
    ShowStatus();
 
-   error = GetLastError();
+   int error = GetLastError();
    if (error != NO_ERROR) {
       catch("ReadStatus(3)", error);
       return(-1);
@@ -297,14 +311,22 @@ int ReadStatus(int ticket = NULL) {
 
 
 /**
- * Ob die aktuell selektierte Order von diesem EA erzeugt wurde.
+ * Ob die aktuell selektierte Order von diesem EA erzeugt wurde. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
+ * ob die Order zur angegebeben Sequenz gehört.
+ *
+ * @param  int sequenceId - ID einer aktiven Sequenz (default: NULL)
  *
  * @return bool
  */
-bool IsMyOrder() {
+bool IsMyOrder(int sequenceId = NULL) {
    if (OrderSymbol()==Symbol()) {
-      if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-         return(OrderMagicNumber() >> 22 == EA.uniqueId);
+      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+         if (OrderMagicNumber() >> 22 == EA.uniqueId) {
+            if (sequenceId == NULL)
+               return(true);
+            return(sequenceId == OrderMagicNumber() << 10 >> 18);    // 14 Bits  9-22 => sequenceId
+         }
+      }
    }
    return(false);
 }
@@ -354,7 +376,7 @@ int StartSequence() {
    if (sequenceId != 0)
       return(catch("StartSequence(1)  cannot start multiple sequences, current active sequence ="+ sequenceId, ERR_RUNTIME_ERROR));
 
-   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
       int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer != IDOK) {
@@ -364,18 +386,16 @@ int StartSequence() {
       }
    }
 
-   if (!NewOrderPermitted()) {                                          // MM verbietet weitere Orders
-      last_error = ERR_NOT_ENOUGH_MONEY;
-      return(last_error);
-   }
-
    progressionLevel = 1;
 
-   int ticket = SendOrder(entryDirection);                              // Position in Entry.Direction öffnen
+   if (!NewOrderPermitted())                                               // Moneymanagement verbietet weitere Orders
+      return(last_error);
+
+   int ticket = SendOrder(entryDirection);                                 // Position in Entry.Direction öffnen
    if (ticket == -1)
       return(last_error);
 
-   if (ReadStatus(ticket) == -1)                                        // Status neu einlesen
+   if (ReadStatus(sequenceId) == -1)                                       // Status neu einlesen
       return(last_error);
 
    return(catch("StartSequence(2)"));
@@ -391,18 +411,16 @@ int IncreaseProgression() {
 
    // ClosePosition();
 
-   if (!NewOrderPermitted()) {                                          // MM verbietet weitere Orders
-      last_error = ERR_NOT_ENOUGH_MONEY;
-      return(last_error);
-   }
-
    progressionLevel++;
 
-   int ticket = SendOrder(ifInt(open.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
+   if (!NewOrderPermitted())                                               // Moneymanagement verbietet weitere Orders
+      return(last_error);
+
+   int ticket = SendOrder(ifInt(current.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
    if (ticket == -1)
       return(last_error);
 
-   if (ReadStatus(ticket) == -1)                                        // Status neu einlesen
+   if (ReadStatus(sequenceId) == -1)                                       // Status neu einlesen
       return(last_error);
 
    return(catch("IncreaseProgression()"));
@@ -414,7 +432,6 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-
    debug("FinishSequence()");
 
    // ClosePosition();
@@ -442,8 +459,6 @@ int SendOrder(int type) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
 
-   debug("SendOrder()   "+ ticket +" = OrderSendEx("+ Symbol()+ ", "+ OperationTypeDescription(type) +", "+ NumberToStr(lotsize, ".+") +" lot, slippage="+ NumberToStr(slippage, ".+") +", magic="+ magicNumber +", comment=\""+ comment +"\", Green)");
-
    if (ticket!=-1) /*&&*/ if (catch("SendOrder(2)")!=NO_ERROR)
       ticket = -1;
    return(ticket);
@@ -457,10 +472,12 @@ int SendOrder(int type) {
 bool NewOrderPermitted() {
    if (AccountBalance() < minAccountBalance) {
       ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
+      last_error = ERR_NOT_ENOUGH_MONEY;
       return(false);
    }
    if (AccountEquity() < minAccountEquity) {
       ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
+      last_error = ERR_NOT_ENOUGH_MONEY;
       return(false);
    }
    return(true);
@@ -501,7 +518,7 @@ int ShowStatus(int id=NULL) {
    string status=__SCRIPT__, msg="";
 
    switch (id) {
-      case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ open.ticket;
+      case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ current.ticket;
                  else if (EQ(Entry.Limit, 0)) msg = ":  waiting";
                  else                         msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
       case STATUS_INACTIVE            :       msg = ":  inactive";                                                        break;
@@ -529,66 +546,11 @@ int ShowStatus(int id=NULL) {
    if (sequenceId != 0) {
       status = status
              +"Breakeven:           "+ NumberToStr(Bid, PriceFormat)                                + NL
-             +"Profit / Loss:          "+ DoubleToStr(open.profit + open.commission + open.swap, 2) + NL;
+             +"Profit / Loss:          "+ DoubleToStr(all.profits + all.commissions + all.swaps, 2) + NL;
    }
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(NL + NL + status);
 
    return(catch("ShowStatus(2)"));
-   BreakevenManager(); TrailingStopManager();
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int BreakevenManager() {
-   if (breakevenDistance <= 0)
-      return(NO_ERROR);
-
-   for (int i=0; i < OrdersTotal(); i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-
-      if (IsMyOrder()) {
-         if (OrderType()==OP_BUY) /*&&*/ if (OrderStopLoss() < OrderOpenPrice()) {
-            if (Bid - OrderOpenPrice() >= breakevenDistance*Pip)
-               OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Green);
-         }
-
-         if (OrderType()==OP_SELL) /*&&*/ if (OrderStopLoss() > OrderOpenPrice()) {
-            if (OrderOpenPrice() - Ask >= breakevenDistance*Pip)
-               OrderModify(OrderTicket(), OrderOpenPrice(), OrderOpenPrice(), OrderTakeProfit(), 0, Red);
-         }
-      }
-   }
-   return(catch("BreakEvenManager()"));
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int TrailingStopManager() {
-   int orders = OrdersTotal();
-
-   for (int i=0; i < orders; i++) {
-      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (IsMyOrder()) {
-         if (OrderType() == OP_BUY) {
-            if (trailStopImmediately || Bid - OrderOpenPrice() > trailingStop*Pip)
-               if (OrderStopLoss() < Bid - trailingStop*Pip)
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Bid - trailingStop*Pip, OrderTakeProfit(), 0, Green);
-         }
-
-         if (OrderType() == OP_SELL) {
-            if (trailStopImmediately || OrderOpenPrice() - Ask > trailingStop*Pip)
-               if (OrderStopLoss() > Ask + trailingStop*Pip || EQ(OrderStopLoss(), 0))
-                  OrderModify(OrderTicket(), OrderOpenPrice(), Ask + trailingStop*Pip, OrderTakeProfit(), 0, Red);
-         }
-      }
-   }
-   return(catch("TrailingStopManager()"));
 }

@@ -1158,7 +1158,7 @@ string GetShortcutTarget(string lnkFile) {
 
 
 /**
- * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
+ * Schickt per PostMessage() einen einzelnen Fake-Tick an den aktuellen Chart.
  *
  * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
  *
@@ -6892,12 +6892,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
 /**
  * Generiert eine ausführliche Logmessage für eine erfolgreich abgeschickte oder ausgeführte Order.
  *
- * @param  int    ticket - Ticket-Nummer der Order
- * @param  int    type   - gewünschter Ordertyp
- * @param  double volume - gewünschtes Ordervolumen
- * @param  double price  - gewünschter Orderpreis
- * @param  int    digits - Nachkommastellen des Ordersymbols
- * @param  int    time   - zur Orderausführung benötigte Zeit
+ * @param  int    ticket  - Ticket-Nummer der Order
+ * @param  int    type    - gewünschter Ordertyp
+ * @param  double volume  - gewünschtes Ordervolumen
+ * @param  double price   - gewünschter Orderpreis
+ * @param  int    digits  - Nachkommastellen des Ordersymbols
+ * @param  int    time    - zur Orderausführung benötigte Zeit
  *
  * @return string - Logmessage
  */
@@ -6937,7 +6937,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
       }
    }
 
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strVolume, " ", OrderSymbol(), " at ", strPrice, ", used time: ", time, " ms");
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strVolume, " ", OrderSymbol(), " at ", strPrice);
+   if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
+   if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
+                                 message = StringConcatenate(message, ", used time: ", time, " ms");
 
    error = GetLastError();
    if (error != NO_ERROR) {

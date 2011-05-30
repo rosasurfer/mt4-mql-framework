@@ -12,7 +12,7 @@ extern string Close.Symbols      = "";    // <leer> | Symbols                   
 extern string Close.Direction    = "";    // <leer> | Buy | Long | Sell | Short
 extern string Close.Tickets      = "";    // <leer> | Tickets                    (kommagetrennt)
 extern string Close.MagicNumbers = "";    // <leer> | MagicNumbers               (kommagetrennt)
-extern string Close.Comment      = "";    // <leer> | Kommentar                  (Prüfung per OrderComment().StartsWith(value))
+extern string Close.Comment      = "";    // <leer> | Kommentar                  (Prüfung per OrderComment().StringIStartsWith(value))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -138,7 +138,7 @@ int start() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int answer = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", WindowExpertName(), MB_ICONQUESTION|MB_OKCANCEL);
+      int answer = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer == IDOK) {
          for (i=0; i < selected; i++) {
             if (!OrderCloseEx(tickets[i]))
@@ -149,7 +149,7 @@ int start() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No "+ ifString(filtered, "matching", "open") +" positions found.", WindowExpertName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(filtered, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start()"));
