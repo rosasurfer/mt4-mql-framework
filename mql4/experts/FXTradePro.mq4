@@ -407,7 +407,7 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   debug("IncreaseProgression()");
+   debug("IncreaseProgression()   StopLoss für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, current.price-Bid, Ask-current.price)/Pip, 1) +" pip");
 
    // ClosePosition();
 
