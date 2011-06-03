@@ -69,7 +69,7 @@ int start() {
    int n;
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE ist hier nur theoretisch: während des Auslesens ändert sich die Zahl der Orderdatensätze
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
          break;
       int type = OrderType();                               // gecancelte Orders überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)

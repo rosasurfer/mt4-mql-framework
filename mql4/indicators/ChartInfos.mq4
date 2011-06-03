@@ -508,7 +508,7 @@ int UpdateMarginLevels() {
 
 
    error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateMarginLevels()", error));
 }
@@ -530,7 +530,7 @@ int CheckPosition() {
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       if (OrderSymbol() == Symbol()) {

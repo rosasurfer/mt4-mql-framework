@@ -3072,7 +3072,7 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
 
    // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
@@ -3227,7 +3227,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
    }
    int orders = OrdersTotal();
    for (i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          noOfKnownPositions++;

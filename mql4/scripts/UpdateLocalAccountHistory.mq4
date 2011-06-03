@@ -92,7 +92,7 @@ int start() {
    ArrayResize(comments,        orders);
 
    for (int i, n=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE ist rein theoretisch: während der Verarbeitung wird Anzeigezeitraum geändert
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
          break;
       int type = OrderType();                                  // gecancelte Orders und Margin Credits überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)

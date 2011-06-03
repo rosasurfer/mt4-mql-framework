@@ -115,7 +115,7 @@ int start() {
 
    // zu schlieﬂende Positionen selektieren
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE ist hier nur theoretisch: w‰hrend des Auslesens ‰ndert sich die Zahl der Orderdatens‰tze
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: w‰hrend des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       bool close = true;
