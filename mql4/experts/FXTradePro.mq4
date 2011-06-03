@@ -9,7 +9,7 @@
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
  */
 
-int EA.uniqueId = 101;           // eindeutige ID dieses EA's im Bereich 0-1023
+int EA.uniqueId = 101;           // eindeutige ID dieses EA's (Bereich 0-1023)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <stdlib.mqh>
@@ -60,7 +60,7 @@ int      entryDirection = OP_UNDEFINED;
 
 int      levels.ticket[],     current.ticket;
 int      levels.type[],       current.type;
-double   levels.price[],      current.price;
+double   levels.openPrice[],  current.openPrice;
 double   levels.lots[],       current.lots;
 double   levels.swap[],       current.swap,       all.swaps;
 double   levels.commission[], current.commission, all.commissions;
@@ -189,24 +189,14 @@ int start() {
    if (ReadStatus(sequenceId) == -1)
       return(last_error);
 
-   if (sequenceId == 0) {                                                  // keine Sequenz aktiv
-      if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert
-         StartSequence();
-      }
-      else if (entryDirection == OP_BUY) {                                 // Limit definiert
-         if (LE(Ask, Entry.Limit))              StartSequence();           // Buy-Limit erreicht
-      }
-      else {
-         if (GE(Bid, Entry.Limit))              StartSequence();           // Sell-Limit erreicht
-      }
+   if (sequenceId == 0) {                                               // keine Sequenz aktiv
+      if (IsEntryLimitReached())             StartSequence();           // Limit erreicht oder kein Limit definiert
    }
-   else {                                                                  // aktive Sequenz gefunden
-      if (IsStopLossReached()) {                                           // StopLoss erreicht
-         if (progressionLevel < sequenceLength) IncreaseProgression();     // auf nächsten Level wechseln ...
-         else                                   FinishSequence();          // ... oder Sequenz beenden
-      }
-      else if (IsProfitTargetReached())         FinishSequence();          // TakeProfit erreicht, Sequenz beenden
+   else if (IsStopLossReached()) {                                      // aktive Sequenz gefunden, wenn StopLoss erreicht ...
+      if (progressionLevel < sequenceLength) IncreaseProgression();     // auf nächsten Level wechseln ...
+      else                                   FinishSequence();          // ... oder Sequenz beenden
    }
+   else if (IsProfitTargetReached())         FinishSequence();          // wenn TakeProfit erreicht -> Sequenz beenden
 
    return(catch("start()"));
 }
@@ -262,7 +252,7 @@ int ReadStatus(int sequence = NULL) {
             if (ArraySize(levels.ticket) != sequenceLength) {
                ArrayResize(levels.ticket    , sequenceLength);
                ArrayResize(levels.type      , sequenceLength);
-               ArrayResize(levels.price     , sequenceLength);
+               ArrayResize(levels.openPrice , sequenceLength);
                ArrayResize(levels.lots      , sequenceLength);
                ArrayResize(levels.swap      , sequenceLength);
                ArrayResize(levels.commission, sequenceLength);
@@ -272,7 +262,7 @@ int ReadStatus(int sequence = NULL) {
             n--;
             levels.ticket    [n] = OrderTicket();
             levels.type      [n] = OrderType();
-            levels.price     [n] = OrderOpenPrice();
+            levels.openPrice [n] = OrderOpenPrice();
             levels.lots      [n] = OrderLots();
             levels.swap      [n] = OrderSwap();       all.swaps       += levels.swap      [n];
             levels.commission[n] = OrderCommission(); all.commissions += levels.commission[n];
@@ -285,7 +275,7 @@ int ReadStatus(int sequence = NULL) {
          i = progressionLevel-1;
          current.ticket     = levels.ticket    [i];
          current.type       = levels.type      [i];
-         current.price      = levels.price     [i];
+         current.openPrice  = levels.openPrice [i];
          current.lots       = levels.lots      [i];
          current.swap       = levels.swap      [i];
          current.commission = levels.commission[i];
@@ -365,16 +355,37 @@ int SequenceId() {
 
 
 /**
+ * Ob das eingestellte EntryLimit erreicht oder überschritten wurde.  Wurde kein Limit definiert, gibt die Funktion immer TRUE zurück.
+ *
+ * @return bool
+ */
+bool IsEntryLimitReached() {
+   if (EQ(Entry.Limit, 0))
+      return(true);
+
+   // Limit definiert
+   if (entryDirection == OP_BUY) {
+      if (LE(Ask, Entry.Limit))           // Buy-Limit erreicht
+         return(true);
+   }
+   else if (GE(Bid, Entry.Limit))         // Sell-Limit erreicht
+      return(true);
+
+   return(false);
+}
+
+
+/**
  * Ob der eingestellte StopLoss erreicht oder überschritten wurde.
  *
  * @return bool
  */
 bool IsStopLossReached() {
    if (current.type == OP_BUY)
-      return(LE(Bid, current.price - StopLoss*Pip));
+      return(LE(Bid, current.openPrice - StopLoss*Pip));
 
    if (current.type == OP_SELL)
-      return(GT(Ask, current.price + StopLoss*Pip));
+      return(GT(Ask, current.openPrice + StopLoss*Pip));
 
    catch("IsStopLossReached()   illegal value for variable current.type = "+ current.type, ERR_RUNTIME_ERROR);
    return(false);
@@ -388,10 +399,10 @@ bool IsStopLossReached() {
  */
 bool IsProfitTargetReached() {
    if (current.type == OP_BUY)
-      return(GE(Bid, current.price + TakeProfit*Pip));
+      return(GE(Bid, current.openPrice + TakeProfit*Pip));
 
    if (current.type == OP_SELL)
-      return(LE(Ask, current.price - TakeProfit*Pip));
+      return(LE(Ask, current.openPrice - TakeProfit*Pip));
 
    catch("IsProfitTargetReached()   illegal value for variable current.type = "+ current.type, ERR_RUNTIME_ERROR);
    return(false);
@@ -419,9 +430,6 @@ int StartSequence() {
 
    progressionLevel = 1;
 
-   if (!NewOrderPermitted())                                               // Moneymanagement verbietet weitere Orders
-      return(last_error);
-
    int ticket = SendOrder(entryDirection);                                 // Position in Entry.Direction öffnen
    if (ticket == -1)
       return(last_error);
@@ -438,14 +446,11 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   debug("IncreaseProgression()   StopLoss für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, current.price-Bid, Ask-current.price)/Pip, 1) +" pip");
+   debug("IncreaseProgression()   StopLoss für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, current.openPrice-Bid, Ask-current.openPrice)/Pip, 1) +" pip");
 
    // ClosePosition();
 
    progressionLevel++;
-
-   if (!NewOrderPermitted())
-      return(last_error);
 
    int ticket = SendOrder(ifInt(current.type==OP_SELL, OP_BUY, OP_SELL));  // nächste Position öffnen
    if (ticket == -1)
@@ -463,7 +468,9 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   debug("FinishSequence()   TakeProfit für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, Bid-current.price, current.price-Ask)/Pip, 1) +" pip");
+   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, Bid-current.openPrice, current.openPrice-Ask)/Pip, 1) +" pip");
+   else                         debug("FinishSequence()   Letzter StopLoss für "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, current.openPrice-Bid, Ask-current.openPrice)/Pip, 1) +" pip");
+
 
    // ClosePosition();
 
@@ -492,29 +499,6 @@ int SendOrder(int type) {
    if (ticket!=-1) /*&&*/ if (catch("SendOrder(2)")!=NO_ERROR)
       ticket = -1;
    return(ticket);
-}
-
-
-/**
- * Prüft den Account nach Moneymanagement-Gesichtspunkten (Balance, Equity, Marginanforderungen, Leverage) und gibt an,
- * ob die nächste Order ausgeführt werden darf.
- */
-bool NewOrderPermitted() {
-   if (progressionLevel > sequenceLength) {
-      catch("NewOrderPermitted()   illegal progressionLevel = "+ progressionLevel +" (sequenceLength="+ sequenceLength +")", ERR_RUNTIME_ERROR);
-      return(false);
-   }
-   if (AccountBalance() < minAccountBalance) {
-      ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
-      last_error = ERR_NOT_ENOUGH_MONEY;
-      return(false);
-   }
-   if (AccountEquity() < minAccountEquity) {
-      ShowStatus(STATUS_UNSUFFICIENT_EQUITY);
-      last_error = ERR_NOT_ENOUGH_MONEY;
-      return(false);
-   }
-   return(true);
 }
 
 
