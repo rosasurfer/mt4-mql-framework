@@ -189,26 +189,23 @@ int start() {
    if (ReadStatus(sequenceId) == -1)
       return(last_error);
 
-   if (sequenceId == 0) {                                                           // keine Sequenz aktiv
-      if (EQ(Entry.Limit, 0)) {                                                     // kein Limit definiert
+   if (sequenceId == 0) {                                                  // keine Sequenz aktiv
+      if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert
          StartSequence();
       }
-      else if (entryDirection == OP_BUY) {                                          // Limit definiert
-         if (LE(Ask, Entry.Limit)) StartSequence();                                 // Buy-Limit erreicht
+      else if (entryDirection == OP_BUY) {                                 // Limit definiert
+         if (LE(Ask, Entry.Limit))              StartSequence();           // Buy-Limit erreicht
       }
       else {
-         if (GE(Bid, Entry.Limit)) StartSequence();                                 // Sell-Limit erreicht
+         if (GE(Bid, Entry.Limit))              StartSequence();           // Sell-Limit erreicht
       }
    }
-   else {                                                                           // aktive Sequenz gefunden
-      if (current.type == OP_BUY) {                                                 // Long-Position
-         if      (LE(Bid, current.price - StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf n‰chsten Level wechseln (OP_SELL)
-         else if (GE(Bid, current.price + TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schlieﬂen und Sequenz beenden
+   else {                                                                  // aktive Sequenz gefunden
+      if (IsStopLossReached()) {                                           // StopLoss erreicht
+         if (progressionLevel < sequenceLength) IncreaseProgression();     // auf n‰chsten Level wechseln ...
+         else                                   FinishSequence();          // ... oder Sequenz beenden
       }
-      else {                                                                        // Short-Position
-         if      (GT(Ask, current.price + StopLoss*Pip  )) IncreaseProgression();   // StopLoss erreicht, auf n‰chsten Level wechseln (OP_BUY)
-         else if (LE(Ask, current.price - TakeProfit*Pip)) FinishSequence();        // TakeProfit erreicht, Position schlieﬂen und Sequenz beenden
-      }
+      else if (IsProfitTargetReached())         FinishSequence();          // TakeProfit erreicht, Sequenz beenden
    }
 
    return(catch("start()"));
@@ -368,6 +365,40 @@ int SequenceId() {
 
 
 /**
+ * Ob der eingestellte StopLoss erreicht oder ¸berschritten wurde.
+ *
+ * @return bool
+ */
+bool IsStopLossReached() {
+   if (current.type == OP_BUY)
+      return(LE(Bid, current.price - StopLoss*Pip));
+
+   if (current.type == OP_SELL)
+      return(GT(Ask, current.price + StopLoss*Pip));
+
+   catch("IsStopLossReached()   illegal value for variable current.type = "+ current.type, ERR_RUNTIME_ERROR);
+   return(false);
+}
+
+
+/**
+ * Ob der eingestellte TakeProfit-Level erreicht oder ¸berschritten wurde.
+ *
+ * @return bool
+ */
+bool IsProfitTargetReached() {
+   if (current.type == OP_BUY)
+      return(GE(Bid, current.price + TakeProfit*Pip));
+
+   if (current.type == OP_SELL)
+      return(LE(Ask, current.price - TakeProfit*Pip));
+
+   catch("IsProfitTargetReached()   illegal value for variable current.type = "+ current.type, ERR_RUNTIME_ERROR);
+   return(false);
+}
+
+
+/**
  * Beginnt eine neue Trade-Sequenz (Progression-Level 1).
  *
  * @return int - Fehlerstatus
@@ -413,14 +444,14 @@ int IncreaseProgression() {
 
    progressionLevel++;
 
-   if (!NewOrderPermitted())                                               // Moneymanagement verbietet weitere Orders
+   if (!NewOrderPermitted())
       return(last_error);
 
    int ticket = SendOrder(ifInt(current.type==OP_SELL, OP_BUY, OP_SELL));  // n‰chste Position ˆffnen
    if (ticket == -1)
       return(last_error);
 
-   if (ReadStatus(sequenceId) == -1)                                       // Status neu einlesen
+   if (ReadStatus(sequenceId) == -1)                                          // Status neu einlesen
       return(last_error);
 
    return(catch("IncreaseProgression()"));
@@ -432,10 +463,9 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   debug("FinishSequence()");
+   debug("FinishSequence()   TakeProfit f¸r "+ OperationTypeDescription(current.type) +" erreicht: "+ DoubleToStr(ifDouble(current.type==OP_BUY, Bid-current.price, current.price-Ask)/Pip, 1) +" pip");
 
    // ClosePosition();
-   // CleanUp();
 
    ShowStatus(STATUS_FINISHED);
 
@@ -470,6 +500,10 @@ int SendOrder(int type) {
  * ob die n‰chste Order ausgef¸hrt werden darf.
  */
 bool NewOrderPermitted() {
+   if (progressionLevel > sequenceLength) {
+      catch("NewOrderPermitted()   illegal progressionLevel = "+ progressionLevel +" (sequenceLength="+ sequenceLength +")", ERR_RUNTIME_ERROR);
+      return(false);
+   }
    if (AccountBalance() < minAccountBalance) {
       ShowStatus(STATUS_UNSUFFICIENT_BALANCE);
       last_error = ERR_NOT_ENOUGH_MONEY;
