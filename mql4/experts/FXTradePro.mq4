@@ -65,7 +65,7 @@ double   levels.lotsize   [], last.lotsize;
 double   levels.swap      [], last.swap,       all.swaps;
 double   levels.commission[], last.commission, all.commissions;
 double   levels.profit    [], last.profit,     all.profits;
-datetime levels.closeTime [], last.closeTime;
+datetime levels.closeTime [], last.closeTime;                     // Unterscheidung zwischen offenen und geschlossenen Positionen
 
 
 /**
