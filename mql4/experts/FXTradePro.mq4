@@ -58,19 +58,14 @@ int      sequenceLength;
 int      progressionLevel;
 int      entryDirection = OP_UNDEFINED;
 
-int      levels.ticket[],     last.ticket;
-int      levels.type[],       last.type;
-double   levels.openPrice[],  last.openPrice;
-double   levels.lotsize[],    last.lotsize;
-double   levels.swap[],       last.swap,       all.swaps;
+int      levels.ticket    [], last.ticket;
+int      levels.type      [], last.type;
+double   levels.openPrice [], last.openPrice;
+double   levels.lotsize   [], last.lotsize;
+double   levels.swap      [], last.swap,       all.swaps;
 double   levels.commission[], last.commission, all.commissions;
-double   levels.profit[],     last.profit,     all.profits;
-datetime levels.closeTime[],  last.closeTime;
-
-// -------------------------------------------------------------
-
-double   minAccountBalance;                  // Balance-Minimum, um zu traden
-double   minAccountEquity;                   // Equity-Minimum, um zu traden
+double   levels.profit    [], last.profit,     all.profits;
+datetime levels.closeTime [], last.closeTime;
 
 
 /**
@@ -461,7 +456,7 @@ int IncreaseProgression() {
    int    direction = ifInt(last.type==OP_SELL, OP_BUY, OP_SELL);
    double lotsize   = CurrentLotSize();
 
-   // Je nach Hedging-Fähigkeit des Accounts die letzte Position schließen oder hedgen
+   // Je nach Hedging-Fähigkeit des Accounts die letzte Position schließen oder hedgen.
    bool hedgingEnabled = true;                                          // IsHedgingEnabled()
 
    if (hedgingEnabled) {
@@ -469,7 +464,7 @@ int IncreaseProgression() {
       if (ticket == -1) {
          if (last_error != ERR_TRADE_HEDGE_PROHIBITED)
             return(last_error);
-         hedgingEnabled = false;
+         hedgingEnabled = false;                                        // Fallback
       }
    }
 
@@ -494,7 +489,6 @@ int IncreaseProgression() {
 int FinishSequence() {
    if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ OperationTypeDescription(last.type) +" erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
    else                         debug("FinishSequence()   Letzter StopLoss für "+ OperationTypeDescription(last.type) +" erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
-
 
    // ClosePosition();
 
