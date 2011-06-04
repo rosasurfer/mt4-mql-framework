@@ -514,8 +514,9 @@ int SendOrder(int type, double lotsize) {
    int    magicNumber = MagicNumber(sequenceId);
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
+   color  markerColor = ifInt(type==OP_BUY, Blue, Red);
 
-   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, Green);
+   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
 
    if (ticket!=-1) /*&&*/ if (catch("SendOrder(3)")!=NO_ERROR)
       ticket = -1;
