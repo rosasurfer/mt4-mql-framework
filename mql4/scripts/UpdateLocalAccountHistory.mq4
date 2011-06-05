@@ -247,7 +247,7 @@ int start() {
          return(catch("start(11)  FileOpen()"));
 
       // Header schreiben
-      string header = "# Account history for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n"
+      string header = "# Account history for account #"+ account +" at "+ AccountCompany() +" ("+ AccountName() +")\n"
                     + "#";
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
