@@ -231,11 +231,11 @@ int ReadStatus(int sequence = NULL) {
    }
    else {
       // alle offenen Positionen der Sequenz einlesen
-      int n;                                                            // Hedge-Erkennung: Anzahl der offenen Positionen
       sequenceId      = sequence;
       all.swaps       = 0;
       all.commissions = 0;
       all.profits     = 0;
+      int n;                                                            // Hedge-Erkennung: Anzahl der offenen Positionen
 
       for (i=0, n=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
@@ -450,7 +450,7 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   debug("IncreaseProgression()   StopLoss für "+ OperationTypeDescription(last.type) +" erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   debug("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    progressionLevel++;
    int    direction = ifInt(last.type==OP_SELL, OP_BUY, OP_SELL);
@@ -487,8 +487,8 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ OperationTypeDescription(last.type) +" erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
-   else                         debug("FinishSequence()   Letzter StopLoss für "+ OperationTypeDescription(last.type) +" erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
+   else                         debug("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    // ClosePosition();
 
@@ -581,7 +581,7 @@ int ShowStatus(int id=NULL) {
    }
       status = status
              +"TakeProfit:            "+ TakeProfit +" pip" + NL
-             +"Stoploss:               "+ StopLoss +" pip"  + NL;
+             +"StopLoss:               "+ StopLoss +" pip"  + NL;
 
    if (sequenceId != 0) {
       status = status
