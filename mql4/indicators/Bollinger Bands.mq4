@@ -185,27 +185,28 @@ int init() {
 
    // Anzeigeoptionen
    if (MA.Timeframe != "")
-      MA.Timeframe = StringConcatenate("x", MA.Timeframe);
-   string indicatorName = StringConcatenate("BollingerBands(", MA.Periods, MA.Timeframe, " / ", MovingAverageDescription(maMethod1));
+      MA.Timeframe = "x"+ MA.Timeframe;
+   string indicatorShortName = "BollingerBands("+ MA.Periods + MA.Timeframe +")";
+   string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageDescription(maMethod1);
    if (maMethod2 != -1)
-      indicatorName = StringConcatenate(indicatorName, ",", MovingAverageDescription(maMethod2));
-   indicatorName = StringConcatenate(indicatorName, " / ", AppliedPriceDescription(appliedPrice), " / ", NumberToStr(deviation1, ".1+"));
+      indicatorLongName = indicatorLongName +","+ MovingAverageDescription(maMethod2);
+   indicatorLongName = indicatorLongName +" / "+ AppliedPriceDescription(appliedPrice) +" / "+ NumberToStr(deviation1, ".1+");
    if (maMethod2 != -1)
-      indicatorName = StringConcatenate(indicatorName, ",", NumberToStr(deviation2, ".1+"));
-   indicatorName = StringConcatenate(indicatorName, ")");
-   IndicatorShortName(indicatorName);
+      indicatorLongName = indicatorLongName +","+ NumberToStr(deviation2, ".1+");
+   indicatorLongName = indicatorLongName +")";
+   IndicatorShortName(indicatorShortName);
 
    if (maMethod2 == -1) {
-      SetIndexLabel(0, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));   // Daten-Anzeige von MA-1
+      SetIndexLabel(0, "UpperBand("+ MA.Periods + MA.Timeframe +")");   // Daten-Anzeige von MA-1
       SetIndexLabel(1, NULL);
-      SetIndexLabel(2, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
+      SetIndexLabel(2, "LowerBand("+ MA.Periods + MA.Timeframe +")");
       SetIndexLabel(3, NULL);
    }
    else {
       SetIndexLabel(0, NULL);
-      SetIndexLabel(1, StringConcatenate("UpperBand(", MA.Periods, MA.Timeframe, ")"));   // Daten-Anzeige von MA-2
+      SetIndexLabel(1, "UpperBand("+ MA.Periods + MA.Timeframe +")");   // Daten-Anzeige von MA-2
       SetIndexLabel(2, NULL);
-      SetIndexLabel(3, StringConcatenate("LowerBand(", MA.Periods, MA.Timeframe, ")"));
+      SetIndexLabel(3, "LowerBand("+ MA.Periods + MA.Timeframe +")");
    }
    SetIndexLabel(4, NULL);
    SetIndexLabel(5, NULL);
@@ -213,9 +214,9 @@ int init() {
    IndicatorDigits(Digits);
 
    // Legende
-   string legendLabel = CreateLegendLabel(indicatorName);
+   string legendLabel = CreateLegendLabel(indicatorLongName);
    RegisterChartObject(legendLabel, objectLabels);
-   ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Color.Bands);
+   ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
       return(catch("init(13)", error));

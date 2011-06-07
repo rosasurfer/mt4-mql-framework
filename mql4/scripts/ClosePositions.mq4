@@ -127,11 +127,12 @@ int start() {
       if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))  // Workaround um MQL-Conditions-Bug
          close = false;
 
-      if (close) ArrayPushInt(tickets, OrderTicket());
+      if (close)
+         ArrayPushInt(tickets, OrderTicket());
    }
 
 
-   bool filtered = !(ArraySize(orderSymbols)+orderType+ArraySize(orderTickets)+ArraySize(orderMagics)==-1 && orderComment=="");
+   bool filtered = !(ArraySize(orderSymbols) + orderType + ArraySize(orderTickets) + ArraySize(orderMagics)==-1 && orderComment=="");
 
 
    // Positionen schlieﬂen

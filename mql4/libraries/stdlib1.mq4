@@ -6766,19 +6766,19 @@ string NumberToStr(double number, string mask) {
  *
  * @param  string   symbol      - Symbol des Instruments          (default: aktuelles Instrument)
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
- * @param  double   volume      - Transaktionsvolumen in Lot
+ * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei pending Orders)
- * @param  int      slippage    - Slippage in Points              (default: 1          )
+ * @param  int      slippage    - akzeptable Slippage in Points   (default: 0          )
  * @param  double   stopLoss    - StopLoss-Level                  (default: - kein -   )
  * @param  double   takeProfit  - TakeProfit-Level                (default: - kein -   )
  * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: - kein -   )
- * @param  int      magicNumber - magic number                    (default: 0          )
+ * @param  int      magicNumber - MagicNumber                     (default: 0          )
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
  * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
  *
  * @return int - Ticket-Nummer oder -1, wenn ein Fehler auftrat
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0, int slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, int slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")         // = NULL
@@ -6797,20 +6797,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
       catch("OrderSendEx(2)   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   // volume
-   if (LT(volume, minLot)) {
-      catch("OrderSendEx(3)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+   // lots
+   if (LT(lots, minLot)) {
+      catch("OrderSendEx(3)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   if (GT(volume, maxLot)) {
-      catch("OrderSendEx(4)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (GT(lots, maxLot)) {
+      catch("OrderSendEx(4)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   if (NE(MathModFix(volume, lotStep), 0)) {
-      catch("OrderSendEx(5)   illegal parameter volume = "+ NumberToStr(volume, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (NE(MathModFix(lots, lotStep), 0)) {
+      catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   volume = NormalizeDouble(volume, CountDecimals(lotStep));
+   lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
    if (LT(price, 0)) {
       catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
@@ -6853,23 +6853,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
-      if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
-      else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
-      price = NormalizeDouble(price, digits);
-
       if (IsTradeContextBusy()) {
          log("OrderSendEx()   trade context busy, waiting...");
       }
       else {
+         if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
+         else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
+         price    = NormalizeDouble(price, digits);
          int time = GetTickCount();
 
-         int ticket = OrderSend(symbol, type, volume, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+         int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          if (ticket > 0) {
-            time = GetTickCount()-time;
-            PlaySound("OrderOk.wav");
-
             // ausführliche Logmessage generieren
-            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, volume, price, digits, time));
+            PlaySound("OrderOk.wav");
+            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, price, digits, GetTickCount()-time));
             catch("OrderSendEx(13)");
             return(ticket);                        // regular exit
          }
@@ -6894,14 +6891,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
  *
  * @param  int    ticket  - Ticket-Nummer der Order
  * @param  int    type    - gewünschter Ordertyp
- * @param  double volume  - gewünschtes Ordervolumen
+ * @param  double lots    - gewünschtes Ordervolumen
  * @param  double price   - gewünschter Orderpreis
  * @param  int    digits  - Nachkommastellen des Ordersymbols
  * @param  int    time    - zur Orderausführung benötigte Zeit
  *
  * @return string - Logmessage
  */
-/*private*/ string OrderSendEx.LogMessage(int ticket, int type, double volume, double price, int digits, int time) {
+/*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time) {
    int    pipDigits   = digits - digits%2;
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
@@ -6918,9 +6915,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
    if (type != OrderType())
       strType = StringConcatenate(strType, " (instead of ", OperationTypeDescription(type), ")");
 
-   string strVolume = NumberToStr(OrderLots(), ".+");
-   if (NE(volume, OrderLots()))
-      strVolume = StringConcatenate(strVolume, " (instead of ", NumberToStr(volume, ".+"), ")");
+   string strLots = NumberToStr(OrderLots(), ".+");
+   if (NE(lots, OrderLots()))
+      strLots = StringConcatenate(strLots, " (instead of ", NumberToStr(lots, ".+"), ")");
 
    string strPrice = NumberToStr(OrderOpenPrice(), priceFormat);
    if (type == OrderType()) {
@@ -6937,7 +6934,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double volume, double price=0,
       }
    }
 
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strVolume, " ", OrderSymbol(), " at ", strPrice);
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice);
    if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
    if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
                                  message = StringConcatenate(message, ", used time: ", time, " ms");
