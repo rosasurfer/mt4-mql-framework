@@ -181,7 +181,9 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   if (ReadStatus(sequenceId) != NO_ERROR)
+   ReadStatus(sequenceId);
+
+   if (last_error != NO_ERROR)
       return(last_error);
 
    if (sequenceId == 0) {                                               // keine Sequenz aktiv
