@@ -156,48 +156,93 @@ int init() {
    // Ende Parametervalidierung
 
 
-   // (2) laufende Sequenz einlesen bzw. neue Sequenz erzeugen
-   if (sequenceId == 0) {
-      ArrayResize(levels.ticket, 0);                                 // levels.ticket[] als Referenz für übrige Arrays sicherheitshalber zurücksetzen
+   // (2) laufende Sequenz finden
+   if (sequenceId == 0) {                                               // keine Sequenz definiert
+      ArrayResize(levels.ticket, 0);                                    // levels.ticket[] als Referenz für übrige Arrays sicherheitshalber zurücksetzen
 
-      // erste aktive Sequenz finden und übernehmen
+      // erste aktive Sequenz finden und offene Positionen einlesen
       for (int i=OrdersTotal()-1; i >= 0; i--) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
             continue;
+
          if (IsMyOrder(sequenceId)) {
-            sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits  9-22 => sequenceId
-            sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits  5-8  => sequenceLength
+            int level = OrderMagicNumber() & 0x000F;                    //  4 Bits  1-4  => progressionLevel
+            if (level > progressionLevel)
+               progressionLevel = level;
 
-            ArrayResize(levels.ticket    , sequenceLength);
-            ArrayResize(levels.type      , sequenceLength);
-            ArrayResize(levels.openPrice , sequenceLength);
-            ArrayResize(levels.lotsize   , sequenceLength);
-            ArrayResize(levels.swap      , sequenceLength);
-            ArrayResize(levels.commission, sequenceLength);
-            ArrayResize(levels.profit    , sequenceLength);
-            ArrayResize(levels.closeTime , sequenceLength);
+            if (sequenceId == 0) {
+               sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits  9-22 => sequenceId
+               sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits  5-8  => sequenceLength
 
-            // offene Positionen der Sequenz einlesen
-            for (; i >= 0; i--) {
-               int level = OrderMagicNumber() & 0x000F;              // 4 Bits 1-4 => progressionLevel
+               ArrayResize(levels.ticket    , sequenceLength);
+               ArrayResize(levels.type      , sequenceLength);
+               ArrayResize(levels.openPrice , sequenceLength);
+               ArrayResize(levels.lotsize   , sequenceLength);
+               ArrayResize(levels.swap      , sequenceLength);
+               ArrayResize(levels.commission, sequenceLength);
+               ArrayResize(levels.profit    , sequenceLength);
+               ArrayResize(levels.closeTime , sequenceLength);
+
+               if (level%2==1) entryDirection =  OrderType();
+               else            entryDirection = ~OrderType() & 1;       // 0=>1, 1=>0
+            }
+            level--;
+            levels.ticket    [level] = OrderTicket();
+            levels.type      [level] = OrderType();
+            levels.openPrice [level] = OrderOpenPrice();
+            levels.lotsize   [level] = OrderLots();
+            levels.swap      [level] = 0;                               // Swap, Commission und Profit werden bei offenen Positionen...
+            levels.commission[level] = 0;                               // ...in ReadStatus() ausgelesen
+            levels.profit    [level] = 0;
+            levels.closeTime [level] = 0;                               // closeTime == 0: offene Position
+         }
+      }
+
+      // fehlende Positionen aus der History auslesen
+      if (sequenceId != 0) /*&&*/ if (IntInArray(0, levels.ticket)) {
+         int orders = OrdersHistoryTotal();
+         for (i=0; i < orders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History geändert
+               break;
+
+            if (IsMyOrder(sequenceId)) {
+               level = OrderMagicNumber() & 0x000F;                     //  4 Bits  1-4  => progressionLevel
                if (level > progressionLevel)
                   progressionLevel = level;
                level--;
+               if (levels.ticket[level] != 0) {
+                  // TODO: möglich bei gehedgten Positionen
+                  return(catch("init(18)", ERR_RUNTIME_ERROR));
+               }
                levels.ticket    [level] = OrderTicket();
                levels.type      [level] = OrderType();
                levels.openPrice [level] = OrderOpenPrice();
                levels.lotsize   [level] = OrderLots();
-               levels.closeTime [level] = 0;                         // Unterscheidung zwischen offenen und geschlossenen Positionen
+               levels.swap      [level] = OrderSwap();
+               levels.commission[level] = OrderCommission();
+               levels.profit    [level] = OrderProfit();
+               levels.closeTime [level] = OrderCloseTime();             // closeTime != 0: geschlossene Position
             }
-
-            int entryDirection = OP_UNDEFINED;
-
-            break;
          }
       }
 
+      // Sequenzdaten auf Vollständigkeit prüfen
+      for (i=0; i < progressionLevel; i++) {
+         if (levels.ticket[i] == 0) {
+            return(catch("init(19)", ERR_RUNTIME_ERROR));
+         }
+      }
+   }
 
 
+
+
+
+
+
+
+   // (2) wenn keine laufende Sequenz gefunden neue Sequenz erzeugen
+   if (sequenceId == 0) {
    }
 
 
@@ -206,7 +251,7 @@ int init() {
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
 
-   return(catch("init(18)"));
+   return(catch("init(20)"));
 }
 
 
