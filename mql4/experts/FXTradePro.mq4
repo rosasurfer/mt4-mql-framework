@@ -81,7 +81,8 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
-   // Parameter überprüfen
+
+   // (1) Beginn Parametervalidierung
    // Entry.Direction
    string direction = StringToUpper(StringTrim(Entry.Direction));
    if (StringLen(direction) == 0)
@@ -152,9 +153,58 @@ int init() {
          }
       }
    }
+   // Ende Parametervalidierung
 
-   // nicht auf den nächsten Tick warten sondern sofort start() aufrufen
-   SendTick(false);
+
+   // (2) laufende Sequenz einlesen bzw. neue Sequenz erzeugen
+   if (sequenceId == 0) {
+      ArrayResize(levels.ticket, 0);                                 // levels.ticket[] als Referenz für übrige Arrays sicherheitshalber zurücksetzen
+
+      // erste aktive Sequenz finden und übernehmen
+      for (int i=OrdersTotal()-1; i >= 0; i--) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+            continue;
+         if (IsMyOrder(sequenceId)) {
+            sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits  9-22 => sequenceId
+            sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits  5-8  => sequenceLength
+
+            ArrayResize(levels.ticket    , sequenceLength);
+            ArrayResize(levels.type      , sequenceLength);
+            ArrayResize(levels.openPrice , sequenceLength);
+            ArrayResize(levels.lotsize   , sequenceLength);
+            ArrayResize(levels.swap      , sequenceLength);
+            ArrayResize(levels.commission, sequenceLength);
+            ArrayResize(levels.profit    , sequenceLength);
+            ArrayResize(levels.closeTime , sequenceLength);
+
+            // offene Positionen der Sequenz einlesen
+            for (; i >= 0; i--) {
+               int level = OrderMagicNumber() & 0x000F;              // 4 Bits 1-4 => progressionLevel
+               if (level > progressionLevel)
+                  progressionLevel = level;
+               level--;
+               levels.ticket    [level] = OrderTicket();
+               levels.type      [level] = OrderType();
+               levels.openPrice [level] = OrderOpenPrice();
+               levels.lotsize   [level] = OrderLots();
+               levels.closeTime [level] = 0;                         // Unterscheidung zwischen offenen und geschlossenen Positionen
+            }
+
+            int entryDirection = OP_UNDEFINED;
+
+            break;
+         }
+      }
+
+
+
+   }
+
+
+   // (3) Nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen.
+   int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_FINISHED, REASON_RECOMPILE };
+   if (IntInArray(UninitializeReason(), reasons))
+      SendTick(false);
 
    return(catch("init(18)"));
 }
@@ -187,7 +237,7 @@ int start() {
       return(last_error);
 
    if (sequenceId == 0) {                                               // keine Sequenz aktiv
-      if (IsEntryLimitReached())             StartSequence();           // Limit erreicht oder kein Limit definiert
+      if (IsEntryLimitReached())             StartSequence();           // kein Limit definiert oder Limit erreicht
    }
    else if (IsStopLossReached()) {                                      // aktive Sequenz gefunden, wenn StopLoss erreicht ...
       if (progressionLevel < sequenceLength) IncreaseProgression();     // auf nächsten Level wechseln ...
@@ -200,8 +250,8 @@ int start() {
 
 
 /**
- * Liest den Status einer aktiven Sequenz im aktuellen Instrument ein. Wird *keine* ID angegeben, werden alle offenen Positionen
- * auf eine aktive Sequenz überprüft. Wird eine ID angegeben, wird nur der Status dieser Sequenz eingelesen.
+ * Liest den Status einer aktiven Sequenz im aktuellen Instrument ein. Wird keine ID angegeben, werden alle offenen Positionen
+ * nach einer aktiven Sequenz überprüft und die erste gefundene übernommen. Wird eine ID angegeben, wird der Status dieser Sequenz eingelesen.
  *
  * @param  int sequence - ID einer aktiven Sequenz (default: NULL)
  *
@@ -343,7 +393,7 @@ int MagicNumber(int sequenceId) {
 
 
 /**
- * Gibt die ID der aktuellen Sequenz zurück. Existiert noch keine ID, wird eine neue generiert.
+ * Gibt die aktuelle Sequenz-ID zurück. Existiert noch keine ID, wird eine neue generiert.
  *
  * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
  */
