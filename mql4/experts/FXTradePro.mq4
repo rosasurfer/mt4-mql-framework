@@ -10,14 +10,11 @@
  */
 #include <stdlib.mqh>
 
+int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023)
 
-int EA.uniqueId = 101;                 // eindeutige ID dieses EA's (im Bereich 0-1023)
 
-
-#define STATUS_INACTIVE                1
-#define STATUS_FINISHED                2
-#define STATUS_UNSUFFICIENT_BALANCE    3
-#define STATUS_UNSUFFICIENT_EQUITY     4
+#define STATUS_INACTIVE    1
+#define STATUS_FINISHED    2
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -56,6 +53,7 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 int      entryDirection = OP_UNDEFINED;
+int      status;
 
 int      levels.ticket    [], last.ticket;
 int      levels.type      [], last.type;
@@ -155,16 +153,19 @@ int init() {
    // Ende Parametervalidierung
 
 
-   // (2) laufende Sequenz finden
-   if (sequenceId == 0) {                                               // keine Sequenz definiert
-      ArrayResize(levels.ticket    , 0);
-      ArrayResize(levels.type      , 0);                                // Arrays sicherheitshalber zurücksetzen
-      ArrayResize(levels.openPrice , 0);
-      ArrayResize(levels.lotsize   , 0);
-      ArrayResize(levels.swap      , 0);
-      ArrayResize(levels.commission, 0);
-      ArrayResize(levels.profit    , 0);
-      ArrayResize(levels.closeTime , 0);
+   // (2) Sequenzdaten einlesen
+   if (sequenceId == 0) {                                               // noch keine Sequenz definiert
+      progressionLevel = 0;
+      if (ArraySize(levels.ticket) > 0) {
+         ArrayResize(levels.ticket    , 0);                             // alte Daten ggf. löschen (Arrays sind statisch)
+         ArrayResize(levels.type      , 0);
+         ArrayResize(levels.openPrice , 0);
+         ArrayResize(levels.lotsize   , 0);
+         ArrayResize(levels.swap      , 0);
+         ArrayResize(levels.commission, 0);
+         ArrayResize(levels.profit    , 0);
+         ArrayResize(levels.closeTime , 0);
+      }
 
       // erste aktive Sequenz finden und offene Positionen einlesen
       for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -216,10 +217,11 @@ int init() {
                if (level > progressionLevel)
                   progressionLevel = level;
                level--;
-               if (levels.ticket[level] != 0) {
-                  // TODO: möglich bei gehedgten Positionen
+
+               // TODO: möglich bei gehedgten Positionen
+               if (levels.ticket[level] != 0)
                   return(catch("init(18)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
-               }
+
                levels.ticket    [level] = OrderTicket();
                levels.type      [level] = OrderType();
                levels.openPrice [level] = OrderOpenPrice();
@@ -232,17 +234,25 @@ int init() {
          }
       }
 
-      // Sequenzdaten auf Vollständigkeit prüfen
+      // Tickets auf Vollständigkeit prüfen
       for (i=0; i < progressionLevel; i++) {
-         if (levels.ticket[i] == 0) {
+         if (levels.ticket[i] == 0)
             return(catch("init(19)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
-         }
       }
    }
 
 
-   // (3) wenn keine laufende Sequenz gefunden neue Sequenz erzeugen
+   // (3) wenn keine Sequenz aktiv ist, neue Sequenz mit Input-Parametern anlegen und initialisieren
    if (sequenceId == 0) {
+      sequenceId = CreateSequenceId();
+      ArrayResize(levels.ticket    , sequenceLength);
+      ArrayResize(levels.type      , sequenceLength);
+      ArrayResize(levels.openPrice , sequenceLength);
+      ArrayResize(levels.lotsize   , sequenceLength);
+      ArrayResize(levels.swap      , sequenceLength);
+      ArrayResize(levels.commission, sequenceLength);
+      ArrayResize(levels.profit    , sequenceLength);
+      ArrayResize(levels.closeTime , sequenceLength);
    }
 
 
@@ -281,12 +291,12 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   ReadStatus(sequenceId);
+   ReadStatus();
 
    if (last_error != NO_ERROR)
       return(last_error);
 
-   if (sequenceId == 0) {                                               // keine Sequenz aktiv
+   if (progressionLevel == 0) {                                         // noch keine offene Position
       if (IsEntryLimitReached())             StartSequence();           // kein Limit definiert oder Limit erreicht
    }
    else if (IsStopLossReached()) {                                      // aktive Sequenz gefunden, wenn StopLoss erreicht ...
@@ -300,102 +310,75 @@ int start() {
 
 
 /**
- * Liest den Status einer aktiven Sequenz im aktuellen Instrument ein. Wird keine ID angegeben, werden alle offenen Positionen
- * nach einer aktiven Sequenz überprüft und die erste gefundene übernommen. Wird eine ID angegeben, wird der Status dieser Sequenz eingelesen.
- *
- * @param  int sequence - ID einer aktiven Sequenz (default: NULL)
+ * Liest den Status der aktuellen Sequenz ein.
  *
  * @return int - Fehlerstatus
- *
- *
- * TODO: Ohne Angabe einer Sequenz wird immer die erste gefundene Sequenz ausgelesen. Theoretisch sind jedoch mehrere aktive Sequenzen
- *       je Instrument möglich und für diesen Fall benötigen wir eine Auswahlmöglichkeit.
  */
-int ReadStatus(int sequence = NULL) {
-   int orders = OrdersTotal();
+int ReadStatus() {
+   if (sequenceId == 0)
+      return(catch("ReadStatus(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
 
-   // falls keine Sequenz angegeben wurde, die erste aktive Sequenz finden
-   if (sequence == NULL) {
-      for (int i=0; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
-            break;
-         if (IsMyOrder()) {
-            sequence = OrderMagicNumber() << 10 >> 18;                  // 14 Bits  9-22 => sequenceId
-            break;
+   // offene Positionen der Sequenz einlesen
+   all.swaps       = 0;
+   all.commissions = 0;
+   all.profits     = 0;
+
+   for (int i, n=0; i < OrdersTotal(); i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+         break;
+      if (IsMyOrder(sequenceId)) {
+         n++;                                                        // Anzahl der offenen Positionen: zur Hedge-Erkennung
+         sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;          // 4 Bits  5-8
+         int level      = OrderMagicNumber() & 0x000F;               // 4 Bits  1-4
+         if (level > progressionLevel)
+            progressionLevel = level;
+
+         if (ArraySize(levels.ticket) != sequenceLength) {
+            ArrayResize(levels.ticket    , sequenceLength);
+            ArrayResize(levels.type      , sequenceLength);
+            ArrayResize(levels.openPrice , sequenceLength);
+            ArrayResize(levels.lotsize   , sequenceLength);
+            ArrayResize(levels.swap      , sequenceLength);
+            ArrayResize(levels.commission, sequenceLength);
+            ArrayResize(levels.profit    , sequenceLength);
+            ArrayResize(levels.closeTime , sequenceLength);
          }
+         level--;
+         levels.ticket    [level] = OrderTicket();
+         levels.type      [level] = OrderType();
+         levels.openPrice [level] = OrderOpenPrice();
+         levels.lotsize   [level] = OrderLots();
+         levels.swap      [level] = OrderSwap();       all.swaps       += levels.swap      [level];
+         levels.commission[level] = OrderCommission(); all.commissions += levels.commission[level];
+         levels.profit    [level] = OrderProfit();     all.profits     += levels.profit    [level];
+         levels.closeTime [level] = OrderCloseTime();                // Unterscheidung zwischen offenen und geschlossenen Positionen
       }
    }
 
-   if (sequence == NULL) {                                              // keine Sequenz angegeben und auch keine aktive Sequenz gefunden
-      // globale Variablen zurücksetzen
-      sequenceId       = 0;
-      progressionLevel = 0;
+   // Lotsizes offener Hedges korrigieren
+   if (n > 1) {
+      double previous;
+      for (i=0; i < sequenceLength; i++) {
+         if (NE(previous, 0))
+            levels.lotsize[i] = MathAbs(levels.lotsize[i] - previous);
+         previous = levels.lotsize[i];
+      }
    }
-   else {
-      // alle offenen Positionen der Sequenz einlesen
-      sequenceId      = sequence;
-      all.swaps       = 0;
-      all.commissions = 0;
-      all.profits     = 0;
-      int n;                                                            // Hedge-Erkennung: Anzahl der offenen Positionen
 
-      for (i=0, n=0; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
-            break;
-         if (IsMyOrder(sequenceId)) {
-            n++;
-            sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;          // 4 Bits  5-8
-            int level      = OrderMagicNumber() & 0x000F;               // 4 Bits  1-4
-            if (level > progressionLevel)
-               progressionLevel = level;
-
-            if (ArraySize(levels.ticket) != sequenceLength) {
-               ArrayResize(levels.ticket    , sequenceLength);
-               ArrayResize(levels.type      , sequenceLength);
-               ArrayResize(levels.openPrice , sequenceLength);
-               ArrayResize(levels.lotsize   , sequenceLength);
-               ArrayResize(levels.swap      , sequenceLength);
-               ArrayResize(levels.commission, sequenceLength);
-               ArrayResize(levels.profit    , sequenceLength);
-               ArrayResize(levels.closeTime , sequenceLength);
-            }
-            level--;
-            levels.ticket    [level] = OrderTicket();
-            levels.type      [level] = OrderType();
-            levels.openPrice [level] = OrderOpenPrice();
-            levels.lotsize   [level] = OrderLots();
-            levels.swap      [level] = OrderSwap();       all.swaps       += levels.swap      [level];
-            levels.commission[level] = OrderCommission(); all.commissions += levels.commission[level];
-            levels.profit    [level] = OrderProfit();     all.profits     += levels.profit    [level];
-            levels.closeTime [level] = OrderCloseTime();                // Unterscheidung zwischen offenen und geschlossenen Positionen
-         }
-      }
-
-      // Lotsizes offener Hedges korrigieren
-      if (n > 1) {
-         double previous;
-         for (i=0; i < sequenceLength; i++) {
-            if (NE(previous, 0))
-               levels.lotsize[i] = MathAbs(levels.lotsize[i] - previous);
-            previous = levels.lotsize[i];
-         }
-      }
-
-      // Daten der letzten Position in last.* speichern
-      if (progressionLevel > 0) {
-         i = progressionLevel-1;
-         last.ticket     = levels.ticket    [i];
-         last.type       = levels.type      [i];
-         last.openPrice  = levels.openPrice [i];
-         last.lotsize    = levels.lotsize   [i];
-         last.swap       = levels.swap      [i];
-         last.commission = levels.commission[i];
-         last.profit     = levels.profit    [i];
-         last.closeTime  = levels.closeTime [i];
-      }
-
-      // versuchen, fehlende Positionen aus der Trade-History auszulesen
+   // Daten der letzten Position in last.* speichern
+   if (progressionLevel > 0) {
+      i = progressionLevel-1;
+      last.ticket     = levels.ticket    [i];
+      last.type       = levels.type      [i];
+      last.openPrice  = levels.openPrice [i];
+      last.lotsize    = levels.lotsize   [i];
+      last.swap       = levels.swap      [i];
+      last.commission = levels.commission[i];
+      last.profit     = levels.profit    [i];
+      last.closeTime  = levels.closeTime [i];
    }
+
+
 
    ShowStatus();
 
@@ -443,20 +426,18 @@ int MagicNumber(int sequenceId) {
 
 
 /**
- * Gibt die aktuelle Sequenz-ID zurück. Existiert noch keine ID, wird eine neue generiert.
+ * Generiert eine neue Sequenz-ID.
  *
  * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
  */
-int SequenceId() {
-   if (sequenceId == 0) {                 // Bei Timeframe-Wechseln wird die ID durch ReadStatus() aus der offenen Position ausgelesen.
-      MathSrand(GetTickCount());          // Ohne offene Position kann sie jedesmal problemlos neu generiert werden.
+int CreateSequenceId() {
+   int id;
+   MathSrand(GetTickCount());
 
-      while (sequenceId < 2000) {         // Das spätere Shiften eines Bits halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
-         sequenceId = MathRand();
-      }
-      sequenceId >>= 1;
+   while (id < 2000) {           			// Das spätere Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
+      id = MathRand();
    }
-   return(sequenceId);
+   return(id >> 1);
 }
 
 
@@ -540,7 +521,7 @@ int StartSequence() {
    if (ticket == -1)
       return(last_error);
 
-   if (ReadStatus(sequenceId) != NO_ERROR)                                 // Status neu einlesen
+   if (ReadStatus() != NO_ERROR)                                           // Status neu einlesen
       return(last_error);
 
    return(catch("StartSequence(2)"));
@@ -577,7 +558,7 @@ int IncreaseProgression() {
          return(last_error);
    }
 
-   if (ReadStatus(sequenceId) != NO_ERROR)                              // Status neu einlesen
+   if (ReadStatus() != NO_ERROR)                                        // Status neu einlesen
       return(last_error);
 
    return(catch("IncreaseProgression()"));
@@ -630,7 +611,6 @@ int SendOrder(int type, double lotsize) {
    if (LE(lotsize, 0))
       return(catch("SendOrder(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   int    sequenceId  = SequenceId();
    int    magicNumber = MagicNumber(sequenceId);
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
@@ -682,10 +662,8 @@ int ShowStatus(int id=NULL) {
       case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ last.ticket;
                  else if (EQ(Entry.Limit, 0)) msg = ":  waiting";
                  else                         msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
-      case STATUS_INACTIVE            :       msg = ":  inactive";                                                        break;
-      case STATUS_FINISHED            :       msg = ":  trade sequence "+ sequenceId +" finished";                        break;
-      case STATUS_UNSUFFICIENT_BALANCE:       msg = ":  new orders disabled (balance below minimum)";                     break;
-      case STATUS_UNSUFFICIENT_EQUITY :       msg = ":  new orders disabled (equity below minimum)" ;                     break;
+      case STATUS_INACTIVE:                   msg = ":  inactive";                                                        break;
+      case STATUS_FINISHED:                   msg = ":  trade sequence "+ sequenceId +" finished";                        break;
       default:
          return(catch("ShowStatus(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
