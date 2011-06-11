@@ -211,7 +211,7 @@
 
 
 // deinit()-Reasons, siehe UninitializeReason()
-#define REASON_FINISHED          0   // execution finished
+#define REASON_APPEXIT           0   // application exit
 #define REASON_REMOVE            1   // program removed from chart
 #define REASON_RECOMPILE         2   // program recompiled
 #define REASON_CHARTCHANGE       3   // chart symbol or timeframe changed

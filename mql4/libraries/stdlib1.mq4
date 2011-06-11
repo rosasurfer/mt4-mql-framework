@@ -177,6 +177,32 @@ string GetGlobalConfigPath() {
 
 
 /**
+ * Aktiviert oder deaktiviert Expert Advisers (exakt: aktiviert/deaktiviert den Aufruf der Startfunktion bei Eintreffen von Ticks).
+ *
+ * @param  bool enable - gewünschter Status
+ *
+ * @return int - Fehlerstatus
+ */
+int ToggleEAs(bool enable) {
+
+   // TODO: In EAs und Scripten SendMessage(), in Indikatoren PostMessage() verwenden (Erkennung des Scripttyps über Thread-ID)
+
+   if (enable) {
+      if (!IsExpertEnabled()) {
+         SendMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
+      }
+   }
+   else {
+      if (IsExpertEnabled()) {
+         SendMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
+      }
+   }
+
+   return(catch("ToggleEAs()"));
+}
+
+
+/**
  * Erzeugt und positioniert ein neues Legendenlabel für den angegebenen Namen. Das erzeugte Label hat keinen Text.
  *
  * @param  string name - Indikatorname
@@ -278,7 +304,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   invalid price
       case ERR_INVALID_STOPS:                //      130   invalid stop
-      case ERR_MARKET_CLOSED:                //      132   market is closed
+    //case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
       case ERR_BROKER_BUSY:                  //      137   broker is busy (never returned error)
@@ -287,6 +313,8 @@ bool IsTemporaryTradeError(int error) {
          return(true);
 
       // permanent errors
+      case ERR_MARKET_CLOSED:                //      132   market is closed      // temporär ???
+
       case ERR_NO_RESULT:                    //        1   no result
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
@@ -5033,7 +5061,7 @@ int GetTerminalWindow() {
  */
 string UninitializeReasonDescription(int reason) {
    switch (reason) {
-      case REASON_FINISHED   : return("execution finished "                   );
+      case REASON_APPEXIT    : return("application exit"                      );
       case REASON_REMOVE     : return("expert or indicator removed from chart");
       case REASON_RECOMPILE  : return("expert or indicator recompiled"        );
       case REASON_CHARTCHANGE: return("symbol or timeframe changed"           );
@@ -5056,7 +5084,7 @@ string UninitializeReasonDescription(int reason) {
  */
 string UninitializeReasonToStr(int reason) {
    switch (reason) {
-      case REASON_FINISHED   : return("REASON_FINISHED"   );
+      case REASON_APPEXIT    : return("REASON_APPEXIT"    );
       case REASON_REMOVE     : return("REASON_REMOVE"     );
       case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
       case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
@@ -6909,7 +6937,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
 /*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time) {
    int    pipDigits   = digits - digits%2;
    double pip         = 1/MathPow(10, pipDigits);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       int error = GetLastError();
@@ -6932,7 +6960,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          if (NE(price, OrderOpenPrice())) {
             string strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
-            bool plus = (OrderOpenPrice() > price);
+            bool plus = GT(OrderOpenPrice(), price);
             if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
             else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
          }

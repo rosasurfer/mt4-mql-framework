@@ -234,6 +234,7 @@
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
    int      StringToPeriod(string description);
+   int      ToggleEAs(bool enable);
    string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 

@@ -9,7 +9,6 @@
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
  */
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 int EA.uniqueId = 101;                 // eindeutige ID dieses EA's (im Bereich 0-1023)
@@ -219,7 +218,7 @@ int init() {
                level--;
                if (levels.ticket[level] != 0) {
                   // TODO: möglich bei gehedgten Positionen
-                  return(catch("init(18)", ERR_RUNTIME_ERROR));
+                  return(catch("init(18)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
                }
                levels.ticket    [level] = OrderTicket();
                levels.type      [level] = OrderType();
@@ -236,7 +235,7 @@ int init() {
       // Sequenzdaten auf Vollständigkeit prüfen
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
-            return(catch("init(19)", ERR_RUNTIME_ERROR));
+            return(catch("init(19)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
          }
       }
    }
@@ -248,42 +247,16 @@ int init() {
 
 
    // (4) EA's nach Neustart ggf. aktivieren
-   if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_FINISHED)) {
+   if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_APPEXIT))
       ToggleEAs(true);
-      log("init()   nach ToggleEAs(), IsExpertEnabled = "+ BoolToStr(IsExpertEnabled()));
-   }
 
 
    // (5) Nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen.
-   int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_FINISHED, REASON_RECOMPILE };
+   int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_APPEXIT, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
 
    return(catch("init(20)"));
-}
-
-
-/**
- * Aktiviert oder deaktiviert Expert Advisers.
- *
- * @param  bool enable - gewünschter Laufzeitstatus
- *
- * @return int - Fehlerstatus
- */
-int ToggleEAs(bool enable) {
-
-   if (enable) {
-      if (!IsExpertEnabled()) {
-         PostMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
-      }
-   }
-   else {
-      if (IsExpertEnabled()) {
-         PostMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
-      }
-   }
-
-   return(catch("ToggleEAs()"));
 }
 
 
@@ -855,7 +828,9 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
  *
  */
 string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time) {
-   int pipDigits = digits - digits%2;
+   int    pipDigits   = digits - digits%2;
+   double pip         = 1/MathPow(10, pipDigits);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
 
@@ -870,10 +845,10 @@ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits
    string strType = OperationTypeDescription(OrderType());
    string strLots = NumberToStr(OrderLots(), ".+");
 
-   string strPrice = DoubleToStr(OrderClosePrice(), digits);
+   string strPrice = NumberToStr(OrderClosePrice(), priceFormat);
    if (NE(price, OrderClosePrice())) {
-      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price) * MathPow(10, pipDigits), ".+");
-      bool plus = (OrderClosePrice() > price);
+      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
+      bool plus = GT(OrderClosePrice(), price);
       if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
       else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
    }

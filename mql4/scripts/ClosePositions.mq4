@@ -16,6 +16,11 @@ extern string Close.Comment      = "";    // <leer> | Kommentar                 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+double   Pip;
+int      PipDigits;
+string   PriceFormat;
+
 string orderSymbols[], orderComment;
 int    orderTickets[], orderMagics[], orderType=-1;
 
@@ -28,6 +33,11 @@ int    orderTickets[], orderMagics[], orderType=-1;
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits - Digits%2;
+   Pip         = 1/MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+
 
    // Parameter auswerten
 
@@ -274,7 +284,7 @@ string OrderCloseEx.LogMessage(int ticket, double volume, double price, int digi
 
    string strPrice = DoubleToStr(OrderClosePrice(), digits);
    if (NE(price, OrderClosePrice())) {
-      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price) * MathPow(10, pipDigits), ".+");
+      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/Pip, ".+");
       bool plus = (OrderClosePrice() > price);
       if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
       else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
