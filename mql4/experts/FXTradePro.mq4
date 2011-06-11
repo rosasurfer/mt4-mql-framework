@@ -256,12 +256,12 @@ int init() {
    }
 
 
-   // (4) EA's nach Neustart ggf. aktivieren
+   // (4) nach Neustart EA's ggf. aktivieren
    if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_APPEXIT))
       ToggleEAs(true);
 
 
-   // (5) Nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen.
+   // (5) nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen
    int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_APPEXIT, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
@@ -434,7 +434,7 @@ int CreateSequenceId() {
    int id;
    MathSrand(GetTickCount());
 
-   while (id < 2000) {           			// Das spätere Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
+   while (id < 2000) {                    // Das spätere Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
       id = MathRand();
    }
    return(id >> 1);
