@@ -41,8 +41,9 @@
    int  GetActiveWindow();
    int  GetParent(int hWnd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int nBufferSize);
-   bool PostMessageA(int hWnd, int Msg, int wParam, int lParam);
+   bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int  RegisterWindowMessageA(string lpString);
+   int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    bool SetWindowTextA(int hWnd, string lpString);
 
 

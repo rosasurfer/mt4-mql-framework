@@ -8,11 +8,11 @@
  *      PowerSM EA:              http://www.forexfactory.com/showthread.php?t=75394
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
  */
-
-int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023)
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <stdlib.mqh>
+#include <win32api.mqh>
+
+
+int EA.uniqueId = 101;                 // eindeutige ID dieses EA's (im Bereich 0-1023)
 
 
 #define STATUS_INACTIVE                1
@@ -158,7 +158,14 @@ int init() {
 
    // (2) laufende Sequenz finden
    if (sequenceId == 0) {                                               // keine Sequenz definiert
-      ArrayResize(levels.ticket, 0);                                    // levels.ticket[] als Referenz für übrige Arrays sicherheitshalber zurücksetzen
+      ArrayResize(levels.ticket    , 0);
+      ArrayResize(levels.type      , 0);                                // Arrays sicherheitshalber zurücksetzen
+      ArrayResize(levels.openPrice , 0);
+      ArrayResize(levels.lotsize   , 0);
+      ArrayResize(levels.swap      , 0);
+      ArrayResize(levels.commission, 0);
+      ArrayResize(levels.profit    , 0);
+      ArrayResize(levels.closeTime , 0);
 
       // erste aktive Sequenz finden und offene Positionen einlesen
       for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -191,8 +198,8 @@ int init() {
             levels.type      [level] = OrderType();
             levels.openPrice [level] = OrderOpenPrice();
             levels.lotsize   [level] = OrderLots();
-            levels.swap      [level] = 0;                               // Swap, Commission und Profit werden bei offenen Positionen...
-            levels.commission[level] = 0;                               // ...in ReadStatus() ausgelesen
+            levels.swap      [level] = 0;                               // Beträge offener Positionen werden in ReadStatus() ausgelesen
+            levels.commission[level] = 0;
             levels.profit    [level] = 0;
             levels.closeTime [level] = 0;                               // closeTime == 0: offene Position
          }
@@ -235,23 +242,48 @@ int init() {
    }
 
 
-
-
-
-
-
-
-   // (2) wenn keine laufende Sequenz gefunden neue Sequenz erzeugen
+   // (3) wenn keine laufende Sequenz gefunden neue Sequenz erzeugen
    if (sequenceId == 0) {
    }
 
 
-   // (3) Nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen.
+   // (4) EA's nach Neustart ggf. aktivieren
+   if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_FINISHED)) {
+      ToggleEAs(true);
+      log("init()   nach ToggleEAs(), IsExpertEnabled = "+ BoolToStr(IsExpertEnabled()));
+   }
+
+
+   // (5) Nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen.
    int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_FINISHED, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
 
    return(catch("init(20)"));
+}
+
+
+/**
+ * Aktiviert oder deaktiviert Expert Advisers.
+ *
+ * @param  bool enable - gewünschter Laufzeitstatus
+ *
+ * @return int - Fehlerstatus
+ */
+int ToggleEAs(bool enable) {
+
+   if (enable) {
+      if (!IsExpertEnabled()) {
+         PostMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
+      }
+   }
+   else {
+      if (IsExpertEnabled()) {
+         PostMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
+      }
+   }
+
+   return(catch("ToggleEAs()"));
 }
 
 

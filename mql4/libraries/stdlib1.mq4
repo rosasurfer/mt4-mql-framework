@@ -1196,7 +1196,7 @@ string GetTradeServerDirectory() {
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
    static string cache.directory[];
-   static int    lastTick;                                  // Erkennung von Mehrfachaufrufen während eines Ticks
+   static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während eines Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
@@ -1215,7 +1215,7 @@ string GetTradeServerDirectory() {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-      if (hFile < 0) {
+      if (hFile < 0) {                                               // u.a. wenn das Serververzeichnis noch nicht existiert
          catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")");
          return("");
       }
@@ -1232,12 +1232,12 @@ string GetTradeServerDirectory() {
             if (name != ".") /*&&*/ if (name != "..") {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
-               if (hFindFile != INVALID_HANDLE_VALUE) {     // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
+               if (hFindFile != INVALID_HANDLE_VALUE) {              // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
                   //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
 
                   FindClose(hFindFile);
                   serverDirectory = name;
-                  if (!DeleteFileA(pattern))                // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
+                  if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
                      return(catch("GetTradeServerDirectory(2)   kernel32::DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
                   break;
                }
@@ -3702,6 +3702,13 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
 
    // Daten nach Möglichkeit aus dem Cache liefern       TODO: paralleles Cachen mehrerer Wertereihen ermöglichen
    if (cache.account[0] == account) {
+      /**
+       * TODO: Fehler tritt nach Neustart auf, wenn Balance-Indikator geladen ist und AccountNumber() noch 0 zurückgibt
+       *
+       * stdlib: Error: incorrect start position 0 for ArrayCopy function
+       * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
+       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)  [4051 - invalid function parameter value]
+       */
       ArrayCopy(lpTimes , cache.times);
       ArrayCopy(lpValues, cache.values);
       log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" balance values for account "+ account +" from cache");
@@ -4861,7 +4868,8 @@ string GetTradeServerTimezone() {
    // 3) Timezone-ID ermitteln
    string timezone, directory=StringToLower(GetTradeServerDirectory());
 
-   if      (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
+   if      (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
