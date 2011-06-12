@@ -13,8 +13,12 @@
 int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023)
 
 
-#define STATUS_INACTIVE    1
-#define STATUS_FINISHED    2
+#define STATUS_INITIALIZED       1
+#define STATUS_WAIT_ENTRYLIMIT   2
+#define STATUS_WORKING           3
+#define STATUS_FINISHED          4
+#define STATUS_INACTIVE          5
+
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -242,7 +246,7 @@ int init() {
    }
 
 
-   // (3) wenn keine Sequenz aktiv ist, neue Sequenz mit Input-Parametern anlegen und initialisieren
+   // (3) ggf. Sequenz anlegen
    if (sequenceId == 0) {
       sequenceId = CreateSequenceId();
       ArrayResize(levels.ticket    , sequenceLength);
@@ -256,12 +260,21 @@ int init() {
    }
 
 
-   // (4) nach Neustart EA's ggf. aktivieren
+   // (4) aktuellen Status bestimmen
+   if (progressionLevel == 0) {
+      if (EQ(Entry.Limit, 0))    status = STATUS_INITIALIZED;
+      else                       status = STATUS_WAIT_ENTRYLIMIT;
+   }
+   else if (last.closeTime == 0) status = STATUS_WORKING;
+   else                          status = STATUS_FINISHED;
+
+
+   // (5) nach Neustart ggf. EA's aktivieren
    if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_APPEXIT))
       ToggleEAs(true);
 
 
-   // (5) nach Reload nicht auf den nächsten Tick warten sondern sofort start() aufrufen
+   // (6) nach Reload sofort start() aufrufen und nicht auf den nächsten Tick warten
    int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_APPEXIT, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
@@ -291,9 +304,10 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   ReadStatus();
+   if (status == STATUS_FINISHED)
+      return(0);
 
-   if (last_error != NO_ERROR)
+   if (!ReadStatus())
       return(last_error);
 
    if (progressionLevel == 0) {                                         // noch keine offene Position
@@ -310,9 +324,9 @@ int start() {
 
 
 /**
- * Liest den Status der aktuellen Sequenz ein.
+ * Überprüft den Status der aktuellen Sequenz.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
 int ReadStatus() {
    if (sequenceId == 0)
@@ -378,11 +392,9 @@ int ReadStatus() {
       last.closeTime  = levels.closeTime [i];
    }
 
-
-
    ShowStatus();
 
-   return(catch("ReadStatus()"));
+   return(catch("ReadStatus()") == NO_ERROR);
 }
 
 
@@ -442,7 +454,7 @@ int CreateSequenceId() {
 
 
 /**
- * Ob das eingestellte EntryLimit erreicht oder überschritten wurde.  Wurde kein Limit definiert, gibt die Funktion immer TRUE zurück.
+ * Ob das eingestellte EntryLimit erreicht oder überschritten wurde.  Wurde kein Limit definiert, gibt die Funktion ebenfalls TRUE zurück.
  *
  * @return bool
  */
@@ -518,7 +530,7 @@ int StartSequence() {
    if (ticket == -1)
       return(last_error);
 
-   if (ReadStatus() != NO_ERROR)                                           // Status neu einlesen
+   if (!ReadStatus())                                                      // Status neu einlesen
       return(last_error);
 
    return(catch("StartSequence(2)"));
@@ -555,7 +567,7 @@ int IncreaseProgression() {
          return(last_error);
    }
 
-   if (ReadStatus() != NO_ERROR)                                        // Status neu einlesen
+   if (!ReadStatus())                                                   // Status neu einlesen
       return(last_error);
 
    return(catch("IncreaseProgression()"));
