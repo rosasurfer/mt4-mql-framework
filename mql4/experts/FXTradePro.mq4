@@ -15,7 +15,7 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023
 
 #define STATUS_INITIALIZED       1
 #define STATUS_WAIT_ENTRYLIMIT   2
-#define STATUS_WORKING           3
+#define STATUS_PROGRESSING       3
 #define STATUS_FINISHED          4
 #define STATUS_INACTIVE          5
 
@@ -24,8 +24,8 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-//extern string Entry.Direction                = "{ long | short }";
-extern string Entry.Direction                = "long";
+extern string Entry.Direction                = "L[ong] | S[hort]";
+//extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
@@ -265,17 +265,19 @@ int init() {
       if (EQ(Entry.Limit, 0))    status = STATUS_INITIALIZED;
       else                       status = STATUS_WAIT_ENTRYLIMIT;
    }
-   else if (last.closeTime == 0) status = STATUS_WORKING;
+   else if (last.closeTime == 0) status = STATUS_PROGRESSING;
    else                          status = STATUS_FINISHED;
 
 
-   // (5) nach Neustart ggf. EA's aktivieren
-   if (!IsExpertEnabled() && (UninitializeReason()==REASON_REMOVE || UninitializeReason()==REASON_APPEXIT))
+   // (5) bei Start ggf. EA's aktivieren
+   int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
+   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons))
       ToggleEAs(true);
 
 
    // (6) nach Reload sofort start() aufrufen und nicht auf den nächsten Tick warten
-   int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_APPEXIT, REASON_RECOMPILE };
+   ArrayPushInt(reasons, REASON_PARAMETERS);
+   ArrayPushInt(reasons, REASON_RECOMPILE );
    if (IntInArray(UninitializeReason(), reasons))
       SendTick(false);
 
@@ -304,22 +306,28 @@ int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
 
-   if (status == STATUS_FINISHED)
-      return(0);
+   if (sequenceId <= 1000)
+      return(catch("start(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
 
-   if (!ReadStatus())
+
+   if (ReadStatus()) {
+      if (status != STATUS_FINISHED) {
+         if (progressionLevel == 0) {                                      // noch keine offene Position
+            if (IsEntryLimitReached())             StartSequence();        // kein Limit definiert oder Limit erreicht
+         }
+         else if (IsStopLossReached()) {                                   // wenn StopLoss erreicht ...
+            if (progressionLevel < sequenceLength) IncreaseProgression();  // auf nächsten Level wechseln ...
+            else                                   FinishSequence();       // ... oder Sequenz beenden
+         }
+         else if (IsProfitTargetReached())         FinishSequence();       // wenn TakeProfit erreicht, Sequenz beenden
+      }
+   }
+
+   ShowStatus();
+
+   if (last_error != NO_ERROR)
       return(last_error);
-
-   if (progressionLevel == 0) {                                         // noch keine offene Position
-      if (IsEntryLimitReached())             StartSequence();           // kein Limit definiert oder Limit erreicht
-   }
-   else if (IsStopLossReached()) {                                      // aktive Sequenz gefunden, wenn StopLoss erreicht ...
-      if (progressionLevel < sequenceLength) IncreaseProgression();     // auf nächsten Level wechseln ...
-      else                                   FinishSequence();          // ... oder Sequenz beenden
-   }
-   else if (IsProfitTargetReached())         FinishSequence();          // wenn TakeProfit erreicht -> Sequenz beenden
-
-   return(catch("start()"));
+   return(catch("start(2)"));
 }
 
 
@@ -328,72 +336,7 @@ int start() {
  *
  * @return bool - Erfolgsstatus
  */
-int ReadStatus() {
-   if (sequenceId == 0)
-      return(catch("ReadStatus(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
-
-   // offene Positionen der Sequenz einlesen
-   all.swaps       = 0;
-   all.commissions = 0;
-   all.profits     = 0;
-
-   for (int i, n=0; i < OrdersTotal(); i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
-         break;
-      if (IsMyOrder(sequenceId)) {
-         n++;                                                        // Anzahl der offenen Positionen: zur Hedge-Erkennung
-         sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;          // 4 Bits  5-8
-         int level      = OrderMagicNumber() & 0x000F;               // 4 Bits  1-4
-         if (level > progressionLevel)
-            progressionLevel = level;
-
-         if (ArraySize(levels.ticket) != sequenceLength) {
-            ArrayResize(levels.ticket    , sequenceLength);
-            ArrayResize(levels.type      , sequenceLength);
-            ArrayResize(levels.openPrice , sequenceLength);
-            ArrayResize(levels.lotsize   , sequenceLength);
-            ArrayResize(levels.swap      , sequenceLength);
-            ArrayResize(levels.commission, sequenceLength);
-            ArrayResize(levels.profit    , sequenceLength);
-            ArrayResize(levels.closeTime , sequenceLength);
-         }
-         level--;
-         levels.ticket    [level] = OrderTicket();
-         levels.type      [level] = OrderType();
-         levels.openPrice [level] = OrderOpenPrice();
-         levels.lotsize   [level] = OrderLots();
-         levels.swap      [level] = OrderSwap();       all.swaps       += levels.swap      [level];
-         levels.commission[level] = OrderCommission(); all.commissions += levels.commission[level];
-         levels.profit    [level] = OrderProfit();     all.profits     += levels.profit    [level];
-         levels.closeTime [level] = OrderCloseTime();                // Unterscheidung zwischen offenen und geschlossenen Positionen
-      }
-   }
-
-   // Lotsizes offener Hedges korrigieren
-   if (n > 1) {
-      double previous;
-      for (i=0; i < sequenceLength; i++) {
-         if (NE(previous, 0))
-            levels.lotsize[i] = MathAbs(levels.lotsize[i] - previous);
-         previous = levels.lotsize[i];
-      }
-   }
-
-   // Daten der letzten Position in last.* speichern
-   if (progressionLevel > 0) {
-      i = progressionLevel-1;
-      last.ticket     = levels.ticket    [i];
-      last.type       = levels.type      [i];
-      last.openPrice  = levels.openPrice [i];
-      last.lotsize    = levels.lotsize   [i];
-      last.swap       = levels.swap      [i];
-      last.commission = levels.commission[i];
-      last.profit     = levels.profit    [i];
-      last.closeTime  = levels.closeTime [i];
-   }
-
-   ShowStatus();
-
+bool ReadStatus() {
    return(catch("ReadStatus()") == NO_ERROR);
 }
 
@@ -421,35 +364,33 @@ bool IsMyOrder(int sequenceId = NULL) {
 
 
 /**
- * Generiert aus der übergebenen Sequenz-ID und den internen Daten einen Wert für OrderMagicNumber()
+ * Generiert eine neue Sequenz-ID.
  *
- * @param  int sequenceId - eindeutige ID der Trade-Sequenz
+ * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
+ */
+int CreateSequenceId() {
+   MathSrand(GetTickCount());
+
+   int id;
+   while (id < 2000) {                    // Das abschließende Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID haben.
+      id = MathRand();
+   }
+   return(id >> 1);
+}
+
+
+/**
+ * Generiert aus den internen Daten einen Wert für OrderMagicNumber()
  *
  * @return int - magic number
  */
-int MagicNumber(int sequenceId) {
+int CreateMagicNumber() {
    int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
    int sequence = sequenceId  << 18 >> 10;            // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
    int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
    int level    = progressionLevel & 0x000F;          // 4 bit (Bereich 1-12)                                 | in MagicNumber: Bits  1-4
 
    return(ea + sequence + length + level);
-}
-
-
-/**
- * Generiert eine neue Sequenz-ID.
- *
- * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
- */
-int CreateSequenceId() {
-   int id;
-   MathSrand(GetTickCount());
-
-   while (id < 2000) {                    // Das spätere Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID.
-      id = MathRand();
-   }
-   return(id >> 1);
 }
 
 
@@ -620,7 +561,7 @@ int SendOrder(int type, double lotsize) {
    if (LE(lotsize, 0))
       return(catch("SendOrder(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   int    magicNumber = MagicNumber(sequenceId);
+   int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    int    slippage    = 1;
    color  markerColor = ifInt(type==OP_BUY, Blue, Red);
@@ -706,146 +647,3 @@ int ShowStatus(int id=NULL) {
 
 
 
-/**
- * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
- *
- * @param  int    ticket      - Ticket-Nr. der zu schließenden Position
- * @param  double lots        - zu schließendes Volumen in Lots         (default: 0 = komplette Position)
- * @param  double price       - Preis                                   (wird ignoriert                 )
- * @param  int    slippage    - akzeptable Slippage in Points           (default: 0                     )
- * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker           )
- *
- * @return bool - Erfolgsstatus
- */
-bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, color markerColor=CLR_NONE) {
-   // -- Beginn Parametervalidierung --
-   // ticket
-   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      int error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_INVALID_TICKET;
-      catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error);
-      return(false);
-   }
-   if (OrderCloseTime() != 0) {
-      catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_TRADE_ERROR);
-      return(false);
-   }
-   if (OrderType()!=OP_BUY && OrderType()!=OP_SELL) {
-      catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_TRADE_ERROR);
-      return(false);
-   }
-   // lots
-   int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
-   double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
-   double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
-   error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error);
-      return(false);
-   }
-   if (EQ(lots, 0)) {
-      lots = OrderLots();
-   }
-   else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot)) {
-         catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
-      if (GT(lots, OrderLots())) {
-         catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
-      if (NE(MathModFix(lots, lotStep), 0)) {
-         catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
-   }
-   lots = NormalizeDouble(lots, CountDecimals(lotStep));
-   // price
-   if (LT(price, 0)) {
-      catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
-   // slippage
-   if (slippage < 0) {
-      catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
-   // markerColor
-   if (markerColor < 0) {
-      catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
-   // -- Ende Parametervalidierung --
-
-
-   // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
-   while (!IsStopped()) {
-      if (IsTradeContextBusy()) {
-         log("OrderSendEx()   trade context busy, waiting...");
-      }
-      else {
-         price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
-         int time = GetTickCount();
-
-         if (OrderClose(ticket, lots, price, slippage, markerColor)) {
-            // ausführliche Logmessage generieren
-            PlaySound("OrderOk.wav");
-            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, GetTickCount()-time));
-            return(catch("OrderCloseEx(11)")==NO_ERROR);    // regular exit
-         }
-         error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                 // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
-            break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
-      }
-      error = NO_ERROR;
-      Sleep(300);                                           // 0.3 Sekunden warten
-   }
-
-   catch("OrderCloseEx(12)   permanent trade error", error);
-   return(false);
-}
-
-
-/**
- *
- */
-string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time) {
-   int    pipDigits   = digits - digits%2;
-   double pip         = 1/MathPow(10, pipDigits);
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-
-   // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
-
-   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      int error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_INVALID_TICKET;
-      catch("OrderCloseEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
-      return("");
-   }
-
-   string strType = OperationTypeDescription(OrderType());
-   string strLots = NumberToStr(OrderLots(), ".+");
-
-   string strPrice = NumberToStr(OrderClosePrice(), priceFormat);
-   if (NE(price, OrderClosePrice())) {
-      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
-      bool plus = GT(OrderClosePrice(), price);
-      if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
-      else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
-   }
-
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, ", used time: ", time, " ms");
-
-   error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("OrderCloseEx.LogMessage(2)", error);
-      return("");
-   }
-   return(message);
-}

@@ -6984,10 +6984,149 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
 }
 
 
+/**
+ * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ *
+ * @param  int    ticket      - Ticket-Nr. der zu schließenden Position
+ * @param  double lots        - zu schließendes Volumen in Lots         (default: 0 = komplette Position)
+ * @param  double price       - Preis                                   (wird ignoriert                 )
+ * @param  int    slippage    - akzeptable Slippage in Points           (default: 0                     )
+ * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker           )
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // ticket
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error);
+      return(false);
+   }
+   if (OrderCloseTime() != 0) {
+      catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_TRADE_ERROR);
+      return(false);
+   }
+   if (OrderType()!=OP_BUY && OrderType()!=OP_SELL) {
+      catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_TRADE_ERROR);
+      return(false);
+   }
+   // lots
+   int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
+   double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error);
+      return(false);
+   }
+   if (EQ(lots, 0)) {
+      lots = OrderLots();
+   }
+   else if (NE(lots, OrderLots())) {
+      if (LT(lots, minLot)) {
+         catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+         return(false);
+      }
+      if (GT(lots, OrderLots())) {
+         catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+         return(false);
+      }
+      if (NE(MathModFix(lots, lotStep), 0)) {
+         catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+         return(false);
+      }
+   }
+   lots = NormalizeDouble(lots, CountDecimals(lotStep));
+   // price
+   if (LT(price, 0)) {
+      catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   // slippage
+   if (slippage < 0) {
+      catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   // markerColor
+   if (markerColor < 0) {
+      catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(false);
+   }
+   // -- Ende Parametervalidierung --
 
 
+   // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      if (IsTradeContextBusy()) {
+         log("OrderSendEx()   trade context busy, waiting...");
+      }
+      else {
+         price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
+         int time = GetTickCount();
+
+         if (OrderClose(ticket, lots, price, slippage, markerColor)) {
+            // ausführliche Logmessage generieren
+            PlaySound("OrderOk.wav");
+            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, GetTickCount()-time));
+            return(catch("OrderCloseEx(11)")==NO_ERROR);    // regular exit
+         }
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))                 // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+      }
+      error = NO_ERROR;
+      Sleep(300);                                           // 0.3 Sekunden warten
+   }
+
+   catch("OrderCloseEx(12)   permanent trade error", error);
+   return(false);
+}
 
 
+/**
+ *
+ */
+/*private*/ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time) {
+   int    pipDigits   = digits - digits%2;
+   double pip         = 1/MathPow(10, pipDigits);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
+
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      catch("OrderCloseEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
+      return("");
+   }
+
+   string strType = OperationTypeDescription(OrderType());
+   string strLots = NumberToStr(OrderLots(), ".+");
+
+   string strPrice = NumberToStr(OrderClosePrice(), priceFormat);
+   if (NE(price, OrderClosePrice())) {
+      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
+      bool plus = GT(OrderClosePrice(), price);
+      if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
+      else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
+   }
+
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, ", used time: ", time, " ms");
+
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("OrderCloseEx.LogMessage(2)", error);
+      return("");
+   }
+   return(message);
+}
 
 
 
