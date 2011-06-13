@@ -3543,7 +3543,11 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
 
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
-   string filename = GetTradeServerDirectory() +"/"+ account + "_account_history.csv";
+
+   string directory = GetTradeServerDirectory();
+   if (StringStartsWith(directory, "Alpari"))
+      directory = StringReplace(StringReplace(StringReplace(directory, "AlpariBroker-", "Alpari-"), "AlpariUK-", "Alpari-"), "AlpariUS-", "Alpari-");
+   string filename = directory +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
@@ -4897,11 +4901,14 @@ string GetTradeServerTimezone() {
    string timezone, directory=StringToLower(GetTradeServerDirectory());
 
    if      (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";

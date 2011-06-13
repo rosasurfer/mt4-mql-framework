@@ -126,7 +126,11 @@ int start() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = GetTradeServerDirectory() +"\\tmp_"+ WindowExpertName() +".txt";
+   string directory = GetTradeServerDirectory();
+   if (StringStartsWith(directory, "Alpari"))
+      directory = StringReplace(StringReplace(StringReplace(directory, "AlpariBroker-", "Alpari-"), "AlpariUK-", "Alpari-"), "AlpariUS-", "Alpari-");
+
+   string filename = directory +"\\tmp_"+ WindowExpertName() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("start(2)  FileOpen()"));

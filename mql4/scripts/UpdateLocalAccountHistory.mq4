@@ -238,7 +238,10 @@ int start() {
 
 
    // (7) CSV-Datei erzeugen
-   string filename = GetTradeServerDirectory() +"/"+ account +"_account_history.csv";
+   string directory = GetTradeServerDirectory();
+   if (StringStartsWith(directory, "Alpari"))
+      directory = StringReplace(StringReplace(StringReplace(directory, "AlpariBroker-", "Alpari-"), "AlpariUK-", "Alpari-"), "AlpariUS-", "Alpari-");
+   string filename = directory +"/"+ account +"_account_history.csv";
 
    if (ArrayRange(history, 0) == 0) {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
