@@ -17,15 +17,15 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023
 #define STATUS_WAIT_ENTRYLIMIT   2
 #define STATUS_PROGRESSING       3
 #define STATUS_FINISHED          4
-#define STATUS_INACTIVE          5
+#define STATUS_DISABLED          5
 
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-extern string Entry.Direction                = "L[ong] | S[hort]";
-//extern string Entry.Direction                = "long";
+//extern string Entry.Direction                = "L[ong] | S[hort]";
+extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
@@ -270,15 +270,14 @@ int init() {
 
 
    // (5) bei Start ggf. EA's aktivieren
-   int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons))
+   int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
+   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
       ToggleEAs(true);
 
 
    // (6) nach Reload sofort start() aufrufen und nicht auf den nächsten Tick warten
-   ArrayPushInt(reasons, REASON_PARAMETERS);
-   ArrayPushInt(reasons, REASON_RECOMPILE );
-   if (IntInArray(UninitializeReason(), reasons))
+   int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
+   if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
 
    return(catch("init(20)"));
@@ -455,25 +454,37 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (EQ(Entry.Limit, 0)) {                                               // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
       int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer != IDOK) {
-         ShowStatus(STATUS_INACTIVE);
-         last_error = ERR_COMMON_ERROR;
-         return(last_error);
+         status = STATUS_DISABLED;
+         return(catch("StartSequence(1)"));
       }
    }
 
    progressionLevel = 1;
 
-   int ticket = SendOrder(entryDirection, CurrentLotSize());               // Position in Entry.Direction öffnen
+   int ticket = SendOrder(entryDirection, CurrentLotSize());            // Position in Entry.Direction öffnen
    if (ticket == -1)
       return(last_error);
 
-   if (!ReadStatus())                                                      // Status neu einlesen
-      return(last_error);
+   // Sequenzdaten aktualisieren
+   if (OrderSelect(ticket, SELECT_BY_TICKET)) {
+      levels.ticket    [0] = OrderTicket();    last.ticket     = OrderTicket();
+      levels.type      [0] = OrderType();      last.type       = OrderType();
+      levels.openPrice [0] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
+      levels.lotsize   [0] = OrderLots();      last.lotsize    = OrderLots();
+      levels.swap      [0] = 0;                last.swap       = 0;
+      levels.commission[0] = 0;                last.commission = 0;     // Werte werden in ReadStatus() ausgelesen
+      levels.profit    [0] = 0;                last.profit     = 0;
+      levels.closeTime [0] = 0;                last.closeTime  = 0;
 
+      // Status aktualisieren
+      status = STATUS_PROGRESSING;
+      if (!ReadStatus())
+         return(last_error);
+   }
    return(catch("StartSequence(2)"));
 }
 
@@ -502,15 +513,30 @@ int IncreaseProgression() {
    }
 
    if (!hedgingEnabled) {
-      //ClosePosition();
+      if (!OrderCloseEx(last.ticket, NULL, NULL, 1, Orange))
+         return(last_error);
       ticket = SendOrder(direction, lotsize);                           // nächste Position öffnen
       if (ticket == -1)
          return(last_error);
    }
 
-   if (!ReadStatus())                                                   // Status neu einlesen
-      return(last_error);
+   // Sequenzdaten aktualisieren
+   if (OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int level = progressionLevel - 1;
+      levels.ticket    [level] = OrderTicket();    last.ticket     = OrderTicket();
+      levels.type      [level] = OrderType();      last.type       = OrderType();
+      levels.openPrice [level] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
+      levels.lotsize   [level] = OrderLots();      last.lotsize    = OrderLots();
+      levels.swap      [level] = 0;                last.swap       = 0;
+      levels.commission[level] = 0;                last.commission = 0; // Werte werden in ReadStatus() ausgelesen
+      levels.profit    [level] = 0;                last.profit     = 0;
+      levels.closeTime [level] = 0;                last.closeTime  = 0;
 
+      // Status aktualisieren
+      status = STATUS_PROGRESSING;
+      if (!ReadStatus())
+         return(last_error);
+   }
    return(catch("IncreaseProgression()"));
 }
 
@@ -612,7 +638,7 @@ int ShowStatus(int id=NULL) {
       case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ last.ticket;
                  else if (EQ(Entry.Limit, 0)) msg = ":  waiting";
                  else                         msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
-      case STATUS_INACTIVE:                   msg = ":  inactive";                                                        break;
+      case STATUS_DISABLED:                   msg = ":  inactive";                                                        break;
       case STATUS_FINISHED:                   msg = ":  trade sequence "+ sequenceId +" finished";                        break;
       default:
          return(catch("ShowStatus(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE));
