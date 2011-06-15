@@ -246,7 +246,7 @@ int init() {
    }
 
 
-   // (3) ggf. Sequenz anlegen
+   // (3) ggf. neue Sequenz anlegen
    if (sequenceId == 0) {
       sequenceId = CreateSequenceId();
       ArrayResize(levels.ticket    , sequenceLength);
@@ -275,7 +275,7 @@ int init() {
       ToggleEAs(true);
 
 
-   // (6) nach Reload sofort start() aufrufen und nicht auf den nächsten Tick warten
+   // (6) nach Start oder Reload nicht auf den nächsten Tick warten
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
@@ -304,21 +304,25 @@ int deinit() {
 int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
+   // --------------------------------------------
 
-   if (sequenceId <= 1000)
-      return(catch("start(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+
+   if (status == STATUS_DISABLED) return(NO_ERROR);
+   if (status == STATUS_FINISHED) return(NO_ERROR);
 
 
    if (ReadStatus()) {
-      if (status != STATUS_FINISHED) {
-         if (progressionLevel == 0) {                                      // noch keine offene Position
-            if (IsEntryLimitReached())             StartSequence();        // kein Limit definiert oder Limit erreicht
+      if (progressionLevel == 0) {                                                  // noch keine offene Position
+         if (IsEntryLimitReached())                StartSequence();                 // kein Limit definiert oder Limit erreicht
+         else                                      status = STATUS_WAIT_ENTRYLIMIT;
+      }
+      else {
+         status = STATUS_PROGRESSING;
+         if (IsStopLossReached()) {                                                 // wenn StopLoss erreicht ...
+            if (progressionLevel < sequenceLength) IncreaseProgression();           // auf nächsten Level wechseln ...
+            else                                   FinishSequence();                // ... oder Sequenz beenden
          }
-         else if (IsStopLossReached()) {                                   // wenn StopLoss erreicht ...
-            if (progressionLevel < sequenceLength) IncreaseProgression();  // auf nächsten Level wechseln ...
-            else                                   FinishSequence();       // ... oder Sequenz beenden
-         }
-         else if (IsProfitTargetReached())         FinishSequence();       // wenn TakeProfit erreicht, Sequenz beenden
+         else if (IsProfitTargetReached())         FinishSequence();                // wenn TakeProfit erreicht, Sequenz beenden
       }
    }
 
@@ -326,7 +330,7 @@ int start() {
 
    if (last_error != NO_ERROR)
       return(last_error);
-   return(catch("start(2)"));
+   return(catch("start()"));
 }
 
 
@@ -384,6 +388,9 @@ int CreateSequenceId() {
  * @return int - magic number
  */
 int CreateMagicNumber() {
+   if (sequenceId <= 1000)
+      return(catch("CreateMagicNumber()   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+
    int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
    int sequence = sequenceId  << 18 >> 10;            // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
    int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
@@ -494,31 +501,15 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   debug("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   log("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    progressionLevel++;
    int    direction = ifInt(last.type==OP_SELL, OP_BUY, OP_SELL);
    double lotsize   = CurrentLotSize();
 
-   // Je nach Hedging-Fähigkeit des Accounts die letzte Position schließen oder hedgen.
-   bool hedgingEnabled = true;                                          // IsHedgingEnabled() implementieren
-
-   if (hedgingEnabled) {
-      int ticket = SendOrder(direction, last.lotsize + lotsize);        // nächste Position öffnen
-      if (ticket == -1) {
-         if (last_error != ERR_TRADE_HEDGE_PROHIBITED)
-            return(last_error);
-         hedgingEnabled = false;                                        // Fallback
-      }
-   }
-
-   if (!hedgingEnabled) {
-      if (!OrderCloseEx(last.ticket, NULL, NULL, 1, Orange))
-         return(last_error);
-      ticket = SendOrder(direction, lotsize);                           // nächste Position öffnen
-      if (ticket == -1)
-         return(last_error);
-   }
+   int ticket = SendOrder(direction, last.lotsize + lotsize);                          // alte Position hedgen und nächste öffnen
+   if (ticket == -1)
+      return(last_error);
 
    // Sequenzdaten aktualisieren
    if (OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -526,9 +517,9 @@ int IncreaseProgression() {
       levels.ticket    [level] = OrderTicket();    last.ticket     = OrderTicket();
       levels.type      [level] = OrderType();      last.type       = OrderType();
       levels.openPrice [level] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
-      levels.lotsize   [level] = OrderLots();      last.lotsize    = OrderLots();
+      levels.lotsize   [level] = lotsize;          last.lotsize    = lotsize;          // wegen Hedges nicht OrderLots() verwenden
       levels.swap      [level] = 0;                last.swap       = 0;
-      levels.commission[level] = 0;                last.commission = 0; // Werte werden in ReadStatus() ausgelesen
+      levels.commission[level] = 0;                last.commission = 0;                // Werte werden in ReadStatus() ausgelesen
       levels.profit    [level] = 0;                last.profit     = 0;
       levels.closeTime [level] = 0;                last.closeTime  = 0;
 
@@ -546,32 +537,28 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
-   else                         debug("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   if (IsProfitTargetReached()) log("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
+   else                         log("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    for (int i=0; i < sequenceLength; i++) {
-      if (levels.ticket[i] > 0) {
-         if (levels.closeTime[i] == 0) {
-            if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange))
-               return(last_error);                          // TODO: später durch stdlib_PeekLastError() ersetzen
-
-            if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-               int error = GetLastError();
-               if (error == NO_ERROR)
-                  error = ERR_INVALID_TICKET;
-               return(catch("FinishSequence(1)   error selecting ticket #"+ levels.ticket[i], error));
-            }
-            levels.swap      [i] = OrderSwap();
-            levels.commission[i] = OrderCommission();
-            levels.profit    [i] = OrderProfit();
-            levels.closeTime [i] = OrderCloseTime();
-         }
+      if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
+         if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange))
+            return(last_error);                                      // TODO: später durch stdlib_PeekLastError() ersetzen
+         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET))
+            return(catch("FinishSequence(1)"));
+         levels.swap      [i] = OrderSwap();
+         levels.commission[i] = OrderCommission();
+         levels.profit    [i] = OrderProfit();
+         levels.closeTime [i] = OrderCloseTime();
       }
    }
 
-   ShowStatus(STATUS_FINISHED);
+   // Status aktualisieren
+   status = STATUS_FINISHED;
+   if (!ReadStatus())
+      return(last_error);
 
-   return(catch("FinishSequence()"));
+   return(catch("FinishSequence(2)"));
 }
 
 
@@ -607,6 +594,7 @@ int SendOrder(int type, double lotsize) {
  */
 double CurrentLotSize() {
    switch (progressionLevel) {
+      case  0: return(0);
       case  1: return(Lotsize.Level.1);
       case  2: return(Lotsize.Level.2);
       case  3: return(Lotsize.Level.3);
@@ -631,45 +619,35 @@ double CurrentLotSize() {
  *
  * @return int - Fehlerstatus
  */
-int ShowStatus(int id=NULL) {
-   string status=__SCRIPT__, msg="";
+int ShowStatus() {
+   string msg = "";
 
-   switch (id) {
-      case NULL: if (sequenceId != 0)         msg = ":  trade sequence "+ sequenceId +", #"+ last.ticket;
-                 else if (EQ(Entry.Limit, 0)) msg = ":  waiting";
-                 else                         msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
-      case STATUS_DISABLED:                   msg = ":  inactive";                                                        break;
-      case STATUS_FINISHED:                   msg = ":  trade sequence "+ sequenceId +" finished";                        break;
+   switch (status) {
+      case STATUS_INITIALIZED:     msg = ":  waiting";                                                         break;
+      case STATUS_WAIT_ENTRYLIMIT: msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
+      case STATUS_PROGRESSING:     msg = ":  trade sequence "+ sequenceId;                                     break;
+      case STATUS_FINISHED:        msg = ":  trade sequence "+ sequenceId +" finished";                        break;
+      case STATUS_DISABLED:        msg = ":  inactive";                                                        break;
       default:
-         return(catch("ShowStatus(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
 
-      status = status + msg + NL + NL;
+   msg = __SCRIPT__ + msg + NL
+                          + NL
+       +"Progression Level:  "+ progressionLevel +" / "+ sequenceLength;
 
-   if (progressionLevel == 0) {
-      status = status
-             +"Progression Level:  "+ progressionLevel +" / "+ sequenceLength + NL;
-   }
-   else {
-      status = status
-             +"Progression Level:  "+ progressionLevel +" / "+ sequenceLength +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot" + NL;
-   }
-      status = status
-             +"TakeProfit:            "+ TakeProfit +" pip" + NL
-             +"StopLoss:               "+ StopLoss +" pip"  + NL;
+   if (progressionLevel > 0)
+      msg = msg +"  =  "+ NumberToStr(CurrentLotSize(), ".+") +" lot";
 
-   if (sequenceId != 0) {
-      status = status
-             +"Breakeven:           "+ "-"                                 + NL
-             +"Profit / Loss:          "+ DoubleToStr(all.profits + all.commissions + all.swaps, 2) + NL;
-   }
+   msg = msg                                                                                  + NL
+       +"TakeProfit:            "+ TakeProfit +" pip"                                         + NL
+       +"StopLoss:               "+ StopLoss +" pip"                                          + NL
+     //+"Breakeven:           "+ "-"                                                          + NL
+       +"Profit / Loss:          "+ DoubleToStr(all.profits + all.commissions + all.swaps, 2) + NL;
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
-   Comment(NL + NL + status);
+   Comment(NL + NL + msg);
 
    return(catch("ShowStatus(2)"));
 }
-
-
-
 
