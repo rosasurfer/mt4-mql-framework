@@ -210,6 +210,7 @@
    string   ErrorDescription(int error);
    string   FindStandardSymbol(string symbol, string defaultValue);
    int      GetAccountHistory(int account, string& lpResults[]);
+   string   GetAccountHistoryDirectory();
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);

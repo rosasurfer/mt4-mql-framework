@@ -1212,7 +1212,7 @@ int SendTick(bool sound=false) {
 
 
 /**
- * Gibt das für den aktuellen Chart verwendete History-Verzeichnis zurück (Tradeserver-Verzeichnis).  Der Name dieses Verzeichnisses ist bei bestehender
+ * Gibt das für den aktuellen Chart verwendete Kurshistory-Verzeichnis zurück (Tradeserver-Verzeichnis).  Der Name dieses Verzeichnisses ist bei bestehender
  * Verbindung identisch mit dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig
  * ermitteln.
  *
@@ -1296,6 +1296,24 @@ string GetTradeServerDirectory() {
    cache.directory[0] = serverDirectory;
 
    return(serverDirectory);
+}
+
+
+/**
+ * Gibt das History-Verzeichnis des aktuellen Accounts zurück (Trade-History etc.).
+ *
+ * @return string
+ */
+string GetAccountHistoryDirectory() {
+   string directory = GetTradeServerDirectory();
+
+   if (StringStartsWith(directory, "Alpari")) {
+      if      (StringStartsWith(directory, "AlpariBroker-")) directory = StringConcatenate("Alpari-", StringRight(directory, -13));
+      else if (StringStartsWith(directory, "AlpariUK-"    )) directory = StringConcatenate("Alpari-", StringRight(directory,  -9));
+      else if (StringStartsWith(directory, "AlpariUS-"    )) directory = StringConcatenate("Alpari-", StringRight(directory,  -9));
+   }
+
+   return(directory);
 }
 
 
@@ -3544,10 +3562,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
 
-   string directory = GetTradeServerDirectory();
-   if (StringStartsWith(directory, "Alpari"))
-      directory = StringReplace(StringReplace(StringReplace(directory, "AlpariBroker-", "Alpari-"), "AlpariUK-", "Alpari-"), "AlpariUS-", "Alpari-");
-   string filename = directory +"/"+ account + "_account_history.csv";
+   string filename = GetAccountHistoryDirectory() +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
