@@ -313,22 +313,22 @@ int start() {
 
    if (ReadStatus()) {
       if (progressionLevel == 0) {
-         if (!IsEntryLimitReached())               status = STATUS_WAIT_ENTRYLIMIT;
-         else                                      StartSequence();                 // kein Limit definiert oder Limit erreicht
+         if (!IsEntryLimitReached())            status = STATUS_WAIT_ENTRYLIMIT;
+         else                                   StartSequence();                    // kein Limit definiert oder Limit erreicht
       }
-      else {
-         if (IsStopLossReached()) {                                                 // wenn StopLoss erreicht ...
-            if (progressionLevel < sequenceLength) IncreaseProgression();           // auf nächsten Level wechseln ...
-            else                                   FinishSequence();                // ... oder Sequenz beenden
-         }
-         else if (IsProfitTargetReached())         FinishSequence();                // wenn TakeProfit erreicht, Sequenz beenden
+      else if (IsStopLossReached()) {                                               // wenn StopLoss erreicht ...
+         if (progressionLevel < sequenceLength) IncreaseProgression();              // auf nächsten Level wechseln ...
+         else                                   FinishSequence();                   // ... oder Sequenz beenden
       }
+      else if (IsProfitTargetReached())         FinishSequence();                   // wenn TakeProfit erreicht, Sequenz beenden
    }
 
    ShowStatus();
 
-   if (last_error != NO_ERROR)
+   if (last_error != NO_ERROR) {
+      status = STATUS_DISABLED;
       return(last_error);
+   }
    return(catch("start()"));
 }
 
@@ -339,7 +339,33 @@ int start() {
  * @return bool - Erfolgsstatus
  */
 bool ReadStatus() {
-   return(catch("ReadStatus()") == NO_ERROR);
+   all.swaps       = 0;
+   all.commissions = 0;
+   all.profits     = 0;
+
+   for (int i=0; i < sequenceLength; i++) {
+      if (levels.ticket[i] == 0)
+         break;
+
+      if (levels.closeTime[i] == 0) {                 // offene Position
+         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            status = STATUS_DISABLED;
+            return(catch("ReadStatus(1)")==NO_ERROR);
+         }
+         if (OrderCloseTime() != 0) {
+            status = STATUS_DISABLED;
+            return(catch("ReadStatus(2)   illegal sequence state, ticket #"+ levels.ticket[i] +"(level "+ (i+1) +") is already closed", ERR_RUNTIME_ERROR)==NO_ERROR);
+         }
+         levels.swap      [i] = OrderSwap();
+         levels.commission[i] = OrderCommission();
+         levels.profit    [i] = OrderProfit();
+      }
+      all.swaps       += levels.swap      [i];
+      all.commissions += levels.commission[i];
+      all.profits     += levels.profit    [i];
+   }
+
+   return(catch("ReadStatus(3)")==NO_ERROR);
 }
 
 
