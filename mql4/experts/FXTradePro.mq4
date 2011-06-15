@@ -312,12 +312,11 @@ int start() {
 
 
    if (ReadStatus()) {
-      if (progressionLevel == 0) {                                                  // noch keine offene Position
-         if (IsEntryLimitReached())                StartSequence();                 // kein Limit definiert oder Limit erreicht
-         else                                      status = STATUS_WAIT_ENTRYLIMIT;
+      if (progressionLevel == 0) {
+         if (!IsEntryLimitReached())               status = STATUS_WAIT_ENTRYLIMIT;
+         else                                      StartSequence();                 // kein Limit definiert oder Limit erreicht
       }
       else {
-         status = STATUS_PROGRESSING;
          if (IsStopLossReached()) {                                                 // wenn StopLoss erreicht ...
             if (progressionLevel < sequenceLength) IncreaseProgression();           // auf nächsten Level wechseln ...
             else                                   FinishSequence();                // ... oder Sequenz beenden
@@ -431,7 +430,7 @@ bool IsStopLossReached() {
       return(LE(Bid, last.openPrice - StopLoss*Pip));
 
    if (last.type == OP_SELL)
-      return(GT(Ask, last.openPrice + StopLoss*Pip));
+      return(GE(Ask, last.openPrice + StopLoss*Pip));
 
    catch("IsStopLossReached()   illegal value for variable last.type = "+ last.type, ERR_RUNTIME_ERROR);
    return(false);
@@ -461,7 +460,7 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (EQ(Entry.Limit, 0)) {                                            // kein Limit definiert, also Aufruf direkt nach Start
+   if (EQ(Entry.Limit, 0)) {                                                        // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
       int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer != IDOK) {
@@ -472,27 +471,35 @@ int StartSequence() {
 
    progressionLevel = 1;
 
-   int ticket = SendOrder(entryDirection, CurrentLotSize());            // Position in Entry.Direction öffnen
-   if (ticket == -1)
+   int ticket = OpenPosition(entryDirection, CurrentLotSize());                     // Position in Entry.Direction öffnen
+   if (ticket == -1) {
+      status = STATUS_DISABLED;
       return(last_error);
+   }
 
    // Sequenzdaten aktualisieren
-   if (OrderSelect(ticket, SELECT_BY_TICKET)) {
-      levels.ticket    [0] = OrderTicket();    last.ticket     = OrderTicket();
-      levels.type      [0] = OrderType();      last.type       = OrderType();
-      levels.openPrice [0] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
-      levels.lotsize   [0] = OrderLots();      last.lotsize    = OrderLots();
-      levels.swap      [0] = 0;                last.swap       = 0;
-      levels.commission[0] = 0;                last.commission = 0;     // Werte werden in ReadStatus() ausgelesen
-      levels.profit    [0] = 0;                last.profit     = 0;
-      levels.closeTime [0] = 0;                last.closeTime  = 0;
-
-      // Status aktualisieren
-      status = STATUS_PROGRESSING;
-      if (!ReadStatus())
-         return(last_error);
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      status = STATUS_DISABLED;
+      return(catch("StartSequence(2)"));
    }
-   return(catch("StartSequence(2)"));
+
+   levels.ticket    [0] = OrderTicket();    last.ticket     = OrderTicket();
+   levels.type      [0] = OrderType();      last.type       = OrderType();
+   levels.openPrice [0] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
+   levels.lotsize   [0] = OrderLots();      last.lotsize    = OrderLots();
+   levels.swap      [0] = 0;                last.swap       = 0;
+   levels.commission[0] = 0;                last.commission = 0;                    // Werte werden in ReadStatus() ausgelesen
+   levels.profit    [0] = 0;                last.profit     = 0;
+   levels.closeTime [0] = 0;                last.closeTime  = 0;
+
+   // Status aktualisieren
+   status = STATUS_PROGRESSING;
+
+   if (!ReadStatus()) {
+      status = STATUS_DISABLED;
+      return(last_error);
+   }
+   return(catch("StartSequence(3)"));
 }
 
 
@@ -501,34 +508,40 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   log("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   debug("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    progressionLevel++;
    int    direction = ifInt(last.type==OP_SELL, OP_BUY, OP_SELL);
    double lotsize   = CurrentLotSize();
 
-   int ticket = SendOrder(direction, last.lotsize + lotsize);                          // alte Position hedgen und nächste öffnen
-   if (ticket == -1)
+   int ticket = OpenPosition(direction, last.lotsize + lotsize);                    // alte Position hedgen und nächste öffnen
+   if (ticket == -1) {
+      status = STATUS_DISABLED;
       return(last_error);
+   }
 
    // Sequenzdaten aktualisieren
-   if (OrderSelect(ticket, SELECT_BY_TICKET)) {
-      int level = progressionLevel - 1;
-      levels.ticket    [level] = OrderTicket();    last.ticket     = OrderTicket();
-      levels.type      [level] = OrderType();      last.type       = OrderType();
-      levels.openPrice [level] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
-      levels.lotsize   [level] = lotsize;          last.lotsize    = lotsize;          // wegen Hedges nicht OrderLots() verwenden
-      levels.swap      [level] = 0;                last.swap       = 0;
-      levels.commission[level] = 0;                last.commission = 0;                // Werte werden in ReadStatus() ausgelesen
-      levels.profit    [level] = 0;                last.profit     = 0;
-      levels.closeTime [level] = 0;                last.closeTime  = 0;
-
-      // Status aktualisieren
-      status = STATUS_PROGRESSING;
-      if (!ReadStatus())
-         return(last_error);
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      status = STATUS_DISABLED;
+      return(catch("IncreaseProgression(1)"));
    }
-   return(catch("IncreaseProgression()"));
+
+   int level = progressionLevel - 1;
+   levels.ticket    [level] = OrderTicket();    last.ticket     = OrderTicket();
+   levels.type      [level] = OrderType();      last.type       = OrderType();
+   levels.openPrice [level] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
+   levels.lotsize   [level] = lotsize;          last.lotsize    = lotsize;          // wegen Hedges nicht OrderLots() verwenden
+   levels.swap      [level] = 0;                last.swap       = 0;
+   levels.commission[level] = 0;                last.commission = 0;                // Werte werden in ReadStatus() ausgelesen
+   levels.profit    [level] = 0;                last.profit     = 0;
+   levels.closeTime [level] = 0;                last.closeTime  = 0;
+
+   // Status aktualisieren
+   if (!ReadStatus()) {
+      status = STATUS_DISABLED;
+      return(last_error);
+   }
+   return(catch("IncreaseProgression(2)"));
 }
 
 
@@ -537,15 +550,19 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   if (IsProfitTargetReached()) log("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
-   else                         log("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
+   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
+   else                         debug("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
-         if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange))
+         if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
+            status = STATUS_DISABLED;
             return(last_error);                                      // TODO: später durch stdlib_PeekLastError() ersetzen
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET))
+         }
+         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            status = STATUS_DISABLED;
             return(catch("FinishSequence(1)"));
+         }
          levels.swap      [i] = OrderSwap();
          levels.commission[i] = OrderCommission();
          levels.profit    [i] = OrderProfit();
@@ -555,9 +572,11 @@ int FinishSequence() {
 
    // Status aktualisieren
    status = STATUS_FINISHED;
-   if (!ReadStatus())
-      return(last_error);
 
+   if (!ReadStatus()) {
+      status = STATUS_DISABLED;
+      return(last_error);
+   }
    return(catch("FinishSequence(2)"));
 }
 
@@ -568,11 +587,11 @@ int FinishSequence() {
  *
  * @return int - Ticket der neuen Position oder -1, falls ein Fehler auftrat
  */
-int SendOrder(int type, double lotsize) {
+int OpenPosition(int type, double lotsize) {
    if (type!=OP_BUY && type!=OP_SELL)
-      return(catch("SendOrder(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (LE(lotsize, 0))
-      return(catch("SendOrder(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
 
    int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
@@ -581,7 +600,7 @@ int SendOrder(int type, double lotsize) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
 
-   if (ticket!=-1) /*&&*/ if (catch("SendOrder(3)")!=NO_ERROR)
+   if (ticket!=-1) /*&&*/ if (catch("OpenPosition(3)")!=NO_ERROR)
       ticket = -1;
    return(ticket);
 }
