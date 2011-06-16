@@ -448,7 +448,16 @@ int log(string message="", int error=NO_ERROR) {
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  */
 void debug(string message) {
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message));
+   static int debugToLog = -1;
+
+   if (debugToLog == -1)
+      debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
+
+   if (debugToLog == 1)
+      log(message);
+   else
+      OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message));
+
    return(NO_ERROR);
 }
 
