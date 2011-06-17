@@ -24,7 +24,7 @@ int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-//extern string Entry.Direction                = "L[ong] | S[hort]";
+//extern string Entry.Direction                = "[ Long | Short ]";
 extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 0;
 
