@@ -114,7 +114,7 @@ int start() {
 
       double lotValue = bid / tickSize * tickValue;               // Lotvalue in Account-Currency
       double unitSize = equity / lotValue * leverage;             // equity / lotValue entspricht einem Hebel von 1
-                                                                  // Account-Equity wird mit 'leverage' gehebelt
+                                                                  // Account-Equity wird mit leverage gehebelt
       lotSizes[i] = units * unitSize;
    }
    debug("start()   lotSizes = "+ DoubleArrayToStr(lotSizes));

@@ -4927,6 +4927,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
+   else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
