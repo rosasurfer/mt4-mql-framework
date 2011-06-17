@@ -37,7 +37,6 @@
  */
 void stdlib_init(string scriptName) {
    __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
-   WM_MT4     = RegisterWindowMessageA("MetaTrader4_Internal_Message");       // see <stddefine.mqh>
 }
 
 
@@ -1196,6 +1195,9 @@ string GetShortcutTarget(string lnkFile) {
 int SendTick(bool sound=false) {
    if (IsTesting())
       return(-1);
+
+   if (WM_MT4 == 0)                                                        // @see <stddefine.mqh>
+      WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
    if (hWnd == 0)
