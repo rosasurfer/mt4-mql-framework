@@ -224,21 +224,21 @@
 #define CID_AUD                  1
 #define CID_CAD                  2
 #define CID_CHF                  3
-#define CID_CZK                  4
-#define CID_DKK                  5
-#define CID_EUR                  6
-#define CID_GBP                  7
-#define CID_HKD                  8
-#define CID_HUF                  9
-#define CID_JPY                 10
-#define CID_MXN                 11
-#define CID_NOK                 12
-#define CID_NZD                 13
-#define CID_PLN                 14
-#define CID_RUR                 15
-#define CID_SEK                 16
-#define CID_SGD                 17
-#define CID_USD                 18
+#define CID_EUR                  4
+#define CID_GBP                  5
+#define CID_JPY                  6
+#define CID_USD                  7  // zuerst die ID's der wichtigsten Währungen, dadurch "passen" diese in 3 Bits
+#define CID_CZK                  8
+#define CID_DKK                  9
+#define CID_HKD                 10
+#define CID_HUF                 11
+#define CID_MXN                 12
+#define CID_NOK                 13
+#define CID_NZD                 14
+#define CID_PLN                 15
+#define CID_RUR                 16
+#define CID_SEK                 17
+#define CID_SGD                 18
 #define CID_ZAR                 19
 
 

@@ -10,7 +10,7 @@
 
 //extern string Currency  = "";                   // AUD | CAD | CHF | EUR | GBP | JPY | USD
 //extern string Direction = "[ Long | Short ]";   // Buy | Long | Sell | Short
-//extern double Units     = 1;                    // 0.1 ... 1.9
+//extern double Units     = 1.0;                  // Vielfaches von 0.1 im Bereich 0.1-3.0
 extern string Currency  = "CHF";
 extern string Direction = "Long";
 extern double Units     = 0.9;
@@ -57,16 +57,18 @@ int init() {
    }
 
    // Open.Units
-   if (LE(Units, 0))
-      return(catch("init(3)  Invalid input parameter Units = "+ NumberToStr(Units, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-   units = Units;
+   if (LT(Units, 0.1) || GT(Units, 3))
+      return(catch("init(3)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 3.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))
+      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   units = NormalizeDouble(Units, 1);
 
    // Leverage-Konfiguration
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
-      return(catch("init(4)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(5)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
-   return(catch("init(5)"));
+   return(catch("init(6)"));
 }
 
 
@@ -125,7 +127,6 @@ int start() {
       double lotStep = MarketInfo(symbols[i], MODE_LOTSTEP);            // auf Vielfaches von MODE_LOTSTEP runden
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));
    }
-   //debug("start()   lots = "+ DoubleArrayToStr(lots));
 
 
    // (3) Directions bestimmen
@@ -144,61 +145,85 @@ int start() {
 
    // (5) Positionen öffnen
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;        // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
+      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                 // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
       int pipDigits = digits - digits%2;
 
       double   price       = NULL;
-      int      slippage    = ifInt(digits==pipDigits, 0, 1);            // keine Slippage bei 4-Digits-Brokern
+      int      slippage    = ifInt(digits==pipDigits, 0, 1);                     // keine Slippage bei 4-Digits-Brokern
       double   sl          = NULL;
       double   tp          = NULL;
-      string   comment     = "LI."+ currency +".1";
-      int      magicNumber = CreateMagicNumber();
+      int      counter     = GetPositionCounter() + 1;
+      string   comment     = "L."+ currency +"-Index."+ counter;
+      int      magicNumber = CreateMagicNumber(counter);
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
+      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());    // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (catch("start(3)")      != NO_ERROR) return(last_error);
+
       int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (ticket == -1)
-         return(stdlib_GetLastError());
+         return(stdlib_PeekLastError());
    }
 
-   return(catch("start(3)"));
+   return(catch("start(4)"));
 }
 
 
 /**
  * Generiert aus den internen Daten einen Wert für OrderMagicNumber().
  *
- * @return int - MagicNumber
+ * @param  int counter - Position-Zähler, für den eine MagicNumber erteugt werden soll
+ *
+ * @return int - MagicNumber oder -1, falls ein Fehler auftrat
  */
-int CreateMagicNumber() {
-   /*
-   int strategy = Strategy.uniqueId << 22;            // 10 bit (Bereich 0-1023)                                  | in MagicNumber: Bits 23-32
-   int instance = GetInstanceId() << 18 >> 10;        // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern) | in MagicNumber: Bits  9-22
-   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-12), auf 8 bit erweitern               | in MagicNumber: Bits  5-8
-   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-12)                                    | in MagicNumber: Bits  1-4
-   */
+int CreateMagicNumber(int counter) {
+   if (counter < 1) {
+      catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   int strategy   = Strategy.uniqueId & 0x3FF << 22;        // 10 bit (Bits größer 10 nullen und auf 32 Bit erweitern)  | in MagicNumber: Bits 23-32
+   int currencyId = GetCurrencyId(currency) & 0x1F << 17;   //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
+   int iUnits     = MathRound(units * 10) + 0.1;            //    +0.1 fängt evt. Präzisionsfehler beim Casten ab
+       iUnits     = iUnits & 0x1F << 12;                    //  5 bit (Bits größer 5 nullen und auf 17 Bit erweitern)   | in MagicNumber: Bits 13-17
+   int pCounter   = counter & 0x7 << 9;                     //  3 bit (Bits größer 3 nullen und auf 12 Bit erweitern)   | in MagicNumber: Bits 10-12
+   int instance   = GetInstanceId() & 0x1FF;                //  9 bit (Bits größer 9 nullen)                            | in MagicNumber: Bits  1-9
 
-   int strategy   = Strategy.uniqueId << 22;                // 10 bit (Bereich 0-1023)                                 | in MagicNumber: Bits 23-32
-   int instance   = GetInstanceId() << 23 >> 10;            //  9 bit (Bits größer 9 löschen und auf 22 Bit erweitern) | in MagicNumber: Bits 14-22
-   int currencyId = GetCurrencyId(currency) << 27 >> 19;    //  5 bit (Bits größer 5 löschen und auf 19 Bit erweitern) | in MagicNumber: Bits  9-13
-   int iUnits     = MathRound(units * 10) + 0.1;            //  5 bit
+   // Der Position-Counter steht nicht am Ende, damit die resultierenden MagicNumbers mehrerer Positionen nicht aufeinander folgende Zahlen sind.
 
-   return(strategy + instance);
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      catch("CreateMagicNumber(2)", error);
+      return(-1);
+   }
+   return(strategy + currencyId + iUnits + pCounter + instance);
 }
 
 
 /**
- * Gibt die aktuelle Instanz-ID zurück.
+ * Gibt den Positionszähler der letzten offenen Position im aktuellen Instrument zurück.
  *
- * @return int - Instanz-ID im Bereich 1-511 (9 bit)
+ * @return int - Anzahl
+ */
+int GetPositionCounter() {
+   return(0);
+}
+
+
+/**
+ * Gibt die aktuelle Instanz-ID zurück. Existiert noch keine, wird eine neue erzeugt.
+ *
+ * @return int - Instanz-ID im Bereich 1-511 (9 bit), zusammen mit der Currency-ID (5 bit) ist das ausreichend
  */
 int GetInstanceId() {
    static int id;
 
    if (id == 0) {
       MathSrand(GetTickCount());
-      while (id < 1 || id > 511) {
+      while (id == 0) {
          id = MathRand();
+         if (id > 511)
+            id >>= 1;
       }
    }
    return(id);
