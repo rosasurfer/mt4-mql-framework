@@ -118,11 +118,11 @@ int start() {
       if (error != NO_ERROR)
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      double lotValue = bid / tickSize * tickValue;                                 // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                               // equity / lotValue entspricht einem Hebel von 1
-      lots[i] = units * unitSize;                                                   // Account-Equity wird mit leverage gehebelt
+      double lotValue = bid / tickSize * tickValue;                     // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;                   // equity / lotValue entspricht einem Hebel von 1
+      lots[i] = units * unitSize;                                       // Account-Equity wird mit leverage gehebelt
 
-      double lotStep = MarketInfo(symbols[i], MODE_LOTSTEP);                        // auf Vielfaches von MODE_LOTSTEP runden
+      double lotStep = MarketInfo(symbols[i], MODE_LOTSTEP);            // auf Vielfaches von MODE_LOTSTEP runden
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));
    }
    //debug("start()   lots = "+ DoubleArrayToStr(lots));
@@ -147,12 +147,16 @@ int start() {
       int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;        // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
       int pipDigits = digits - digits%2;
 
-      int    magicNumber = CreateMagicNumber();
-      string comment     = "LI."+ currency +".1";
-      int    slippage    = ifInt(digits==pipDigits, 0, 1);              // keine Slippage bei 4-Digits-Brokern
-      color  markerColor = CLR_NONE;
+      double   price       = NULL;
+      int      slippage    = ifInt(digits==pipDigits, 0, 1);            // keine Slippage bei 4-Digits-Brokern
+      double   sl          = NULL;
+      double   tp          = NULL;
+      string   comment     = "LI."+ currency +".1";
+      int      magicNumber = CreateMagicNumber();
+      datetime expiration  = NULL;
+      color    markerColor = CLR_NONE;
 
-      int ticket = OrderSendEx(symbols[i], directions[i], lots[i], NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
+      int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (ticket == -1)
          return(stdlib_GetLastError());
    }
