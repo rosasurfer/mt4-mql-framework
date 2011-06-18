@@ -6903,7 +6903,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       return(-1);
    }
    // markerColor
-   if (markerColor < 0) {
+   if (markerColor < CLR_NONE) {       // CLR_NONE: -1
       catch("OrderSendEx(12)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }

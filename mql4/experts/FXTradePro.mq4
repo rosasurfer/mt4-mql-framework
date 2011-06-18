@@ -10,8 +10,6 @@
  */
 #include <stdlib.mqh>
 
-int EA.uniqueId = 101;           // eindeutige ID dieses EA's (im Bereich 0-1023)
-
 
 #define STATUS_INITIALIZED       1
 #define STATUS_WAIT_ENTRYLIMIT   2
@@ -47,6 +45,9 @@ extern double Lotsize.Level.11               = 2.7;
 extern double Lotsize.Level.12               = 3.6;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+int EA.uniqueId = 101;                                            // eindeutige ID der Strategie (im Bereich 0-1023)
 
 
 double   Pip;
@@ -408,13 +409,15 @@ int CreateSequenceId() {
 
 
 /**
- * Generiert aus den internen Daten einen Wert für OrderMagicNumber()
+ * Generiert aus den internen Daten einen Wert für OrderMagicNumber().
  *
- * @return int - magic number
+ * @return int - MagicNumber oder -1, falls ein Fehler auftrat
  */
 int CreateMagicNumber() {
-   if (sequenceId <= 1000)
-      return(catch("CreateMagicNumber()   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+   if (sequenceId <= 1000) {
+      catch("CreateMagicNumber()   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR);
+      return(-1);
+   }
 
    int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
    int sequence = sequenceId  << 18 >> 10;            // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
@@ -488,7 +491,7 @@ bool IsProfitTargetReached() {
 int StartSequence() {
    if (EQ(Entry.Limit, 0)) {                                                        // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
-      int answer = MessageBox("Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int answer = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (answer != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
