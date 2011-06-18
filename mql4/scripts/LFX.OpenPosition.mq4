@@ -171,33 +171,35 @@ int start() {
  * @return int - MagicNumber
  */
 int CreateMagicNumber() {
-   int strategy = Strategy.uniqueId << 22;            // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
-   int instance = GetInstanceId() << 18 >> 10;        // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
+   /*
+   int strategy = Strategy.uniqueId << 22;            // 10 bit (Bereich 0-1023)                                  | in MagicNumber: Bits 23-32
+   int instance = GetInstanceId() << 18 >> 10;        // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern) | in MagicNumber: Bits  9-22
+   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-12), auf 8 bit erweitern               | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-12)                                    | in MagicNumber: Bits  1-4
+   */
 
-   //int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
-   //int level    = progressionLevel & 0x000F;          // 4 bit (Bereich 1-12)                                 | in MagicNumber: Bits  1-4
+   int strategy   = Strategy.uniqueId << 22;                // 10 bit (Bereich 0-1023)                                 | in MagicNumber: Bits 23-32
+   int instance   = GetInstanceId() << 23 >> 10;            //  9 bit (Bits größer 9 löschen und auf 22 Bit erweitern) | in MagicNumber: Bits 14-22
+   int currencyId = GetCurrencyId(currency) << 27 >> 19;    //  5 bit (Bits größer 5 löschen und auf 19 Bit erweitern) | in MagicNumber: Bits  9-13
+   int iUnits     = MathRound(units * 10) + 0.1;            //  5 bit
 
-   int length;
-   int level;
-
-   return(strategy + instance + length + level);
+   return(strategy + instance);
 }
 
 
 /**
  * Gibt die aktuelle Instanz-ID zurück.
  *
- * @return int - Instanz-ID im Bereich 1000-16383 (14 bit)
+ * @return int - Instanz-ID im Bereich 1-511 (9 bit)
  */
 int GetInstanceId() {
    static int id;
 
    if (id == 0) {
       MathSrand(GetTickCount());
-      while (id < 2000) {           // Das abschließende Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID haben.
+      while (id < 1 || id > 511) {
          id = MathRand();
       }
-      id >>= 1;
    }
    return(id);
 }

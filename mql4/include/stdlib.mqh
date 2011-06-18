@@ -215,6 +215,8 @@
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
    string   GetComputerName();
+   string   GetCurrency(int id);
+   int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
    string   GetStandardSymbol(string symbol);
    string   GetSymbolName(string symbol, string defaultName);

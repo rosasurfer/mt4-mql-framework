@@ -177,6 +177,75 @@ string GetGlobalConfigPath() {
 
 
 /**
+ * Gibt die eindeutige ID einer Währung zurück.
+ *
+ * @param  string currency - 3-stelliger Währungsbezeichner
+ *
+ * @return int - Currency-ID
+ */
+int GetCurrencyId(string currency) {
+   string curr = StringToUpper(currency);
+
+   if (curr == C_AUD) return(CID_AUD);
+   if (curr == C_CAD) return(CID_CAD);
+   if (curr == C_CHF) return(CID_CHF);
+   if (curr == C_CZK) return(CID_CZK);
+   if (curr == C_DKK) return(CID_DKK);
+   if (curr == C_EUR) return(CID_EUR);
+   if (curr == C_GBP) return(CID_GBP);
+   if (curr == C_HKD) return(CID_HKD);
+   if (curr == C_HUF) return(CID_HUF);
+   if (curr == C_JPY) return(CID_JPY);
+   if (curr == C_MXN) return(CID_MXN);
+   if (curr == C_NOK) return(CID_NOK);
+   if (curr == C_NZD) return(CID_NZD);
+   if (curr == C_PLN) return(CID_PLN);
+   if (curr == C_RUR) return(CID_RUR);
+   if (curr == C_SEK) return(CID_SEK);
+   if (curr == C_SGD) return(CID_SGD);
+   if (curr == C_USD) return(CID_USD);
+   if (curr == C_ZAR) return(CID_ZAR);
+
+   catch("GetCurrencyId()   unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR);
+   return(0);
+}
+
+
+/**
+ * Gibt den 3-stelligen Bezeichner einer Währungs-ID zurück.
+ *
+ * @param  int id - Währungs-ID
+ *
+ * @return string - Währungsbezeichner
+ */
+string GetCurrency(int id) {
+   switch (id) {
+      case CID_AUD: return(C_AUD);
+      case CID_CAD: return(C_CAD);
+      case CID_CHF: return(C_CHF);
+      case CID_CZK: return(C_CZK);
+      case CID_DKK: return(C_DKK);
+      case CID_EUR: return(C_EUR);
+      case CID_GBP: return(C_GBP);
+      case CID_HKD: return(C_HKD);
+      case CID_HUF: return(C_HUF);
+      case CID_JPY: return(C_JPY);
+      case CID_MXN: return(C_MXN);
+      case CID_NOK: return(C_NOK);
+      case CID_NZD: return(C_NZD);
+      case CID_PLN: return(C_PLN);
+      case CID_RUR: return(C_RUR);
+      case CID_SEK: return(C_SEK);
+      case CID_SGD: return(C_SGD);
+      case CID_USD: return(C_USD);
+      case CID_ZAR: return(C_ZAR);
+   }
+   catch("GetCurrency()   unknown currency id = "+ id, ERR_RUNTIME_ERROR);
+   return("");
+}
+
+
+/**
  * Aktiviert oder deaktiviert Expert Advisers (exakt: aktiviert/deaktiviert den Aufruf der Startfunktion bei Eintreffen von Ticks).
  *
  * @param  bool enable - gewünschter Status

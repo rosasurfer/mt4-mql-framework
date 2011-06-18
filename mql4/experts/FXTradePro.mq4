@@ -47,7 +47,7 @@ extern double Lotsize.Level.12               = 3.6;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int EA.uniqueId = 101;                                            // eindeutige ID der Strategie (im Bereich 0-1023)
+int EA.uniqueId = 101;                                            // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
 
 
 double   Pip;
@@ -178,13 +178,13 @@ int init() {
             continue;
 
          if (IsMyOrder(sequenceId)) {
-            int level = OrderMagicNumber() & 0x000F;                    //  4 Bits  1-4  => progressionLevel
+            int level = OrderMagicNumber() & 0x000F;                    //  4 Bits (Bits 1-4)  => progressionLevel
             if (level > progressionLevel)
                progressionLevel = level;
 
             if (sequenceId == 0) {
-               sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits  9-22 => sequenceId
-               sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits  5-8  => sequenceLength
+               sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits (Bits 9-22) => sequenceId
+               sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits (Bits 5-8 ) => sequenceLength
 
                ArrayResize(levels.ticket    , sequenceLength);
                ArrayResize(levels.type      , sequenceLength);
@@ -218,7 +218,7 @@ int init() {
                break;
 
             if (IsMyOrder(sequenceId)) {
-               level = OrderMagicNumber() & 0x000F;                     //  4 Bits  1-4  => progressionLevel
+               level = OrderMagicNumber() & 0x000F;                     // 4 Bits (Bits 1-4) => progressionLevel
                if (level > progressionLevel)
                   progressionLevel = level;
                level--;
@@ -384,7 +384,7 @@ bool IsMyOrder(int sequenceId = NULL) {
          if (OrderMagicNumber() >> 22 == EA.uniqueId) {
             if (sequenceId == NULL)
                return(true);
-            return(sequenceId == OrderMagicNumber() << 10 >> 18);       // 14 Bits  9-22 => sequenceId
+            return(sequenceId == OrderMagicNumber() << 10 >> 18);       // 14 Bits (Bits 9-22) => sequenceId
          }
       }
    }
@@ -419,10 +419,10 @@ int CreateMagicNumber() {
       return(-1);
    }
 
-   int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                              | in MagicNumber: Bits 23-32
-   int sequence = sequenceId  << 18 >> 10;            // Bits größer 14 löschen und Wert auf 22 Bit erweitern | in MagicNumber: Bits  9-22
-   int length   = sequenceLength   & 0x000F << 4;     // 4 bit (Bereich 1-12), auf 8 bit erweitern            | in MagicNumber: Bits  5-8
-   int level    = progressionLevel & 0x000F;          // 4 bit (Bereich 1-12)                                 | in MagicNumber: Bits  1-4
+   int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                                 | in MagicNumber: Bits 23-32
+   int sequence = sequenceId  << 18 >> 10;            // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern | in MagicNumber: Bits  9-22
+   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-12), auf 8 bit erweitern              | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-12)                                   | in MagicNumber: Bits  1-4
 
    return(ea + sequence + length + level);
 }
@@ -586,7 +586,7 @@ int FinishSequence() {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
          if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
             status = STATUS_DISABLED;
-            return(last_error);                                      // TODO: später durch stdlib_PeekLastError() ersetzen
+            return(stdlib_PeekLastError());
          }
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             status = STATUS_DISABLED;

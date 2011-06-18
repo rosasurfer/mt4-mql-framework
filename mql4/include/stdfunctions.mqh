@@ -220,6 +220,50 @@
 #define REASON_ACCOUNT           6   // account changed
 
 
+// Currency-ID's
+#define CID_AUD                  1
+#define CID_CAD                  2
+#define CID_CHF                  3
+#define CID_CZK                  4
+#define CID_DKK                  5
+#define CID_EUR                  6
+#define CID_GBP                  7
+#define CID_HKD                  8
+#define CID_HUF                  9
+#define CID_JPY                 10
+#define CID_MXN                 11
+#define CID_NOK                 12
+#define CID_NZD                 13
+#define CID_PLN                 14
+#define CID_RUR                 15
+#define CID_SEK                 16
+#define CID_SGD                 17
+#define CID_USD                 18
+#define CID_ZAR                 19
+
+
+// Currency-Kürzel
+#define C_AUD                "AUD"
+#define C_CAD                "CAD"
+#define C_CHF                "CHF"
+#define C_CZK                "CZK"
+#define C_DKK                "DKK"
+#define C_EUR                "EUR"
+#define C_GBP                "GBP"
+#define C_HKD                "HKD"
+#define C_HUF                "HUF"
+#define C_JPY                "JPY"
+#define C_MXN                "MXN"
+#define C_NOK                "NOK"
+#define C_NZD                "NZD"
+#define C_PLN                "PLN"
+#define C_RUR                "RUR"
+#define C_SEK                "SEK"
+#define C_SGD                "SGD"
+#define C_USD                "USD"
+#define C_ZAR                "ZAR"
+
+
 // MessageBox() flags
 #define MB_OK                                  0x00000000
 #define MB_OKCANCEL                            0x00000001
