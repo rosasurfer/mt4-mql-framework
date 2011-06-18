@@ -184,7 +184,7 @@ int UpdateInfos() {
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
 
-   bool   tradeAllowed = MarketInfo(symbol, MODE_TRADEALLOWED);
+   bool   tradeAllowed = NE(MarketInfo(symbol, MODE_TRADEALLOWED), 0);
    color  Font.Color = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
 
                                                             ObjectSetText(names[TRADEALLOWED], StringConcatenate("Trading enabled: ", strBool[0+tradeAllowed]), Font.Size, Font.Name, Font.Color);
