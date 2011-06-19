@@ -8,23 +8,21 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string Currency  = "CHF";
-extern string Direction = "Long";
-//extern string Currency  = "";                   // AUD | CAD | CHF | EUR | GBP | JPY | USD
-//extern string Direction = "[ Long | Short ]";   // Buy | Long | Sell | Short
-extern double Units     = 1.0;                  // Vielfaches von 0.1 im Bereich 0.1-3.0
+extern string Currency  = "";             // AUD | CAD | CHF | EUR | GBP | JPY | USD
+extern string Direction = "long";         // buy | sell | long | short
+extern double Units     = 1.0;            // Vielfaches von 0.1 im Bereich 0.1-3.0
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int Strategy.uniqueId = 102;                       // eindeutige ID der Strategie (im Bereich 0-1023)
+int Strategy.uniqueId = 102;              // eindeutige ID der Strategie (im Bereich 0-1023)
 
 string currency;
 int    direction;
 double units;
 double leverage;
 
-int    positions.magic   [];                       // Daten der aktuell offenen Positionen dieser Strategie
+int    positions.magic   [];              // Daten der aktuell offenen Positionen dieser Strategie
 string positions.currency[];
 double positions.units   [];
 int    positions.instance[];
@@ -117,24 +115,38 @@ int start() {
    double equity = AccountEquity()-AccountCredit();
 
    for (int i=0; i < 6; i++) {
-      double bid            = MarketInfo(symbols[i], MODE_BID           ); if (LT(bid, 0.5)            || GT(bid, 150)            ) return(catch("start(1)   \""+ symbols[i] +"\" illegal MODE_BID value = "           + NumberToStr(bid           , ".+"), ERR_RUNTIME_ERROR));
-      double tickSize       = MarketInfo(symbols[i], MODE_TICKSIZE      ); if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) return(catch("start(2)   \""+ symbols[i] +"\" illegal MODE_TICKSIZE value = "      + NumberToStr(tickSize      , ".+"), ERR_RUNTIME_ERROR));
-      double tickValue      = MarketInfo(symbols[i], MODE_TICKVALUE     ); if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) return(catch("start(3)   \""+ symbols[i] +"\" illegal MODE_TICKVALUE value = "     + NumberToStr(tickValue     , ".+"), ERR_RUNTIME_ERROR));
-      double lotStep        = MarketInfo(symbols[i], MODE_LOTSTEP       ); if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) return(catch("start(4)   \""+ symbols[i] +"\" illegal MODE_LOTSTEP value = "       + NumberToStr(lotStep       , ".+"), ERR_RUNTIME_ERROR));
-      double marginRequired = MarketInfo(symbols[i], MODE_MARGINREQUIRED); if (LT(marginRequired, 200) || GT(marginRequired, 1500)) return(catch("start(5)   \""+ symbols[i] +"\" illegal MODE_MARGINREQUIRED value = "+ NumberToStr(marginRequired, ".+"), ERR_RUNTIME_ERROR));
+      double bid            = MarketInfo(symbols[i], MODE_BID           );
+      double tickSize       = MarketInfo(symbols[i], MODE_TICKSIZE      );
+      double tickValue      = MarketInfo(symbols[i], MODE_TICKVALUE     );
+      double minLot         = MarketInfo(symbols[i], MODE_MINLOT        );
+      double lotStep        = MarketInfo(symbols[i], MODE_LOTSTEP       );
+      double maxLot         = MarketInfo(symbols[i], MODE_MAXLOT        );
+      double marginRequired = MarketInfo(symbols[i], MODE_MARGINREQUIRED);
 
       int error = GetLastError();
       if (error != NO_ERROR)
-         return(catch("start(6)   \""+ symbols[i] +"\"", error));
+         return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      double lotValue = bid / tickSize * tickValue;                     // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                   // equity / lotValue entspricht einem Hebel von 1
-      lots[i] = units * unitSize;                                       // Account-Equity wird mit leverage gehebelt
-                                                                        // auf Vielfaches von MODE_LOTSTEP runden
-      lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));
-      if (LE(lots[i], 0))
-         return(catch("start(7)   Not enough money, calculated lot size for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+"), ERR_NOT_ENOUGH_MONEY));
-      margin += lots[i] * marginRequired;                               // required margin berechnen
+      // nicht jeder MarketInfo()-Aufruf löst bei fehlendem Symbol einen Fehler aus, daher kann die Validierung erst nach Auslesen aller Werte erfolgen
+      if (LT(bid, 0.5)            || GT(bid, 150)            ) return(catch("start(2)   \""+ symbols[i] +"\" illegal MODE_BID value = "           + NumberToStr(bid           , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) return(catch("start(3)   \""+ symbols[i] +"\" illegal MODE_TICKSIZE value = "      + NumberToStr(tickSize      , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) return(catch("start(4)   \""+ symbols[i] +"\" illegal MODE_TICKVALUE value = "     + NumberToStr(tickValue     , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) return(catch("start(5)   \""+ symbols[i] +"\" illegal MODE_MINLOT value = "        + NumberToStr(minLot        , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) return(catch("start(6)   \""+ symbols[i] +"\" illegal MODE_LOTSTEP value = "       + NumberToStr(lotStep       , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(maxLot, 50)                                     ) return(catch("start(7)   \""+ symbols[i] +"\" illegal MODE_MAXLOT value = "        + NumberToStr(maxLot        , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) return(catch("start(8)   \""+ symbols[i] +"\" illegal MODE_MARGINREQUIRED value = "+ NumberToStr(marginRequired, ".+"), ERR_RUNTIME_ERROR));
+
+      double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;                                           // equity / lotValue entspricht einem Hebel von 1, dies wird mit leverage gehebelt
+      lots[i] = units * unitSize;
+      lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
+
+      if (LT(lots[i], minLot))
+         return(catch("start(9)   Calculated lot size for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +", minLot: "+ NumberToStr(minLot, ".+"), ERR_INVALID_TRADE_VOLUME));
+      if (GT(lots[i], maxLot))
+         return(catch("start(10)   Calculated lot size for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +", maxLot: "+ NumberToStr(maxLot, ".+"), ERR_INVALID_TRADE_VOLUME));
+
+      margin += lots[i] * marginRequired;                                                       // required margin berechnen
    }
 
 
@@ -149,7 +161,7 @@ int start() {
    PlaySound("notify.wav");
    int answer = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(units, ".+") + ifString(EQ(units, 1), " unit ", " units ") + currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    if (answer != IDOK)
-      return(catch("start(8)"));
+      return(catch("start(11)"));
 
 
    // (5) Daten bereits offener Positionen einlesen
@@ -173,14 +185,14 @@ int start() {
       color    markerColor = CLR_NONE;
 
       if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());    // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
-      if (catch("start(9)")      != NO_ERROR) return(last_error);
+      if (catch("start(12)")      != NO_ERROR) return(last_error);
 
       int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (ticket == -1)
          return(stdlib_PeekLastError());
    }
 
-   return(catch("start(10)"));
+   return(catch("start(13)"));
 }
 
 
