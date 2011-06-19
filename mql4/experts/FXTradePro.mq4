@@ -79,7 +79,7 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   PipDigits   = Digits - Digits%2;
+   PipDigits   = Digits & (~1);
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
@@ -195,8 +195,8 @@ int init() {
                ArrayResize(levels.profit    , sequenceLength);
                ArrayResize(levels.closeTime , sequenceLength);
 
-               if (level%2==1) entryDirection =  OrderType();
-               else            entryDirection = ~OrderType() & 1;       // 0=>1, 1=>0
+               if (level%2==1) entryDirection = OrderType();
+               else            entryDirection = OrderType() ^ 1;        // 0=>1, 1=>0
             }
             level--;
             levels.ticket    [level] = OrderTicket();

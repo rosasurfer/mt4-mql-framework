@@ -152,8 +152,8 @@ int start() {
 
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
-      if (StringStartsWith(symbols[i], currency)) directions[i] =  direction;
-      else                                        directions[i] = ~direction & 1;   // 0=>1, 1=>0
+      if (StringStartsWith(symbols[i], currency)) directions[i] = direction;
+      else                                        directions[i] = direction ^ 1;    // 0=>1, 1=>0
    }
 
 
@@ -172,7 +172,7 @@ int start() {
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
       int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                 // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
-      int pipDigits = digits - digits%2;
+      int pipDigits = digits & (~1);
       int counter   = GetPositionCounter() + 1;
 
       double   price       = NULL;

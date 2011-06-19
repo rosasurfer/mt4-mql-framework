@@ -7027,7 +7027,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
  * @return string - Logmessage
  */
 /*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time) {
-   int    pipDigits   = digits - digits%2;
+   int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
@@ -7185,7 +7185,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
  *
  */
 /*private*/ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time) {
-   int    pipDigits   = digits - digits%2;
+   int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
