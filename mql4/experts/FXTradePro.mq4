@@ -371,7 +371,7 @@ bool ReadStatus() {
 
 
 /**
- * Ob die aktuell selektierte Order von diesem EA erzeugt wurde. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
+ * Ob die aktuell selektierte Order zu dieser Strategie gehört. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
  * ob die Order zur angegebeben Sequenz gehört.
  *
  * @param  int sequenceId - ID einer aktiven Sequenz (default: NULL)
