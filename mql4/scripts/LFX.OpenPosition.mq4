@@ -128,13 +128,13 @@ int start() {
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
       // nicht jeder MarketInfo()-Aufruf löst bei fehlendem Symbol einen Fehler aus, daher kann die Validierung erst nach Auslesen aller Werte erfolgen
-      if (LT(bid, 0.5)            || GT(bid, 150)            ) return(catch("start(2)   \""+ symbols[i] +"\" illegal MODE_BID value = "           + NumberToStr(bid           , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) return(catch("start(3)   \""+ symbols[i] +"\" illegal MODE_TICKSIZE value = "      + NumberToStr(tickSize      , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) return(catch("start(4)   \""+ symbols[i] +"\" illegal MODE_TICKVALUE value = "     + NumberToStr(tickValue     , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) return(catch("start(5)   \""+ symbols[i] +"\" illegal MODE_MINLOT value = "        + NumberToStr(minLot        , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) return(catch("start(6)   \""+ symbols[i] +"\" illegal MODE_LOTSTEP value = "       + NumberToStr(lotStep       , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(maxLot, 50)                                     ) return(catch("start(7)   \""+ symbols[i] +"\" illegal MODE_MAXLOT value = "        + NumberToStr(maxLot        , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) return(catch("start(8)   \""+ symbols[i] +"\" illegal MODE_MARGINREQUIRED value = "+ NumberToStr(marginRequired, ".+"), ERR_RUNTIME_ERROR));
+      if (LT(bid, 0.5)            || GT(bid, 150)            ) return(catch("start(2)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_BID value = "           + NumberToStr(bid           , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) return(catch("start(3)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_TICKSIZE value = "      + NumberToStr(tickSize      , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) return(catch("start(4)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_TICKVALUE value = "     + NumberToStr(tickValue     , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) return(catch("start(5)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MINLOT value = "        + NumberToStr(minLot        , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) return(catch("start(6)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_LOTSTEP value = "       + NumberToStr(lotStep       , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(maxLot, 50)                                     ) return(catch("start(7)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MAXLOT value = "        + NumberToStr(maxLot        , ".+"), ERR_RUNTIME_ERROR));
+      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) return(catch("start(8)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MARGINREQUIRED value = "+ NumberToStr(marginRequired, ".+"), ERR_RUNTIME_ERROR));
 
       double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
       double unitSize = equity / lotValue * leverage;                                           // equity / lotValue entspricht einem Hebel von 1, dies wird mit leverage gehebelt
@@ -142,9 +142,9 @@ int start() {
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
-         return(catch("start(9)   Calculated lot size for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +", minLot: "+ NumberToStr(minLot, ".+"), ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(9)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
-         return(catch("start(10)   Calculated lot size for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +", maxLot: "+ NumberToStr(maxLot, ".+"), ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(10)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       margin += lots[i] * marginRequired;                                                       // required margin berechnen
    }
@@ -176,7 +176,7 @@ int start() {
       int counter   = GetPositionCounter() + 1;
 
       double   price       = NULL;
-      int      slippage    = ifInt(digits==pipDigits, 0, 1);                     // keine Slippage bei 4-Digits-Brokern
+      int      slippage    = ifInt(digits==pipDigits, 0, 1);                     // keine Slippage bei 2- oder 4-Digits-Brokern
       double   sl          = NULL;
       double   tp          = NULL;
       string   comment     = currency +"."+ counter +"/"+ DoubleToStr(units, 1);
