@@ -1800,12 +1800,12 @@ string GetSymbolLongName(string symbol, string altValue="") {
    if (symbol == "CADLFX"  ) return("CAD-Index (LiteForex)"   );
    if (symbol == "CHFLFX"  ) return("CHF-Index (LiteForex)"   );
    if (symbol == "EURLFX"  ) return("EUR-Index (LiteForex)"   );
-   if (symbol == "EURX"    ) return("EUR-Index (NYBOT)"       );
+   if (symbol == "EURX"    ) return("EUR-Index (CME)"         );
    if (symbol == "GBPLFX"  ) return("GBP-Index (LiteForex)"   );
    if (symbol == "LFXJPY"  ) return("1/JPY-Index (LiteForex)" );
    if (symbol == "NZDLFX"  ) return("NZD-Index (LiteForex)"   );
    if (symbol == "USDLFX"  ) return("USD-Index (LiteForex)"   );
-   if (symbol == "USDX"    ) return("USD-Index (NYBOT)"       );
+   if (symbol == "USDX"    ) return("USD-Index (CME)"         );
 
    string prefix = StringLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);

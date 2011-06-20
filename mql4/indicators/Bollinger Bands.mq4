@@ -41,7 +41,7 @@ extern string Deviations        = "2.0";                       // ein oder zwei 
 extern int    Max.Values        = 2000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 extern string ___________________________;
-extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration
+extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
