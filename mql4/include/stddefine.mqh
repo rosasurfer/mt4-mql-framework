@@ -277,7 +277,7 @@
 #define MB_ICONEXCLAMATION                     0x00000030
 #define MB_ICONASTERISK                        0x00000040
 #define MB_USERICON                            0x00000080
-#define MB_ICONWARNING                MB_ICONEXCLAMATION
+#define MB_ICONWARNING                 MB_ICONEXCLAMATION
 #define MB_ICONERROR                          MB_ICONHAND
 #define MB_ICONINFORMATION                MB_ICONASTERISK
 #define MB_ICONSTOP                           MB_ICONHAND
@@ -388,7 +388,7 @@
 #define ERR_CANNOT_OPEN_FILE                         4103
 #define ERR_INCOMPATIBLE_FILEACCESS                  4104
 #define ERR_NO_ORDER_SELECTED                        4105   // no order selected
-#define ERR_UNKNOWN_SYMBOL                           4106
+#define ERR_UNKNOWN_SYMBOL                           4106   // unknown symbol
 #define ERR_INVALID_PRICE_PARAM                      4107
 #define ERR_INVALID_TICKET                           4108   // invalid ticket
 #define ERR_TRADE_NOT_ALLOWED                        4109
@@ -410,6 +410,7 @@
 #define ERR_INVALID_CONFIG_PARAMVALUE                5003   // invalid configuration parameter value
 #define ERR_TERMINAL_NOT_YET_READY                   5004   // terminal not yet ready
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
+#define ERR_MARKETINFO_UPDATE                        5006   // function MarketInfo() in update state
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung

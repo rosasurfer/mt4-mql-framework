@@ -62,7 +62,7 @@ int init() {
    if (LT(Units, 0.1) || GT(Units, 3))
       return(catch("init(3)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 3.0)", ERR_INVALID_INPUT_PARAMVALUE));
    if (NE(MathModFix(Units, 0.1), 0))
-      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
    units = NormalizeDouble(Units, 1);
 
    // Leverage-Konfiguration
@@ -127,14 +127,27 @@ int start() {
       if (error != NO_ERROR)
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      // nicht jeder MarketInfo()-Aufruf löst bei fehlendem Symbol einen Fehler aus, daher kann die Validierung erst nach Auslesen aller Werte erfolgen
-      if (LT(bid, 0.5)            || GT(bid, 150)            ) return(catch("start(2)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_BID value = "           + NumberToStr(bid           , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) return(catch("start(3)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_TICKSIZE value = "      + NumberToStr(tickSize      , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) return(catch("start(4)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_TICKVALUE value = "     + NumberToStr(tickValue     , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) return(catch("start(5)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MINLOT value = "        + NumberToStr(minLot        , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) return(catch("start(6)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_LOTSTEP value = "       + NumberToStr(lotStep       , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(maxLot, 50)                                     ) return(catch("start(7)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MAXLOT value = "        + NumberToStr(maxLot        , ".+"), ERR_RUNTIME_ERROR));
-      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) return(catch("start(8)   "+ GetSymbolName(symbols[i], symbols[i]) +" illegal MODE_MARGINREQUIRED value = "+ NumberToStr(marginRequired, ".+"), ERR_RUNTIME_ERROR));
+      // ERR_MARKETINFO_UPDATE abfangen (erst nach Auslesen aller Werte)
+      string errorMsg = "";
+      if (LT(bid, 0.5)            || GT(bid, 150)            ) errorMsg = StringConcatenate(errorMsg, "Bid(\""           , symbols[i], "\") = ", NumberToStr(bid           , ".+"), NL);
+      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) errorMsg = StringConcatenate(errorMsg, "TickSize(\""      , symbols[i], "\") = ", NumberToStr(tickSize      , ".+"), NL);
+      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) errorMsg = StringConcatenate(errorMsg, "TickValue(\""     , symbols[i], "\") = ", NumberToStr(tickValue     , ".+"), NL);
+      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) errorMsg = StringConcatenate(errorMsg, "MinLot(\""        , symbols[i], "\") = ", NumberToStr(minLot        , ".+"), NL);
+      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) errorMsg = StringConcatenate(errorMsg, "LotStep(\""       , symbols[i], "\") = ", NumberToStr(lotStep       , ".+"), NL);
+      if (LT(maxLot, 50)                                     ) errorMsg = StringConcatenate(errorMsg, "MaxLot(\""        , symbols[i], "\") = ", NumberToStr(maxLot        , ".+"), NL);
+      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) errorMsg = StringConcatenate(errorMsg, "MarginRequired(\"", symbols[i], "\") = ", NumberToStr(marginRequired, ".+"), NL);
+      errorMsg = StringTrim(errorMsg);
+
+      // ERR_MARKETINFO_UPDATE behandeln
+      if (StringLen(errorMsg) > 0) {
+         PlaySound("notify.wav");
+         int button = MessageBox("Instrument data in update state.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         if (button == IDRETRY) {
+            i = -1;
+            continue;
+         }
+         return(catch("start(2)"));
+      }
 
       double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
       double unitSize = equity / lotValue * leverage;                                           // equity / lotValue entspricht einem Hebel von 1, dies wird mit leverage gehebelt
@@ -142,9 +155,9 @@ int start() {
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
-         return(catch("start(9)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(3)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
-         return(catch("start(10)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       margin += lots[i] * marginRequired;                                                       // required margin berechnen
    }
@@ -152,16 +165,17 @@ int start() {
 
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
-      if (StringStartsWith(symbols[i], currency)) directions[i] = direction;
-      else                                        directions[i] = direction ^ 1;    // 0=>1, 1=>0
+      if (StringStartsWith(symbols[i], currency)) directions[i]  = direction;
+      else                                        directions[i]  = direction ^ 1;   // 0=>1, 1=>0
+      if (currency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
    }
 
 
    // (4) Sicherheitsabfrage
    PlaySound("notify.wav");
-   int answer = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(units, ".+") + ifString(EQ(units, 1), " unit ", " units ") + currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
-   if (answer != IDOK)
-      return(catch("start(11)"));
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(units, ".+") + ifString(EQ(units, 1), " unit ", " units ") + currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   if (button != IDOK)
+      return(catch("start(5)"));
 
 
    // (5) Daten bereits offener Positionen einlesen
@@ -185,14 +199,14 @@ int start() {
       color    markerColor = CLR_NONE;
 
       if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());    // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
-      if (catch("start(12)")      != NO_ERROR) return(last_error);
+      if (catch("start(6)")      != NO_ERROR) return(last_error);
 
       int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (ticket == -1)
          return(stdlib_PeekLastError());
    }
 
-   return(catch("start(13)"));
+   return(catch("start(7)"));
 }
 
 

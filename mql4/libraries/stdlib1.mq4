@@ -4463,6 +4463,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                         ); // 5003
       case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5005
+      case ERR_MARKETINFO_UPDATE          : return("requested market info data in update state"                    ); // 5006
    }
    return("unknown error");
 }
@@ -4583,6 +4584,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
       case ERR_TERMINAL_NOT_YET_READY     : return("ERR_TERMINAL_NOT_YET_READY"     ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
+      case ERR_MARKETINFO_UPDATE          : return("ERR_MARKETINFO_UPDATE"          ); // 5006
    }
    return(error);
 }
@@ -4734,6 +4736,32 @@ int MovingAverageToId(string method) {
 
    catch("MovingAverageToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
+}
+
+
+/**
+ * Gibt die lesbare Konstante einer MessageBox-Command-ID zurück.
+ *
+ * @param  int cmd - Command-ID (entspricht dem gedrückten Messagebox-Button)
+ *
+ * @return string
+ */
+string MessageBoxCmdToStr(int cmd) {
+   switch (cmd) {
+      case IDOK      : return("IDOK"      );
+      case IDCANCEL  : return("IDCANCEL"  );
+      case IDABORT   : return("IDABORT"   );
+      case IDRETRY   : return("IDRETRY"   );
+      case IDIGNORE  : return("IDIGNORE"  );
+      case IDYES     : return("IDYES"     );
+      case IDNO      : return("IDNO"      );
+      case IDCLOSE   : return("IDCLOSE"   );
+      case IDHELP    : return("IDHELP"    );
+      case IDTRYAGAIN: return("IDTRYAGAIN");
+      case IDCONTINUE: return("IDCONTINUE");
+   }
+   catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR);
+   return("");
 }
 
 

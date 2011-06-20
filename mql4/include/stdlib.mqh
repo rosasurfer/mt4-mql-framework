@@ -254,6 +254,7 @@
    string   IntArrayToStr(int& values[]);
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                                     // MetaQuotes-Alias für IntToHexStr()
+   string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageToStr(int method);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
