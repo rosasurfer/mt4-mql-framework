@@ -203,6 +203,7 @@ int GetCurrencyId(string currency) {
    if (curr == C_RUR) return(CID_RUR);
    if (curr == C_SEK) return(CID_SEK);
    if (curr == C_SGD) return(CID_SGD);
+   if (curr == C_TRY) return(CID_TRY);
    if (curr == C_USD) return(CID_USD);
    if (curr == C_ZAR) return(CID_ZAR);
 
@@ -237,6 +238,7 @@ string GetCurrency(int id) {
       case CID_RUR: return(C_RUR);
       case CID_SEK: return(C_SEK);
       case CID_SGD: return(C_SGD);
+      case CID_TRY: return(C_TRY);
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
@@ -1596,6 +1598,7 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "AUDCHF")) return("AUDCHF");
                 if (StringStartsWith(symbol, "AUDJPY")) return("AUDJPY");
                 if (StringStartsWith(symbol, "AUDNZD")) return("AUDNZD");
+                if (StringStartsWith(symbol, "AUDSGD")) return("AUDSGD");
                 if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
                 break;
 
@@ -1603,7 +1606,9 @@ string GetStandardSymbol(string symbol) {
 
       case 'C': if (StringStartsWith(symbol, "CADCHF")) return("CADCHF");
                 if (StringStartsWith(symbol, "CADJPY")) return("CADJPY");
+                if (StringStartsWith(symbol, "CADSGD")) return("CADSGD");
                 if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
+                if (StringStartsWith(symbol, "CHFSGD")) return("CHFSGD");
                 break;
 
       case 'D': break;
@@ -1613,11 +1618,16 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "EURCHF")) return("EURCHF");
                 if (StringStartsWith(symbol, "EURDKK")) return("EURDKK");
                 if (StringStartsWith(symbol, "EURGBP")) return("EURGBP");
+                if (StringStartsWith(symbol, "EURHKD")) return("EURHKD");
                 if (StringStartsWith(symbol, "EURJPY")) return("EURJPY");
+                if (StringStartsWith(symbol, "EURMXN")) return("EURMXN");
                 if (StringStartsWith(symbol, "EURNOK")) return("EURNOK");
                 if (StringStartsWith(symbol, "EURNZD")) return("EURNZD");
+                if (StringStartsWith(symbol, "EURPLN")) return("EURPLN");
                 if (StringStartsWith(symbol, "EURRUR")) return("EURRUR");
                 if (StringStartsWith(symbol, "EURSEK")) return("EURSEK");
+                if (StringStartsWith(symbol, "EURSGD")) return("EURSGD");
+                if (StringStartsWith(symbol, "EURTRY")) return("EURTRY");
                 if (StringStartsWith(symbol, "EURUSD")) return("EURUSD");
                 if (symbol == "ECX" )                   return("EURX"  );
                 if (symbol == "EURX")                   return("EURX"  );
@@ -1629,22 +1639,31 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "GBPCAD")) return("GBPCAD");
                 if (StringStartsWith(symbol, "GBPCHF")) return("GBPCHF");
                 if (StringStartsWith(symbol, "GBPJPY")) return("GBPJPY");
+                if (StringStartsWith(symbol, "GBPNOK")) return("GBPNOK");
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
                 if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUR");
+                if (StringStartsWith(symbol, "GBPSEK")) return("GBPSEK");
                 if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
                 if (symbol == "GOLD")                   return("XAUUSD");
                 break;
 
-      case 'H':
+      case 'H': if (StringStartsWith(symbol, "HKDJPY")) return("HKDJPY");
+                break;
+
       case 'I':
       case 'J':
       case 'K':
-      case 'L':
-      case 'M': break;
+      case 'L': break;
 
-      case 'N': if (StringStartsWith(symbol, "NZDCAD")) return("NZDCAD");
+      case 'M': if (StringStartsWith(symbol, "MXNJPY")) return("MXNJPY");
+                break;
+
+      case 'N': if (StringStartsWith(symbol, "NOKJPY")) return("NOKJPY");
+                if (StringStartsWith(symbol, "NOKSEK")) return("NOKSEK");
+                if (StringStartsWith(symbol, "NZDCAD")) return("NZDCAD");
                 if (StringStartsWith(symbol, "NZDCHF")) return("NZDCHF");
                 if (StringStartsWith(symbol, "NZDJPY")) return("NZDJPY");
+                if (StringStartsWith(symbol, "NZDSGD")) return("NZDSGD");
                 if (StringStartsWith(symbol, "NZDUSD")) return("NZDUSD");
                 break;
 
@@ -1652,7 +1671,8 @@ string GetStandardSymbol(string symbol) {
       case 'P':
       case 'Q': break;
 
-      case 'S': if (StringStartsWith(symbol, "SGDJPY")) return("SGDJPY");
+      case 'S': if (StringStartsWith(symbol, "SEKJPY")) return("SEKJPY");
+                if (StringStartsWith(symbol, "SGDJPY")) return("SGDJPY");
                 break;
 
       case 'T': break;
@@ -1670,6 +1690,7 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "USDRUR")) return("USDRUR");
                 if (StringStartsWith(symbol, "USDSEK")) return("USDSEK");
                 if (StringStartsWith(symbol, "USDSGD")) return("USDSGD");
+                if (StringStartsWith(symbol, "USDTRY")) return("USDTRY");
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
                 if (symbol == "USDX")                   return("USDX"  );
                 break;
@@ -1721,23 +1742,31 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "AUDJPY"  ) return("AUD/JPY"  );
    if (symbol == "AUDLFX"  ) return("AUD-Index");
    if (symbol == "AUDNZD"  ) return("AUD/NZD"  );
+   if (symbol == "AUDSGD"  ) return("AUDSGD"   );
    if (symbol == "AUDUSD"  ) return("AUD/USD"  );
    if (symbol == "CADCHF"  ) return("CAD/CHF"  );
    if (symbol == "CADJPY"  ) return("CAD/JPY"  );
    if (symbol == "CADLFX"  ) return("CAD-Index");
+   if (symbol == "CADSGD"  ) return("CADSGD"   );
    if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
    if (symbol == "CHFLFX"  ) return("CHF-Index");
+   if (symbol == "CHFSGD"  ) return("CHFSGD"   );
    if (symbol == "EURAUD"  ) return("EUR/AUD"  );
    if (symbol == "EURCAD"  ) return("EUR/CAD"  );
    if (symbol == "EURCHF"  ) return("EUR/CHF"  );
    if (symbol == "EURDKK"  ) return("EUR/DKK"  );
    if (symbol == "EURGBP"  ) return("EUR/GBP"  );
+   if (symbol == "EURHKD"  ) return("EURHKD"   );
    if (symbol == "EURJPY"  ) return("EUR/JPY"  );
    if (symbol == "EURLFX"  ) return("EUR-Index");
+   if (symbol == "EURMXN"  ) return("EURMXN"   );
    if (symbol == "EURNOK"  ) return("EUR/NOK"  );
    if (symbol == "EURNZD"  ) return("EUR/NZD"  );
+   if (symbol == "EURPLN"  ) return("EURPLN"   );
    if (symbol == "EURRUR"  ) return("EUR/RUR"  );
    if (symbol == "EURSEK"  ) return("EUR/SEK"  );
+   if (symbol == "EURSGD"  ) return("EURSGD"   );
+   if (symbol == "EURTRY"  ) return("EURTRY"   );
    if (symbol == "EURUSD"  ) return("EUR/USD"  );
    if (symbol == "EURX"    ) return("EUR-Index");
    if (symbol == "GBPAUD"  ) return("GBP/AUD"  );
@@ -1745,15 +1774,23 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "GBPCHF"  ) return("GBP/CHF"  );
    if (symbol == "GBPJPY"  ) return("GBP/JPY"  );
    if (symbol == "GBPLFX"  ) return("GBP-Index");
+   if (symbol == "GBPNOK"  ) return("GBPNOK"   );
    if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
    if (symbol == "GBPRUR"  ) return("GBP/RUR"  );
+   if (symbol == "GBPSEK"  ) return("GBPSEK"   );
    if (symbol == "GBPUSD"  ) return("GBP/USD"  );
+   if (symbol == "HKDJPY"  ) return("HKDJPY"   );
    if (symbol == "LFXJPY"  ) return("JPY-Index");
+   if (symbol == "MXNJPY"  ) return("MXNJPY"   );
+   if (symbol == "NOKJPY"  ) return("NOKJPY"   );
+   if (symbol == "NOKSEK"  ) return("NOKSEK"   );
    if (symbol == "NZDCAD"  ) return("NZD/CAD"  );
    if (symbol == "NZDCHF"  ) return("NZD/CHF"  );
    if (symbol == "NZDJPY"  ) return("NZD/JPY"  );
    if (symbol == "NZDLFX"  ) return("NZD-Index");
+   if (symbol == "NZDSGD"  ) return("NZDSGD"   );
    if (symbol == "NZDUSD"  ) return("NZD/USD"  );
+   if (symbol == "SEKJPY"  ) return("SEKJPY"   );
    if (symbol == "SGDJPY"  ) return("SGD/JPY"  );
    if (symbol == "USDCAD"  ) return("USD/CAD"  );
    if (symbol == "USDCHF"  ) return("USD/CHF"  );
@@ -1769,6 +1806,7 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "USDRUR"  ) return("USD/RUR"  );
    if (symbol == "USDSEK"  ) return("USD/SEK"  );
    if (symbol == "USDSGD"  ) return("USD/SGD"  );
+   if (symbol == "USDTRY"  ) return("USDTRY"   );
    if (symbol == "USDX"    ) return("USD-Index");
    if (symbol == "USDZAR"  ) return("USD/ZAR"  );
    if (symbol == "XAGUSD"  ) return("Silver"   );

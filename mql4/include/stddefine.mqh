@@ -228,6 +228,7 @@
 #define CID_GBP                  5
 #define CID_JPY                  6
 #define CID_USD                  7  // zuerst die ID's der wichtigsten Währungen, dadurch "passen" diese in 3 Bits
+
 #define CID_CZK                  8
 #define CID_DKK                  9
 #define CID_HKD                 10
@@ -239,7 +240,8 @@
 #define CID_RUR                 16
 #define CID_SEK                 17
 #define CID_SGD                 18
-#define CID_ZAR                 19
+#define CID_TRY                 19
+#define CID_ZAR                 20
 
 
 // Currency-Kürzel
@@ -261,6 +263,7 @@
 #define C_SEK                "SEK"
 #define C_SGD                "SGD"
 #define C_USD                "USD"
+#define C_TRY                "TRY"
 #define C_ZAR                "ZAR"
 
 
