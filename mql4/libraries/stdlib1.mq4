@@ -1269,8 +1269,8 @@ int SendTick(bool sound=false) {
       WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
-   if (hWnd == 0)
-      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodToStr(Period()) +") => 0", ERR_RUNTIME_ERROR));
+   if (hWnd <= 0)
+      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodToStr(Period()) +") => "+ hWnd, ERR_RUNTIME_ERROR));
    PostMessageA(hWnd, WM_MT4, 2, 1);
 
    if (sound)
