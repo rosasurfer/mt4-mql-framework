@@ -262,6 +262,7 @@
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
    string   StringArrayToStr(string& values[]);
+   int      StringBufferToArray(int& buffer[], string& results[]);
    string   StructCharToStr(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);
    string   StructToStr(int& lpStruct[]);

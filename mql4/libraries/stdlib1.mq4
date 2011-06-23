@@ -1023,6 +1023,54 @@ string StructWCharToStr(int& lpStruct[], int from, int len) {
 
 
 /**
+ * Konvertiert einen String-Buffer in ein String-Array.
+ *
+ * @param  int&    buffer[]  - Buffer mit durch NULL-Zeichen getrennten Strings, terminiert durch ein weiteres NULL-Zeichen
+ * @param  string& results[] - Ergebnisarray
+ *
+ * @return int - Anzahl der konvertierten Strings
+ */
+int StringBufferToArray(int& buffer[], string& results[]) {
+   int  bufferSize = ArraySize(buffer);
+   bool separator  = true;
+
+   ArrayResize(results, 0);
+   int resultSize = 0;
+
+   for (int i=0; i < bufferSize; i++) {
+      int value, shift=0, integer=buffer[i];
+
+      // Die Reihenfolge von HIBYTE, LOBYTE, HIWORD und LOWORD eines Integers muß in die eines Strings konvertiert werden.
+      for (int n=0; n < 4; n++) {
+         value = (integer >> shift) & 0xFF;           // Integer in Bytes zerlegen
+
+         if (value != 0x00) {                         // kein Trennzeichen, Character in Array ablegen
+            if (separator) {
+               resultSize++;
+               ArrayResize(results, resultSize);
+               results[resultSize-1] = "";
+               separator = false;
+            }
+            results[resultSize-1] = StringConcatenate(results[resultSize-1], CharToStr(value));
+         }
+         else {                                       // Trennzeichen
+            if (separator) {                          // 2 Trennzeichen = Separator + Terminator, beide Schleifen verlassen
+               i = bufferSize;
+               break;
+            }
+            separator = true;
+         }
+         shift += 8;
+      }
+   }
+
+   if (catch("StringBufferToArray()") != NO_ERROR)
+      return(0);
+   return(ArraySize(results));
+}
+
+
+/**
  * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
  *
  * @return string lnkFile - Pfadangabe zum Shortcut

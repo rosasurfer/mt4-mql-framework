@@ -17,7 +17,10 @@
    int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
+   //   GetPrivateProfileSectionNames(...)                  @use  win32api-alt::GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
+   //   GetPrivateProfileStringA(lpSection = NULL, ...)     @use  win32api-alt::GetPrivateProfileSectionNames()
+   //   GetPrivateProfileStringA(..., lpKey = NULL, ...)    @use  win32api-alt::GetPrivateProfileKeys()
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetCurrentThreadId();
@@ -48,8 +51,11 @@
 
 #import "win32api-alt.ex4"
 
-   int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileStringA.alt(string lpSection, int lpKey, string lpDefault, int& lpBuffer[], int bufferSize, string lpFileName);
+   int  GetPrivateProfileKeys(string lpSection, string& lpResults[], string lpFileName);
+   int  GetPrivateProfileSectionNames(string& lpResults[], string lpFileName);
+
+   //int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
+
 
    /*
    // MetaQuest-Code (nicht überprüft)

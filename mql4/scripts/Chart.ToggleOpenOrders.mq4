@@ -48,45 +48,13 @@ int start() {
    // --------------------------------------------
 
 
-
-   string file    = TerminalPath() +"\\experts\\files\\"+ GetAccountHistoryDirectory() +"\\external_positions.ini";
    string section = Account.Company +"."+ Account.Number;
+   string file    = TerminalPath() +"\\experts\\files\\"+ GetAccountHistoryDirectory() +"\\external_positions.ini";
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL);
-
-   GetPrivateProfileStringA(section, NULL, "", buffer[0], StringLen(buffer[0]), file);
-   debug("start()   GetPrivateProfileStringA     buffer[0] = \""+ buffer[0] +"\"");
-
-   int iBuffer[300];
-   debug("start()   GetPrivateProfileStringA.alt iBuffer("+ ArraySize(iBuffer) +") = \""+ StructToStr(iBuffer) +"\"");
-
-   GetPrivateProfileStringA.alt(section, NULL, "", iBuffer, ArraySize(iBuffer)*4, file);
-   debug("start()   GetPrivateProfileStringA.alt iBuffer("+ ArraySize(iBuffer) +") = \""+ StructToStr(iBuffer) +"\"");
+   string keys[];
+   int result = GetPrivateProfileKeys(section, keys, file);
+   debug("start()   GetPrivateProfileKeys   "+ result +" keys = "+ StringArrayToStr(keys));
 
 
    return(catch("start()"));
-
-   // F:\MetaTrader\4\experts\files\SIG-Real.com\external_positions.ini
-   GetLocalConfigString(NULL, NULL, NULL);
-}
-
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als String zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetLocalConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL, MAX_STRING_LITERAL);
-
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
-
-   if (catch("GetLocalConfigString()") != NO_ERROR)
-      return("");
-   return(buffer[0]);
 }
