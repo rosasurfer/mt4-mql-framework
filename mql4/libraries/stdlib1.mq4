@@ -3929,7 +3929,7 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
  */
 string GetComputerName() {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
-   int lpBufferSize[1]; lpBufferSize[0] = MAX_STRING_LITERAL_LEN;
+   int lpBufferSize[1]; lpBufferSize[0] = StringLen(buffer[0]);
 
    if (!GetComputerNameA(buffer[0], lpBufferSize)) {
       catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ lpBufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
@@ -3955,10 +3955,11 @@ string GetComputerName() {
 bool GetConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
+   int bufferSize = StringLen(buffer[0]);
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], bufferSize, GetLocalConfigPath());
 
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
 
@@ -3980,10 +3981,11 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
+   int bufferSize = StringLen(buffer[0]);
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -4026,10 +4028,11 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  */
 string GetConfigString(string section, string key, string defaultValue="") {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
+   int bufferSize = StringLen(buffer[0]);
 
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], bufferSize, GetLocalConfigPath());
 
    if (catch("GetConfigString()") != NO_ERROR)
       return("");
@@ -4112,7 +4115,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
@@ -4135,7 +4138,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -4175,7 +4178,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], MAX_STRING_LITERAL_LEN, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
 
    if (catch("GetGlobalConfigString()") != NO_ERROR)
       return("");
@@ -4285,7 +4288,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
 
    buffer[0]   = StringToLower(buffer[0]);
    bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
@@ -4309,7 +4312,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -4351,7 +4354,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 string GetLocalConfigString(string section, string key, string defaultValue="") {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetPrivateProfileStringA(section, key, buffer[0], buffer[0], MAX_STRING_LITERAL_LEN, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
 
    if (catch("GetLocalConfigString()") != NO_ERROR)
       return("");
@@ -5267,7 +5270,7 @@ string UninitializeReasonToStr(int reason) {
 string GetWindowText(int hWnd) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
 
-   GetWindowTextA(hWnd, buffer[0], MAX_STRING_LITERAL_LEN);
+   GetWindowTextA(hWnd, buffer[0], StringLen(buffer[0]));
 
    if (catch("GetWindowText()") != NO_ERROR)
       return("");

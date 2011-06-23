@@ -23,13 +23,13 @@
    int  GetCurrentThreadId();
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
-   int  WaitForSingleObject(int hHandle, int milliseconds);
+   int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);
    int _lcreat(string lpPathName, int attributes);
    int _lopen(string lpPathName, int accessModes);
    int _llseek(int hFile, int offset, int origin);
-   int _lread(int hFile, int lpBuffer[], int bytes);        // int lpBuffer, für string lpBuffer ReadFile() verwenden
-   int _lwrite(int hFile, int lpBuffer[], int bytes);       // int lpBuffer, für string lpBuffer WriteFile() verwenden
+   int _lread(int hFile, int lpBuffer[], int bytes);           // für string-Parameter lpBuffer ReadFile() verwenden
+   int _lwrite(int hFile, int lpBuffer[], int bytes);          // für string-Parameter lpBuffer WriteFile() verwenden
    int _lclose(int hFile);
 
 #import "shell32.dll"
@@ -46,12 +46,15 @@
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    bool SetWindowTextA(int hWnd, string lpString);
 
+#import "win32api-alt.ex4"
+
+   int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
+   int  GetPrivateProfileStringA.alt(string lpSection, int lpKey, string lpDefault, int& lpBuffer[], int bufferSize, string lpFileName);
 
    /*
-   // Von hier an MetaQuest-Code (nicht überprüft)
+   // MetaQuest-Code (nicht überprüft)
    //
    // messages
-   int  SendMessageA(int hWnd, int Msg, int wParam, int lParam);
    int  SendNotifyMessageA(int hWnd, int Msg, int wParam, int lParam);
    void keybd_event(int bVk, int bScan, int dwFlags, int dwExtraInfo);
    void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
