@@ -232,16 +232,19 @@
 #define CID_CZK                  8
 #define CID_DKK                  9
 #define CID_HKD                 10
-#define CID_HUF                 11
-#define CID_MXN                 12
-#define CID_NOK                 13
-#define CID_NZD                 14
-#define CID_PLN                 15
-#define CID_RUR                 16
-#define CID_SEK                 17
-#define CID_SGD                 18
-#define CID_TRY                 19
-#define CID_ZAR                 20
+#define CID_HRK                 11
+#define CID_HUF                 12
+#define CID_LTL                 13
+#define CID_LVL                 14
+#define CID_MXN                 15
+#define CID_NOK                 16
+#define CID_NZD                 17
+#define CID_PLN                 18
+#define CID_RUB                 19
+#define CID_SEK                 20
+#define CID_SGD                 21
+#define CID_TRY                 22
+#define CID_ZAR                 23
 
 
 // Currency-Kürzel
@@ -253,13 +256,16 @@
 #define C_EUR                "EUR"
 #define C_GBP                "GBP"
 #define C_HKD                "HKD"
+#define C_HRK                "HRK"
 #define C_HUF                "HUF"
 #define C_JPY                "JPY"
+#define C_LTL                "LTL"
+#define C_LVL                "LVL"
 #define C_MXN                "MXN"
 #define C_NOK                "NOK"
 #define C_NZD                "NZD"
 #define C_PLN                "PLN"
-#define C_RUR                "RUR"
+#define C_RUB                "RUB"
 #define C_SEK                "SEK"
 #define C_SGD                "SGD"
 #define C_USD                "USD"
