@@ -217,10 +217,17 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
-   string   GetStandardSymbol(string symbol);
+   string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolDefault(symbol, symbol)
    string   GetStandardSymbolDefault(string symbol, string defaultValue);
-   string   GetSymbolName(string symbol, string defaultName);
-   string   GetSymbolLongName(string symbol, string defaultName);
+   string   GetStandardSymbolStrict(string symbol);
+   string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameDefault(symbol, symbol)
+   string   GetSymbolNameDefault(string symbol, string defaultName);
+   string   GetSymbolNameStrict(string symbol);
+
+   string   GetSymbolLongName(string symbol);
+   string   GetSymbolLongNameDefault(string symbol, string defaultName);
+   string   GetSymbolLongNameStrict(string symbol);
+
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);

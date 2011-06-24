@@ -75,7 +75,7 @@ int init() {
 
    // Konfiguration auslesen
    symbol        = GetStandardSymbol(Symbol());
-   symbolName    = GetSymbolName(symbol, symbol);
+   symbolName    = GetSymbolName(symbol);
    symbolSection = "EventTracker."+ symbol;
 
    // Sound- und SMS-Einstellungen

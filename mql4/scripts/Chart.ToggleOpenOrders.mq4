@@ -26,7 +26,7 @@ int init() {
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
-      MessageBox("The current instrument is not a LFX instrument: "+ GetSymbolName(GetStandardSymbol(Symbol())), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("The current instrument is not a LFX instrument: "+ GetSymbolName(Symbol()), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       init_error = ERR_RUNTIME_ERROR;
       return(init_error);
    }
@@ -55,13 +55,11 @@ int start() {
    // --------------------------------------------
 
 
-   string section = Account.Company +"."+ Account.Number;
    string file    = TerminalPath() +"\\experts\\files\\"+ GetAccountHistoryDirectory() +"\\external_positions.ini";
+   string section = Account.Company +"."+ Account.Number;
    string keys[];
 
-   int size = GetPrivateProfileKeys(section, keys, file);
-   debug("start()   keys = "+ StringArrayToStr(keys));
-
+   int size = GetPrivateProfileKeys(file, section, keys);
 
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");
    int bufferSize = StringLen(buffer[0]);

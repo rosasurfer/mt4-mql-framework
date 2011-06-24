@@ -155,9 +155,9 @@ int start() {
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
-         return(catch("start(3)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
-         return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i], symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       margin += lots[i] * marginRequired;                                                       // required margin berechnen
    }

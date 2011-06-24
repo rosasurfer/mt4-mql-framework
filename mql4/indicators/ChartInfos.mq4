@@ -160,8 +160,7 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   string symbol = GetStandardSymbol(Symbol());
-   string name   = GetSymbolLongName(symbol, GetSymbolName(symbol, symbol));
+   string name = GetSymbolLongNameDefault(Symbol(), GetSymbolName(Symbol()));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
    ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);             // Anzeige wird sofort (und nur hier) gesetzt

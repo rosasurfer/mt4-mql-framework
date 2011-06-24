@@ -17,7 +17,7 @@
    int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   //   GetPrivateProfileSectionNames(...)                  @use  win32api-alt::GetPrivateProfileSectionNames()
+   //   GetPrivateProfileSectionNamesA(...)                 @use  win32api-alt::GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    //   GetPrivateProfileStringA(lpSection = NULL, ...)     @use  win32api-alt::GetPrivateProfileSectionNames()
    //   GetPrivateProfileStringA(..., lpKey = NULL, ...)    @use  win32api-alt::GetPrivateProfileKeys()
@@ -51,8 +51,8 @@
 
 #import "win32api-alt.ex4"
 
-   int  GetPrivateProfileKeys(string lpSection, string& lpResults[], string lpFileName);
-   int  GetPrivateProfileSectionNames(string& lpResults[], string lpFileName);
+   int  GetPrivateProfileKeys(string lpFileName, string lpSection, string& lpResults[]);
+   int  GetPrivateProfileSectionNames(string lpFileName, string& lpResults[]);
 
    //int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
 

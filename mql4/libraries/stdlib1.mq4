@@ -1588,90 +1588,19 @@ string WaitForSingleObjectValueToStr(int value) {
  * @return string - Standardsymbol oder der übergebene Ausgangswert, wenn das Brokersymbol unbekannt ist
  *
  *
- * @see GetStandardSymbolDefault() - um beim Aufruf einen Default-Rückgabewert anzugeben, der im Falle eines unbekannten Brokersymbols zurückgegeben wird,
+ * NOTE:
+ * -----
+ * Alias für GetStandardSymbolDefault(symbol, symbol)
+ *
+ * @see GetStandardSymbolStrict()
+ * @see GetStandardSymbolDefault()
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0) {
       catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
-
-   symbol = StringToUpper(symbol);
-
-   if      (StringEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
-   else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
-
-   switch (StringGetChar(symbol, 0)) {
-      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X");
-                if (symbol == "#DJI.XDJ" ) return("#DJI.X");
-                if (symbol == "#DJT.XDJ" ) return("#DJT.X");
-                if (symbol == "#SPX.X.XP") return("#SPX.X");
-                break;
-
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-      case 'A':
-      case 'B':
-      case 'C':
-      case 'D': break;
-
-      case 'E': if (StringStartsWith(symbol, "EURCCK")) return("EURCZK");
-                if (StringStartsWith(symbol, "EURRUR")) return("EURRUB");
-                if (symbol == "ECX" )                   return("EURX"  );
-                break;
-
-      case 'F': break;
-
-      case 'G': if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUB");
-                if (symbol == "GOLD"    )               return("XAUUSD");
-                if (symbol == "GOLDEURO")               return("XAUEUR");
-                break;
-
-      case 'H':
-      case 'I':
-      case 'J':
-      case 'K':
-      case 'L':
-      case 'M':
-      case 'N':
-      case 'O':
-      case 'P':
-      case 'Q': break;
-
-      case 'S': if (symbol == "SILVER"    )             return("XAGUSD");
-                if (symbol == "SILVEREURO")             return("XAGEUR");
-                break;
-
-      case 'T': break;
-
-      case 'U': if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
-                if (StringStartsWith(symbol, "USDRUR")) return("USDRUB");
-                break;
-
-      case 'V':
-      case 'W':
-      case 'X':
-      case 'Y':
-      case 'Z': break;
-
-      case '_': if (symbol == "_DJI"   ) return("#DJI.X"  );
-                if (symbol == "_DJT"   ) return("#DJT.X"  );
-                if (symbol == "_N225"  ) return("#NIK.X"  );
-                if (symbol == "_NQ100" ) return("#N100.X" );
-                if (symbol == "_NQCOMP") return("#NCOMP.X");
-                if (symbol == "_SP500" ) return("#SPX.X"  );
-                break;
-   }
-
-   return(symbol);
+   return(GetStandardSymbolDefault(symbol, symbol));
 }
 
 
@@ -1687,14 +1616,40 @@ string GetStandardSymbol(string symbol) {
  *
  * NOTE:
  * -----
- * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die bequeme Angabe eines Alternativwertes, läßt jedoch nicht mehr so
+ * Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die bequeme Angabe eines Alternativwertes, läßt jedoch nicht mehr so
  * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
  *
- * @see GetStandardSymbol()
+ * @see GetStandardSymbolStrict()
  */
 string GetStandardSymbolDefault(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
       catch("GetStandardSymbolDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   string value = GetStandardSymbolStrict(symbol);
+
+   if (StringLen(value) == 0)
+      value = altValue;
+
+   return(value);
+}
+
+
+/**
+ * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
+ * (z.B. GetStandardSymbolStrict("EURUSDm") => "EURUSD")
+ *
+ * @param  string symbol   - broker-spezifisches Symbol
+ *
+ * @return string - Standardsymbol oder Leerstring, wenn kein Standardsymbol gefunden wurde.
+ *
+ *
+ * @see GetStandardSymbolDefault() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
+ */
+string GetStandardSymbolStrict(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetStandardSymbolStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -1862,21 +1817,78 @@ string GetStandardSymbolDefault(string symbol, string altValue="") {
                 break;
    }
 
-   return(altValue);
+   return("");
 }
 
 
 /**
- * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Kurzname für dieses Symbol gefunden wurde.
+ * Gibt den Kurznamen eines Symbols zurück.
  * (z.B. GetSymbolName("EURUSD") => "EUR/USD")
+ *
+ * @param  string symbol - broker-spezifisches Symbol
+ *
+ * @return string - Kurzname oder der übergebene Ausgangswert, wenn das Symbol unbekannt ist
+ *
+ *
+ * NOTE:
+ * -----
+ * Alias für GetSymbolNameDefault(symbol, symbol)
+ *
+ * @see GetSymbolNameStrict()
+ * @see GetSymbolNameDefault()
+ */
+string GetSymbolName(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+   return(GetSymbolNameDefault(symbol, symbol));
+}
+
+
+/**
+ * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
+ * (z.B. GetSymbolNameDefault("EURUSD") => "EUR/USD")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
  *
- * @return string
+ * @return string - Ergebnis
+ *
+ * @see GetSymbolNameStrict()
  */
-string GetSymbolName(string symbol, string altValue="") {
-   symbol = StringToUpper(symbol);
+string GetSymbolNameDefault(string symbol, string altValue="") {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolNameDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   string value = GetSymbolNameStrict(symbol);
+
+   if (StringLen(value) == 0)
+      value = altValue;
+
+   return(value);
+}
+
+
+/**
+ * Gibt den Kurznamen eines Symbols zurück.
+ * (z.B. GetSymbolNameStrict("EURUSD") => "EUR/USD")
+ *
+ * @param  string symbol - Symbol
+ *
+ * @return string - Kurzname oder Leerstring, wenn das Symbol unbekannt ist
+ */
+string GetSymbolNameStrict(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   symbol = GetStandardSymbolStrict(symbol);
+   if (StringLen(symbol) == 0)
+      return("");
 
    if (symbol == "#DAX.X"  ) return("DAX"      );
    if (symbol == "#DJI.X"  ) return("DJIA"     );
@@ -1973,21 +1985,76 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "XAUEUR"  ) return("XAU/EUR"  );
    if (symbol == "XAUUSD"  ) return("XAU/USD"  );
 
-   return(altValue);
+   return("");
+}
+
+
+/**
+ * Gibt den Langnamen eines Symbols zurück.
+ * (z.B. GetSymbolLongName("EURUSD") => "EUR/USD")
+ *
+ * @param  string symbol - broker-spezifisches Symbol
+ *
+ * @return string - Langname oder der übergebene Ausgangswert, wenn kein Langname gefunden wurde
+ *
+ *
+ * NOTE:
+ * -----
+ * Alias für GetSymbolLongNameDefault(symbol, symbol)
+ *
+ * @see GetSymbolLongNameStrict()
+ * @see GetSymbolLongNameDefault()
+ */
+string GetSymbolLongName(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolLongName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+   return(GetSymbolLongNameDefault(symbol, symbol));
 }
 
 
 /**
  * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetSymbolLongName("USDLFX") => "USD-Index (LiteForex)")
+ * (z.B. GetSymbolLongNameDefault("USDLFX") => "USD-Index (LiteForex)")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
  *
- * @return string
+ * @return string - Ergebnis
  */
-string GetSymbolLongName(string symbol, string altValue="") {
-   symbol = StringToUpper(symbol);
+string GetSymbolLongNameDefault(string symbol, string altValue="") {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolLongNameDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   string value = GetSymbolLongNameStrict(symbol);
+
+   if (StringLen(value) == 0)
+      value = altValue;
+
+   return(value);
+}
+
+
+/**
+ * Gibt den Langnamen eines Symbols zurück.
+ * (z.B. GetSymbolLongNameStrict("USDLFX") => "USD-Index (LiteForex)")
+ *
+ * @param  string symbol - Symbol
+ *
+ * @return string - Langname oder Leerstring, wenn das Symnol unbekannt ist oder keinen Langnamen hat
+ */
+string GetSymbolLongNameStrict(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetSymbolLongNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   symbol = GetStandardSymbolStrict(symbol);
+   if (StringLen(symbol) == 0)
+      return("");
 
    if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
    if (symbol == "#DJT.X"  ) return("Dow Jones Transportation");
@@ -2020,7 +2087,7 @@ string GetSymbolLongName(string symbol, string altValue="") {
    else if (suffix == ".FM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Free Margin"     ));
    else if (suffix == ".UM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Used Margin"     ));
 
-   return(altValue);
+   return("");
 }
 
 
