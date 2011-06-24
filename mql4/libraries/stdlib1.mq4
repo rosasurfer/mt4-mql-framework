@@ -4199,11 +4199,16 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
    int bufferSize = StringLen(buffer[0]);
 
-   // zuerst globale, dann lokale Config auslesen
+   // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
    GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], bufferSize, GetLocalConfigPath());
 
-   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+   buffer[0] = StringToLower(buffer[0]);
+   bool result = true;
+
+   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
+      result = false;
+   }
 
    if (catch("GetConfigBool()") != NO_ERROR)
       return(false);
@@ -4225,7 +4230,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
    int bufferSize = StringLen(buffer[0]);
 
-   // zuerst globale, dann lokale Config auslesen
+   // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
    GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], bufferSize, GetLocalConfigPath());
 
@@ -4269,16 +4274,11 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-   int bufferSize = StringLen(buffer[0]);
-
    // zuerst globale, dann lokale Config auslesen
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0]   , buffer[0], bufferSize, GetLocalConfigPath());
+   string value = GetPrivateProfileString(GetGlobalConfigPath(), section, key, defaultValue);
+          value = GetPrivateProfileString(GetLocalConfigPath() , section, key, value       );
 
-   if (catch("GetConfigString()") != NO_ERROR)
-      return("");
-   return(buffer[0]);
+   return(value);
 }
 
 
@@ -4356,11 +4356,15 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
+                                                                                 // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
 
-   buffer[0]   = StringToLower(buffer[0]);
-   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+   buffer[0] = StringToLower(buffer[0]);
+   bool result = true;
+
+   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
+      result = false;
+   }
 
    if (catch("GetGlobalConfigBool()") != NO_ERROR)
       return(false);
@@ -4379,7 +4383,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
+                                                                                 // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
@@ -4418,13 +4422,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
-
-   if (catch("GetGlobalConfigString()") != NO_ERROR)
-      return("");
-   return(buffer[0]);
+   return(GetPrivateProfileString(GetGlobalConfigPath(), section, key, defaultValue));
 }
 
 
@@ -4518,6 +4516,35 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
 
 
 /**
+ * Gibt einen Wert des angegebenen Abschnitts einer .ini-Datei als String zurück.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  string defaultValue - Rückgabewert, falls kein Wert gefunden wurde
+ *
+ * @return string
+ */
+string GetPrivateProfileString(string fileName, string section, string key, string defaultValue="") {
+   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
+   int bufferSize = StringLen(buffer[0]);
+
+   int result = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
+
+   // zu kleinen Buffer abfangen
+   while (result == bufferSize-1) {
+      buffer[0]  = StringConcatenate(buffer[0], MAX_STRING_LITERAL);
+      bufferSize = StringLen(buffer[0]);
+      result     = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
+   }
+
+   if (catch("GetPrivateProfileString()") != NO_ERROR)
+      return("");
+   return(buffer[0]);
+}
+
+
+/**
  * Gibt einen lokalen Konfigurationswert als Boolean zurück.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
@@ -4529,15 +4556,18 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
+                                                                                 // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
 
-   buffer[0]   = StringToLower(buffer[0]);
-   bool result = (buffer[0]=="1" || buffer[0]=="true" || buffer[0]=="yes" || buffer[0]=="on");
+   buffer[0] = StringToLower(buffer[0]);
+   bool result = true;
+
+   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
+      result = false;
+   }
 
    if (catch("GetLocalConfigBool()") != NO_ERROR)
       return(false);
-
    return(result);
 }
 
@@ -4553,14 +4583,13 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
+                                                                                 // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
    if (catch("GetLocalConfigDouble()") != NO_ERROR)
       return(0);
-
    return(result);
 }
 
@@ -4594,14 +4623,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetLocalConfigString(string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-
-   GetPrivateProfileStringA(section, key, defaultValue, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
-
-   if (catch("GetLocalConfigString()") != NO_ERROR)
-      return("");
-
-   return(buffer[0]);
+   return(GetPrivateProfileString(GetLocalConfigPath(), section, key, defaultValue));
 }
 
 

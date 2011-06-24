@@ -61,14 +61,12 @@ int start() {
 
    int size = GetPrivateProfileKeys(file, section, keys);
 
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");
-   int bufferSize = StringLen(buffer[0]);
-
    for (int i=0; i < size; i++) {
-      GetPrivateProfileStringA(section, keys[i], "", buffer[0], bufferSize, file);
-      debug("start()   \""+ keys[i] +"\" = \""+ buffer[0] +"\"");
+      string value = GetPrivateProfileString(file, section, keys[i], "");
+      debug("start()   \""+ keys[i] +"\" = \""+ value +"\"");
    }
 
 
    return(catch("start()"));
 }
+
