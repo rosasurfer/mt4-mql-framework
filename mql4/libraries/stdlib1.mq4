@@ -1680,6 +1680,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "AUDCHF")) return("AUDCHF");
                 if (StringStartsWith(symbol, "AUDDKK")) return("AUDDKK");
                 if (StringStartsWith(symbol, "AUDJPY")) return("AUDJPY");
+                if (StringStartsWith(symbol, "AUDLFX")) return("AUDLFX");
                 if (StringStartsWith(symbol, "AUDNZD")) return("AUDNZD");
                 if (StringStartsWith(symbol, "AUDPLN")) return("AUDPLN");
                 if (StringStartsWith(symbol, "AUDSGD")) return("AUDSGD");
@@ -1690,8 +1691,10 @@ string GetStandardSymbolStrict(string symbol) {
 
       case 'C': if (StringStartsWith(symbol, "CADCHF")) return("CADCHF");
                 if (StringStartsWith(symbol, "CADJPY")) return("CADJPY");
+                if (StringStartsWith(symbol, "CADLFX")) return("CADLFX");
                 if (StringStartsWith(symbol, "CADSGD")) return("CADSGD");
                 if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
+                if (StringStartsWith(symbol, "CHFLFX")) return("CHFLFX");
                 if (StringStartsWith(symbol, "CHFSGD")) return("CHFSGD");
                 break;
 
@@ -1707,6 +1710,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "EURHKD")) return("EURHKD");
                 if (StringStartsWith(symbol, "EURHUF")) return("EURHUF");
                 if (StringStartsWith(symbol, "EURJPY")) return("EURJPY");
+                if (StringStartsWith(symbol, "EURLFX")) return("EURLFX");
                 if (StringStartsWith(symbol, "EURLVL")) return("EURLVL");
                 if (StringStartsWith(symbol, "EURMXN")) return("EURMXN");
                 if (StringStartsWith(symbol, "EURNOK")) return("EURNOK");
@@ -1730,6 +1734,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "GBPCHF")) return("GBPCHF");
                 if (StringStartsWith(symbol, "GBPDKK")) return("GBPDKK");
                 if (StringStartsWith(symbol, "GBPJPY")) return("GBPJPY");
+                if (StringStartsWith(symbol, "GBPLFX")) return("GBPLFX");
                 if (StringStartsWith(symbol, "GBPNOK")) return("GBPNOK");
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
                 if (StringStartsWith(symbol, "GBPRUB")) return("GBPRUB");
@@ -1746,8 +1751,10 @@ string GetStandardSymbolStrict(string symbol) {
 
       case 'I':
       case 'J':
-      case 'K':
-      case 'L': break;
+      case 'K': break;
+
+      case 'L': if (StringStartsWith(symbol, "LFXJPY")) return("LFXJPY");
+                break;
 
       case 'M': if (StringStartsWith(symbol, "MXNJPY")) return("MXNJPY");
                 break;
@@ -1757,6 +1764,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "NZDCAD")) return("NZDCAD");
                 if (StringStartsWith(symbol, "NZDCHF")) return("NZDCHF");
                 if (StringStartsWith(symbol, "NZDJPY")) return("NZDJPY");
+                if (StringStartsWith(symbol, "NZDLFX")) return("NZDLFX");
                 if (StringStartsWith(symbol, "NZDSGD")) return("NZDSGD");
                 if (StringStartsWith(symbol, "NZDUSD")) return("NZDUSD");
                 break;
@@ -1782,6 +1790,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "USDHRK")) return("USDHRK");
                 if (StringStartsWith(symbol, "USDHUF")) return("USDHUF");
                 if (StringStartsWith(symbol, "USDJPY")) return("USDJPY");
+                if (StringStartsWith(symbol, "USDLFX")) return("USDLFX");
                 if (StringStartsWith(symbol, "USDLTL")) return("USDLTL");
                 if (StringStartsWith(symbol, "USDLVL")) return("USDLVL");
                 if (StringStartsWith(symbol, "USDMXN")) return("USDMXN");
@@ -2053,6 +2062,7 @@ string GetSymbolLongNameStrict(string symbol) {
    }
 
    symbol = GetStandardSymbolStrict(symbol);
+
    if (StringLen(symbol) == 0)
       return("");
 
