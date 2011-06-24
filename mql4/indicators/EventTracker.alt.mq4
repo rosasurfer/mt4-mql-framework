@@ -74,7 +74,7 @@ int init() {
    }
 
    // Konfiguration auslesen
-   symbol        = FindStandardSymbol(Symbol(), Symbol());
+   symbol        = GetStandardSymbol(Symbol());
    symbolName    = GetSymbolName(symbol, symbol);
    symbolSection = "EventTracker."+ symbol;
 

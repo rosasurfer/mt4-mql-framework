@@ -159,13 +159,13 @@
    bool     IsFile(string pathName);
 
    // Math, Numbers
-   bool     CompareDoubles(double double1, double double2);                   // MetaQuotes-Alias für EQ()
-   bool     LT(double double1, double double2);
-   bool     LE(double double1, double double2);
-   bool     EQ(double double1, double double2);
-   bool     NE(double double1, double double2);
-   bool     GE(double double1, double double2);
-   bool     GT(double double1, double double2);
+   bool     CompareDoubles(double a, double b);                            // MetaQuotes-Alias für EQ()
+   bool     LT(double a, double b);
+   bool     LE(double a, double b);
+   bool     EQ(double a, double b);
+   bool     NE(double a, double b);
+   bool     GE(double a, double b);
+   bool     GT(double a, double b);
    int      CountDecimals(double number);
    string   DecimalToHex(int number);
    string   FormatNumber(double number, string mask);
@@ -208,7 +208,6 @@
    int      RepositionLegend();
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
-   string   FindStandardSymbol(string symbol, string defaultValue);
    int      GetAccountHistory(int account, string& lpResults[]);
    string   GetAccountHistoryDirectory();
    int      GetAccountNumber();
@@ -219,6 +218,7 @@
    int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
    string   GetStandardSymbol(string symbol);
+   string   GetStandardSymbolDefault(string symbol, string defaultValue);
    string   GetSymbolName(string symbol, string defaultName);
    string   GetSymbolLongName(string symbol, string defaultName);
    int      GetTerminalWindow();
@@ -247,13 +247,13 @@
    string   BoolArrayToStr(bool& values[]);
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);
-   string   DoubleToStrMorePrecision(double number, int precision);           // MetaQuotes-Alias für DoubleToStrEx()
+   string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
    string   DoubleArrayToStr(double& values[]);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
    string   IntArrayToStr(int& values[]);
    string   IntToHexStr(int integer);
-   string   IntegerToHexStr(int integer);                                     // MetaQuotes-Alias für IntToHexStr()
+   string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageToStr(int method);
    string   NumberToStr(double number, string mask);

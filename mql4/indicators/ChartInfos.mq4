@@ -54,7 +54,7 @@ int init() {
    SetIndexLabel(0, NULL);
 
    // Konfiguration auswerten
-   string symbol = FindStandardSymbol(Symbol(), Symbol());
+   string symbol = GetStandardSymbol(Symbol());
    string price  = StringToLower(GetGlobalConfigString("AppliedPrice", symbol, "median"));
    if      (price == "median") appliedPrice = PRICE_MEDIAN;
    else if (price == "bid"   ) appliedPrice = PRICE_BID;
@@ -160,7 +160,7 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   string symbol = FindStandardSymbol(Symbol(), Symbol());
+   string symbol = GetStandardSymbol(Symbol());
    string name   = GetSymbolLongName(symbol, GetSymbolName(symbol, symbol));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");

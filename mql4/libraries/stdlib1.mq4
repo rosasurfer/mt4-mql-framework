@@ -1580,49 +1580,123 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
+ * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
+ * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
+ *
+ * @param  string symbol - broker-spezifisches Symbol
+ *
+ * @return string - Standardsymbol oder der übergebene Ausgangswert, wenn das Brokersymbol unbekannt ist
+ *
+ *
+ * @see GetStandardSymbolDefault() - um beim Aufruf einen Default-Rückgabewert anzugeben, der im Falle eines unbekannten Brokersymbols zurückgegeben wird,
+ */
+string GetStandardSymbol(string symbol) {
+   if (StringLen(symbol) == 0) {
+      catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   symbol = StringToUpper(symbol);
+
+   if      (StringEndsWith(symbol, "_ASK")) symbol = StringLeft(symbol, -4);
+   else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
+
+   switch (StringGetChar(symbol, 0)) {
+      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X");
+                if (symbol == "#DJI.XDJ" ) return("#DJI.X");
+                if (symbol == "#DJT.XDJ" ) return("#DJT.X");
+                if (symbol == "#SPX.X.XP") return("#SPX.X");
+                break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+      case 'A':
+      case 'B':
+      case 'C':
+      case 'D': break;
+
+      case 'E': if (StringStartsWith(symbol, "EURCCK")) return("EURCZK");
+                if (StringStartsWith(symbol, "EURRUR")) return("EURRUB");
+                if (symbol == "ECX" )                   return("EURX"  );
+                break;
+
+      case 'F': break;
+
+      case 'G': if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUB");
+                if (symbol == "GOLD"    )               return("XAUUSD");
+                if (symbol == "GOLDEURO")               return("XAUEUR");
+                break;
+
+      case 'H':
+      case 'I':
+      case 'J':
+      case 'K':
+      case 'L':
+      case 'M':
+      case 'N':
+      case 'O':
+      case 'P':
+      case 'Q': break;
+
+      case 'S': if (symbol == "SILVER"    )             return("XAGUSD");
+                if (symbol == "SILVEREURO")             return("XAGEUR");
+                break;
+
+      case 'T': break;
+
+      case 'U': if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
+                if (StringStartsWith(symbol, "USDRUR")) return("USDRUB");
+                break;
+
+      case 'V':
+      case 'W':
+      case 'X':
+      case 'Y':
+      case 'Z': break;
+
+      case '_': if (symbol == "_DJI"   ) return("#DJI.X"  );
+                if (symbol == "_DJT"   ) return("#DJT.X"  );
+                if (symbol == "_N225"  ) return("#NIK.X"  );
+                if (symbol == "_NQ100" ) return("#N100.X" );
+                if (symbol == "_NQCOMP") return("#NCOMP.X");
+                if (symbol == "_SP500" ) return("#SPX.X"  );
+                break;
+   }
+
+   return(symbol);
+}
+
+
+/**
  * Gibt für ein broker-spezifisches Symbol das Standardsymbol oder den angegebenen Alternativwert zurück.
- * (z.B. FindStandardSymbol("EURUSDm") => "EURUSD")
+ * (z.B. GetStandardSymbolDefault("EURUSDm") => "EURUSD")
  *
  * @param  string symbol   - broker-spezifisches Symbol
- * @param  string altValue - Rückgabewert, falls kein Standardsymbol gefunden wurde
+ * @param  string altValue - alternativer Rückgabewert, falls kein Standardsymbol gefunden wurde
  *
  * @return string - Ergebnis
  *
  *
  * NOTE:
  * -----
- * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die (bequeme) Angabe eines Alternativwertes, läßt jedoch nicht mehr so
- * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.  Dafür ist GetStandardSymbol() zu verwenden.
+ * Im Unterschied zu GetStandardSymbol() erlaubt diese Funktion die bequeme Angabe eines Alternativwertes, läßt jedoch nicht mehr so
+ * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
  *
  * @see GetStandardSymbol()
  */
-string FindStandardSymbol(string symbol, string altValue="") {
-   symbol = GetStandardSymbol(symbol);
-
-   if (StringLen(symbol) == 0)            // unbekanntes Brokersymbol
-      return(altValue);
-   return(symbol);
-}
-
-
-/**
- * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
- * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
- *
- * @param  string symbol - broker-spezifisches Symbol
- *
- * @return string - Standardsymbol oder Leerstring, wenn das Brokersymbol unbekannt ist
- *
- *
- * NOTE:
- * -----
- * Im Unterschied zu FindStandardSymbol() gibt diese Funktion einen Leerstring zurück, wenn kein Standardsymbol gefunden wurde.
- *
- * @see FindStandardSymbol()
- */
-string GetStandardSymbol(string symbol) {
-   if (StringLen(symbol) == 0)
+string GetStandardSymbolDefault(string symbol, string altValue="") {
+   if (StringLen(symbol) == 0) {
+      catch("GetStandardSymbolDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
+   }
 
    symbol = StringToUpper(symbol);
 
@@ -1683,7 +1757,8 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "EURNOK")) return("EURNOK");
                 if (StringStartsWith(symbol, "EURNZD")) return("EURNZD");
                 if (StringStartsWith(symbol, "EURPLN")) return("EURPLN");
-                if (StringStartsWith(symbol, "EURRUR")) return("EURRUR");
+                if (StringStartsWith(symbol, "EURRUB")) return("EURRUB");
+                if (StringStartsWith(symbol, "EURRUR")) return("EURRUB");
                 if (StringStartsWith(symbol, "EURSEK")) return("EURSEK");
                 if (StringStartsWith(symbol, "EURSGD")) return("EURSGD");
                 if (StringStartsWith(symbol, "EURTRY")) return("EURTRY");
@@ -1702,7 +1777,8 @@ string GetStandardSymbol(string symbol) {
                 if (StringStartsWith(symbol, "GBPJPY")) return("GBPJPY");
                 if (StringStartsWith(symbol, "GBPNOK")) return("GBPNOK");
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
-                if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUR");
+                if (StringStartsWith(symbol, "GBPRUB")) return("GBPRUB");
+                if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUB");
                 if (StringStartsWith(symbol, "GBPSEK")) return("GBPSEK");
                 if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
                 if (StringStartsWith(symbol, "GBPZAR")) return("GBPZAR");
@@ -1786,7 +1862,7 @@ string GetStandardSymbol(string symbol) {
                 break;
    }
 
-   return("");
+   return(altValue);
 }
 
 
@@ -1840,7 +1916,7 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "EURNOK"  ) return("EUR/NOK"  );
    if (symbol == "EURNZD"  ) return("EUR/NZD"  );
    if (symbol == "EURPLN"  ) return("EUR/PLN"  );
-   if (symbol == "EURRUR"  ) return("EUR/RUR"  );
+   if (symbol == "EURRUB"  ) return("EUR/RUB"  );
    if (symbol == "EURSEK"  ) return("EUR/SEK"  );
    if (symbol == "EURSGD"  ) return("EUR/SGD"  );
    if (symbol == "EURTRY"  ) return("EUR/TRY"  );
@@ -1855,7 +1931,7 @@ string GetSymbolName(string symbol, string altValue="") {
    if (symbol == "GBPLFX"  ) return("GBP-Index");
    if (symbol == "GBPNOK"  ) return("GBP/NOK"  );
    if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
-   if (symbol == "GBPRUR"  ) return("GBP/RUR"  );
+   if (symbol == "GBPRUB"  ) return("GBP/RUB"  );
    if (symbol == "GBPSEK"  ) return("GBP/SEK"  );
    if (symbol == "GBPUSD"  ) return("GBP/USD"  );
    if (symbol == "GBPZAR"  ) return("GBP/ZAR"  );

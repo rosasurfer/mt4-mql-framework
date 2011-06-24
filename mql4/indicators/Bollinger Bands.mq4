@@ -79,7 +79,7 @@ int init() {
       if (!StringContains(configLabel, "{symbol}"))
          return(catch("init(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       configSection  = WindowExpertName();
-      configLabel    = StringReplace(configLabel, "{symbol}", FindStandardSymbol(Symbol(), Symbol()));
+      configLabel    = StringReplace(configLabel, "{symbol}", GetStandardSymbol(Symbol()));
       externalConfig = true;
    }
 

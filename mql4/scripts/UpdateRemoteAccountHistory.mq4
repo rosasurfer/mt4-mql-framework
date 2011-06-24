@@ -69,9 +69,9 @@ int start() {
    int n;
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))     // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
          break;
-      int type = OrderType();                               // gecancelte Orders überspringen
+      int type = OrderType();                                     // gecancelte Orders überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP)
          continue;
 
@@ -81,7 +81,7 @@ int start() {
          if (symbols[n] == "")
             units[n]= 0;
          else {
-            symbols[n]  = FindStandardSymbol(OrderSymbol(), OrderSymbol());   // möglichst das Standardsymbol verwenden
+            symbols[n]  = GetStandardSymbol(OrderSymbol());       // möglichst das Standardsymbol verwenden
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {

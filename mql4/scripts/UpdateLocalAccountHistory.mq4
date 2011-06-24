@@ -99,7 +99,7 @@ int start() {
          continue;
       tickets        [n] = ticket;
       types          [n] = type;
-      symbols        [n] = FindStandardSymbol(OrderSymbol(), OrderSymbol());
+      symbols        [n] = GetStandardSymbol(OrderSymbol());
       lotSizes       [n] = ifDouble(OrderSymbol()=="", 0, OrderLots());       // OP_BALANCE: OrderLots() enthält fälschlich 0.01
       openTimes      [n] = OrderOpenTime();
       closeTimes     [n] = OrderCloseTime();

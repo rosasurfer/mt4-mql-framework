@@ -1,6 +1,4 @@
 /**
- * Config.mq4
- *
  * Lädt die Konfigurationsdateien der MetaTrader-Instanz in den Editor.
  */
 #include <stdlib.mqh>
