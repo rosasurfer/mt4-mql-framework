@@ -223,11 +223,9 @@
    string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameDefault(symbol, symbol)
    string   GetSymbolNameDefault(string symbol, string defaultName);
    string   GetSymbolNameStrict(string symbol);
-
-   string   GetSymbolLongName(string symbol);
+   string   GetSymbolLongName(string symbol);                              // Alias für GetSymbolLongNameDefault(symbol, symbol)
    string   GetSymbolLongNameDefault(string symbol, string defaultName);
    string   GetSymbolLongNameStrict(string symbol);
-
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
