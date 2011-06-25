@@ -17,6 +17,7 @@
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
  *  - Visualisierung und Prüfung des Entry.Limits implementieren
  *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Spreadänderungen bei Limit-Checks berücksichtigen
  *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
  *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
  *  - in FinishSequence(): OrderCloseBy() implementieren
@@ -461,24 +462,29 @@ int CreateMagicNumber() {
  * @return bool
  */
 bool IsEntryLimitReached() {
-   if (EQ(Entry.Limit, 0))                                        // kein Limit definiert
+   if (EQ(Entry.Limit, 0))                                           // kein Limit definiert
       return(true);
 
-   // Limit ist definiert
-   double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);    // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
+   // TODO: lastPrice Timeframe-übergreifend speichern
    static double lastPrice;
 
-   if (EQ(lastPrice, Entry.Limit) || EQ(price, Entry.Limit)) {    // Preis liegt oder lag beim letzten Tick exakt auf dem Limit.
-      lastPrice = Entry.Limit;                                    // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
-      return(true);                                               // lastPrice = Entry.Limit das Limit, einmal getriggert, bei den folgenden Ticks immer wieder getriggert.
+   // Limit ist definiert
+   double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);       // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
+
+   //debug("IsEntryLimitReached()   lastPrice = "+ NumberToStr(lastPrice, PriceFormat) +"   price = "+ NumberToStr(price, PriceFormat));
+
+   if (EQ(price, Entry.Limit) || EQ(lastPrice, Entry.Limit)) {       // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
+      lastPrice = Entry.Limit;                                       // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
+      return(true);                                                  // lastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
    }
 
-   if (LT(lastPrice, Entry.Limit) && GT(price, Entry.Limit)) {    // letzter Tick hat Limit von unten nach oben gekreuzt
-      lastPrice = Entry.Limit;
-      return(true);
+   if (LT(lastPrice, Entry.Limit)) {
+      if (GT(price, Entry.Limit)) {                                   // Tick hat Limit von unten nach oben gekreuzt
+         lastPrice = Entry.Limit;
+         return(true);
+      }
    }
-
-   if (GT(lastPrice, Entry.Limit) && LT(price, Entry.Limit)) {    // letzter Tick hat Limit von oben nach unten gekreuzt
+   else if (LT(price, Entry.Limit)) {                                // Tick hat Limit von oben nach unten gekreuzt
       lastPrice = Entry.Limit;
       return(true);
    }
