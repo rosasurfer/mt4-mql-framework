@@ -156,7 +156,7 @@
    int      FileReadLines(string filename, string& lpLines[], bool skipEmptyLines);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    string   GetShortcutTarget(string lnkFile);
-   bool     IsDir(string pathName);
+   bool     IsDirectory(string pathName);
    bool     IsFile(string pathName);
 
    // Math, Numbers

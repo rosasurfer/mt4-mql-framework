@@ -6597,7 +6597,7 @@ bool IsFile(string pathName) {
  *
  * @return bool
  */
-bool IsDir(string pathName) {
+bool IsDirectory(string pathName) {
    bool result = false;
 
    if (StringLen(pathName) > 0) {
@@ -6611,7 +6611,7 @@ bool IsDir(string pathName) {
       }
    }
 
-   catch("IsDir()");
+   catch("IsDirectory()");
    return(result);
 }
 
