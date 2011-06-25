@@ -18,8 +18,8 @@
  *       - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
  *       - in FinishSequence(): OrderCloseBy() implementieren
  *       - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
- *       - Breakeven-Anzeige (in ShowStatus()???)
  *       - in ReadStatus(): Breakeven-Berechnung implementieren
+ *       - Breakeven-Anzeige (in ShowStatus()???)
  *       - StopLoss->Breakeven und TakeProfit->Breakeven implementieren
  *       - SMS-Benachrichtigungen implementieren
  *       - Equity-Chart der Sequenz implementieren
