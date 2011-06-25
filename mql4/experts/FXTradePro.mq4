@@ -324,12 +324,13 @@ int start() {
       else if (IsProfitTargetReached())         FinishSequence();                   // wenn TakeProfit erreicht, Sequenz beenden
    }
 
+   if (last_error != NO_ERROR)
+      status = STATUS_DISABLED;
+
    ShowStatus();
 
-   if (last_error != NO_ERROR) {
-      status = STATUS_DISABLED;
+   if (last_error != NO_ERROR)
       return(last_error);
-   }
    return(catch("start()"));
 }
 
@@ -366,7 +367,11 @@ bool ReadStatus() {
       all.profits     += levels.profit    [i];
    }
 
-   return(catch("ReadStatus(3)")==NO_ERROR);
+   if (catch("ReadStatus(3)") != NO_ERROR) {
+      status = STATUS_DISABLED;
+      return(false);
+   }
+   return(true);
 }
 
 
@@ -491,8 +496,8 @@ bool IsProfitTargetReached() {
 int StartSequence() {
    if (EQ(Entry.Limit, 0)) {                                                        // kein Limit definiert, also Aufruf direkt nach Start
       PlaySound("notify.wav");
-      int answer = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
-      if (answer != IDOK) {
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
       }
@@ -523,11 +528,8 @@ int StartSequence() {
 
    // Status aktualisieren
    status = STATUS_PROGRESSING;
+   ReadStatus();
 
-   if (!ReadStatus()) {
-      status = STATUS_DISABLED;
-      return(last_error);
-   }
    return(catch("StartSequence(3)"));
 }
 
@@ -566,10 +568,8 @@ int IncreaseProgression() {
    levels.closeTime [level] = 0;                last.closeTime  = 0;
 
    // Status aktualisieren
-   if (!ReadStatus()) {
-      status = STATUS_DISABLED;
-      return(last_error);
-   }
+   ReadStatus();
+
    return(catch("IncreaseProgression(2)"));
 }
 
@@ -601,11 +601,8 @@ int FinishSequence() {
 
    // Status aktualisieren
    status = STATUS_FINISHED;
+   ReadStatus();
 
-   if (!ReadStatus()) {
-      status = STATUS_DISABLED;
-      return(last_error);
-   }
    return(catch("FinishSequence(2)"));
 }
 

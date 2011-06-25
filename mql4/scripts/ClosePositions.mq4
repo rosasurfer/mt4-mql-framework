@@ -149,8 +149,8 @@ int start() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int answer = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
-      if (answer == IDOK) {
+      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      if (button == IDOK) {
          for (i=0; i < selected; i++) {
             if (!OrderCloseEx(tickets[i], NULL, NULL, 1, Orange))
                break;
