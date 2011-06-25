@@ -10,20 +10,25 @@
  *
  * ---------------------------------------------------------------------------------
  *
- * TODO: - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
- *       - alle Tradefunktionen vorher auf [TradeserverLimits] prüfen
- *       - Visualisierung und Prüfung des Entry.Limits implementieren
- *       - Visualisierung der gesamten Sequenz implementieren
- *       - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
- *       - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
- *       - in FinishSequence(): OrderCloseBy() implementieren
- *       - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
- *       - in ReadStatus(): Breakeven-Berechnung implementieren
- *       - Breakeven-Anzeige (in ShowStatus()???)
- *       - StopLoss->Breakeven und TakeProfit->Breakeven implementieren
- *       - SMS-Benachrichtigungen implementieren
- *       - Equity-Chart der Sequenz implementieren
- *       - ShowStatus() nach Fertigstellung auf StringConcatenate() umstellen
+ *  TODO:
+ *  -----
+ *  - Laufzeitdaten Timeframe-übergreifend speichern
+ *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
+ *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
+ *  - Visualisierung und Prüfung des Entry.Limits implementieren
+ *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
+ *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
+ *  - in FinishSequence(): OrderCloseBy() implementieren
+ *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
+ *  - in ReadStatus(): Breakeven-Berechnung implementieren
+ *  - Breakeven-Anzeige (in ShowStatus()???)
+ *  - StopLoss->Breakeven und TakeProfit->Breakeven implementieren
+ *  - SMS-Benachrichtigungen implementieren
+ *  - Heartbeat-Order einrichten
+ *  - Equity-Chart der laufenden Sequenz implementieren
+ *  - ShowStatus() nach Fertigstellung auf StringConcatenate() umstellen
+ *  - ShowStatus() übersichtlicher mit Textlabeln statt mit Comment() implementieren
  */
 #include <stdlib.mqh>
 
@@ -39,9 +44,9 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-//extern string Entry.Direction                = "[ Long | Short ]";
+//extern string Entry.Direction                = "[ long | short ]";
 extern string Entry.Direction                = "long";
-extern double Entry.Limit                    = 0;
+extern double Entry.Limit                    = 2.0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 40;
@@ -346,8 +351,6 @@ int start() {
 
    ShowStatus();
 
-   if (last_error != NO_ERROR)
-      return(last_error);
    return(catch("start()"));
 }
 
@@ -458,16 +461,28 @@ int CreateMagicNumber() {
  * @return bool
  */
 bool IsEntryLimitReached() {
-   if (EQ(Entry.Limit, 0))                // kein Limit definiert
+   if (EQ(Entry.Limit, 0))                                        // kein Limit definiert
       return(true);
 
-   // Limit definiert
-   if (entryDirection == OP_BUY) {
-      if (LE(Ask, Entry.Limit))           // Buy-Limit erreicht
-         return(true);
+   // Limit ist definiert
+   double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);    // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
+   static double lastPrice;
+
+   if (EQ(lastPrice, Entry.Limit) || EQ(price, Entry.Limit)) {    // Preis liegt oder lag beim letzten Tick exakt auf dem Limit.
+      lastPrice = Entry.Limit;                                    // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
+      return(true);                                               // lastPrice = Entry.Limit das Limit, einmal getriggert, bei den folgenden Ticks immer wieder getriggert.
    }
-   else if (GE(Bid, Entry.Limit))         // Sell-Limit erreicht
+
+   if (LT(lastPrice, Entry.Limit) && GT(price, Entry.Limit)) {    // letzter Tick hat Limit von unten nach oben gekreuzt
+      lastPrice = Entry.Limit;
       return(true);
+   }
+
+   if (GT(lastPrice, Entry.Limit) && LT(price, Entry.Limit)) {    // letzter Tick hat Limit von oben nach unten gekreuzt
+      lastPrice = Entry.Limit;
+      return(true);
+   }
+   lastPrice = price;
 
    return(false);
 }
@@ -527,13 +542,13 @@ int StartSequence() {
    int ticket = OpenPosition(entryDirection, CurrentLotSize());                     // Position in Entry.Direction öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
-      return(last_error);
+      return(catch("StartSequence(2)"));
    }
 
    // Sequenzdaten aktualisieren
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       status = STATUS_DISABLED;
-      return(catch("StartSequence(2)"));
+      return(catch("StartSequence(3)"));
    }
 
    levels.ticket    [0] = OrderTicket();    last.ticket     = OrderTicket();
@@ -549,7 +564,7 @@ int StartSequence() {
    status = STATUS_PROGRESSING;
    ReadStatus();
 
-   return(catch("StartSequence(3)"));
+   return(catch("StartSequence(4)"));
 }
 
 
@@ -567,13 +582,13 @@ int IncreaseProgression() {
    int ticket = OpenPosition(direction, last.lotsize + lotsize);                    // alte Position hedgen und nächste öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
-      return(last_error);
+      return(catch("IncreaseProgression(1)"));
    }
 
    // Sequenzdaten aktualisieren
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       status = STATUS_DISABLED;
-      return(catch("IncreaseProgression(1)"));
+      return(catch("IncreaseProgression(2)"));
    }
 
    int level = progressionLevel - 1;
@@ -589,7 +604,7 @@ int IncreaseProgression() {
    // Status aktualisieren
    ReadStatus();
 
-   return(catch("IncreaseProgression(2)"));
+   return(catch("IncreaseProgression(3)"));
 }
 
 
@@ -606,7 +621,8 @@ int FinishSequence() {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
          if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
             status = STATUS_DISABLED;
-            return(stdlib_PeekLastError());
+            last_error = stdlib_PeekLastError();
+            return(last_error);
          }
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             status = STATUS_DISABLED;
@@ -634,10 +650,14 @@ int FinishSequence() {
  * @return int - Ticket der neuen Position oder -1, falls ein Fehler auftrat
  */
 int OpenPosition(int type, double lotsize) {
-   if (type!=OP_BUY && type!=OP_SELL)
-      return(catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (LE(lotsize, 0))
-      return(catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (type!=OP_BUY && type!=OP_SELL) {
+      catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   if (LE(lotsize, 0)) {
+      catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
 
    int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
@@ -645,9 +665,11 @@ int OpenPosition(int type, double lotsize) {
    color  markerColor = ifInt(type==OP_BUY, Blue, Red);
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
+   if (ticket == -1)
+      last_error = stdlib_PeekLastError();
 
-   if (ticket!=-1) /*&&*/ if (catch("OpenPosition(3)")!=NO_ERROR)
-      ticket = -1;
+   if (catch("OpenPosition(3)") != NO_ERROR)
+      return(-1);
    return(ticket);
 }
 
@@ -688,11 +710,12 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED:     msg = ":  waiting";                                                         break;
-      case STATUS_WAIT_ENTRYLIMIT: msg = ":  waiting for entry limit "+ NumberToStr(Entry.Limit, PriceFormat); break;
-      case STATUS_PROGRESSING:     msg = ":  trade sequence "+ sequenceId;                                     break;
-      case STATUS_FINISHED:        msg = ":  trade sequence "+ sequenceId +" finished";                        break;
-      case STATUS_DISABLED:        msg = ":  inactive";                                                        break;
+      case STATUS_INITIALIZED:     msg = ":  waiting";                                                                            break;
+      case STATUS_WAIT_ENTRYLIMIT: msg = StringConcatenate(":  waiting for entry limit ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING:     msg = StringConcatenate(":  trade sequence ", sequenceId);                                     break;
+      case STATUS_FINISHED:        msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                        break;
+      case STATUS_DISABLED:        msg = ":  disabled";
+                                   if (last_error != NO_ERROR) msg = msg +"  ["+ ErrorDescription(last_error) +"]";               break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -714,5 +737,25 @@ int ShowStatus() {
    Comment(NL + NL + msg);
 
    return(catch("ShowStatus(2)"));
+   StatusToStr(NULL);
 }
 
+
+/**
+ * Gibt die lesbare Konstante eines Status-Codes zurück.
+ *
+ * @param  int status - Status-Code
+ *
+ * @return string
+ */
+string StatusToStr(int status) {
+   switch (status) {
+      case STATUS_INITIALIZED    : return("STATUS_INITIALIZED"    );
+      case STATUS_WAIT_ENTRYLIMIT: return("STATUS_WAIT_ENTRYLIMIT");
+      case STATUS_PROGRESSING    : return("STATUS_PROGRESSING"    );
+      case STATUS_FINISHED       : return("STATUS_FINISHED"       );
+      case STATUS_DISABLED       : return("STATUS_DISABLED"       );
+   }
+   catch("StatusToStr()  invalid parameter status: "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
