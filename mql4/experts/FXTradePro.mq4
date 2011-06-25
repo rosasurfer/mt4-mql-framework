@@ -7,6 +7,23 @@
  *
  *      PowerSM EA:              http://www.forexfactory.com/showthread.php?t=75394
  *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
+ *
+ * ---------------------------------------------------------------------------------
+ *
+ * TODO: - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
+ *       - alle Tradefunktionen vorher auf [TradeserverLimits] prüfen
+ *       - Visualisierung und Prüfung des Entry.Limits implementieren
+ *       - Visualisierung der gesamten Sequenz implementieren
+ *       - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
+ *       - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
+ *       - in FinishSequence(): OrderCloseBy() implementieren
+ *       - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
+ *       - Breakeven-Anzeige (in ShowStatus()???)
+ *       - in ReadStatus(): Breakeven-Berechnung implementieren
+ *       - StopLoss->Breakeven und TakeProfit->Breakeven implementieren
+ *       - SMS-Benachrichtigungen implementieren
+ *       - Equity-Chart der Sequenz implementieren
+ *       - ShowStatus() nach Fertigstellung auf StringConcatenate() umstellen
  */
 #include <stdlib.mqh>
 
@@ -308,20 +325,20 @@ int start() {
    // --------------------------------------------
 
 
-   if (status == STATUS_DISABLED) return(NO_ERROR);
-   if (status == STATUS_FINISHED) return(NO_ERROR);
+   if (status==STATUS_DISABLED || status==STATUS_FINISHED)
+      return(NO_ERROR);
 
 
    if (ReadStatus()) {
       if (progressionLevel == 0) {
          if (!IsEntryLimitReached())            status = STATUS_WAIT_ENTRYLIMIT;
-         else                                   StartSequence();                    // kein Limit definiert oder Limit erreicht
+         else                                   StartSequence();                 // kein Limit definiert oder Limit erreicht
       }
-      else if (IsStopLossReached()) {                                               // wenn StopLoss erreicht ...
-         if (progressionLevel < sequenceLength) IncreaseProgression();              // auf nächsten Level wechseln ...
-         else                                   FinishSequence();                   // ... oder Sequenz beenden
+      else if (IsStopLossReached()) {
+         if (progressionLevel < sequenceLength) IncreaseProgression();
+         else                                   FinishSequence();
       }
-      else if (IsProfitTargetReached())         FinishSequence();                   // wenn TakeProfit erreicht, Sequenz beenden
+      else if (IsProfitTargetReached())         FinishSequence();
    }
 
    if (last_error != NO_ERROR)
@@ -349,7 +366,7 @@ bool ReadStatus() {
       if (levels.ticket[i] == 0)
          break;
 
-      if (levels.closeTime[i] == 0) {                 // offene Position
+      if (levels.closeTime[i] == 0) {                             // offene Position
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             status = STATUS_DISABLED;
             return(catch("ReadStatus(1)")==NO_ERROR);
@@ -365,6 +382,8 @@ bool ReadStatus() {
       all.swaps       += levels.swap      [i];
       all.commissions += levels.commission[i];
       all.profits     += levels.profit    [i];
+
+      // TODO: korrekte Commission- und Profit-Berechnung bei Verwendung von OrderCloseBy() implementieren
    }
 
    if (catch("ReadStatus(3)") != NO_ERROR) {
@@ -434,12 +453,12 @@ int CreateMagicNumber() {
 
 
 /**
- * Ob das eingestellte EntryLimit erreicht oder überschritten wurde.  Wurde kein Limit definiert, gibt die Funktion ebenfalls TRUE zurück.
+ * Ob das konfigurierte EntryLimit erreicht oder überschritten wurde.  Wurde kein Limit angegeben, gibt die Funktion immer TRUE zurück.
  *
  * @return bool
  */
 bool IsEntryLimitReached() {
-   if (EQ(Entry.Limit, 0))
+   if (EQ(Entry.Limit, 0))                // kein Limit definiert
       return(true);
 
    // Limit definiert
@@ -455,7 +474,7 @@ bool IsEntryLimitReached() {
 
 
 /**
- * Ob der eingestellte StopLoss erreicht oder überschritten wurde.
+ * Ob der konfigurierte StopLoss erreicht oder überschritten wurde.
  *
  * @return bool
  */
@@ -472,7 +491,7 @@ bool IsStopLossReached() {
 
 
 /**
- * Ob der eingestellte TakeProfit-Level erreicht oder überschritten wurde.
+ * Ob der konfigurierte TakeProfit-Level erreicht oder überschritten wurde.
  *
  * @return bool
  */
@@ -561,7 +580,7 @@ int IncreaseProgression() {
    levels.ticket    [level] = OrderTicket();    last.ticket     = OrderTicket();
    levels.type      [level] = OrderType();      last.type       = OrderType();
    levels.openPrice [level] = OrderOpenPrice(); last.openPrice  = OrderOpenPrice();
-   levels.lotsize   [level] = lotsize;          last.lotsize    = lotsize;          // wegen Hedges nicht OrderLots() verwenden
+   levels.lotsize   [level] = lotsize;          last.lotsize    = lotsize;          // wegen Hedge nicht OrderLots() verwenden
    levels.swap      [level] = 0;                last.swap       = 0;
    levels.commission[level] = 0;                last.commission = 0;                // Werte werden in ReadStatus() ausgelesen
    levels.profit    [level] = 0;                last.profit     = 0;
@@ -582,6 +601,7 @@ int FinishSequence() {
    if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip");
    else                         debug("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip");
 
+   // TODO: OrderCloseBy() implementieren
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
          if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
