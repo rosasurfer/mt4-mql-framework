@@ -12,7 +12,9 @@
  *
  *  TODO:
  *  -----
- *  - Laufzeitdaten Timeframe-übergreifend speichern
+ *  - bei Recompilation zur Laufzeit aktuelle Konfiguration aus dem externen Speicher laden
+ *  - bei Recompilation zur Laufzeit (REASON_RECOMPILE) Sequenzdaten neu einlesen
+ *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
  *  - Visualisierung und Prüfung des Entry.Limits implementieren
@@ -29,7 +31,7 @@
  *  - Heartbeat-Order einrichten
  *  - Equity-Chart der laufenden Sequenz implementieren
  *  - ShowStatus() nach Fertigstellung auf StringConcatenate() umstellen
- *  - ShowStatus() übersichtlicher mit Textlabeln statt mit Comment() implementieren
+ *  - ShowStatus() übersichtlicher gestalten (mit Textlabeln statt Comment()-Funktion)
  */
 #include <stdlib.mqh>
 
@@ -46,6 +48,7 @@
 
 extern string _1____________________________ = "==== Entry Options ===================";
 //extern string Entry.Direction                = "[ long | short ]";
+//extern double Entry.Limit                    = 0;
 extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 2.0;
 
@@ -81,6 +84,7 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 int      entryDirection = OP_UNDEFINED;
+string   entryLimitType;
 int      status;
 
 int      levels.ticket    [], last.ticket;
@@ -108,66 +112,69 @@ int init() {
 
 
    // (1) Beginn Parametervalidierung
-   // Entry.Direction
-   string direction = StringToUpper(StringTrim(Entry.Direction));
-   if (StringLen(direction) == 0)
-      return(catch("init(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   switch (StringGetChar(direction, 0)) {
-      case 'B':
-      case 'L': entryDirection = OP_BUY;  break;
-      case 'S': entryDirection = OP_SELL; break;
-      default:
-         return(catch("init(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   }
+   if (UninitializeReason() != REASON_CHARTCHANGE) {                       // bei REASON_CHARTCHANGE wurde bereits alles vorher validiert
+      // Entry.Direction
+      string direction = StringToUpper(StringTrim(Entry.Direction));
+      if (StringLen(direction) == 0)
+         return(catch("init(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      switch (StringGetChar(direction, 0)) {
+         case 'B':
+         case 'L': entryDirection = OP_BUY;  break;
+         case 'S': entryDirection = OP_SELL; break;
+         default:
+            return(catch("init(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      }
 
-   // Entry.Limit
-   if (LT(Entry.Limit, 0))
-      return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      // Entry.Limit
+      if (LT(Entry.Limit, 0))
+         return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      if (entryDirection == OP_BUY) entryLimitType = ifString(LT(Entry.Limit, Ask), "Buy Limit" , "Stop Buy" );
+      else                          entryLimitType = ifString(GT(Entry.Limit, Bid), "Sell Limit", "Stop Sell");
 
-   // TakeProfit
-   if (TakeProfit < 1)
-      return(catch("init(4)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE));
+      // TakeProfit
+      if (TakeProfit < 1)
+         return(catch("init(4)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE));
 
-   // StopLoss
-   if (StopLoss < 1)
-      return(catch("init(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
+      // StopLoss
+      if (StopLoss < 1)
+         return(catch("init(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
 
-   // Lotsizes
-   if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-
-   if (LT(Lotsize.Level.2, 0)) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-   if (EQ(Lotsize.Level.2, 0)) sequenceLength = 1;
-   else {
-      if (LT(Lotsize.Level.3, 0)) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      if (EQ(Lotsize.Level.3, 0)) sequenceLength = 2;
+      // Lotsizes
+      if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      if (LT(Lotsize.Level.2, 0)) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      if (EQ(Lotsize.Level.2, 0)) sequenceLength = 1;
       else {
-         if (LT(Lotsize.Level.4, 0)) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-         if (EQ(Lotsize.Level.4, 0)) sequenceLength = 3;
+         if (LT(Lotsize.Level.3, 0)) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+         if (EQ(Lotsize.Level.3, 0)) sequenceLength = 2;
          else {
-            if (LT(Lotsize.Level.5, 0)) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-            if (EQ(Lotsize.Level.5, 0)) sequenceLength = 4;
+            if (LT(Lotsize.Level.4, 0)) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+            if (EQ(Lotsize.Level.4, 0)) sequenceLength = 3;
             else {
-               if (LT(Lotsize.Level.6, 0)) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-               if (EQ(Lotsize.Level.6, 0)) sequenceLength = 5;
+               if (LT(Lotsize.Level.5, 0)) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+               if (EQ(Lotsize.Level.5, 0)) sequenceLength = 4;
                else {
-                  if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                  if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
+                  if (LT(Lotsize.Level.6, 0)) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                  if (EQ(Lotsize.Level.6, 0)) sequenceLength = 5;
                   else {
-                     if (LT(Lotsize.Level.8, 0)) return(catch("init(13)  Invalid input parameter Lotsize.Level.8 = "+ NumberToStr(Lotsize.Level.8, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                     if (EQ(Lotsize.Level.8, 0)) sequenceLength = 7;
+                     if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                     if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
                      else {
-                        if (LT(Lotsize.Level.9, 0)) return(catch("init(14)  Invalid input parameter Lotsize.Level.9 = "+ NumberToStr(Lotsize.Level.9, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                        if (EQ(Lotsize.Level.9, 0)) sequenceLength = 8;
+                        if (LT(Lotsize.Level.8, 0)) return(catch("init(13)  Invalid input parameter Lotsize.Level.8 = "+ NumberToStr(Lotsize.Level.8, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                        if (EQ(Lotsize.Level.8, 0)) sequenceLength = 7;
                         else {
-                           if (LT(Lotsize.Level.10, 0)) return(catch("init(15)  Invalid input parameter Lotsize.Level.10 = "+ NumberToStr(Lotsize.Level.10, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                           if (EQ(Lotsize.Level.10, 0)) sequenceLength = 9;
+                           if (LT(Lotsize.Level.9, 0)) return(catch("init(14)  Invalid input parameter Lotsize.Level.9 = "+ NumberToStr(Lotsize.Level.9, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                           if (EQ(Lotsize.Level.9, 0)) sequenceLength = 8;
                            else {
-                              if (LT(Lotsize.Level.11, 0)) return(catch("init(16)  Invalid input parameter Lotsize.Level.11 = "+ NumberToStr(Lotsize.Level.11, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                              if (EQ(Lotsize.Level.11, 0)) sequenceLength = 10;
+                              if (LT(Lotsize.Level.10, 0)) return(catch("init(15)  Invalid input parameter Lotsize.Level.10 = "+ NumberToStr(Lotsize.Level.10, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                              if (EQ(Lotsize.Level.10, 0)) sequenceLength = 9;
                               else {
-                                 if (LT(Lotsize.Level.12, 0)) return(catch("init(17)  Invalid input parameter Lotsize.Level.12 = "+ NumberToStr(Lotsize.Level.12, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                                 if (EQ(Lotsize.Level.12, 0)) sequenceLength = 11;
-                                 else                         sequenceLength = 12;
+                                 if (LT(Lotsize.Level.11, 0)) return(catch("init(16)  Invalid input parameter Lotsize.Level.11 = "+ NumberToStr(Lotsize.Level.11, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                                 if (EQ(Lotsize.Level.11, 0)) sequenceLength = 10;
+                                 else {
+                                    if (LT(Lotsize.Level.12, 0)) return(catch("init(17)  Invalid input parameter Lotsize.Level.12 = "+ NumberToStr(Lotsize.Level.12, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                                    if (EQ(Lotsize.Level.12, 0)) sequenceLength = 11;
+                                    else                         sequenceLength = 12;
+                                 }
                               }
                            }
                         }
@@ -177,8 +184,8 @@ int init() {
             }
          }
       }
+      // Ende Parametervalidierung
    }
-   // Ende Parametervalidierung
 
 
    // (2) Sequenzdaten einlesen
@@ -267,6 +274,19 @@ int init() {
          if (levels.ticket[i] == 0)
             return(catch("init(19)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
       }
+
+      // last.*-Variablen belegen
+      if (progressionLevel > 0) {
+         level = progressionLevel-1;
+         last.ticket     = levels.ticket    [level];
+         last.type       = levels.type      [level];
+         last.openPrice  = levels.openPrice [level];
+         last.lotsize    = levels.lotsize   [level];
+         last.swap       = levels.swap      [level];
+         last.commission = levels.commission[level];
+         last.profit     = levels.profit    [level];
+         last.closeTime  = levels.closeTime [level];
+      }
    }
 
 
@@ -284,13 +304,16 @@ int init() {
    }
 
 
-   // (4) aktuellen Status bestimmen
-   if (progressionLevel == 0) {
-      if (EQ(Entry.Limit, 0))    status = STATUS_INITIALIZED;
-      else                       status = STATUS_WAIT_ENTRYLIMIT;
+   // (4) aktuellen Status bestimmen und anzeigen
+   if (status == 0) {
+      if (progressionLevel == 0) {
+         if (EQ(Entry.Limit, 0))    status = STATUS_INITIALIZED;
+         else                       status = STATUS_WAIT_ENTRYLIMIT;
+      }
+      else if (last.closeTime == 0) status = STATUS_PROGRESSING;
+      else                          status = STATUS_FINISHED;
    }
-   else if (last.closeTime == 0) status = STATUS_PROGRESSING;
-   else                          status = STATUS_FINISHED;
+   ShowStatus();
 
 
    // (5) bei Start ggf. EA's aktivieren
@@ -304,7 +327,10 @@ int init() {
    if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
 
-   return(catch("init(20)"));
+   int error = GetLastError();
+   if (error      != NO_ERROR) catch("init(20)", error);
+   if (last_error != NO_ERROR) status = STATUS_DISABLED;
+   return(last_error);
 }
 
 
@@ -314,8 +340,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   if (UninitializeReason() != REASON_CHARTCHANGE)
-      Comment("");
    return(catch("deinit()"));
 }
 
@@ -346,9 +370,6 @@ int start() {
       }
       else if (IsProfitTargetReached())         FinishSequence();
    }
-
-   if (last_error != NO_ERROR)
-      status = STATUS_DISABLED;
 
    ShowStatus();
 
@@ -465,13 +486,10 @@ bool IsEntryLimitReached() {
    if (EQ(Entry.Limit, 0))                                           // kein Limit definiert
       return(true);
 
-   // TODO: lastPrice Timeframe-übergreifend speichern
    static double lastPrice;
 
    // Limit ist definiert
    double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);       // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
-
-   //debug("IsEntryLimitReached()   lastPrice = "+ NumberToStr(lastPrice, PriceFormat) +"   price = "+ NumberToStr(price, PriceFormat));
 
    if (EQ(price, Entry.Limit) || EQ(lastPrice, Entry.Limit)) {       // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
       lastPrice = Entry.Limit;                                       // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
@@ -713,15 +731,18 @@ double CurrentLotSize() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
+   if (last_error != NO_ERROR)
+      status = STATUS_DISABLED;
+
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED:     msg = ":  waiting";                                                                            break;
-      case STATUS_WAIT_ENTRYLIMIT: msg = StringConcatenate(":  waiting for entry limit ", NumberToStr(Entry.Limit, PriceFormat)); break;
-      case STATUS_PROGRESSING:     msg = StringConcatenate(":  trade sequence ", sequenceId);                                     break;
-      case STATUS_FINISHED:        msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                        break;
+      case STATUS_INITIALIZED:     msg = ":  initialized";                                                                                    break;
+      case STATUS_WAIT_ENTRYLIMIT: msg = StringConcatenate(":  waiting for ", entryLimitType, " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING:     msg = StringConcatenate(":  trade sequence ", sequenceId, ", progressing ...");                            break;
+      case STATUS_FINISHED:        msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                    break;
       case STATUS_DISABLED:        msg = ":  disabled";
-                                   if (last_error != NO_ERROR) msg = msg +"  ["+ ErrorDescription(last_error) +"]";               break;
+                                   if (last_error != NO_ERROR) msg = msg +"  ["+ ErrorDescription(last_error) +"]";                           break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }

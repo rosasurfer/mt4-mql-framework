@@ -38,8 +38,8 @@ int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
-   // Parameter auswerten
 
+   // (1) Parametervalidierung
    // Open.Currency
    currency = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
@@ -65,7 +65,8 @@ int init() {
       return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
    units = NormalizeDouble(Units, 1);
 
-   // Leverage-Konfiguration
+
+   // (2) Leverage-Konfiguration einlesen
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
       return(catch("init(5)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
