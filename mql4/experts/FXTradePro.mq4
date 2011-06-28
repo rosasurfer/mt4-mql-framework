@@ -608,7 +608,7 @@ int IncreaseProgression() {
    double last.openPrice = levels.openPrice[last];
    double last.lotsize   = levels.lotsize  [last];
 
-   debug("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
+   log("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
 
    progressionLevel++;
    last = progressionLevel-1;
@@ -651,8 +651,8 @@ int FinishSequence() {
    int    last.type      = levels.type     [last];
    double last.openPrice = levels.openPrice[last];
 
-   if (IsProfitTargetReached()) debug("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
-   else                         debug("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +")");
+   if (IsProfitTargetReached()) log("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
+   else                         log("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +")");
 
    // TODO: OrderCloseBy() implementieren
    for (int i=0; i < sequenceLength; i++) {
