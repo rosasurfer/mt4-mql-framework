@@ -13,15 +13,15 @@
  *  TODO:
  *  -----
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
- *  - bei Recompilation zur Laufzeit aktuelle Konfiguration aus dem externen Speicher laden
+ *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
  *  - bei Recompilation zur Laufzeit (REASON_RECOMPILE) Sequenzdaten neu einlesen
+ *  - bei Recompilation zur Laufzeit aktuelle Konfiguration aus dem externen Speicher laden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
  *  - Visualisierung des Entry.Limits implementieren
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
- *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
  *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
  *  - in FinishSequence(): OrderCloseBy() implementieren
  *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
@@ -47,9 +47,8 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-//extern string Entry.Direction                = "[ long | short ]";
-//extern double Entry.Limit                    = 0;
 extern string Entry.Direction                = "long";
+//extern double Entry.Limit                    = 0;
 extern double Entry.Limit                    = 2.0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
@@ -464,7 +463,7 @@ int CreateSequenceId() {
  * @return int - MagicNumber oder -1, falls ein Fehler auftrat
  */
 int CreateMagicNumber() {
-   if (sequenceId <= 1000) {
+   if (sequenceId < 1000) {
       catch("CreateMagicNumber()   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR);
       return(-1);
    }
