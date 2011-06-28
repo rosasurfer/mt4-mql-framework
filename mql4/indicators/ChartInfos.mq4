@@ -63,7 +63,7 @@ int init() {
       catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
 
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 1.0);
-   if (leverage < 1)
+   if (LT(leverage, 1))
       return(catch("init(2)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ symbol +",");
@@ -237,12 +237,12 @@ int CreateLabels() {
  * @return int - Fehlerstatus
  */
 int UpdatePriceLabel() {
-   if (Bid == 0) {                           // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+   if (Bid < 0.00000001) {                                     // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
       string strPrice = " ";
    }
    else {
       static double lastBid, lastAsk;
-      if (lastBid==Bid) /*&&*/ if (lastAsk==Ask)
+      if (EQ(lastBid, Bid)) /*&&*/ if (EQ(lastAsk, Ask))
          return(NO_ERROR);
       lastBid = Bid;
       lastAsk = Ask;
@@ -258,7 +258,7 @@ int UpdatePriceLabel() {
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
 }
@@ -270,10 +270,10 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   int spread = MathRound(MarketInfo(Symbol(), MODE_SPREAD));
+   int spread = MarketInfo(Symbol(), MODE_SPREAD) + 0.1;    // +0.1 fängt beim Casten Genauigkeitsfehler im Double ab: (int) double
    int error  = GetLastError();
 
-   if (error==ERR_UNKNOWN_SYMBOL || Bid==0) {               // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001) {     // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
       string strSpread = " ";
    }
    else {
@@ -311,7 +311,7 @@ int UpdateH1CloseLabel() {
    }
    else {
       static double lastClose;
-      if (lastClose == close)
+      if (EQ(lastClose, close))
          return(0);
       lastClose = close;
       strClose  = StringConcatenate("H1:  ", NumberToStr(close, StringConcatenate(", ", PriceFormat)));
@@ -361,7 +361,7 @@ int UpdateUnitSizeLabel() {
       lastTickValue = tickValue;
 
       equity -= credit;
-      if (GT(equity, 0)) {                                  // Accountequity wird mit 'leverage' gehebelt
+      if (equity > 0.00000001) {                            // Accountequity wird mit 'leverage' gehebelt
          double lotValue = Bid / tickSize * tickValue;      // Lotvalue in Account-Currency
          unitSize = equity / lotValue * leverage;           // unitSize = equity/lotValue entspricht Hebel von 1
 
@@ -407,14 +407,14 @@ int UpdatePositionLabel() {
    if (!positionChecked)
       CheckPosition();
 
-   if      (!anyPosition)       string strPosition = " ";
-   else if (totalPosition == 0)        strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " Lot (hedged)");
-   else                                strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " Lot");
+   if      (!anyPosition)         string strPosition = " ";
+   else if (EQ(totalPosition, 0))        strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " Lot (hedged)");
+   else                                  strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " Lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
 }
@@ -429,7 +429,7 @@ int UpdateMarginLevels() {
    if (!positionChecked)
       CheckPosition();
 
-   if (totalPosition == 0) {                // keine Position im Markt: ggf. vorhandene Marker löschen
+   if (totalPosition < 0.00000001) {                                          // keine Position im Markt: ggf. vorhandene Marker löschen
       ObjectDelete(freezeLevelLabel);
       ObjectDelete(stopoutLevelLabel);
    }
@@ -446,7 +446,7 @@ int UpdateMarginLevels() {
              tickValue      = tickValue * MathAbs(totalPosition);             // TickValue der gesamten Position
 
       int error = GetLastError();
-      if (tickValue==0 || error==ERR_UNKNOWN_SYMBOL)                          // bei Start oder Accountwechsel
+      if (tickValue < 0.00000001 || error==ERR_UNKNOWN_SYMBOL)                // bei Start oder Accountwechsel
          return(ERR_UNKNOWN_SYMBOL);
 
       bool showFreezeLevel = true;
@@ -460,11 +460,11 @@ int UpdateMarginLevels() {
 
       double quoteFreezeLevel, quoteStopoutLevel;
 
-      if (totalPosition > 0) {            // long position
+      if (totalPosition > 0.00000001) {                                       // long position
          quoteFreezeLevel  = NormalizeDouble(Bid - quoteFreezeDiff, Digits);
          quoteStopoutLevel = NormalizeDouble(Bid - quoteStopoutDiff, Digits);
       }
-      else {                              // short position
+      else {                                                                  // short position
          quoteFreezeLevel  = NormalizeDouble(Ask + quoteFreezeDiff, Digits);
          quoteStopoutLevel = NormalizeDouble(Ask + quoteStopoutDiff, Digits);
       }
@@ -535,10 +535,8 @@ int CheckPosition() {
          else if (OrderType() == OP_SELL) shortPosition += OrderLots();
       }
    }
-   longPosition  = NormalizeDouble(longPosition , 8);
-   shortPosition = NormalizeDouble(shortPosition, 8);
-   totalPosition = NormalizeDouble(longPosition - shortPosition, 8);
-   anyPosition   = (longPosition!=0 || shortPosition!=0);
+   totalPosition = longPosition - shortPosition;
+   anyPosition   = (longPosition > 0.00000001 || shortPosition > 0.00000001);
 
    positionChecked = true;
 
