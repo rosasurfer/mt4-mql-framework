@@ -48,8 +48,8 @@
 
 extern string _1____________________________ = "==== Entry Options ===================";
 extern string Entry.Direction                = "long";
-//extern double Entry.Limit                    = 0;
-extern double Entry.Limit                    = 2.0;
+extern double Entry.Limit                    = 0;
+//extern double Entry.Limit                    = 2.0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 40;
@@ -63,11 +63,6 @@ extern double Lotsize.Level.4                = 0.3;
 extern double Lotsize.Level.5                = 0.4;
 extern double Lotsize.Level.6                = 0.6;
 extern double Lotsize.Level.7                = 0.8;
-extern double Lotsize.Level.8                = 1.1;
-extern double Lotsize.Level.9                = 1.5;
-extern double Lotsize.Level.10               = 2.0;
-extern double Lotsize.Level.11               = 2.7;
-extern double Lotsize.Level.12               = 3.6;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,27 +153,7 @@ int init() {
                   else {
                      if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                      if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
-                     else {
-                        if (LT(Lotsize.Level.8, 0)) return(catch("init(13)  Invalid input parameter Lotsize.Level.8 = "+ NumberToStr(Lotsize.Level.8, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                        if (EQ(Lotsize.Level.8, 0)) sequenceLength = 7;
-                        else {
-                           if (LT(Lotsize.Level.9, 0)) return(catch("init(14)  Invalid input parameter Lotsize.Level.9 = "+ NumberToStr(Lotsize.Level.9, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                           if (EQ(Lotsize.Level.9, 0)) sequenceLength = 8;
-                           else {
-                              if (LT(Lotsize.Level.10, 0)) return(catch("init(15)  Invalid input parameter Lotsize.Level.10 = "+ NumberToStr(Lotsize.Level.10, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                              if (EQ(Lotsize.Level.10, 0)) sequenceLength = 9;
-                              else {
-                                 if (LT(Lotsize.Level.11, 0)) return(catch("init(16)  Invalid input parameter Lotsize.Level.11 = "+ NumberToStr(Lotsize.Level.11, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                                 if (EQ(Lotsize.Level.11, 0)) sequenceLength = 10;
-                                 else {
-                                    if (LT(Lotsize.Level.12, 0)) return(catch("init(17)  Invalid input parameter Lotsize.Level.12 = "+ NumberToStr(Lotsize.Level.12, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                                    if (EQ(Lotsize.Level.12, 0)) sequenceLength = 11;
-                                    else                         sequenceLength = 12;
-                                 }
-                              }
-                           }
-                        }
-                     }
+                     else                        sequenceLength = 7;
                   }
                }
             }
@@ -259,7 +234,7 @@ int init() {
 
                // TODO: möglich bei gehedgten Positionen
                if (levels.ticket[level] != 0)
-                  return(catch("init(18)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+                  return(catch("init(13)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
 
                levels.ticket    [level] = OrderTicket();
                levels.type      [level] = OrderType();
@@ -277,7 +252,7 @@ int init() {
       double total;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0)
-            return(catch("init(19)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
+            return(catch("init(14)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
 
          if (levels.closeTime[i] == 0) {
             if (levels.type[i] == OP_BUY) total += levels.lotsize[i];
@@ -328,7 +303,7 @@ int init() {
       SendTick(false);
 
    int error = GetLastError();
-   if (error      != NO_ERROR) catch("init(20)", error);
+   if (error      != NO_ERROR) catch("init(15)", error);
    if (last_error != NO_ERROR) status = STATUS_DISABLED;
    return(last_error);
 }
@@ -470,8 +445,8 @@ int CreateMagicNumber() {
 
    int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                                 | in MagicNumber: Bits 23-32
    int sequence = sequenceId  << 18 >> 10;            // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern | in MagicNumber: Bits  9-22
-   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-12), auf 8 bit erweitern              | in MagicNumber: Bits  5-8
-   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-12)                                   | in MagicNumber: Bits  1-4
+   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-7), auf 8 bit erweitern               | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-7)                                    | in MagicNumber: Bits  1-4
 
    return(ea + sequence + length + level);
 }
@@ -719,19 +694,13 @@ int OpenPosition(int type, double lotsize) {
  */
 double CurrentLotSize() {
    switch (progressionLevel) {
-      case  0: return(0);
-      case  1: return(Lotsize.Level.1);
-      case  2: return(Lotsize.Level.2);
-      case  3: return(Lotsize.Level.3);
-      case  4: return(Lotsize.Level.4);
-      case  5: return(Lotsize.Level.5);
-      case  6: return(Lotsize.Level.6);
-      case  7: return(Lotsize.Level.7);
-      case  8: return(Lotsize.Level.8);
-      case  9: return(Lotsize.Level.9);
-      case 10: return(Lotsize.Level.10);
-      case 11: return(Lotsize.Level.11);
-      case 12: return(Lotsize.Level.12);
+      case 1: return(Lotsize.Level.1);
+      case 2: return(Lotsize.Level.2);
+      case 3: return(Lotsize.Level.3);
+      case 4: return(Lotsize.Level.4);
+      case 5: return(Lotsize.Level.5);
+      case 6: return(Lotsize.Level.6);
+      case 7: return(Lotsize.Level.7);
    }
 
    catch("CurrentLotSize()   illegal progression level = "+ progressionLevel, ERR_RUNTIME_ERROR);
@@ -751,11 +720,11 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED:     msg = ":  initialized";                                                                                    break;
+      case STATUS_INITIALIZED:     msg =                   ":  initialized";                                                                  break;
       case STATUS_WAIT_ENTRYLIMIT: msg = StringConcatenate(":  waiting for ", entryLimitType, " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
       case STATUS_PROGRESSING:     msg = StringConcatenate(":  trade sequence ", sequenceId, ", progressing ...");                            break;
       case STATUS_FINISHED:        msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                    break;
-      case STATUS_DISABLED:        msg = ":  disabled";
+      case STATUS_DISABLED:        msg =                   ":  disabled";
                                    if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");        break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
@@ -766,7 +735,7 @@ int ShowStatus() {
                           "Progression Level:  ", progressionLevel, " / ", sequenceLength);
 
    if (progressionLevel > 0)
-      msg = StringConcatenate(msg, "  =  ", NumberToStr(CurrentLotSize(), ".+"), " lot");
+      msg = StringConcatenate(msg, "  =  ", ifString(levels.type[progressionLevel-1]==OP_BUY, "+", "-"), NumberToStr(CurrentLotSize(), ".+"), " lot");
 
    msg = StringConcatenate(msg,                                                                                  NL,
                           "TakeProfit:            ", TakeProfit +" pip = ",                                      NL,
