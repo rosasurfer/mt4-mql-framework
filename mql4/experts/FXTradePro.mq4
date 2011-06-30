@@ -12,13 +12,14 @@
  *
  *  TODO:
  *  -----
- *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
  *  - bei Recompilation zur Laufzeit (REASON_RECOMPILE) Sequenzdaten neu einlesen
  *  - bei Recompilation zur Laufzeit aktuelle Konfiguration aus dem externen Speicher laden
+ *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
+ *  - falsche Zuweisung bei Restart, wenn das Limit während der Auszeit erreicht wurde => lastPrice auswerten
  *  - Visualisierung des Entry.Limits implementieren
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
@@ -52,7 +53,7 @@ extern double Entry.Limit                    = 0;
 //extern double Entry.Limit                    = 2.0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
-extern int    TakeProfit                     = 40;
+extern int    TakeProfit                     = 50;
 extern int    StopLoss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes =======================";
@@ -78,6 +79,7 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 int      entryDirection = OP_UNDEFINED;
+double   entryLastPrice;
 string   entryLimitType;
 int      status;
 
@@ -89,7 +91,8 @@ double   levels.swap      [], all.swaps;
 double   levels.commission[], all.commissions;
 double   levels.profit    [], all.profits;
 datetime levels.closeTime [];                   // Unterscheidung zwischen offenen und geschlossenen Positionen
-int      last;                                  // lastIndex in levels.*[]
+
+bool     firstTick = true;
 
 
 /**
@@ -106,8 +109,8 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
 
-   // (1) Beginn Parametervalidierung
-   if (UninitializeReason() != REASON_CHARTCHANGE) {                       // bei REASON_CHARTCHANGE wurde bereits alles vorher validiert
+   // (1) Parametervalidierung
+   if (UninitializeReason() != REASON_CHARTCHANGE) {                       // bei REASON_CHARTCHANGE wurde bereits vorher validiert
       // Entry.Direction
       string direction = StringToUpper(StringTrim(Entry.Direction));
       if (StringLen(direction) == 0)
@@ -123,6 +126,7 @@ int init() {
       // Entry.Limit
       if (LT(Entry.Limit, 0))
          return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      // TODO: falsche Zuweisung bei Restart, wenn das Limit während der Auszeit erreicht wurde => lastPrice auswerten
       if (entryDirection == OP_BUY) entryLimitType = ifString(LT(Entry.Limit, Ask), "Buy Limit" , "Stop Buy" );
       else                          entryLimitType = ifString(GT(Entry.Limit, Bid), "Sell Limit", "Stop Sell");
 
@@ -159,23 +163,20 @@ int init() {
             }
          }
       }
-      // Ende Parametervalidierung
    }
 
 
    // (2) Sequenzdaten einlesen
    if (sequenceId == 0) {                                               // noch keine Sequenz definiert
       progressionLevel = 0;
-      if (ArraySize(levels.ticket) > 0) {
-         ArrayResize(levels.ticket    , 0);                             // alte Daten ggf. löschen (Arrays sind statisch)
-         ArrayResize(levels.type      , 0);
-         ArrayResize(levels.openPrice , 0);
-         ArrayResize(levels.lotsize   , 0);
-         ArrayResize(levels.swap      , 0);
-         ArrayResize(levels.commission, 0);
-         ArrayResize(levels.profit    , 0);
-         ArrayResize(levels.closeTime , 0);
-      }
+      ArrayResize(levels.ticket    , 0);                                // ggf. vorhandene Daten löschen (Arrays sind statisch)
+      ArrayResize(levels.type      , 0);
+      ArrayResize(levels.openPrice , 0);
+      ArrayResize(levels.lotsize   , 0);
+      ArrayResize(levels.swap      , 0);
+      ArrayResize(levels.commission, 0);
+      ArrayResize(levels.profit    , 0);
+      ArrayResize(levels.closeTime , 0);
 
       // erste aktive Sequenz finden und offene Positionen einlesen
       for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -184,10 +185,8 @@ int init() {
 
          if (IsMyOrder(sequenceId)) {
             int level = OrderMagicNumber() & 0x000F;                    //  4 Bits (Bits 1-4)  => progressionLevel
-            if (level > progressionLevel) {
+            if (level > progressionLevel)
                progressionLevel = level;
-               last = progressionLevel-1;
-            }
 
             if (sequenceId == 0) {
                sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits (Bits 9-22) => sequenceId
@@ -202,8 +201,8 @@ int init() {
                ArrayResize(levels.profit    , sequenceLength);
                ArrayResize(levels.closeTime , sequenceLength);
 
-               if (level%2==1) entryDirection = OrderType();
-               else            entryDirection = OrderType() ^ 1;        // 0=>1, 1=>0
+               if (level&1 == 1) entryDirection = OrderType();
+               else              entryDirection = OrderType() ^ 1;      // 0=>1, 1=>0
             }
             level--;
             levels.ticket    [level] = OrderTicket();
@@ -226,10 +225,8 @@ int init() {
 
             if (IsMyOrder(sequenceId)) {
                level = OrderMagicNumber() & 0x000F;                     // 4 Bits (Bits 1-4) => progressionLevel
-               if (level > progressionLevel) {
+               if (level > progressionLevel)
                   progressionLevel = level;
-                  last = progressionLevel-1;
-               }
                level--;
 
                // TODO: möglich bei gehedgten Positionen
@@ -284,6 +281,7 @@ int init() {
          else                             status = STATUS_WAIT_ENTRYLIMIT;
       }
       else {
+         int last = progressionLevel-1;
          if (levels.closeTime[last] == 0) status = STATUS_PROGRESSING;
          else                             status = STATUS_FINISHED;
       }
@@ -291,16 +289,39 @@ int init() {
    ShowStatus();
 
 
-   // (5) bei Start ggf. EA's aktivieren
+   // (5) Konfiguration speichern
+   /*
+   // Entry Options
+   string Entry.Direction = "long";
+   double Entry.Limit     = 0;
+   // TP and SL Settings
+   int    TakeProfit      = 40;
+   int    StopLoss        = 10;
+   // Lotsizes
+   double Lotsize.Level.1 = 0.1;
+   double Lotsize.Level.2 = 0.1;
+   double Lotsize.Level.3 = 0.2;
+   double Lotsize.Level.4 = 0.3;
+   double Lotsize.Level.5 = 0.4;
+   double Lotsize.Level.6 = 0.6;
+   double Lotsize.Level.7 = 0.8;
+   // Laufzeitdaten
+   int    sequenceId;
+   double entryLastPrice;
+   */
+
+
+   // (6) bei Start ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
    if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
       ToggleEAs(true);
 
 
-   // (6) nach Start oder Reload nicht auf den nächsten Tick warten
+   // (7) nach Start oder Reload nicht auf den nächsten Tick warten
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
+
 
    int error = GetLastError();
    if (error      != NO_ERROR) catch("init(15)", error);
@@ -327,6 +348,15 @@ int deinit() {
 int start() {
    init = false;
    if (last_error != NO_ERROR) return(last_error);
+
+   // temporäre Laufzeitanalyse
+   bool priceError;
+   if (Bid < 0.00000001) { priceError = true; catch("start()   Bid = "+ NumberToStr(Bid, PriceFormat), ERR_RUNTIME_ERROR); }
+   if (Ask < 0.00000001) { priceError = true; catch("start()   Ask = "+ NumberToStr(Ask, PriceFormat), ERR_RUNTIME_ERROR); }
+   if (priceError) {
+      last_error = NO_ERROR;
+      return(last_error);
+   }
    // --------------------------------------------
 
 
@@ -348,6 +378,7 @@ int start() {
 
    ShowStatus();
 
+   firstTick = false;
    return(catch("start()"));
 }
 
@@ -358,15 +389,13 @@ int start() {
  * @return bool - Erfolgsstatus
  */
 bool ReadStatus() {
-   all.swaps       = 0;
-   all.commissions = 0;
-   all.profits     = 0;
+   double swaps, commissions, profits;
 
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] == 0)
          break;
 
-      if (levels.closeTime[i] == 0) {                                // offene Position
+      if (levels.closeTime[i] == 0) {                             // offene Position
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             status = STATUS_DISABLED;
             return(catch("ReadStatus(1)")==NO_ERROR);
@@ -379,12 +408,16 @@ bool ReadStatus() {
          levels.commission[i] = OrderCommission();
          levels.profit    [i] = OrderProfit();
       }
-      all.swaps       += levels.swap      [i];
-      all.commissions += levels.commission[i];
-      all.profits     += levels.profit    [i];
+      swaps       += levels.swap      [i];
+      commissions += levels.commission[i];
+      profits     += levels.profit    [i];
 
       // TODO: korrekte Commission- und Profit-Berechnung bei Verwendung von OrderCloseBy() implementieren
    }
+
+   all.swaps       = swaps;                                       // zum Schluß globale Variablen überschreiben
+   all.commissions = commissions;
+   all.profits     = profits;
 
    if (catch("ReadStatus(3)") != NO_ERROR) {
       status = STATUS_DISABLED;
@@ -461,32 +494,30 @@ bool IsEntryLimitReached() {
    if (EQ(Entry.Limit, 0))                                           // kein Limit definiert
       return(true);
 
-   static double lastPrice;
-
    // Limit ist definiert
    double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);       // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
 
-   if (EQ(price, Entry.Limit) || EQ(lastPrice, Entry.Limit)) {       // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
+   if (EQ(price, Entry.Limit) || EQ(entryLastPrice, Entry.Limit)) {  // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
       debug("IsEntryLimitReached()   Tick="+ NumberToStr(price, PriceFormat) +" liegt genau auf dem Limit="+ NumberToStr(Entry.Limit, PriceFormat));
-      lastPrice = Entry.Limit;                                       // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
-      return(true);                                                  // lastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
+      entryLastPrice = Entry.Limit;                                  // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
+      return(true);                                                  // entryLastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
    }
 
-   if (NE(lastPrice, 0)) {                                           // lastPrice muß initialisiert sein => ersten Tick überspringen
-      if (LT(lastPrice, Entry.Limit)) {
+   if (NE(entryLastPrice, 0)) {                                      // entryLastPrice muß initialisiert sein => ersten Aufruf überspringen
+      if (LT(entryLastPrice, Entry.Limit)) {
          if (GT(price, Entry.Limit)) {                               // Tick hat Limit von unten nach oben gekreuzt
-            debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastPrice="+ NumberToStr(lastPrice, PriceFormat) +") nach oben (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
-            lastPrice = Entry.Limit;
+            debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastPrice="+ NumberToStr(entryLastPrice, PriceFormat) +") nach oben (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
+            entryLastPrice = Entry.Limit;
             return(true);
          }
       }
       else if (LT(price, Entry.Limit)) {                             // Tick hat Limit von oben nach unten gekreuzt
-         debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastPrice="+ NumberToStr(lastPrice, PriceFormat) +") nach unten (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
-         lastPrice = Entry.Limit;
+         debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastPrice="+ NumberToStr(entryLastPrice, PriceFormat) +") nach unten (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
+         entryLastPrice = Entry.Limit;
          return(true);
       }
    }
-   lastPrice = price;
+   entryLastPrice = price;
 
    return(false);
 }
@@ -498,13 +529,28 @@ bool IsEntryLimitReached() {
  * @return bool
  */
 bool IsStopLossReached() {
-   if (levels.type[last] == OP_BUY)
-      return(LE(Bid, levels.openPrice[last] - StopLoss*Pip));
+   int    last           = progressionLevel-1;
+   int    last.type      = levels.type     [last];
+   double last.openPrice = levels.openPrice[last];
 
-   if (levels.type[last] == OP_SELL)
-      return(GE(Ask, levels.openPrice[last] + StopLoss*Pip));
+   double last.price, last.loss;
 
-   catch("IsStopLossReached()   illegal value for variable levels.type[last="+ last +"] = "+ levels.type[last], ERR_RUNTIME_ERROR);
+   static string last.directions[] = { "long", "short" };
+   static string last.priceNames[] = { "Bid" , "Ask"   };
+
+   if (last.type == OP_BUY) {
+      last.price = Bid;
+      last.loss  = last.openPrice-Bid;
+   }
+   else {
+      last.price = Ask;
+      last.loss  = Ask-last.openPrice;
+   }
+
+   if (GT(last.loss, StopLoss*Pip)) {
+      log("IsStopLossReached()   StopLoss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      return(true);
+   }
    return(false);
 }
 
@@ -515,13 +561,28 @@ bool IsStopLossReached() {
  * @return bool
  */
 bool IsProfitTargetReached() {
-   if (levels.type[last] == OP_BUY)
-      return(GE(Bid, levels.openPrice[last] + TakeProfit*Pip));
+   int    last           = progressionLevel-1;
+   int    last.type      = levels.type     [last];
+   double last.openPrice = levels.openPrice[last];
 
-   if (levels.type[last] == OP_SELL)
-      return(LE(Ask, levels.openPrice[last] - TakeProfit*Pip));
+   double last.price, last.profit;
 
-   catch("IsProfitTargetReached()   illegal value for variable levels.type[last="+ last +"] = "+ levels.type[last], ERR_RUNTIME_ERROR);
+   static string last.directions[] = { "long", "short" };
+   static string last.priceNames[] = { "Bid" , "Ask"   };
+
+   if (last.type == OP_BUY) {
+      last.price  = Bid;
+      last.profit = Bid-last.openPrice;
+   }
+   else {
+      last.price  = Ask;
+      last.profit = last.openPrice-Ask;
+   }
+
+   if (GE(last.profit, TakeProfit*Pip)) {
+      log("IsProfitTargetReached()   TakeProfit für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      return(true);
+   }
    return(false);
 }
 
@@ -532,7 +593,7 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (EQ(Entry.Limit, 0)) {                                      // kein Limit definiert, also Aufruf direkt nach Start
+   if (firstTick) {                                               // Sicherheitsabfrage, wenn Sequenzstart sofort beim ersten Tick erfolgt
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
@@ -542,7 +603,6 @@ int StartSequence() {
    }
 
    progressionLevel = 1;
-   last = progressionLevel-1;
 
    int ticket = OpenPosition(entryDirection, CurrentLotSize());   // Position in Entry.Direction öffnen
    if (ticket == -1) {
@@ -556,14 +616,14 @@ int StartSequence() {
       return(catch("StartSequence(3)"));
    }
 
-   levels.ticket    [last] = OrderTicket();
-   levels.type      [last] = OrderType();
-   levels.openPrice [last] = OrderOpenPrice();
-   levels.lotsize   [last] = OrderLots();
-   levels.swap      [last] = 0;
-   levels.commission[last] = 0;                                   // Werte werden in ReadStatus() ausgelesen
-   levels.profit    [last] = 0;
-   levels.closeTime [last] = 0;
+   levels.ticket    [0] = OrderTicket();
+   levels.type      [0] = OrderType();
+   levels.openPrice [0] = OrderOpenPrice();
+   levels.lotsize   [0] = OrderLots();
+   levels.swap      [0] = 0;
+   levels.commission[0] = 0;                                      // Werte werden in ReadStatus() ausgelesen
+   levels.profit    [0] = 0;
+   levels.closeTime [0] = 0;
 
    // Status aktualisieren
    status = STATUS_PROGRESSING;
@@ -578,18 +638,13 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
-   int    last.type      = levels.type     [last];
-   double last.openPrice = levels.openPrice[last];
-   double last.lotsize   = levels.lotsize  [last];
-
-   log("IncreaseProgression()   StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
+   int    last         = progressionLevel-1;
+   double last.lotsize = levels.lotsize[last];
+   int    new.type     = levels.type   [last] ^ 1;                         // 0=>1, 1=>0
 
    progressionLevel++;
-   last = progressionLevel-1;
 
-   int direction = last.type ^ 1;                                          // 0=>1, 1=>0
-
-   int ticket = OpenPosition(direction, last.lotsize + CurrentLotSize());  // alte Position hedgen und nächste öffnen
+   int ticket = OpenPosition(new.type, last.lotsize + CurrentLotSize());   // alte Position hedgen und nächste öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       return(catch("IncreaseProgression(1)"));
@@ -601,6 +656,7 @@ int IncreaseProgression() {
       return(catch("IncreaseProgression(2)"));
    }
 
+   last = progressionLevel-1;
    levels.ticket    [last] = OrderTicket();
    levels.type      [last] = OrderType();
    levels.openPrice [last] = OrderOpenPrice();
@@ -622,13 +678,6 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   int    last.type      = levels.type     [last];
-   double last.openPrice = levels.openPrice[last];
-   double last.profit    = levels.profit   [last];
-
-   if (LT(last.profit, 0)) log("FinishSequence()   TakeProfit für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, Bid-last.openPrice, last.openPrice-Ask)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ ifString(last.type==OP_BUY, "Bid", "Ask") +"="+ NumberToStr(ifDouble(last.type==OP_BUY, Bid, Ask), PriceFormat) +")");
-   else                    log("FinishSequence()   Letzter StopLoss für "+ ifString(last.type==OP_BUY, "long", "short") +" position erreicht: "+ DoubleToStr(ifDouble(last.type==OP_BUY, last.openPrice-Bid, Ask-last.openPrice)/Pip, 1) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +")");
-
    // TODO: OrderCloseBy() implementieren
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {

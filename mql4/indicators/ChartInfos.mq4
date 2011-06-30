@@ -300,7 +300,7 @@ int UpdateSpreadLabel() {
  */
 int UpdateH1CloseLabel() {
    if (!showH1Close)
-      return(0);
+      return(NO_ERROR);
 
    double close = iClose(NULL, PERIOD_H1, 1);
 
@@ -312,7 +312,7 @@ int UpdateH1CloseLabel() {
    else {
       static double lastClose;
       if (EQ(lastClose, close))
-         return(0);
+         return(NO_ERROR);
       lastClose = close;
       strClose  = StringConcatenate("H1:  ", NumberToStr(close, StringConcatenate(", ", PriceFormat)));
    }
@@ -344,7 +344,7 @@ int UpdateUnitSizeLabel() {
    int error = GetLastError();
    string strUnitSize;
 
-   if (error==ERR_UNKNOWN_SYMBOL || Bid<=0.00000001 || tickSize<=0.00000001 || tickValue<=0.00000001 || !tradeAllowed) {   // bei Start oder Accountwechsel
+   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001 || tickSize < 0.00000001 || tickValue < 0.00000001 || !tradeAllowed) {   // bei Start oder Accountwechsel
       strUnitSize = " ";
    }
    else {
