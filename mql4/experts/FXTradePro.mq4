@@ -548,7 +548,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      log("IsStopLossReached()   StopLoss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsStopLossReached()   Stop-Loss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -580,7 +580,7 @@ bool IsProfitTargetReached() {
    }
 
    if (GE(last.profit, TakeProfit*Pip)) {
-      log("IsProfitTargetReached()   TakeProfit für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsProfitTargetReached()   Profit target für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
