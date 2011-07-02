@@ -35,6 +35,7 @@
  *  - ShowStatus() übersichtlicher gestalten (mit Textlabeln statt Comment()-Funktion)
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 
 #define STATUS_INITIALIZED       1
@@ -290,25 +291,48 @@ int init() {
 
 
    // (5) Konfiguration speichern
-   /*
-   // Entry Options
-   string Entry.Direction = "long";
-   double Entry.Limit     = 0;
-   // TP and SL Settings
-   int    TakeProfit      = 40;
-   int    StopLoss        = 10;
-   // Lotsizes
-   double Lotsize.Level.1 = 0.1;
-   double Lotsize.Level.2 = 0.1;
-   double Lotsize.Level.3 = 0.2;
-   double Lotsize.Level.4 = 0.3;
-   double Lotsize.Level.5 = 0.4;
-   double Lotsize.Level.6 = 0.6;
-   double Lotsize.Level.7 = 0.8;
-   // Laufzeitdaten
-   int    sequenceId;
+   string Entry.Direction;          // Entry Options
+   double Entry.Limit;
+   int    TakeProfit;               // TP and SL Settings
+   int    StopLoss;
+   double Lotsize.Level.1;          // Lotsizes
+   double Lotsize.Level.2;
+   double Lotsize.Level.3;
+   double Lotsize.Level.4;
+   double Lotsize.Level.5;
+   double Lotsize.Level.6;
+   double Lotsize.Level.7;
+   int    sequenceId;               // Laufzeitdaten
    double entryLastPrice;
+   // --------------------
+
+
+   string fileName = TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set";
+   debug("init()   fileName = \""+ fileName +"\" successfully created: ");
+
+   int hFile = _lcreat(fileName, AT_NORMAL);
+   if (hFile == HFILE_ERROR)
+      return(catch("init()   kernel32::_lcreat()   error creating \""+ fileName +"\"", ERR_WINDOWS_ERROR));
+   _lclose(hFile);
+
+
+
+   /*
+   string line = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
+   if (FileWrite(hFile, line) < 0) {
+      error = GetLastError();
+      FileClose(hFile);
+      return(catch("init()  FileWrite()", error));
+   }
    */
+
+
+
+
+
+
+
+
 
 
    // (6) bei Start ggf. EA's aktivieren

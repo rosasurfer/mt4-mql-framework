@@ -111,7 +111,7 @@ string GetLocalConfigPath() {
       }
 
       if (createIniFile) {
-         int hFile = _lcreat(iniFile, 0);
+         int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
             catch("GetLocalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
             return("");
@@ -159,7 +159,7 @@ string GetGlobalConfigPath() {
       }
 
       if (createIniFile) {
-         int hFile = _lcreat(iniFile, 0);
+         int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
             catch("GetGlobalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
             return("");

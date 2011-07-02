@@ -160,6 +160,12 @@
 // File & I/O constants
 #define MAX_PATH                                    260     // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
 
+#define AT_NORMAL                                  0x00     // DOS file attributes
+#define AT_READONLY                                0x01
+#define AT_HIDDEN                                  0x02
+#define AT_SYSTEM                                  0x04
+#define AT_ARCHIVE                                 0x20
+
 #define FILE_ATTRIBUTE_READONLY                       1
 #define FILE_ATTRIBUTE_HIDDEN                         2
 #define FILE_ATTRIBUTE_SYSTEM                         4
