@@ -118,8 +118,8 @@ int init() {
          return(catch("init(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       switch (StringGetChar(direction, 0)) {
          case 'B':
-         case 'L': entryDirection = OP_BUY;  break;
-         case 'S': entryDirection = OP_SELL; break;
+         case 'L': Entry.Direction = "long";  entryDirection = OP_BUY;  break;
+         case 'S': Entry.Direction = "short"; entryDirection = OP_SELL; break;
          default:
             return(catch("init(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       }
@@ -291,43 +291,34 @@ int init() {
 
 
    // (5) Konfiguration speichern
-   string Entry.Direction;          // Entry Options
-   double Entry.Limit;
-   int    TakeProfit;               // TP and SL Settings
-   int    StopLoss;
-   double Lotsize.Level.1;          // Lotsizes
-   double Lotsize.Level.2;
-   double Lotsize.Level.3;
-   double Lotsize.Level.4;
-   double Lotsize.Level.5;
-   double Lotsize.Level.6;
-   double Lotsize.Level.7;
-   int    sequenceId;               // Laufzeitdaten
-   double entryLastPrice;
-   // --------------------
-
+   string lines[]; ArrayResize(lines, 0);
+   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );    // Entry Options
+   ArrayPushString(lines, /*double*/ "Entry.Limit="    + DoubleToStr(Entry.Limit, Digits)   );
+   ArrayPushString(lines, /*int   */ "TakeProfit="     +             TakeProfit             );    // TP and SL Settings
+   ArrayPushString(lines, /*int   */ "StopLoss="       +             StopLoss               );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.1="+ NumberToStr(Lotsize.Level.1, ".+") );    // Lotsizes
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.2="+ NumberToStr(Lotsize.Level.2, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.3="+ NumberToStr(Lotsize.Level.3, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.4="+ NumberToStr(Lotsize.Level.4, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.5="+ NumberToStr(Lotsize.Level.5, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.6="+ NumberToStr(Lotsize.Level.6, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.7="+ NumberToStr(Lotsize.Level.7, ".+") );
+   ArrayPushString(lines, /*int   */ "sequenceId="     +             sequenceId             );    // Laufzeitdaten
+   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));
 
    string filename = "presets\\FTP."+ sequenceId +".set";
 
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(catch("init()  FileOpen(\""+ filename +"\")"));
-
-   string lines[] = { "first line", "second line", "third line" };
+      return(catch("init(15)  FileOpen(\""+ filename +"\")"));
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
          int error = GetLastError();
          FileClose(hFile);
-         return(catch("init()  FileWrite(line="+ (i+1) +")", error));
+         return(catch("init(16)  FileWrite(line="+ (i+1) +")", error));
       }
    }
    FileClose(hFile);
-
-
-
-
-
-
 
 
    // (6) bei Start ggf. EA's aktivieren
@@ -343,7 +334,7 @@ int init() {
 
 
    error = GetLastError();
-   if (error      != NO_ERROR) catch("init(15)", error);
+   if (error      != NO_ERROR) catch("init(17)", error);
    if (last_error != NO_ERROR) status = STATUS_DISABLED;
    return(last_error);
 }
