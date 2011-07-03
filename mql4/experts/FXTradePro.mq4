@@ -261,7 +261,7 @@ int init() {
    }
 
 
-   // (3) ggf. neue Sequenz anlegen
+   // (3) ggf. neue Sequenz anlegen oder Laufzeitdaten der vorhandenen Sequenz aktualisieren
    if (sequenceId == 0) {
       sequenceId = CreateSequenceId();
       ArrayResize(levels.ticket    , sequenceLength);
@@ -272,6 +272,8 @@ int init() {
       ArrayResize(levels.commission, sequenceLength);
       ArrayResize(levels.profit    , sequenceLength);
       ArrayResize(levels.closeTime , sequenceLength);
+   }
+   else {
    }
 
 
@@ -317,7 +319,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   // im Status STATUS_ENTRYLIMIT den aktuellen Wert von entryLastPrice speichern
+   // im STATUS_ENTRYLIMIT den aktuellen Wert von entryLastPrice speichern
    if (status == STATUS_ENTRYLIMIT) {
       int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_RECOMPILE };
       if (IntInArray(UninitializeReason(), reasons)) {
@@ -829,10 +831,9 @@ int SaveConfiguration() {
    ArrayPushString(lines, /*string*/ "Symbol="         +             Symbol()               );
    // ----------------------------------------------------------------------------------------
    ArrayPushString(lines, /*int   */ "sequenceId="     +             sequenceId             );
-   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );     // für Properties-Dialog
-   ArrayPushString(lines, /*int   */ "entryDirection=" +             entryDirection         );
+   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );     // für Properties-Dialog (daraus wird entryDirection abgeleitet)
    ArrayPushString(lines, /*double*/ "Entry.Limit="    + DoubleToStr(Entry.Limit, Digits)   );
-   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));
+   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));     // notwendig in STATUS_ENTRYLIMIT
    ArrayPushString(lines, /*int   */ "TakeProfit="     +             TakeProfit             );
    ArrayPushString(lines, /*int   */ "StopLoss="       +             StopLoss               );
    ArrayPushString(lines, /*double*/ "Lotsize.Level.1="+ NumberToStr(Lotsize.Level.1, ".+") );
