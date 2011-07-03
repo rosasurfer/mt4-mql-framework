@@ -38,11 +38,11 @@
 #include <win32api.mqh>
 
 
-#define STATUS_INITIALIZED       1
-#define STATUS_WAIT_ENTRYLIMIT   2
-#define STATUS_PROGRESSING       3
-#define STATUS_FINISHED          4
-#define STATUS_DISABLED          5
+#define STATUS_INITIALIZED    1
+#define STATUS_ENTRYLIMIT     2
+#define STATUS_PROGRESSING    3
+#define STATUS_FINISHED       4
+#define STATUS_DISABLED       5
 
 
 
@@ -279,7 +279,7 @@ int init() {
    if (status == 0) {
       if (progressionLevel == 0) {
          if (EQ(Entry.Limit, 0))          status = STATUS_INITIALIZED;
-         else                             status = STATUS_WAIT_ENTRYLIMIT;
+         else                             status = STATUS_ENTRYLIMIT;
       }
       else {
          int last = progressionLevel-1;
@@ -290,51 +290,22 @@ int init() {
    ShowStatus();
 
 
-   // (5) Konfiguration speichern
-   string lines[]; ArrayResize(lines, 0);
-   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );    // Entry Options
-   ArrayPushString(lines, /*double*/ "Entry.Limit="    + DoubleToStr(Entry.Limit, Digits)   );
-   ArrayPushString(lines, /*int   */ "TakeProfit="     +             TakeProfit             );    // TP and SL Settings
-   ArrayPushString(lines, /*int   */ "StopLoss="       +             StopLoss               );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.1="+ NumberToStr(Lotsize.Level.1, ".+") );    // Lotsizes
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.2="+ NumberToStr(Lotsize.Level.2, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.3="+ NumberToStr(Lotsize.Level.3, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.4="+ NumberToStr(Lotsize.Level.4, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.5="+ NumberToStr(Lotsize.Level.5, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.6="+ NumberToStr(Lotsize.Level.6, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.7="+ NumberToStr(Lotsize.Level.7, ".+") );
-   ArrayPushString(lines, /*int   */ "sequenceId="     +             sequenceId             );    // Laufzeitdaten
-   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));
-
-   string filename = "presets\\FTP."+ sequenceId +".set";
-
-   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0)
-      return(catch("init(15)  FileOpen(\""+ filename +"\")"));
-   for (i=0; i < ArraySize(lines); i++) {
-      if (FileWrite(hFile, lines[i]) < 0) {
-         int error = GetLastError();
-         FileClose(hFile);
-         return(catch("init(16)  FileWrite(line="+ (i+1) +")", error));
-      }
-   }
-   FileClose(hFile);
-
-
-   // (6) bei Start ggf. EA's aktivieren
+   // (5) bei Start ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
    if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
       ToggleEAs(true);
 
 
-   // (7) nach Start oder Reload nicht auf den nächsten Tick warten
+   // (6) nach Start oder Reload aktuelle Konfiguration speichern und nicht auf den nächsten Tick warten
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(UninitializeReason(), reasons2))
+   if (IntInArray(UninitializeReason(), reasons2)) {
+      SaveConfiguration();
       SendTick(false);
+   }
 
 
-   error = GetLastError();
-   if (error      != NO_ERROR) catch("init(17)", error);
+   int error = GetLastError();
+   if (error      != NO_ERROR) catch("init(15)", error);
    if (last_error != NO_ERROR) status = STATUS_DISABLED;
    return(last_error);
 }
@@ -346,6 +317,13 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   // im Status STATUS_ENTRYLIMIT den aktuellen Wert von entryLastPrice speichern
+   if (status == STATUS_ENTRYLIMIT) {
+      int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_RECOMPILE };
+      if (IntInArray(UninitializeReason(), reasons)) {
+         SaveConfiguration();
+      }
+   }
    return(catch("deinit()"));
 }
 
@@ -376,7 +354,7 @@ int start() {
 
    if (ReadStatus()) {
       if (progressionLevel == 0) {
-         if (!IsEntryLimitReached())            status = STATUS_WAIT_ENTRYLIMIT;
+         if (!IsEntryLimitReached())            status = STATUS_ENTRYLIMIT;
          else                                   StartSequence();                 // kein Limit definiert oder Limit erreicht
       }
       else if (IsStopLossReached()) {
@@ -558,7 +536,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      log("IsStopLossReached()   Stop-Loss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsStopLossReached()   Stoploss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -779,12 +757,12 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED:     msg =                   ":  initialized";                                                                  break;
-      case STATUS_WAIT_ENTRYLIMIT: msg = StringConcatenate(":  waiting for ", entryLimitType, " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
-      case STATUS_PROGRESSING:     msg = StringConcatenate(":  trade sequence ", sequenceId, ", progressing ...");                            break;
-      case STATUS_FINISHED:        msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                    break;
-      case STATUS_DISABLED:        msg =                   ":  disabled";
-                                   if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");        break;
+      case STATUS_INITIALIZED: msg = StringConcatenate(":  trade sequence ", sequenceId, " initialized");                                                                 break;
+      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  trade sequence ", sequenceId, " waiting for ", entryLimitType, " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(":  trade sequence ", sequenceId, " progressing...");                                                              break;
+      case STATUS_FINISHED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                                                    break;
+      case STATUS_DISABLED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " disabled");
+                               if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");                                        break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -819,12 +797,70 @@ int ShowStatus() {
  */
 string StatusToStr(int status) {
    switch (status) {
-      case STATUS_INITIALIZED    : return("STATUS_INITIALIZED"    );
-      case STATUS_WAIT_ENTRYLIMIT: return("STATUS_WAIT_ENTRYLIMIT");
-      case STATUS_PROGRESSING    : return("STATUS_PROGRESSING"    );
-      case STATUS_FINISHED       : return("STATUS_FINISHED"       );
-      case STATUS_DISABLED       : return("STATUS_DISABLED"       );
+      case STATUS_INITIALIZED: return("STATUS_INITIALIZED");
+      case STATUS_ENTRYLIMIT : return("STATUS_ENTRYLIMIT" );
+      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
+      case STATUS_FINISHED   : return("STATUS_FINISHED"   );
+      case STATUS_DISABLED   : return("STATUS_DISABLED"   );
    }
    catch("StatusToStr()  invalid parameter status: "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
+}
+
+
+/**
+ * Speichert die aktuelle Konfiguration und Laufzeitdaten der Instanz, um die korrekte und nahtlose Wiederauf- und Übernahme
+ * durch eine andere Instanz im selben oder einem anderen Terminal zu ermöglichen.
+ *
+ * @return int - Fehlerstatus
+ */
+int SaveConfiguration() {
+   if (sequenceId == 0)
+      return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+
+   debug("SaveConfiguration()   saving current configuration for account "+ AccountNumber() +" at \""+ AccountCompany() +"\"");
+
+
+   // (1) Daten zusammenstellen
+   string lines[]; ArrayResize(lines, 0);
+
+   ArrayPushString(lines, /*string*/ "AccountCompany=" +             AccountCompany()       );
+   ArrayPushString(lines, /*int   */ "AccountNumber="  +             AccountNumber()        );
+   ArrayPushString(lines, /*string*/ "Symbol="         +             Symbol()               );
+   // ----------------------------------------------------------------------------------------
+   ArrayPushString(lines, /*int   */ "sequenceId="     +             sequenceId             );
+   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );     // für Properties-Dialog
+   ArrayPushString(lines, /*int   */ "entryDirection=" +             entryDirection         );
+   ArrayPushString(lines, /*double*/ "Entry.Limit="    + DoubleToStr(Entry.Limit, Digits)   );
+   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));
+   ArrayPushString(lines, /*int   */ "TakeProfit="     +             TakeProfit             );
+   ArrayPushString(lines, /*int   */ "StopLoss="       +             StopLoss               );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.1="+ NumberToStr(Lotsize.Level.1, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.2="+ NumberToStr(Lotsize.Level.2, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.3="+ NumberToStr(Lotsize.Level.3, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.4="+ NumberToStr(Lotsize.Level.4, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.5="+ NumberToStr(Lotsize.Level.5, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.6="+ NumberToStr(Lotsize.Level.6, ".+") );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.7="+ NumberToStr(Lotsize.Level.7, ".+") );
+
+
+   // (2) Daten in lokale Datei schreiben
+   string filename = "presets\\FTP."+ sequenceId +".set";
+
+   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
+   if (hFile < 0)
+      return(catch("SaveConfiguration(2)  FileOpen(\""+ filename +"\")"));
+   for (int i=0; i < ArraySize(lines); i++) {
+      if (FileWrite(hFile, lines[i]) < 0) {
+         int error = GetLastError();
+         FileClose(hFile);
+         return(catch("SaveConfiguration(3)  FileWrite(line "+ (i+1) +")", error));
+      }
+   }
+   FileClose(hFile);
+
+
+   // (3) Daten auf Server laden
+
+   return(catch("SaveConfiguration(4)"));
 }
