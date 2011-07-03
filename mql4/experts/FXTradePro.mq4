@@ -307,26 +307,21 @@ int init() {
    // --------------------
 
 
-   string fileName = TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set";
-   debug("init()   fileName = \""+ fileName +"\" successfully created: ");
+   string filename = "presets\\FTP."+ sequenceId +".set";
 
-   int hFile = _lcreat(fileName, AT_NORMAL);
-   if (hFile == HFILE_ERROR)
-      return(catch("init()   kernel32::_lcreat()   error creating \""+ fileName +"\"", ERR_WINDOWS_ERROR));
-   _lclose(hFile);
+   int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
+   if (hFile < 0)
+      return(catch("init()  FileOpen(\""+ filename +"\")"));
 
-
-
-   /*
-   string line = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
-   if (FileWrite(hFile, line) < 0) {
-      error = GetLastError();
-      FileClose(hFile);
-      return(catch("init()  FileWrite()", error));
+   string lines[] = { "first line", "second line", "third line" };
+   for (i=0; i < ArraySize(lines); i++) {
+      if (FileWrite(hFile, lines[i]) < 0) {
+         int error = GetLastError();
+         FileClose(hFile);
+         return(catch("init()  FileWrite(line="+ (i+1) +")", error));
+      }
    }
-   */
-
-
+   FileClose(hFile);
 
 
 
@@ -347,7 +342,7 @@ int init() {
       SendTick(false);
 
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error      != NO_ERROR) catch("init(15)", error);
    if (last_error != NO_ERROR) status = STATUS_DISABLED;
    return(last_error);
