@@ -76,13 +76,13 @@ double   Pip;
 int      PipDigits;
 string   PriceFormat;
 
+int      Entry.iDirection = OP_UNDEFINED;       // -1
+int      Entry.LimitType  = OP_UNDEFINED;
+double   Entry.LastPrice;
+
 int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
-int      entryDirection = OP_UNDEFINED;
-double   entryLastPrice;
-string   entryLimitType;
-int      status;
 
 int      levels.ticket    [];
 int      levels.type      [];
@@ -94,6 +94,7 @@ double   levels.profit    [], all.profits;
 datetime levels.closeTime [];                   // Unterscheidung zwischen offenen und geschlossenen Positionen
 
 bool     firstTick = true;
+int      status;
 
 
 /**
@@ -118,8 +119,8 @@ int init() {
          return(catch("init(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       switch (StringGetChar(direction, 0)) {
          case 'B':
-         case 'L': Entry.Direction = "long";  entryDirection = OP_BUY;  break;
-         case 'S': Entry.Direction = "short"; entryDirection = OP_SELL; break;
+         case 'L': Entry.Direction = "long";  Entry.iDirection = OP_BUY;  break;
+         case 'S': Entry.Direction = "short"; Entry.iDirection = OP_SELL; break;
          default:
             return(catch("init(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       }
@@ -127,9 +128,10 @@ int init() {
       // Entry.Limit
       if (LT(Entry.Limit, 0))
          return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      // TODO: falsche Zuweisung bei Restart, wenn das Limit während der Auszeit erreicht wurde => lastPrice auswerten
-      if (entryDirection == OP_BUY) entryLimitType = ifString(LT(Entry.Limit, Ask), "Buy Limit" , "Stop Buy" );
-      else                          entryLimitType = ifString(GT(Entry.Limit, Bid), "Sell Limit", "Stop Sell");
+      if (GT(Entry.Limit, 0)) {
+         if (Entry.iDirection == OP_BUY) Entry.LimitType = ifInt(LT(Entry.Limit, Ask), OP_BUYLIMIT , OP_BUYSTOP );
+         else                            Entry.LimitType = ifInt(GT(Entry.Limit, Bid), OP_SELLLIMIT, OP_SELLSTOP);
+      }
 
       // TakeProfit
       if (TakeProfit < 1)
@@ -202,8 +204,8 @@ int init() {
                ArrayResize(levels.profit    , sequenceLength);
                ArrayResize(levels.closeTime , sequenceLength);
 
-               if (level&1 == 1) entryDirection = OrderType();
-               else              entryDirection = OrderType() ^ 1;      // 0=>1, 1=>0
+               if (level & 1 == 1) Entry.iDirection = OrderType();
+               else                Entry.iDirection = OrderType() ^ 1;  // 0=>1, 1=>0
             }
             level--;
             levels.ticket    [level] = OrderTicket();
@@ -261,9 +263,11 @@ int init() {
    }
 
 
-   // (3) ggf. neue Sequenz anlegen oder Laufzeitdaten der vorhandenen Sequenz aktualisieren
+   // (3) ggf. neue Sequenz anlegen
+   bool newSequence = false;
    if (sequenceId == 0) {
-      sequenceId = CreateSequenceId();
+      sequenceId  = CreateSequenceId();
+      newSequence = true;
       ArrayResize(levels.ticket    , sequenceLength);
       ArrayResize(levels.type      , sequenceLength);
       ArrayResize(levels.openPrice , sequenceLength);
@@ -273,11 +277,18 @@ int init() {
       ArrayResize(levels.profit    , sequenceLength);
       ArrayResize(levels.closeTime , sequenceLength);
    }
-   else {
+
+
+   // (4) Konfiguration neuer Sequenzen speichern und existierender Sequenzen restaurieren
+   if (newSequence || UninitializeReason()==REASON_PARAMETERS) {
+      SaveConfiguration();
+   }
+   else if (!newSequence && UninitializeReason()!=REASON_CHARTCHANGE) {
+      RestoreConfiguration();
    }
 
 
-   // (4) aktuellen Status bestimmen und anzeigen
+   // (5) aktuellen Status bestimmen und anzeigen
    if (status == 0) {
       if (progressionLevel == 0) {
          if (EQ(Entry.Limit, 0))          status = STATUS_INITIALIZED;
@@ -292,18 +303,16 @@ int init() {
    ShowStatus();
 
 
-   // (5) bei Start ggf. EA's aktivieren
+   // (6) bei Start ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
    if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
       ToggleEAs(true);
 
 
-   // (6) nach Start oder Reload aktuelle Konfiguration speichern und nicht auf den nächsten Tick warten
+   // (7) nach Start oder Reload nicht auf den ersten Tick warten
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(UninitializeReason(), reasons2)) {
-      SaveConfiguration();
+   if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
-   }
 
 
    int error = GetLastError();
@@ -319,14 +328,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   // im STATUS_ENTRYLIMIT den aktuellen Wert von entryLastPrice speichern
-   if (status == STATUS_ENTRYLIMIT) {
-      int reasons[] = { REASON_PARAMETERS, REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_RECOMPILE };
-      if (IntInArray(UninitializeReason(), reasons)) {
-         SaveConfiguration();
-      }
-   }
-   return(catch("deinit()"));
+  return(catch("deinit()"));
 }
 
 
@@ -485,29 +487,29 @@ bool IsEntryLimitReached() {
       return(true);
 
    // Limit ist definiert
-   double price = ifDouble(entryDirection==OP_SELL, Bid, Ask);       // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
+   double price = ifDouble(Entry.iDirection==OP_SELL, Bid, Ask);     // Das Limit ist erreicht, wenn der Preis es seit dem letzten Tick berührt oder gekreuzt hat.
 
-   if (EQ(price, Entry.Limit) || EQ(entryLastPrice, Entry.Limit)) {  // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
+   if (EQ(price, Entry.Limit) || EQ(Entry.LastPrice, Entry.Limit)) { // Preis liegt oder lag beim letzten Tick exakt auf dem Limit
       debug("IsEntryLimitReached()   Tick="+ NumberToStr(price, PriceFormat) +" liegt genau auf dem Limit="+ NumberToStr(Entry.Limit, PriceFormat));
-      entryLastPrice = Entry.Limit;                                  // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
-      return(true);                                                  // entryLastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
+      Entry.LastPrice = Entry.Limit;                                 // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
+      return(true);                                                  // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
    }
 
-   if (NE(entryLastPrice, 0)) {                                      // entryLastPrice muß initialisiert sein => ersten Aufruf überspringen
-      if (LT(entryLastPrice, Entry.Limit)) {
+   if (NE(Entry.LastPrice, 0)) {                                     // entryLastPrice muß initialisiert sein => ersten Aufruf überspringen
+      if (LT(Entry.LastPrice, Entry.Limit)) {
          if (GT(price, Entry.Limit)) {                               // Tick hat Limit von unten nach oben gekreuzt
-            debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastPrice="+ NumberToStr(entryLastPrice, PriceFormat) +") nach oben (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
-            entryLastPrice = Entry.Limit;
+            debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastPrice="+ NumberToStr(Entry.LastPrice, PriceFormat) +") nach oben (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
+            Entry.LastPrice = Entry.Limit;
             return(true);
          }
       }
       else if (LT(price, Entry.Limit)) {                             // Tick hat Limit von oben nach unten gekreuzt
-         debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastPrice="+ NumberToStr(entryLastPrice, PriceFormat) +") nach unten (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
-         entryLastPrice = Entry.Limit;
+         debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastPrice="+ NumberToStr(Entry.LastPrice, PriceFormat) +") nach unten (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
+         Entry.LastPrice = Entry.Limit;
          return(true);
       }
    }
-   entryLastPrice = price;
+   Entry.LastPrice = price;
 
    return(false);
 }
@@ -583,7 +585,7 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (firstTick) {                                               // Sicherheitsabfrage, wenn Sequenzstart sofort beim ersten Tick erfolgt
+   if (firstTick) {                                                  // Sicherheitsabfrage, wenn Sequenzstart sofort beim ersten Tick erfolgt
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
@@ -594,7 +596,7 @@ int StartSequence() {
 
    progressionLevel = 1;
 
-   int ticket = OpenPosition(entryDirection, CurrentLotSize());   // Position in Entry.Direction öffnen
+   int ticket = OpenPosition(Entry.iDirection, CurrentLotSize());    // Position in Entry.Direction öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       return(catch("StartSequence(2)"));
@@ -759,12 +761,12 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED: msg = StringConcatenate(":  trade sequence ", sequenceId, " initialized");                                                                 break;
-      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  trade sequence ", sequenceId, " waiting for ", entryLimitType, " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(":  trade sequence ", sequenceId, " progressing...");                                                              break;
-      case STATUS_FINISHED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                                                    break;
+      case STATUS_INITIALIZED: msg = StringConcatenate(":  trade sequence ", sequenceId, " initialized");                                                                                            break;
+      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  trade sequence ", sequenceId, " waiting for ", OperationTypeDescription(Entry.LimitType), " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(":  trade sequence ", sequenceId, " progressing...");                                                                                         break;
+      case STATUS_FINISHED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                                                                               break;
       case STATUS_DISABLED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " disabled");
-                               if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");                                        break;
+                               if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");                                                                   break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -820,29 +822,29 @@ int SaveConfiguration() {
    if (sequenceId == 0)
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
 
-   debug("SaveConfiguration()   saving current configuration for account "+ AccountNumber() +" at \""+ AccountCompany() +"\"");
+   debug("SaveConfiguration()   saving configuration for sequence "+ sequenceId);
 
 
    // (1) Daten zusammenstellen
    string lines[]; ArrayResize(lines, 0);
 
-   ArrayPushString(lines, /*string*/ "AccountCompany=" +             AccountCompany()       );
-   ArrayPushString(lines, /*int   */ "AccountNumber="  +             AccountNumber()        );
-   ArrayPushString(lines, /*string*/ "Symbol="         +             Symbol()               );
-   // ----------------------------------------------------------------------------------------
-   ArrayPushString(lines, /*int   */ "sequenceId="     +             sequenceId             );
-   ArrayPushString(lines, /*string*/ "Entry.Direction="+             Entry.Direction        );     // für Properties-Dialog (daraus wird entryDirection abgeleitet)
-   ArrayPushString(lines, /*double*/ "Entry.Limit="    + DoubleToStr(Entry.Limit, Digits)   );
-   ArrayPushString(lines, /*double*/ "entryLastPrice=" + DoubleToStr(entryLastPrice, Digits));     // notwendig in STATUS_ENTRYLIMIT
-   ArrayPushString(lines, /*int   */ "TakeProfit="     +             TakeProfit             );
-   ArrayPushString(lines, /*int   */ "StopLoss="       +             StopLoss               );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.1="+ NumberToStr(Lotsize.Level.1, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.2="+ NumberToStr(Lotsize.Level.2, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.3="+ NumberToStr(Lotsize.Level.3, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.4="+ NumberToStr(Lotsize.Level.4, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.5="+ NumberToStr(Lotsize.Level.5, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.6="+ NumberToStr(Lotsize.Level.6, ".+") );
-   ArrayPushString(lines, /*double*/ "Lotsize.Level.7="+ NumberToStr(Lotsize.Level.7, ".+") );
+   ArrayPushString(lines, /*string*/ "AccountCompany="  +             AccountCompany()        );
+   ArrayPushString(lines, /*int   */ "AccountNumber="   +             AccountNumber()         );
+   ArrayPushString(lines, /*string*/ "Symbol="          +             Symbol()                );
+   // ------------------------------------------------------------------------------------------
+   ArrayPushString(lines, /*int   */ "sequenceId="      +             sequenceId              );
+   ArrayPushString(lines, /*string*/ "Entry.Direction=" +             Entry.Direction         );
+   ArrayPushString(lines, /*double*/ "Entry.Limit="     + DoubleToStr(Entry.Limit, Digits)    );
+   ArrayPushString(lines, /*int   */ "Entry.LimitType=" +             Entry.LimitType         );
+   ArrayPushString(lines, /*int   */ "TakeProfit="      +             TakeProfit              );
+   ArrayPushString(lines, /*int   */ "StopLoss="        +             StopLoss                );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.1=" + NumberToStr(Lotsize.Level.1, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.2=" + NumberToStr(Lotsize.Level.2, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.3=" + NumberToStr(Lotsize.Level.3, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.4=" + NumberToStr(Lotsize.Level.4, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.5=" + NumberToStr(Lotsize.Level.5, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.6=" + NumberToStr(Lotsize.Level.6, ".+")  );
+   ArrayPushString(lines, /*double*/ "Lotsize.Level.7=" + NumberToStr(Lotsize.Level.7, ".+")  );
 
 
    // (2) Daten in lokale Datei schreiben
@@ -864,4 +866,18 @@ int SaveConfiguration() {
    // (3) Daten auf Server laden
 
    return(catch("SaveConfiguration(4)"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int RestoreConfiguration() {
+   if (sequenceId == 0)
+      return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+
+   debug("RestoreConfiguration()   restoring configuration for sequence "+ sequenceId);
+
+   return(catch("RestoreConfiguration(2)"));
 }
