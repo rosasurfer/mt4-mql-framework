@@ -13,13 +13,10 @@
  *  TODO:
  *  -----
  *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
- *  - bei Recompilation zur Laufzeit (REASON_RECOMPILE) Sequenzdaten neu einlesen
- *  - bei Recompilation zur Laufzeit aktuelle Konfiguration aus dem externen Speicher laden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
- *  - falsche Zuweisung bei Restart, wenn das Limit während der Auszeit erreicht wurde => lastPrice auswerten
  *  - Visualisierung des Entry.Limits implementieren
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
@@ -28,7 +25,7 @@
  *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
  *  - in ReadStatus(): Breakeven-Berechnung implementieren
  *  - Breakeven-Anzeige (in ShowStatus()???)
- *  - StopLoss->Breakeven und TakeProfit->Breakeven implementieren
+ *  - StopLoss -> Breakeven und TakeProfit -> Breakeven implementieren
  *  - SMS-Benachrichtigungen implementieren
  *  - Heartbeat-Order einrichten
  *  - Equity-Chart der laufenden Sequenz implementieren
