@@ -320,8 +320,9 @@ int onPositionClose(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
-         if (error == NO_ERROR) log("onPositionClose()  error selectiong closed position #"+ tickets[i]);
-         else                   catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
          continue;
       }
 

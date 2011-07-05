@@ -387,8 +387,11 @@ bool ReadStatus() {
 
       if (levels.closeTime[i] == 0) {                             // offene Position
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            int error = GetLastError();
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("ReadStatus(1)")==NO_ERROR);
+            return(catch("ReadStatus(1)", error)==NO_ERROR);
          }
          if (OrderCloseTime() != 0) {
             status = STATUS_DISABLED;
@@ -602,8 +605,11 @@ int StartSequence() {
 
    // Sequenzdaten aktualisieren
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
       status = STATUS_DISABLED;
-      return(catch("StartSequence(3)"));
+      return(catch("StartSequence(3)", error));
    }
 
    levels.ticket    [0] = OrderTicket();
@@ -651,8 +657,11 @@ int IncreaseProgression() {
 
    // Sequenzdaten aktualisieren
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
       status = STATUS_DISABLED;
-      return(catch("IncreaseProgression(3)"));
+      return(catch("IncreaseProgression(3)", error));
    }
 
    last = progressionLevel-1;
@@ -695,8 +704,11 @@ int FinishSequence() {
             return(last_error);
          }
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            int error = GetLastError();
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("FinishSequence(2)"));
+            return(catch("FinishSequence(2)", error));
          }
          levels.swap      [i] = OrderSwap();
          levels.commission[i] = OrderCommission();
