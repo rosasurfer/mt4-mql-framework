@@ -239,7 +239,7 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
 
    // Serverantwort zeilenweise einlesen
    string response[];
-   if (FileReadLines(filename +".response", response, false) != NO_ERROR)     // FileReadLines() erwartet relativen Pfad
+   if (FileReadLines(filename +".response", response, false) == -1)           // FileReadLines() erwartet relativen Pfad
       return(ERR_RUNTIME_ERROR);
 
    // Serverantwort auswerten
@@ -250,7 +250,7 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
    }
    else {
       string values[];
-      Explode(response[0], ":", values);
+      Explode(response[0], ":", values, NULL);
       string strErrorCode = StringTrim(values[0]);
 
       if (StringIsDigit(strErrorCode)) {

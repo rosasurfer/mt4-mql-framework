@@ -43,7 +43,7 @@ int init() {
 
    // Close.Symbols
    string values[];
-   int size = Explode(StringToUpper(Close.Symbols), ",", values);
+   int size = Explode(StringToUpper(Close.Symbols), ",", values, NULL);
    for (int i=0; i < size; i++) {
       string strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0)
@@ -63,7 +63,7 @@ int init() {
    }
 
    // Close.Tickets
-   size = Explode(Close.Tickets, ",", values);
+   size = Explode(Close.Tickets, ",", values, NULL);
    for (i=0; i < size; i++) {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {
@@ -77,7 +77,7 @@ int init() {
    }
 
    // Close.MagicNumbers
-   size = Explode(Close.MagicNumbers, ",", values);
+   size = Explode(Close.MagicNumbers, ",", values, NULL);
    for (i=0; i < size; i++) {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {

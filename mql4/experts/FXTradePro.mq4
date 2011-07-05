@@ -12,8 +12,10 @@
  *
  *  TODO:
  *  -----
- *  - Konfiguration der Instanz extern speichern und bei Reload von dort einlesen
+ *  - Konfiguration der Instanz auf Server speichern und bei Reload ggf. von dort einlesen
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
+ *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
+ *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
@@ -582,9 +584,9 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (firstTick) {                                                  // Sicherheitsabfrage, wenn Sequenzstart sofort beim ersten Tick erfolgt
+   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
@@ -593,7 +595,7 @@ int StartSequence() {
 
    progressionLevel = 1;
 
-   int ticket = OpenPosition(Entry.iDirection, CurrentLotSize());    // Position in Entry.Direction öffnen
+   int ticket = OpenPosition(Entry.iDirection, CurrentLotSize());          // Position in Entry.Direction öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       return(catch("StartSequence(2)"));
@@ -610,7 +612,7 @@ int StartSequence() {
    levels.openPrice [0] = OrderOpenPrice();
    levels.lotsize   [0] = OrderLots();
    levels.swap      [0] = 0;
-   levels.commission[0] = 0;                                      // Werte werden in ReadStatus() ausgelesen
+   levels.commission[0] = 0;                                               // Werte werden in ReadStatus() ausgelesen
    levels.profit    [0] = 0;
    levels.closeTime [0] = 0;
 
@@ -627,6 +629,15 @@ int StartSequence() {
  * @return int - Fehlerstatus
  */
 int IncreaseProgression() {
+   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+      PlaySound("notify.wav");
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK) {
+         status = STATUS_DISABLED;
+         return(catch("IncreaseProgression(1)"));
+      }
+   }
+
    int    last         = progressionLevel-1;
    double last.lotsize = levels.lotsize[last];
    int    new.type     = levels.type   [last] ^ 1;                         // 0=>1, 1=>0
@@ -636,13 +647,13 @@ int IncreaseProgression() {
    int ticket = OpenPosition(new.type, last.lotsize + CurrentLotSize());   // alte Position hedgen und nächste öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
-      return(catch("IncreaseProgression(1)"));
+      return(catch("IncreaseProgression(2)"));
    }
 
    // Sequenzdaten aktualisieren
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       status = STATUS_DISABLED;
-      return(catch("IncreaseProgression(2)"));
+      return(catch("IncreaseProgression(3)"));
    }
 
    last = progressionLevel-1;
@@ -658,7 +669,7 @@ int IncreaseProgression() {
    // Status aktualisieren
    ReadStatus();
 
-   return(catch("IncreaseProgression(3)"));
+   return(catch("IncreaseProgression(4)"));
 }
 
 
@@ -667,6 +678,15 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
+   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+      PlaySound("notify.wav");
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK) {
+         status = STATUS_DISABLED;
+         return(catch("FinishSequence(1)"));
+      }
+   }
+
    // TODO: OrderCloseBy() implementieren
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
@@ -677,7 +697,7 @@ int FinishSequence() {
          }
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             status = STATUS_DISABLED;
-            return(catch("FinishSequence(1)"));
+            return(catch("FinishSequence(2)"));
          }
          levels.swap      [i] = OrderSwap();
          levels.commission[i] = OrderCommission();
@@ -690,7 +710,7 @@ int FinishSequence() {
    status = STATUS_FINISHED;
    ReadStatus();
 
-   return(catch("FinishSequence(2)"));
+   return(catch("FinishSequence(3)"));
 }
 
 
@@ -816,10 +836,12 @@ string StatusToStr(int status) {
  * @return int - Fehlerstatus
  */
 int SaveConfiguration() {
-   if (sequenceId == 0)
+   if (sequenceId == 0) {
+      status = STATUS_DISABLED;
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+   }
 
-   debug("SaveConfiguration()   saving configuration for sequence "+ sequenceId);
+   debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
 
 
    // (1) Daten zusammenstellen
@@ -848,21 +870,28 @@ int SaveConfiguration() {
    string filename = "presets\\FTP."+ sequenceId +".set";
 
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
-   if (hFile < 0)
-      return(catch("SaveConfiguration(2)  FileOpen(\""+ filename +"\")"));
+   if (hFile < 0) {
+      status = STATUS_DISABLED;
+      return(catch("SaveConfiguration(2)  FileOpen(file=\""+ filename +"\")"));
+   }
    for (int i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
          int error = GetLastError();
          FileClose(hFile);
-         return(catch("SaveConfiguration(3)  FileWrite(line "+ (i+1) +")", error));
+         status = STATUS_DISABLED;
+         return(catch("SaveConfiguration(3)  FileWrite(line #"+ (i+1) +")", error));
       }
    }
    FileClose(hFile);
 
+   // (3) Datei auf Server laden
 
-   // (3) Daten auf Server laden
-
-   return(catch("SaveConfiguration(4)"));
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      status = STATUS_DISABLED;
+      catch("SaveConfiguration(4)", error);
+   }
+   return(error);
 }
 
 
@@ -871,10 +900,155 @@ int SaveConfiguration() {
  * @return int - Fehlerstatus
  */
 int RestoreConfiguration() {
-   if (sequenceId == 0)
+   if (sequenceId == 0) {
+      status = STATUS_DISABLED;
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
+   }
 
-   debug("RestoreConfiguration()   restoring configuration for sequence "+ sequenceId);
+   debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
 
-   return(catch("RestoreConfiguration(2)"));
+
+   // (1) Existenz der lokalen Konfiguration prüfen und Datei ggf. vom Server laden
+   string filesDir = TerminalPath() +"\\experts\\files\\";
+   string fileName = "presets\\FTP."+ sequenceId +".set";
+
+   if (!IsFile(filesDir + fileName)) {
+      string url        = "http://sub.domain.tld/getFTPConfiguration.php?sequenceId="+ sequenceId;
+      string targetFile = filesDir +"\\"+ fileName;
+      string logFile    = filesDir +"\\"+ fileName +".log";
+      string cmdLine    = "wget.exe -S \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
+
+      int error = WinExecAndWait(cmdLine, SW_HIDE);               // SW_SHOWNORMAL|SW_HIDE
+      if (error == NO_ERROR)
+         return(RestoreConfiguration());                          // nochmaliges Einlesen nach Download
+
+      status = STATUS_DISABLED;
+      return(error);
+   }
+
+
+   // (2) Datei einlesen
+   string config[];
+   int lines = FileReadLines(fileName, config, true);
+   if (lines <= 0) {
+      if (lines == 0) catch("RestoreConfiguration(2)   invalid configuration file \""+ fileName +"\", 0 lines", ERR_RUNTIME_ERROR);
+      else            last_error = stdlib_PeekLastError();
+      status = STATUS_DISABLED;
+      return(last_error);
+   }
+   //debug("RestoreConfiguration()   config = "+ StringArrayToStr(config));
+
+
+   // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Daten valideren und übernehmen
+   string parts[];
+   for (int i=0; i < lines; i++) {
+      if (Explode(config[i], "=", parts, 2) != 2) {
+         status = STATUS_DISABLED;
+         return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+      }
+      string key   = parts[0];
+      string value = parts[1];
+
+      if (key == "sequenceId") {
+         if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId)   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+      }
+      else if (key == "Entry.Direction") {
+         if (value!="long" && value!="short")                            { status = STATUS_DISABLED; return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Entry.Direction  = value;
+         Entry.iDirection = ifInt(Entry.Direction=="long", OP_BUY, OP_SELL);
+      }
+      else if (key == "Entry.Limit") {
+         double dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LT(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Entry.Limit = dValue;
+      }
+      else if (key == "Entry.LimitType") {
+         int iValue       = StrToInteger(value);
+         int validTypes[] = {OP_UNDEFINED, OP_BUYLIMIT, OP_SELLLIMIT, OP_BUYSTOP, OP_SELLSTOP};
+         if (!StringIsInteger(value) || !IntInArray(iValue, validTypes)) { status = STATUS_DISABLED; return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Entry.LimitType = iValue;
+      }
+      else if (key == "TakeProfit") {
+         iValue = StrToInteger(value);
+         if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         TakeProfit = iValue;
+      }
+      else if (key == "StopLoss") {
+         iValue = StrToInteger(value);
+         if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         StopLoss = iValue;
+      }
+      else if (key == "Lotsize.Level.1") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.1 = dValue;
+      }
+      else if (key == "Lotsize.Level.2") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.2 = dValue;
+      }
+      else if (key == "Lotsize.Level.3") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.3 = dValue;
+      }
+      else if (key == "Lotsize.Level.4") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.4 = dValue;
+      }
+      else if (key == "Lotsize.Level.5") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(14)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.5 = dValue;
+      }
+      else if (key == "Lotsize.Level.6") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(15)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.6 = dValue;
+      }
+      else if (key == "Lotsize.Level.7") {
+         dValue = StrToDouble(value);
+         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(16)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         Lotsize.Level.7 = dValue;
+      }
+   }
+
+   if ((Entry.LimitType==OP_UNDEFINED && NE(Entry.Limit, 0)) || (Entry.LimitType!=OP_UNDEFINED && EQ(Entry.Limit, 0))) {
+      status = STATUS_DISABLED;
+      return(catch("RestoreConfiguration(17)   invalid configuration file \""+ fileName +"\" (Entry.Limit="+ NumberToStr(Entry.Limit, ".+") +" doesn't match Entry.LimitType="+ OperationTypeToStr(Entry.LimitType) +")", ERR_RUNTIME_ERROR));
+   }
+
+
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      status = STATUS_DISABLED;
+      catch("RestoreConfiguration(18)", error);
+   }
+   return(error);
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines Operation-Types zurück (überschreibt die Version in der Library)
+ *
+ * @param  int type - Operation-Type
+ *
+ * @return string
+ */
+string OperationTypeToStr(int type) {
+   switch (type) {
+      case OP_UNDEFINED: return("OP_UNDEFINED");
+      case OP_BUY      : return("OP_BUY"      );
+      case OP_SELL     : return("OP_SELL"     );
+      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
+      case OP_SELLLIMIT: return("OP_SELLLIMIT");
+      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
+      case OP_SELLSTOP : return("OP_SELLSTOP" );
+      case OP_BALANCE  : return("OP_BALANCE"  );
+      case OP_CREDIT   : return("OP_CREDIT"   );
+   }
+   catch("OperationTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
 }

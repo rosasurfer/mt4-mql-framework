@@ -175,7 +175,7 @@
    int      MathSign(double number);
 
    // Strings
-   int      Explode(string object, string separator, string& lpResults[]);
+   int      Explode(string object, string separator, string& lpResults[], int limit);
    bool     StringContains(string object, string substring);
    bool     StringEndsWith(string object, string postfix);
    int      StringFindR(string object, string search);
@@ -184,6 +184,7 @@
    bool     StringIEndsWith(string object, string postfix);
    bool     StringIStartsWith(string object, string prefix);
    bool     StringIsDigit(string value);
+   bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
    string   StringLeft(string value, int n);
    string   StringRepeat(string input, int times);

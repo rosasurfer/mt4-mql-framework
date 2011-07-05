@@ -1481,21 +1481,24 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
  * @param  string& lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
  * @param  bool    skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
  *
- * @return int - Fehlerstatus
+ * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
 int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false) {
    int fieldSeparator = '\t';
 
    // Datei öffnen
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);  // FileOpen() erwartet Pfadangabe relativ zu .\experts\files
-   if (hFile < 0)
-      return(catch("FileReadLines(1)   FileOpen(\""+ filename +"\")", GetLastError()));
+   if (hFile < 0) {
+      catch("FileReadLines(1)   FileOpen(filenname=\""+ filename +"\")", GetLastError());
+      return(-1);
+   }
 
 
    // Schnelle Rückkehr bei leerer Datei
    if (FileSize(hFile) == 0) {
+      FileClose(hFile);
       ArrayResize(lpResult, 0);
-      return(catch("FileReadLines(2)"));
+      return(ifInt(catch("FileReadLines(2)")==NO_ERROR, 0, -1));
    }
 
 
@@ -1546,8 +1549,11 @@ int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false
 
    // Dateiende hat ERR_END_OF_FILE ausgelöst
    int error = GetLastError();
-   if (error!=ERR_END_OF_FILE) /*&&*/ if (error!=NO_ERROR)
-      return(catch("FileReadLines(2)", error));
+   if (error!=ERR_END_OF_FILE) /*&&*/ if (error!=NO_ERROR) {
+      FileClose(hFile);
+      catch("FileReadLines(2)", error);
+      return(-1);
+   }
 
    // Datei schließen
    FileClose(hFile);
@@ -1557,7 +1563,7 @@ int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false
    if (i > 0)
       ArrayCopy(lpResult, lines);
 
-   return(catch("FileReadLines(3)"));
+   return(ifInt(catch("FileReadLines(3)")==NO_ERROR, i, -1));
 }
 
 
@@ -3829,10 +3835,11 @@ int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
  * @param  string  object      - zu zerlegender String
  * @param  string  separator   - Trennstring
  * @param  string& lpResults[] - Zielarray für die Teilstrings
+ * @param  int     limit       - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
-int Explode(string object, string separator, string& lpResults[]) {
+int Explode(string object, string separator, string& lpResults[], int limit=NULL) {
    int lenObject    = StringLen(object),
        lenSeparator = StringLen(separator);
 
@@ -3841,9 +3848,11 @@ int Explode(string object, string separator, string& lpResults[]) {
       lpResults[0] = object;
    }
    else if (separator == "") {               // String in einzelne Zeichen zerlegen
-      ArrayResize(lpResults, lenObject);
+      if (limit==NULL || limit > lenObject)
+         limit = lenObject;
+      ArrayResize(lpResults, limit);
 
-      for (int i=0; i < lenObject; i++) {
+      for (int i=0; i < limit; i++) {
          lpResults[i] = StringSubstr(object, i, 1);
       }
    }
@@ -3855,6 +3864,8 @@ int Explode(string object, string separator, string& lpResults[]) {
          ArrayResize(lpResults, size+1);
 
          pos = StringFind(object, separator, i);
+         if (limit == size+1)
+            pos = -1;
          if (pos == -1) {
             lpResults[size] = StringSubstr(object, i);
             break;
@@ -3871,7 +3882,7 @@ int Explode(string object, string separator, string& lpResults[]) {
 
       if (i == lenObject) {                  // bei abschließendem Separator Substrings mit Leerstring beenden
          ArrayResize(lpResults, size+1);
-         lpResults[size] = "";
+         lpResults[size] = "";               // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende überprüfen
       }
    }
 
@@ -6416,6 +6427,18 @@ bool StringIsNumeric(string value) {
    }
 
    return(true);
+}
+
+
+/**
+ * Prüft, ob ein String einen gültigen Integer darstellt.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsInteger(string value) {
+   return(value == StringConcatenate("", StrToInteger(value)));
 }
 
 

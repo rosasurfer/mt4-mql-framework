@@ -102,7 +102,7 @@ int init() {
    if (externalConfig)
       MA.Methods = GetGlobalConfigString(configSection, configLabel +".MA.Methods", MA.Methods);
    string values[];
-   int size = Explode(StringToUpper(MA.Methods), ",", values);
+   int size = Explode(StringToUpper(MA.Methods), ",", values, NULL);
 
    // MA-Methode 1
    string value = StringTrim(values[0]);
@@ -145,7 +145,7 @@ int init() {
    // Deviations
    if (externalConfig)
       Deviations = GetGlobalConfigString(configSection, configLabel +".Deviations", Deviations);
-   size = Explode(Deviations, ",", values);
+   size = Explode(Deviations, ",", values, NULL);
    if (size > 2)
       return(catch("init(8)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
