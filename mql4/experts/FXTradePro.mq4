@@ -829,6 +829,30 @@ string StatusToStr(int status) {
 
 
 /**
+ * Gibt die lesbare Konstante eines Operation-Types zurück (überschreibt die Version in der Library)
+ *
+ * @param  int type - Operation-Type
+ *
+ * @return string
+ */
+string OperationTypeToStr(int type) {
+   switch (type) {
+      case OP_UNDEFINED: return("OP_UNDEFINED");
+      case OP_BUY      : return("OP_BUY"      );
+      case OP_SELL     : return("OP_SELL"     );
+      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
+      case OP_SELLLIMIT: return("OP_SELLLIMIT");
+      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
+      case OP_SELLSTOP : return("OP_SELLSTOP" );
+      case OP_BALANCE  : return("OP_BALANCE"  );
+      case OP_CREDIT   : return("OP_CREDIT"   );
+   }
+   catch("OperationTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
  * Speichert die aktuelle Konfiguration und Laufzeitdaten der Instanz, um die korrekte und nahtlose Wiederauf- und Übernahme
  * durch eine andere Instanz im selben oder einem anderen Terminal zu ermöglichen.
  *
@@ -904,7 +928,6 @@ int RestoreConfiguration() {
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
 
-
    // (1) Existenz der lokalen Konfiguration prüfen und Datei ggf. vom Server laden
    string filesDir = TerminalPath() +"\\experts\\files\\";
    string fileName = "presets\\FTP."+ sequenceId +".set";
@@ -925,7 +948,6 @@ int RestoreConfiguration() {
       return(error);
    }
 
-
    // (2) Datei einlesen
    debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
    string config[];
@@ -941,7 +963,6 @@ int RestoreConfiguration() {
       status = STATUS_DISABLED;
       return(last_error);
    }
-
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Daten valideren und übernehmen
    int parameters[13]; ArrayInitialize(parameters, 0);
@@ -965,8 +986,7 @@ int RestoreConfiguration() {
          status = STATUS_DISABLED;
          return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
       }
-      string key   = parts[0];
-      string value = parts[1];
+      string key=parts[0], value=parts[1];
 
       if (key == "sequenceId") {
          if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId)   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
@@ -1063,28 +1083,4 @@ int RestoreConfiguration() {
       catch("RestoreConfiguration(19)", error);
    }
    return(error);
-}
-
-
-/**
- * Gibt die lesbare Konstante eines Operation-Types zurück (überschreibt die Version in der Library)
- *
- * @param  int type - Operation-Type
- *
- * @return string
- */
-string OperationTypeToStr(int type) {
-   switch (type) {
-      case OP_UNDEFINED: return("OP_UNDEFINED");
-      case OP_BUY      : return("OP_BUY"      );
-      case OP_SELL     : return("OP_SELL"     );
-      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
-      case OP_SELLLIMIT: return("OP_SELLLIMIT");
-      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
-      case OP_SELLSTOP : return("OP_SELLSTOP" );
-      case OP_BALANCE  : return("OP_BALANCE"  );
-      case OP_CREDIT   : return("OP_CREDIT"   );
-   }
-   catch("OperationTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
 }
