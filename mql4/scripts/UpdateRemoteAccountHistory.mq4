@@ -5,7 +5,6 @@
  * Die Auswertung und Zuordnung erfolgt auf dem Server.
  */
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 /**

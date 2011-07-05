@@ -34,7 +34,6 @@
  *  - ShowStatus() übersichtlicher gestalten (mit Textlabeln statt Comment()-Funktion)
  */
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 
 #define STATUS_INITIALIZED    1
@@ -327,7 +326,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-  return(catch("deinit()"));
+   return(catch("deinit()"));
 }
 
 
@@ -905,8 +904,6 @@ int RestoreConfiguration() {
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
 
-   debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
-
 
    // (1) Existenz der lokalen Konfiguration prüfen und Datei ggf. vom Server laden
    string filesDir = TerminalPath() +"\\experts\\files\\";
@@ -916,7 +913,9 @@ int RestoreConfiguration() {
       string url        = "http://sub.domain.tld/getFTPConfiguration.php?sequenceId="+ sequenceId;
       string targetFile = filesDir +"\\"+ fileName;
       string logFile    = filesDir +"\\"+ fileName +".log";
-      string cmdLine    = "wget.exe -S \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
+      string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
+
+      debug("RestoreConfiguration()   downloading configuration for sequence #"+ sequenceId);
 
       int error = WinExecAndWait(cmdLine, SW_HIDE);               // SW_SHOWNORMAL|SW_HIDE
       if (error == NO_ERROR)
@@ -928,18 +927,38 @@ int RestoreConfiguration() {
 
 
    // (2) Datei einlesen
+   debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines <= 0) {
-      if (lines == 0) catch("RestoreConfiguration(2)   invalid configuration file \""+ fileName +"\", 0 lines", ERR_RUNTIME_ERROR);
-      else            last_error = stdlib_PeekLastError();
+      if (lines == 0) {
+         FileDelete(fileName);
+         catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR);
+      }
+      else {
+         last_error = stdlib_PeekLastError();
+      }
       status = STATUS_DISABLED;
       return(last_error);
    }
-   //debug("RestoreConfiguration()   config = "+ StringArrayToStr(config));
 
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Daten valideren und übernehmen
+   int parameters[13]; ArrayInitialize(parameters, 0);
+   int I_SEQUENCEID      =  0;
+   int I_ENTRY_DIRECTION =  1;
+   int I_ENTRY_LIMIT     =  2;
+   int I_ENTRY_LIMITTYPE =  3;
+   int I_TAKEPROFIT      =  4;
+   int I_STOPLOSS        =  5;
+   int I_LOTSIZE_LEVEL_1 =  6;
+   int I_LOTSIZE_LEVEL_2 =  7;
+   int I_LOTSIZE_LEVEL_3 =  8;
+   int I_LOTSIZE_LEVEL_4 =  9;
+   int I_LOTSIZE_LEVEL_5 = 10;
+   int I_LOTSIZE_LEVEL_6 = 11;
+   int I_LOTSIZE_LEVEL_7 = 12;
+
    string parts[];
    for (int i=0; i < lines; i++) {
       if (Explode(config[i], "=", parts, 2) != 2) {
@@ -951,67 +970,80 @@ int RestoreConfiguration() {
 
       if (key == "sequenceId") {
          if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId)   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         parameters[I_SEQUENCEID] = 1;
       }
       else if (key == "Entry.Direction") {
          if (value!="long" && value!="short")                            { status = STATUS_DISABLED; return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Entry.Direction  = value;
          Entry.iDirection = ifInt(Entry.Direction=="long", OP_BUY, OP_SELL);
+         parameters[I_ENTRY_DIRECTION] = 1;
       }
       else if (key == "Entry.Limit") {
          double dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LT(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Entry.Limit = dValue;
+         parameters[I_ENTRY_LIMIT] = 1;
       }
       else if (key == "Entry.LimitType") {
          int iValue       = StrToInteger(value);
          int validTypes[] = {OP_UNDEFINED, OP_BUYLIMIT, OP_SELLLIMIT, OP_BUYSTOP, OP_SELLSTOP};
          if (!StringIsInteger(value) || !IntInArray(iValue, validTypes)) { status = STATUS_DISABLED; return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Entry.LimitType = iValue;
+         parameters[I_ENTRY_LIMITTYPE] = 1;
       }
       else if (key == "TakeProfit") {
          iValue = StrToInteger(value);
          if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          TakeProfit = iValue;
+         parameters[I_TAKEPROFIT] = 1;
       }
       else if (key == "StopLoss") {
          iValue = StrToInteger(value);
          if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          StopLoss = iValue;
+         parameters[I_STOPLOSS] = 1;
       }
       else if (key == "Lotsize.Level.1") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.1 = dValue;
+         parameters[I_LOTSIZE_LEVEL_1] = 1;
       }
       else if (key == "Lotsize.Level.2") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.2 = dValue;
+         parameters[I_LOTSIZE_LEVEL_2] = 1;
       }
       else if (key == "Lotsize.Level.3") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.3 = dValue;
+         parameters[I_LOTSIZE_LEVEL_3] = 1;
       }
       else if (key == "Lotsize.Level.4") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.4 = dValue;
+         parameters[I_LOTSIZE_LEVEL_4] = 1;
       }
       else if (key == "Lotsize.Level.5") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(14)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.5 = dValue;
+         parameters[I_LOTSIZE_LEVEL_5] = 1;
       }
       else if (key == "Lotsize.Level.6") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(15)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.6 = dValue;
+         parameters[I_LOTSIZE_LEVEL_6] = 1;
       }
       else if (key == "Lotsize.Level.7") {
          dValue = StrToDouble(value);
          if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(16)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
          Lotsize.Level.7 = dValue;
+         parameters[I_LOTSIZE_LEVEL_7] = 1;
       }
    }
 
@@ -1019,12 +1051,16 @@ int RestoreConfiguration() {
       status = STATUS_DISABLED;
       return(catch("RestoreConfiguration(17)   invalid configuration file \""+ fileName +"\" (Entry.Limit="+ NumberToStr(Entry.Limit, ".+") +" doesn't match Entry.LimitType="+ OperationTypeToStr(Entry.LimitType) +")", ERR_RUNTIME_ERROR));
    }
+   if (IntInArray(0, parameters)) {
+      status = STATUS_DISABLED;
+      return(catch("RestoreConfiguration(18)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR));
+   }
 
 
    error = GetLastError();
    if (error != NO_ERROR) {
       status = STATUS_DISABLED;
-      catch("RestoreConfiguration(18)", error);
+      catch("RestoreConfiguration(19)", error);
    }
    return(error);
 }

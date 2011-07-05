@@ -347,3 +347,21 @@
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
 
 #import
+
+
+// ShowWindow()-Konstanten für WinExecWait()
+#define SW_SHOW                           5        // Details zu den Werten in win32api.mqh
+#define SW_SHOWNA                         8
+#define SW_HIDE                           0
+#define SW_SHOWMAXIMIZED                  3
+#define SW_MAXIMIZE        SW_SHOWMAXIMIZED
+#define SW_SHOWMINIMIZED                  2
+#define SW_SHOWMINNOACTIVE                7
+#define SW_MINIMIZE                       6
+#define SW_FORCEMINIMIZE                 11
+#define SW_MAX             SW_FORCEMINIMIZE
+#define SW_SHOWNORMAL                     1
+#define SW_NORMAL             SW_SHOWNORMAL
+#define SW_SHOWNOACTIVATE                 4
+#define SW_RESTORE                        9
+#define SW_SHOWDEFAULT                   10
