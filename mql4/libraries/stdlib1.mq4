@@ -4780,6 +4780,7 @@ string ErrorDescription(int error) {
       case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5005
       case ERR_MARKETINFO_UPDATE          : return("requested market info data in update state"                    ); // 5006
+      case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
    }
    return("unknown error");
 }
@@ -4901,6 +4902,7 @@ string ErrorToStr(int error) {
       case ERR_TERMINAL_NOT_YET_READY     : return("ERR_TERMINAL_NOT_YET_READY"     ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
       case ERR_MARKETINFO_UPDATE          : return("ERR_MARKETINFO_UPDATE"          ); // 5006
+      case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
    }
    return(error);
 }

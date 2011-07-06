@@ -420,6 +420,7 @@
 #define ERR_TERMINAL_NOT_YET_READY                   5004   // terminal not yet ready
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
 #define ERR_MARKETINFO_UPDATE                        5006   // function MarketInfo() in update state
+#define ERR_FILE_NOT_FOUND                           5007   // file not found
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung

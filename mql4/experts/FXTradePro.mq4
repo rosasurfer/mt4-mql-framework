@@ -13,6 +13,7 @@
  *  TODO:
  *  -----
  *  - Konfiguration der Instanz auf Server speichern und bei Reload ggf. von dort einlesen
+ *  - bei fehlender Konfiguration muß die laufende Instanz weitmöglichst eingelesen werden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -34,6 +35,7 @@
  *  - ShowStatus() übersichtlicher gestalten (mit Textlabeln statt Comment()-Funktion)
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 
 #define STATUS_INITIALIZED    1
@@ -49,20 +51,19 @@
 extern string _1____________________________ = "==== Entry Options ===================";
 extern string Entry.Direction                = "long";
 extern double Entry.Limit                    = 0;
-//extern double Entry.Limit                    = 2.0;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 50;
 extern int    StopLoss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes =======================";
-extern double Lotsize.Level.1                = 0.1;
-extern double Lotsize.Level.2                = 0.1;
-extern double Lotsize.Level.3                = 0.2;
-extern double Lotsize.Level.4                = 0.3;
-extern double Lotsize.Level.5                = 0.4;
-extern double Lotsize.Level.6                = 0.6;
-extern double Lotsize.Level.7                = 0.8;
+extern double Lotsize.Level.1                = 0.5;
+extern double Lotsize.Level.2                = 0.6;
+extern double Lotsize.Level.3                = 2.2;
+extern double Lotsize.Level.4                = 2.6;
+extern double Lotsize.Level.5                = 3.2;
+extern double Lotsize.Level.6                = 3.8;
+extern double Lotsize.Level.7                = 4.6;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -281,7 +282,7 @@ int init() {
    if (newSequence || UninitializeReason()==REASON_PARAMETERS) {
       SaveConfiguration();
    }
-   else if (!newSequence && UninitializeReason()!=REASON_CHARTCHANGE) {
+   else if (/*!newSequence &&*/ UninitializeReason()!=REASON_CHARTCHANGE) {
       RestoreConfiguration();
    }
 
@@ -496,7 +497,13 @@ bool IsEntryLimitReached() {
       return(true);                                                  // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
    }
 
-   if (NE(Entry.LastPrice, 0)) {                                     // entryLastPrice muß initialisiert sein => ersten Aufruf überspringen
+
+   static bool lastPrice.init = false;
+
+   if (EQ(Entry.LastPrice, 0)) {                                     // Entry.LastPrice muß initialisiert sein => ersten Aufruf überspringen und Status merken,
+      lastPrice.init = true;                                         // um firstTick bei erstem tatsächlichen Test gegen Entry.LastPrice auf TRUE zurückzusetzen
+   }
+   else {
       if (LT(Entry.LastPrice, Entry.Limit)) {
          if (GT(price, Entry.Limit)) {                               // Tick hat Limit von unten nach oben gekreuzt
             debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastPrice="+ NumberToStr(Entry.LastPrice, PriceFormat) +") nach oben (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
@@ -508,6 +515,10 @@ bool IsEntryLimitReached() {
          debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastPrice="+ NumberToStr(Entry.LastPrice, PriceFormat) +") nach unten (price="+ NumberToStr(price, PriceFormat) +") gekreuzt");
          Entry.LastPrice = Entry.Limit;
          return(true);
+      }
+      if (lastPrice.init) {
+         lastPrice.init = false;
+         firstTick      = true;                                      // firstTick nach erstem tatsächlichen Test gegen Entry.LastPrice auf TRUE zurückzusetzen
       }
    }
    Entry.LastPrice = price;
@@ -528,8 +539,8 @@ bool IsStopLossReached() {
 
    double last.price, last.loss;
 
-   static string last.directions[] = { "long", "short" };
-   static string last.priceNames[] = { "Bid" , "Ask"   };
+   static string last.directions[] = {"long", "short"};
+   static string last.priceNames[] = {"Bid" , "Ask"  };
 
    if (last.type == OP_BUY) {
       last.price = Bid;
@@ -919,7 +930,13 @@ int SaveConfiguration() {
    }
    FileClose(hFile);
 
+
    // (3) Datei auf Server laden
+   error = UploadConfiguration(filename);
+   if (error != NO_ERROR) {
+      status = STATUS_DISABLED;
+      return(error);
+   }
 
    error = GetLastError();
    if (error != NO_ERROR) {
@@ -927,6 +944,35 @@ int SaveConfiguration() {
       catch("SaveConfiguration(4)", error);
    }
    return(error);
+}
+
+
+/**
+ * Lädt die angegebene Konfigurationsdatei auf den Server.
+ *
+ * @param  string filename - Dateiname, relativ zu "{terminal-directory}\experts\files"
+ *
+ * @return int - Fehlerstatus
+ */
+int UploadConfiguration(string filename) {
+   // Befehlszeile für Shellaufruf zusammensetzen
+   string url          = "http://sub.domain.tld/saveFTPConfiguration.php";
+   string filesDir     = TerminalPath() +"\\experts\\files\\";
+   string dataFile     = filesDir + filename;
+   string responseFile = filesDir + filename +".response";
+   string logFile      = filesDir + filename +".log";
+   string cmdLine      = "wget.exe -b \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+
+   // Existenz der Datei prüfen
+   if (!IsFile(dataFile))
+      return(catch("UploadConfiguration(1)   file not found: \""+ dataFile +"\"", ERR_FILE_NOT_FOUND));
+
+   // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
+   int error = WinExec(cmdLine, SW_HIDE);          // SW_SHOWNORMAL|SW_HIDE
+   if (error < 32)
+      return(catch("UploadConfiguration(2)   execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+
+   return(catch("UploadConfiguration(3)"));
 }
 
 
