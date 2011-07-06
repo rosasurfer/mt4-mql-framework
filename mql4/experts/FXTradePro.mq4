@@ -955,8 +955,10 @@ int SaveConfiguration() {
  * @return int - Fehlerstatus
  */
 int UploadConfiguration(string filename) {
+   string parts[]; int size = Explode(filename, "\\", parts, NULL);
+
    // Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "http://sub.domain.tld/saveFTPConfiguration.php";
+   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?name="+ UrlEncode(parts[size-1]);
    string filesDir     = TerminalPath() +"\\experts\\files\\";
    string dataFile     = filesDir + filename;
    string responseFile = filesDir + filename +".response";
