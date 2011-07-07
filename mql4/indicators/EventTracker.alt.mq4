@@ -180,19 +180,19 @@ int start() {
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
 
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
+   // init() ggf. nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
       init();
    init = false;
    if (init_error != NO_ERROR)
       return(init_error);
 
-   // nach Terminal-Start Abschluß der Initialisierung überprüfen
-   if (Bars == 0) {
+   // Abschluß der Chart-Initialisierung überprüfen
+   if (Bars == 0) {                                   // tritt u.U. bei Terminal-Start auf
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
    }
-   last_error = 0;
+   last_error = NO_ERROR;
    // -----------------------------------------------------------------------------
 
 
@@ -200,15 +200,11 @@ int start() {
    if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
 
-   // aktuelle Accountdaten holen und alte Ticks abfangen, sämtliche Events werden nur nach neuen Ticks überprüft
-   static int accountData[3];                                  // { last_account_number, current_account_number, current_account_init_servertime }
+   // aktuelle Accountdaten holen und alte Ticks abfangen: alle Events werden nur nach neuen Ticks überprüft
+   static int accountData[3];                                  // { PreviousAccount.Number, CurrentAccount.Number, CurrentAccount.LoginServertime }
    EventListener.AccountChange(accountData, 0);                // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
-   if (TimeCurrent() < accountData[2]) {
-      //debug("start()   account="+ accountData[1] +"   alter Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   if (TimeCurrent() < accountData[2])
       return(catch("start(1)"));
-   }
-   //debug("start()   account="+ accountData[1] +"   neuer Tick="+ NumberToStr(Close[0], ".4'") +"   ServerTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   RealServerTime="+ TimeToStr(GmtToServerTime(TimeGMT()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   accountInitTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-
 
    // Positionen
    if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)

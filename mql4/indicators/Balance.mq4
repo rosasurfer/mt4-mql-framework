@@ -70,12 +70,12 @@ int start() {
    if (init_error != NO_ERROR)
       return(init_error);
 
-   // nach Terminal-Start Abschluß der Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iBalance) == 0) {
+   // Abschluß der Chart-Initialisierung überprüfen
+   if (Bars == 0 || ArraySize(iBalance) == 0) {          // tritt u.U. bei Terminal-Start auf
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
    }
-   last_error = 0;
+   last_error = NO_ERROR;
    // -----------------------------------------------------------------------------
 
 
