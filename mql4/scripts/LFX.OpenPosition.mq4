@@ -10,16 +10,14 @@
 
 extern string Currency  = "";             // AUD | CAD | CHF | EUR | GBP | JPY | USD
 extern string Direction = "long";         // buy | sell | long | short
-extern double Units     = 1.0;            // Vielfaches von 0.1 im Bereich 0.1-3.0
+extern double Units     = 1.0;            // Vielfaches von 0.1 im Bereich 0.1-1.5
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 int Strategy.uniqueId = 102;              // eindeutige ID der Strategie (im Bereich 0-1023)
 
-string currency;
-int    direction;
-double units;
+int    iDirection;
 double leverage;
 
 int    positions.magic   [];              // Daten der aktuell offenen Positionen dieser Strategie
@@ -40,38 +38,39 @@ int init() {
 
 
    // (1) Parametervalidierung
-   // Open.Currency
-   currency = StringToUpper(StringTrim(Currency));
+   // Currency
+   string value = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
-   if (!StringInArray(currency, currencies))
+   if (!StringInArray(value, currencies))
       return(catch("init(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   Currency = value;
 
-   // Open.Direction
-   string strDirection = StringToUpper(StringTrim(Direction));
-   if (StringLen(strDirection) > 0) {
-      switch (StringGetChar(strDirection, 0)) {
-         case 'B':
-         case 'L': direction = OP_BUY;  break;
-         case 'S': direction = OP_SELL; break;
-         default:
-            return(catch("init(2)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-      }
+   // Direction
+   value = StringToUpper(StringTrim(Direction));
+   if (value == "")
+      return(catch("init(2)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   switch (StringGetChar(value, 0)) {
+      case 'B':
+      case 'L': Direction = "long";  iDirection = OP_BUY;  break;
+      case 'S': Direction = "short"; iDirection = OP_SELL; break;
+      default:
+         return(catch("init(3)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    }
 
-   // Open.Units
-   if (LT(Units, 0.1) || GT(Units, 3))
-      return(catch("init(3)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 3.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   // Units
+   if (LT(Units, 0.1) || GT(Units, 1.5))
+      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT_PARAMVALUE));
    if (NE(MathModFix(Units, 0.1), 0))
-      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   units = NormalizeDouble(Units, 1);
+      return(catch("init(5)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   Units = NormalizeDouble(Units, 1);
 
 
    // (2) Leverage-Konfiguration einlesen
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
-      return(catch("init(5)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(6)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
-   return(catch("init(6)"));
+   return(catch("init(7)"));
 }
 
 
@@ -103,13 +102,13 @@ int start() {
 
 
    // (1) Pairs bestimmen
-   if      (currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
-   else if (currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
-   else if (currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
-   else if (currency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
-   else if (currency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
-   else if (currency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
-   else if (currency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
+   if      (Currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
+   else if (Currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
+   else if (Currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
+   else if (Currency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
+   else if (Currency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
+   else if (Currency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
+   else if (Currency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
 
 
    // (2) Lotsizes berechnen
@@ -124,11 +123,11 @@ int start() {
       double maxLot         = MarketInfo(symbols[i], MODE_MAXLOT        );
       double marginRequired = MarketInfo(symbols[i], MODE_MARGINREQUIRED);
 
-      int error = GetLastError();
+      int error = GetLastError();                     // ERR_UNKNOWN_SYMBOL ???
       if (error != NO_ERROR)
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      // ERR_MARKETINFO_UPDATE abfangen (erst nach Auslesen aller Werte)
+      // zusätzlich auf ERR_MARKETINFO_UPDATE prüfen
       string errorMsg = "";
       if (LT(bid, 0.5)            || GT(bid, 150)            ) errorMsg = StringConcatenate(errorMsg, "Bid(\""           , symbols[i], "\") = ", NumberToStr(bid           , ".+"), NL);
       if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) errorMsg = StringConcatenate(errorMsg, "TickSize(\""      , symbols[i], "\") = ", NumberToStr(tickSize      , ".+"), NL);
@@ -151,8 +150,8 @@ int start() {
       }
 
       double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                                           // equity / lotValue entspricht einem Hebel von 1, dies wird mit leverage gehebelt
-      lots[i] = units * unitSize;
+      double unitSize = equity / lotValue * leverage;                                           // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      lots[i] = Units * unitSize;
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
@@ -166,15 +165,15 @@ int start() {
 
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
-      if (StringStartsWith(symbols[i], currency)) directions[i]  = direction;
-      else                                        directions[i]  = direction ^ 1;   // 0=>1, 1=>0
-      if (currency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], Currency)) directions[i]  = iDirection;
+      else                                        directions[i]  = iDirection ^ 1;     // 0=>1, 1=>0
+      if (Currency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
    }
 
 
    // (4) Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(units, ".+") + ifString(EQ(units, 1), " unit ", " units ") + currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("start(5)"));
 
@@ -194,7 +193,7 @@ int start() {
       int      slippage    = ifInt(digits==pipDigits, 0, 1);                     // keine Slippage bei 2- oder 4-Digits-Brokern
       double   sl          = NULL;
       double   tp          = NULL;
-      string   comment     = currency +"."+ counter +"/"+ DoubleToStr(units, 1);
+      string   comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
       int      magicNumber = CreateMagicNumber(counter);
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
@@ -273,8 +272,8 @@ int CreateMagicNumber(int counter) {
       return(-1);
    }
    int strategy   = Strategy.uniqueId & 0x3FF << 22;                 // 10 bit (Bits größer 10 nullen und auf 32 Bit erweitern)  | in MagicNumber: Bits 23-32
-   int currencyId = GetCurrencyId(currency) & 0x1F << 17;            //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
-   int iUnits     = MathRound(units * 10) + 0.1;                     //    +0.1 fängt evt. Präzisionsfehler beim Casten ab
+   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;            //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
+   int iUnits     = MathRound(Units * 10) + 0.1;                     //   +0.1 fängt evt. Präzisionsfehler beim Casten ab
        iUnits     = iUnits & 0x1F << 12;                             //  5 bit (Bits größer 5 nullen und auf 17 Bit erweitern)   | in MagicNumber: Bits 13-17
    int instance   = GetInstanceId() & 0x1FF << 3;                    //  9 bit (Bits größer 9 nullen und auf 12 Bit erweitern)   | in MagicNumber: Bits  4-12
    int pCounter   = counter & 0x7;                                   //  3 bit (Bits größer 3 nullen)                            | in MagicNumber: Bits  1-3
@@ -297,7 +296,7 @@ int GetPositionCounter() {
    int counter, size=ArraySize(positions.currency);
 
    for (int i=0; i < size; i++) {
-      if (positions.currency[i] == currency) {
+      if (positions.currency[i] == Currency) {
          if (positions.counter[i] > counter)
             counter = positions.counter[i];
       }
@@ -321,7 +320,7 @@ int GetInstanceId() {
          while (id > 511) {
             id >>= 1;
          }
-         if (IntInArray(id, positions.instance))   // zusätzlich sicherstellen, daß wir im selben Moment nie zwei gleiche Instanz-ID's benutzen
+         if (IntInArray(id, positions.instance))      // sicherstellen, daß wir im selben Moment nie zwei gleiche Instanz-ID's benutzen
             id = 0;
       }
    }
