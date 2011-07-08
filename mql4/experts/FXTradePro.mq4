@@ -282,7 +282,7 @@ int init() {
    if (newSequence || UninitializeReason()==REASON_PARAMETERS) {
       SaveConfiguration();
    }
-   else if (/*!newSequence &&*/ UninitializeReason()!=REASON_CHARTCHANGE) {
+   else if (UninitializeReason()!=REASON_CHARTCHANGE) {
       RestoreConfiguration();
    }
 
@@ -341,13 +341,10 @@ int start() {
    if (last_error != NO_ERROR) return(last_error);
 
    // temporäre Laufzeitanalyse
-   bool priceError;
-   if (Bid < 0.00000001) { priceError = true; catch("start()   Bid = "+ NumberToStr(Bid, PriceFormat), ERR_RUNTIME_ERROR); }
-   if (Ask < 0.00000001) { priceError = true; catch("start()   Ask = "+ NumberToStr(Ask, PriceFormat), ERR_RUNTIME_ERROR); }
-   if (priceError) {
-      last_error = NO_ERROR;
+   if (Bid < 0.00000001) catch("start()   Bid = "+ NumberToStr(Bid, PriceFormat), ERR_RUNTIME_ERROR);
+   if (Ask < 0.00000001) catch("start()   Ask = "+ NumberToStr(Ask, PriceFormat), ERR_RUNTIME_ERROR);
+   if (last_error != NO_ERROR)
       return(last_error);
-   }
    // --------------------------------------------
 
 
