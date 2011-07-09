@@ -211,7 +211,6 @@
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
    int      GetAccountHistory(int account, string& lpResults[]);
-   string   GetAccountHistoryDirectory();
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
@@ -219,6 +218,7 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
+   string   GetShortAccountCompany();
    string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolDefault(symbol, symbol)
    string   GetStandardSymbolDefault(string symbol, string defaultValue);
    string   GetStandardSymbolStrict(string symbol);

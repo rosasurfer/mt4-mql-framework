@@ -56,7 +56,7 @@ int start() {
    // ------------------------
 
 
-   string file    = TerminalPath() +"\\experts\\files\\"+ GetAccountHistoryDirectory() +"\\external_positions.ini";
+   string file    = TerminalPath() +"\\experts\\files\\"+ GetShortAccountCompany() +"\\external_positions.ini";
    string section = Account.Company +"."+ Account.Number;
    string keys[];
 

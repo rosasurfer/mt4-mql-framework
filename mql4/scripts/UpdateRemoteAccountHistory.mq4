@@ -126,7 +126,7 @@ int start() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = GetAccountHistoryDirectory() +"\\tmp_"+ WindowExpertName() +".txt";
+   string filename = GetShortAccountCompany() +"\\tmp_"+ WindowExpertName() +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("start(2)  FileOpen(filename=\""+ filename +"\")"));

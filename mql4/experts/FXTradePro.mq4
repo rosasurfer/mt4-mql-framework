@@ -892,8 +892,8 @@ int SaveConfiguration() {
 
    // (1) Daten zusammenstellen
    string lines[]; ArrayResize(lines, 0);
-
-   ArrayPushString(lines, /*string*/ "AccountCompany="  +             AccountCompany()        );
+   string company = GetShortAccountCompany();
+   ArrayPushString(lines, /*string*/ "AccountCompany="  +             company                 );
    ArrayPushString(lines, /*int   */ "AccountNumber="   +             AccountNumber()         );
    ArrayPushString(lines, /*string*/ "Symbol="          +             Symbol()                );
    // ------------------------------------------------------------------------------------------
@@ -932,7 +932,7 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   error = UploadConfiguration(filename);
+   error = UploadConfiguration(company, AccountNumber(), Symbol(), filename);
    if (error != NO_ERROR) {
       status = STATUS_DISABLED;
       return(error);
@@ -950,15 +950,18 @@ int SaveConfiguration() {
 /**
  * Lädt die angegebene Konfigurationsdatei auf den Server.
  *
+ * @param  string company  - Account-Company
+ * @param  int    account  - Account-Number
+ * @param  string symbol   - Symbol der Konfiguration
  * @param  string filename - Dateiname, relativ zu "{terminal-directory}\experts\files"
  *
  * @return int - Fehlerstatus
  */
-int UploadConfiguration(string filename) {
+int UploadConfiguration(string company, int account, string symbol, string filename) {
    string parts[]; int size = Explode(filename, "\\", parts, NULL);
 
    // Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?name="+ UrlEncode(parts[size-1]);
+   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account=account&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(parts[size-1]);
    string filesDir     = TerminalPath() +"\\experts\\files\\";
    string dataFile     = filesDir + filename;
    string responseFile = filesDir + filename +".response";

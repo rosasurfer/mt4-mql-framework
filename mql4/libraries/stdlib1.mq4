@@ -1425,20 +1425,38 @@ string GetTradeServerDirectory() {
 
 
 /**
- * Gibt das History-Verzeichnis des aktuellen Accounts zurück (Trade-History etc.).
+ * Gibt den Kurznamen der Firma des aktuellen Accounts zurück. Der Name wird aus dem Namen des Account-Servers und
+ * nicht aus dem Rückgabewert von AccountCompany() ermittelt.
  *
- * @return string
+ * @return string - Kurzname
  */
-string GetAccountHistoryDirectory() {
-   string directory = GetTradeServerDirectory();
+string GetShortAccountCompany() {
+   string server=StringToLower(GetTradeServerDirectory());
 
-   if (StringStartsWith(directory, "Alpari")) {
-      if      (StringStartsWith(directory, "AlpariBroker-")) directory = StringConcatenate("Alpari-", StringRight(directory, -13));
-      else if (StringStartsWith(directory, "AlpariUK-"    )) directory = StringConcatenate("Alpari-", StringRight(directory,  -9));
-      else if (StringStartsWith(directory, "AlpariUS-"    )) directory = StringConcatenate("Alpari-", StringRight(directory,  -9));
-   }
+   if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
+   else if (StringStartsWith(server, "alparibroker-"      )) return("Alpari"          );
+   else if (StringStartsWith(server, "alpariuk-"          )) return("Alpari"          );
+   else if (StringStartsWith(server, "alparius-"          )) return("Alpari"          );
+   else if (StringStartsWith(server, "apbgtrading-"       )) return("APBG"            );
+   else if (StringStartsWith(server, "atcbrokers-"        )) return("ATC Brokers"     );
+   else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC Brokers"     );
+   else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
+   else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
+   else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
+   else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
+   else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
+   else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
+   else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
+   else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
+   else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
+   else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
+   else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
+   else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
+   else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
+   else if (StringStartsWith(server, "sig-"               )) return("SIG"             );
+   else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
 
-   return(directory);
+   return(AccountCompany());
 }
 
 
@@ -3922,7 +3940,7 @@ int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
 
-   string filename = GetAccountHistoryDirectory() +"/"+ account + "_account_history.csv";
+   string filename = GetShortAccountCompany() +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
