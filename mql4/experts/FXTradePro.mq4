@@ -12,7 +12,6 @@
  *
  *  TODO:
  *  -----
- *  - Konfiguration der Instanz auf Server speichern und bei Reload ggf. von dort einlesen
  *  - bei fehlender Konfiguration muß die laufende Instanz weitmöglichst eingelesen werden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
@@ -300,6 +299,7 @@ int init() {
          else                             status = STATUS_FINISHED;
       }
    }
+   ReadStatus();
    ShowStatus();
 
 
@@ -374,7 +374,7 @@ int start() {
 
 
 /**
- * Überprüft den Status der aktuellen Sequenz.
+ * Liest den aktuellen Status der Sequenz ein.
  *
  * @return bool - Erfolgsstatus
  */
@@ -598,7 +598,7 @@ bool IsProfitTargetReached() {
 int StartSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
@@ -610,6 +610,7 @@ int StartSequence() {
    int ticket = OpenPosition(Entry.iDirection, CurrentLotSize());          // Position in Entry.Direction öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
+      progressionLevel--;
       return(catch("StartSequence(2)"));
    }
 
@@ -619,6 +620,7 @@ int StartSequence() {
       if (error == NO_ERROR)
          error = ERR_INVALID_TICKET;
       status = STATUS_DISABLED;
+      progressionLevel--;
       return(catch("StartSequence(3)", error));
    }
 
@@ -646,7 +648,7 @@ int StartSequence() {
 int IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("IncreaseProgression(1)"));
@@ -662,6 +664,7 @@ int IncreaseProgression() {
    int ticket = OpenPosition(new.type, last.lotsize + CurrentLotSize());   // alte Position hedgen und nächste öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
+      progressionLevel--;
       return(catch("IncreaseProgression(2)"));
    }
 
@@ -671,6 +674,7 @@ int IncreaseProgression() {
       if (error == NO_ERROR)
          error = ERR_INVALID_TICKET;
       status = STATUS_DISABLED;
+      progressionLevel--;
       return(catch("IncreaseProgression(3)", error));
    }
 
@@ -698,7 +702,7 @@ int IncreaseProgression() {
 int FinishSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to finish the sequence now?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("FinishSequence(1)"));
@@ -891,15 +895,11 @@ int SaveConfiguration() {
 
 
    // (1) Daten zusammenstellen
-   string lines[]; ArrayResize(lines, 0);
-   string company = GetShortAccountCompany();
-   ArrayPushString(lines, /*string*/ "AccountCompany="  +             company                 );
-   ArrayPushString(lines, /*int   */ "AccountNumber="   +             AccountNumber()         );
-   ArrayPushString(lines, /*string*/ "Symbol="          +             Symbol()                );
-   // ------------------------------------------------------------------------------------------
+   string lines[];  ArrayResize(lines, 0);
+
    ArrayPushString(lines, /*int   */ "sequenceId="      +             sequenceId              );
    ArrayPushString(lines, /*string*/ "Entry.Direction=" +             Entry.Direction         );
-   ArrayPushString(lines, /*double*/ "Entry.Limit="     + DoubleToStr(Entry.Limit, Digits)    );
+   ArrayPushString(lines, /*double*/ "Entry.Limit="     + NumberToStr(Entry.Limit, ".+")      );
    ArrayPushString(lines, /*int   */ "Entry.LimitType=" +             Entry.LimitType         );
    ArrayPushString(lines, /*int   */ "TakeProfit="      +             TakeProfit              );
    ArrayPushString(lines, /*int   */ "StopLoss="        +             StopLoss                );
@@ -932,7 +932,7 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   error = UploadConfiguration(company, AccountNumber(), Symbol(), filename);
+   error = UploadConfiguration(GetShortAccountCompany(), AccountNumber(), Symbol(), filename);
    if (error != NO_ERROR) {
       status = STATUS_DISABLED;
       return(error);
@@ -999,7 +999,7 @@ int RestoreConfiguration() {
 
    if (!IsFile(filesDir + fileName)) {
       // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(GetShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequenceId="+ sequenceId;
+      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(GetShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequence="+ sequenceId;
       string targetFile = filesDir +"\\"+ fileName;
       string logFile    = filesDir +"\\"+ fileName +".log";
       string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
@@ -1011,6 +1011,8 @@ int RestoreConfiguration() {
          status = STATUS_DISABLED;
          return(processLibError(error));
       }
+      debug("RestoreConfiguration()   configuration for sequence #"+ sequenceId +" successfully downloaded");
+      FileDelete(fileName +".log");
    }
 
    // (2) Datei einlesen
