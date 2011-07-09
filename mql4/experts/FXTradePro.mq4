@@ -288,7 +288,8 @@ int init() {
 
 
    // (5) aktuellen Status bestimmen und anzeigen
-   if (status == 0) {
+   if (init_error != NO_ERROR)            status = STATUS_DISABLED;
+   else if (status == 0) {
       if (progressionLevel == 0) {
          if (EQ(Entry.Limit, 0))          status = STATUS_INITIALIZED;
          else                             status = STATUS_ENTRYLIMIT;
@@ -316,8 +317,8 @@ int init() {
 
    int error = GetLastError();
    if (error      != NO_ERROR) catch("init(15)", error);
-   if (last_error != NO_ERROR) status = STATUS_DISABLED;
-   return(last_error);
+   if (init_error != NO_ERROR) status = STATUS_DISABLED;
+   return(init_error);
 }
 
 
@@ -338,6 +339,7 @@ int deinit() {
  */
 int start() {
    init = false;
+   if (init_error != NO_ERROR) return(init_error);
    if (last_error != NO_ERROR) return(last_error);
 
    // temporäre Laufzeitanalyse
@@ -708,8 +710,7 @@ int FinishSequence() {
       if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
          if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
             status = STATUS_DISABLED;
-            last_error = stdlib_PeekLastError();
-            return(last_error);
+            return(processLibError(stdlib_PeekLastError()));
          }
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             int error = GetLastError();
@@ -756,7 +757,7 @@ int OpenPosition(int type, double lotsize) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
    if (ticket == -1)
-      last_error = stdlib_PeekLastError();
+      processLibError(stdlib_PeekLastError());
 
    if (catch("OpenPosition(3)") != NO_ERROR)
       return(-1);
@@ -802,7 +803,10 @@ int ShowStatus() {
       case STATUS_PROGRESSING: msg = StringConcatenate(":  trade sequence ", sequenceId, " progressing...");                                                                                         break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                                                                               break;
       case STATUS_DISABLED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " disabled");
-                               if (last_error != NO_ERROR) msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");                                                                   break;
+                               int error = ifInt(init, init_error, last_error);
+                               if (error != NO_ERROR)
+                                  msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]");
+                               break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -883,8 +887,7 @@ int SaveConfiguration() {
       status = STATUS_DISABLED;
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
-
-   debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
+   //debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
 
 
    // (1) Daten zusammenstellen
@@ -967,7 +970,7 @@ int UploadConfiguration(string filename) {
       return(catch("UploadConfiguration(1)   file not found: \""+ dataFile +"\"", ERR_FILE_NOT_FOUND));
 
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
-   int error = WinExec(cmdLine, SW_HIDE);          // SW_SHOWNORMAL|SW_HIDE
+   int error = WinExec(cmdLine, SW_HIDE);                // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
       return(catch("UploadConfiguration(2)   execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
@@ -976,6 +979,8 @@ int UploadConfiguration(string filename) {
 
 
 /**
+ * Liest die Konfiguration einer Sequenz ein und setzt die internen Variablen entsprechend. Ohne lokale Konfiguration
+ * wird die Konfiguration vom Server zu laden und lokal gespeichert.
  *
  * @return int - Fehlerstatus
  */
@@ -985,7 +990,7 @@ int RestoreConfiguration() {
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
 
-   // (1) Existenz der lokalen Konfiguration prüfen und Datei ggf. vom Server laden
+   // (1) bei nicht existierender lokaler Konfiguration die Datei vom Server laden
    string filesDir = TerminalPath() +"\\experts\\files\\";
    string fileName = "presets\\FTP."+ sequenceId +".set";
 
@@ -997,12 +1002,11 @@ int RestoreConfiguration() {
 
       debug("RestoreConfiguration()   downloading configuration for sequence #"+ sequenceId);
 
-      int error = WinExecAndWait(cmdLine, SW_HIDE);               // SW_SHOWNORMAL|SW_HIDE
-      if (error == NO_ERROR)
-         return(RestoreConfiguration());                          // nochmaliges Einlesen nach Download
-
-      status = STATUS_DISABLED;
-      return(error);
+      int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
+      if (error != NO_ERROR) {
+         status = STATUS_DISABLED;
+         return(processLibError(error));
+      }
    }
 
    // (2) Datei einlesen
@@ -1010,15 +1014,12 @@ int RestoreConfiguration() {
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines <= 0) {
+      status = STATUS_DISABLED;
       if (lines == 0) {
          FileDelete(fileName);
-         catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR);
+         return(catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR));
       }
-      else {
-         last_error = stdlib_PeekLastError();
-      }
-      status = STATUS_DISABLED;
-      return(last_error);
+      return(processLibError(stdlib_PeekLastError()));
    }
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Daten valideren und übernehmen

@@ -22,10 +22,8 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber()) {
-      init_error = stdlib_GetLastError();
-      return(init_error);
-   }
+   if (!GetAccountNumber())
+      return(processLibError(stdlib_PeekLastError()));
 
    SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");

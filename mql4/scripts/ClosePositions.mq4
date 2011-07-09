@@ -116,7 +116,7 @@ int start() {
    init = false;
    if (init_error != NO_ERROR)
       return(init_error);
-   // -----------------------------------------------------------------------------
+   // ------------------------
 
 
    int orders = OrdersTotal();

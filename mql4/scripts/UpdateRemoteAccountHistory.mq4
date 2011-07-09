@@ -38,7 +38,8 @@ int start() {
    init = false;
    if (init_error != NO_ERROR)
       return(init_error);
-   // -----------------------------------------------------------------------------
+   // ------------------------
+
 
    int account = AccountNumber();
    if (account == 0) {

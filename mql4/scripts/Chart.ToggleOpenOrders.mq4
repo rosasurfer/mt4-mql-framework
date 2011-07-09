@@ -51,8 +51,9 @@ int deinit() {
  */
 int start() {
    init = false;
-   if (init_error != NO_ERROR) return(init_error);
-   // --------------------------------------------
+   if (init_error != NO_ERROR)
+      return(init_error);
+   // ------------------------
 
 
    string file    = TerminalPath() +"\\experts\\files\\"+ GetAccountHistoryDirectory() +"\\external_positions.ini";

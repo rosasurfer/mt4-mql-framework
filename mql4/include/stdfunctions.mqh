@@ -434,8 +434,9 @@ int    ChangedBars = -1;
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error
- * gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare interne MQL-Fehler-Code ist nach Aufruf dieser Funktion immer zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Bei Aufruf in einer init()-Funktion wird der Fehler in der globalen
+ * Variable init_error gespeichert, außerhalb von init() in der globalen Variable last_error. Der mit der MQL-Funktion GetLastError() auslesbare interne
+ * MQL-Fehler-Code ist nach Aufruf dieser Funktion immer zurückgesetzt.
  *
  * @param  string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
  * @param  int    error   - manuelles Forcieren eines bestimmten Error-Codes
@@ -447,7 +448,7 @@ int    ChangedBars = -1;
  */
 int catch(string message="", int error=NO_ERROR) {
    if (error == NO_ERROR) error = GetLastError();
-   else                           GetLastError(); // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
+   else                           GetLastError();     // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
       if (message == "")
@@ -459,10 +460,28 @@ int catch(string message="", int error=NO_ERROR) {
    return(error);
 
    // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
+   processLibError(NULL);
    log(NULL);
    debug(NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
+}
+
+
+/**
+ * Speichert je nachdem, ob der Aufruf in der Funktion init() erfolgt oder nicht, den in einer Libraray aufgetretenen Fehler in den globalen Variablen
+ * init_error oder last_error.
+ *
+ * @param  int error - Fehler-Code
+ *
+ * @return int - derselbe Fehler-Code
+ */
+int processLibError(int error) {
+   if (error != NO_ERROR) {
+      if (init) init_error = error;
+      else      last_error = error;
+   }
+   return(error);
 }
 
 
