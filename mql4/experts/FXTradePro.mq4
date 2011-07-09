@@ -961,7 +961,7 @@ int UploadConfiguration(string company, int account, string symbol, string filen
    string parts[]; int size = Explode(filename, "\\", parts, NULL);
 
    // Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account=account&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(parts[size-1]);
+   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(parts[size-1]);
    string filesDir     = TerminalPath() +"\\experts\\files\\";
    string dataFile     = filesDir + filename;
    string responseFile = filesDir + filename +".response";
@@ -998,7 +998,8 @@ int RestoreConfiguration() {
    string fileName = "presets\\FTP."+ sequenceId +".set";
 
    if (!IsFile(filesDir + fileName)) {
-      string url        = "http://sub.domain.tld/getFTPConfiguration.php?sequenceId="+ sequenceId;
+      // Befehlszeile für Shellaufruf zusammensetzen
+      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(GetShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequenceId="+ sequenceId;
       string targetFile = filesDir +"\\"+ fileName;
       string logFile    = filesDir +"\\"+ fileName +".log";
       string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
