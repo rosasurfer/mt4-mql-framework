@@ -12,14 +12,14 @@
  *
  *  TODO:
  *  -----
- *  - ShowStatus(): Kennzahlen der Sequenz anzeigen (Level, erwarteter P/L etc.)
+ *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - in FinishSequence(): OrderCloseBy() implementieren
  *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
  *  - in ReadStatus(): Breakeven-Berechnung implementieren
  *  - Breakeven-Anzeige (in ShowStatus()???)
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Visualisierung des Entry.Limits implementieren
- *  - bei fehlender Konfiguration muß die laufende Instanz weitmöglichst eingelesen werden
+ *  - bei fehlender Konfiguration müssen die Daten die laufende Instanz weitmöglichst eingelesen werden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -32,7 +32,7 @@
  *  - SMS-Benachrichtigungen implementieren
  *  - Heartbeat-Order einrichten
  *  - Equity-Chart der laufenden Sequenz implementieren
- *  - ShowStatus() übersichtlicher gestalten (mit Textlabeln statt Comment()-Funktion)
+ *  - ShowStatus() übersichtlicher gestalten (Textlabel statt Comment()-Funktion)
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -844,7 +844,7 @@ int ShowStatus() {
    msg = StringConcatenate(msg,                                                                                               NL,
                           "Lot sizes:               ", strLotsizes,                                                           NL,
                           "TakeProfit:            ", TakeProfit +" pip = ", /*potentieller Gewinn*/                           NL,
-                          "StopLoss:              ", StopLoss +" pip = ",   /*erwarteter DrawDown*/                           NL,
+                          "StopLoss:              ", StopLoss +" pip = ",   /*potentieller DrawDown*/                         NL,
                         //"Breakeven:           ", "-",                                                                       NL,
                           "Profit/Loss:           ", /*P/L pip = */DoubleToStr(all.profits + all.commissions + all.swaps, 2), NL);
 
