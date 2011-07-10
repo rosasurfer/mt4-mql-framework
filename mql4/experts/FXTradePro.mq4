@@ -12,6 +12,7 @@
  *
  *  TODO:
  *  -----
+ *  - ShowStatus(): Kennzahlen der Sequenz anzeigen (Level, erwarteter P/L etc.)
  *  - in FinishSequence(): OrderCloseBy() implementieren
  *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
  *  - in ReadStatus(): Breakeven-Berechnung implementieren
@@ -91,6 +92,8 @@ double   levels.commission[], all.commissions;
 double   levels.profit    [], all.profits;
 datetime levels.closeTime [];                   // Unterscheidung zwischen offenen und geschlossenen Positionen
 
+double   lotsizes[];
+string   strLotsizes;
 bool     firstTick = true;
 int      status;
 
@@ -140,30 +143,41 @@ int init() {
          return(catch("init(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
 
       // Lotsizes
+      ArrayResize(lotsizes, 0);
       if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
       if (LT(Lotsize.Level.2, 0)) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      ArrayPushDouble(lotsizes, Lotsize.Level.1);
       if (EQ(Lotsize.Level.2, 0)) sequenceLength = 1;
       else {
          if (LT(Lotsize.Level.3, 0)) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+         ArrayPushDouble(lotsizes, Lotsize.Level.2);
          if (EQ(Lotsize.Level.3, 0)) sequenceLength = 2;
          else {
             if (LT(Lotsize.Level.4, 0)) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+            ArrayPushDouble(lotsizes, Lotsize.Level.3);
             if (EQ(Lotsize.Level.4, 0)) sequenceLength = 3;
             else {
                if (LT(Lotsize.Level.5, 0)) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+               ArrayPushDouble(lotsizes, Lotsize.Level.4);
                if (EQ(Lotsize.Level.5, 0)) sequenceLength = 4;
                else {
                   if (LT(Lotsize.Level.6, 0)) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                  ArrayPushDouble(lotsizes, Lotsize.Level.5);
                   if (EQ(Lotsize.Level.6, 0)) sequenceLength = 5;
                   else {
                      if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                     ArrayPushDouble(lotsizes, Lotsize.Level.6);
                      if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
-                     else                        sequenceLength = 7;
+                     else {
+                        ArrayPushDouble(lotsizes, Lotsize.Level.7);
+                        sequenceLength = 7;
+                     }
                   }
                }
             }
          }
       }
+      strLotsizes = JoinDoubles(lotsizes, ",  ");
    }
 
 
@@ -807,11 +821,11 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED: msg = StringConcatenate(":  trade sequence ", sequenceId, " initialized");                                                                                            break;
-      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  trade sequence ", sequenceId, " waiting for ", OperationTypeDescription(Entry.LimitType), " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(":  trade sequence ", sequenceId, " progressing...");                                                                                         break;
-      case STATUS_FINISHED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " finished");                                                                                               break;
-      case STATUS_DISABLED:    msg = StringConcatenate(":  trade sequence ", sequenceId, " disabled");
+      case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence #", sequenceId, " initialized");                                                                                            break;
+      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  sequence #", sequenceId, " waiting for ", OperationTypeDescription(Entry.LimitType), " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence #", sequenceId, " progressing...");                                                                                         break;
+      case STATUS_FINISHED:    msg = StringConcatenate(":  sequence #", sequenceId, " finished");                                                                                               break;
+      case STATUS_DISABLED:    msg = StringConcatenate(":  sequence #", sequenceId, " disabled");
                                int error = ifInt(init, init_error, last_error);
                                if (error != NO_ERROR)
                                   msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]");
@@ -820,18 +834,19 @@ int ShowStatus() {
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__SCRIPT__, msg,                                            NL,
-                                                                                       NL,
-                          "Progression Level:  ", progressionLevel, " / ", sequenceLength);
+   msg = StringConcatenate(__SCRIPT__, msg,                                              NL,
+                                                                                         NL,
+                          "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
    if (progressionLevel > 0)
       msg = StringConcatenate(msg, "  =  ", ifString(levels.type[progressionLevel-1]==OP_BUY, "+", "-"), NumberToStr(CurrentLotSize(), ".+"), " lot");
 
-   msg = StringConcatenate(msg,                                                                                  NL,
-                          "TakeProfit:            ", TakeProfit +" pip = ",                                      NL,
-                          "StopLoss:              ", StopLoss +" pip = ",                                        NL,
-                        //"Breakeven:           ", "-",                                                          NL,
-                          "Profit / Loss:          ", DoubleToStr(all.profits + all.commissions + all.swaps, 2), NL);
+   msg = StringConcatenate(msg,                                                                                               NL,
+                          "Lot sizes:               ", strLotsizes,                                                           NL,
+                          "TakeProfit:            ", TakeProfit +" pip = ", /*potentieller Gewinn*/                           NL,
+                          "StopLoss:              ", StopLoss +" pip = ",   /*erwarteter DrawDown*/                           NL,
+                        //"Breakeven:           ", "-",                                                                       NL,
+                          "Profit/Loss:           ", /*P/L pip = */DoubleToStr(all.profits + all.commissions + all.swaps, 2), NL);
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(StringConcatenate(NL, NL, msg));
@@ -1145,6 +1160,15 @@ int RestoreConfiguration() {
       return(catch("RestoreConfiguration(18)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR));
    }
 
+   ArrayResize(lotsizes, 7);
+   lotsizes[0] = Lotsize.Level.1;
+   lotsizes[1] = Lotsize.Level.2;
+   lotsizes[2] = Lotsize.Level.3;
+   lotsizes[3] = Lotsize.Level.4;
+   lotsizes[4] = Lotsize.Level.5;
+   lotsizes[5] = Lotsize.Level.6;
+   lotsizes[6] = Lotsize.Level.7;
+   strLotsizes = JoinDoubles(lotsizes, ",  ");
 
    error = GetLastError();
    if (error != NO_ERROR) {

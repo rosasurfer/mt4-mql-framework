@@ -251,14 +251,14 @@
 
    // toString-Funktionen
    string   AppliedPriceToStr(int appliedPrice);
-   string   BoolArrayToStr(bool& values[]);
+   string   BoolArrayToStr(bool& values[], string separator);
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);
    string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
-   string   DoubleArrayToStr(double& values[]);
+   string   DoubleArrayToStr(double& values[], string separator);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   IntArrayToStr(int& values[]);
+   string   IntArrayToStr(int& values[], string separator);
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
@@ -268,7 +268,7 @@
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
-   string   StringArrayToStr(string& values[]);
+   string   StringArrayToStr(string& values[], string separator);
    int      StringBufferToArray(int& buffer[], string& results[]);
    string   StructCharToStr(int& lpStruct[], int from, int len);
    string   StructToHexStr(int& lpStruct[]);

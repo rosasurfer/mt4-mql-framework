@@ -367,7 +367,7 @@ int start() {
       ArrayCopy(array2, iUpperBand1, 0, 0, startBar+1);
 
       debug("start()  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
-      debug("start()  iMovAvg = "+ DoubleArrayToStr(array1));
+      debug("start()  iMovAvg = "+ DoubleArrayToStr(array1, ", "));
 
       start()  iMovAvg     = {1.61582234, 1.61550427, 1.61522141, 1.61491031, 1.61461975, 1.61433817, 1.61409116, 1.61388254, 1.61369392, 1.61348614, 1.61329017, 1.61313936}
                iUpperBand1 = {302939849.67705119, 302939849.67673314, 302939849.67645031, 302939849.67613918, 302939849.6758486, 302939849.67556703, 302939849.67532003, 302939849.67511141, 302939849.67492276, 302939849.67471498, 302939849.674519, 302939849.6743682}
