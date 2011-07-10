@@ -12,6 +12,12 @@
  *
  *  TODO:
  *  -----
+ *  - in FinishSequence(): OrderCloseBy() implementieren
+ *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
+ *  - in ReadStatus(): Breakeven-Berechnung implementieren
+ *  - Breakeven-Anzeige (in ShowStatus()???)
+ *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Visualisierung des Entry.Limits implementieren
  *  - bei fehlender Konfiguration muß die laufende Instanz weitmöglichst eingelesen werden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
@@ -19,14 +25,8 @@
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
- *  - Visualisierung des Entry.Limits implementieren
- *  - Visualisierung der gesamten Sequenz implementieren
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
  *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
- *  - in FinishSequence(): OrderCloseBy() implementieren
- *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
- *  - in ReadStatus(): Breakeven-Berechnung implementieren
- *  - Breakeven-Anzeige (in ShowStatus()???)
  *  - StopLoss -> Breakeven und TakeProfit -> Breakeven implementieren
  *  - SMS-Benachrichtigungen implementieren
  *  - Heartbeat-Order einrichten
@@ -277,11 +277,15 @@ int init() {
    }
 
 
-   // (4) Konfiguration neuer Sequenzen speichern und existierender Sequenzen restaurieren
-   if (newSequence || UninitializeReason()==REASON_PARAMETERS) {
+   // (4) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
+   if (newSequence) {
+      if (NE(Entry.Limit, 0))                               // ohne Entry.Limit wird die Konfiguration erst nach der Sicherheitsabfrage
+         SaveConfiguration();                               // in StartSequence() gespeichert
+   }
+   else if (UninitializeReason() == REASON_PARAMETERS) {
       SaveConfiguration();
    }
-   else if (UninitializeReason()!=REASON_CHARTCHANGE) {
+   else if (UninitializeReason() != REASON_CHARTCHANGE) {
       RestoreConfiguration();
    }
 
@@ -603,6 +607,7 @@ int StartSequence() {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
       }
+      SaveConfiguration();                                                 // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
    }
 
    progressionLevel = 1;
