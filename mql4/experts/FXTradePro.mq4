@@ -60,10 +60,10 @@ extern string _3____________________________ = "==== Lotsizes ==================
 extern double Lotsize.Level.1                = 0.5;
 extern double Lotsize.Level.2                = 0.6;
 extern double Lotsize.Level.3                = 2.2;
-extern double Lotsize.Level.4                = 2.6;
+extern double Lotsize.Level.4                = 2.7;
 extern double Lotsize.Level.5                = 3.2;
-extern double Lotsize.Level.6                = 3.8;
-extern double Lotsize.Level.7                = 4.6;
+extern double Lotsize.Level.6                = 3.9;
+extern double Lotsize.Level.7                = 4.7;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -111,72 +111,7 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
 
-   // (1) Parametervalidierung
-   if (UninitializeReason() != REASON_CHARTCHANGE) {                       // bei REASON_CHARTCHANGE wurde bereits vorher validiert
-      // Entry.Direction
-      string direction = StringToUpper(StringTrim(Entry.Direction));
-      if (StringLen(direction) == 0)
-         return(catch("init(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-      switch (StringGetChar(direction, 0)) {
-         case 'B':
-         case 'L': Entry.Direction = "long";  Entry.iDirection = OP_BUY;  break;
-         case 'S': Entry.Direction = "short"; Entry.iDirection = OP_SELL; break;
-         default:
-            return(catch("init(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-      }
-
-      // Entry.Limit
-      if (LT(Entry.Limit, 0))
-         return(catch("init(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-
-      // TakeProfit
-      if (TakeProfit < 1)
-         return(catch("init(4)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE));
-
-      // StopLoss
-      if (StopLoss < 1)
-         return(catch("init(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
-
-      // Lotsizes
-      ArrayResize(lotsizes, 0);
-      if (LE(Lotsize.Level.1, 0)) return(catch("init(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      if (LT(Lotsize.Level.2, 0)) return(catch("init(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      ArrayPushDouble(lotsizes, Lotsize.Level.1);
-      if (EQ(Lotsize.Level.2, 0)) sequenceLength = 1;
-      else {
-         if (LT(Lotsize.Level.3, 0)) return(catch("init(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-         ArrayPushDouble(lotsizes, Lotsize.Level.2);
-         if (EQ(Lotsize.Level.3, 0)) sequenceLength = 2;
-         else {
-            if (LT(Lotsize.Level.4, 0)) return(catch("init(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-            ArrayPushDouble(lotsizes, Lotsize.Level.3);
-            if (EQ(Lotsize.Level.4, 0)) sequenceLength = 3;
-            else {
-               if (LT(Lotsize.Level.5, 0)) return(catch("init(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-               ArrayPushDouble(lotsizes, Lotsize.Level.4);
-               if (EQ(Lotsize.Level.5, 0)) sequenceLength = 4;
-               else {
-                  if (LT(Lotsize.Level.6, 0)) return(catch("init(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                  ArrayPushDouble(lotsizes, Lotsize.Level.5);
-                  if (EQ(Lotsize.Level.6, 0)) sequenceLength = 5;
-                  else {
-                     if (LT(Lotsize.Level.7, 0)) return(catch("init(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                     ArrayPushDouble(lotsizes, Lotsize.Level.6);
-                     if (EQ(Lotsize.Level.7, 0)) sequenceLength = 6;
-                     else {
-                        ArrayPushDouble(lotsizes, Lotsize.Level.7);
-                        sequenceLength = 7;
-                     }
-                  }
-               }
-            }
-         }
-      }
-      strLotsizes = JoinDoubles(lotsizes, ",  ");
-   }
-
-
-   // (2) Sequenzdaten einlesen
+   // (1) Sequenzdaten einlesen
    if (sequenceId == 0) {                                               // noch keine Sequenz definiert
       progressionLevel = 0;
       ArrayResize(levels.ticket    , 0);                                // ggf. vorhandene Daten löschen (Arrays sind statisch)
@@ -241,7 +176,7 @@ int init() {
 
                // TODO: möglich bei gehedgten Positionen
                if (levels.ticket[level] != 0)
-                  return(catch("init(13)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+                  return(catch("init(1)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
 
                levels.ticket    [level] = OrderTicket();
                levels.type      [level] = OrderType();
@@ -259,7 +194,7 @@ int init() {
       double total;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0)
-            return(catch("init(14)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
+            return(catch("init(2)   order not found for progression level "+ (i+1) +", more history data needed.", ERR_RUNTIME_ERROR));
 
          if (levels.closeTime[i] == 0) {
             if (levels.type[i] == OP_BUY) total += levels.lotsize[i];
@@ -270,11 +205,16 @@ int init() {
    }
 
 
-   // (3) ggf. neue Sequenz anlegen
+   // (2) ggf. neue Sequenz anlegen
    bool newSequence = false;
    if (sequenceId == 0) {
-      sequenceId  = CreateSequenceId();
       newSequence = true;
+      if (ValidateConfiguration() != NO_ERROR) {
+         status = STATUS_DISABLED;
+         ShowStatus();
+         return(init_error);
+      }
+      sequenceId  = CreateSequenceId();
       ArrayResize(levels.ticket    , sequenceLength);
       ArrayResize(levels.type      , sequenceLength);
       ArrayResize(levels.openPrice , sequenceLength);
@@ -286,20 +226,22 @@ int init() {
    }
 
 
-   // (4) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
+   // (3) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
    if (newSequence) {
       if (NE(Entry.Limit, 0))                               // ohne Entry.Limit wird die Konfiguration erst nach der Sicherheitsabfrage
          SaveConfiguration();                               // in StartSequence() gespeichert
    }
    else if (UninitializeReason() == REASON_PARAMETERS) {
-      SaveConfiguration();
+      if (ValidateConfiguration() == NO_ERROR)
+         SaveConfiguration();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {
-      RestoreConfiguration();
+      if (RestoreConfiguration() == NO_ERROR)
+         ValidateConfiguration();
    }
 
 
-   // (5) aktuellen Status bestimmen und anzeigen
+   // (4) aktuellen Status bestimmen und anzeigen
    if (init_error != NO_ERROR)            status = STATUS_DISABLED;
    else if (status == 0) {
       if (progressionLevel == 0) {
@@ -316,20 +258,22 @@ int init() {
    ShowStatus();
 
 
-   // (6) bei Start ggf. EA's aktivieren
-   int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
-      ToggleEAs(true);
+   if (init_error == NO_ERROR) {
+      // (5) bei Start ggf. EA's aktivieren
+      int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
+      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
+         ToggleEAs(true);
 
 
-   // (7) nach Start oder Reload nicht auf den ersten Tick warten
-   int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(UninitializeReason(), reasons2))
-      SendTick(false);
+      // (6) nach Start oder Reload nicht auf den ersten Tick warten
+      int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
+      if (IntInArray(UninitializeReason(), reasons2))
+         SendTick(false);
+   }
 
 
    int error = GetLastError();
-   if (error      != NO_ERROR) catch("init(15)", error);
+   if (error      != NO_ERROR) catch("init(3)", error);
    if (init_error != NO_ERROR) status = STATUS_DISABLED;
    return(init_error);
 }
@@ -869,6 +813,79 @@ string StatusToStr(int status) {
 
 
 /**
+ * Validiert die aktuelle Konfiguration.
+ *
+ * @return int - Fehlerstatus
+ */
+int ValidateConfiguration() {
+   debug("ValidateConfiguration()   validating configuration...");
+
+   // Entry.Direction
+   string direction = StringToUpper(StringTrim(Entry.Direction));
+   if (StringLen(direction) == 0)
+      return(catch("ValidateConfiguration(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   switch (StringGetChar(direction, 0)) {
+      case 'B':
+      case 'L': Entry.Direction = "long";  Entry.iDirection = OP_BUY;  break;
+      case 'S': Entry.Direction = "short"; Entry.iDirection = OP_SELL; break;
+      default:
+         return(catch("ValidateConfiguration(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   }
+
+   // Entry.Limit
+   if (LT(Entry.Limit, 0))
+      return(catch("ValidateConfiguration(3)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.Limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+
+   // TakeProfit
+   if (TakeProfit < 1)
+      return(catch("ValidateConfiguration(4)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE));
+
+   // StopLoss
+   if (StopLoss < 1)
+      return(catch("ValidateConfiguration(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
+
+   // Lotsizes
+   ArrayResize(lotsizes, 0);
+   if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   ArrayPushDouble(lotsizes, Lotsize.Level.1);
+   if      (EQ(Lotsize.Level.2, 0))               sequenceLength = 1;
+   else if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   else {
+      ArrayPushDouble(lotsizes, Lotsize.Level.2);
+      if      (EQ(Lotsize.Level.3, 0))               sequenceLength = 2;
+      else if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      else {
+         ArrayPushDouble(lotsizes, Lotsize.Level.3);
+         if      (EQ(Lotsize.Level.4, 0))               sequenceLength = 3;
+         else if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+         else {
+            ArrayPushDouble(lotsizes, Lotsize.Level.4);
+            if      (EQ(Lotsize.Level.5, 0))               sequenceLength = 4;
+            else if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+            else {
+               ArrayPushDouble(lotsizes, Lotsize.Level.5);
+               if      (EQ(Lotsize.Level.6, 0))               sequenceLength = 5;
+               else if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+               else {
+                  ArrayPushDouble(lotsizes, Lotsize.Level.6);
+                  if      (EQ(Lotsize.Level.7, 0))               sequenceLength = 6;
+                  else if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+                  else {
+                     ArrayPushDouble(lotsizes, Lotsize.Level.7);
+                     sequenceLength = 7;
+                  }
+               }
+            }
+         }
+      }
+   }
+   strLotsizes = JoinDoubles(lotsizes, ",  ");
+
+   return(catch("ValidateConfiguration(13)"));
+}
+
+
+/**
  * Speichert die aktuelle Konfiguration und Laufzeitdaten der Instanz, um die korrekte und nahtlose Wiederauf- und Übernahme
  * durch eine andere Instanz im selben oder einem anderen Terminal zu ermöglichen.
  *
@@ -879,7 +896,7 @@ int SaveConfiguration() {
       status = STATUS_DISABLED;
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
-   //debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
+   debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
 
 
    // (1) Daten zusammenstellen
@@ -975,10 +992,8 @@ int UploadConfiguration(string company, int account, string symbol, string filen
  * @return int - Fehlerstatus
  */
 int RestoreConfiguration() {
-   if (sequenceId == 0) {
-      status = STATUS_DISABLED;
+   if (sequenceId == 0)
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
-   }
 
    // (1) bei nicht existierender lokaler Konfiguration die Datei vom Server laden
    string filesDir = TerminalPath() +"\\experts\\files\\";
@@ -994,10 +1009,9 @@ int RestoreConfiguration() {
       debug("RestoreConfiguration()   downloading configuration for sequence #"+ sequenceId);
 
       int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
-      if (error != NO_ERROR) {
-         status = STATUS_DISABLED;
+      if (error != NO_ERROR)
          return(processLibError(error));
-      }
+
       debug("RestoreConfiguration()   configuration for sequence #"+ sequenceId +" successfully downloaded");
       FileDelete(fileName +".log");
    }
@@ -1006,16 +1020,14 @@ int RestoreConfiguration() {
    debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
    string config[];
    int lines = FileReadLines(fileName, config, true);
-   if (lines <= 0) {
-      status = STATUS_DISABLED;
-      if (lines == 0) {
-         FileDelete(fileName);
-         return(catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR));
-      }
+   if (lines < 0)
       return(processLibError(stdlib_PeekLastError()));
+   if (lines == 0) {
+      FileDelete(fileName);
+      return(catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR));
    }
 
-   // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Daten valideren und übernehmen
+   // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Datentypen validieren und Daten übernehmen
    int parameters[12]; ArrayInitialize(parameters, 0);
    int I_SEQUENCEID      =  0;
    int I_ENTRY_DIRECTION =  1;
@@ -1032,102 +1044,69 @@ int RestoreConfiguration() {
 
    string parts[];
    for (int i=0; i < lines; i++) {
-      if (Explode(config[i], "=", parts, 2) != 2) {
-         status = STATUS_DISABLED;
-         return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
-      }
+      if (Explode(config[i], "=", parts, 2) != 2)                      return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
       string key=parts[0], value=parts[1];
 
       if (key == "sequenceId") {
-         if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId)   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
+         if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId) return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
          parameters[I_SEQUENCEID] = 1;
       }
       else if (key == "Entry.Direction") {
-         if (value!="long" && value!="short")                            { status = STATUS_DISABLED; return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Entry.Direction  = value;
-         Entry.iDirection = ifInt(Entry.Direction=="long", OP_BUY, OP_SELL);
+         Entry.Direction = value;
          parameters[I_ENTRY_DIRECTION] = 1;
       }
       else if (key == "Entry.Limit") {
-         double dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LT(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Entry.Limit = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Entry.Limit = StrToDouble(value);
          parameters[I_ENTRY_LIMIT] = 1;
       }
       else if (key == "TakeProfit") {
-         int iValue = StrToInteger(value);
-         if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         TakeProfit = iValue;
+         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         TakeProfit = StrToInteger(value);
          parameters[I_TAKEPROFIT] = 1;
       }
       else if (key == "StopLoss") {
-         iValue = StrToInteger(value);
-         if (!StringIsDigit(value) || iValue==0)                         { status = STATUS_DISABLED; return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         StopLoss = iValue;
+         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         StopLoss = StrToInteger(value);
          parameters[I_STOPLOSS] = 1;
       }
       else if (key == "Lotsize.Level.1") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.1 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.1 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_1] = 1;
       }
       else if (key == "Lotsize.Level.2") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.2 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.2 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_2] = 1;
       }
       else if (key == "Lotsize.Level.3") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.3 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.3 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_3] = 1;
       }
       else if (key == "Lotsize.Level.4") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.4 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.4 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_4] = 1;
       }
       else if (key == "Lotsize.Level.5") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(14)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.5 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.5 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_5] = 1;
       }
       else if (key == "Lotsize.Level.6") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(15)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.6 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.6 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_6] = 1;
       }
       else if (key == "Lotsize.Level.7") {
-         dValue = StrToDouble(value);
-         if (!StringIsNumeric(value) || LE(dValue, 0))                   { status = STATUS_DISABLED; return(catch("RestoreConfiguration(16)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)); }
-         Lotsize.Level.7 = dValue;
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(14)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR));
+         Lotsize.Level.7 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_7] = 1;
       }
    }
-   if (IntInArray(0, parameters)) {
-      status = STATUS_DISABLED;
-      return(catch("RestoreConfiguration(18)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR));
-   }
+   if (IntInArray(0, parameters))                                      return(catch("RestoreConfiguration(15)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR));
 
-   ArrayResize(lotsizes, 7);
-   lotsizes[0] = Lotsize.Level.1;
-   lotsizes[1] = Lotsize.Level.2;
-   lotsizes[2] = Lotsize.Level.3;
-   lotsizes[3] = Lotsize.Level.4;
-   lotsizes[4] = Lotsize.Level.5;
-   lotsizes[5] = Lotsize.Level.6;
-   lotsizes[6] = Lotsize.Level.7;
-   strLotsizes = JoinDoubles(lotsizes, ",  ");
-
-   error = GetLastError();
-   if (error != NO_ERROR) {
-      status = STATUS_DISABLED;
-      catch("RestoreConfiguration(19)", error);
-   }
-   return(error);
+   return(catch("RestoreConfiguration(16)"));
 }
