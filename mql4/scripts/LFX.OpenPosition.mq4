@@ -1,5 +1,15 @@
 /**
  * Öffnet eine Position in einer der LiteForex-Indizes.
+ *
+ * -------------------------------------------------------------------------------------
+ *
+ *  Regeln:
+ *  ------
+ *  - maximal 2 offene Positionen
+ *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
+ *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
+ *  - Stop-Out aller Positionen bei 50% von MaxEquity
+ *  - 20% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
  */
 #include <stdlib.mqh>
 
