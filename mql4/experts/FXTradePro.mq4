@@ -446,7 +446,7 @@ bool IsEntryLimitReached() {
 
    // Das Limit ist erreicht, wenn der Bid-Preis es seit dem letzten Tick berührt oder gekreuzt hat.
    if (EQ(Bid, Entry.Limit) || EQ(Entry.LastBid, Entry.Limit)) {     // Bid liegt oder lag beim letzten Tick exakt auf dem Limit
-      debug("IsEntryLimitReached()   Bid="+ NumberToStr(Bid, PriceFormat) +" liegt genau auf dem Limit="+ NumberToStr(Entry.Limit, PriceFormat));
+      log("IsEntryLimitReached()   Bid="+ NumberToStr(Bid, PriceFormat) +" liegt genau auf dem Limit="+ NumberToStr(Entry.Limit, PriceFormat));
       Entry.LastBid = Entry.Limit;                                   // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
       return(true);                                                  // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
    }
@@ -459,13 +459,13 @@ bool IsEntryLimitReached() {
    else {
       if (LT(Entry.LastBid, Entry.Limit)) {
          if (GT(Bid, Entry.Limit)) {                                 // Bid hat Limit von unten nach oben gekreuzt
-            debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastBid="+ NumberToStr(Entry.LastBid, PriceFormat) +") nach oben (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
+            log("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von unten (lastBid="+ NumberToStr(Entry.LastBid, PriceFormat) +") nach oben (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
             Entry.LastBid = Entry.Limit;
             return(true);
          }
       }
       else if (LT(Bid, Entry.Limit)) {                               // Bid hat Limit von oben nach unten gekreuzt
-         debug("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastBid="+ NumberToStr(Entry.LastBid, PriceFormat) +") nach unten (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
+         log("IsEntryLimitReached()   Tick hat Limit="+ NumberToStr(Entry.Limit, PriceFormat) +" von oben (lastBid="+ NumberToStr(Entry.LastBid, PriceFormat) +") nach unten (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
          Entry.LastBid = Entry.Limit;
          return(true);
       }
