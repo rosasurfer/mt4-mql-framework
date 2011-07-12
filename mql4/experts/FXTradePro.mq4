@@ -757,11 +757,11 @@ int ShowStatus() {
    string msg = "";
 
    switch (status) {
-      case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence #", sequenceId, " initialized");                                                                                            break;
-      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  sequence #", sequenceId, " waiting for Stop ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence #", sequenceId, " progressing...");                                                                                         break;
-      case STATUS_FINISHED:    msg = StringConcatenate(":  sequence #", sequenceId, " finished");                                                                                               break;
-      case STATUS_DISABLED:    msg = StringConcatenate(":  sequence #", sequenceId, " disabled");
+      case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
+      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  sequence ", sequenceId, " waiting for Stop ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.Limit, PriceFormat)); break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing...");                                                                                               break;
+      case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");                                                                                                     break;
+      case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled");
                                int error = ifInt(init, init_error, last_error);
                                if (error != NO_ERROR)
                                   msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]");
