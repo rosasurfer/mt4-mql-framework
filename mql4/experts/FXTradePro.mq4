@@ -14,7 +14,7 @@
  *  -----
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - in FinishSequence(): OrderCloseBy() implementieren
- *  - in ReadStatus(): Commission- und Profit-Berechnung an Verwendung von OrderCloseBy() anpassen
+ *  - in ReadStatus(): Commission-Berechnung an Verwendung von OrderCloseBy() anpassen
  *  - in ReadStatus(): Breakeven-Berechnung implementieren
  *  - Breakeven-Anzeige
  *  - Visualisierung der gesamten Sequenz implementieren
@@ -393,11 +393,11 @@ bool ReadStatus() {
                   }
                }
             }
-         }
 
-         // P/L von Restpositionen anhand des angegebenen Wertes verrechnen
-         if (GT(tmp.openLots[i], 0))
-            levels.profit[i] += OrderProfit() / levels.openLots[i] * tmp.openLots[i];
+            // P/L von Restpositionen anteilmäßig anhand des regulären OrderProfit() ermitteln
+            if (GT(tmp.openLots[i], 0))
+               levels.profit[i] += OrderProfit() / levels.openLots[i] * tmp.openLots[i];
+         }
 
          // Swap und Commission normal übernehmen                 // TODO: korrekte Commission-Berechnung der Hedges implementieren
          levels.swap      [i] = OrderSwap();
@@ -408,7 +408,7 @@ bool ReadStatus() {
       commissions += levels.commission[i];
    }
 
-   all.profits     = profits;                                     // zum Schluß globale Variablen überschreiben
+   all.profits     = profits;                                     // erst zum Schluß die globalen Variablen belegen
    all.swaps       = swaps;
    all.commissions = commissions;
 
