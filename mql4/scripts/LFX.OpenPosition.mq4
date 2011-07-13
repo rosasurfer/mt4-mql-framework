@@ -176,8 +176,8 @@ int start() {
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
       if (StringStartsWith(symbols[i], Currency)) directions[i]  = iDirection;
-      else                                        directions[i]  = iDirection ^ 1;     // 0=>1, 1=>0
-      if (Currency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
+      else                                        directions[i]  = iDirection ^ 1;              // 0=>1, 1=>0
+      if (Currency == "JPY")                      directions[i] ^= 1;                           // JPY ist invers notiert
    }
 
 
@@ -195,12 +195,12 @@ int start() {
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                 // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
+      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                                // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
       int pipDigits = digits & (~1);
       int counter   = GetPositionCounter() + 1;
 
       double   price       = NULL;
-      int      slippage    = ifInt(digits==pipDigits, 0, 1);                     // keine Slippage bei 2- oder 4-Digits-Brokern
+      int      slippage    = ifInt(digits==pipDigits, 0, 1);                                    // keine Slippage bei 2- oder 4-Digits-Brokern
       double   sl          = NULL;
       double   tp          = NULL;
       string   comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
@@ -208,7 +208,7 @@ int start() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
-      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());    // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());                   // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
       int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
@@ -233,7 +233,7 @@ bool ReadOpenPositionStatus() {
    ArrayResize(positions.counter , 0);
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
          continue;
 
       // alle Positionen dieser Strategie finden und Daten einlesen
@@ -241,10 +241,10 @@ bool ReadOpenPositionStatus() {
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;
 
-         int currency = OrderMagicNumber() >> 17 & 0x1F;             //  5 bit | in MagicNumber: Bits 18-22
-         int units    = OrderMagicNumber() >> 12 & 0x1F;             //  5 bit | in MagicNumber: Bits 13-17
-         int instance = OrderMagicNumber() >> 3 & 0x1FF;             //  9 bit | in MagicNumber: Bits  4-12
-         int counter  = OrderMagicNumber() & 0x7;                    //  3 bit | in MagicNumber: Bits  1-3
+         int currency = OrderMagicNumber() >> 17 & 0x1F;                //  5 bit | in MagicNumber: Bits 18-22
+         int units    = OrderMagicNumber() >> 12 & 0x1F;                //  5 bit | in MagicNumber: Bits 13-17
+         int instance = OrderMagicNumber() >> 3 & 0x1FF;                //  9 bit | in MagicNumber: Bits  4-12
+         int counter  = OrderMagicNumber() & 0x7;                       //  3 bit | in MagicNumber: Bits  1-3
 
          ArrayPushInt   (positions.magic   , OrderMagicNumber()   );
          ArrayPushString(positions.currency, GetCurrency(currency));
@@ -281,12 +281,12 @@ int CreateMagicNumber(int counter) {
       catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   int strategy   = Strategy.uniqueId & 0x3FF << 22;                 // 10 bit (Bits größer 10 nullen und auf 32 Bit erweitern)  | in MagicNumber: Bits 23-32
-   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;            //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
-   int iUnits     = MathRound(Units * 10) + 0.1;                     //   +0.1 fängt evt. Präzisionsfehler beim Casten ab
-       iUnits     = iUnits & 0x1F << 12;                             //  5 bit (Bits größer 5 nullen und auf 17 Bit erweitern)   | in MagicNumber: Bits 13-17
-   int instance   = GetInstanceId() & 0x1FF << 3;                    //  9 bit (Bits größer 9 nullen und auf 12 Bit erweitern)   | in MagicNumber: Bits  4-12
-   int pCounter   = counter & 0x7;                                   //  3 bit (Bits größer 3 nullen)                            | in MagicNumber: Bits  1-3
+   int strategy   = Strategy.uniqueId & 0x3FF << 22;                    // 10 bit (Bits größer 10 nullen und auf 32 Bit erweitern)  | in MagicNumber: Bits 23-32
+   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;               //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
+   int iUnits     = MathRound(Units * 10) + 0.1;                        //   +0.1 fängt evt. Präzisionsfehler beim Casten ab
+       iUnits     = iUnits & 0x1F << 12;                                //  5 bit (Bits größer 5 nullen und auf 17 Bit erweitern)   | in MagicNumber: Bits 13-17
+   int instance   = GetInstanceId() & 0x1FF << 3;                       //  9 bit (Bits größer 9 nullen und auf 12 Bit erweitern)   | in MagicNumber: Bits  4-12
+   int pCounter   = counter & 0x7;                                      //  3 bit (Bits größer 3 nullen)                            | in MagicNumber: Bits  1-3
 
    int error = GetLastError();
    if (error != NO_ERROR) {
