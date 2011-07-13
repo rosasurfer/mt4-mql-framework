@@ -73,7 +73,7 @@ extern double Lotsize.Level.5                = 0.5;
 extern double Lotsize.Level.6                = 0.6;
 extern double Lotsize.Level.7                = 0.7;
 
-// Input-Parameter sind im Gegensatz zu normalen Variablen nicht statisch und müssen bei REASON_CHARTCHANGE zwischengespeichert und restauriert werden.
+// Externe Input-Parameter sind nicht statisch und müssen daher manuell zwischengespeichert und restauriert werden.
 string intern.Entry.Direction;
 double intern.Entry.Limit;
 int    intern.TakeProfit;
