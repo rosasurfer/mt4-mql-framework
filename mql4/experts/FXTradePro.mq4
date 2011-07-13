@@ -851,7 +851,8 @@ int ShowStatus() {
    if (last_error != NO_ERROR)
       status = STATUS_DISABLED;
 
-   string msg = "";
+   string msg="", strTakeProfitPrice="", strStopLossPrice="", strProfitLoss="0";
+   double profitLoss;
 
    switch (status) {
       case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
@@ -871,15 +872,19 @@ int ShowStatus() {
                                                                                          NL,
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
-   if (progressionLevel > 0)
-      msg = StringConcatenate(msg, "  =  ", ifString(levels.type[progressionLevel-1]==OP_BUY, "+", "-"), NumberToStr(CurrentLotSize(), ".+"), " lot");
+   if (progressionLevel > 0) {
+      msg                = StringConcatenate(msg, "  =  ", ifString(levels.type[progressionLevel-1]==OP_BUY, "+", "-"), NumberToStr(CurrentLotSize(), ".+"), " lot");
+      strTakeProfitPrice = NumberToStr(levels.openPrice[progressionLevel-1] + ifDouble(levels.type[progressionLevel-1]==OP_BUY, TakeProfit*Pip, -TakeProfit*Pip), PriceFormat);
+      strStopLossPrice   = NumberToStr(levels.openPrice[progressionLevel-1] + ifDouble(levels.type[progressionLevel-1]==OP_BUY,  -StopLoss*Pip,    StopLoss*Pip), PriceFormat);
+      profitLoss         = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[progressionLevel-1], levels.openPrice[progressionLevel-1]-Ask) / Pip;
+   }
 
    msg = StringConcatenate(msg,                                                                                                                                         NL,
                           "Lot sizes:               ", strLotsizes, "  (+0.00/-0.00)",                                                                                  NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = ", NumberToStr(1.7, PriceFormat), " (+", DoubleToStr(23.45, 2), ")", NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", NumberToStr(1.5, PriceFormat), " (", DoubleToStr(-12.34, 2), ")", NL,
-                          "Breakeven:           ",     DoubleToStr(8.2, Digits-PipDigits), " pip = ", NumberToStr(1.6, PriceFormat),                                    NL,
-                          "Profit/Loss:           ",   DoubleToStr(3.1, Digits-PipDigits), " pip = ", DoubleToStr(all.profits + all.commissions + all.swaps, 2),        NL);
+                          "TakeProfit:            ",   TakeProfit,                         " pip = ", strTakeProfitPrice, " (+", DoubleToStr(0, 2), ")",                NL,
+                          "StopLoss:              ",   StopLoss,                           " pip = ", strStopLossPrice, " (", DoubleToStr(-0.01, 2), ")",               NL,
+                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                        NL,
+                          "Profit/Loss:           ",   DoubleToStr(profitLoss, Digits-PipDigits), " pip = ", DoubleToStr(all.profits + all.commissions + all.swaps, 2), NL);
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(StringConcatenate(NL, NL, msg));
