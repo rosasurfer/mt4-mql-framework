@@ -73,6 +73,20 @@ extern double Lotsize.Level.5                = 0.5;
 extern double Lotsize.Level.6                = 0.6;
 extern double Lotsize.Level.7                = 0.7;
 
+// Input-Parameter sind im Gegensatz zu normalen Variablen nicht statisch und müssen bei REASON_CHARTCHANGE zwischengespeichert und restauriert werden.
+string intern.Entry.Direction;
+double intern.Entry.Limit;
+int    intern.TakeProfit;
+int    intern.StopLoss;
+double intern.Lotsize.Level.1;
+double intern.Lotsize.Level.2;
+double intern.Lotsize.Level.3;
+double intern.Lotsize.Level.4;
+double intern.Lotsize.Level.5;
+double intern.Lotsize.Level.6;
+double intern.Lotsize.Level.7;
+bool   intern = false;                             // Statusflag: TRUE => zwischengespeicherte Werte vorhanden (siehe deinit())
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -119,7 +133,23 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
 
-   // (1) Sequenzdaten einlesen
+   // (1) ggf. Input-Parameter restaurieren
+   if (intern) {
+      Entry.Direction = intern.Entry.Direction;
+      Entry.Limit     = intern.Entry.Limit;
+      TakeProfit      = intern.TakeProfit;
+      StopLoss        = intern.StopLoss;
+      Lotsize.Level.1 = intern.Lotsize.Level.1;
+      Lotsize.Level.2 = intern.Lotsize.Level.2;
+      Lotsize.Level.3 = intern.Lotsize.Level.3;
+      Lotsize.Level.4 = intern.Lotsize.Level.4;
+      Lotsize.Level.5 = intern.Lotsize.Level.5;
+      Lotsize.Level.6 = intern.Lotsize.Level.6;
+      Lotsize.Level.7 = intern.Lotsize.Level.7;
+   }
+
+
+   // (2) Sequenzdaten einlesen
    if (sequenceId == 0) {                                               // noch keine Sequenz definiert
       progressionLevel = 0;
       ArrayResize(levels.ticket       , 0);                             // ggf. vorhandene Daten löschen (Arrays sind statisch)
@@ -158,6 +188,7 @@ int init() {
 
                if (level & 1 == 1) Entry.iDirection = OrderType();
                else                Entry.iDirection = OrderType() ^ 1;  // 0=>1, 1=>0
+               Entry.Direction = ifString(Entry.iDirection==OP_BUY, "long", "short");
             }
             level--;
             levels.ticket    [level] = OrderTicket();
@@ -216,7 +247,7 @@ int init() {
    }
 
 
-   // (2) ggf. neue Sequenz anlegen
+   // (3) ggf. neue Sequenz anlegen
    bool newSequence = false;
    if (sequenceId == 0) {
       newSequence = true;
@@ -238,7 +269,7 @@ int init() {
    }
 
 
-   // (3) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
+   // (4) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
    if (newSequence) {
       if (NE(Entry.Limit, 0))                               // ohne Entry.Limit wird die Konfiguration erst nach der Sicherheitsabfrage
          SaveConfiguration();                               // in StartSequence() gespeichert
@@ -253,7 +284,7 @@ int init() {
    }
 
 
-   // (4) aktuellen Status bestimmen und anzeigen
+   // (5) aktuellen Status bestimmen und anzeigen
    if (init_error != NO_ERROR)            status = STATUS_DISABLED;
    else if (status == 0) {
       if (progressionLevel == 0) {
@@ -271,13 +302,13 @@ int init() {
 
 
    if (init_error == NO_ERROR) {
-      // (5) bei Start ggf. EA's aktivieren
+      // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
       if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
          ToggleEAs(true);
 
 
-      // (6) nach Start oder Reload nicht auf den ersten Tick warten
+      // (7) nach Start oder Reload nicht auf den ersten Tick warten
       int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
       if (IntInArray(UninitializeReason(), reasons2))
          SendTick(false);
@@ -297,6 +328,20 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   // Input-Parameter sind nicht statisch und müssen im nächsten init() restauriert werden
+   intern.Entry.Direction = Entry.Direction;
+   intern.Entry.Limit     = Entry.Limit;
+   intern.TakeProfit      = TakeProfit;
+   intern.StopLoss        = StopLoss;
+   intern.Lotsize.Level.1 = Lotsize.Level.1;
+   intern.Lotsize.Level.2 = Lotsize.Level.2;
+   intern.Lotsize.Level.3 = Lotsize.Level.3;
+   intern.Lotsize.Level.4 = Lotsize.Level.4;
+   intern.Lotsize.Level.5 = Lotsize.Level.5;
+   intern.Lotsize.Level.6 = Lotsize.Level.6;
+   intern.Lotsize.Level.7 = Lotsize.Level.7;
+   intern                 = true;               // Statusflag setzen
+
    return(catch("deinit()"));
 }
 
@@ -348,7 +393,14 @@ int start() {
  * @return bool - Erfolgsstatus
  */
 bool ReadStatus() {
-   double profits, swaps, commissions, pl;
+   double profits, swaps, commissions, difference, tickSize=MarketInfo(Symbol(), MODE_TICKSIZE), tickValue=MarketInfo(Symbol(), MODE_TICKVALUE);
+
+   // auf ERR_MARKETINFO_UPDATE prüfen
+   int error = GetLastError();
+   if (error != NO_ERROR)                      { status = STATUS_DISABLED; return(catch("ReadStatus(1)", error)==NO_ERROR);                                                                   }
+   if (tickSize  < 0.000009 || tickSize  >  1) { status = STATUS_DISABLED; return(catch("ReadStatus(2)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
+   if (tickValue < 0.5      || tickValue > 20) { status = STATUS_DISABLED; return(catch("ReadStatus(3)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
+
 
    double tmp.openLots[];
    ArrayCopy(tmp.openLots, levels.openLots);
@@ -359,15 +411,15 @@ bool ReadStatus() {
 
       if (levels.closeTime[i] == 0) {                             // offene Position
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            int error = GetLastError();
+            error = GetLastError();
             if (error == NO_ERROR)
                error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("ReadStatus(1)", error)==NO_ERROR);
+            return(catch("ReadStatus(4)", error)==NO_ERROR);
          }
          if (OrderCloseTime() != 0) {
             status = STATUS_DISABLED;
-            return(catch("ReadStatus(2)   illegal sequence state, ticket #"+ levels.ticket[i] +"(level "+ (i+1) +") is already closed", ERR_RUNTIME_ERROR)==NO_ERROR);
+            return(catch("ReadStatus(5)   illegal sequence state, ticket #"+ levels.ticket[i] +"(level "+ (i+1) +") is already closed", ERR_RUNTIME_ERROR)==NO_ERROR);
          }
 
          levels.profit[i] = 0;
@@ -378,16 +430,16 @@ bool ReadStatus() {
                if (levels.ticket[n] == 0)
                   break;
                if (levels.closeTime[n]==0) /*&&*/ if (levels.type[i]!=levels.type[n]) /*&&*/ if (GT(tmp.openLots[n], 0)) { // offener und verrechenbarer Hedge
+                  difference = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
+
                   if (LE(tmp.openLots[i], tmp.openLots[n])) {
-                     pl                = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
-                     levels.profit[i] += pl / Pip * 10/*PipValue*/ * tmp.openLots[i];
+                     levels.profit[i] += difference / tickSize * tickValue * tmp.openLots[i];
                      tmp.openLots [n] -= tmp.openLots[i];
                      tmp.openLots [i]  = 0;
                      break;
                   }
                   else  /*(GT(tmp.openLots[i], tmp.openLots[n]))*/ {
-                     pl                = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
-                     levels.profit[i] += pl / Pip * 10/*PipValue*/ * tmp.openLots[n];
+                     levels.profit[i] += difference / tickSize * tickValue * tmp.openLots[n];
                      tmp.openLots [i] -= tmp.openLots[n];
                      tmp.openLots [n]  = 0;
                   }
@@ -408,11 +460,11 @@ bool ReadStatus() {
       commissions += levels.commission[i];
    }
 
-   all.profits     = profits;                                     // erst zum Schluß die globalen Variablen belegen
+   all.profits     = profits;                                     // globale Variablen erst zum Schluß überschreiben
    all.swaps       = swaps;
    all.commissions = commissions;
 
-   if (catch("ReadStatus(3)") != NO_ERROR) {
+   if (catch("ReadStatus(6)") != NO_ERROR) {
       status = STATUS_DISABLED;
       return(false);
    }
@@ -548,7 +600,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      log("IsStopLossReached()   Stoploss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsStopLossReached()   Stoploss von "+ StopLoss +" pip für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -580,7 +632,7 @@ bool IsProfitTargetReached() {
    }
 
    if (GE(last.profit, TakeProfit*Pip)) {
-      log("IsProfitTargetReached()   Profit target für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsProfitTargetReached()   Profit target von "+ TakeProfit +" pip für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
