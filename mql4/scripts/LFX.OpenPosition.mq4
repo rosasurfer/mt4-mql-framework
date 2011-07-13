@@ -4,7 +4,7 @@
  * -------------------------------------------------------------------------------------
  *
  *  Regeln:
- *  ------
+ *  -------
  *  - maximal 2 offene Positionen
  *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
  *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
