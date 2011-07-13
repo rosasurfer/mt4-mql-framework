@@ -151,7 +151,7 @@ int start() {
       // ERR_MARKETINFO_UPDATE behandeln
       if (StringLen(errorMsg) > 0) {
          PlaySound("notify.wav");
-         int button = MessageBox("Instrument data in update state.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         int button = MessageBox("Market data in update state.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
             continue;
