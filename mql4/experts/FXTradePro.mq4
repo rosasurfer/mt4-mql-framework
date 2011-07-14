@@ -135,7 +135,7 @@ int init() {
 
 
    // (1) ggf. Input-Parameter restaurieren
-   if (intern) {
+   if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
       Entry.Direction = intern.Entry.Direction;
       Entry.Limit     = intern.Entry.Limit;
       TakeProfit      = intern.TakeProfit;
@@ -834,14 +834,14 @@ int ShowStatus() {
    if (last_error != NO_ERROR)
       status = STATUS_DISABLED;
 
-   static string str.levels.lots;
+   static string str.levels.lots = "";
 
    if (levels.lots.changed) {
       str.levels.lots = JoinDoubles(levels.lots, ",  ");
       levels.lots.changed = false;
    }
 
-   string msg="", strTakeProfitPrice="", strStopLossPrice="", strProfitLoss="0";
+   string msg="", strProfitLoss="0";
    double profitLoss;
 
    switch (status) {
@@ -864,16 +864,14 @@ int ShowStatus() {
 
    if (progressionLevel > 0) {
       int last = progressionLevel-1;
-      msg                = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(levels.effectiveLots[last], ".+"), " lot");
-      strTakeProfitPrice = NumberToStr(levels.openPrice[last] + ifDouble(levels.type[last]==OP_BUY, TakeProfit*Pip, -TakeProfit*Pip), PriceFormat);
-      strStopLossPrice   = NumberToStr(levels.openPrice[last] + ifDouble(levels.type[last]==OP_BUY,  -StopLoss*Pip,    StopLoss*Pip), PriceFormat);
-      profitLoss         = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
+      msg        = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(levels.effectiveLots[last], ".+"), " lot");
+      profitLoss = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
    }
 
    msg = StringConcatenate(msg,                                                                                                                                         NL,
                           "Lot sizes:               ", str.levels.lots, "  (+0.00/-0.00)",                                                                              NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = ", strTakeProfitPrice, " (+", DoubleToStr(0, 2), ")",                NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", strStopLossPrice, " (", DoubleToStr(-0.01, 2), ")",               NL,
+                          "TakeProfit:            ",   TakeProfit,                         " pip = +", DoubleToStr(0, 2),                                               NL,
+                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(-0.01, 2),                                            NL,
                           "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                        NL,
                           "Profit/Loss:           ",   DoubleToStr(profitLoss, Digits-PipDigits), " pip = ", DoubleToStr(all.profits + all.commissions + all.swaps, 2), NL);
 
