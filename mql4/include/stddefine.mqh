@@ -316,7 +316,7 @@
 
 // trade server errors
 #define ERR_NO_RESULT                                   1
-#define ERR_COMMON_ERROR                                2   // e.g. manual trade confirmation was denied
+#define ERR_COMMON_ERROR                                2   // manual confirmation denied, broker rejects order
 #define ERR_INVALID_TRADE_PARAMETERS                    3
 #define ERR_SERVER_BUSY                                 4
 #define ERR_OLD_VERSION                                 5

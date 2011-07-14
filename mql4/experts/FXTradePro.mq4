@@ -13,21 +13,20 @@
  *  TODO:
  *  -----
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
- *  - in FinishSequence(): OrderCloseBy() implementieren
- *  - in ReadStatus(): Commission-Berechnung an Verwendung von OrderCloseBy() anpassen
- *  - in ReadStatus(): Breakeven-Berechnung implementieren
- *  - Breakeven-Anzeige
+ *  - FinishSequence(): OrderCloseBy() implementieren
+ *  - ReadStatus(): Commission-Berechnung an OrderCloseBy() anpassen
+ *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Visualisierung des Entry.Limits implementieren
  *  - bei fehlender Konfiguration müssen die Daten der laufenden Instanz weitmöglichst eingelesen werden
  *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
+ *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
- *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
  *  - StopLoss -> Breakeven und TakeProfit -> Breakeven implementieren
  *  - SMS-Benachrichtigungen implementieren
  *  - Heartbeat-Order einrichten
@@ -73,7 +72,7 @@ extern double Lotsize.Level.5                = 0.5;
 extern double Lotsize.Level.6                = 0.6;
 extern double Lotsize.Level.7                = 0.7;
 
-// Externe Input-Parameter sind nicht statisch und müssen daher manuell zwischengespeichert und restauriert werden.
+// Externe Input-Parameter sind nicht statisch und müssen bei REASON_CHARTCHANGE manuell zwischengespeichert und restauriert werden.
 string intern.Entry.Direction;
 double intern.Entry.Limit;
 int    intern.TakeProfit;
@@ -328,7 +327,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   // Input-Parameter sind nicht statisch und müssen im nächsten init() restauriert werden
+   // externe Input-Parameter sind nicht statisch und müssen im nächsten init() restauriert werden
    intern.Entry.Direction = Entry.Direction;
    intern.Entry.Limit     = Entry.Limit;
    intern.TakeProfit      = TakeProfit;

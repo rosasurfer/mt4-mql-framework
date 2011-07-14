@@ -375,13 +375,11 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   common error (e.g. manual confirmation was denied)
+      case ERR_COMMON_ERROR:                 //        2   manual confirmation denied, broker rejects order
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
-      case ERR_NO_CONNECTION:                //        6   no connection to trade server
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   invalid price
       case ERR_INVALID_STOPS:                //      130   invalid stop
-    //case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
       case ERR_BROKER_BUSY:                  //      137   broker is busy (never returned error)
@@ -390,17 +388,17 @@ bool IsTemporaryTradeError(int error) {
          return(true);
 
       // permanent errors
-      case ERR_MARKET_CLOSED:                //      132   market is closed      // temporär ???
-
       case ERR_NO_RESULT:                    //        1   no result
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
+      case ERR_NO_CONNECTION:                //        6   no connection to trade server
       case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
       case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation (never returned error)
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
       case ERR_INVALID_TRADE_VOLUME:         //      131   invalid trade volume
+      case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
       case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
       case ERR_ORDER_LOCKED:                 //      139   order is locked
@@ -6006,10 +6004,10 @@ string JoinStrings(string& values[], string separator) {
 string StringArrayToStr(string& array[], string separator=", ") {
    if (ArraySize(array) == 0)
       return("{}");
-   
+
    if (separator == "0")   // NULL
       separator = ", ";
-   
+
    return(StringConcatenate("{\"", JoinStrings(array, StringConcatenate("\"", separator, "\"")), "\"}"));
 }
 
