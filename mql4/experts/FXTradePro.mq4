@@ -105,15 +105,17 @@ int      progressionLevel;
 
 int      levels.ticket       [];
 int      levels.type         [];
+double   levels.lots         [];                   // Soll-Lotsize des Levels
+double   levels.openLots     [];                   // Order-Lotsize (inklusive Hedges)
+double   levels.effectiveLots[];                   // effektive Ist-Lotsize (kann bei manueller Intervention von Soll-Lotsize abweichen)
 double   levels.openPrice    [];
-double   levels.openLots     [];                   // inklusive Hedge
-double   levels.effectiveLots[];                   // ohne Hedge
 double   levels.swap         [], all.swaps;
 double   levels.commission   [], all.commissions;
 double   levels.profit       [], all.profits;
 datetime levels.closeTime    [];                   // Unterscheidung zwischen offenen und geschlossenen Positionen
 
-string   strLotsizes;
+bool     levels.lots.changed = true;
+
 bool     firstTick = true;
 int      status;
 
@@ -153,9 +155,10 @@ int init() {
       progressionLevel = 0;
       ArrayResize(levels.ticket       , 0);                             // ggf. vorhandene Daten löschen (Arrays sind statisch)
       ArrayResize(levels.type         , 0);
-      ArrayResize(levels.openPrice    , 0);
+      ArrayResize(levels.lots         , 0);
       ArrayResize(levels.openLots     , 0);
       ArrayResize(levels.effectiveLots, 0);
+      ArrayResize(levels.openPrice    , 0);
       ArrayResize(levels.swap         , 0);
       ArrayResize(levels.commission   , 0);
       ArrayResize(levels.profit       , 0);
@@ -177,9 +180,10 @@ int init() {
 
                ArrayResize(levels.ticket       , sequenceLength);
                ArrayResize(levels.type         , sequenceLength);
-               ArrayResize(levels.openPrice    , sequenceLength);
+               ArrayResize(levels.lots         , sequenceLength);
                ArrayResize(levels.openLots     , sequenceLength);
                ArrayResize(levels.effectiveLots, sequenceLength);
+               ArrayResize(levels.openPrice    , sequenceLength);
                ArrayResize(levels.swap         , sequenceLength);
                ArrayResize(levels.commission   , sequenceLength);
                ArrayResize(levels.profit       , sequenceLength);
@@ -192,8 +196,8 @@ int init() {
             level--;
             levels.ticket    [level] = OrderTicket();
             levels.type      [level] = OrderType();
-            levels.openPrice [level] = OrderOpenPrice();
             levels.openLots  [level] = OrderLots();
+            levels.openPrice [level] = OrderOpenPrice();
             levels.swap      [level] = 0;                               // Beträge offener Positionen werden in ReadStatus() ausgelesen
             levels.commission[level] = 0;
             levels.profit    [level] = 0;
@@ -220,9 +224,9 @@ int init() {
 
                levels.ticket       [level] = OrderTicket();
                levels.type         [level] = OrderType();
-               levels.openPrice    [level] = OrderOpenPrice();
-               levels.openLots     [level] = OrderLots();
+               levels.openLots     [level] = OrderLots();                  // ist das richtig ???
                levels.effectiveLots[level] = OrderLots();                  // ist das richtig ???
+               levels.openPrice    [level] = OrderOpenPrice();
                levels.swap         [level] = OrderSwap();
                levels.commission   [level] = OrderCommission();
                levels.profit       [level] = OrderProfit();
@@ -240,7 +244,7 @@ int init() {
          if (levels.closeTime[i] == 0) {
             if (levels.type[i] == OP_BUY) total += levels.openLots[i];
             else                          total -= levels.openLots[i];
-            levels.effectiveLots[i] = MathAbs(total);
+            levels.effectiveLots[i] = MathAbs(total);                      // ist es richtig, effectiveLots nur anhand der offenen Positionen zu berechnen ???
          }
       }
    }
@@ -258,9 +262,10 @@ int init() {
       sequenceId  = CreateSequenceId();
       ArrayResize(levels.ticket       , sequenceLength);
       ArrayResize(levels.type         , sequenceLength);
-      ArrayResize(levels.openPrice    , sequenceLength);
+      ArrayResize(levels.lots         , sequenceLength);
       ArrayResize(levels.openLots     , sequenceLength);
       ArrayResize(levels.effectiveLots, sequenceLength);
+      ArrayResize(levels.openPrice    , sequenceLength);
       ArrayResize(levels.swap         , sequenceLength);
       ArrayResize(levels.commission   , sequenceLength);
       ArrayResize(levels.profit       , sequenceLength);
@@ -644,19 +649,19 @@ bool IsProfitTargetReached() {
  * @return int - Fehlerstatus
  */
 int StartSequence() {
-   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                               // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
       }
-      SaveConfiguration();                                                 // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
+      SaveConfiguration();                                        // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
    }
 
    progressionLevel = 1;
 
-   int ticket = OpenPosition(Entry.iDirection, CurrentLotSize());          // Position in Entry.Direction öffnen
+   int ticket = OpenPosition(Entry.iDirection, levels.lots[0]);   // Position in Entry.Direction öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       progressionLevel--;
@@ -675,11 +680,11 @@ int StartSequence() {
 
    levels.ticket       [0] = OrderTicket();
    levels.type         [0] = OrderType();
-   levels.openPrice    [0] = OrderOpenPrice();
    levels.openLots     [0] = OrderLots();
-   levels.effectiveLots[0] = OrderLots();
+   levels.effectiveLots[0] = OrderLots();                         // Level 1: openLots = effectiveLots
+   levels.openPrice    [0] = OrderOpenPrice();
    levels.swap         [0] = 0;
-   levels.commission   [0] = 0;                                            // Werte werden in ReadStatus() ausgelesen
+   levels.commission   [0] = 0;                                   // Werte werden in ReadStatus() ausgelesen
    levels.profit       [0] = 0;
    levels.closeTime    [0] = 0;
 
@@ -707,11 +712,11 @@ int IncreaseProgression() {
 
    int    last      = progressionLevel-1;
    double last.lots = levels.effectiveLots[last];
-   int    new.type  = levels.type         [last] ^ 1;                   // 0=>1, 1=>0
+   int    new.type  = levels.type         [last] ^ 1;                      // 0=>1, 1=>0
 
    progressionLevel++;
 
-   int ticket = OpenPosition(new.type, last.lots + CurrentLotSize());   // alte Position hedgen und nächste öffnen
+   int ticket = OpenPosition(new.type, last.lots + levels.lots[last+1]);   // alte Position hedgen und nächste öffnen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       progressionLevel--;
@@ -731,11 +736,11 @@ int IncreaseProgression() {
    int this = progressionLevel-1;
    levels.ticket       [this] = OrderTicket();
    levels.type         [this] = OrderType();
-   levels.openPrice    [this] = OrderOpenPrice();
    levels.openLots     [this] = OrderLots();
-   levels.effectiveLots[this] = CurrentLotSize();
+   levels.effectiveLots[this] = levels.lots[this];
+   levels.openPrice    [this] = OrderOpenPrice();
    levels.swap         [this] = 0;
-   levels.commission   [this] = 0;                                      // Werte werden in ReadStatus() ausgelesen
+   levels.commission   [this] = 0;                                         // Werte werden in ReadStatus() ausgelesen
    levels.profit       [this] = 0;
    levels.closeTime    [this] = 0;
 
@@ -821,27 +826,6 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Gibt die Lotsize des aktuellen Progression-Levels zurück.
- *
- * @return double - Lotsize oder -1, wenn ein Fehler auftrat
- */
-double CurrentLotSize() {
-   switch (progressionLevel) {
-      case 1: return(Lotsize.Level.1);
-      case 2: return(Lotsize.Level.2);
-      case 3: return(Lotsize.Level.3);
-      case 4: return(Lotsize.Level.4);
-      case 5: return(Lotsize.Level.5);
-      case 6: return(Lotsize.Level.6);
-      case 7: return(Lotsize.Level.7);
-   }
-
-   catch("CurrentLotSize()   illegal progression level = "+ progressionLevel, ERR_RUNTIME_ERROR);
-   return(-1);
-}
-
-
-/**
  * TODO: Nach Fertigstellung alles auf StringConcatenate() umstellen.
  *
  * @return int - Fehlerstatus
@@ -849,6 +833,13 @@ double CurrentLotSize() {
 int ShowStatus() {
    if (last_error != NO_ERROR)
       status = STATUS_DISABLED;
+
+   static string str.levels.lots;
+
+   if (levels.lots.changed) {
+      str.levels.lots = JoinDoubles(levels.lots, ",  ");
+      levels.lots.changed = false;
+   }
 
    string msg="", strTakeProfitPrice="", strStopLossPrice="", strProfitLoss="0";
    double profitLoss;
@@ -872,14 +863,15 @@ int ShowStatus() {
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
    if (progressionLevel > 0) {
-      msg                = StringConcatenate(msg, "  =  ", ifString(levels.type[progressionLevel-1]==OP_BUY, "+", "-"), NumberToStr(CurrentLotSize(), ".+"), " lot");
-      strTakeProfitPrice = NumberToStr(levels.openPrice[progressionLevel-1] + ifDouble(levels.type[progressionLevel-1]==OP_BUY, TakeProfit*Pip, -TakeProfit*Pip), PriceFormat);
-      strStopLossPrice   = NumberToStr(levels.openPrice[progressionLevel-1] + ifDouble(levels.type[progressionLevel-1]==OP_BUY,  -StopLoss*Pip,    StopLoss*Pip), PriceFormat);
-      profitLoss         = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[progressionLevel-1], levels.openPrice[progressionLevel-1]-Ask) / Pip;
+      int last = progressionLevel-1;
+      msg                = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(levels.effectiveLots[last], ".+"), " lot");
+      strTakeProfitPrice = NumberToStr(levels.openPrice[last] + ifDouble(levels.type[last]==OP_BUY, TakeProfit*Pip, -TakeProfit*Pip), PriceFormat);
+      strStopLossPrice   = NumberToStr(levels.openPrice[last] + ifDouble(levels.type[last]==OP_BUY,  -StopLoss*Pip,    StopLoss*Pip), PriceFormat);
+      profitLoss         = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
    }
 
    msg = StringConcatenate(msg,                                                                                                                                         NL,
-                          "Lot sizes:               ", strLotsizes, "  (+0.00/-0.00)",                                                                                  NL,
+                          "Lot sizes:               ", str.levels.lots, "  (+0.00/-0.00)",                                                                              NL,
                           "TakeProfit:            ",   TakeProfit,                         " pip = ", strTakeProfitPrice, " (+", DoubleToStr(0, 2), ")",                NL,
                           "StopLoss:              ",   StopLoss,                           " pip = ", strStopLossPrice, " (", DoubleToStr(-0.01, 2), ")",               NL,
                           "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                        NL,
@@ -946,34 +938,35 @@ int ValidateConfiguration() {
       return(catch("ValidateConfiguration(5)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE));
 
    // Lotsizes
-   double lotsizes[]; ArrayResize(lotsizes, 0);
+   ArrayResize(levels.lots, 0);
+   levels.lots.changed = true;
 
    if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-   ArrayPushDouble(lotsizes, Lotsize.Level.1);
+   ArrayPushDouble(levels.lots, Lotsize.Level.1);
    if      (EQ(Lotsize.Level.2, 0))               sequenceLength = 1;
    else if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
    else {
-      ArrayPushDouble(lotsizes, Lotsize.Level.2);
+      ArrayPushDouble(levels.lots, Lotsize.Level.2);
       if      (EQ(Lotsize.Level.3, 0))               sequenceLength = 2;
       else if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
       else {
-         ArrayPushDouble(lotsizes, Lotsize.Level.3);
+         ArrayPushDouble(levels.lots, Lotsize.Level.3);
          if      (EQ(Lotsize.Level.4, 0))               sequenceLength = 3;
          else if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
          else {
-            ArrayPushDouble(lotsizes, Lotsize.Level.4);
+            ArrayPushDouble(levels.lots, Lotsize.Level.4);
             if      (EQ(Lotsize.Level.5, 0))               sequenceLength = 4;
             else if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
             else {
-               ArrayPushDouble(lotsizes, Lotsize.Level.5);
+               ArrayPushDouble(levels.lots, Lotsize.Level.5);
                if      (EQ(Lotsize.Level.6, 0))               sequenceLength = 5;
                else if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                else {
-                  ArrayPushDouble(lotsizes, Lotsize.Level.6);
+                  ArrayPushDouble(levels.lots, Lotsize.Level.6);
                   if      (EQ(Lotsize.Level.7, 0))               sequenceLength = 6;
                   else if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                   else {
-                     ArrayPushDouble(lotsizes, Lotsize.Level.7);
+                     ArrayPushDouble(levels.lots, Lotsize.Level.7);
                      sequenceLength = 7;
                   }
                }
@@ -981,8 +974,6 @@ int ValidateConfiguration() {
          }
       }
    }
-   strLotsizes = JoinDoubles(lotsizes, ",  ");
-
    return(catch("ValidateConfiguration(13)"));
 }
 
