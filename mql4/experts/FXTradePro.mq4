@@ -273,10 +273,13 @@ int init() {
       ArrayResize(levels.openLots     , sequenceLength);
       ArrayResize(levels.effectiveLots, sequenceLength);
       ArrayResize(levels.openPrice    , sequenceLength);
-      ArrayResize(levels.swap         , sequenceLength);
-      ArrayResize(levels.commission   , sequenceLength);
-      ArrayResize(levels.profit       , sequenceLength);
       ArrayResize(levels.closeTime    , sequenceLength);
+      ArrayResize(levels.swap         , sequenceLength);
+      ArrayResize(levels.swaps        , sequenceLength);
+      ArrayResize(levels.commission   , sequenceLength);
+      ArrayResize(levels.commissions  , sequenceLength);
+      ArrayResize(levels.profit       , sequenceLength);
+      ArrayResize(levels.profits      , sequenceLength);
    }
 
 
@@ -390,7 +393,6 @@ int start() {
       }
       else if (IsProfitTargetReached())         FinishSequence();
    }
-
    ShowStatus();
 
    firstTick = false;
@@ -847,7 +849,7 @@ int ShowStatus() {
 
 
    string msg="", strProfitLoss="0";
-   double profitLoss;
+   double profitLoss, profitLossPips;
 
    switch (status) {
       case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
@@ -870,16 +872,17 @@ int ShowStatus() {
    int last = 0;
    if (progressionLevel > 0) {
       last = progressionLevel-1;
-      msg        = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(levels.effectiveLots[last], ".+"), " lot");
-      profitLoss = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
+      msg            = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(levels.effectiveLots[last], ".+"), " lot");
+      profitLoss     = levels.profits[last] + levels.commissions[last] + levels.swaps[last];
+      profitLossPips = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
    }
 
-   msg = StringConcatenate(msg,                                                                                                                                                                    NL,
-                          "Lot sizes:               ", str.levels.lots, "  (+0.00/-0.00)",                                                                                                         NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = +", DoubleToStr(0, 2),                                                                          NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(-0.01, 2),                                                                       NL,
-                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                                                   NL,
-                          "Profit/Loss:           ",   DoubleToStr(profitLoss, Digits-PipDigits), " pip = ", DoubleToStr(levels.profits[last] + levels.commissions[last] + levels.swaps[last], 2), NL);
+   msg = StringConcatenate(msg,                                                                                                              NL,
+                          "Lot sizes:               ", str.levels.lots, "  (+0.00/-0.00)",                                                   NL,
+                          "TakeProfit:            ",   TakeProfit,                         " pip = +", DoubleToStr(0, 2),                    NL,
+                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(-0.01, 2),                 NL,
+                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
+                          "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(StringConcatenate(NL, NL, msg));
