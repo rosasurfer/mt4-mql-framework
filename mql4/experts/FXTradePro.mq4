@@ -12,6 +12,8 @@
  *
  *  TODO:
  *  -----
+ *  - Heartbeat-Order einrichten
+ *  - Heartbeat-Order muß signalisieren, wenn sich die Konfiguration geändert hat => erneuter Download vom Server
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - FinishSequence(): OrderCloseBy() implementieren
  *  - ReadStatus(): Commission-Berechnung an OrderCloseBy() anpassen
@@ -29,7 +31,6 @@
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
  *  - StopLoss -> Breakeven und TakeProfit -> Breakeven implementieren
  *  - SMS-Benachrichtigungen implementieren
- *  - Heartbeat-Order einrichten
  *  - Equity-Chart der laufenden Sequenz implementieren
  *  - ShowStatus() übersichtlicher gestalten (Textlabel statt Comment())
  */
@@ -178,13 +179,13 @@ int init() {
             continue;
 
          if (IsMyOrder(sequenceId)) {
-            int level = OrderMagicNumber() & 0x000F;                    //  4 Bits (Bits 1-4)  => progressionLevel
+            int level = OrderMagicNumber() & 0xF;                       //  4 Bits (Bits 1-4)  => progressionLevel
             if (level > progressionLevel)
                progressionLevel = level;
 
             if (sequenceId == 0) {
-               sequenceId     = OrderMagicNumber() << 10 >> 18;         // 14 Bits (Bits 9-22) => sequenceId
-               sequenceLength = OrderMagicNumber() & 0x00F0 >> 4;       //  4 Bits (Bits 5-8 ) => sequenceLength
+               sequenceId     = OrderMagicNumber() >> 8 & 0x3FFF;       // 14 Bits (Bits 9-22) => sequenceId
+               sequenceLength = OrderMagicNumber() >> 4 & 0xF;          //  4 Bits (Bits 5-8 ) => sequenceLength
 
                ArrayResize(levels.ticket       , sequenceLength);
                ArrayResize(levels.type         , sequenceLength);
@@ -220,7 +221,7 @@ int init() {
                break;
 
             if (IsMyOrder(sequenceId)) {
-               level = OrderMagicNumber() & 0x000F;                     // 4 Bits (Bits 1-4) => progressionLevel
+               level = OrderMagicNumber() & 0xF;                        // 4 Bits (Bits 1-4) => progressionLevel
                if (level > progressionLevel)
                   progressionLevel = level;
                level--;
@@ -503,7 +504,7 @@ bool IsMyOrder(int sequenceId = NULL) {
          if (OrderMagicNumber() >> 22 == EA.uniqueId) {
             if (sequenceId == NULL)
                return(true);
-            return(sequenceId == OrderMagicNumber() << 10 >> 18);       // 14 Bits (Bits 9-22) => sequenceId
+            return(sequenceId == OrderMagicNumber() >> 8 & 0x3FFF);       // 14 Bits (Bits 9-22) => sequenceId
          }
       }
    }
@@ -538,10 +539,10 @@ int CreateMagicNumber() {
       return(-1);
    }
 
-   int ea       = EA.uniqueId << 22;                  // 10 bit (Bereich 0-1023)                                 | in MagicNumber: Bits 23-32
-   int sequence = sequenceId  << 18 >> 10;            // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern | in MagicNumber: Bits  9-22
-   int length   = sequenceLength   & 0x000F << 4;     //  4 bit (Bereich 1-7), auf 8 bit erweitern               | in MagicNumber: Bits  5-8
-   int level    = progressionLevel & 0x000F;          //  4 bit (Bereich 1-7)                                    | in MagicNumber: Bits  1-4
+   int ea       = EA.uniqueId & 0x3FF << 22;          // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
+   int sequence = sequenceId & 0x3FFF << 8;           // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern  | in MagicNumber: Bits  9-22
+   int length   = sequenceLength & 0xF << 4;          //  4 bit (Bits größer 4 löschen und auf 8 bit erweitern)   | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0xF;             //  4 bit (Bits größer 4 löschen)                           | in MagicNumber: Bits  1-4
 
    return(ea + sequence + length + level);
 }
@@ -796,6 +797,109 @@ int FinishSequence() {
    ReadStatus();
 
    return(catch("FinishSequence(3)"));
+   int array[]; OrderCloseMultiple(array); OrderCloseByEx(NULL, NULL);
+}
+
+
+/**
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden mit einer einzigen Order (per Hedge)
+ * geschlossen, Brokerbetrug durch Berechnung doppelter Spreads wird verhindert.
+ *
+ * @param  int   tickets[]   - Ticket-Nr. der zu schließenden Positionen
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
+ */
+bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // tickets
+   int size = ArraySize(tickets);
+   if (size == 0)
+      return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   for (int i=0; i < size; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         int error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets, NULL), error)==NO_ERROR);
+      }
+      if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   }
+   // markerColor
+   if (markerColor < 0) return(catch("OrderCloseMultiple(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // -- Ende Parametervalidierung --
+
+
+}
+
+
+/**
+ * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ *
+ * @param  int   ticket      - Ticket-Nr. der zu schließenden Position
+ * @param  int   opposite    - Ticket-Nr. der entgegengesetzten zu schließenden Position
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderCloseByEx(int ticket, int opposite, color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // ticket
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      return(catch("OrderCloseByEx(1)   invalid parameter ticket = "+ ticket, error)==NO_ERROR);
+   }
+   if (OrderCloseTime() != 0)                                return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   int    type = OrderType();
+   double lots = OrderLots();
+   // opposite
+   if (!OrderSelect(opposite, SELECT_BY_TICKET)) {
+      error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      return(catch("OrderCloseByEx(4)   invalid parameter opposite ticket = "+ opposite, error)==NO_ERROR);
+   }
+   if (OrderCloseTime() != 0)   return(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType() != type ^ 1) return(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
+   lots = MathMin(lots, OrderLots());
+   // markerColor
+   if (markerColor < 0)
+      return(catch("OrderCloseByEx(7)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // -- Ende Parametervalidierung --
+
+
+   // TODO: Reihenfolge der Trades ermitteln und hedgende Order definieren
+
+
+   // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      if (IsTradeContextBusy()) {
+         log("OrderCloseByEx()   trade context busy, waiting...");
+      }
+      else {
+         int time = GetTickCount();
+         if (OrderCloseBy(ticket, opposite, markerColor)) {
+            PlaySound("OrderOk.wav");
+            log(StringConcatenate("OrderCloseByEx()   closed #", ticket, " ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", OrderSymbol(), ", used time: ", GetTickCount()-time, " ms"));
+            return(catch("OrderCloseByEx(8)")==NO_ERROR);   // regular exit
+         }
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))                 // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+         Alert("OrderCloseByEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+      }
+      error = NO_ERROR;
+      Sleep(300);                                           // 0.3 Sekunden warten
+   }
+
+   catch("OrderCloseByEx(9)   permanent trade error", error);
+   return(false);
 }
 
 

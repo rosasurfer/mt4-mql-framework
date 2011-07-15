@@ -7483,66 +7483,39 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
       int error = GetLastError();
       if (error == NO_ERROR)
          error = ERR_INVALID_TICKET;
-      catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error);
-      return(false);
+      return(catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error)==NO_ERROR);
    }
-   if (OrderCloseTime() != 0) {
-      catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_TRADE_ERROR);
-      return(false);
-   }
-   if (OrderType()!=OP_BUY && OrderType()!=OP_SELL) {
-      catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_TRADE_ERROR);
-      return(false);
-   }
+   if (OrderCloseTime() != 0)                                return(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot)) {
-         catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
-      if (GT(lots, OrderLots())) {
-         catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
-      if (NE(MathModFix(lots, lotStep), 0)) {
-         catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
-         return(false);
-      }
+      if (LT(lots, minLot))                 return(catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (GT(lots, OrderLots()))            return(catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (NE(MathModFix(lots, lotStep), 0)) return(catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0)) {
-      catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (LT(price, 0))    return(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // slippage
-   if (slippage < 0) {
-      catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (slippage < 0)    return(catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < 0) {
-      catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (markerColor < 0) return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
-         log("OrderSendEx()   trade context busy, waiting...");
+         log("OrderCloseEx()   trade context busy, waiting...");
       }
       else {
          price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);

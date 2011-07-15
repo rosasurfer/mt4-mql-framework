@@ -281,12 +281,12 @@ int CreateMagicNumber(int counter) {
       catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   int strategy   = Strategy.uniqueId & 0x3FF << 22;                    // 10 bit (Bits größer 10 nullen und auf 32 Bit erweitern)  | in MagicNumber: Bits 23-32
-   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;               //  5 bit (Bits größer 5 nullen und auf 22 Bit erweitern)   | in MagicNumber: Bits 18-22
-   int iUnits     = MathRound(Units * 10) + 0.1;                        //   +0.1 fängt evt. Präzisionsfehler beim Casten ab
-       iUnits     = iUnits & 0x1F << 12;                                //  5 bit (Bits größer 5 nullen und auf 17 Bit erweitern)   | in MagicNumber: Bits 13-17
-   int instance   = GetInstanceId() & 0x1FF << 3;                       //  9 bit (Bits größer 9 nullen und auf 12 Bit erweitern)   | in MagicNumber: Bits  4-12
-   int pCounter   = counter & 0x7;                                      //  3 bit (Bits größer 3 nullen)                            | in MagicNumber: Bits  1-3
+   int strategy   = Strategy.uniqueId & 0x3FF << 22;                    // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
+   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;               //  5 bit (Bits größer 5 löschen und auf 22 Bit erweitern)  | in MagicNumber: Bits 18-22
+   int iUnits     = MathRound(Units * 10) + 0.1;                        // +0.1 fängt Präzisionsfehler beim Casten ab
+       iUnits     = iUnits & 0x1F << 12;                                //  5 bit (Bits größer 5 löschen und auf 17 Bit erweitern)  | in MagicNumber: Bits 13-17
+   int instance   = GetInstanceId() & 0x1FF << 3;                       //  9 bit (Bits größer 9 löschen und auf 12 Bit erweitern)  | in MagicNumber: Bits  4-12
+   int pCounter   = counter & 0x7;                                      //  3 bit (Bits größer 3 löschen)                           | in MagicNumber: Bits  1-3
 
    int error = GetLastError();
    if (error != NO_ERROR) {
