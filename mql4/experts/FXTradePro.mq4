@@ -844,7 +844,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
    if (symbol != OrderSymbol())        return(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
 
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > 0xFFFFFF) return(catch("OrderCloseByEx(9)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseByEx(9)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -931,7 +931,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
       if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > 0xFFFFFF)        return(catch("OrderCloseMultiple(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 

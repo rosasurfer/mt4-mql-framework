@@ -7361,7 +7361,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       return(-1);
    }
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > 0xFFFFFF) {
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') {
       catch("OrderSendEx(12)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
@@ -7508,7 +7508,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
    // slippage
    if (slippage < 0) return(catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > 0xFFFFFF) return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 
