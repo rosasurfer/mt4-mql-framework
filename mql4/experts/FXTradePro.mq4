@@ -960,27 +960,65 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
    }
 
 
-   // (4) Gehören die Tickets zu mehreren Symbolen, die Tickets jeweils eines Symbols auslesen und per Symbol schließen...
+   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen...
    int sizeOfSymbols = ArraySize(symbols);
+
    if (sizeOfSymbols > 1) {
+      int hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
 
-      // Da wir Tickets mehrerer Symbole auf einmal schließen wollen, müssen multiple Positionen je Symbol zunächst nur gehedged
-      // und die Hedges erst zum Schluß geschlossen werden.
-
-      for (i=0; i < sizeOfSymbols; i++) {
+      for (symbolIndex=0; symbolIndex < sizeOfSymbols; symbolIndex++) {
          int perSymbolTickets[]; ArrayResize(perSymbolTickets, 0);
-         for (int n=0; n < sizeOfTickets; n++) {
-            if (i == ticketSymbols[n])
-               ArrayPushInt(perSymbolTickets, tickets[n]);
+         for (i=0; i < sizeOfTickets; i++) {
+            if (symbolIndex == ticketSymbols[i])
+               ArrayPushInt(perSymbolTickets, tickets[i]);
          }
-         if (ArraySize(perSymbolTickets) == 1) {   // eine Position je Symbol => kann sofort komplett geschlossen werden
+         int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
+         if (sizeOfPerSymbolTickets == 1) {
+            // eine Position des Symbols => kann sofort komplett geschlossen werden
             if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, NULL, markerColor))
                return(false);
          }
-         else {                                    // mehrere Positionen je Symbol => zunächst nur hedgen
-            // resultierende Gesamtposition berechnen und ggf. Hedge-Trade öffnen
+         else {
+            // Da wir hier Tickets mehrerer Symbole auf einmal schließen, müssen mehrere Positionen je Symbol
+            // zunächst nur gehedged und die Hedges erst zum Schluß geschlossen werden.
+
+            // Gesamtposition berechnen
+            double totalLots;
+            for (int n=0; n < sizeOfPerSymbolTickets; n++) {
+               if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
+                  error = GetLastError();
+                  if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+                  return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
+               }
+               if (OrderType() == OP_BUY) totalLots += OrderLots();
+               else                       totalLots -= OrderLots();
+            }
+            if (NE(totalLots, 0)) {                      // Gesamtposition hedgen
+               int hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+               if (hedge == -1)
+                  return(false);
+               // Hedge-Position zu den zu schließenden Tickets dieses Symbols hinzufügen
+               ArrayPushInt(tickets,       hedge      );       // TODO: können wir hier tickets[] ohne Zeiger darauf vergrößern ??? (direkte Zuweisung verursacht Compilerfehler)
+               ArrayPushInt(ticketSymbols, symbolIndex);
+            }
+            // Gesamtposition ist gehedged => Hedge-Symbol zum späteren Schließen vormerken
+            ArrayPushInt(hedgedSymbolIndices, symbolIndex);
          }
       }
+
+      // jetzt die gehedgten Symbole per rekursivem Aufruf komplett schließen
+      int hedges = ArraySize(hedgedSymbolIndices);
+      for (i=0; i < hedges; i++) {
+         symbolIndex = hedgedSymbolIndices[i];
+         ArrayResize(perSymbolTickets, 0);
+         for (n=0; n < sizeOfTickets; n++) {
+            if (ticketSymbols[n] == symbolIndex)
+               ArrayPushInt(perSymbolTickets, tickets[n]);
+         }
+         if (!OrderCloseMultiple(perSymbolTickets, markerColor))
+            return(false);
+      }
+
       return(catch("OrderCloseMultiple(7)")==NO_ERROR);
    }
 
