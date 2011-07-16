@@ -6018,7 +6018,7 @@ string StringArrayToStr(string& array[], string separator=", ") {
  * @param  int needle     - zu suchender Wert
  * @param  int haystack[] - zu durchsuchendes Array
  *
- * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchInt(int needle, int &haystack[]) {
    if (ArrayDimension(haystack) > 1) {
@@ -6054,7 +6054,7 @@ bool IntInArray(int needle, int &haystack[]) {
  * @param  double needle     - zu suchender Wert
  * @param  double haystack[] - zu durchsuchendes Array
  *
- * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchDouble(double needle, double &haystack[]) {
    if (ArrayDimension(haystack) > 1) {
@@ -6090,7 +6090,7 @@ bool DoubleInArray(double needle, double &haystack[]) {
  * @param  string needle     - zu suchender Wert
  * @param  string haystack[] - zu durchsuchendes Array
  *
- * @return int - Index des Wertes oder -1, wenn der Wert im Array nicht enthalten ist
+ * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchString(string needle, string &haystack[]) {
    if (ArrayDimension(haystack) > 1) {
@@ -7367,23 +7367,28 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
    }
    // -- Ende Parametervalidierung --
 
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
-         log("OrderSendEx()   trade context busy, waiting...");
+         log("OrderSendEx()   trade context busy, retrying...");
       }
       else {
          if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
          else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
          price    = NormalizeDouble(price, digits);
-         int time = GetTickCount();
 
+         int time1  = GetTickCount();
+         log("OrderSendEx()   opening "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ symbol +" at "+ NumberToStr(price, priceFormat) +" order");
          int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+         int time2  = GetTickCount();
+
          if (ticket > 0) {
             // ausführliche Logmessage generieren
             PlaySound("OrderOk.wav");
-            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, price, digits, GetTickCount()-time));
+            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, price, digits, time2-time1));
             catch("OrderSendEx(13)");
             return(ticket);                        // regular exit
          }
@@ -7392,7 +7397,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))        // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
       Sleep(300);                                  // 0.3 Sekunden warten
@@ -7511,28 +7516,34 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
-         log("OrderCloseEx()   trade context busy, waiting...");
+         log("OrderCloseEx()   trade context busy, retrying...");
       }
       else {
          price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
-         int time = GetTickCount();
+
+         int time2, time1=GetTickCount();
+         log("OrderCloseEx()   closing #"+ ticket +" at "+ NumberToStr(price, priceFormat));
 
          if (OrderClose(ticket, lots, price, slippage, markerColor)) {
+            time2 = GetTickCount();
             // ausführliche Logmessage generieren
             PlaySound("OrderOk.wav");
-            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, GetTickCount()-time));
+            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, time2-time1));
             return(catch("OrderCloseEx(11)")==NO_ERROR);    // regular exit
          }
+         time2 = GetTickCount();
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                 // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +", retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
       Sleep(300);                                           // 0.3 Sekunden warten

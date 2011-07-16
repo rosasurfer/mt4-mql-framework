@@ -16,11 +16,11 @@
    int      ArrayPushDouble(double& array[], double value);
    int      ArrayPushInt(int& array[], int value);
    int      ArrayPushString(string& array[], string value);
-   int      ArraySearchDouble(double needle, double &haystack[]);
-   int      ArraySearchInt(int needle, int &haystack[]);
-   int      ArraySearchString(string needle, string &haystack[]);
-   bool     DoubleInArray(double needle, double &haystack[]);
-   bool     IntInArray(int needle, int &haystack[]);
+   int      ArraySearchDouble(double needle, double& haystack[]);
+   int      ArraySearchInt(int needle, int& haystack[]);
+   int      ArraySearchString(string needle, string& haystack[]);
+   bool     DoubleInArray(double needle, double& haystack[]);
+   bool     IntInArray(int needle, int& haystack[]);
    bool     IsReverseIndexedDoubleArray(double& array[]);
    bool     IsReverseIndexedIntArray(int& array[]);
    bool     IsReverseIndexedSringArray(string& array[]);
@@ -31,7 +31,7 @@
    bool     ReverseDoubleArray(double& array[]);
    bool     ReverseIntArray(int& array[]);
    bool     ReverseStringArray(string& array[]);
-   bool     StringInArray(string needle, string &haystack[]);
+   bool     StringInArray(string needle, string& haystack[]);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
