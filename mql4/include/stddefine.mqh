@@ -5,6 +5,14 @@
  */
 
 
+// Special constants
+#define NULL                     0     //
+#define EMPTY                   -1     //
+#define EMPTY_VALUE     0x7FFFFFFF     // indicates an empty custom indicator value (2147483647)
+#define CLR_NONE                -1     // indicates no color
+#define WHOLE_ARRAY              0     //
+
+
 // String maximaler Länge
 #define MAX_STRING_LITERAL     "..............................................................................................................................................................................................................................................................."
 #define MAX_STRING_LITERAL_LEN 255
