@@ -16,6 +16,7 @@
  *  - Heartbeat-Order muß signalisieren, wenn sich die Konfiguration geändert hat => erneuter Download vom Server
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - FinishSequence(): OrderCloseBy() implementieren
+ *  - alle Trade-Funktionen: Slippage als Subpips statt Points implementieren
  *  - ReadStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Visualisierung der gesamten Sequenz implementieren
@@ -618,7 +619,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      log("IsStopLossReached()   Stoploss von "+ StopLoss +" pip für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsStopLossReached()   Stoploss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -650,7 +651,7 @@ bool IsProfitTargetReached() {
    }
 
    if (GE(last.profit, TakeProfit*Pip)) {
-      log("IsProfitTargetReached()   Profit target von "+ TakeProfit +" pip für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      log("IsProfitTargetReached()   Profit target für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -771,33 +772,26 @@ int FinishSequence() {
       }
    }
 
-   // TODO: OrderCloseBy() implementieren
+   // zu schließende Tickets ermitteln
+   int tickets[]; ArrayResize(tickets, 0);
+
    for (int i=0; i < sequenceLength; i++) {
-      if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0) {
-         if (!OrderCloseEx(levels.ticket[i], NULL, NULL, 1, Orange)) {
-            status = STATUS_DISABLED;
-            return(processLibError(stdlib_PeekLastError()));
-         }
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            int error = GetLastError();
-            if (error == NO_ERROR)
-               error = ERR_INVALID_TICKET;
-            status = STATUS_DISABLED;
-            return(catch("FinishSequence(2)", error));
-         }
-         levels.closeTime [i] = OrderCloseTime();
-         levels.swap      [i] = OrderSwap();
-         levels.commission[i] = OrderCommission();
-         levels.profit    [i] = OrderProfit();
-      }
+      if (levels.ticket[i] > 0) /*&&*/ if (levels.closeTime[i] == 0)
+         ArrayPushInt(tickets, levels.ticket[i]);
+   }
+
+   // Tickets schließen
+   if (!OrderCloseMultiple(tickets)) {
+      status = STATUS_DISABLED;
+      return(processLibError(stdlib_PeekLastError()));
    }
 
    // Status aktualisieren
    status = STATUS_FINISHED;
    ReadStatus();
 
-   return(catch("FinishSequence(3)"));
-   int array[]; OrderCloseMultiple(array); OrderCloseByEx(NULL, NULL, array);
+   return(catch("FinishSequence(2)"));
+   int array[]; OrderCloseByEx(NULL, NULL, array);
 }
 
 
@@ -870,9 +864,10 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
 
          if (OrderCloseBy(first, hedge, markerColor)) {
             time2 = GetTickCount();
-            // Restposition suchen und in lpRemainder speichern
             ArrayResize(lpRemainder, 0);
+
             if (NE(firstLots, hedgeLots)) {
+               // Restposition suchen und in lpRemainder speichern
                string comment = StringConcatenate("from #", ifString(GT(firstLots, hedgeLots), first, hedge));
                for (int i=OrdersTotal()-1; i >= 0; i--) {
                   if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
@@ -902,7 +897,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
       Sleep(300);                                                    // 0.3 Sekunden warten
    }
 
-   catch("OrderCloseByEx(12)   permanent trade error", error);
+   catch("OrderCloseByEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
    return(false);
 }
 
@@ -943,12 +938,17 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
       return(OrderCloseEx(tickets[0], NULL, NULL, NULL, markerColor));
 
 
+   // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
+   int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
+   ArrayCopy(ticketsCopy, tickets);
+
+
    // (3) Zuordnung der Tickets zu Symbolen ermitteln
    string symbols[];
    int    ticketSymbols[]; ArrayResize(ticketSymbols, sizeOfTickets);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
          error = GetLastError();
          if (error == NO_ERROR) error = ERR_INVALID_TICKET;
          return(catch("OrderCloseMultiple(6)", error)==NO_ERROR);
@@ -960,7 +960,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
    }
 
 
-   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen...
+   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen.
    int sizeOfSymbols = ArraySize(symbols);
 
    if (sizeOfSymbols > 1) {
@@ -970,19 +970,19 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
          int perSymbolTickets[]; ArrayResize(perSymbolTickets, 0);
          for (i=0; i < sizeOfTickets; i++) {
             if (symbolIndex == ticketSymbols[i])
-               ArrayPushInt(perSymbolTickets, tickets[i]);
+               ArrayPushInt(perSymbolTickets, ticketsCopy[i]);
          }
          int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
          if (sizeOfPerSymbolTickets == 1) {
-            // eine Position des Symbols => kann sofort komplett geschlossen werden
+            // nur eine Position des Symbols => kann sofort komplett geschlossen werden
             if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, NULL, markerColor))
                return(false);
          }
          else {
-            // Da wir hier Tickets mehrerer Symbole auf einmal schließen, müssen mehrere Positionen je Symbol
-            // zunächst nur gehedged und die Hedges erst zum Schluß geschlossen werden.
+            // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, muß zunächst
+            // per Hedge die Gesamtposition ausgeglichen und die Teilpositionen erst zum Schluß geschlossen werden.
 
-            // Gesamtposition berechnen
+            // Gesamtposition berechnen...
             double totalLots;
             for (int n=0; n < sizeOfPerSymbolTickets; n++) {
                if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
@@ -993,13 +993,13 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
                if (OrderType() == OP_BUY) totalLots += OrderLots();
                else                       totalLots -= OrderLots();
             }
-            if (NE(totalLots, 0)) {                      // Gesamtposition hedgen
+            if (NE(totalLots, 0)) {                      // ... und Gesamtposition hedgen
                int hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
                if (hedge == -1)
                   return(false);
                // Hedge-Position zu den zu schließenden Tickets dieses Symbols hinzufügen
-               ArrayPushInt(tickets,       hedge      );       // TODO: können wir hier tickets[] ohne Zeiger darauf vergrößern ??? (direkte Zuweisung verursacht Compilerfehler)
-               ArrayPushInt(ticketSymbols, symbolIndex);
+               sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
+                               ArrayPushInt(ticketSymbols, symbolIndex);
             }
             // Gesamtposition ist gehedged => Hedge-Symbol zum späteren Schließen vormerken
             ArrayPushInt(hedgedSymbolIndices, symbolIndex);
@@ -1013,17 +1013,45 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
          ArrayResize(perSymbolTickets, 0);
          for (n=0; n < sizeOfTickets; n++) {
             if (ticketSymbols[n] == symbolIndex)
-               ArrayPushInt(perSymbolTickets, tickets[n]);
+               ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
          if (!OrderCloseMultiple(perSymbolTickets, markerColor))
             return(false);
       }
-
-      return(catch("OrderCloseMultiple(7)")==NO_ERROR);
+      return(catch("OrderCloseMultiple(8)")==NO_ERROR);
    }
 
 
-   // (5) alle Tickets gehören zu genau einem Symbol
+   // (5) mehrere Tickets, die alle zu einem Symbol gehören
+   debug("OrderCloseMultiple()   closing per symbol tickets = "+ IntArrayToStr(ticketsCopy, NULL));
+
+   // zunächst wird per Hedge die Gesamtposition ausgeglichen
+   totalLots = 0;                                                 // Gesamtposition berechnen ...
+   for (i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(9)", error)==NO_ERROR);
+      }
+      if (OrderType() == OP_BUY) totalLots += OrderLots();
+      else                       totalLots -= OrderLots();
+   }
+   if (NE(totalLots, 0)) {                                        // ..., ggf. ausgleichen ...
+      hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+      if (hedge == -1)
+         return(false);
+      sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);           // ... und Hedge den zu schließenden Tickets hinzufügen
+   }
+
+   // Gesamtposition ist ausgeglichen, jetzt Teilpositionen auflösen
+
+
+
+
+
+
+
+   return(catch("OrderCloseMultiple(9)")==NO_ERROR);
 }
 
 

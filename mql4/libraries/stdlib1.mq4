@@ -7403,7 +7403,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       Sleep(300);                                  // 0.3 Sekunden warten
    }
 
-   catch("OrderSendEx(14)   permanent trade error", error);
+   catch("OrderSendEx(14)   permanent trade error after "+ (time2-time1) +" ms", error);
    return(-1);
 }
 
@@ -7549,7 +7549,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
       Sleep(300);                                           // 0.3 Sekunden warten
    }
 
-   catch("OrderCloseEx(12)   permanent trade error", error);
+   catch("OrderCloseEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
    return(false);
 }
 
