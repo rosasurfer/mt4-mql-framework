@@ -19,7 +19,7 @@
 /**
  *
  */
-int GetPrivateProfileKeys(string fileName, string section, string& results[]) {
+int GetPrivateProfileKeys(string fileName, string section, string results[]) {
    int buffer[200];
    int bufferSize = ArraySize(buffer) * 4;
 
@@ -46,7 +46,7 @@ int GetPrivateProfileKeys(string fileName, string section, string& results[]) {
 /**
  *
  */
-int GetPrivateProfileSectionNames(string fileName, string& results[]) {
+int GetPrivateProfileSectionNames(string fileName, string results[]) {
    int buffer[200];
    int bufferSize = ArraySize(buffer) * 4;
 

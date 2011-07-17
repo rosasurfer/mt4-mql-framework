@@ -13,25 +13,28 @@
    int      stdlib_PeekLastError();
 
    // Arrays
-   int      ArrayPushDouble(double& array[], double value);
-   int      ArrayPushInt(int& array[], int value);
-   int      ArrayPushString(string& array[], string value);
-   int      ArraySearchDouble(double needle, double& haystack[]);
-   int      ArraySearchInt(int needle, int& haystack[]);
-   int      ArraySearchString(string needle, string& haystack[]);
-   bool     DoubleInArray(double needle, double& haystack[]);
-   bool     IntInArray(int needle, int& haystack[]);
-   bool     IsReverseIndexedDoubleArray(double& array[]);
-   bool     IsReverseIndexedIntArray(int& array[]);
-   bool     IsReverseIndexedSringArray(string& array[]);
-   string   JoinBools(bool& values[], string separator);
-   string   JoinDoubles(double& values[], string separator);
-   string   JoinInts(int& values[], string separator);
-   string   JoinStrings(string& values[], string separator);
-   bool     ReverseDoubleArray(double& array[]);
-   bool     ReverseIntArray(int& array[]);
-   bool     ReverseStringArray(string& array[]);
-   bool     StringInArray(string needle, string& haystack[]);
+   int      ArrayPushDouble(double array[], double value);
+   int      ArrayPushInt(int array[], int value);
+   int      ArrayPushString(string array[], string value);
+   int      ArraySearchDouble(double needle, double haystack[]);
+   int      ArraySearchInt(int needle, int haystack[]);
+   int      ArraySearchString(string needle, string haystack[]);
+   double   ArrayShiftDouble(double array[]);
+   int      ArrayShiftInt(int array[]);
+   string   ArrayShiftString(string array[]);
+   bool     DoubleInArray(double needle, double haystack[]);
+   bool     IntInArray(int needle, int haystack[]);
+   bool     IsReverseIndexedDoubleArray(double array[]);
+   bool     IsReverseIndexedIntArray(int array[]);
+   bool     IsReverseIndexedSringArray(string array[]);
+   string   JoinBools(bool values[], string separator);
+   string   JoinDoubles(double values[], string separator);
+   string   JoinInts(int values[], string separator);
+   string   JoinStrings(string values[], string separator);
+   bool     ReverseDoubleArray(double array[]);
+   bool     ReverseIntArray(int array[]);
+   bool     ReverseStringArray(string array[]);
+   bool     StringInArray(string needle, string haystack[]);
 
    // Conditional Statements
    double   ifDouble(bool condition, double dThen, double dElse);
@@ -114,16 +117,16 @@
    datetime TimeGMT();
 
    // Eventlistener
-   bool     EventListener(int event, int& lpResults[], int flags);
-   bool     EventListener.AccountChange(int& lpResults[], int flags);
-   bool     EventListener.AccountPayment(int& lpResults[], int flags);
-   bool     EventListener.BarOpen(int& lpResults[], int flags);
-   bool     EventListener.HistoryChange(int& lpResults[], int flags);
-   bool     EventListener.OrderCancel(int& lpResults[], int flags);
-   bool     EventListener.OrderChange(int& lpResults[], int flags);
-   bool     EventListener.OrderPlace(int& lpResults[], int flags);
-   bool     EventListener.PositionClose(int& lpResults[], int flags);
-   bool     EventListener.PositionOpen(int& lpResults[], int flags);
+   bool     EventListener(int event, int lpResults[], int flags);
+   bool     EventListener.AccountChange(int lpResults[], int flags);
+   bool     EventListener.AccountPayment(int lpResults[], int flags);
+   bool     EventListener.BarOpen(int lpResults[], int flags);
+   bool     EventListener.HistoryChange(int lpResults[], int flags);
+   bool     EventListener.OrderCancel(int lpResults[], int flags);
+   bool     EventListener.OrderChange(int lpResults[], int flags);
+   bool     EventListener.OrderPlace(int lpResults[], int flags);
+   bool     EventListener.PositionClose(int lpResults[], int flags);
+   bool     EventListener.PositionOpen(int lpResults[], int flags);
 
    // Eventhandler
    int      onAccountChange(int details[]);
@@ -137,9 +140,9 @@
    int      onPositionOpen(int tickets[]);
 
    // EventTracker (Indikator)
-   bool     EventTracker.GetBandLimits(double& lpLimits[3]);
-   bool     EventTracker.SetBandLimits(double& lpLimits[3]);
-   bool     EventTracker.GetGridLimits(double& lpLimits[2]);
+   bool     EventTracker.GetBandLimits(double lpLimits[3]);
+   bool     EventTracker.SetBandLimits(double lpLimits[3]);
+   bool     EventTracker.GetGridLimits(double lpLimits[2]);
    int      EventTracker.SaveGridLimits(double upperLimit, double lowerLimit);
 
    // Farben
@@ -149,11 +152,11 @@
    color    HSVToRGBColor(double hsv[3]);
    color    HSVValuesToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
-   int      RGBToHSVColor(color rgb, double& lpHSV[]);
-   int      RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]);
+   int      RGBToHSVColor(color rgb, double lpHSV[]);
+   int      RGBValuesToHSVColor(int red, int green, int blue, double lpHSV[]);
 
    // Files, I/O
-   int      FileReadLines(string filename, string& lpLines[], bool skipEmptyLines);
+   int      FileReadLines(string filename, string lpLines[], bool skipEmptyLines);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    string   GetShortcutTarget(string lnkFile);
    bool     IsDirectory(string pathName);
@@ -175,7 +178,7 @@
    int      MathSign(double number);
 
    // Strings
-   int      Explode(string object, string separator, string& lpResults[], int limit);
+   int      Explode(string object, string separator, string lpResults[], int limit);
    bool     StringContains(string object, string substring);
    bool     StringEndsWith(string object, string postfix);
    int      StringFindR(string object, string search);
@@ -201,19 +204,21 @@
    bool     IsPermanentTradeError(int error);
    bool     IsTemporaryTradeError(int error);
    bool     IsTradeOperationType(int value);
+   bool     OrderCloseByEx(int ticket, int opposite, int lpRemainder[], color markerColor);
    bool     OrderCloseEx(int ticket, double lots, double price, int slippage, color markerColor);
+   bool     OrderCloseMultiple(int tickets[], color markerColor);
    int      OrderSendEx(string symbol, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
 
    // sonstiges
    string   AppliedPriceDescription(int appliedPrice);
    string   CreateLegendLabel(string name);
-   int      RepositionLegend();
+   int      ChronologicalSortTickets(int tickets[]);
    int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
-   int      GetAccountHistory(int account, string& lpResults[]);
+   int      GetAccountHistory(int account, string lpResults[]);
    int      GetAccountNumber();
    double   GetAverageSpread(string symbol);
-   int      GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]);
+   int      GetBalanceHistory(int account, datetime lpTimes[], double lpValues[]);
    string   GetComputerName();
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
@@ -231,16 +236,17 @@
    int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
-   int      iAccountBalance(int account, double& lpBuffer[], int bar);
-   int      iAccountBalanceSeries(int account, double& lpBuffer[]);
+   int      iAccountBalance(int account, double lpBuffer[], int bar);
+   int      iAccountBalanceSeries(int account, double lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
    string   MovingAverageDescription(int method);
    int      MovingAverageToId(string method);
    string   OperationTypeDescription(int type);
-   int      RegisterChartObject(string label, string& lpObjects[]);
-   int      RemoveChartObjects(string& lpObjects[]);
+   int      RegisterChartObject(string label, string lpObjects[]);
+   int      RemoveChartObjects(string lpObjects[]);
+   int      RepositionLegend();
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
@@ -251,14 +257,14 @@
 
    // toString-Funktionen
    string   AppliedPriceToStr(int appliedPrice);
-   string   BoolArrayToStr(bool& values[], string separator);
+   string   BoolArrayToStr(bool values[], string separator);
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);
    string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
-   string   DoubleArrayToStr(double& values[], string separator);
+   string   DoubleArrayToStr(double values[], string separator);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   IntArrayToStr(int& values[], string separator);
+   string   IntArrayToStr(int values[], string separator);
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
@@ -268,83 +274,83 @@
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
-   string   StringArrayToStr(string& values[], string separator);
-   int      StringBufferToArray(int& buffer[], string& results[]);
-   string   StructCharToStr(int& lpStruct[], int from, int len);
-   string   StructToHexStr(int& lpStruct[]);
-   string   StructToStr(int& lpStruct[]);
-   string   StructWCharToStr(int& lpStruct[], int from, int len);
+   string   StringArrayToStr(string values[], string separator);
+   int      StringBufferToArray(int buffer[], string results[]);
+   string   StructCharToStr(int lpStruct[], int from, int len);
+   string   StructToHexStr(int lpStruct[]);
+   string   StructToStr(int lpStruct[]);
+   string   StructWCharToStr(int lpStruct[], int from, int len);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
 
    // Win32-Structs Getter und Setter
-   int      pi.hProcess                   (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.hThread                    (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ProcessId                  (/*PROCESS_INFORMATION*/ int& pi[]);
-   int      pi.ThreadId                   (/*PROCESS_INFORMATION*/ int& pi[]);
+   int      pi.hProcess                   (/*PROCESS_INFORMATION*/ int pi[]);
+   int      pi.hThread                    (/*PROCESS_INFORMATION*/ int pi[]);
+   int      pi.ProcessId                  (/*PROCESS_INFORMATION*/ int pi[]);
+   int      pi.ThreadId                   (/*PROCESS_INFORMATION*/ int pi[]);
 
-   int      sa.Length                     (/*SECURITY_ATTRIBUTES*/ int& sa[]);
-   int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/ int& sa[]);
-   bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/ int& sa[]);
+   int      sa.Length                     (/*SECURITY_ATTRIBUTES*/ int sa[]);
+   int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/ int sa[]);
+   bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/ int sa[]);
 
-   int      si.cb                         (/*STARTUPINFO*/ int& si[]);
-   int      si.Desktop                    (/*STARTUPINFO*/ int& si[]);
-   int      si.Title                      (/*STARTUPINFO*/ int& si[]);
-   int      si.X                          (/*STARTUPINFO*/ int& si[]);
-   int      si.Y                          (/*STARTUPINFO*/ int& si[]);
-   int      si.XSize                      (/*STARTUPINFO*/ int& si[]);
-   int      si.YSize                      (/*STARTUPINFO*/ int& si[]);
-   int      si.XCountChars                (/*STARTUPINFO*/ int& si[]);
-   int      si.YCountChars                (/*STARTUPINFO*/ int& si[]);
-   int      si.FillAttribute              (/*STARTUPINFO*/ int& si[]);
-   int      si.Flags                      (/*STARTUPINFO*/ int& si[]);
-   string   si.FlagsToStr                 (/*STARTUPINFO*/ int& si[]);
-   int      si.ShowWindow                 (/*STARTUPINFO*/ int& si[]);
-   string   si.ShowWindowToStr            (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdInput                  (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdOutput                 (/*STARTUPINFO*/ int& si[]);
-   int      si.hStdError                  (/*STARTUPINFO*/ int& si[]);
+   int      si.cb                         (/*STARTUPINFO*/ int si[]);
+   int      si.Desktop                    (/*STARTUPINFO*/ int si[]);
+   int      si.Title                      (/*STARTUPINFO*/ int si[]);
+   int      si.X                          (/*STARTUPINFO*/ int si[]);
+   int      si.Y                          (/*STARTUPINFO*/ int si[]);
+   int      si.XSize                      (/*STARTUPINFO*/ int si[]);
+   int      si.YSize                      (/*STARTUPINFO*/ int si[]);
+   int      si.XCountChars                (/*STARTUPINFO*/ int si[]);
+   int      si.YCountChars                (/*STARTUPINFO*/ int si[]);
+   int      si.FillAttribute              (/*STARTUPINFO*/ int si[]);
+   int      si.Flags                      (/*STARTUPINFO*/ int si[]);
+   string   si.FlagsToStr                 (/*STARTUPINFO*/ int si[]);
+   int      si.ShowWindow                 (/*STARTUPINFO*/ int si[]);
+   string   si.ShowWindowToStr            (/*STARTUPINFO*/ int si[]);
+   int      si.hStdInput                  (/*STARTUPINFO*/ int si[]);
+   int      si.hStdOutput                 (/*STARTUPINFO*/ int si[]);
+   int      si.hStdError                  (/*STARTUPINFO*/ int si[]);
 
-   int      si.setCb                      (/*STARTUPINFO*/ int& si[], int size);
-   int      si.setFlags                   (/*STARTUPINFO*/ int& si[], int flags);
-   int      si.setShowWindow              (/*STARTUPINFO*/ int& si[], int cmdShow);
+   int      si.setCb                      (/*STARTUPINFO*/ int si[], int size);
+   int      si.setFlags                   (/*STARTUPINFO*/ int si[], int flags);
+   int      si.setShowWindow              (/*STARTUPINFO*/ int si[], int cmdShow);
 
-   int      st.Year                       (/*SYSTEMTIME*/ int& st[]);
-   int      st.Month                      (/*SYSTEMTIME*/ int& st[]);
-   int      st.DayOfWeek                  (/*SYSTEMTIME*/ int& st[]);
-   int      st.Day                        (/*SYSTEMTIME*/ int& st[]);
-   int      st.Hour                       (/*SYSTEMTIME*/ int& st[]);
-   int      st.Minute                     (/*SYSTEMTIME*/ int& st[]);
-   int      st.Second                     (/*SYSTEMTIME*/ int& st[]);
-   int      st.MilliSec                   (/*SYSTEMTIME*/ int& st[]);
+   int      st.Year                       (/*SYSTEMTIME*/ int st[]);
+   int      st.Month                      (/*SYSTEMTIME*/ int st[]);
+   int      st.DayOfWeek                  (/*SYSTEMTIME*/ int st[]);
+   int      st.Day                        (/*SYSTEMTIME*/ int st[]);
+   int      st.Hour                       (/*SYSTEMTIME*/ int st[]);
+   int      st.Minute                     (/*SYSTEMTIME*/ int st[]);
+   int      st.Second                     (/*SYSTEMTIME*/ int st[]);
+   int      st.MilliSec                   (/*SYSTEMTIME*/ int st[]);
 
-   int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
-   void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]);
-   int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/ int& tzi[]);
+   int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/ int tzi[]);
+   string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/ int tzi[]);
+   void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]);
+   int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/ int tzi[]);
+   string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/ int tzi[]);
+   void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]);
+   int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/ int tzi[]);
 
-   int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int& wfd[]);
-   string   wdf.FileAttributesToStr       (/*WIN32_FIND_DATA*/ int& wdf[]);
-   bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int& wfd[]);
-   bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int& wfd[]);
-   string   wfd.FileName                  (/*WIN32_FIND_DATA*/ int& wfd[]);
-   string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]);
+   int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int wfd[]);
+   string   wdf.FileAttributesToStr       (/*WIN32_FIND_DATA*/ int wdf[]);
+   bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int wfd[]);
+   bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int wfd[]);
+   string   wfd.FileName                  (/*WIN32_FIND_DATA*/ int wfd[]);
+   string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]);
 
 #import
 

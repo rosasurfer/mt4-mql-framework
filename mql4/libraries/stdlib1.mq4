@@ -254,6 +254,60 @@ string GetCurrency(int id) {
 
 
 /**
+ * Sortiert die übergebenen Tickets in chronologischer Reihenfolge (nach OpenTime und Ticket#).
+ *
+ * @param  int tickets[] - zu sortierende Tickets
+ *
+ * @return int - Fehlerstatus
+ */
+int ChronologicalSortTickets(int& tickets[]) {
+   int sizeOfTickets = ArraySize(tickets);
+   int data[][2]; ArrayResize(data, sizeOfTickets);
+
+   // Tickets aufsteigend nach OrderOpenTime() sortieren
+   for (int i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         int error = GetLastError();
+         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         return(catch("ChronologicalSortTickets(1)", error));
+      }
+      data[i][0] = OrderOpenTime();
+      data[i][1] = tickets[i];
+   }
+   ArraySort(data);
+
+   // Tickets mit derselben OpenTime nach Ticket# sortieren
+   int open, lastOpen=-1, sortFrom=-1;
+
+   for (i=0; i < sizeOfTickets; i++) {
+      open = data[i][0];
+
+      if (open == lastOpen) {
+         if (sortFrom == -1) {
+            sortFrom = i-1;
+            data[sortFrom][0] = data[sortFrom][1];
+         }
+         data[i][0] = data[i][1];
+      }
+      else if (sortFrom != -1) {
+         ArraySort(data, i-sortFrom, sortFrom);
+         sortFrom = -1;
+      }
+      lastOpen = open;
+   }
+   if (sortFrom != -1)
+      ArraySort(data, i+1-sortFrom, sortFrom);
+
+   // Tickets zurück ins Ausgangsarray schreiben
+   for (i=0; i < sizeOfTickets; i++) {
+      tickets[i] = data[i][1];
+   }
+
+   return(catch("ChronologicalSortTickets(2)"));
+}
+
+
+/**
  * Aktiviert oder deaktiviert Expert Advisers (exakt: aktiviert/deaktiviert den Aufruf der Startfunktion bei Eintreffen von Ticks).
  *
  * @param  bool enable - gewünschter Status
@@ -433,8 +487,8 @@ bool IsPermanentTradeError(int error) {
 /**
  * Vergrößert ein Double-Array und fügt ein weiteres Element an.
  *
- * @param  double& array[] - Double-Array
- * @param  double  value   - hinzuzufügendes Element
+ * @param  double array[] - Double-Array
+ * @param  double value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
@@ -449,10 +503,35 @@ int ArrayPushDouble(double& array[], double value) {
 
 
 /**
+ * Entfernt ein Element vom Beginn eines Double-Arrays.
+ *
+ * @param  double array[] - Double-Array
+ *
+ * @return double - das entfernte Element
+ *
+ * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+double ArrayShiftDouble(double array[]) {
+   int size = ArraySize(array);
+   if (size == 0) {
+      catch("ArrayShiftDouble()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
+      return(NULL);
+   }
+
+   double shifted = array[0];
+
+   ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
  * Vergrößert ein Integer-Array und fügt ein weiteres Element an.
  *
- * @param  int& array[] - Integer-Array
- * @param  int  value   - hinzuzufügendes Element
+ * @param  int array[] - Integer-Array
+ * @param  int value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
@@ -467,10 +546,35 @@ int ArrayPushInt(int& array[], int value) {
 
 
 /**
+ * Entfernt ein Element vom Beginn eines Integer-Arrays.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element
+ *
+ * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+int ArrayShiftInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0) {
+      catch("ArrayShiftInt()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
+      return(NULL);
+   }
+
+   int shifted = array[0];
+
+   ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
  * Vergrößert ein String-Array und fügt ein weiteres Element an.
  *
- * @param  string& array[] - String-Array
- * @param  string  value   - hinzuzufügendes Element
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
@@ -485,13 +589,38 @@ int ArrayPushString(string& array[], string value) {
 
 
 /**
+ * Entfernt ein Element vom Beginn eines String-Arrays.
+ *
+ * @param  string array[] - String-Array
+ *
+ * @return string - das entfernte Element
+ *
+ * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+string ArrayShiftString(string array[]) {
+   int size = ArraySize(array);
+   if (size == 0) {
+      catch("ArrayShiftString()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
+      return(NULL);
+   }
+
+   string shifted = array[0];
+
+   ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
  * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
  *
- * @param  double& array[] - Double-Array
+ * @param  double array[] - Double-Array
  *
  * @return bool
  */
-bool IsReverseIndexedDoubleArray(double& array[]) {
+bool IsReverseIndexedDoubleArray(double array[]) {
    if (ArraySetAsSeries(array, false))
       return(!ArraySetAsSeries(array, true));
    return(false);
@@ -501,11 +630,11 @@ bool IsReverseIndexedDoubleArray(double& array[]) {
 /**
  * Ob die Indizierung der internen Implementierung des angegebenen Integer-Arrays umgekehrt ist oder nicht.
  *
- * @param  int& array[] - Integer-Array
+ * @param  int array[] - Integer-Array
  *
  * @return bool
  */
-bool IsReverseIndexedIntArray(int& array[]) {
+bool IsReverseIndexedIntArray(int array[]) {
    if (ArraySetAsSeries(array, false))
       return(!ArraySetAsSeries(array, true));
    return(false);
@@ -515,11 +644,11 @@ bool IsReverseIndexedIntArray(int& array[]) {
 /**
  * Ob die Indizierung der internen Implementierung des angegebenen String-Arrays umgekehrt ist oder nicht.
  *
- * @param  string& array[] - String-Array
+ * @param  string array[] - String-Array
  *
  * @return bool
  */
-bool IsReverseIndexedStringArray(string& array[]) {
+bool IsReverseIndexedStringArray(string array[]) {
    if (ArraySetAsSeries(array, false))
       return(!ArraySetAsSeries(array, true));
    return(false);
@@ -529,14 +658,14 @@ bool IsReverseIndexedStringArray(string& array[]) {
 /**
  * Kehrt die Reihenfolge der Elemente eines Double-Arrays um.
  *
- * @param  double& array[] - Double-Array
+ * @param  double array[] - Double-Array
  *
  * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
  * @see IsReverseIndexedDoubleArray()
  */
-bool ReverseDoubleArray(double& array[]) {
+bool ReverseDoubleArray(double array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
@@ -546,14 +675,14 @@ bool ReverseDoubleArray(double& array[]) {
 /**
  * Kehrt die Reihenfolge der Elemente eines Integer-Arrays um.
  *
- * @param  int& array[] - Integer-Array
+ * @param  int array[] - Integer-Array
  *
  * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
  * @see IsReverseIndexedIntArray()
  */
-bool ReverseIntArray(int& array[]) {
+bool ReverseIntArray(int array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
@@ -563,14 +692,14 @@ bool ReverseIntArray(int& array[]) {
 /**
  * Kehrt die Reihenfolge der Elemente eines String-Arrays um.
  *
- * @param  string& array[] - String-Array
+ * @param  string array[] - String-Array
  *
  * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
  * @see IsReverseIndexedStringArray()
  */
-bool ReverseStringArray(string& array[]) {
+bool ReverseStringArray(string array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
@@ -611,34 +740,34 @@ bool ReverseStringArray(string& array[]) {
  *                                   52484F44 4F447E31 2E424D50 00000000
  *                                    R H O D  O D ~ 1  . B M P
  */
-int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0]); }
-bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ); }
-bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ); }
-bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ); }
-bool   wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ); }
-bool   wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ); }
-bool   wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ); }
-bool   wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ); }
-bool   wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ); }
-bool   wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ); }
-bool   wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT); }
-bool   wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ); }
-bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ); }
-bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
-bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
-bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int& wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToStr(wfd, 11, 65)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int& wfd[]) { return(StructCharToStr(wfd, 76,  4)); }
+int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0]); }
+bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ); }
+bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ); }
+bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ); }
+bool   wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ); }
+bool   wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ); }
+bool   wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ); }
+bool   wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ); }
+bool   wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ); }
+bool   wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ); }
+bool   wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT); }
+bool   wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ); }
+bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ); }
+bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
+bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
+bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/ int wfd[]) { return(StructCharToStr(wfd, 11, 65)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]) { return(StructCharToStr(wfd, 76,  4)); }
 
 
 /**
  * Gibt die lesbare Version eines FileAttributes zurück.
  *
- * @param  int& wdf[] - WIN32_FIND_DATA structure
+ * @param  int wdf[] - WIN32_FIND_DATA structure
  *
  * @return string
  */
-string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int& wdf[]) {
+string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int wdf[]) {
    string result = "";
    int flags = wfd.FileAttributes(wdf);
 
@@ -688,10 +817,10 @@ string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int& wdf[]) {
  *
  * StructToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
  */
-int pi.hProcess (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[0]); }
-int pi.hThread  (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[1]); }
-int pi.ProcessId(/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[2]); }
-int pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[3]); }
+int pi.hProcess (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[0]); }
+int pi.hThread  (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[1]); }
+int pi.ProcessId(/*PROCESS_INFORMATION*/ int pi[]) { return(pi[2]); }
+int pi.ThreadId (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[3]); }
 
 
 /**
@@ -705,9 +834,9 @@ int pi.ThreadId (/*PROCESS_INFORMATION*/ int& pi[]) { return(pi[3]); }
  *
  * StructToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
  */
-int  sa.Length            (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[0]); }
-int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[1]); }
-bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 0); }
+int  sa.Length            (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[0]); }
+int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[1]); }
+bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[2] != 0); }
 
 
 /**
@@ -736,21 +865,21 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int& sa[]) { return(sa[2] != 
  *
  * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
  */
-int si.cb            (/*STARTUPINFO*/ int& si[]) { return(si[ 0]); }
-int si.Desktop       (/*STARTUPINFO*/ int& si[]) { return(si[ 2]); }
-int si.Title         (/*STARTUPINFO*/ int& si[]) { return(si[ 3]); }
-int si.X             (/*STARTUPINFO*/ int& si[]) { return(si[ 4]); }
-int si.Y             (/*STARTUPINFO*/ int& si[]) { return(si[ 5]); }
-int si.XSize         (/*STARTUPINFO*/ int& si[]) { return(si[ 6]); }
-int si.YSize         (/*STARTUPINFO*/ int& si[]) { return(si[ 7]); }
-int si.XCountChars   (/*STARTUPINFO*/ int& si[]) { return(si[ 8]); }
-int si.YCountChars   (/*STARTUPINFO*/ int& si[]) { return(si[ 9]); }
-int si.FillAttribute (/*STARTUPINFO*/ int& si[]) { return(si[10]); }
-int si.Flags         (/*STARTUPINFO*/ int& si[]) { return(si[11]); }
-int si.ShowWindow    (/*STARTUPINFO*/ int& si[]) { return(si[12] & 0xFFFF); }
-int si.hStdInput     (/*STARTUPINFO*/ int& si[]) { return(si[14]); }
-int si.hStdOutput    (/*STARTUPINFO*/ int& si[]) { return(si[15]); }
-int si.hStdError     (/*STARTUPINFO*/ int& si[]) { return(si[16]); }
+int si.cb            (/*STARTUPINFO*/ int si[]) { return(si[ 0]); }
+int si.Desktop       (/*STARTUPINFO*/ int si[]) { return(si[ 2]); }
+int si.Title         (/*STARTUPINFO*/ int si[]) { return(si[ 3]); }
+int si.X             (/*STARTUPINFO*/ int si[]) { return(si[ 4]); }
+int si.Y             (/*STARTUPINFO*/ int si[]) { return(si[ 5]); }
+int si.XSize         (/*STARTUPINFO*/ int si[]) { return(si[ 6]); }
+int si.YSize         (/*STARTUPINFO*/ int si[]) { return(si[ 7]); }
+int si.XCountChars   (/*STARTUPINFO*/ int si[]) { return(si[ 8]); }
+int si.YCountChars   (/*STARTUPINFO*/ int si[]) { return(si[ 9]); }
+int si.FillAttribute (/*STARTUPINFO*/ int si[]) { return(si[10]); }
+int si.Flags         (/*STARTUPINFO*/ int si[]) { return(si[11]); }
+int si.ShowWindow    (/*STARTUPINFO*/ int si[]) { return(si[12] & 0xFFFF); }
+int si.hStdInput     (/*STARTUPINFO*/ int si[]) { return(si[14]); }
+int si.hStdOutput    (/*STARTUPINFO*/ int si[]) { return(si[15]); }
+int si.hStdError     (/*STARTUPINFO*/ int si[]) { return(si[16]); }
 
 int si.setCb         (/*STARTUPINFO*/ int& si[], int size   ) { si[ 0] =  size; }
 int si.setFlags      (/*STARTUPINFO*/ int& si[], int flags  ) { si[11] = flags; }
@@ -760,11 +889,11 @@ int si.setShowWindow (/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12]
 /**
  * Gibt die lesbare Version eines STARTUPINFO-Flags zurück.
  *
- * @param  int& si[] - STARTUPINFO structure
+ * @param  int si[] - STARTUPINFO structure
  *
  * @return string
  */
-string si.FlagsToStr(/*STARTUPINFO*/ int& si[]) {
+string si.FlagsToStr(/*STARTUPINFO*/ int si[]) {
    string result = "";
    int flags = si.Flags(si);
 
@@ -791,11 +920,11 @@ string si.FlagsToStr(/*STARTUPINFO*/ int& si[]) {
 /**
  * Gibt die lesbare Konstante einer STARTUPINFO ShowWindow command ID zurück.
  *
- * @param  int& si[] - STARTUPINFO structure
+ * @param  int si[] - STARTUPINFO structure
  *
  * @return string
  */
-string si.ShowWindowToStr(/*STARTUPINFO*/ int& si[]) {
+string si.ShowWindowToStr(/*STARTUPINFO*/ int si[]) {
    switch (si.ShowWindow(si)) {
       case SW_HIDE           : return("SW_HIDE"           );
       case SW_SHOWNORMAL     : return("SW_SHOWNORMAL"     );
@@ -830,14 +959,14 @@ string si.ShowWindowToStr(/*STARTUPINFO*/ int& si[]) {
  *
  * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
-int st.Year     (/*SYSTEMTIME*/ int& st[]) { return(st[0] &  0x0000FFFF); }
-int st.Month    (/*SYSTEMTIME*/ int& st[]) { return(st[0] >> 16        ); }
-int st.DayOfWeek(/*SYSTEMTIME*/ int& st[]) { return(st[1] &  0x0000FFFF); }
-int st.Day      (/*SYSTEMTIME*/ int& st[]) { return(st[1] >> 16        ); }
-int st.Hour     (/*SYSTEMTIME*/ int& st[]) { return(st[2] &  0x0000FFFF); }
-int st.Minute   (/*SYSTEMTIME*/ int& st[]) { return(st[2] >> 16        ); }
-int st.Second   (/*SYSTEMTIME*/ int& st[]) { return(st[3] &  0x0000FFFF); }
-int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
+int st.Year     (/*SYSTEMTIME*/ int st[]) { return(st[0] &  0x0000FFFF); }
+int st.Month    (/*SYSTEMTIME*/ int st[]) { return(st[0] >> 16        ); }
+int st.DayOfWeek(/*SYSTEMTIME*/ int st[]) { return(st[1] &  0x0000FFFF); }
+int st.Day      (/*SYSTEMTIME*/ int st[]) { return(st[1] >> 16        ); }
+int st.Hour     (/*SYSTEMTIME*/ int st[]) { return(st[2] &  0x0000FFFF); }
+int st.Minute   (/*SYSTEMTIME*/ int st[]) { return(st[2] >> 16        ); }
+int st.Second   (/*SYSTEMTIME*/ int st[]) { return(st[3] &  0x0000FFFF); }
+int st.MilliSec (/*SYSTEMTIME*/ int st[]) { return(st[3] >> 16        ); }
 
 
 /**
@@ -863,23 +992,23 @@ int st.MilliSec (/*SYSTEMTIME*/ int& st[]) { return(st[3] >> 16        ); }
  *                                         00000300 00000500 03000000 00000000
  *                                         C4FFFFFF
  */
-int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[0]); }                               // Bias in Minuten
-string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToStr(tzi, 1, 16)); }
-void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
-int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[21]); }                              // Bias in Minuten
-string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(StructWCharToStr(tzi, 22, 16)); }
-void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int& tzi[], /*SYSTEMTIME*/ int& st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
-int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int& tzi[])                           { return(tzi[42]); }                              // Bias in Minuten
+int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[0]); }                               // Bias in Minuten
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(StructWCharToStr(tzi, 1, 16)); }
+void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
+int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[21]); }                              // Bias in Minuten
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(StructWCharToStr(tzi, 22, 16)); }
+void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
+int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[42]); }                              // Bias in Minuten
 
 
 /**
  * Gibt den Inhalt einer Structure als hexadezimalen String zurück.
  *
- * @param  int& lpStruct[]
+ * @param  int lpStruct[]
  *
  * @return string
  */
-string StructToHexStr(int& lpStruct[]) {
+string StructToHexStr(int lpStruct[]) {
    string result = "";
    int size = ArraySize(lpStruct);
 
@@ -907,11 +1036,11 @@ string StructToHexStr(int& lpStruct[]) {
  * Gibt den Inhalt einer Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
  * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
  *
- * @param  int& lpStruct[]
+ * @param  int lpStruct[]
  *
  * @return string
  */
-string StructToStr(int& lpStruct[]) {
+string StructToStr(int lpStruct[]) {
    string result = "";
    int size = ArraySize(lpStruct);
 
@@ -939,9 +1068,9 @@ string StructToStr(int& lpStruct[]) {
 /**
  * Gibt den in einer Structure im angegebenen Bereich gespeicherten und mit einem NULL-Character terminierten ANSI-String zurück.
  *
- * @param  int& lpStruct[] - Structure
- * @param  int  from       - Index des ersten Integers der Charactersequenz
- * @param  int  len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ * @param  int lpStruct[] - Structure
+ * @param  int from       - Index des ersten Integers der Charactersequenz
+ * @param  int len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
  *
  * @return string
  *
@@ -949,7 +1078,7 @@ string StructToStr(int& lpStruct[]) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructCharToStr(int& lpStruct[], int from, int len) {
+string StructCharToStr(int lpStruct[], int from, int len) {
    if (from < 0)
       return(catch("StructCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+len, size=ArraySize(lpStruct);
@@ -981,9 +1110,9 @@ string StructCharToStr(int& lpStruct[], int from, int len) {
 /**
  * Gibt den in einer Structure im angegebenen Bereich gespeicherten mit einem NULL-Character terminierten WCHAR-String zurück (Multibyte-Characters).
  *
- * @param  int& lpStruct[] - Structure
- * @param  int  from       - Index des ersten Integers der Charactersequenz
- * @param  int  len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ * @param  int lpStruct[] - Structure
+ * @param  int from       - Index des ersten Integers der Charactersequenz
+ * @param  int len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
  *
  * @return string
  *
@@ -991,7 +1120,7 @@ string StructCharToStr(int& lpStruct[], int from, int len) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructWCharToStr(int& lpStruct[], int from, int len) {
+string StructWCharToStr(int lpStruct[], int from, int len) {
    if (from < 0)
       return(catch("StructWCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+len, size=ArraySize(lpStruct);
@@ -1029,12 +1158,12 @@ string StructWCharToStr(int& lpStruct[], int from, int len) {
 /**
  * Konvertiert einen String-Buffer in ein String-Array.
  *
- * @param  int&    buffer[]  - Buffer mit durch NULL-Zeichen getrennten Strings, terminiert durch ein weiteres NULL-Zeichen
- * @param  string& results[] - Ergebnisarray
+ * @param  int    buffer[]  - Buffer mit durch NULL-Zeichen getrennten Strings, terminiert durch ein weiteres NULL-Zeichen
+ * @param  string results[] - Ergebnisarray
  *
  * @return int - Anzahl der konvertierten Strings
  */
-int StringBufferToArray(int& buffer[], string& results[]) {
+int StringBufferToArray(int buffer[], string& results[]) {
    int  bufferSize = ArraySize(buffer);
    bool separator  = true;
 
@@ -1493,13 +1622,13 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 /**
  * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
  *
- * @param  string  filename       - Dateiname mit zu "{terminal-path}\experts\files" relativer Pfadangabe
- * @param  string& lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
- * @param  bool    skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
+ * @param  string filename       - Dateiname mit zu "{terminal-path}\experts\files" relativer Pfadangabe
+ * @param  string lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
+ * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
  *
  * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
-int FileReadLines(string filename, string& lpResult[], bool skipEmptyLines=false) {
+int FileReadLines(string filename, string lpResult[], bool skipEmptyLines=false) {
    int fieldSeparator = '\t';
 
    // Datei öffnen
@@ -2164,7 +2293,7 @@ string BoolToStr(bool value) {
  *
  * @return string
  */
-string BoolArrayToStr(bool& array[], string separator=", ") {
+string BoolArrayToStr(bool array[], string separator=", ") {
    if (ArraySize(array) == 0)
       return("{}");
    if (separator == "0")   // NULL
@@ -3280,13 +3409,13 @@ datetime EasternToServerTime(datetime easternTime) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
  *
- * @param  int  event       - Event
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int event       - Event
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener(int event, int& lpResults[], int flags=0) {
+bool EventListener(int event, int lpResults[], int flags=0) {
    switch (event) {
       case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (lpResults, flags));
       case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (lpResults, flags));
@@ -3307,8 +3436,8 @@ bool EventListener(int event, int& lpResults[], int flags=0) {
 /**
  * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
  *
- * @param  int& lpResults[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int  flags       - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ * @param  int lpResults[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int flags       - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
  *
  * @return bool - Ergebnis
  */
@@ -3379,12 +3508,12 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
  *
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderChange(int& lpResults[], int flags=0) {
+bool EventListener.OrderChange(int lpResults[], int flags=0) {
    bool eventStatus = false;
 
    if (ArraySize(lpResults) > 0)
@@ -3404,12 +3533,12 @@ bool EventListener.OrderChange(int& lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
  *
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderPlace(int& lpResults[], int flags=0) {
+bool EventListener.OrderPlace(int lpResults[], int flags=0) {
    bool eventStatus = false;
 
    if (ArraySize(lpResults) > 0)
@@ -3429,12 +3558,12 @@ bool EventListener.OrderPlace(int& lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
  *
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderCancel(int& lpResults[], int flags=0) {
+bool EventListener.OrderCancel(int lpResults[], int flags=0) {
    bool eventStatus = false;
 
    if (ArraySize(lpResults) > 0)
@@ -3455,8 +3584,8 @@ bool EventListener.OrderCancel(int& lpResults[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int& lpTickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
- * @param  int  flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ * @param  int lpTickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
+ * @param  int flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
  *                            (default: 0)
  * @return bool - Ergebnis
  */
@@ -3571,9 +3700,9 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int& lpTickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
- * @param  int  flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                            (default: 0)
+ * @param  int lpTickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
+ * @param  int flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ *                           (default: 0)
  * @return bool - Ergebnis
  */
 bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
@@ -3672,12 +3801,12 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountPayment(int& lpResults[], int flags=0) {
+bool EventListener.AccountPayment(int lpResults[], int flags=0) {
    bool eventStatus = false;
 
    if (ArraySize(lpResults) > 0)
@@ -3697,12 +3826,12 @@ bool EventListener.AccountPayment(int& lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
  *
- * @param  int& lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.HistoryChange(int& lpResults[], int flags=0) {
+bool EventListener.HistoryChange(int lpResults[], int flags=0) {
    bool eventStatus = false;
 
    if (ArraySize(lpResults) > 0)
@@ -3724,12 +3853,12 @@ bool EventListener.HistoryChange(int& lpResults[], int flags=0) {
  * Beim Start des Terminals und während eines Accountwechsels treten in der Initialiserungsphase "Ticks" mit AccountNumber() == 0 auf. Diese fehlerhaften Aufrufe des Terminals
  * werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int& lpResults[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
- * @param  int  flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int lpResults[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
+ * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountChange(int& lpResults[], int flags=0) {
+bool EventListener.AccountChange(int lpResults[], int flags=0) {
    static int accountData[3];                         // { last_account_number, current_account_number, current_account_init_servertime }
 
    bool eventStatus = false;
@@ -3772,7 +3901,7 @@ double EventTracker.bandLimits[3];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
  * in der Library gespeichert).
  *
- * @param  double& lpResults[3] - Zeiger auf Array für die Ergebnisse { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double lpResults[3] - Zeiger auf Array für die Ergebnisse { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE bei nicht existierenden Daten
@@ -3792,11 +3921,11 @@ bool EventTracker.GetBandLimits(double& lpResults[]) {
  * Setzt die aktuellen BollingerBand-Limite des EventTrackers (aus Performancegründen sind sie timeframe-übergreifend
  * in der Library gespeichert).
  *
- * @param  double& lpLimits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double lpLimits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
  *
  * @return int - Fehlerstatus
  */
-int EventTracker.SetBandLimits(double& lpLimits[]) {
+int EventTracker.SetBandLimits(double lpLimits[]) {
    EventTracker.bandLimits[0] = lpLimits[0];
    EventTracker.bandLimits[1] = lpLimits[1];
    EventTracker.bandLimits[2] = lpLimits[2];
@@ -3811,7 +3940,7 @@ double EventTracker.gridLimit.High,       // sind Timeframe-übergreifend gespeic
 /**
  * Gibt die in der Library gespeicherten Grid-Limite des EventTrackers zurück.
  *
- * @param  double& lpLimits[2] - Zeiger auf Array für die zu speichernden Limite { LOWER_LIMIT, UPPER_LIMIT }
+ * @param  double lpLimits[2] - Zeiger auf Array für die zu speichernden Limite { LOWER_LIMIT, UPPER_LIMIT }
  *
  * @return bool - TRUE, wenn Daten in der Library gespeichert waren; FALSE andererseits
  */
@@ -3851,10 +3980,10 @@ int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string  object      - zu zerlegender String
- * @param  string  separator   - Trennstring
- * @param  string& lpResults[] - Zielarray für die Teilstrings
- * @param  int     limit       - maximale Anzahl von Teilstrings (default: kein Limit)
+ * @param  string object      - zu zerlegender String
+ * @param  string separator   - Trennstring
+ * @param  string lpResults[] - Zielarray für die Teilstrings
+ * @param  int    limit       - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
@@ -3917,12 +4046,12 @@ int Explode(string object, string separator, string& lpResults[], int limit=NULL
 /**
  * Liest die History eines Accounts aus dem Dateisystem in das angegebene Array ein (Daten werden als Strings gespeichert).
  *
- * @param  int     account                      - Account-Nummer
- * @param  string& lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
+ * @param  int    account                      - Account-Nummer
+ * @param  string lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
  *
  * @return int - Fehlerstatus
  */
-int GetAccountHistory(int account, string& lpResults[][HISTORY_COLUMNS]) {
+int GetAccountHistory(int account, string lpResults[][HISTORY_COLUMNS]) {
    if (ArrayRange(lpResults, 1) != HISTORY_COLUMNS)
       return(catch("GetAccountHistory(1)   invalid parameter lpResults["+ ArrayRange(lpResults, 0) +"]["+ ArrayRange(lpResults, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
@@ -4112,9 +4241,9 @@ double GetAverageSpread(string symbol) {
 /**
  * Schreibt die Balance-History eines Accounts in die angegebenen Ergebnisarrays (aufsteigend nach Zeitpunkt sortiert).
  *
- * @param  int       account    - Account-Nummer
- * @param  datetime& lpTimes[]  - Zeiger auf Ergebnisarray für die Zeitpunkte der Balanceänderung
- * @param  double&   lpValues[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
+ * @param  int      account    - Account-Nummer
+ * @param  datetime lpTimes[]  - Zeiger auf Ergebnisarray für die Zeitpunkte der Balanceänderung
+ * @param  double   lpValues[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
  *
  * @return int - Fehlerstatus
  */
@@ -5635,13 +5764,13 @@ datetime GmtToServerTime(datetime gmtTime) {
 /**
  * Berechnet den Balancewert eines Accounts am angegebenen Offset des aktuellen Charts und schreibt ihn in das Ergebnisarray.
  *
- * @param  int     account  - Account, für den der Wert berechnet werden soll
- * @param  double& lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
- * @param  int     bar      - Barindex des zu berechnenden Wertes (Chart-Offset)
+ * @param  int    account  - Account, für den der Wert berechnet werden soll
+ * @param  double lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
+ * @param  int    bar      - Barindex des zu berechnenden Wertes (Chart-Offset)
  *
  * @return int - Fehlerstatus
  */
-int iAccountBalance(int account, double& lpBuffer[], int bar) {
+int iAccountBalance(int account, double lpBuffer[], int bar) {
 
    // TODO: Berechnung einzelner Bar implementieren (zur Zeit wird der Indikator hier noch komplett neuberechnet)
 
@@ -5657,8 +5786,8 @@ int iAccountBalance(int account, double& lpBuffer[], int bar) {
 /**
  * Berechnet den Balanceverlauf eines Accounts für alle Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
- * @param  int     account  - Account-Nummer
- * @param  double& lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
+ * @param  int    account  - Account-Nummer
+ * @param  double lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
  *
  * @return int - Fehlerstatus
  */
@@ -5848,7 +5977,7 @@ int IncreasePeriod(int period = 0) {
  *
  * @return string
  */
-string JoinBools(bool& values[], string separator) {
+string JoinBools(bool values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5871,7 +6000,7 @@ string JoinBools(bool& values[], string separator) {
  *
  * @return string
  */
-string JoinDoubles(double& values[], string separator) {
+string JoinDoubles(double values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5893,7 +6022,7 @@ string JoinDoubles(double& values[], string separator) {
  *
  * @return string
  */
-string DoubleArrayToStr(double& array[], string separator=", ") {
+string DoubleArrayToStr(double array[], string separator=", ") {
    if (ArraySize(array) == 0)
       return("{}");
    if (separator == "0")   // NULL
@@ -5910,7 +6039,7 @@ string DoubleArrayToStr(double& array[], string separator=", ") {
  *
  * @return string
  */
-string JoinInts(int& values[], string separator) {
+string JoinInts(int values[], string separator) {
    string strings[];
 
    int size = ArraySize(values);
@@ -5932,7 +6061,7 @@ string JoinInts(int& values[], string separator) {
  *
  * @return string
  */
-string IntArrayToStr(int& array[][], string separator=", ") {
+string IntArrayToStr(int array[][], string separator=", ") {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -5976,7 +6105,7 @@ string IntArrayToStr(int& array[][], string separator=", ") {
  *
  * @return string
  */
-string JoinStrings(string& values[], string separator) {
+string JoinStrings(string values[], string separator) {
    string result = "";
 
    int size = ArraySize(values);
@@ -6001,7 +6130,7 @@ string JoinStrings(string& values[], string separator) {
  *
  * @return string
  */
-string StringArrayToStr(string& array[], string separator=", ") {
+string StringArrayToStr(string array[], string separator=", ") {
    if (ArraySize(array) == 0)
       return("{}");
 
@@ -6199,8 +6328,8 @@ abstract*/ int onHistoryChange(int details[]) {
 /**
  * Fügt das angegebene Objektlabel den bereits gespeicherten Labels hinzu.
  *
- * @param  string  label       - zu speicherndes Label
- * @param  string& lpObjects[] - Array mit bereits gespeicherten Labels
+ * @param  string label       - zu speicherndes Label
+ * @param  string lpObjects[] - Array mit bereits gespeicherten Labels
  *
  * @return int - Fehlerstatus
  */
@@ -6215,11 +6344,11 @@ int RegisterChartObject(string label, string& lpObjects[]) {
 /**
  * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
  *
- * @param  string& lpLabels[] - Array mit Objektlabels
+ * @param  string lpLabels[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects(string& lpLabels[]) {
+int RemoveChartObjects(string lpLabels[]) {
    int size = ArraySize(lpLabels);
    if (size == 0)
       return(NO_ERROR);
@@ -6763,14 +6892,14 @@ string ColorToRGBStr(color rgb) {
 /**
  * Konvertiert drei RGB-Farbwerte in den HSV-Farbraum (Hue-Saturation-Value).
  *
- * @param  int     red     - Rotanteil  (0-255)
- * @param  int     green   - Grünanteil (0-255)
- * @param  int     blue    - Blauanteil (0-255)
- * @param  double& lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ * @param  int    red     - Rotanteil  (0-255)
+ * @param  int    green   - Grünanteil (0-255)
+ * @param  int    blue    - Blauanteil (0-255)
+ * @param  double lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
  *
  * @return int - Fehlerstatus
  */
-int RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]) {
+int RGBValuesToHSVColor(int red, int green, int blue, double lpHSV[]) {
    return(RGBToHSVColor(RGB(red, green, blue), lpHSV));
 }
 
@@ -6778,8 +6907,8 @@ int RGBValuesToHSVColor(int red, int green, int blue, double& lpHSV[]) {
 /**
  * Konvertiert eine RGB-Farbe in den HSV-Farbraum (Hue-Saturation-Value).
  *
- * @param  color   rgb     - Farbe
- * @param  double& lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ * @param  color  rgb     - Farbe
+ * @param  double lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
  *
  * @return int - Fehlerstatus
  */
@@ -7381,7 +7510,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
          price    = NormalizeDouble(price, digits);
 
          int time1  = GetTickCount();
-         log("OrderSendEx()   opening "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ symbol +" at "+ NumberToStr(price, priceFormat) +" order");
+         log("OrderSendEx()   opening "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ symbol +" order at "+ NumberToStr(price, priceFormat));
          int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          int time2  = GetTickCount();
 
@@ -7594,16 +7723,297 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
 }
 
 
+/**
+ * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab, behandelt sie entsprechend und
+ * gibt ggf. die Ticket-Nr. einer resultierenden Restposition zurück.
+ *
+ * @param  int   ticket        - Ticket-Nr. der zu schließenden Position
+ * @param  int   opposite      - Ticket-Nr. der entgegengesetzten zu schließenden Position
+ * @param  int   lpRemainder[] - Zeiger auf ein Array zur Aufnahme der Ticket-Nr. einer resultierenden Restposition (wenn zutreffend)
+ * @param  color markerColor   - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // ticket
+   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      int error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      return(catch("OrderCloseByEx(1)   invalid parameter ticket = "+ ticket, error)==NO_ERROR);
+   }
+   if (OrderCloseTime() != 0)                                return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   int    ticketType     = OrderType();
+   double ticketLots     = OrderLots();
+   string symbol         = OrderSymbol();
+   string ticketOpenTime = OrderOpenTime();
+
+   // opposite
+   if (!OrderSelect(opposite, SELECT_BY_TICKET)) {
+      error = GetLastError();
+      if (error == NO_ERROR)
+         error = ERR_INVALID_TICKET;
+      return(catch("OrderCloseByEx(4)   invalid parameter opposite ticket = "+ opposite, error)==NO_ERROR);
+   }
+   if (OrderCloseTime() != 0)          return(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   int    oppositeType     = OrderType();
+   double oppositeLots     = OrderLots();
+   string oppositeOpenTime = OrderOpenTime();
+   if (ticket == opposite)             return(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
+   if (ticketType != oppositeType ^ 1) return(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
+   if (symbol != OrderSymbol())        return(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
+
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseByEx(9)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // -- Ende Parametervalidierung --
+
+   // Tradereihenfolge analysieren und hedgende Order definieren
+   int    first, hedge, firstType, hedgeType;
+   double firstLots, hedgeLots;
+   if (ticketOpenTime < oppositeOpenTime || (ticketOpenTime==oppositeOpenTime && ticket < opposite)) {
+      first = ticket;   firstType = ticketType;   firstLots = ticketLots;
+      hedge = opposite; hedgeType = oppositeType; hedgeLots = oppositeLots;
+   }
+   else {
+      first = opposite; firstType = oppositeType; firstLots = oppositeLots;
+      hedge = ticket;   hedgeType = ticketType;   hedgeLots = ticketLots;
+   }
+
+   // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      if (IsTradeContextBusy()) {
+         log("OrderCloseByEx()   trade context busy, retrying...");
+      }
+      else {
+         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge));
+         int time2, time1=GetTickCount();
+
+         if (OrderCloseBy(first, hedge, markerColor)) {
+            time2 = GetTickCount();
+            ArrayResize(lpRemainder, 0);
+
+            if (NE(firstLots, hedgeLots)) {
+               // Restposition suchen und in lpRemainder speichern
+               string comment = StringConcatenate("from #", ifString(GT(firstLots, hedgeLots), first, hedge));
+               for (int i=OrdersTotal()-1; i >= 0; i--) {
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+                     continue;
+                  if (OrderComment() == comment) {
+                     ArrayResize(lpRemainder, 1);
+                     lpRemainder[0] = OrderTicket();
+                     break;
+                  }
+               }
+               if (ArraySize(lpRemainder) == 0)
+                  return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
+            }
+            PlaySound("OrderOk.wav");
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position #", lpRemainder[0], ", used time: ", time2-time1, " ms"));
+            return(catch("OrderCloseByEx(11)")==NO_ERROR);           // regular exit
+         }
+         time2 = GetTickCount();
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+         Alert("OrderCloseByEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+      }
+      error = NO_ERROR;
+      Sleep(300);                                                    // 0.3 Sekunden warten
+   }
+
+   catch("OrderCloseByEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
+   return(false);
+}
 
 
+/**
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden mit einer einzigen Order per Hedge
+ * geschlossen, Brokerbetrug durch Berechnung doppelter Spreads wird verhindert.
+ *
+ * @param  int   tickets[]   - Ticket-Nr. der zu schließenden Positionen
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
+ */
+bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
+   // (1) Beginn Parametervalidierung --
+   // tickets
+   int sizeOfTickets = ArraySize(tickets);
+   if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+
+   for (int i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         int error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets, NULL), error)==NO_ERROR);
+      }
+      if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   }
+
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // -- Ende Parametervalidierung --
 
 
+   // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
+   if (sizeOfTickets == 1)
+      return(OrderCloseEx(tickets[0], NULL, NULL, NULL, markerColor));
 
 
+   // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
+   int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
+   ArrayCopy(ticketsCopy, tickets);
 
 
+   // (3) Zuordnung der Tickets zu Symbolen ermitteln
+   string symbols[];
+   int    ticketSymbols[]; ArrayResize(ticketSymbols, sizeOfTickets);
+
+   for (i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(6)", error)==NO_ERROR);
+      }
+      int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
+      if (symbolIndex == -1)
+         symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
+      ticketSymbols[i] = symbolIndex;
+   }
 
 
+   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen.
+   int sizeOfSymbols = ArraySize(symbols);
+
+   if (sizeOfSymbols > 1) {
+      int hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
+
+      for (symbolIndex=0; symbolIndex < sizeOfSymbols; symbolIndex++) {
+         int perSymbolTickets[]; ArrayResize(perSymbolTickets, 0);
+         for (i=0; i < sizeOfTickets; i++) {
+            if (symbolIndex == ticketSymbols[i])
+               ArrayPushInt(perSymbolTickets, ticketsCopy[i]);
+         }
+         int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
+         if (sizeOfPerSymbolTickets == 1) {
+            // nur eine Position des Symbols => kann sofort komplett geschlossen werden
+            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, NULL, markerColor))
+               return(false);
+         }
+         else {
+            // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, muß zunächst
+            // per Hedge die Gesamtposition ausgeglichen und die Teilpositionen erst zum Schluß geschlossen werden.
+
+            // Gesamtposition berechnen...
+            double totalLots;
+            for (int n=0; n < sizeOfPerSymbolTickets; n++) {
+               if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
+                  error = GetLastError();
+                  if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+                  return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
+               }
+               if (OrderType() == OP_BUY) totalLots += OrderLots();
+               else                       totalLots -= OrderLots();
+            }
+            if (NE(totalLots, 0)) {                      // ... und Gesamtposition hedgen
+               int hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+               if (hedge == -1)
+                  return(false);
+               // Hedge-Position zu den zu schließenden Tickets dieses Symbols hinzufügen
+               sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
+                               ArrayPushInt(ticketSymbols, symbolIndex);
+            }
+            // Gesamtposition ist gehedged => Hedge-Symbol zum späteren Schließen vormerken
+            ArrayPushInt(hedgedSymbolIndices, symbolIndex);
+         }
+      }
+
+      // jetzt die gehedgten Symbole per rekursivem Aufruf komplett schließen
+      int hedges = ArraySize(hedgedSymbolIndices);
+      for (i=0; i < hedges; i++) {
+         symbolIndex = hedgedSymbolIndices[i];
+         ArrayResize(perSymbolTickets, 0);
+         for (n=0; n < sizeOfTickets; n++) {
+            if (ticketSymbols[n] == symbolIndex)
+               ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
+         }
+         if (!OrderCloseMultiple(perSymbolTickets, markerColor))
+            return(false);
+      }
+      return(catch("OrderCloseMultiple(8)")==NO_ERROR);
+   }
+
+
+   // (5) mehrere Tickets, die alle zu einem Symbol gehören
+   debug("OrderCloseMultiple()   closing per symbol tickets = "+ IntArrayToStr(ticketsCopy, NULL));
+
+   totalLots = 0;                                                       // Gesamtposition berechnen
+   for (i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(9)", error)==NO_ERROR);
+      }
+      if (OrderType() == OP_BUY) totalLots += OrderLots();
+      else                       totalLots -= OrderLots();
+   }
+   if (NE(totalLots, 0)) {                                              // Gesamtposition ausgleichen
+      hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+      if (hedge == -1)
+         return(false);
+      sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);                 // Hedge den zu schließenden Tickets hinzufügen
+   }
+
+
+   // (6) alle Teilpositionen nacheinander auflösen
+   while (sizeOfTickets > 0) {
+      ChronologicalSortTickets(ticketsCopy);
+
+      int first = ticketsCopy[0];
+      hedge     = 0;
+      if (!OrderSelect(first, SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(10)", error)==NO_ERROR);
+      }
+      int firstType = OrderType();
+
+      for (i=1; i < sizeOfTickets; i++) {
+         if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+            error = GetLastError();
+            if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+            return(catch("OrderCloseMultiple(11)", error)==NO_ERROR);
+         }
+         if (OrderType() == firstType ^ 1) {
+            hedge = ticketsCopy[i];                                     // hedgende Position ermitteln
+            break;
+         }
+      }
+      if (hedge == 0) return(catch("OrderCloseMultiple(12)   cannot find matching position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+
+      int remainder[];
+      if (!OrderCloseByEx(first, hedge, remainder, markerColor))        // erste und hedgende Position schließen
+         return(false);
+
+      ArrayShiftInt(ticketsCopy);                                       // erstes[0] Ticket löschen
+      sizeOfTickets--;
+
+      ArrayCopy(ticketsCopy, ticketsCopy, i-1, i);                      // hedgendes[i-1] Ticket löschen
+      sizeOfTickets--;
+      ArrayResize(ticketsCopy, sizeOfTickets);
+
+      if (ArraySize(remainder) != 0)                                    // Restposition zu verbleibenden Teilpositionen hinzufügen
+         sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
+   }
+
+   return(catch("OrderCloseMultiple(13)")==NO_ERROR);
+}
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //

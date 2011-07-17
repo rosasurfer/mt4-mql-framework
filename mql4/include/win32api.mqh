@@ -51,8 +51,8 @@
 
 #import "win32api-alt.ex4"
 
-   int  GetPrivateProfileKeys(string lpFileName, string lpSection, string& lpResults[]);
-   int  GetPrivateProfileSectionNames(string lpFileName, string& lpResults[]);
+   int  GetPrivateProfileKeys(string lpFileName, string lpSection, string lpResults[]);
+   int  GetPrivateProfileSectionNames(string lpFileName, string lpResults[]);
 
    //int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
 
