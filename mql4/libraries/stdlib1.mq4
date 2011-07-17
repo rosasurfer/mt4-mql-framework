@@ -7510,7 +7510,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
          price    = NormalizeDouble(price, digits);
 
          int time1  = GetTickCount();
-         log("OrderSendEx()   opening "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ symbol +" order at "+ NumberToStr(price, priceFormat));
+         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat)));
          int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          int time2  = GetTickCount();
 
@@ -7657,7 +7657,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
          price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
 
          int time2, time1=GetTickCount();
-         log("OrderCloseEx()   closing #"+ ticket +" at "+ NumberToStr(price, priceFormat));
+         log(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat)));
 
          if (OrderClose(ticket, lots, price, slippage, markerColor)) {
             time2 = GetTickCount();
@@ -7909,8 +7909,6 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
          else {
             // Da wir hier Tickets mehrerer Symbole auf einmal schlieﬂen und mehrere Positionen je Symbol haben, muﬂ zun‰chst
             // per Hedge die Gesamtposition ausgeglichen und die Teilpositionen erst zum Schluﬂ geschlossen werden.
-
-            // Gesamtposition berechnen...
             double totalLots;
             for (int n=0; n < sizeOfPerSymbolTickets; n++) {
                if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
@@ -7918,10 +7916,10 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
                   if (error == NO_ERROR) error = ERR_INVALID_TICKET;
                   return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
                }
-               if (OrderType() == OP_BUY) totalLots += OrderLots();
+               if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
                else                       totalLots -= OrderLots();
             }
-            if (NE(totalLots, 0)) {                      // ... und Gesamtposition hedgen
+            if (NE(totalLots, 0)) {                                           // Gesamtposition hedgen
                int hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
                if (hedge == -1)
                   return(false);
@@ -7951,8 +7949,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehˆren
-   debug("OrderCloseMultiple()   closing per symbol tickets = "+ IntArrayToStr(ticketsCopy, NULL));
-
+   //debug("OrderCloseMultiple()   closing per symbol tickets = "+ IntArrayToStr(ticketsCopy, NULL));
    totalLots = 0;                                                       // Gesamtposition berechnen
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
