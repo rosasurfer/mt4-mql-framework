@@ -7777,7 +7777,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
-   int    first, hedge, firstType, hedgeType;
+   int    first, hedge, firstType, hedgeType, smaller, larger;
    double firstLots, hedgeLots;
    if (ticketOpenTime < oppositeOpenTime || (ticketOpenTime==oppositeOpenTime && ticket < opposite)) {
       first = ticket;   firstType = ticketType;   firstLots = ticketLots;
@@ -7787,6 +7787,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
       first = opposite; firstType = oppositeType; firstLots = oppositeLots;
       hedge = ticket;   hedgeType = ticketType;   hedgeLots = ticketLots;
    }
+   if (LE(firstLots, hedgeLots)) { smaller = first; larger = hedge; }      // Nur wenn #smaller by #larger geschlossen wird, wird im Kommentar von #remainder auf #smaller
+   else                          { smaller = hedge; larger = first; }      // verwiesen. Anderenfalls fehlt später in #remainder jede Referenz auf die Ausgangstickets.
 
    // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
@@ -7797,15 +7799,16 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
          log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, " (", NumberToStr(hedgeLots, ".+"), ")"));
          int time2, time1=GetTickCount();
 
-         if (OrderCloseBy(first, hedge, markerColor)) {
+         if (OrderCloseBy(smaller, larger, markerColor)) {
             time2 = GetTickCount();
             ArrayResize(lpRemainder, 0);
+            string strRemainder = ": none";
 
             if (NE(firstLots, hedgeLots)) {
                // Restposition suchen und in lpRemainder speichern
-               string comment = StringConcatenate("from #", ifString(GT(firstLots, hedgeLots), first, hedge));
+               string comment = StringConcatenate("from #", smaller);
                for (int i=OrdersTotal()-1; i >= 0; i--) {
-                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))   // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
                      continue;
                   if (OrderComment() == comment) {
                      ArrayResize(lpRemainder, 1);
@@ -7815,21 +7818,22 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
                }
                if (ArraySize(lpRemainder) == 0)
                   return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
+               strRemainder = StringConcatenate(" #", lpRemainder[0]);
             }
             PlaySound("OrderOk.wav");
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position #", lpRemainder[0], ", used time: ", time2-time1, " ms"));
-            return(catch("OrderCloseByEx(11)")==NO_ERROR);           // regular exit
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position", strRemainder, ", used time: ", time2-time1, " ms"));
+            return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
          time2 = GetTickCount();
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                                // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
          Alert("OrderCloseByEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
-      Sleep(300);                                                    // 0.3 Sekunden warten
+      Sleep(300);                                                          // 0.3 Sekunden warten
    }
 
    catch("OrderCloseByEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
@@ -7851,14 +7855,14 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_INVALID_TICKET;
-         return(catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets, NULL), error)==NO_ERROR);
+         return(catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)==NO_ERROR);
       }
       if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
       if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
@@ -7988,7 +7992,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
 
 
    // (6) alle Teilpositionen nacheinander auflösen
-   log(StringConcatenate("OrderCloseMultiple()   closing multiple ", symbols[0], " positions ", IntArrayToStr(ticketsCopy, NULL)));
+   log(StringConcatenate("OrderCloseMultiple()   closing multiple ", symbols[0], " positions ", IntArrayToStr(ticketsCopy)));
    while (sizeOfTickets > 0) {
       ChronologicalSortTickets(ticketsCopy);
 
@@ -8014,7 +8018,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
             break;
          }
       }
-      if (hedge == 0) return(catch("OrderCloseMultiple(13)   cannot find matching position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (hedge == 0) return(catch("OrderCloseMultiple(13)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
 
       int remainder[];
       if (!OrderCloseByEx(first, hedge, remainder, markerColor))        // erste und hedgende Position schließen
@@ -8023,7 +8027,11 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
       ArrayShiftInt(ticketsCopy);                                       // erstes[0] Ticket löschen
       sizeOfTickets--;
 
-      ArrayCopy(ticketsCopy, ticketsCopy, i-1, i);                      // hedgendes[i-1] Ticket löschen
+      if (sizeOfTickets > 1)
+         ArrayCopy(ticketsCopy, ticketsCopy, i-1, i);                   // hedgendes[i-1] Ticket löschen
+      else
+         ArrayResize(ticketsCopy, 0);
+
       sizeOfTickets--;
       ArrayResize(ticketsCopy, sizeOfTickets);
 
