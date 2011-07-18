@@ -38,9 +38,7 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
-
-   // Parameter auswerten
-
+   // Parametervalidierung
    // Close.Symbols
    string values[];
    int size = Explode(StringToUpper(Close.Symbols), ",", values, NULL);
@@ -151,10 +149,8 @@ int start() {
       PlaySound("notify.wav");
       int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
-         for (i=0; i < selected; i++) {
-            if (!OrderCloseEx(tickets[i], NULL, NULL, 1, Orange))
-               break;
-         }
+         if (!OrderCloseMultiple(tickets, Orange))             // TODO: slippage einbauen
+            return(processLibError(stdlib_PeekLastError()));
          SendTick(false);
       }
    }
