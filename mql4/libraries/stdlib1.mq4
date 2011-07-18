@@ -7481,12 +7481,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
-   if (StringLen(comment) > 27) {
+   if (comment == "0")        // = NULL
+      comment = "";
+   else if (StringLen(comment) > 27) {
       catch("OrderSendEx(10)   too long parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // expires
-   if (expires!= 0 && expires <= TimeCurrent()) {
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent()) {
       catch("OrderSendEx(11)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
