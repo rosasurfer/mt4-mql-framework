@@ -17,9 +17,10 @@ extern string Close.Comment      = "";    // <leer> | Kommentar                 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double   Pip;
-int      PipDigits;
-string   PriceFormat;
+double Pip;
+int    PipDigits;
+int    PipPoints;
+string PriceFormat;
 
 string orderSymbols[], orderComment;
 int    orderTickets[], orderMagics[], orderType=-1;
@@ -35,6 +36,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
@@ -149,7 +151,7 @@ int start() {
       PlaySound("notify.wav");
       int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
-         if (!OrderCloseMultiple(tickets, Orange))             // TODO: slippage einbauen
+         if (!OrderCloseMultiple(tickets, 1, Orange))
             return(processLibError(stdlib_PeekLastError()));
          SendTick(false);
       }

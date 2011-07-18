@@ -27,6 +27,7 @@ extern string H1.Close.Symbols = "";         // Symbole, für die der Schlußkurs 
 
 double Pip;
 int    PipDigits;
+int    PipPoints;
 string PriceFormat;
 
 string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
@@ -47,6 +48,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 

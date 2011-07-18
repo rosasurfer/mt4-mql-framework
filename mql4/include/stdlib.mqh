@@ -205,9 +205,9 @@
    bool     IsTemporaryTradeError(int error);
    bool     IsTradeOperationType(int value);
    bool     OrderCloseByEx(int ticket, int opposite, int lpRemainder[], color markerColor);
-   bool     OrderCloseEx(int ticket, double lots, double price, int slippage, color markerColor);
-   bool     OrderCloseMultiple(int tickets[], color markerColor);
-   int      OrderSendEx(string symbol, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
+   bool     OrderCloseMultiple(int tickets[], double slippage, color markerColor);
+   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
 
    // sonstiges
    string   AppliedPriceDescription(int appliedPrice);

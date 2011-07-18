@@ -45,6 +45,7 @@ double BollingerBands.MA.Deviation  = 0;
 
 double Pip;
 int    PipDigits;
+int    PipPoints;
 string PriceFormat;
 
 string symbol, symbolName, symbolSection;
@@ -62,6 +63,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 

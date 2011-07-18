@@ -268,7 +268,8 @@ int ChronologicalSortTickets(int& tickets[]) {
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
          int error = GetLastError();
-         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
          return(catch("ChronologicalSortTickets(1)", error));
       }
       data[i][0] = OrderOpenTime();
@@ -7414,7 +7415,7 @@ string NumberToStr(double number, string mask) {
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
  * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei pending Orders)
- * @param  int      slippage    - akzeptable Slippage in Points   (default: 0          )
+ * @param  double   slippage    - akzeptable Slippage in Pips     (default: 0          )
  * @param  double   stopLoss    - StopLoss-Level                  (default: - kein -   )
  * @param  double   takeProfit  - TakeProfit-Level                (default: - kein -   )
  * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: - kein -   )
@@ -7424,7 +7425,7 @@ string NumberToStr(double number, string mask) {
  *
  * @return int - Ticket-Nummer oder -1, wenn ein Fehler auftrat
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, int slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, double slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")         // = NULL
@@ -7463,8 +7464,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       return(-1);
    }
    // slippage
-   if (slippage < 0) {
-      catch("OrderSendEx(7)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (LT(slippage, 0)) {
+      catch("OrderSendEx(7)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // stopLoss
@@ -7497,6 +7498,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
    // -- Ende Parametervalidierung --
 
    int    pipDigits   = digits & (~1);
+   int    pipPoints   = MathPow(10, digits-pipDigits) + 0.1;
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
@@ -7507,11 +7509,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
       else {
          if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
          else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
-         price    = NormalizeDouble(price, digits);
+         price         = NormalizeDouble(price, digits);
+         int iSlippage = MathFloor(slippage * pipPoints) + 0.1;
+
+         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat)));
 
          int time1  = GetTickCount();
-         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat)));
-         int ticket = OrderSend(symbol, type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+         int ticket = OrderSend(symbol, type, lots, price, iSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          int time2  = GetTickCount();
 
          if (ticket > 0) {
@@ -7605,12 +7609,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, i
  * @param  int    ticket      - Ticket-Nr. der zu schließenden Position
  * @param  double lots        - zu schließendes Volumen in Lots         (default: 0 = komplette Position)
  * @param  double price       - Preis                                   (wird ignoriert                 )
- * @param  int    slippage    - akzeptable Slippage in Points           (default: 0                     )
+ * @param  double slippage    - akzeptable Slippage in Pips             (default: 0                     )
  * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker           )
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, color markerColor=CLR_NONE) {
+bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -7626,8 +7630,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
+   if (error != NO_ERROR)                   return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
@@ -7638,14 +7641,15 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0)) return(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(price, 0))    return(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // slippage
-   if (slippage < 0) return(catch("OrderCloseEx(9)   illegal parameter slippage = "+ slippage, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0)) return(catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
    int    pipDigits   = digits & (~1);
+   int    pipPoints   = MathPow(10, digits-pipDigits) + 0.1;
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
@@ -7654,12 +7658,13 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, int slippage=0, col
          log("OrderCloseEx()   trade context busy, retrying...");
       }
       else {
-         price = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
+         price         = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
+         int iSlippage = MathFloor(slippage * pipPoints) + 0.1;
 
-         int time2, time1=GetTickCount();
          log(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat)));
 
-         if (OrderClose(ticket, lots, price, slippage, markerColor)) {
+         int time2, time1=GetTickCount();
+         if (OrderClose(ticket, lots, price, iSlippage, markerColor)) {
             time2 = GetTickCount();
             // ausführliche Logmessage generieren
             PlaySound("OrderOk.wav");
@@ -7787,7 +7792,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
          log("OrderCloseByEx()   trade context busy, retrying...");
       }
       else {
-         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge));
+         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, " (", NumberToStr(hedgeLots, ".+"), ")"));
          int time2, time1=GetTickCount();
 
          if (OrderCloseBy(first, hedge, markerColor)) {
@@ -7834,12 +7839,13 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
  * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden mit einer einzigen Order per Hedge
  * geschlossen, Brokerbetrug durch Berechnung doppelter Spreads wird verhindert.
  *
- * @param  int   tickets[]   - Ticket-Nr. der zu schließenden Positionen
- * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
+ * @param  double slippage    - akzeptable Slippage in Pip (default: 0          )
+ * @param  color  markerColor - Farbe des Chart-Markers    (default: kein Marker)
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
-bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
+bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
@@ -7855,15 +7861,16 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
       if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
       if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
-
+   // slippage
+   if (LT(slippage, 0))                                         return(catch("OrderCloseMultiple(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(6)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1)
-      return(OrderCloseEx(tickets[0], NULL, NULL, NULL, markerColor));
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor));
 
 
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
@@ -7878,8 +7885,9 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
          error = GetLastError();
-         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
-         return(catch("OrderCloseMultiple(6)", error)==NO_ERROR);
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
       }
       int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
       if (symbolIndex == -1)
@@ -7903,7 +7911,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
          int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
          if (sizeOfPerSymbolTickets == 1) {
             // nur eine Position des Symbols => kann sofort komplett geschlossen werden
-            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, NULL, markerColor))
+            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor))
                return(false);
          }
          else {
@@ -7913,14 +7921,19 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
             for (int n=0; n < sizeOfPerSymbolTickets; n++) {
                if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
                   error = GetLastError();
-                  if (error == NO_ERROR) error = ERR_INVALID_TICKET;
-                  return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
+                  if (error == NO_ERROR)
+                     error = ERR_INVALID_TICKET;
+                  return(catch("OrderCloseMultiple(8)", error)==NO_ERROR);
                }
                if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
                else                       totalLots -= OrderLots();
             }
             if (NE(totalLots, 0)) {                                           // Gesamtposition hedgen
-               int hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+               int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
+
+               log(StringConcatenate("OrderCloseMultiple()   opening ", OperationTypeDescription(type), " hedge for multiple positions in ", OrderSymbol()));
+
+               int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
                if (hedge == -1)
                   return(false);
                // Hedge-Position zu den zu schließenden Tickets dieses Symbols hinzufügen
@@ -7941,27 +7954,31 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
             if (ticketSymbols[n] == symbolIndex)
                ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
-         if (!OrderCloseMultiple(perSymbolTickets, markerColor))
+         if (!OrderCloseMultiple(perSymbolTickets, slippage, markerColor))
             return(false);
       }
-      return(catch("OrderCloseMultiple(8)")==NO_ERROR);
+      return(catch("OrderCloseMultiple(9)")==NO_ERROR);
    }
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehören
-   //debug("OrderCloseMultiple()   closing per symbol tickets = "+ IntArrayToStr(ticketsCopy, NULL));
-   totalLots = 0;                                                       // Gesamtposition berechnen
-   for (i=0; i < sizeOfTickets; i++) {
+   totalLots = 0;
+   for (i=0; i < sizeOfTickets; i++) {                                  // Gesamtposition berechnen
       if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
          error = GetLastError();
-         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
-         return(catch("OrderCloseMultiple(9)", error)==NO_ERROR);
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(10)", error)==NO_ERROR);
       }
       if (OrderType() == OP_BUY) totalLots += OrderLots();
       else                       totalLots -= OrderLots();
    }
    if (NE(totalLots, 0)) {                                              // Gesamtposition ausgleichen
-      hedge = OrderSendEx(OrderSymbol(), ifInt(LT(totalLots, 0), OP_BUY, OP_SELL), MathAbs(totalLots), NULL, 1, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+      type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
+
+      log(StringConcatenate("OrderCloseMultiple()   opening ", OperationTypeDescription(type), " hedge for multiple ", symbols[0] ," positions"));
+
+      hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
       if (hedge == -1)
          return(false);
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);                 // Hedge den zu schließenden Tickets hinzufügen
@@ -7969,6 +7986,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
 
 
    // (6) alle Teilpositionen nacheinander auflösen
+   log(StringConcatenate("OrderCloseMultiple()   closing multiple ", symbols[0], " positions ", IntArrayToStr(ticketsCopy, NULL)));
    while (sizeOfTickets > 0) {
       ChronologicalSortTickets(ticketsCopy);
 
@@ -7976,23 +7994,25 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
       hedge     = 0;
       if (!OrderSelect(first, SELECT_BY_TICKET)) {
          error = GetLastError();
-         if (error == NO_ERROR) error = ERR_INVALID_TICKET;
-         return(catch("OrderCloseMultiple(10)", error)==NO_ERROR);
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(11)", error)==NO_ERROR);
       }
       int firstType = OrderType();
 
       for (i=1; i < sizeOfTickets; i++) {
          if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
             error = GetLastError();
-            if (error == NO_ERROR) error = ERR_INVALID_TICKET;
-            return(catch("OrderCloseMultiple(11)", error)==NO_ERROR);
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
+            return(catch("OrderCloseMultiple(12)", error)==NO_ERROR);
          }
          if (OrderType() == firstType ^ 1) {
             hedge = ticketsCopy[i];                                     // hedgende Position ermitteln
             break;
          }
       }
-      if (hedge == 0) return(catch("OrderCloseMultiple(12)   cannot find matching position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (hedge == 0) return(catch("OrderCloseMultiple(13)   cannot find matching position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
 
       int remainder[];
       if (!OrderCloseByEx(first, hedge, remainder, markerColor))        // erste und hedgende Position schließen
@@ -8009,7 +8029,7 @@ bool OrderCloseMultiple(int tickets[], color markerColor=CLR_NONE) {
          sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
    }
 
-   return(catch("OrderCloseMultiple(13)")==NO_ERROR);
+   return(catch("OrderCloseMultiple(14)")==NO_ERROR);
 }
 
 

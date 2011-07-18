@@ -15,7 +15,6 @@
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muﬂ signalisieren, wenn sich die Konfiguration ge‰ndert hat => erneuter Download vom Server
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
- *  - alle Trade-Funktionen: Slippage in Subpips statt Points implementieren
  *  - ReadStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Visualisierung der gesamten Sequenz implementieren
@@ -95,6 +94,7 @@ int EA.uniqueId = 101;                             // eindeutige ID der Strategi
 
 double   Pip;
 int      PipDigits;
+int      PipPoints;
 string   PriceFormat;
 
 int      Entry.iDirection = OP_UNDEFINED;          // -1
@@ -136,6 +136,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
@@ -780,7 +781,7 @@ int FinishSequence() {
    }
 
    // Tickets schlieﬂen
-   if (!OrderCloseMultiple(tickets, Orange)) {
+   if (!OrderCloseMultiple(tickets, 1, Orange)) {
       status = STATUS_DISABLED;
       return(processLibError(stdlib_PeekLastError()));
    }
@@ -811,7 +812,7 @@ int OpenPosition(int type, double lotsize) {
 
    int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
-   int    slippage    = 1;
+   double slippage    = 0.1;
    color  markerColor = ifInt(type==OP_BUY, Blue, Red);
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);

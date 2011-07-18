@@ -195,12 +195,12 @@ int start() {
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                                // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
+      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                    // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
       int pipDigits = digits & (~1);
       int counter   = GetPositionCounter() + 1;
 
       double   price       = NULL;
-      int      slippage    = ifInt(digits==pipDigits, 0, 1);                                    // keine Slippage bei 2- oder 4-Digits-Brokern
+      double   slippage    = 0.1;                                                   // 0.1 pip
       double   sl          = NULL;
       double   tp          = NULL;
       string   comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
@@ -208,7 +208,7 @@ int start() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
-      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());                   // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());       // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
       int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
