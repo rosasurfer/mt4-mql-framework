@@ -6,6 +6,7 @@
  *  Regeln:
  *  -------
  *  - maximal 2 offene Positionen
+ *  - Positionen möglichst am Bollinger-Band eingehen
  *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
  *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
  *  - Stop-Out aller Positionen bei 50% von MaxEquity
