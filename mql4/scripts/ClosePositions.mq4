@@ -163,3 +163,225 @@ int start() {
 
    return(catch("start()"));
 }
+
+
+/**
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden mit einer einzigen Order per Hedge
+ * geschlossen, Brokerbetrug durch Berechnung doppelter Spreads wird verhindert.
+ *
+ * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
+ * @param  double slippage    - akzeptable Slippage in Pip (default: 0          )
+ * @param  color  markerColor - Farbe des Chart-Markers    (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
+ */
+bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
+   debug("OrderCloseMultiple()   tickets = "+ IntArrayToStr(tickets, NULL));
+
+   // (1) Beginn Parametervalidierung --
+   // tickets
+   int sizeOfTickets = ArraySize(tickets);
+   if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+
+   for (int i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         int error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets, NULL), error)==NO_ERROR);
+      }
+      if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   }
+   // slippage
+   if (LT(slippage, 0))                                         return(catch("OrderCloseMultiple(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(6)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   // -- Ende Parametervalidierung --
+
+
+   // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
+   if (sizeOfTickets == 1)
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor));
+
+
+   // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
+   int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
+   ArrayCopy(ticketsCopy, tickets);
+
+
+   // (3) Zuordnung der Tickets zu Symbolen ermitteln
+   string symbols      []; ArrayResize(symbols, 0);
+   int    ticketSymbols[]; ArrayResize(ticketSymbols, sizeOfTickets);
+
+   for (i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(7)", error)==NO_ERROR);
+      }
+      int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
+      if (symbolIndex == -1)
+         symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
+      ticketSymbols[i] = symbolIndex;
+   }
+
+
+   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen.
+   int sizeOfSymbols = ArraySize(symbols);
+
+   if (sizeOfSymbols > 1) {
+      int hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
+
+      for (symbolIndex=0; symbolIndex < sizeOfSymbols; symbolIndex++) {
+         int perSymbolTickets[]; ArrayResize(perSymbolTickets, 0);
+         for (i=0; i < sizeOfTickets; i++) {
+            if (symbolIndex == ticketSymbols[i])
+               ArrayPushInt(perSymbolTickets, ticketsCopy[i]);
+         }
+         int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
+         if (sizeOfPerSymbolTickets == 1) {
+            // nur eine Position des Symbols => kann sofort komplett geschlossen werden
+            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor))
+               return(false);
+         }
+         else {
+            // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, muß zunächst
+            // per Hedge die Gesamtposition ausgeglichen und die Teilpositionen erst zum Schluß geschlossen werden.
+            double totalLots;
+            for (int n=0; n < sizeOfPerSymbolTickets; n++) {
+               if (!OrderSelect(perSymbolTickets[n], SELECT_BY_TICKET)) {
+                  error = GetLastError();
+                  if (error == NO_ERROR)
+                     error = ERR_INVALID_TICKET;
+                  return(catch("OrderCloseMultiple(8)", error)==NO_ERROR);
+               }
+               if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
+               else                       totalLots -= OrderLots();
+            }
+            if (NE(totalLots, 0)) {                                           // Gesamtposition hedgen
+               int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
+
+               log(StringConcatenate("OrderCloseMultiple()   opening ", OperationTypeDescription(type), " hedge for multiple positions in ", OrderSymbol()));
+
+               int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+               if (hedge == -1)
+                  return(false);
+               // Hedge-Position zu den zu schließenden Tickets dieses Symbols hinzufügen
+               sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
+                               ArrayPushInt(ticketSymbols, symbolIndex);
+            }
+            // Gesamtposition ist gehedged => Hedge-Symbol zum späteren Schließen vormerken
+            ArrayPushInt(hedgedSymbolIndices, symbolIndex);
+         }
+      }
+
+      // jetzt die gehedgten Symbole per rekursivem Aufruf komplett schließen
+
+      debug("OrderCloseMultiple()   symbols             = "+ StringArrayToStr(symbols, NULL));
+      debug("OrderCloseMultiple()   hedgedSymbolIndices = "+ IntArrayToStr(hedgedSymbolIndices, NULL));
+
+      int hedges = ArraySize(hedgedSymbolIndices);
+      for (i=0; i < hedges; i++) {
+         symbolIndex = hedgedSymbolIndices[i];
+         ArrayResize(perSymbolTickets, 0);
+         for (n=0; n < sizeOfTickets; n++) {
+            if (ticketSymbols[n] == symbolIndex)
+               ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
+         }
+
+         debug("calling  OrderCloseMultiple()           symbols = "+ StringArrayToStr(symbols, NULL) +" for "+ symbols[symbolIndex] +" tickets to close = "+ IntArrayToStr(perSymbolTickets, NULL));
+
+         if (!OrderCloseMultiple(perSymbolTickets, slippage, markerColor))
+            return(false);
+
+         debug("call to  OrderCloseMultiple() returned, symbols = "+ StringArrayToStr(symbols, NULL));
+      }
+      return(catch("OrderCloseMultiple(9)")==NO_ERROR);
+   }
+
+
+   // (5) mehrere Tickets, die alle zu einem Symbol gehören
+   totalLots = 0;
+   for (i=0; i < sizeOfTickets; i++) {                                  // Gesamtposition berechnen
+      if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(10)", error)==NO_ERROR);
+      }
+      if (OrderType() == OP_BUY) totalLots += OrderLots();
+      else                       totalLots -= OrderLots();
+   }
+   if (NE(totalLots, 0)) {                                              // Gesamtposition ausgleichen
+      type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
+
+      log(StringConcatenate("OrderCloseMultiple()   opening ", OperationTypeDescription(type), " hedge for multiple ", symbols[0] ," positions"));
+
+      hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE);
+      if (hedge == -1)
+         return(false);
+      sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);                 // Hedge den zu schließenden Tickets hinzufügen
+   }
+
+
+   // (6) alle Teilpositionen nacheinander auflösen
+   log(StringConcatenate("OrderCloseMultiple()   closing multiple ", symbols[0], " positions ", IntArrayToStr(ticketsCopy, NULL)));
+   while (sizeOfTickets > 0) {
+      ChronologicalSortTickets(ticketsCopy);
+
+      int first = ticketsCopy[0];
+      hedge     = 0;
+      if (!OrderSelect(first, SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("OrderCloseMultiple(11)", error)==NO_ERROR);
+      }
+      int firstType = OrderType();
+
+      for (i=1; i < sizeOfTickets; i++) {
+         if (!OrderSelect(ticketsCopy[i], SELECT_BY_TICKET)) {
+            error = GetLastError();
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
+            return(catch("OrderCloseMultiple(12)", error)==NO_ERROR);
+         }
+         if (OrderType() == firstType ^ 1) {
+            hedge = ticketsCopy[i];                                     // hedgende Position ermitteln
+            break;
+         }
+      }
+      if (hedge == 0) return(catch("OrderCloseMultiple(13)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+
+      int remainder[];
+      if (!OrderCloseByEx(first, hedge, remainder, markerColor))        // erste und hedgende Position schließen
+         return(false);
+
+      //debug("OrderCloseMultiple()   shifting 0 from "+ IntArrayToStr(ticketsCopy, NULL));
+
+      ArrayShiftInt(ticketsCopy);                                       // erstes[0] Ticket löschen
+      sizeOfTickets--;
+
+      if (sizeOfTickets > 1) {
+         //debug("OrderCloseMultiple()   deleting hedge by ArrayCopy(i="+ i +") "+ IntArrayToStr(ticketsCopy, NULL));
+         ArrayCopy(ticketsCopy, ticketsCopy, i-1, i);                   // hedgendes[i-1] Ticket löschen
+         error = GetLastError();
+         if (error != NO_ERROR)
+            return(catch("OrderCloseMultiple(0.1)", error)==NO_ERROR);
+      }
+      else {
+         //debug("OrderCloseMultiple()   deleting hedge by ResizeTo(0) "+ IntArrayToStr(ticketsCopy, NULL));
+         ArrayResize(ticketsCopy, 0);
+      }
+
+      sizeOfTickets--;
+      ArrayResize(ticketsCopy, sizeOfTickets);
+
+      if (ArraySize(remainder) != 0)                                    // Restposition zu verbleibenden Teilpositionen hinzufügen
+         sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
+   }
+
+   return(catch("OrderCloseMultiple(14)")==NO_ERROR);
+}

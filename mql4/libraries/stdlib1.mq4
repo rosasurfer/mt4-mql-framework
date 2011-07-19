@@ -7851,7 +7851,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
-bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
+bool _OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
@@ -7960,7 +7960,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
             if (ticketSymbols[n] == symbolIndex)
                ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
-         if (!OrderCloseMultiple(perSymbolTickets, slippage, markerColor))
+         if (!_OrderCloseMultiple(perSymbolTickets, slippage, markerColor))
             return(false);
       }
       return(catch("OrderCloseMultiple(9)")==NO_ERROR);
