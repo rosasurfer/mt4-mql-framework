@@ -11,6 +11,17 @@
  *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
  *  - Stop-Out aller Positionen bei 50% von MaxEquity
  *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
+ *
+ *  TODO:
+ *  -----
+ *  - Berechnung von Open- und ClosePrice automatisieren
+ *  - Anzeige der Positionen im SIG-Account implementieren
+ *  - Upload neuer und geschlossener Positionen implementieren
+ *  - Download der aktuellen Positionen implementieren
+ *  - Anzeige der offenen Positionen implementieren
+ *  - Buy-/Sell-Limits implementieren
+ *  - TakeProfit-Limits implementieren
+ *  - Breakeven-Orders implementieren
  */
 #include <stdlib.mqh>
 

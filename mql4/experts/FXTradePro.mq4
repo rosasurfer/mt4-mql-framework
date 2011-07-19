@@ -10,20 +10,23 @@
  *
  * ---------------------------------------------------------------------------------
  *
+ *  Voraussetzungen für Produktivbetrieb:
+ *  -------------------------------------
+ *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und Änderungen (partielle Closes) prüfen
+ *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
+ *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
+ *  - Heartbeat-Order einrichten
+ *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
+ *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
+ *
  *  TODO:
  *  -----
- *  - Heartbeat-Order einrichten
- *  - Heartbeat-Order muß signalisieren, wenn sich die Konfiguration geändert hat => erneuter Download vom Server
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - ReadStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - Visualisierung des Entry.Limits implementieren
  *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
- *  - ReadStatus() muß die offenen Positionen auf Vollständigkeit und auf Änderungen (partielle Closes) prüfen
- *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
- *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
- *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
