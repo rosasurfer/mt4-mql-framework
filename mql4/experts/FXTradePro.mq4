@@ -781,7 +781,7 @@ int FinishSequence() {
    }
 
    // Tickets schlieﬂen
-   if (!OrderCloseMultiple(tickets, 1, Orange)) {
+   if (!OrderCloseMultiple(tickets, 0.1, Orange)) {
       status = STATUS_DISABLED;
       return(processLibError(stdlib_PeekLastError()));
    }
