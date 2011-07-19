@@ -3219,7 +3219,6 @@ bool EQ(double double1, double double2) {
  */
 bool NE(double double1, double double2) {
    return(!EQ(double1, double2));
-
 }
 
 
@@ -3235,7 +3234,6 @@ bool GE(double double1, double double2) {
    if (double1 > double2)
       return(true);
    return(EQ(double1, double2));
-
 }
 
 
