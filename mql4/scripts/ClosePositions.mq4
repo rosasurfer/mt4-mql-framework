@@ -120,8 +120,8 @@ int start() {
 
 
    int orders = OrdersTotal();
-   int tickets[];
-   ArrayResize(tickets, 0);
+   int tickets[]; ArrayResize(tickets, 0);
+
 
    // zu schließende Positionen selektieren
    for (int i=0; i < orders; i++) {
@@ -359,25 +359,13 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
       if (!OrderCloseByEx(first, hedge, remainder, markerColor))        // erste und hedgende Position schließen
          return(false);
 
-      //debug("OrderCloseMultiple()   shifting 0 from "+ IntArrayToStr(ticketsCopy, NULL));
+      if (i+1 < sizeOfTickets)                                          // hedgendes[i] Ticket löschen
+         ArrayCopy(ticketsCopy, ticketsCopy, i, i+1);
+      sizeOfTickets--;
+      ArrayResize(ticketsCopy, sizeOfTickets);
 
       ArrayShiftInt(ticketsCopy);                                       // erstes[0] Ticket löschen
       sizeOfTickets--;
-
-      if (sizeOfTickets > 1) {
-         //debug("OrderCloseMultiple()   deleting hedge by ArrayCopy(i="+ i +") "+ IntArrayToStr(ticketsCopy, NULL));
-         ArrayCopy(ticketsCopy, ticketsCopy, i-1, i);                   // hedgendes[i-1] Ticket löschen
-         error = GetLastError();
-         if (error != NO_ERROR)
-            return(catch("OrderCloseMultiple(0.1)", error)==NO_ERROR);
-      }
-      else {
-         //debug("OrderCloseMultiple()   deleting hedge by ResizeTo(0) "+ IntArrayToStr(ticketsCopy, NULL));
-         ArrayResize(ticketsCopy, 0);
-      }
-
-      sizeOfTickets--;
-      ArrayResize(ticketsCopy, sizeOfTickets);
 
       if (ArraySize(remainder) != 0)                                    // Restposition zu verbleibenden Teilpositionen hinzufügen
          sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
