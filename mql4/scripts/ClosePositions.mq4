@@ -9,7 +9,7 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string Close.Symbols      = "";    // <leer> | Symbols                    (kommagetrennt)
-extern string Close.Direction    = "";    // <leer> | Buy | Long | Sell | Short
+extern string Close.Direction    = "";    // <leer> | buy | long | sell | short
 extern string Close.Tickets      = "";    // <leer> | Tickets                    (kommagetrennt)
 extern string Close.MagicNumbers = "";    // <leer> | MagicNumbers               (kommagetrennt)
 extern string Close.Comment      = "";    // <leer> | Kommentar                  (Prüfung per OrderComment().StringIStartsWith(value))
@@ -55,8 +55,8 @@ int init() {
    if (StringLen(direction) > 0) {
       switch (StringGetChar(direction, 0)) {
          case 'B':
-         case 'L': orderType = OP_BUY;  break;
-         case 'S': orderType = OP_SELL; break;
+         case 'L': orderType = OP_BUY;  Close.Direction = "long";  break;
+         case 'S': orderType = OP_SELL; Close.Direction = "short"; break;
          default:
             return(catch("init(1)  Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       }
@@ -142,14 +142,14 @@ int start() {
    }
 
 
-   bool filtered = !(ArraySize(orderSymbols) + orderType + ArraySize(orderTickets) + ArraySize(orderMagics)==-1 && orderComment=="");
+   bool filtered = !(ArraySize(orderSymbols)+orderType+ArraySize(orderTickets)+ArraySize(orderMagics)==-1 && orderComment=="");
 
 
    // Positionen schließen
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified", "all open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified "+ ArraySize(tickets), "all "+ ArraySize(tickets) +" open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
             return(processLibError(stdlib_PeekLastError()));
