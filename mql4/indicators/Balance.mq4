@@ -23,7 +23,7 @@ int init() {
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber())
-      return(processLibError(stdlib_PeekLastError()));
+      return(processError(stdlib_PeekLastError()));
 
    SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");

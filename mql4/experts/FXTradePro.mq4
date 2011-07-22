@@ -12,7 +12,8 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
- *  - korrekte Verarbeitung bereits geschlossener Hedge-Positionen implementieren (@see "multiple tickets found...")
+ *  - CheckStatus() berechnet P/L falsch
+ *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Verfahrensweise für einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
@@ -160,108 +161,11 @@ int init() {
    }
 
 
-   // (2) Sequenzdaten einlesen
-   if (sequenceId == 0) {                                               // noch keine Sequenz definiert
-      progressionLevel = 0;
-
-      // erste aktive Sequenz finden und offene Positionen einlesen
-      for (int i=OrdersTotal()-1; i >= 0; i--) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
-            continue;
-
-         if (IsMyOrder(sequenceId)) {
-            int level = OrderMagicNumber() & 0xF;                       //  4 Bits (Bits 1-4)  => progressionLevel
-            if (level > progressionLevel)
-               progressionLevel = level;
-
-            if (sequenceId == 0) {
-               sequenceId     = OrderMagicNumber() >> 8 & 0x3FFF;       // 14 Bits (Bits 9-22) => sequenceId
-               sequenceLength = OrderMagicNumber() >> 4 & 0xF;          //  4 Bits (Bits 5-8 ) => sequenceLength
-
-               ArrayResize(levels.ticket          , sequenceLength);
-               ArrayResize(levels.type            , sequenceLength);
-               ArrayResize(levels.lots            , sequenceLength);
-               ArrayResize(levels.openLots        , sequenceLength);
-               ArrayResize(levels.openPrice       , sequenceLength);
-               ArrayResize(levels.closeTime       , sequenceLength);
-
-               ArrayResize(levels.openSwap        , sequenceLength);
-               ArrayResize(levels.openCommission  , sequenceLength);
-               ArrayResize(levels.openProfit      , sequenceLength);
-
-               ArrayResize(levels.closedSwap      , sequenceLength);
-               ArrayResize(levels.closedCommission, sequenceLength);
-               ArrayResize(levels.closedProfit    , sequenceLength);
-
-               ArrayResize(levels.cumSwaps        , sequenceLength);
-               ArrayResize(levels.cumCommissions  , sequenceLength);
-               ArrayResize(levels.cumProfits      , sequenceLength);
-
-               ArrayResize(levels.maxProfit       , sequenceLength);
-               ArrayResize(levels.maxDrawdown     , sequenceLength);
-               ArrayResize(levels.breakeven       , sequenceLength);
-
-               if (level & 1 == 1) Entry.iDirection = OrderType();
-               else                Entry.iDirection = OrderType() ^ 1;  // 0=>1, 1=>0
-               Entry.Direction = ifString(Entry.iDirection==OP_BUY, "long", "short");
-            }
-            level--;
-            levels.ticket   [level] = OrderTicket();
-            levels.type     [level] = OrderType();
-            levels.openLots [level] = OrderLots();
-            levels.openPrice[level] = OrderOpenPrice();
-         }
-      }
-
-      // fehlende Positionen aus der History auslesen
-      if (sequenceId != 0) /*&&*/ if (IntInArray(0, levels.ticket)) {
-         int orders = OrdersHistoryTotal();
-         for (i=0; i < orders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History geändert
-               break;
-
-            if (IsMyOrder(sequenceId)) {
-               level = OrderMagicNumber() & 0xF;                        // 4 Bits (Bits 1-4) => progressionLevel
-               if (level > progressionLevel)
-                  progressionLevel = level;
-               level--;
-
-               // TODO: möglich bei gehedgten Positionen
-               if (levels.ticket[level] != 0)
-                  return(catch("init(1)   multiple tickets found for progression level "+ (level+1) +": #"+ levels.ticket[level] +", #"+ OrderTicket(), ERR_RUNTIME_ERROR));
-
-               levels.ticket          [level] = OrderTicket();
-               levels.type            [level] = OrderType();
-               levels.openLots        [level] = OrderLots();            // ist das richtig ???
-               levels.openPrice       [level] = OrderOpenPrice();
-               levels.closeTime       [level] = OrderCloseTime();
-
-               levels.closedSwap      [level] = OrderSwap();
-               levels.closedCommission[level] = OrderCommission();
-               levels.closedProfit    [level] = OrderProfit();
-            }
-         }
-      }
-
-      // Tickets auf Vollständigkeit prüfen und Volumen der Hedge-Positionen ausgleichen
-      double total;
-      for (i=0; i < progressionLevel; i++) {
-         if (levels.ticket[i] == 0) {
-            PlaySound("notify.wav");
-            int button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
-            if (button == IDRETRY) {
-               i = -1;
-               continue;                        // TODO: !!! continue kehrt nicht zur Schleife zurück !!!
-            }
-            init_error = ERR_RUNTIME_ERROR;
-            return(catch("init(2)"));
-         }
-
-         if (levels.closeTime[i] == 0) {
-            if (levels.type[i] == OP_BUY) total += levels.openLots[i];
-            else                          total -= levels.openLots[i];
-            effectiveLots = MathAbs(total);
-         }
+   // (2) falls noch keine Sequenz definiert, die erste Sequenz einlesen
+   if (sequenceId == 0) {
+      if (ReadSequence(0) != NO_ERROR) {
+         status = STATUS_DISABLED;
+         return(init_error);
       }
    }
 
@@ -422,18 +326,16 @@ int start() {
  * Ob die aktuell selektierte Order zu dieser Strategie gehört. Wird eine Sequenz-ID angegeben, wird zusätzlich überprüft,
  * ob die Order zur angegebenen Sequenz gehört.
  *
- * @param  int sequenceId - ID einer aktiven Sequenz (default: NULL)
+ * @param  int sequenceId - ID einer Sequenz (default: NULL)
  *
  * @return bool
  */
 bool IsMyOrder(int sequenceId = NULL) {
-   if (OrderSymbol()==Symbol()) {
-      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         if (OrderMagicNumber() >> 22 == EA.uniqueId) {
-            if (sequenceId == NULL)
-               return(true);
-            return(sequenceId == OrderMagicNumber() >> 8 & 0x3FFF);       // 14 Bits (Bits 9-22) => sequenceId
-         }
+   if (OrderSymbol() == Symbol()) {
+      if (OrderMagicNumber() >> 22 == EA.uniqueId) {
+         if (sequenceId == NULL)
+            return(true);
+         return(sequenceId == OrderMagicNumber() >> 8 & 0x3FFF);     // 14 Bits (Bits 9-22) => sequenceId
       }
    }
    return(false);
@@ -708,7 +610,7 @@ int FinishSequence() {
    // Tickets schließen
    if (!OrderCloseMultiple(tickets, 0.1, Orange)) {
       status = STATUS_DISABLED;
-      return(processLibError(stdlib_PeekLastError()));
+      return(processError(stdlib_PeekLastError()));
    }
 
    // Status aktualisieren
@@ -742,7 +644,7 @@ int OpenPosition(int type, double lotsize) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
    if (ticket == -1)
-      processLibError(stdlib_PeekLastError());
+      processError(stdlib_PeekLastError());
 
    if (catch("OpenPosition(3)") != NO_ERROR)
       return(-1);
@@ -772,10 +674,10 @@ bool CheckStatus() {
             return(catch("CheckStatus(1)", error)==NO_ERROR);
          }
          if (OrderCloseTime() != 0) {                       // Ticket ist geschlossen           => Sequenz neu einlesen
-            error = ReadSequence(); break;
+            error = ReadSequence(sequenceId); break;
          }
          if (NE(OrderLots(), levels.openLots[i])) {         // Ticket ist teilweise geschlossen => Sequenz neu einlesen
-            error = ReadSequence(); break;
+            error = ReadSequence(sequenceId); break;
          }
          if (NE(OrderSwap(), levels.openSwap[i])) {         // Swap hat sich geändert           => aktualisieren
             levels.openSwap[i] = OrderSwap();
@@ -872,74 +774,128 @@ bool CheckStatus() {
 
 
 /**
- * Liest die aktuelle Sequenz komplett neu ein.
+ * Liest die aktuelle Sequenz komplett neu ein. Ohne Angabe einer ID wird nach der ersten Sequenz dieser Strategie gesucht und die Variablen
+ * sequenceId, sequenceLength und progressionLevel entsprechend belegt.
+ *
+ * @param  int id - Sequenz-ID (default: NULL)
  *
  * @return int - Fehlerstatus
  */
-int ReadSequence() {
-   if (sequenceId       == 0)                      return(catch("ReadSequence(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
-   if (progressionLevel == 0)                      return(catch("ReadSequence(2)   illegal progressionLevel = "+ progressionLevel, ERR_RUNTIME_ERROR));
-   if (ArraySize(levels.ticket) != sequenceLength) return(catch("ReadSequence(3)   illegal sequence state, sequenceLength ("+ sequenceLength +") != sizeOf(levels.ticket) = "+ ArraySize(levels.ticket), ERR_RUNTIME_ERROR));
-
+int ReadSequence(int id = NULL) {
+   bool findFirstSequence = false;
+   if (id == 0) {
+      sequenceId        = 0;
+      sequenceLength    = 0;
+      progressionLevel  = 0;
+      findFirstSequence = true;
+   }
+   else if (progressionLevel == 0)                 return(catch("ReadSequence(1)   illegal progressionLevel = "+ progressionLevel, ERR_RUNTIME_ERROR));
+   if (ArraySize(levels.ticket) != sequenceLength) return(catch("ReadSequence(2)   illegal sequence state, variable sequenceLength ("+ sequenceLength +") doesn't match the number of levels ("+ ArraySize(levels.ticket) +")", ERR_RUNTIME_ERROR));
 
    // (1) alle Arrays außer levels.lots[] zurücksetzen (levels.lots[] wird in ValidateConfiguration() belegt)
-   ArrayInitialize(levels.ticket          , 0.1);                    // Präzisionsfehler beim Casten von Doubles vermeiden: (int) ArrayInitialize()
-   ArrayInitialize(levels.type,    OP_UNDEFINED);
-   ArrayInitialize(levels.openLots        , 0  );
-   ArrayInitialize(levels.openPrice       , 0  );
-   ArrayInitialize(levels.closeTime       , 0.1);
+   if (ArraySize(levels.ticket) > 0) {
+      ArrayInitialize(levels.ticket          , 0.1);                 // Präzisionsfehler beim Casten von Doubles vermeiden: (int) ArrayInitialize()
+      ArrayInitialize(levels.type,    OP_UNDEFINED);
+      ArrayInitialize(levels.openLots        , 0  );
+      ArrayInitialize(levels.openPrice       , 0  );
+      ArrayInitialize(levels.closeTime       , 0.1);
 
-   ArrayInitialize(levels.openSwap        , 0  );
-   ArrayInitialize(levels.openCommission  , 0  );
-   ArrayInitialize(levels.openProfit      , 0  );
+      ArrayInitialize(levels.openSwap        , 0  );
+      ArrayInitialize(levels.openCommission  , 0  );
+      ArrayInitialize(levels.openProfit      , 0  );
 
-   ArrayInitialize(levels.closedSwap      , 0  );
-   ArrayInitialize(levels.closedCommission, 0  );
-   ArrayInitialize(levels.closedProfit    , 0  );
+      ArrayInitialize(levels.closedSwap      , 0  );
+      ArrayInitialize(levels.closedCommission, 0  );
+      ArrayInitialize(levels.closedProfit    , 0  );
 
-   ArrayInitialize(levels.cumSwaps        , 0  );
-   ArrayInitialize(levels.cumCommissions  , 0  );
-   ArrayInitialize(levels.cumProfits      , 0  );
+      ArrayInitialize(levels.cumSwaps        , 0  );
+      ArrayInitialize(levels.cumCommissions  , 0  );
+      ArrayInitialize(levels.cumProfits      , 0  );
 
-   ArrayInitialize(levels.maxProfit       , 0  );
-   ArrayInitialize(levels.maxDrawdown     , 0  );
-   ArrayInitialize(levels.breakeven       , 0  );
+      ArrayInitialize(levels.maxProfit       , 0  );
+      ArrayInitialize(levels.maxDrawdown     , 0  );
+      ArrayInitialize(levels.breakeven       , 0  );
+   }
 
 
    // (2) offene Positionen einlesen
+   effectiveLots = 0;
+
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
          continue;
+
       if (IsMyOrder(sequenceId)) {
+         if (sequenceId == 0) {
+            sequenceId     = OrderMagicNumber() >> 8 & 0x3FFF;       // 14 Bits (Bits 9-22) => sequenceId
+            sequenceLength = OrderMagicNumber() >> 4 & 0xF;          //  4 Bits (Bits 5-8 ) => sequenceLength
+
+            ArrayResize(levels.ticket          , sequenceLength);
+            ArrayResize(levels.type            , sequenceLength); ArrayInitialize(levels.type, OP_UNDEFINED);
+            ArrayResize(levels.openLots        , sequenceLength);
+            ArrayResize(levels.openPrice       , sequenceLength);
+            ArrayResize(levels.closeTime       , sequenceLength);
+
+            ArrayResize(levels.openSwap        , sequenceLength);
+            ArrayResize(levels.openCommission  , sequenceLength);
+            ArrayResize(levels.openProfit      , sequenceLength);
+
+            ArrayResize(levels.closedSwap      , sequenceLength);
+            ArrayResize(levels.closedCommission, sequenceLength);
+            ArrayResize(levels.closedProfit    , sequenceLength);
+
+            ArrayResize(levels.cumSwaps        , sequenceLength);
+            ArrayResize(levels.cumCommissions  , sequenceLength);
+            ArrayResize(levels.cumProfits      , sequenceLength);
+
+            ArrayResize(levels.maxProfit       , sequenceLength);
+            ArrayResize(levels.maxDrawdown     , sequenceLength);
+            ArrayResize(levels.breakeven       , sequenceLength);
+         }
+         int type = OrderType();
+         if (type!=OP_BUY) /*&&*/ if (type!=OP_SELL)                 // Nicht-Trades überspringen
+            continue;
+
          int level = OrderMagicNumber() & 0xF;                       //  4 Bits (Bits 1-4)  => progressionLevel
+         if (level > progressionLevel) {
+            if (!findFirstSequence) return(catch("ReadSequence(3)   illegal sequence state, progression level of ticket #"+ OrderTicket() +" exceeds the current value of progressionLevel = "+ progressionLevel, ERR_RUNTIME_ERROR));
+            progressionLevel = level;
+         }
          level--;
          levels.ticket        [level] = OrderTicket();
-         levels.type          [level] = OrderType();
+         levels.type          [level] = type;
          levels.openLots      [level] = OrderLots();
          levels.openPrice     [level] = OrderOpenPrice();
 
          levels.openSwap      [level] = OrderSwap();
          levels.openCommission[level] = OrderCommission();
          levels.openProfit    [level] = OrderProfit();
+
+         if (type == OP_BUY) effectiveLots += OrderLots();           // effektive Lotsize berechnen
+         else                effectiveLots -= OrderLots();
       }
    }
+   effectiveLots = MathAbs(effectiveLots);
+
+   if (sequenceId == 0)                                              // Abbruch, falls keine offenen Positionen gefunden
+      return(catch("ReadSequence(4)"));
 
 
    // (3) geschlossene Positionen einlesen
    bool retry = true;
    while (retry) {                                                   // Endlosschleife, bis ausreichend History-Daten verfügbar sind
       int n, closedTickets=OrdersHistoryTotal();
-      int      hist.tickets     []; ArrayResize(hist.tickets     , closedTickets); ArrayInitialize(hist.tickets     ,   0.1);
-      int      hist.types       []; ArrayResize(hist.types       , closedTickets); ArrayInitialize(hist.types, OP_UNDEFINED);
-      double   hist.lots        []; ArrayResize(hist.lots        , closedTickets); ArrayInitialize(hist.lots        ,   0  );
-      double   hist.openPrices  []; ArrayResize(hist.openPrices  , closedTickets); ArrayInitialize(hist.openPrices  ,   0  );
-      datetime hist.openTimes   []; ArrayResize(hist.openTimes   , closedTickets); ArrayInitialize(hist.openTimes   ,   0.1);
-      datetime hist.closeTimes  []; ArrayResize(hist.closeTimes  , closedTickets); ArrayInitialize(hist.closeTimes  ,   0.1);
-      double   hist.swaps       []; ArrayResize(hist.swaps       , closedTickets); ArrayInitialize(hist.swaps       ,   0  );
-      double   hist.commissions []; ArrayResize(hist.commissions , closedTickets); ArrayInitialize(hist.commissions ,   0  );
-      double   hist.profits     []; ArrayResize(hist.profits     , closedTickets); ArrayInitialize(hist.profits     ,   0  );
-      int      hist.magicNumbers[]; ArrayResize(hist.magicNumbers, closedTickets); ArrayInitialize(hist.magicNumbers,   0.1);
-      string   hist.comments    []; ArrayResize(hist.comments    , closedTickets); ArrayInitialize(hist.comments    ,    "");
+      int      hist.tickets     []; ArrayResize(hist.tickets     , closedTickets);
+      int      hist.types       []; ArrayResize(hist.types       , closedTickets);
+      double   hist.lots        []; ArrayResize(hist.lots        , closedTickets);
+      double   hist.openPrices  []; ArrayResize(hist.openPrices  , closedTickets);
+      datetime hist.openTimes   []; ArrayResize(hist.openTimes   , closedTickets);
+      datetime hist.closeTimes  []; ArrayResize(hist.closeTimes  , closedTickets);
+      double   hist.swaps       []; ArrayResize(hist.swaps       , closedTickets);
+      double   hist.commissions []; ArrayResize(hist.commissions , closedTickets);
+      double   hist.profits     []; ArrayResize(hist.profits     , closedTickets);
+      int      hist.magicNumbers[]; ArrayResize(hist.magicNumbers, closedTickets);
+      string   hist.comments    []; ArrayResize(hist.comments    , closedTickets);
 
       for (i=0, n=0; i < closedTickets; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History vekürzt
@@ -947,7 +903,7 @@ int ReadSequence() {
 
          // (3.1) Daten der geschlossenen Tickets der Sequenz auslesen
          if (IsMyOrder(sequenceId)) {
-            int type = OrderType();
+            type = OrderType();
             if (type!=OP_BUY) /*&&*/ if (type!=OP_SELL)              // Nicht-Trades überspringen
                continue;
             hist.tickets     [n] = OrderTicket();
@@ -986,15 +942,15 @@ int ReadSequence() {
 
          if (EQ(hist.lots[i], 0)) {                                  // hist.lots = 0.00: Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
-               return(catch("ReadSequence(4)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
+               return(catch("ReadSequence(5)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
 
             // Gegenstück suchen
             int ticket = StrToInteger(StringSubstr(hist.comments[i], 16));
             for (n=0; n < closedTickets; n++)
                if (hist.tickets[n] == ticket)
                   break;
-            if (n == closedTickets) return(catch("ReadSequence(5)  cannot find counterpart for hedging position #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
-            if (i == n            ) return(catch("ReadSequence(6)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
+            if (n == closedTickets) return(catch("ReadSequence(6)  cannot find counterpart for hedging position #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
+            if (i == n            ) return(catch("ReadSequence(7)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
 
             int first, second;
             if      (hist.openTimes[i] < hist.openTimes[n])                                     { first = i; second = n; }
@@ -1016,8 +972,14 @@ int ReadSequence() {
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets[i] == 0)                                   // markierte Tickets sind verworfene Hedges
             continue;
+
          level = hist.magicNumbers[i] & 0xF;                         // 4 Bits (Bits 1-4) => progressionLevel
+         if (level > progressionLevel) {
+            if (!findFirstSequence) return(catch("ReadSequence(8)   illegal sequence state, progression level of ticket #"+ hist.tickets[i] +" exceeds the current value of progressionLevel = "+ progressionLevel, ERR_RUNTIME_ERROR));
+            progressionLevel = level;
+         }
          level--;
+
          if (levels.ticket[level] == 0) {                            // unbelegter Level
             levels.ticket   [level] = hist.tickets   [i];
             levels.type     [level] = hist.types     [i];
@@ -1026,7 +988,7 @@ int ReadSequence() {
             levels.closeTime[level] = hist.closeTimes[i];
          }
          else if (levels.type[level] != hist.types[i]) {
-            return(catch("ReadSequence(7)  illegal sequence state, operation type "+ OperationTypeDescription(levels.type[level]) +" (level "+ (level+1) +") doesn't match "+ OperationTypeDescription(hist.types[i]) +" of closed position #"+ hist.tickets[i], ERR_RUNTIME_ERROR));
+            return(catch("ReadSequence(9)  illegal sequence state, operation type "+ OperationTypeDescription(levels.type[level]) +" (level "+ (level+1) +") doesn't match "+ OperationTypeDescription(hist.types[i]) +" of closed position #"+ hist.tickets[i], ERR_RUNTIME_ERROR));
          }
          levels.closedSwap      [level] += hist.swaps      [i];
          levels.closedCommission[level] += hist.commissions[i];
@@ -1036,7 +998,6 @@ int ReadSequence() {
 
       // (4) Tickets auf Vollständigkeit überprüfen
       retry         = false;
-      effectiveLots = 0;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
             PlaySound("notify.wav");
@@ -1045,23 +1006,14 @@ int ReadSequence() {
                retry = true;
                break;
             }
-            catch("ReadSequence(8)");
-            return(ERR_RUNTIME_ERROR);
-         }
-         if (levels.closeTime[i] == 0) {                             // effektive Lotsize berechnen
-            if (levels.type[i] == OP_BUY) effectiveLots += levels.openLots[i];
-            else                          effectiveLots -= levels.openLots[i];
-            effectiveLots = MathAbs(effectiveLots);
+            catch("ReadSequence(10)");
+            status = STATUS_DISABLED;
+            return(processError(ERR_RUNTIME_ERROR));
          }
       }
-
-
-      // (5) aktuelle effektive Lotsize überprüfen
-      if (NE(effectiveLots, levels.lots[progressionLevel-1]))
-         return(catch("ReadSequence(9)   illegal sequence state, current lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match configuration of "+ NumberToStr(levels.lots[progressionLevel-1], ".+") +" lots", ERR_RUNTIME_ERROR));
    }
 
-   return(catch("ReadSequence(10)"));
+   return(catch("ReadSequence(12)"));
 }
 
 
@@ -1185,38 +1137,49 @@ int ValidateConfiguration() {
 
    if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(6)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
    ArrayPushDouble(levels.lots, Lotsize.Level.1);
-   if      (EQ(Lotsize.Level.2, 0))               sequenceLength = 1;
-   else if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-   else {
+
+   if (NE(Lotsize.Level.2, 0)) {
+      if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(7)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
       ArrayPushDouble(levels.lots, Lotsize.Level.2);
-      if      (EQ(Lotsize.Level.3, 0))               sequenceLength = 2;
-      else if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-      else {
+
+      if (NE(Lotsize.Level.3, 0)) {
+         if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(8)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
          ArrayPushDouble(levels.lots, Lotsize.Level.3);
-         if      (EQ(Lotsize.Level.4, 0))               sequenceLength = 3;
-         else if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-         else {
+
+         if (NE(Lotsize.Level.4, 0)) {
+            if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(9)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
             ArrayPushDouble(levels.lots, Lotsize.Level.4);
-            if      (EQ(Lotsize.Level.5, 0))               sequenceLength = 4;
-            else if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-            else {
+
+            if (NE(Lotsize.Level.5, 0)) {
+               if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(10)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                ArrayPushDouble(levels.lots, Lotsize.Level.5);
-               if      (EQ(Lotsize.Level.6, 0))               sequenceLength = 5;
-               else if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-               else {
+
+               if (NE(Lotsize.Level.6, 0)) {
+                  if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(11)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                   ArrayPushDouble(levels.lots, Lotsize.Level.6);
-                  if      (EQ(Lotsize.Level.7, 0))               sequenceLength = 6;
-                  else if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
-                  else {
+
+                  if (NE(Lotsize.Level.7, 0)) {
+                     if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(12)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
                      ArrayPushDouble(levels.lots, Lotsize.Level.7);
-                     sequenceLength = 7;
                   }
                }
             }
          }
       }
    }
-   return(catch("ValidateConfiguration(13)"));
+
+   // Konfiguration mit aktuellen Daten einer laufenden Sequenz vergleichen
+   if (sequenceId == 0) {
+      sequenceLength = ArraySize(levels.lots);
+   }
+   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(13)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR));
+   else if (progressionLevel > 0) {
+      int last = progressionLevel-1;
+      if (NE(levels.lots[last], effectiveLots))       return(catch("ValidateConfiguration(14)   illegal sequence state, the current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR));
+      if (levels.type[0] != Entry.iDirection)         return(catch("ValidateConfiguration(15)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR));
+   }
+
+   return(catch("ValidateConfiguration(16)"));
 }
 
 
@@ -1345,7 +1308,7 @@ int RestoreConfiguration() {
 
       int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
       if (error != NO_ERROR)
-         return(processLibError(error));
+         return(processError(error));
 
       debug("RestoreConfiguration()   configuration for sequence #"+ sequenceId +" successfully downloaded");
       FileDelete(fileName +".log");
@@ -1356,7 +1319,7 @@ int RestoreConfiguration() {
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines < 0)
-      return(processLibError(stdlib_PeekLastError()));
+      return(processError(stdlib_PeekLastError()));
    if (lines == 0) {
       FileDelete(fileName);
       return(catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR));

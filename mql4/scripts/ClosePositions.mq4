@@ -152,7 +152,7 @@ int start() {
       int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified "+ ArraySize(tickets), "all "+ ArraySize(tickets) +" open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
-            return(processLibError(stdlib_PeekLastError()));
+            return(processError(stdlib_PeekLastError()));
          SendTick(false);
       }
    }

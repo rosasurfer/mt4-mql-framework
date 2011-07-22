@@ -468,7 +468,7 @@ int catch(string message="", int error=NO_ERROR) {
    return(error);
 
    // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
-   processLibError(NULL);
+   processError(NULL);
    log(NULL);
    debug(NULL);
    HandleEvent(NULL);
@@ -484,7 +484,7 @@ int catch(string message="", int error=NO_ERROR) {
  *
  * @return int - derselbe Fehler-Code
  */
-int processLibError(int error) {
+int processError(int error) {
    if (error != NO_ERROR) {
       if (init) init_error = error;
       else      last_error = error;

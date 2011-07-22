@@ -102,7 +102,7 @@ int start() {
  */
 int DrawGrid() {
    if (GetTradeServerTimezone() == "")
-      return(processLibError(stdlib_PeekLastError()));
+      return(processError(stdlib_PeekLastError()));
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();
    int      easternDow, bar, sColor, sStyle;
