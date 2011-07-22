@@ -8,8 +8,8 @@
 // Special constants
 #define NULL                     0     //
 #define EMPTY                   -1     //
-#define EMPTY_VALUE     0x7FFFFFFF     // indicates an empty custom indicator value (2147483647)
-#define CLR_NONE                -1     // indicates no color
+#define EMPTY_VALUE     0x7FFFFFFF     // empty custom indicator value (= 2147483647)
+#define CLR_NONE                -1     // no color
 #define WHOLE_ARRAY              0     //
 
 
@@ -83,7 +83,7 @@
 
 
 // Custom Operation-Types
-#define OP_UNDEFINED            -1     // Default-Wert für nicht initialisierte Variablen
+#define OP_UNDEFINED            -1     // Default-Wert für nicht initialisierte Variable
 #define OP_TRANSFER              8     // Balance-Änderung durch Kunden (Ein-/Auszahlung)
 #define OP_VENDOR                9     // Balance-Änderung durch Criminal (Swap, sonstiges)
 

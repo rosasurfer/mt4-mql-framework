@@ -23,7 +23,7 @@ int    PipPoints;
 string PriceFormat;
 
 string orderSymbols[], orderComment;
-int    orderTickets[], orderMagics[], orderType=-1;
+int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
 
 
 /**

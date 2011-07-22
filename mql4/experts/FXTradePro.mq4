@@ -20,6 +20,7 @@
  *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Visualisierung der gesamten Sequenz implementieren
+ *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
  *
  *  TODO:
  *  -----
