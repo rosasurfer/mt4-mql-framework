@@ -12,8 +12,9 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
- *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
+ *  - die Berechnung des erwarteten P/L berücksichtigt nicht die tatsächlichen Sequenzdaten
  *  - Breakeven-Berechnung implementieren und anzeigen
+ *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - Visualisierung der gesamten Sequenz implementieren
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
@@ -1134,23 +1135,23 @@ int ShowStatus() {
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
    double profitLoss, profitLossPips;
-   int    level;
+   int i;
 
    if (progressionLevel > 0) {
-      level = progressionLevel-1;
+      i = progressionLevel-1;
       if (status != STATUS_FINISHED)
-         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[level]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
+         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
       profitLoss     = all.swaps + all.commissions + all.profits;
-      profitLossPips = ifDouble(levels.type[level]==OP_BUY, Bid-levels.openPrice[level], levels.openPrice[level]-Ask) / Pip;
+      profitLossPips = ifDouble(levels.type[i]==OP_BUY, Bid-levels.openPrice[i], levels.openPrice[i]-Ask) / Pip;
    }
    else {
-      level = 0;                                                     // wenn Level noch auf 0 steht, TakeProfit- und StopLoss-Anzeige für Level 1
+      i = 0;                                                         // wenn Level noch auf 0 steht, TakeProfit- und StopLoss-Anzeige für Level 1
    }
 
    msg = StringConcatenate(msg,                                                                                                                                                                      NL,
                           "Lot sizes:               ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = ", DoubleToStr(levels.maxProfit[level], 2),                                                       NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(levels.maxDrawdown[level], 2),                                                     NL,
+                          "TakeProfit:            ",   TakeProfit,                         " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                           NL,
+                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                         NL,
                           "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                                                     NL,
                           "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2),                                                         NL);
 
@@ -1189,7 +1190,6 @@ string StatusToStr(int status) {
  * @return int - Fehlerstatus
  */
 int ValidateConfiguration() {
-   //debug("ValidateConfiguration()   validating configuration...");
 
    // Entry.Direction
    string direction = StringToUpper(StringTrim(Entry.Direction));
