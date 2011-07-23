@@ -13,9 +13,7 @@
  *  Voraussetzungen f¸r Produktivbetrieb:
  *  -------------------------------------
  *  - Sicherheitsabfrage, wenn nach ƒnderung von TakeProfit sofort FinishSequence() getriggert wird
- *  - CheckStatus() berechnet P/L falsch
  *  - bei STATUS_FINISHED und STATUS_DISABLED muﬂ ein REASON_RECOMPILE sich den alten Status merken
- *  - Verfahrensweise f¸r einzelne geschlossene Positionen entwickeln (z.B. letzte Position wurde manuell geschlossen)
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muﬂ signalisieren, wenn die Konfiguration sich ge‰ndert hat => erneuter Download vom Server
  *  - ggf. muﬂ statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -117,9 +115,9 @@ double   levels.openLots [];                       // aktuelle Order-Lotsize (in
 double   levels.openPrice[];
 datetime levels.closeTime[];                       // Unterscheidung zwischen offenen und geschlossenen Positionen
 
-double   levels.openSwap      [], levels.closedSwap      [], levels.cumSwaps      [];
-double   levels.openCommission[], levels.closedCommission[], levels.cumCommissions[];
-double   levels.openProfit    [], levels.closedProfit    [], levels.cumProfits    [];
+double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [], all.swaps;
+double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
+double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [], all.profits;
 
 double   levels.maxProfit  [];
 double   levels.maxDrawdown[];
@@ -191,6 +189,10 @@ int init() {
       ArrayResize(levels.openPrice       , sequenceLength);
       ArrayResize(levels.closeTime       , sequenceLength);
 
+      ArrayResize(levels.swap            , sequenceLength);
+      ArrayResize(levels.commission      , sequenceLength);
+      ArrayResize(levels.profit          , sequenceLength);
+
       ArrayResize(levels.openSwap        , sequenceLength);
       ArrayResize(levels.openCommission  , sequenceLength);
       ArrayResize(levels.openProfit      , sequenceLength);
@@ -198,10 +200,6 @@ int init() {
       ArrayResize(levels.closedSwap      , sequenceLength);
       ArrayResize(levels.closedCommission, sequenceLength);
       ArrayResize(levels.closedProfit    , sequenceLength);
-
-      ArrayResize(levels.cumSwaps        , sequenceLength);
-      ArrayResize(levels.cumCommissions  , sequenceLength);
-      ArrayResize(levels.cumProfits      , sequenceLength);
 
       ArrayResize(levels.maxProfit       , sequenceLength);
       ArrayResize(levels.maxDrawdown     , sequenceLength);
@@ -211,8 +209,8 @@ int init() {
 
    // (4) neue und ge‰nderte Konfigurationen speichern, alte Konfigurationen restaurieren
    if (newSequence) {
-      if (NE(Entry.Limit, 0))                                           // ohne Entry.Limit wird die Konfiguration erst nach der Sicherheitsabfrage
-         SaveConfiguration();                                           // in StartSequence() gespeichert
+      if (NE(Entry.Limit, 0))                               // ohne Entry.Limit wird Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert
+         SaveConfiguration();
    }
    else if (UninitializeReason() == REASON_PARAMETERS) {
       if (ValidateConfiguration() == NO_ERROR)
@@ -308,7 +306,7 @@ int start() {
    if (CheckStatus()) {
       if (progressionLevel == 0) {
          if (!IsEntryLimitReached())            status = STATUS_ENTRYLIMIT;
-         else                                   StartSequence();                 // kein Limit definiert oder Limit erreicht
+         else                                   StartSequence();              // kein Limit definiert oder Limit erreicht
       }
       else if (IsStopLossReached()) {
          if (progressionLevel < sequenceLength) IncreaseProgression();
@@ -666,6 +664,7 @@ bool CheckStatus() {
    for (int i=0; i < sequenceLength; i++) {
       if (levels.ticket[i] == 0)
          break;
+
       if (levels.closeTime[i] == 0) {                       // Ticket pr¸fen, wenn es beim letzten Aufruf offen war
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             int error = GetLastError();
@@ -675,10 +674,12 @@ bool CheckStatus() {
             return(catch("CheckStatus(1)", error)==NO_ERROR);
          }
          if (OrderCloseTime() != 0) {                       // Ticket ist geschlossen           => Sequenz neu einlesen
-            error = ReadSequence(sequenceId); break;
+            error = ReadSequence(sequenceId);
+            break;
          }
          if (NE(OrderLots(), levels.openLots[i])) {         // Ticket ist teilweise geschlossen => Sequenz neu einlesen
-            error = ReadSequence(sequenceId); break;
+            error = ReadSequence(sequenceId);
+            break;
          }
          if (NE(OrderSwap(), levels.openSwap[i])) {         // Swap hat sich ge‰ndert           => aktualisieren
             levels.openSwap[i] = OrderSwap();
@@ -692,25 +693,23 @@ bool CheckStatus() {
    }
 
 
-   // (2) Sequenzdaten sind jetzt aktuell
-
-
-   // (3) Profit/Loss neu berechnen
+   // (2) Sequenzdaten sind aktuell, Profit/Loss neu berechnen
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();                                    // ERR_MARKETINFO_UPDATE ???
+   error = GetLastError();                                           // evt. ERR_MARKETINFO_UPDATE
    if (error != NO_ERROR)                      { status = STATUS_DISABLED; return(catch("CheckStatus(2)", error)==NO_ERROR);                                                                   }
    if (tickSize  < 0.000009 || tickSize  >  1) { status = STATUS_DISABLED; return(catch("CheckStatus(3)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
    if (tickValue < 0.5      || tickValue > 20) { status = STATUS_DISABLED; return(catch("CheckStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
 
-   double profits, swaps, commissions, difference, tmp.openLots[];
+   all.swaps       = 0;
+   all.commissions = 0;
+   all.profits     = 0;
+
+   double tmp.openLots[], priceDiff;
    ArrayCopy(tmp.openLots, levels.openLots);
 
-   for (i=0; i < sequenceLength; i++) {
-      if (levels.ticket[i] == 0)
-         break;
-
-      if (levels.closeTime[i] == 0) {                             // offene Position
+   for (i=0; i < progressionLevel; i++) {
+      if (levels.closeTime[i] == 0) {                                // offene Position
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             error = GetLastError();
             if (error == NO_ERROR)
@@ -718,29 +717,21 @@ bool CheckStatus() {
             status = STATUS_DISABLED;
             return(catch("CheckStatus(5)", error)==NO_ERROR);
          }
-         if (OrderCloseTime() != 0) {
-            status = STATUS_DISABLED;
-            return(catch("CheckStatus(6)   illegal sequence state, ticket #"+ levels.ticket[i] +"(level "+ (i+1) +") is already closed", ERR_RUNTIME_ERROR)==NO_ERROR);
-         }
-
          levels.openProfit[i] = 0;
 
-         if (GT(tmp.openLots[i], 0)) {
-            // P/L offener Hedges verrechnen
-            for (int n=i+1; n < sequenceLength; n++) {
-               if (levels.ticket[n] == 0)
-                  break;
+         if (GT(tmp.openLots[i], 0)) {                               // P/L offener Hedges verrechnen
+            for (int n=i+1; n < progressionLevel; n++) {
                if (levels.closeTime[n]==0) /*&&*/ if (levels.type[i]!=levels.type[n]) /*&&*/ if (GT(tmp.openLots[n], 0)) { // offener und verrechenbarer Hedge
-                  difference = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
+                  priceDiff = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
 
                   if (LE(tmp.openLots[i], tmp.openLots[n])) {
-                     levels.openProfit[i] += difference / tickSize * tickValue * tmp.openLots[i];
+                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[i];
                      tmp.openLots     [n] -= tmp.openLots[i];
                      tmp.openLots     [i]  = 0;
                      break;
                   }
                   else  /*(GT(tmp.openLots[i], tmp.openLots[n]))*/ {
-                     levels.openProfit[i] += difference / tickSize * tickValue * tmp.openLots[n];
+                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[n];
                      tmp.openLots     [i] -= tmp.openLots[n];
                      tmp.openLots     [n]  = 0;
                   }
@@ -752,21 +743,19 @@ bool CheckStatus() {
                levels.openProfit[i] += OrderProfit() / levels.openLots[i] * tmp.openLots[i];
          }
 
-         // Swap und Commission normal ¸bernehmen
-         levels.openSwap      [i] = OrderSwap();
-         levels.openCommission[i] = OrderCommission();         // TODO: korrekte Commission-Berechnung der Hedges implementieren
+         // TODO: korrekte Commission-Berechnung der Hedges implementieren
+         levels.openCommission[i] = OrderCommission();
       }
-      swaps       += levels.openSwap      [i];
-      commissions += levels.openCommission[i];
-      profits     += levels.openProfit    [i];
+      levels.swap      [i] = levels.openSwap      [i] + levels.closedSwap      [i];
+      levels.commission[i] = levels.openCommission[i] + levels.closedCommission[i];
+      levels.profit    [i] = levels.openProfit    [i] + levels.closedProfit    [i];
+
+      all.swaps       += levels.swap      [i];
+      all.commissions += levels.commission[i];
+      all.profits     += levels.profit    [i];
    }
 
-   int last = progressionLevel-1;
-   levels.cumSwaps      [last] = swaps;
-   levels.cumCommissions[last] = commissions;
-   levels.cumProfits    [last] = profits;
-
-   if (catch("CheckStatus(7)") != NO_ERROR) {
+   if (catch("CheckStatus(6)") != NO_ERROR) {
       status = STATUS_DISABLED;
       return(false);
    }
@@ -803,6 +792,10 @@ int ReadSequence(int id = NULL) {
       ArrayInitialize(levels.openPrice       , 0  );
       ArrayInitialize(levels.closeTime       , 0.1);
 
+      ArrayInitialize(levels.swap            , 0  );
+      ArrayInitialize(levels.commission      , 0  );
+      ArrayInitialize(levels.profit          , 0  );
+
       ArrayInitialize(levels.openSwap        , 0  );
       ArrayInitialize(levels.openCommission  , 0  );
       ArrayInitialize(levels.openProfit      , 0  );
@@ -810,10 +803,6 @@ int ReadSequence(int id = NULL) {
       ArrayInitialize(levels.closedSwap      , 0  );
       ArrayInitialize(levels.closedCommission, 0  );
       ArrayInitialize(levels.closedProfit    , 0  );
-
-      ArrayInitialize(levels.cumSwaps        , 0  );
-      ArrayInitialize(levels.cumCommissions  , 0  );
-      ArrayInitialize(levels.cumProfits      , 0  );
 
       ArrayInitialize(levels.maxProfit       , 0  );
       ArrayInitialize(levels.maxDrawdown     , 0  );
@@ -838,6 +827,10 @@ int ReadSequence(int id = NULL) {
             ArrayResize(levels.openPrice       , sequenceLength);
             ArrayResize(levels.closeTime       , sequenceLength);
 
+            ArrayResize(levels.swap            , sequenceLength);
+            ArrayResize(levels.commission      , sequenceLength);
+            ArrayResize(levels.profit          , sequenceLength);
+
             ArrayResize(levels.openSwap        , sequenceLength);
             ArrayResize(levels.openCommission  , sequenceLength);
             ArrayResize(levels.openProfit      , sequenceLength);
@@ -845,10 +838,6 @@ int ReadSequence(int id = NULL) {
             ArrayResize(levels.closedSwap      , sequenceLength);
             ArrayResize(levels.closedCommission, sequenceLength);
             ArrayResize(levels.closedProfit    , sequenceLength);
-
-            ArrayResize(levels.cumSwaps        , sequenceLength);
-            ArrayResize(levels.cumCommissions  , sequenceLength);
-            ArrayResize(levels.cumProfits      , sequenceLength);
 
             ArrayResize(levels.maxProfit       , sequenceLength);
             ArrayResize(levels.maxDrawdown     , sequenceLength);
@@ -914,6 +903,10 @@ int ReadSequence(int id = NULL) {
                ArrayResize(levels.openPrice       , sequenceLength);
                ArrayResize(levels.closeTime       , sequenceLength);
 
+               ArrayResize(levels.swap            , sequenceLength);
+               ArrayResize(levels.commission      , sequenceLength);
+               ArrayResize(levels.profit          , sequenceLength);
+
                ArrayResize(levels.openSwap        , sequenceLength);
                ArrayResize(levels.openCommission  , sequenceLength);
                ArrayResize(levels.openProfit      , sequenceLength);
@@ -921,10 +914,6 @@ int ReadSequence(int id = NULL) {
                ArrayResize(levels.closedSwap      , sequenceLength);
                ArrayResize(levels.closedCommission, sequenceLength);
                ArrayResize(levels.closedProfit    , sequenceLength);
-
-               ArrayResize(levels.cumSwaps        , sequenceLength);
-               ArrayResize(levels.cumCommissions  , sequenceLength);
-               ArrayResize(levels.cumProfits      , sequenceLength);
 
                ArrayResize(levels.maxProfit       , sequenceLength);
                ArrayResize(levels.maxDrawdown     , sequenceLength);
@@ -1058,6 +1047,10 @@ int ResetAll() {
    progressionLevel = 0;
 
    effectiveLots    = 0;
+   all.swaps        = 0;
+   all.commissions  = 0;
+   all.profits      = 0;
+
    status           = STATUS_UNDEFINED;
 
    if (ArraySize(levels.ticket) > 0) {
@@ -1068,6 +1061,10 @@ int ResetAll() {
       ArrayResize(levels.openPrice       , 0);
       ArrayResize(levels.closeTime       , 0);
 
+      ArrayResize(levels.swap            , 0);
+      ArrayResize(levels.commission      , 0);
+      ArrayResize(levels.profit          , 0);
+
       ArrayResize(levels.openSwap        , 0);
       ArrayResize(levels.openCommission  , 0);
       ArrayResize(levels.openProfit      , 0);
@@ -1075,10 +1072,6 @@ int ResetAll() {
       ArrayResize(levels.closedSwap      , 0);
       ArrayResize(levels.closedCommission, 0);
       ArrayResize(levels.closedProfit    , 0);
-
-      ArrayResize(levels.cumSwaps        , 0);
-      ArrayResize(levels.cumCommissions  , 0);
-      ArrayResize(levels.cumProfits      , 0);
 
       ArrayResize(levels.maxProfit       , 0);
       ArrayResize(levels.maxDrawdown     , 0);
@@ -1129,10 +1122,11 @@ int ShowStatus() {
 
    int last = 0;
    if (progressionLevel > 0) {
-      last = progressionLevel-1;
-      msg            = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
-      profitLoss     = levels.cumProfits[last] + levels.cumCommissions[last] + levels.cumSwaps[last];
-      profitLossPips = ifDouble(levels.type[progressionLevel-1]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
+      last           = progressionLevel-1;
+      if (status != STATUS_FINISHED)
+         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
+      profitLossPips = ifDouble(levels.type[last]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
+      profitLoss     = all.swaps + all.commissions + all.profits;
    }
 
    msg = StringConcatenate(msg,                                                                                                              NL,
@@ -1248,7 +1242,7 @@ int ValidateConfiguration() {
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
-         if (NE(levels.lots[last], effectiveLots))    return(catch("ValidateConfiguration(14)   illegal sequence state, the current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR));
+         if (NE(levels.lots[last], effectiveLots))    return(catch("ValidateConfiguration(14)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR));
       }
       if (levels.type[0] != Entry.iDirection)         return(catch("ValidateConfiguration(15)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR));
    }
