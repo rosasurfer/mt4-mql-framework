@@ -12,14 +12,14 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
+ *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
+ *  - Breakeven-Berechnung implementieren und anzeigen
+ *  - Visualisierung der gesamten Sequenz implementieren
+ *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
- *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
- *  - ShowStatus(): erwarteten P/L der Sequenz anzeigen
- *  - Breakeven-Berechnung implementieren und anzeigen
- *  - Visualisierung der gesamten Sequenz implementieren
  *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
  *
  *  TODO:
@@ -100,6 +100,7 @@ double   Pip;
 int      PipDigits;
 int      PipPoints;
 string   PriceFormat;
+double   tickSize;
 
 int      Entry.iDirection = OP_UNDEFINED;          // -1
 double   Entry.LastBid;
@@ -144,6 +145,11 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
+   tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+   int error = GetLastError();                                       // ERR_MARKETINFO_UPDATE abfangen
+   if (error != NO_ERROR)                   { status = STATUS_DISABLED; return(catch("init(1)", error));                                                                   }
+   if (tickSize < 0.000009 || tickSize > 1) { status = STATUS_DISABLED; return(catch("init(2)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)); }
+
 
    // (1) ggf. Input-Parameter restaurieren
    if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
@@ -163,7 +169,7 @@ int init() {
 
    // (2) falls noch keine Sequenz definiert, die erste Sequenz suchen und einlesen
    if (sequenceId == 0) {
-      sequenceId = 10741;     // temporär
+      //sequenceId = 10741;     // temporär
 
       if (ReadSequence(sequenceId) != NO_ERROR) {
          status = STATUS_DISABLED;
@@ -250,7 +256,7 @@ int init() {
    }
 
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error      != NO_ERROR) catch("init(3)", error);
    if (init_error != NO_ERROR) status = STATUS_DISABLED;
    return(init_error);
@@ -652,118 +658,6 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Prüft/aktualisiert den Sequenzstatus und berechnet die aktuellen Kennziffern (P/L, Breakeven etc.)
- *
- * @return bool - Erfolgsstatus
- */
-bool CheckStatus() {
-   if (progressionLevel == 0)                               // vorerst nichts zu tun
-      return(true);
-
-   // (1) offene Positionen auf Änderungen prüfen: OrderCloseTime(), OrderLots(), OrderSwap()
-   for (int i=0; i < sequenceLength; i++) {
-      if (levels.ticket[i] == 0)
-         break;
-
-      if (levels.closeTime[i] == 0) {                       // Ticket prüfen, wenn es beim letzten Aufruf offen war
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            int error = GetLastError();
-            if (error == NO_ERROR)
-               error = ERR_INVALID_TICKET;
-            status = STATUS_DISABLED;
-            return(catch("CheckStatus(1)", error)==NO_ERROR);
-         }
-         if (OrderCloseTime() != 0) {                       // Ticket ist geschlossen           => Sequenz neu einlesen
-            error = ReadSequence(sequenceId);
-            break;
-         }
-         if (NE(OrderLots(), levels.openLots[i])) {         // Ticket ist teilweise geschlossen => Sequenz neu einlesen
-            error = ReadSequence(sequenceId);
-            break;
-         }
-         if (NE(OrderSwap(), levels.openSwap[i])) {         // Swap hat sich geändert           => aktualisieren
-            levels.openSwap[i] = OrderSwap();
-            levels.swap.changed = true;
-         }
-      }
-   }
-   if (error != NO_ERROR) {
-      status = STATUS_DISABLED;
-      return(false);
-   }
-
-
-   // (2) Sequenzdaten sind aktuell, Profit/Loss neu berechnen
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE );
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();                                           // evt. ERR_MARKETINFO_UPDATE
-   if (error != NO_ERROR)                      { status = STATUS_DISABLED; return(catch("CheckStatus(2)", error)==NO_ERROR);                                                                   }
-   if (tickSize  < 0.000009 || tickSize  >  1) { status = STATUS_DISABLED; return(catch("CheckStatus(3)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
-   if (tickValue < 0.5      || tickValue > 20) { status = STATUS_DISABLED; return(catch("CheckStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
-
-   all.swaps       = 0;
-   all.commissions = 0;
-   all.profits     = 0;
-
-   double tmp.openLots[], priceDiff;
-   ArrayCopy(tmp.openLots, levels.openLots);
-
-   for (i=0; i < progressionLevel; i++) {
-      if (levels.closeTime[i] == 0) {                                // offene Position
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            error = GetLastError();
-            if (error == NO_ERROR)
-               error = ERR_INVALID_TICKET;
-            status = STATUS_DISABLED;
-            return(catch("CheckStatus(5)", error)==NO_ERROR);
-         }
-         levels.openProfit[i] = 0;
-
-         if (GT(tmp.openLots[i], 0)) {                               // P/L offener Hedges verrechnen
-            for (int n=i+1; n < progressionLevel; n++) {
-               if (levels.closeTime[n]==0) /*&&*/ if (levels.type[i]!=levels.type[n]) /*&&*/ if (GT(tmp.openLots[n], 0)) { // offener und verrechenbarer Hedge
-                  priceDiff = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
-
-                  if (LE(tmp.openLots[i], tmp.openLots[n])) {
-                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[i];
-                     tmp.openLots     [n] -= tmp.openLots[i];
-                     tmp.openLots     [i]  = 0;
-                     break;
-                  }
-                  else  /*(GT(tmp.openLots[i], tmp.openLots[n]))*/ {
-                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[n];
-                     tmp.openLots     [i] -= tmp.openLots[n];
-                     tmp.openLots     [n]  = 0;
-                  }
-               }
-            }
-
-            // P/L von Restpositionen anteilmäßig anhand des regulären OrderProfit() ermitteln
-            if (GT(tmp.openLots[i], 0))
-               levels.openProfit[i] += OrderProfit() / levels.openLots[i] * tmp.openLots[i];
-         }
-
-         // TODO: korrekte Commission-Berechnung der Hedges implementieren
-         levels.openCommission[i] = OrderCommission();
-      }
-      levels.swap      [i] = levels.openSwap      [i] + levels.closedSwap      [i];
-      levels.commission[i] = levels.openCommission[i] + levels.closedCommission[i];
-      levels.profit    [i] = levels.openProfit    [i] + levels.closedProfit    [i];
-
-      all.swaps       += levels.swap      [i];
-      all.commissions += levels.commission[i];
-      all.profits     += levels.profit    [i];
-   }
-
-   if (catch("CheckStatus(6)") != NO_ERROR) {
-      status = STATUS_DISABLED;
-      return(false);
-   }
-   return(true);
-}
-
-
-/**
  * Liest die angegebene Sequenz komplett neu ein. Ohne Angabe einer ID wird die erste gefundene Sequenz eingelesen.
  *
  * @param  int id - ID der einzulesenden Sequenz
@@ -771,13 +665,14 @@ bool CheckStatus() {
  * @return int - Fehlerstatus
  */
 int ReadSequence(int id = NULL) {
-   bool findSequence = false;
+   levels.swap.changed = true;                                       // alle Flags zurücksetzen
 
+   bool findSequence = false;
    if (id == 0) {
       ResetAll();
       findSequence = true;
    }
-   else if (sequenceLength == 0) {  // keine internen Daten vorhanden
+   else if (sequenceLength == 0) {                                   // keine internen Daten vorhanden
       ResetAll();
    }
    else if (ArraySize(levels.ticket) != sequenceLength) return(catch("ReadSequence(1)   illegal sequence state, variable sequenceLength ("+ sequenceLength +") doesn't match the number of levels ("+ ArraySize(levels.ticket) +")", ERR_RUNTIME_ERROR));
@@ -866,13 +761,15 @@ int ReadSequence(int id = NULL) {
          else                       effectiveLots -= OrderLots();
       }
    }
-   if (sequenceId == 0)                                              // Abbruch, falls keine Sequenz-ID angegeben und keine offenen Positionen gefunden wurden
-      return(catch("ReadSequence(3)"));
-
    effectiveLots = MathAbs(effectiveLots);
 
 
-   // (3) geschlossene Positionen einlesen
+   // (3) Abbruch, falls keine Sequenz-ID angegeben und keine offenen Positionen gefunden wurden
+   if (sequenceId == 0)
+      return(catch("ReadSequence(3)"));
+
+
+   // (4) geschlossene Positionen einlesen
    bool retry = true;
    while (retry) {                                                   // Endlosschleife, bis ausreichend History-Daten verfügbar sind
       int n, closedTickets=OrdersHistoryTotal();
@@ -892,7 +789,7 @@ int ReadSequence(int id = NULL) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History vekürzt
             break;
 
-         // (3.1) Daten der geschlossenen Tickets der Sequenz auslesen
+         // (4.1) Daten der geschlossenen Tickets der Sequenz auslesen
          if (IsMyOrder(sequenceId)) {
             if (sequenceLength == 0) {
                sequenceLength = OrderMagicNumber() >> 4 & 0xF;       //  4 Bits (Bits 5-8 ) => sequenceLength
@@ -951,7 +848,7 @@ int ReadSequence(int id = NULL) {
          closedTickets = n;
       }
 
-      // (3.2) Hedges analysieren: relevante Daten der ersten Position zuordnen, hedgende Position verwerfen
+      // (4.2) Hedges analysieren: relevante Daten der ersten Position zuordnen, hedgende Position verwerfen
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets[i] == 0)                                   // markierte Tickets sind verworfene Hedges
             continue;
@@ -984,7 +881,7 @@ int ReadSequence(int id = NULL) {
          }
       }
 
-      // (3.3) levels.* mit den geschlossenen Tickets aktualisieren
+      // (4.3) levels.* mit den geschlossenen Tickets aktualisieren
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets[i] == 0)                                   // markierte Tickets sind verworfene Hedges
             continue;
@@ -1012,7 +909,7 @@ int ReadSequence(int id = NULL) {
       }
 
 
-      // (4) Tickets auf Vollständigkeit überprüfen
+      // (5) offene und geschlossene Tickets auf Vollständigkeit überprüfen
       retry = false;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
@@ -1082,6 +979,124 @@ int ResetAll() {
 
 
 /**
+ * Überprüft die offenen Positionen der Sequenz auf Änderungen und berechnet die aktuellen Kennziffern (P/L, Breakeven etc.)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CheckStatus() {
+
+   // (1) offene Positionen auf Änderungen prüfen (OrderCloseTime(), OrderLots(), OrderSwap()) und Sequenzdaten ggf. aktualisieren
+   for (int i=0; i < progressionLevel; i++) {
+      if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf offen war
+         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            int error = GetLastError();
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
+            status = STATUS_DISABLED;
+            return(catch("CheckStatus(1)", error)==NO_ERROR);
+         }
+         if (OrderCloseTime() != 0) {                                // Ticket wurde geschlossen           => Sequenz neu einlesen
+            error = ReadSequence(sequenceId);
+            break;
+         }
+         if (NE(OrderLots(), levels.openLots[i])) {                  // Ticket wurde teilweise geschlossen => Sequenz neu einlesen
+            error = ReadSequence(sequenceId);
+            break;
+         }
+         if (NE(OrderSwap(), levels.openSwap[i])) {                  // Swap hat sich geändert             => aktualisieren
+            levels.openSwap[i] = OrderSwap();
+            levels.swap.changed = true;
+         }
+      }
+   }
+   if (error != NO_ERROR) {
+      status = STATUS_DISABLED;
+      return(false);
+   }
+
+
+   // (3) MarketInfo()-Daten auslesen
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   error = GetLastError();                                           // ERR_MARKETINFO_UPDATE abfangen
+   if (error != NO_ERROR)                 { status = STATUS_DISABLED; return(catch("CheckStatus(2)", error)==NO_ERROR);                                                                   }
+   if (tickValue < 0.5 || tickValue > 20) { status = STATUS_DISABLED; return(catch("CheckStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
+   double pipValue = Pip / tickSize * tickValue;
+
+
+   // (2) aktuellen Profit/Loss neu berechnen
+   all.swaps       = 0;
+   all.commissions = 0;
+   all.profits     = 0;
+
+   double tmp.openLots[], priceDiff;
+   ArrayCopy(tmp.openLots, levels.openLots);
+
+   for (i=0; i < progressionLevel; i++) {
+      if (levels.closeTime[i] == 0) {                                // offene Position
+         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
+            error = GetLastError();
+            if (error == NO_ERROR)
+               error = ERR_INVALID_TICKET;
+            status = STATUS_DISABLED;
+            return(catch("CheckStatus(5)", error)==NO_ERROR);
+         }
+         levels.openProfit[i] = 0;
+
+         if (GT(tmp.openLots[i], 0)) {                               // P/L offener Hedges verrechnen
+            for (int n=i+1; n < progressionLevel; n++) {
+               if (levels.closeTime[n]==0) /*&&*/ if (levels.type[i]!=levels.type[n]) /*&&*/ if (GT(tmp.openLots[n], 0)) { // offener und verrechenbarer Hedge
+                  priceDiff = ifDouble(levels.type[i]==OP_BUY, levels.openPrice[n]-levels.openPrice[i], levels.openPrice[i]-levels.openPrice[n]);
+
+                  if (LE(tmp.openLots[i], tmp.openLots[n])) {
+                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[i];
+                     tmp.openLots     [n] -= tmp.openLots[i];
+                     tmp.openLots     [i]  = 0;
+                     break;
+                  }
+                  else  /*(GT(tmp.openLots[i], tmp.openLots[n]))*/ {
+                     levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[n];
+                     tmp.openLots     [i] -= tmp.openLots[n];
+                     tmp.openLots     [n]  = 0;
+                  }
+               }
+            }
+
+            // P/L von Restpositionen anteilmäßig anhand des regulären OrderProfit() ermitteln
+            if (GT(tmp.openLots[i], 0))
+               levels.openProfit[i] += OrderProfit() / levels.openLots[i] * tmp.openLots[i];
+         }
+
+         // TODO: korrekte Commission-Berechnung der Hedges implementieren
+         levels.openCommission[i] = OrderCommission();
+      }
+      levels.swap      [i] = levels.openSwap      [i] + levels.closedSwap      [i];
+      levels.commission[i] = levels.openCommission[i] + levels.closedCommission[i];
+      levels.profit    [i] = levels.openProfit    [i] + levels.closedProfit    [i];
+
+      all.swaps       += levels.swap      [i];
+      all.commissions += levels.commission[i];
+      all.profits     += levels.profit    [i];
+   }
+
+
+   // (3) zu erwartenden Profit/Loss neu berechnen (analog zu "FXTradePro-Calculator.xls")
+   double prevDrawdown = 0;
+   for (i=0; i < sequenceLength; i++) {
+      levels.maxProfit  [i] = prevDrawdown + levels.lots[i] * TakeProfit * pipValue;
+      levels.maxDrawdown[i] = prevDrawdown - levels.lots[i] * StopLoss   * pipValue;
+      prevDrawdown          = levels.maxDrawdown[i];
+   }
+
+
+   if (catch("CheckStatus(6)") != NO_ERROR) {
+      status = STATUS_DISABLED;
+      return(false);
+   }
+   return(true);
+}
+
+
+/**
  * Zeigt den aktuellen Status der Sequenz an.
  *
  * @return int - Fehlerstatus
@@ -1098,9 +1113,7 @@ int ShowStatus() {
       levels.lots.changed = false;
    }
 
-
-   string msg="", strProfitLoss="0";
-   double profitLoss, profitLossPips;
+   string msg = "";
 
    switch (status) {
       case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
@@ -1120,21 +1133,26 @@ int ShowStatus() {
                                                                                          NL,
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
-   int last = 0;
+   double profitLoss, profitLossPips;
+   int    level;
+
    if (progressionLevel > 0) {
-      last           = progressionLevel-1;
+      level = progressionLevel-1;
       if (status != STATUS_FINISHED)
-         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[last]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
-      profitLossPips = ifDouble(levels.type[last]==OP_BUY, Bid-levels.openPrice[last], levels.openPrice[last]-Ask) / Pip;
+         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[level]==OP_BUY, "+", "-"), NumberToStr(effectiveLots, ".+"), " lot");
       profitLoss     = all.swaps + all.commissions + all.profits;
+      profitLossPips = ifDouble(levels.type[level]==OP_BUY, Bid-levels.openPrice[level], levels.openPrice[level]-Ask) / Pip;
+   }
+   else {
+      level = 0;                                                     // wenn Level noch auf 0 steht, TakeProfit- und StopLoss-Anzeige für Level 1
    }
 
-   msg = StringConcatenate(msg,                                                                                                              NL,
-                          "Lot sizes:               ", str.levels.lots, "  (+0.00/-0.00)",                                                   NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = +", DoubleToStr(0, 2),                    NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(-0.01, 2),                 NL,
-                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
-                          "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
+   msg = StringConcatenate(msg,                                                                                                                                                                      NL,
+                          "Lot sizes:               ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
+                          "TakeProfit:            ",   TakeProfit,                         " pip = ", DoubleToStr(levels.maxProfit[level], 2),                                                       NL,
+                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(levels.maxDrawdown[level], 2),                                                     NL,
+                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                                                     NL,
+                          "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2),                                                         NL);
 
    // 2 Zeilen Abstand nach oben für Instrumentanzeige
    Comment(StringConcatenate(NL, NL, msg));
@@ -1171,7 +1189,7 @@ string StatusToStr(int status) {
  * @return int - Fehlerstatus
  */
 int ValidateConfiguration() {
-   debug("ValidateConfiguration()   validating configuration...");
+   //debug("ValidateConfiguration()   validating configuration...");
 
    // Entry.Direction
    string direction = StringToUpper(StringTrim(Entry.Direction));
