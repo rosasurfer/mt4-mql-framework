@@ -24,7 +24,6 @@
  *
  *  TODO:
  *  -----
- *  - Bug: closePrice[letzter_level]  als closePrice von last.closeTime implementieren
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - CheckStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - Visualisierung des Entry.Limits implementieren
@@ -108,9 +107,8 @@ int      levels.ticket    [];                         // offenes Ticket des Leve
 int      levels.type      [];
 double   levels.lots      [], effectiveLots;          // Soll-Lotsize des Levels und aktuelle effektive Lotsize
 double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive Hedges)
-double   levels.openPrice [];
+double   levels.openPrice [], last.closePrice;
 datetime levels.closeTime [];                         // Unterscheidung zwischen offenen und geschlossenen Positionen
-double   levels.closePrice[];
 
 double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [], all.swaps;
 double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
@@ -191,7 +189,6 @@ int init() {
       ArrayResize(levels.openLots        , sequenceLength);
       ArrayResize(levels.openPrice       , sequenceLength);
       ArrayResize(levels.closeTime       , sequenceLength);
-      ArrayResize(levels.closePrice      , sequenceLength);
 
       ArrayResize(levels.swap            , sequenceLength);
       ArrayResize(levels.commission      , sequenceLength);
@@ -812,7 +809,6 @@ int ResetAll() {
       ArrayResize(levels.openLots        , 0);
       ArrayResize(levels.openPrice       , 0);
       ArrayResize(levels.closeTime       , 0);
-      ArrayResize(levels.closePrice      , 0);
 
       ArrayResize(levels.swap            , 0);
       ArrayResize(levels.commission      , 0);
@@ -863,7 +859,6 @@ int ReadSequence(int id = NULL) {
       ArrayInitialize(levels.openLots        , 0  );
       ArrayInitialize(levels.openPrice       , 0  );
       ArrayInitialize(levels.closeTime       , 0.1);
-      ArrayInitialize(levels.closePrice      , 0  );
 
       ArrayInitialize(levels.swap            , 0  );
       ArrayInitialize(levels.commission      , 0  );
@@ -899,7 +894,6 @@ int ReadSequence(int id = NULL) {
             ArrayResize(levels.openLots        , sequenceLength);
             ArrayResize(levels.openPrice       , sequenceLength);
             ArrayResize(levels.closeTime       , sequenceLength);
-            ArrayResize(levels.closePrice      , sequenceLength);
 
             ArrayResize(levels.swap            , sequenceLength);
             ArrayResize(levels.commission      , sequenceLength);
@@ -948,7 +942,9 @@ int ReadSequence(int id = NULL) {
 
 
    // (4) geschlossene Positionen einlesen
+   last.closePrice = 0;
    bool retry = true;
+
    while (retry) {                                                   // Endlosschleife, bis ausreichend History-Daten verfügbar sind
       int n, closedTickets=OrdersHistoryTotal();
       int      hist.tickets     []; ArrayResize(hist.tickets     , closedTickets);
@@ -978,7 +974,6 @@ int ReadSequence(int id = NULL) {
                ArrayResize(levels.openLots        , sequenceLength);
                ArrayResize(levels.openPrice       , sequenceLength);
                ArrayResize(levels.closeTime       , sequenceLength);
-               ArrayResize(levels.closePrice      , sequenceLength);
 
                ArrayResize(levels.swap            , sequenceLength);
                ArrayResize(levels.commission      , sequenceLength);
@@ -1065,6 +1060,8 @@ int ReadSequence(int id = NULL) {
          }
       }
 
+      datetime last.closeTime;
+
       // (4.3) levels.* mit den geschlossenen Tickets aktualisieren
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets[i] == 0)                                   // markierte Tickets sind verworfene Hedges
@@ -1077,15 +1074,12 @@ int ReadSequence(int id = NULL) {
             progressionLevel = level;
          level--;
 
-         // TODO: closePrice[letzter_level]  als closePrice von last.closeTime implementieren
-
          if (levels.ticket[level] == 0) {                            // unbelegter Level
             levels.ticket    [level] = hist.tickets    [i];
             levels.type      [level] = hist.types      [i];
             levels.openLots  [level] = hist.lots       [i];
             levels.openPrice [level] = hist.openPrices [i];
             levels.closeTime [level] = hist.closeTimes [i];
-            levels.closePrice[level] = hist.closePrices[i];
          }
          else if (levels.type[level] != hist.types[i]) {
             return(catch("ReadSequence(8)  illegal sequence state, operation type "+ OperationTypeDescription(levels.type[level]) +" (level "+ (level+1) +") doesn't match "+ OperationTypeDescription(hist.types[i]) +" of closed position #"+ hist.tickets[i], ERR_RUNTIME_ERROR));
@@ -1093,6 +1087,11 @@ int ReadSequence(int id = NULL) {
          levels.closedSwap      [level] += hist.swaps      [i];
          levels.closedCommission[level] += hist.commissions[i];
          levels.closedProfit    [level] += hist.profits    [i];
+
+         if (hist.closeTimes[i] > last.closeTime) {
+            last.closeTime  = hist.closeTimes[i];
+            last.closePrice = hist.closePrices[i];
+         }
       }
 
 
@@ -1154,20 +1153,23 @@ int ShowStatus() {
                                                                                          NL,
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
 
-   double profitLoss, profitLossPips;
+   double profitLoss, profitLossPips, lastPrice;
    int i;
 
    if (progressionLevel > 0) {
       i = progressionLevel-1;
-      if (status != STATUS_FINISHED)                                 // TODO: NumberToStr(x, "+- ") implementieren
+      if (status == STATUS_FINISHED) {
+         lastPrice = last.closePrice;
+      }
+      else {                                                         // TODO: NumberToStr(x, "+- ") implementieren
          msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", ""), NumberToStr(effectiveLots, ".+"), " lot");
+         lastPrice = ifDouble(levels.type[i]==OP_BUY, Bid, Ask);
+      }
+      profitLossPips = ifDouble(levels.type[i]==OP_BUY, lastPrice-levels.openPrice[i], levels.openPrice[i]-lastPrice) / Pip;
       profitLoss     = all.swaps + all.commissions + all.profits;
-
-      if (status == STATUS_FINISHED) profitLossPips = ifDouble(levels.type[i]==OP_BUY, levels.closePrice[i]-levels.openPrice[i], levels.openPrice[i]-levels.closePrice[i]) / Pip;
-      else                           profitLossPips = ifDouble(levels.type[i]==OP_BUY,                  Bid-levels.openPrice[i], levels.openPrice[i]-Ask                 ) / Pip;
    }
    else {
-      i = 0;                                                         // wenn Level noch auf 0 steht, TakeProfit- und StopLoss-Anzeige für Level 1
+      i = 0;                                                         // in Progression-Level 0 TakeProfit- und StopLoss-Anzeige für ersten Level
    }
 
    msg = StringConcatenate(msg,                                                                                                                                                                      NL,
