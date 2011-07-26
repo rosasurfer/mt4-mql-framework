@@ -16,6 +16,7 @@
  *
  *  TODO:
  *  -----
+ *  - Fehler im Counter, wenn 2 Positionen gleichzeitig eröffnet werden (2 x CHF.3)
  *  - Anzeige des Stoploss-Levels und des Stop-Out-Levels des Brokers
  *  - Berechnung von Open- und ClosePrice automatisieren
  *  - Anzeige der Positionen im SIG-Account implementieren
