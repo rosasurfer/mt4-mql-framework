@@ -5,17 +5,18 @@
  *
  *  Regeln:
  *  -------
+ *  - automatisierter StopLoss aller Positionen bei 50% von MaxEquity
  *  - maximal 2 offene Positionen
- *  - Positionen möglichst am Bollinger-Band eingehen
  *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
  *  - Positionsgrößen: 0.7 - 1.0 - 1.3
  *  - nach Gewinnen bleibt der alte Equity-Wert Ausgangsbasis für neue Positionen
  *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
- *  - Stop-Out aller Positionen bei 50% von MaxEquity
+ *  - Positionen möglichst am Bollinger-Band eingehen
  *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
  *
  *  TODO:
  *  -----
+ *  - Anzeige des Stoploss-Levels und des Stop-Out-Levels des Brokers
  *  - Berechnung von Open- und ClosePrice automatisieren
  *  - Anzeige der Positionen im SIG-Account implementieren
  *  - Upload neuer und geschlossener Positionen implementieren

@@ -103,7 +103,7 @@ int      PipPoints;
 string   PriceFormat;
 double   tickSize;
 
-int      Entry.iDirection = OP_UNDEFINED;          // -1
+int      Entry.iDirection = OP_UNDEFINED;
 double   Entry.LastBid;
 
 int      sequenceId;
