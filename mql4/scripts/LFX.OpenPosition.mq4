@@ -18,14 +18,20 @@
  *  -----
  *  - Fehler im Counter, wenn 2 Positionen gleichzeitig eröffnet werden (2 x CHF.3)
  *  - Anzeige des Stoploss-Levels und des Stop-Out-Levels des Brokers
- *  - Berechnung von Open- und ClosePrice automatisieren
+ *  - Berechnung des ClosePrice automatisieren
  *  - Anzeige der Positionen im SIG-Account implementieren
- *  - Upload neuer und geschlossener Positionen implementieren
- *  - Download der aktuellen Positionen implementieren
- *  - Anzeige der offenen Positionen implementieren
  *  - Buy-/Sell-Limits implementieren
  *  - TakeProfit-Limits implementieren
  *  - Breakeven-Orders implementieren
+ *
+ *
+ *  Format von MagicNumber:
+ *  -----------------------
+ *  Strategy-Id:   10 bit (Bit 23-32) => Bereich 0-1023 (immer größer 100)
+ *  Currency-Id:    4 bit (Bit 19-22) => Bereich 0-15
+ *  Units:          5 bit (Bit 14-18) => Bereich 0-31   (Vielfaches von 0.1 zwischen 0.1 und 1.5)
+ *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
+ *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
 #include <stdlib.mqh>
 
@@ -41,7 +47,7 @@ extern double Units     = 1.0;            // Vielfaches von 0.1 im Bereich 0.1-1
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int Strategy.uniqueId = 102;              // eindeutige ID der Strategie (im Bereich 0-1023)
+int Strategy.Id = 102;                    // eindeutige ID der Strategie (Bereich 101-1023)
 
 int    iDirection;
 double leverage;
@@ -63,14 +69,13 @@ int init() {
    stdlib_init(__SCRIPT__);
 
 
-   // (1) Parametervalidierung
+   // -- Beginn - Parametervalidierung
    // Currency
    string value = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
    if (!StringInArray(value, currencies))
       return(catch("init(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    Currency = value;
-
    // Direction
    value = StringToUpper(StringTrim(Direction));
    if (value == "")
@@ -82,16 +87,16 @@ int init() {
       default:
          return(catch("init(3)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    }
-
    // Units
    if (LT(Units, 0.1) || GT(Units, 1.5))
       return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT_PARAMVALUE));
    if (NE(MathModFix(Units, 0.1), 0))
       return(catch("init(5)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
+   // -- Ende - Parametervalidierung
 
 
-   // (2) Leverage-Konfiguration einlesen
+   // Leverage-Konfiguration einlesen
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
       return(catch("init(6)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
@@ -124,6 +129,7 @@ int start() {
    string symbols   [6];
    double lots      [6];
    int    directions[6];
+   int    tickets   [6];
    double margin;
 
 
@@ -149,11 +155,11 @@ int start() {
       double maxLot         = MarketInfo(symbols[i], MODE_MAXLOT        );
       double marginRequired = MarketInfo(symbols[i], MODE_MARGINREQUIRED);
 
-      int error = GetLastError();                     // ERR_UNKNOWN_SYMBOL ???
+      int error = GetLastError();                     // auf ERR_UNKNOWN_SYMBOL prüfen
       if (error != NO_ERROR)
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      // zusätzlich auf ERR_MARKETINFO_UPDATE prüfen
+      // auf ERR_MARKETINFO_UPDATE prüfen
       string errorMsg = "";
       if (LT(bid, 0.5)            || GT(bid, 150)            ) errorMsg = StringConcatenate(errorMsg, "Bid(\""           , symbols[i], "\") = ", NumberToStr(bid           , ".+"), NL);
       if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) errorMsg = StringConcatenate(errorMsg, "TickSize(\""      , symbols[i], "\") = ", NumberToStr(tickSize      , ".+"), NL);
@@ -175,8 +181,8 @@ int start() {
          return(catch("start(2)"));
       }
 
-      double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                                           // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      double lotValue = bid / tickSize * tickValue;                                          // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;                                        // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
       lots[i] = Units * unitSize;
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
@@ -185,15 +191,15 @@ int start() {
       if (GT(lots[i], maxLot))
          return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      margin += lots[i] * marginRequired;                                                       // required margin berechnen
+      margin += lots[i] * marginRequired;                                                    // required margin berechnen
    }
 
 
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
       if (StringStartsWith(symbols[i], Currency)) directions[i]  = iDirection;
-      else                                        directions[i]  = iDirection ^ 1;              // 0=>1, 1=>0
-      if (Currency == "JPY")                      directions[i] ^= 1;                           // JPY ist invers notiert
+      else                                        directions[i]  = iDirection ^ 1;           // 0=>1, 1=>0
+      if (Currency == "JPY")                      directions[i] ^= 1;                        // JPY ist invers notiert
    }
 
 
@@ -205,18 +211,18 @@ int start() {
 
 
    // (5) Daten bereits offener Positionen einlesen
-   if (!ReadOpenPositionStatus())
+   if (!ReadOpenPositions())
       return(last_error);
 
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                    // +0.1 fängt evt. Präzisionsfehler beim Casten ab: (int) double
+      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler im Double ab
       int pipDigits = digits & (~1);
       int counter   = GetPositionCounter() + 1;
 
       double   price       = NULL;
-      double   slippage    = 0.1;                                                   // 0.1 pip
+      double   slippage    = 0.1;
       double   sl          = NULL;
       double   tp          = NULL;
       string   comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
@@ -224,24 +230,41 @@ int start() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
-      if (stdlib_PeekLastError() != NO_ERROR) return(stdlib_PeekLastError());       // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (stdlib_PeekLastError() != NO_ERROR) return(processError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
-      int ticket = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
-      if (ticket == -1)
-         return(stdlib_PeekLastError());
+      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
+      if (tickets[i] == -1)
+         return(processError(stdlib_PeekLastError()));
    }
 
-   return(catch("start(7)"));
+
+   // (7) LFX-Kurs der neuen Position berechnen und ausgeben
+   price = 1.0;
+
+   for (i=0; i < 6; i++) {
+      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+         return(catch("start(7)", error));
+      }
+      if (StringStartsWith(OrderSymbol(), Currency)) price *= OrderOpenPrice();
+      else                                           price /= OrderOpenPrice();
+   }
+   if (Currency == "JPY")                            price = 1/price;            // JPY ist invers notiert
+
+   log("start()   "+ Currency +" position opened at "+ NumberToStr(price, ifString(Currency=="JPY", ".2'", ".4'")));
+   return(catch("start(8)"));
 }
 
 
 /**
- * Liest die Daten bereits offener Positionen ein.
+ * Liest die Daten der offenen Positionen dieser Strategie ein.
  *
  * @return bool - Erfolgsstatus
  */
-bool ReadOpenPositionStatus() {
+bool ReadOpenPositions() {
    ArrayResize(positions.magic   , 0);
    ArrayResize(positions.currency, 0);
    ArrayResize(positions.units   , 0);
@@ -252,24 +275,20 @@ bool ReadOpenPositionStatus() {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
          continue;
 
-      // alle Positionen dieser Strategie finden und Daten einlesen
+      // alle offenen Positionen dieser Strategie finden und Daten einlesen
       if (IsMyOrder()) {
+         if (OrderType()!=OP_BUY) /*&&*/ if ( OrderType()!=OP_SELL)
+            continue;
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;
-
-         int currency = OrderMagicNumber() >> 17 & 0x1F;                //  5 bit | in MagicNumber: Bits 18-22
-         int units    = OrderMagicNumber() >> 12 & 0x1F;                //  5 bit | in MagicNumber: Bits 13-17
-         int instance = OrderMagicNumber() >> 3 & 0x1FF;                //  9 bit | in MagicNumber: Bits  4-12
-         int counter  = OrderMagicNumber() & 0x7;                       //  3 bit | in MagicNumber: Bits  1-3
-
-         ArrayPushInt   (positions.magic   , OrderMagicNumber()   );
-         ArrayPushString(positions.currency, GetCurrency(currency));
-         ArrayPushDouble(positions.units   , units/10.0           );
-         ArrayPushInt   (positions.instance, instance             );
-         ArrayPushInt   (positions.counter , counter              );
+         ArrayPushInt   (positions.magic   , OrderMagicNumber()                             );
+         ArrayPushString(positions.currency, Currency(OrderMagicNumber(), OrderOpenTime())  );
+         ArrayPushDouble(positions.units   , Units(OrderMagicNumber(), OrderOpenTime())     );
+         ArrayPushInt   (positions.instance, InstanceId(OrderMagicNumber(), OrderOpenTime()));
+         ArrayPushInt   (positions.counter , Counter(OrderMagicNumber(), OrderOpenTime())   );
       }
    }
-   return(catch("ReadOpenPositionStatus()")==NO_ERROR);
+   return(catch("ReadOpenPositions()")==NO_ERROR);
 }
 
 
@@ -279,16 +298,107 @@ bool ReadOpenPositionStatus() {
  * @return bool
  */
 bool IsMyOrder() {
-   if (OrderType()==OP_BUY || OrderType()==OP_SELL)
-      return(OrderMagicNumber() >> 22 == Strategy.uniqueId);
-   return(false);
+   return(StrategyId(OrderMagicNumber(), OrderOpenTime()) == Strategy.Id);
+}
+
+
+/**
+ * Gibt die Strategy-ID einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return int - Strategy-ID
+ */
+int StrategyId(int magicNumber, datetime openTime=NULL) {
+   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
+      return(magicNumber >> 22);
+
+   return(magicNumber >> 22);                                  // neue Regel
+}
+
+
+/**
+ * Gibt die Currency-ID einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return int - Currency-ID
+ */
+int CurrencyId(int magicNumber, datetime openTime=NULL) {
+   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 5 bit (Bit 18-22) => Bereich 0-31
+      return(magicNumber >> 17 & 0x1F);
+
+   return(magicNumber >> 18 & 0xF);                            // neue Regel: 4 bit (Bit 19-22) => Bereich 0-15
+}
+
+
+/**
+ * Gibt die Units einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return double - Units
+ */
+double Units(int magicNumber, datetime openTime=NULL) {
+   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 5 bit (Bit 13-17) => Bereich 0-31 (Vielfaches von 0.1 zwischen 0.1 und 1.5)
+      return(magicNumber >> 12 & 0x1F / 10.0);
+
+   return(magicNumber >> 13 & 0x1F / 10.0);                    // neue Regel: 5 bit (Bit 14-18) => Bereich 0-31
+}
+
+
+/**
+ * Gibt die Instanz-ID einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return int - Instanz-ID
+ */
+int InstanceId(int magicNumber, datetime openTime=NULL) {
+   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 9 bit (Bit 4-12) => Bereich 0-511
+      return(magicNumber >> 3 & 0x1FF);
+
+   return(magicNumber >> 4 & 0x1FF);                           // neue Regel: 9 bit (Bit  5-13) => Bereich 0-511
+}
+
+
+/**
+ * Gibt den Wert des Position-Counters einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return int - Counter
+ */
+int Counter(int magicNumber, datetime openTime=NULL) {
+   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 3 bit (Bit 1-3) => Bereich 0-7
+      return(magicNumber & 0x7);
+
+   return(magicNumber & 0xF);                                  // neue Regel: 4 bit (Bit  1-4 ) => Bereich 0-15
+}
+
+
+/**
+ * Gibt die Currency einer MagicNumber zurück.
+ *
+ * @param  int      magicNumber
+ * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ *
+ * @return string - Currency
+ */
+string Currency(int magicNumber, datetime openTime=NULL) {
+   return(GetCurrency(CurrencyId(magicNumber, openTime)));
 }
 
 
 /**
  * Generiert aus den internen Daten einen Wert für OrderMagicNumber().
  *
- * @param  int counter - Position-Zähler, für den eine MagicNumber erteugt werden soll
+ * @param  int counter - Position-Zähler, für den eine MagicNumber erzeugt werden soll
  *
  * @return int - MagicNumber oder -1, falls ein Fehler auftrat
  */
@@ -297,19 +407,19 @@ int CreateMagicNumber(int counter) {
       catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   int strategy   = Strategy.uniqueId & 0x3FF << 22;                    // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
-   int currencyId = GetCurrencyId(Currency) & 0x1F << 17;               //  5 bit (Bits größer 5 löschen und auf 22 Bit erweitern)  | in MagicNumber: Bits 18-22
-   int iUnits     = MathRound(Units * 10) + 0.1;                        // +0.1 fängt Präzisionsfehler beim Casten ab
-       iUnits     = iUnits & 0x1F << 12;                                //  5 bit (Bits größer 5 löschen und auf 17 Bit erweitern)  | in MagicNumber: Bits 13-17
-   int instance   = GetInstanceId() & 0x1FF << 3;                       //  9 bit (Bits größer 9 löschen und auf 12 Bit erweitern)  | in MagicNumber: Bits  4-12
-   int pCounter   = counter & 0x7;                                      //  3 bit (Bits größer 3 löschen)                           | in MagicNumber: Bits  1-3
+   int strategy  = Strategy.Id & 0x3FF << 22;                  // 10 bit (Bits 23-32)
+   int iCurrency = GetCurrencyId(Currency) & 0xF << 18;        //  4 bit (Bits 19-22)
+   int iUnits    = MathRound(Units * 10) + 0.1;
+       iUnits    = iUnits & 0x1F << 13;                        //  5 bit (Bits 14-18)
+   int instance  = GetInstanceId() & 0x1FF << 4;               //  9 bit (Bits  5-13)
+   int pCounter  = counter & 0xF;                              //  4 bit (Bits  1-4 )
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       catch("CreateMagicNumber(2)", error);
       return(-1);
    }
-   return(strategy + currencyId + iUnits + instance + pCounter);
+   return(strategy + iCurrency + iUnits + instance + pCounter);
 }
 
 
@@ -334,7 +444,7 @@ int GetPositionCounter() {
 /**
  * Gibt die aktuelle Instanz-ID zurück. Existiert noch keine, wird eine neue erzeugt.
  *
- * @return int - Instanz-ID im Bereich 1-511 (9 bit), zusammen mit der Currency-ID (5 bit) und dem Positionszähler (3 bit) ist das ausreichend
+ * @return int - Instanz-ID im Bereich 1-511 (9 bit)
  */
 int GetInstanceId() {
    static int id;
@@ -346,7 +456,7 @@ int GetInstanceId() {
          while (id > 511) {
             id >>= 1;
          }
-         if (IntInArray(id, positions.instance))      // sicherstellen, daß wir im selben Moment nie zwei gleiche Instanz-ID's benutzen
+         if (IntInArray(id, positions.instance))      // sicherstellen, daß die Instanz-ID's der im Moment offenen Positionen eindeutig sind
             id = 0;
       }
    }

@@ -235,7 +235,7 @@
 #define CID_EUR                  4
 #define CID_GBP                  5
 #define CID_JPY                  6
-#define CID_USD                  7  // zuerst die ID's der wichtigsten Währungen, dadurch "passen" diese in 3 Bits
+#define CID_USD                  7  // zuerst die ID's der LFX-Währungen, dadurch "passen" diese in 3 Bits
 
 #define CID_CZK                  8
 #define CID_DKK                  9
