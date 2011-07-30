@@ -589,7 +589,7 @@ int HandleEvents(int events, int flags=0) {
  */
 int HandleEvent(int event, int flags=0) {
    bool status = false;
-   int  results[];      // zurücksetzen hier nicht nötig, da EventListener.*() Array immer zurücksetzt
+   int  results[];      // zurücksetzen hier nicht nötig, da alle EventListener.*() den Array-Parameter selbst zurücksetzen
 
    switch (event) {
       case EVENT_BAR_OPEN       : if (EventListener.BarOpen       (results, flags)) { status = true; onBarOpen       (results); } break;
@@ -603,9 +603,9 @@ int HandleEvent(int event, int flags=0) {
       case EVENT_HISTORY_CHANGE : if (EventListener.HistoryChange (results, flags)) { status = true; onHistoryChange (results); } break;
 
       default:
-         catch("HandleEvent()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+         catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
 
-   return(status && catch("HandleEvent()")==NO_ERROR);
+   return(status && catch("HandleEvent(2)")==NO_ERROR);
 }
 

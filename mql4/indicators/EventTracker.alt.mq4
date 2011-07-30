@@ -198,7 +198,7 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   // Accountinitialiserung abfangen (bei Start und Accountwechsel)
+   // Accountinitialisierung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
 
