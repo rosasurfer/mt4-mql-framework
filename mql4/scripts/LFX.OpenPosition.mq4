@@ -214,8 +214,6 @@ int start() {
    if (!ReadOpenPositions())
       return(last_error);
 
-   debug("start()   counter = "+ GetPositionCounter());
-
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
@@ -235,14 +233,10 @@ int start() {
       if (stdlib_PeekLastError() != NO_ERROR) return(processError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
-      continue;
-
       tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (tickets[i] == -1)
          return(processError(stdlib_PeekLastError()));
    }
-   return(catch("start()"));
-
 
 
    // (7) OpenPrice berechnen und ausgeben
@@ -288,21 +282,13 @@ bool ReadOpenPositions() {
       if (IsMyOrder()) {
          if (OrderType()!=OP_BUY) /*&&*/ if ( OrderType()!=OP_SELL)
             continue;
-
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;
-
-         string currency = Currency(OrderMagicNumber(), OrderOpenTime());
-         double units    = Units(OrderMagicNumber(), OrderOpenTime());
-         int    instance = InstanceId(OrderMagicNumber(), OrderOpenTime());
-         int    counter  = Counter(OrderMagicNumber(), OrderOpenTime());
-         debug("ReadOpenPositions()   ticket="+ OrderTicket() +",   magic="+ OrderMagicNumber() +",   symbol="+ OrderSymbol() +",   currency="+currency +",   units="+ NumberToStr(units, ".+") +",   instance="+ instance +",    counter="+ counter);
-
-         ArrayPushInt   (positions.magic   , OrderMagicNumber()                             );
-         ArrayPushString(positions.currency, Currency(OrderMagicNumber(), OrderOpenTime())  );
-         ArrayPushDouble(positions.units   , Units(OrderMagicNumber(), OrderOpenTime())     );
-         ArrayPushInt   (positions.instance, InstanceId(OrderMagicNumber(), OrderOpenTime()));
-         ArrayPushInt   (positions.counter , Counter(OrderMagicNumber(), OrderOpenTime())   );
+         ArrayPushInt   (positions.magic   ,              OrderMagicNumber() );
+         ArrayPushString(positions.currency, LFX.Currency(OrderMagicNumber()));
+         ArrayPushDouble(positions.units   , LFX.Units   (OrderMagicNumber()));
+         ArrayPushInt   (positions.instance, LFX.Instance(OrderMagicNumber()));
+         ArrayPushInt   (positions.counter , LFX.Counter (OrderMagicNumber()));
       }
    }
 
@@ -316,100 +302,79 @@ bool ReadOpenPositions() {
  * @return bool
  */
 bool IsMyOrder() {
-   return(StrategyId(OrderMagicNumber(), OrderOpenTime()) == Strategy.Id);
+   return(StrategyId(OrderMagicNumber()) == Strategy.Id);
 }
 
 
 /**
  * Gibt die Strategy-ID einer MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return int - Strategy-ID
  */
-int StrategyId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
-      return(magicNumber >> 22);                                     // alte Regel: 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
-
-   return(magicNumber >> 22);                                        // neue Regel
+int StrategyId(int magicNumber) {
+   return(magicNumber >> 22);                                        // 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
 }
 
 
 /**
- * Gibt die Currency-ID einer MagicNumber zurück.
+ * Gibt die Currency-ID einer LFX-MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return int - Currency-ID
  */
-int CurrencyId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
-      return(magicNumber >> 17 & 0x1F);                              // alte Regel: 5 bit (Bit 18-22) => Bereich 0-31
-
-   return(magicNumber >> 18 & 0xF);                                  // neue Regel: 4 bit (Bit 19-22) => Bereich 0-15
+int LFX.CurrencyId(int magicNumber) {
+   return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 0-15
 }
 
 
 /**
- * Gibt die Units einer MagicNumber zurück.
+ * Gibt die Units einer LFX-MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return double - Units
  */
-double Units(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
-      return(magicNumber >> 12 & 0x1F / 10.0);                       // alte Regel: 5 bit (Bit 13-17) => Bereich 0-31 (Vielfaches von 0.1 zwischen 0.1 und 1.5)
-
-   return(magicNumber >> 13 & 0x1F / 10.0);                          // neue Regel: 5 bit (Bit 14-18) => Bereich 0-31
+double LFX.Units(int magicNumber) {
+   return(magicNumber >> 13 & 0x1F / 10.0);                          // 5 bit (Bit 14-18) => Bereich 0-31
 }
 
 
 /**
- * Gibt die Instanz-ID einer MagicNumber zurück.
+ * Gibt die Instanz einer LFX-MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return int - Instanz-ID
  */
-int InstanceId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
-      return(magicNumber >> 3 & 0x1FF);                              // alte Regel: 9 bit (Bit 4-12) => Bereich 0-511
-
-   return(magicNumber >> 4 & 0x1FF);                                 // neue Regel: 9 bit (Bit  5-13) => Bereich 0-511
+int LFX.Instance(int magicNumber) {
+   return(magicNumber >> 4 & 0x1FF);                                 // 9 bit (Bit 5-13) => Bereich 0-511
 }
 
 
 /**
- * Gibt den Wert des Position-Counters einer MagicNumber zurück.
+ * Gibt den Wert des Position-Counters einer LFX-MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return int - Counter
  */
-int Counter(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
-      return(magicNumber & 0x7);                                     // alte Regel: 3 bit (Bit 1-3) => Bereich 0-7
-
-   return(magicNumber & 0xF);                                        // neue Regel: 4 bit (Bit  1-4 ) => Bereich 0-15
+int LFX.Counter(int magicNumber) {
+   return(magicNumber & 0xF);                                        // 4 bit (Bit 1-4 ) => Bereich 0-15
 }
 
 
 /**
- * Gibt die Currency einer MagicNumber zurück.
+ * Gibt die Währung einer LFX-MagicNumber zurück.
  *
- * @param  int      magicNumber
- * @param  datetime openTime    - OrderOpenTime (zur Versionsunterscheidung, default: NULL)
+ * @param  int magicNumber
  *
  * @return string - Currency
  */
-string Currency(int magicNumber, datetime openTime=NULL) {
-   return(GetCurrency(CurrencyId(magicNumber, openTime)));
+string LFX.Currency(int magicNumber) {
+   return(GetCurrency(LFX.CurrencyId(magicNumber)));
 }
 
 
@@ -429,7 +394,7 @@ int CreateMagicNumber(int counter) {
    int iCurrency = GetCurrencyId(Currency) & 0xF << 18;        //  4 bit (Bits 19-22)
    int iUnits    = MathRound(Units * 10) + 0.1;
        iUnits    = iUnits & 0x1F << 13;                        //  5 bit (Bits 14-18)
-   int instance  = GetInstanceId() & 0x1FF << 4;               //  9 bit (Bits  5-13)
+   int instance  = GetInstance() & 0x1FF << 4;                 //  9 bit (Bits  5-13)
    int pCounter  = counter & 0xF;                              //  4 bit (Bits  1-4 )
 
    int error = GetLastError();
@@ -464,7 +429,7 @@ int GetPositionCounter() {
  *
  * @return int - Instanz-ID im Bereich 1-511 (9 bit)
  */
-int GetInstanceId() {
+int GetInstance() {
    static int id;
 
    if (id == 0) {
