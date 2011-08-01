@@ -214,6 +214,8 @@ int start() {
    if (!ReadOpenPositions())
       return(last_error);
 
+   debug("start()   counter = "+ GetPositionCounter());
+
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
@@ -233,13 +235,17 @@ int start() {
       if (stdlib_PeekLastError() != NO_ERROR) return(processError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
+      continue;
+
       tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (tickets[i] == -1)
          return(processError(stdlib_PeekLastError()));
    }
+   return(catch("start()"));
 
 
-   // (7) LFX-Kurs der neuen Position berechnen und ausgeben
+
+   // (7) OpenPrice berechnen und ausgeben
    price = 1.0;
 
    for (i=0; i < 6; i++) {
@@ -252,9 +258,12 @@ int start() {
       if (StringStartsWith(OrderSymbol(), Currency)) price *= OrderOpenPrice();
       else                                           price /= OrderOpenPrice();
    }
-   if (Currency == "JPY")                            price = 1/price;            // JPY ist invers notiert
-
+   price = MathPow(price, 1.0/7);
+   if (Currency == "JPY")
+      price = 1/price;                                               // JPY ist invers notiert
    log("start()   "+ Currency +" position opened at "+ NumberToStr(price, ifString(Currency=="JPY", ".2'", ".4'")));
+
+
    return(catch("start(8)"));
 }
 
@@ -272,15 +281,23 @@ bool ReadOpenPositions() {
    ArrayResize(positions.counter , 0);
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
          continue;
 
       // alle offenen Positionen dieser Strategie finden und Daten einlesen
       if (IsMyOrder()) {
          if (OrderType()!=OP_BUY) /*&&*/ if ( OrderType()!=OP_SELL)
             continue;
+
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;
+
+         string currency = Currency(OrderMagicNumber(), OrderOpenTime());
+         double units    = Units(OrderMagicNumber(), OrderOpenTime());
+         int    instance = InstanceId(OrderMagicNumber(), OrderOpenTime());
+         int    counter  = Counter(OrderMagicNumber(), OrderOpenTime());
+         debug("ReadOpenPositions()   ticket="+ OrderTicket() +",   magic="+ OrderMagicNumber() +",   symbol="+ OrderSymbol() +",   currency="+currency +",   units="+ NumberToStr(units, ".+") +",   instance="+ instance +",    counter="+ counter);
+
          ArrayPushInt   (positions.magic   , OrderMagicNumber()                             );
          ArrayPushString(positions.currency, Currency(OrderMagicNumber(), OrderOpenTime())  );
          ArrayPushDouble(positions.units   , Units(OrderMagicNumber(), OrderOpenTime())     );
@@ -288,6 +305,7 @@ bool ReadOpenPositions() {
          ArrayPushInt   (positions.counter , Counter(OrderMagicNumber(), OrderOpenTime())   );
       }
    }
+
    return(catch("ReadOpenPositions()")==NO_ERROR);
 }
 
@@ -311,10 +329,10 @@ bool IsMyOrder() {
  * @return int - Strategy-ID
  */
 int StrategyId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
-      return(magicNumber >> 22);
+   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
+      return(magicNumber >> 22);                                     // alte Regel: 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
 
-   return(magicNumber >> 22);                                  // neue Regel
+   return(magicNumber >> 22);                                        // neue Regel
 }
 
 
@@ -327,10 +345,10 @@ int StrategyId(int magicNumber, datetime openTime=NULL) {
  * @return int - Currency-ID
  */
 int CurrencyId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 5 bit (Bit 18-22) => Bereich 0-31
-      return(magicNumber >> 17 & 0x1F);
+   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
+      return(magicNumber >> 17 & 0x1F);                              // alte Regel: 5 bit (Bit 18-22) => Bereich 0-31
 
-   return(magicNumber >> 18 & 0xF);                            // neue Regel: 4 bit (Bit 19-22) => Bereich 0-15
+   return(magicNumber >> 18 & 0xF);                                  // neue Regel: 4 bit (Bit 19-22) => Bereich 0-15
 }
 
 
@@ -343,10 +361,10 @@ int CurrencyId(int magicNumber, datetime openTime=NULL) {
  * @return double - Units
  */
 double Units(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 5 bit (Bit 13-17) => Bereich 0-31 (Vielfaches von 0.1 zwischen 0.1 und 1.5)
-      return(magicNumber >> 12 & 0x1F / 10.0);
+   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
+      return(magicNumber >> 12 & 0x1F / 10.0);                       // alte Regel: 5 bit (Bit 13-17) => Bereich 0-31 (Vielfaches von 0.1 zwischen 0.1 und 1.5)
 
-   return(magicNumber >> 13 & 0x1F / 10.0);                    // neue Regel: 5 bit (Bit 14-18) => Bereich 0-31
+   return(magicNumber >> 13 & 0x1F / 10.0);                          // neue Regel: 5 bit (Bit 14-18) => Bereich 0-31
 }
 
 
@@ -359,10 +377,10 @@ double Units(int magicNumber, datetime openTime=NULL) {
  * @return int - Instanz-ID
  */
 int InstanceId(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 9 bit (Bit 4-12) => Bereich 0-511
-      return(magicNumber >> 3 & 0x1FF);
+   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
+      return(magicNumber >> 3 & 0x1FF);                              // alte Regel: 9 bit (Bit 4-12) => Bereich 0-511
 
-   return(magicNumber >> 4 & 0x1FF);                           // neue Regel: 9 bit (Bit  5-13) => Bereich 0-511
+   return(magicNumber >> 4 & 0x1FF);                                 // neue Regel: 9 bit (Bit  5-13) => Bereich 0-511
 }
 
 
@@ -375,10 +393,10 @@ int InstanceId(int magicNumber, datetime openTime=NULL) {
  * @return int - Counter
  */
 int Counter(int magicNumber, datetime openTime=NULL) {
-   if (openTime!=NULL) /*&&*/ if (openTime < D'2011.07.31')    // alte Regel: 3 bit (Bit 1-3) => Bereich 0-7
-      return(magicNumber & 0x7);
+   if (openTime!=NULL) /*&&*/ if (ServerToGMT(openTime) < D'2011.08.01 07:00')
+      return(magicNumber & 0x7);                                     // alte Regel: 3 bit (Bit 1-3) => Bereich 0-7
 
-   return(magicNumber & 0xF);                                  // neue Regel: 4 bit (Bit  1-4 ) => Bereich 0-15
+   return(magicNumber & 0xF);                                        // neue Regel: 4 bit (Bit  1-4 ) => Bereich 0-15
 }
 
 
