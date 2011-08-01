@@ -9,7 +9,7 @@
  *  - maximal 2 offene Positionen
  *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
  *  - Positionsgrößen: 0.7 - 1.0 - 1.3
- *  - nach Gewinnen bleibt der alte Equity-Wert Ausgangsbasis für neue Positionen
+ *  - nach Gewinnen ist ein MA(Equity) Ausgangsbasis für neue Positionen
  *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
  *  - Positionen möglichst am Bollinger-Band eingehen
  *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
