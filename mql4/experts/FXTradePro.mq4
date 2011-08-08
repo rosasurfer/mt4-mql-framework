@@ -15,6 +15,7 @@
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Visualisierung des Entry.Limits implementieren
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
@@ -26,7 +27,6 @@
  *  -----
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - CheckStatus(): Commission-Berechnung an OrderCloseBy() anpassen
- *  - Visualisierung des Entry.Limits implementieren
  *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
