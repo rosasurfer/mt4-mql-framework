@@ -64,9 +64,9 @@ int init() {
    else
       catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
 
-   leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 1.0);
+   leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1.0);
    if (LT(leverage, 1))
-      return(catch("init(2)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(2)  Invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ symbol +",");
 
