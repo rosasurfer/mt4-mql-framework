@@ -26,6 +26,7 @@
  *  TODO:
  *  -----
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
+ *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
  *  - CheckStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
