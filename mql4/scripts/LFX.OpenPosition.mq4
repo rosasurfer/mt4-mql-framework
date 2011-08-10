@@ -167,7 +167,8 @@ int start() {
       if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) errorMsg = StringConcatenate(errorMsg, "MinLot(\""        , symbols[i], "\") = ", NumberToStr(minLot        , ".+"), NL);
       if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) errorMsg = StringConcatenate(errorMsg, "LotStep(\""       , symbols[i], "\") = ", NumberToStr(lotStep       , ".+"), NL);
       if (LT(maxLot, 50)                                     ) errorMsg = StringConcatenate(errorMsg, "MaxLot(\""        , symbols[i], "\") = ", NumberToStr(maxLot        , ".+"), NL);
-      if (LT(marginRequired, 200) || GT(marginRequired, 1500)) errorMsg = StringConcatenate(errorMsg, "MarginRequired(\"", symbols[i], "\") = ", NumberToStr(marginRequired, ".+"), NL);
+      // TODO: check(marginRequired) muﬂ sich am Account-Leverage orientieren und nicht an blanken Zahlen
+      if (LT(marginRequired, 100) || GT(marginRequired, 1500)) errorMsg = StringConcatenate(errorMsg, "MarginRequired(\"", symbols[i], "\") = ", NumberToStr(marginRequired, ".+"), NL);
       errorMsg = StringTrim(errorMsg);
 
       // ERR_MARKETINFO_UPDATE behandeln
