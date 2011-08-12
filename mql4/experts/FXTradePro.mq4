@@ -174,8 +174,7 @@ int init() {
 
    // (2) falls noch keine Sequenz definiert, die erste Sequenz suchen und einlesen
    if (sequenceId == 0) {
-      //sequenceId = 10741;     // temporär
-      //sequenceId = 13729;
+      sequenceId = 13666;     // temporär
 
       if (ReadSequence(sequenceId) != NO_ERROR) {
          status = STATUS_DISABLED;

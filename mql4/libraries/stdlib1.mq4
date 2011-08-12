@@ -430,10 +430,10 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   manual confirmation denied, broker rejects order
+      case ERR_COMMON_ERROR:                 //        2   manual confirmation denied | broker rejects order
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
-      case ERR_INVALID_PRICE:                //      129   invalid price
+      case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_INVALID_STOPS:                //      130   invalid stop
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
@@ -4827,18 +4827,18 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
-      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2    manual confirmation was denied
+      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2 manual confirmation denied | broker rejects order
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
       case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
       case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
       case ERR_NO_CONNECTION              : return("no connection to trade server"                                 ); //    6
       case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                             ); //    7
       case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                         ); //    8
-      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                                 ); //    9    never returned error
+      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                                 ); //    9 never returned error
       case ERR_ACCOUNT_DISABLED           : return("account disabled"                                              ); //   64
       case ERR_INVALID_ACCOUNT            : return("invalid account"                                               ); //   65
       case ERR_TRADE_TIMEOUT              : return("trade timeout"                                                 ); //  128
-      case ERR_INVALID_PRICE              : return("invalid price"                                                 ); //  129
+      case ERR_INVALID_PRICE              : return("invalid price"                                                 ); //  129 Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_INVALID_STOPS              : return("invalid stop"                                                  ); //  130
       case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                          ); //  131
       case ERR_MARKET_CLOSED              : return("market is closed"                                              ); //  132
@@ -4859,7 +4859,7 @@ string ErrorDescription(int error) {
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                      ); //  150
 
       // runtime errors
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000    common runtime error (no mql error)
+      case ERR_RUNTIME_ERROR              : return("runtime error"                                                 ); // 4000 common runtime error (no mql error)
       case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                        ); // 4001
       case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                      ); // 4002
       case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                             ); // 4003
@@ -4881,14 +4881,14 @@ string ErrorDescription(int error) {
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
-      case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022    never generated error
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050    invalid parameters count
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051    invalid parameter value
+      case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022 never generated error
+      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050 invalid parameters count
+      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
-      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053    some array error
+      case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053 some array error
       case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                                  ); // 4054
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055    custom indicator error
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056    incompatible arrays
+      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055 custom indicator error
+      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056 incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
       case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                             ); // 4059
@@ -4898,10 +4898,10 @@ string ErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                    ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                     ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                      ); // 4065
-      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066    history in update state
-      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067    error in trading function
-      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099    end of file
-      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100    some file error
+      case ERR_HISTORY_UPDATE             : return("requested history data in update state"                        ); // 4066 history in update state
+      case ERR_TRADE_ERROR                : return("error in trading function"                                     ); // 4067 error in trading function
+      case ERR_END_OF_FILE                : return("end of file"                                                   ); // 4099 end of file
+      case ERR_SOME_FILE_ERROR            : return("file error"                                                    ); // 4100 some file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                               ); // 4101
       case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                         ); // 4102
       case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                              ); // 4103

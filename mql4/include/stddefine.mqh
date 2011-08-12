@@ -324,7 +324,7 @@
 
 // trade server errors
 #define ERR_NO_RESULT                                   1
-#define ERR_COMMON_ERROR                                2   // manual confirmation denied, broker rejects order
+#define ERR_COMMON_ERROR                                2   // manual confirmation denied | broker rejects order
 #define ERR_INVALID_TRADE_PARAMETERS                    3
 #define ERR_SERVER_BUSY                                 4
 #define ERR_OLD_VERSION                                 5
@@ -335,7 +335,7 @@
 #define ERR_ACCOUNT_DISABLED                           64
 #define ERR_INVALID_ACCOUNT                            65
 #define ERR_TRADE_TIMEOUT                             128
-#define ERR_INVALID_PRICE                             129
+#define ERR_INVALID_PRICE                             129   // Kurs bewegt sich zu schnell (aus dem Fenster)
 #define ERR_INVALID_STOPS                             130
 #define ERR_INVALID_TRADE_VOLUME                      131
 #define ERR_MARKET_CLOSED                             132
