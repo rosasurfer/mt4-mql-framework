@@ -14,6 +14,7 @@
  *  - Positionen möglichst am Bollinger-Band eingehen
  *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
  *
+ *
  *  TODO:
  *  -----
  *  - Fehler im Counter, wenn 2 Positionen gleichzeitig eröffnet werden (2 x CHF.3)
@@ -130,7 +131,6 @@ int start() {
    double lots      [6];
    int    directions[6];
    int    tickets   [6];
-   double margin;
 
 
    // (1) Pairs bestimmen
@@ -146,14 +146,13 @@ int start() {
    // (2) Lotsizes berechnen
    double equity = AccountEquity()-AccountCredit();
 
-   for (int i=0; i < 6; i++) {
-      double bid            = MarketInfo(symbols[i], MODE_BID           );
-      double tickSize       = MarketInfo(symbols[i], MODE_TICKSIZE      );
-      double tickValue      = MarketInfo(symbols[i], MODE_TICKVALUE     );
-      double minLot         = MarketInfo(symbols[i], MODE_MINLOT        );
-      double lotStep        = MarketInfo(symbols[i], MODE_LOTSTEP       );
-      double maxLot         = MarketInfo(symbols[i], MODE_MAXLOT        );
-      double marginRequired = MarketInfo(symbols[i], MODE_MARGINREQUIRED);
+   for (int retry, i=0; i < 6; i++) {
+      double bid       = MarketInfo(symbols[i], MODE_BID      );
+      double tickSize  = MarketInfo(symbols[i], MODE_TICKSIZE );
+      double tickValue = MarketInfo(symbols[i], MODE_TICKVALUE);
+      double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
+      double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
+      double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
 
       int error = GetLastError();                     // auf ERR_UNKNOWN_SYMBOL prüfen
       if (error != NO_ERROR)
@@ -161,19 +160,22 @@ int start() {
 
       // auf ERR_MARKETINFO_UPDATE prüfen
       string errorMsg = "";
-      if (LT(bid, 0.5)            || GT(bid, 150)            ) errorMsg = StringConcatenate(errorMsg, "Bid(\""           , symbols[i], "\") = ", NumberToStr(bid           , ".+"), NL);
-      if (LT(tickSize, 0.00001)   || GT(tickSize, 0.01)      ) errorMsg = StringConcatenate(errorMsg, "TickSize(\""      , symbols[i], "\") = ", NumberToStr(tickSize      , ".+"), NL);
-      if (LT(tickValue, 0.5)      || GT(tickValue, 20)       ) errorMsg = StringConcatenate(errorMsg, "TickValue(\""     , symbols[i], "\") = ", NumberToStr(tickValue     , ".+"), NL);
-      if (LT(minLot, 0.01)        || GT(minLot, 0.1)         ) errorMsg = StringConcatenate(errorMsg, "MinLot(\""        , symbols[i], "\") = ", NumberToStr(minLot        , ".+"), NL);
-      if (LT(lotStep, 0.01)       || GT(lotStep, 0.1)        ) errorMsg = StringConcatenate(errorMsg, "LotStep(\""       , symbols[i], "\") = ", NumberToStr(lotStep       , ".+"), NL);
-      if (LT(maxLot, 50)                                     ) errorMsg = StringConcatenate(errorMsg, "MaxLot(\""        , symbols[i], "\") = ", NumberToStr(maxLot        , ".+"), NL);
-      // TODO: check(marginRequired) muß sich am Account-Leverage orientieren und nicht an blanken Zahlen
-      if (LT(marginRequired, 100) || GT(marginRequired, 1500)) errorMsg = StringConcatenate(errorMsg, "MarginRequired(\"", symbols[i], "\") = ", NumberToStr(marginRequired, ".+"), NL);
-      errorMsg = StringTrim(errorMsg);
+      if      (LT(bid, 0.5)          || GT(bid, 150)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
+      else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = StringConcatenate("TickSize(\"" , symbols[i], "\") = ", NumberToStr(tickSize , ".+"));
+      else if (LT(tickValue, 0.5)    || GT(tickValue, 20) ) errorMsg = StringConcatenate("TickValue(\"", symbols[i], "\") = ", NumberToStr(tickValue, ".+"));
+      else if (LT(minLot, 0.01)      || GT(minLot, 0.1)   ) errorMsg = StringConcatenate("MinLot(\""   , symbols[i], "\") = ", NumberToStr(minLot   , ".+"));
+      else if (LT(maxLot, 50)                             ) errorMsg = StringConcatenate("MaxLot(\""   , symbols[i], "\") = ", NumberToStr(maxLot   , ".+"));
+      else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = StringConcatenate("LotStep(\""  , symbols[i], "\") = ", NumberToStr(lotStep  , ".+"));
 
       // ERR_MARKETINFO_UPDATE behandeln
       if (StringLen(errorMsg) > 0) {
-         PlaySound("notify.wav");
+         if (retry < 3) {                                                                       // 3 stille Versuche, korrekte Werte zu lesen
+            Sleep(200);
+            i = -1;
+            retry++;
+            continue;
+         }
+         PlaySound("notify.wav");                                                               // danach Bestätigung per Dialog
          int button = MessageBox("Market data in update state.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
@@ -182,8 +184,8 @@ int start() {
          return(catch("start(2)"));
       }
 
-      double lotValue = bid / tickSize * tickValue;                                          // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                                        // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;                                           // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
       lots[i] = Units * unitSize;
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
@@ -191,22 +193,20 @@ int start() {
          return(catch("start(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
          return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
-
-      margin += lots[i] * marginRequired;                                                    // required margin berechnen
    }
 
 
    // (3) Directions bestimmen
    for (i=0; i < 6; i++) {
       if (StringStartsWith(symbols[i], Currency)) directions[i]  = iDirection;
-      else                                        directions[i]  = iDirection ^ 1;           // 0=>1, 1=>0
-      if (Currency == "JPY")                      directions[i] ^= 1;                        // JPY ist invers notiert
+      else                                        directions[i]  = iDirection ^ 1;              // 0=>1, 1=>0
+      if (Currency == "JPY")                      directions[i] ^= 1;                           // JPY ist invers notiert
    }
 
 
    // (4) Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?\n\n(required margin: "+ DoubleToStr(margin, 2) +")", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("start(5)"));
 

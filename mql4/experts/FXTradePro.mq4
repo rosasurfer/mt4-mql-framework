@@ -10,21 +10,31 @@
  *
  * ---------------------------------------------------------------------------------
  *
+ *  Probleme:
+ *  ---------
+ *  - Verhältnis Spread/StopLoss: hohe Spreads machen den Einsatz teilweise unmöglich
+ *  - Verhältnis Tagesvolatilität/Spread: teilweise wurde innerhalb von 10 Sekunden der nächste Level getriggert
+ *  - beim Start müßten die obigen Kennziffern überprüft werden
+ *
+ *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
- *  - Breakeven-Berechnung implementieren und anzeigen
- *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit vielen Hedges ist fehlerhaft)
  *  - Visualisierung des Entry.Limits implementieren
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
+ *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
  *
+ *
  *  TODO:
  *  -----
+ *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
+ *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
  *  - CheckStatus(): Commission-Berechnung an OrderCloseBy() anpassen
