@@ -159,7 +159,7 @@ int start() {
          int second = MathMax(i, n);
 
          // Orderdaten korrigieren
-         lotSizes[i] = lotSizes[n];                                           // lotSizes[i] == 0.00 korrigieren
+         lotSizes[i] = lotSizes[n];                                           // lotSizes[i] == 0.0 korrigieren
          if (i == first) {
             commissions[first ] = commissions[second];                        // alle Transaktionsdaten in der ersten Order speichern
             swaps      [first ] = swaps      [second];
