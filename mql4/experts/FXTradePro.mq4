@@ -20,7 +20,7 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
- *  - Visualisierung der gesamten Sequenz implementieren
+ *  - Visualisierung der gesamten Sequenz
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit vielen Hedges ist fehlerhaft)
  *  - Visualisierung des Entry.Limits implementieren
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -394,7 +394,7 @@ int CreateMagicNumber() {
 
 
 /**
- * Ob das konfigurierte Entry.Limit erreicht oder überschritten wurde.  Wurde kein Limit angegeben, gibt die Funktion ebenfalls TRUE zurück.
+ * Ob das konfigurierte Entry.Limit erreicht oder überschritten wurde.  Wurde kein Limit angegeben, gibt die Funktion immer TRUE zurück.
  *
  * @return bool
  */
