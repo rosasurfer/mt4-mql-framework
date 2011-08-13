@@ -14,7 +14,7 @@
  *  ---------
  *  - Verhältnis Spread/StopLoss: hohe Spreads machen den Einsatz teilweise unmöglich
  *  - Verhältnis Tagesvolatilität/Spread: teilweise wurde innerhalb von 10 Sekunden der nächste Level getriggert
- *  - gleiche Volatilität = gleicher StopLoss, aber variabler Spread => Avg(Price) als Trigger verwenden => Spread eliminiert
+ *  - gleiche Volatilität = gleicher StopLoss, aber variabler Spread => Avg(Price) als Trigger verwend#include ""en => Spread eliminiert
  *  - beim Start müßten die obigen Kennziffern überprüft werden
  *
  *
@@ -204,8 +204,10 @@ int init() {
          SaveConfiguration();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {
-      if (RestoreConfiguration() == NO_ERROR)
+      if (RestoreConfiguration() == NO_ERROR) {
          ValidateConfiguration();
+         VisualizeSequence();
+      }
    }
 
    if (ArraySize(levels.ticket) == 0) {
@@ -629,14 +631,14 @@ int FinishSequence() {
    }
 
    // Tickets schließen
-   if (!OrderCloseMultiple(tickets, 0.1, Orange)) {
+   if (!OrderCloseMultiple(tickets, 0.1, CLR_NONE)) {
       status = STATUS_DISABLED;
       return(processError(stdlib_PeekLastError()));
    }
 
    // Status aktualisieren
    status = STATUS_FINISHED;
-   CheckStatus();                                                    // alle Positionen geschlossen => CheckStatus() löst ein komplettes ReadSequence() aus
+   CheckStatus();                                                    // alle Positionen geschlossen => CheckStatus() löst komplettes ReadSequence() aus
 
    return(catch("FinishSequence(2)"));
 }
@@ -1159,25 +1161,62 @@ int ReadSequence(int id = NULL) {
  * @return int - Fehlerstatus
  */
 int VisualizeSequence() {
+   if (ArraySize(levels.lots) == 0)                                  // bei Aufruf vor ValidateConfiguration() ist levels.lots noch nicht initialisiert
+      return(NO_ERROR);
+
    for (int i=0; i < progressionLevel; i++) {
-      int    ticket    = levels.ticket   [i];
-      int    type      = levels.type     [i];
-      double lots      = levels.lots     [i];
-      int    openTime  = levels.openTime [i];
-      double openPrice = levels.openPrice[i];
+      int ticket = levels.ticket[i];
+      int type   = levels.type  [i];
 
-      string arrow = "#"+ ticket +" "+ ifString(type==OP_BUY, "buy", "sell") +" "+ NumberToStr(lots, ".+") +" at "+ NumberToStr(openPrice, PriceFormat);
+      // Verbinder
+      if (i > 0) {
+         string line = "#"+ ticket +"  Level "+ i +" > "+ (i+1);
+         if (ObjectFind(line) > -1)
+            ObjectDelete(line);
+         if (ObjectCreate(line, OBJ_TREND, 0, levels.openTime[i-1], levels.openPrice[i-1], levels.openTime[i], levels.openPrice[i])) {
+            ObjectSet(line, OBJPROP_COLOR, ifInt(type==OP_SELL, Blue, Red));
+            ObjectSet(line, OBJPROP_RAY,   false);
+            ObjectSet(line, OBJPROP_STYLE, STYLE_DOT);
+         }
+         else GetLastError();
+      }
 
+      // Positionsmarker
+      string arrow = "#"+ ticket +"  Level "+ (i+1) +": "+ ifString(type==OP_BUY, "Buy", "Sell") +" "+ NumberToStr(levels.lots[i], ".+") +" lots at "+ NumberToStr(levels.openPrice[i], PriceFormat);
       if (ObjectFind(arrow) > -1)
          ObjectDelete(arrow);
-      if (ObjectCreate(arrow, OBJ_ARROW, 0, openTime, openPrice)) {
+      if (ObjectCreate(arrow, OBJ_ARROW, 0, levels.openTime[i], levels.openPrice[i])) {
          ObjectSet(arrow, OBJPROP_ARROWCODE, 1);
-         ObjectSet(arrow, OBJPROP_COLOR    , ifInt(type==OP_BUY, Blue, Red));
+         ObjectSet(arrow, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
+      }
+      else GetLastError();
+   }
+
+   // Sequenzende
+   if (progressionLevel > 0) /*&&*/ if (levels.closeTime[i-1] != 0) {
+      // letzter Verbinder
+      line = "#"+ levels.ticket[i-1] +"  Level "+ progressionLevel;
+      if (ObjectFind(line) > -1)
+         ObjectDelete(line);
+      if (ObjectCreate(line, OBJ_TREND, 0, levels.openTime[i-1], levels.openPrice[i-1], levels.closeTime[i-1], last.closePrice)) {
+         ObjectSet(line, OBJPROP_COLOR, ifInt(levels.type[i-1]==OP_BUY, Blue, Red));
+         ObjectSet(line, OBJPROP_RAY,   false);
+         ObjectSet(line, OBJPROP_STYLE, STYLE_DOT);
       }
       else GetLastError();
 
+      // letzter Marker
+      arrow = "#"+ levels.ticket[i-1] +"  Level "+ progressionLevel +" finished at "+ NumberToStr(last.closePrice, PriceFormat);
+      if (ObjectFind(arrow) > -1)
+         ObjectDelete(arrow);
+      if (ObjectCreate(arrow, OBJ_ARROW, 0, levels.closeTime[i-1], last.closePrice)) {
+         ObjectSet(arrow, OBJPROP_ARROWCODE, 3);
+         ObjectSet(arrow, OBJPROP_COLOR, Orange);
+      }
+      else GetLastError();
    }
-   return(catch("VisualizeSequence"));
+
+   return(catch("VisualizeSequence()"));
 }
 
 
