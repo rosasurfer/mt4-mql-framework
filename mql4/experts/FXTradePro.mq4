@@ -79,6 +79,10 @@ extern double Lotsize.Level.5                = 0;
 extern double Lotsize.Level.6                = 0;
 extern double Lotsize.Level.7                = 0;
 
+extern string _4____________________________ = "==== Sequence to Process ============";
+//extern string Sequence.ID                    = "";
+extern string Sequence.ID                    = "13666";
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Input-Parameter sind nicht statisch und müssen bei REASON_CHARTCHANGE manuell zwischengespeichert und restauriert werden.
@@ -93,6 +97,7 @@ double intern.Lotsize.Level.4;
 double intern.Lotsize.Level.5;
 double intern.Lotsize.Level.6;
 double intern.Lotsize.Level.7;
+string intern.Sequence.ID;
 bool   intern = false;                                // Statusflag: TRUE = zwischengespeicherte Werte vorhanden (siehe deinit())
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +161,7 @@ int init() {
    if (tickSize < 0.000009 || tickSize > 1) { status = STATUS_DISABLED; return(catch("init(2)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)); }
 
 
-   // (1) ggf. Input-Parameter restaurieren
+   // (1) ggf. Input-Parameter restaurieren (externe Parameter sind nicht statisch)
    if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
       Entry.Direction = intern.Entry.Direction;
       Entry.Limit     = intern.Entry.Limit;
@@ -169,30 +174,39 @@ int init() {
       Lotsize.Level.5 = intern.Lotsize.Level.5;
       Lotsize.Level.6 = intern.Lotsize.Level.6;
       Lotsize.Level.7 = intern.Lotsize.Level.7;
+      Sequence.ID     = intern.Sequence.ID;
    }
 
 
-   // (2) falls noch keine Sequenz definiert, die erste Sequenz suchen und einlesen
+   // (2) falls noch keine Sequenz definiert, die erste oder die angegebene Sequenz suchen und einlesen
    if (sequenceId == 0) {
-      sequenceId = 13666;     // temporär
-
-      if (ReadSequence(sequenceId) != NO_ERROR) {
-         status = STATUS_DISABLED;
-         return(init_error);
-      }
+      int id = ForcedSequenceId();
+      if (id < 0)                       { status = STATUS_DISABLED; return(init_error); }
+      if (ReadSequence(id) != NO_ERROR) { status = STATUS_DISABLED; return(init_error); }
    }
 
 
-   // (3) ggf. neue Sequenz anlegen
-   bool newSequence = false;
+   // (3) ggf. neue Sequenz anlegen, neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
    if (sequenceId == 0) {
-      newSequence = true;
       if (ValidateConfiguration() != NO_ERROR) {
          status = STATUS_DISABLED;
          ShowStatus();
          return(init_error);
       }
-      sequenceId  = CreateSequenceId();
+      sequenceId = CreateSequenceId();
+      if (NE(Entry.Limit, 0))                                     // ohne Entry.Limit wird Konfiguration erst nach Abfrage in StartSequence() gespeichert
+         SaveConfiguration();
+   }
+   else if (UninitializeReason() == REASON_PARAMETERS) {
+      if (ValidateConfiguration() == NO_ERROR)
+         SaveConfiguration();
+   }
+   else if (UninitializeReason() != REASON_CHARTCHANGE) {
+      if (RestoreConfiguration() == NO_ERROR)
+         ValidateConfiguration();
+   }
+
+   if (ArraySize(levels.ticket) == 0) {
       ArrayResize(levels.ticket          , sequenceLength);
       ArrayResize(levels.type            , sequenceLength);
       ArrayResize(levels.lots            , sequenceLength);
@@ -218,22 +232,7 @@ int init() {
    }
 
 
-   // (4) neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
-   if (newSequence) {
-      if (NE(Entry.Limit, 0))                               // ohne Entry.Limit wird Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert
-         SaveConfiguration();
-   }
-   else if (UninitializeReason() == REASON_PARAMETERS) {
-      if (ValidateConfiguration() == NO_ERROR)
-         SaveConfiguration();
-   }
-   else if (UninitializeReason() != REASON_CHARTCHANGE) {
-      if (RestoreConfiguration() == NO_ERROR)
-         ValidateConfiguration();
-   }
-
-
-   // (5) aktuellen Status bestimmen und anzeigen
+   // (4) aktuellen Status bestimmen und anzeigen
    if (init_error != NO_ERROR)       status = STATUS_DISABLED;
    if (status != STATUS_DISABLED) {
       if (progressionLevel == 0) {
@@ -242,8 +241,8 @@ int init() {
       }
       else if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
       else                           status = STATUS_FINISHED;
+      CheckStatus();
    }
-   CheckStatus();
    ShowStatus();
 
 
@@ -286,6 +285,7 @@ int deinit() {
    intern.Lotsize.Level.5 = Lotsize.Level.5;
    intern.Lotsize.Level.6 = Lotsize.Level.6;
    intern.Lotsize.Level.7 = Lotsize.Level.7;
+   intern.Sequence.ID     = Sequence.ID;
    intern                 = true;               // Statusflag setzen
 
    return(catch("deinit()"));
@@ -355,13 +355,13 @@ bool IsMyOrder(int sequenceId = NULL) {
 /**
  * Generiert eine neue Sequenz-ID.
  *
- * @return int - Sequenze-ID im Bereich 1000-16383 (14 bit)
+ * @return int - Sequenz-ID im Bereich 1000-16383 (14 bit)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
 
    int id;
-   while (id < 2000) {                    // Das abschließende Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID haben.
+   while (id < 2000) {                                               // Das abschließende Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID haben.
       id = MathRand();
    }
    return(id >> 1);
@@ -379,10 +379,10 @@ int CreateMagicNumber() {
       return(-1);
    }
 
-   int ea       = EA.uniqueId & 0x3FF << 22;          // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
-   int sequence = sequenceId & 0x3FFF << 8;           // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern  | in MagicNumber: Bits  9-22
-   int length   = sequenceLength & 0xF << 4;          //  4 bit (Bits größer 4 löschen und auf 8 bit erweitern)   | in MagicNumber: Bits  5-8
-   int level    = progressionLevel & 0xF;             //  4 bit (Bits größer 4 löschen)                           | in MagicNumber: Bits  1-4
+   int ea       = EA.uniqueId & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
+   int sequence = sequenceId & 0x3FFF << 8;                          // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern  | in MagicNumber: Bits  9-22
+   int length   = sequenceLength & 0xF << 4;                         //  4 bit (Bits größer 4 löschen und auf 8 bit erweitern)   | in MagicNumber: Bits  5-8
+   int level    = progressionLevel & 0xF;                            //  4 bit (Bits größer 4 löschen)                           | in MagicNumber: Bits  1-4
 
    return(ea + sequence + length + level);
 }
@@ -848,23 +848,17 @@ int ResetAll() {
  * @return int - Fehlerstatus
  */
 int ReadSequence(int id = NULL) {
-   levels.swap.changed = true;                                       // alle Flags zurücksetzen
+   levels.swap.changed = true;                                       // Swap-Flag zurücksetzen
 
-   bool findSequence = false;
-   if (id == 0) {
-      ResetAll();
-      findSequence = true;
-   }
-   else if (sequenceLength == 0) {                                   // keine internen Daten vorhanden
-      ResetAll();
-   }
+   if (id==0 || sequenceLength==0) ResetAll();                       // keine internen Daten vorhanden
    else if (ArraySize(levels.ticket) != sequenceLength) return(catch("ReadSequence(1)   illegal sequence state, variable sequenceLength ("+ sequenceLength +") doesn't match the number of levels ("+ ArraySize(levels.ticket) +")", ERR_RUNTIME_ERROR));
+
    sequenceId = id;
 
 
    // (1) ggf. Arrays zurücksetzen (außer levels.lots[] => enthält Konfiguration und wird nur in ValidateConfiguration() modifiziert)
    if (ArraySize(levels.ticket) > 0) {
-      ArrayInitialize(levels.ticket          , 0.1);                 // Präzisionsfehler beim Casten von Doubles vermeiden: (int) ArrayInitialize()
+      ArrayInitialize(levels.ticket          , 0.1);                 // Präzisionsfehler beim Casten abfangen: (int) double
       ArrayInitialize(levels.type,    OP_UNDEFINED);
       ArrayInitialize(levels.openLots        , 0  );
       ArrayInitialize(levels.openPrice       , 0  );
@@ -1105,24 +1099,38 @@ int ReadSequence(int id = NULL) {
       }
 
 
-      // (5) offene und geschlossene Tickets auf Vollständigkeit überprüfen
+      // (5) insgesamt muß mindestens ein Ticket gefunden worden sein
+      if (progressionLevel == 0) {
+         PlaySound("notify.wav");
+         int button = MessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+         if (button == IDRETRY) {
+            retry = true;
+            continue;
+         }
+         catch("ReadSequence(9)");
+         status = STATUS_DISABLED;
+         return(processError(ERR_RUNTIME_ERROR));
+      }
+
+
+      // (6) Tickets auf Vollständigkeit überprüfen
       retry = false;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
             PlaySound("notify.wav");
-            int button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+            button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
             if (button == IDRETRY) {
                retry = true;
                break;
             }
-            catch("ReadSequence(9)");
+            catch("ReadSequence(10)");
             status = STATUS_DISABLED;
             return(processError(ERR_RUNTIME_ERROR));
          }
       }
    }
 
-   return(catch("ReadSequence(10)"));
+   return(catch("ReadSequence(11)"));
 }
 
 
@@ -1288,22 +1296,55 @@ int ValidateConfiguration() {
          }
       }
    }
+   sequenceLength = ArraySize(levels.lots);
+
+   // Sequence.ID
+   string strValue = StringTrim(Sequence.ID);
+   if (StringLen(strValue) > 0) {
+      if (!StringIsInteger(strValue))      return(catch("ValidateConfiguration(13)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      int iValue = StrToInteger(strValue);
+      if (iValue < 1000 || iValue > 16383) return(catch("ValidateConfiguration(14)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      strValue = iValue;
+   }
+   Sequence.ID = strValue;
 
    // Konfiguration mit aktuellen Daten einer laufenden Sequenz vergleichen
-   if (sequenceId == 0) {
-      sequenceLength = ArraySize(levels.lots);
-   }
-   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(13)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR));
-   else if (progressionLevel > 0) {
+   if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
          if (NE(levels.lots[last], ifInt(levels.type[last]==OP_BUY, 1, -1) * effectiveLots))
-            return(catch("ValidateConfiguration(14)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR));
+            return(catch("ValidateConfiguration(15)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR));
       }
-      if (levels.type[0] != Entry.iDirection)         return(catch("ValidateConfiguration(15)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR));
+      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(16)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR));
    }
 
-   return(catch("ValidateConfiguration(16)"));
+   return(catch("ValidateConfiguration(17)"));
+}
+
+
+/**
+ * Gibt die in der Konfiguration angegebene zu benutzende Sequenz-ID zurück.
+ *
+ * @return int - Sequenz-ID oder -1, wenn ein Fehler auftrat
+ */
+int ForcedSequenceId() {
+   int    iValue;
+   string strValue = StringTrim(Sequence.ID);
+
+   if (StringLen(strValue) == 0) {
+      Sequence.ID = strValue;
+      return(iValue);
+   }
+   if (StringIsInteger(strValue)) {
+      iValue = StrToInteger(strValue);
+      if (1000 <= iValue) /*&&*/ if (iValue <= 16383) {
+         Sequence.ID = strValue;
+         return(iValue);
+      }
+   }
+
+   catch("ForcedSequenceId()  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+   return(-1);
 }
 
 
