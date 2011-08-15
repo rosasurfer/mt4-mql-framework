@@ -93,7 +93,11 @@ int init() {
    SetIndexBuffer(5, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
 
    // Anzeigeoptionen
-   indicatorName = StringConcatenate("ALMA(", MA.Periods, ifString(MA.Timeframe=="", "", "x"+ MA.Timeframe), ")");
+   string strTimeframe="", strAppliedPrice="";
+   if (MA.Timeframe!="")          strTimeframe    = StringConcatenate("x", MA.Timeframe);
+   if (appliedPrice!=PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(appliedPrice));
+
+   indicatorName = StringConcatenate("ALMA(", MA.Periods, strTimeframe, strAppliedPrice, ")");
    IndicatorShortName(indicatorName);
    SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL);
@@ -290,7 +294,7 @@ int start() {
    double normalizedValue = NormalizeDouble(iALMA[0], PipDigits);
    if (NE(normalizedValue, lastValue)) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorName, " = ", DoubleToStr(normalizedValue, PipDigits)),
+                    StringConcatenate(indicatorName, "    ", DoubleToStr(normalizedValue, PipDigits)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastValue = normalizedValue;
