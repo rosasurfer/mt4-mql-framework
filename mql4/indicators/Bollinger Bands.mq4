@@ -46,6 +46,11 @@ extern string Per.Symbol.Configuration;                        // Label für symb
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+double Pip;
+int    PipDigits;
+int    PipPoints;
+string PriceFormat;
+
 double iUpperBand1  [], iLowerBand1  [];                    // sichtbare Indikatorbuffer: erstes Band
 double iUpperBand2  [], iLowerBand2  [];                    //                            zweites Band als Histogramm
 double iUpperBand2_1[], iLowerBand2_1[];                    //                            zweites Band als Linie
@@ -68,6 +73,12 @@ string objectLabels[];
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   Pip         = 1/MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+
 
    // Konfiguration einlesen
    bool   externalConfig = false;
@@ -211,7 +222,7 @@ int init() {
    SetIndexLabel(4, NULL);
    SetIndexLabel(5, NULL);
    SetIndexLabel(6, NULL);
-   IndicatorDigits(Digits);
+   IndicatorDigits(PipDigits);
 
    // Legende
    string legendLabel = CreateLegendLabel(indicatorLongName);

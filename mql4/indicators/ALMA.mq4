@@ -34,6 +34,11 @@ extern color  Color.Reversal    = Yellow;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+double Pip;
+int    PipDigits;
+int    PipPoints;
+string PriceFormat;
+
 double iALMA[], iUpTrend[], iDownTrend[];             // sichtbare Indikatorbuffer
 double iSMA[], iTrend[], iBarDiff[];                  // nicht sichtbare Buffer
 double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
@@ -50,6 +55,12 @@ string objectLabels[], legendLabel, indicatorName;
 int init() {
    init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
+
+   PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   Pip         = 1/MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+
 
    // Konfiguration auswerten
    if (MA.Periods < 2)
@@ -82,14 +93,12 @@ int init() {
    SetIndexBuffer(5, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
 
    // Anzeigeoptionen
-   if (MA.Timeframe != "")
-      MA.Timeframe = StringConcatenate("x", MA.Timeframe);
-   indicatorName = StringConcatenate("ALMA(", MA.Periods, MA.Timeframe, " / ", AppliedPriceDescription(appliedPrice), ")");
+   indicatorName = StringConcatenate("ALMA(", MA.Periods, ifString(MA.Timeframe=="", "", "x"+ MA.Timeframe), ")");
    IndicatorShortName(indicatorName);
    SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
-   IndicatorDigits(Digits);
+   IndicatorDigits(PipDigits);
 
    // Legende
    legendLabel = CreateLegendLabel(indicatorName);
@@ -196,7 +205,6 @@ int start() {
    // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
 
 
-   int time0 = GetTickCount();
    // Laufzeitverteilung:  Schleife          -  5%                                   5%    10%
    // -------------------  iMA()             - 80%  bei Verwendung von OHLC-Arrays  30% -> 60%
    //                      Rechenoperationen - 15%                                  15%    30%
@@ -206,7 +214,9 @@ int start() {
    // M1 - ALMA(350xM30)::start()   ALMA(10500)   startBar=1999   loop passes=20.989.500   time1=953 msec   time2=16094 msec   time3=18969 msec
 
 
-   static int lastTrend;
+   static int    lastTrend;
+   static double lastValue;
+
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=startBar; bar >= 0; bar--) {
@@ -214,9 +224,9 @@ int start() {
       iALMA[bar] = 0;
       switch (appliedPrice) {
          case PRICE_CLOSE: for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Close[bar+i]; break;
-         case PRICE_OPEN:  for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
-         case PRICE_HIGH:  for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * High [bar+i]; break;
-         case PRICE_LOW:   for     (i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Low  [bar+i]; break;
+         case PRICE_OPEN:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
+         case PRICE_HIGH:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * High [bar+i]; break;
+         case PRICE_LOW:   for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Low  [bar+i]; break;
          default:
             for (i=0; i < MA.Periods; i++) {
                iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
@@ -264,20 +274,26 @@ int start() {
       }
    }
 
-   // Legende aktualisieren
+   // Trendanzeige aktualisieren
    if (iTrend[0] != lastTrend) {
       if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
       else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
       else                          fontColor = Color.Reversal;
-      ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", fontColor);
+      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", fontColor);
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("start(1)", error));
    }
    lastTrend = iTrend[0];
 
-   int time1 = GetTickCount();
-   //if (startBar > 1) debug("start()  ALMA("+ MA.Periods +")   startBar="+ startBar +"   loop passes="+ NumberToStr(startBar * MA.Periods, ",.")+"   time1="+ (time1-time0) +" msec");
+   // Wertanzeige aktualisieren
+   double normalizedValue = NormalizeDouble(iALMA[0], PipDigits);
+   if (NE(normalizedValue, lastValue)) {
+      ObjectSetText(legendLabel,
+                    StringConcatenate(indicatorName, " = ", DoubleToStr(normalizedValue, PipDigits)),
+                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
+   }
+   lastValue = normalizedValue;
 
    return(catch("start(2)"));
 }

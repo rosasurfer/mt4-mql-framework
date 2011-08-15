@@ -52,6 +52,7 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
+
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 

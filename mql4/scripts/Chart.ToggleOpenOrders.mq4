@@ -15,6 +15,9 @@ extern string Account.Number  = "8188497";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+string currency;
+
+
 /**
  * Initialisierung
  *
@@ -26,10 +29,14 @@ int init() {
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
-      MessageBox("The current instrument is not a LFX instrument: "+ GetSymbolName(Symbol()), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("The current instrument is not a LFX index: "+ GetSymbolName(Symbol()), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       init_error = ERR_RUNTIME_ERROR;
       return(init_error);
    }
+
+   if (StringStartsWith(Symbol(), "LFX")) currency = StringRight(Symbol(), -3);
+   else                                   currency = StringLeft (Symbol(), -3);
+
    return(catch("init()"));
 }
 
@@ -60,11 +67,17 @@ int start() {
    string section = Account.Company +"."+ Account.Number;
    string keys[];
 
-   int size = GetPrivateProfileKeys(file, section, keys);
+   int sizeOfKeys = GetPrivateProfileKeys(file, section, keys);
 
-   for (int i=0; i < size; i++) {
-      string value = GetPrivateProfileString(file, section, keys[i], "");
-      debug("start()   \""+ keys[i] +"\" = \""+ value +"\"");
+   for (int i=0; i < sizeOfKeys; i++) {
+      if (StringIStartsWith(keys[i], currency)) {
+         string values[], value=GetPrivateProfileString(file, section, keys[i], "");
+         if (Explode(value, "|", values, NULL) != 4) {
+            debug("start()   invalid entry: "+ keys[i] +" = "+ value);
+            continue;
+         }
+         debug("start()   Position des aktuellen Instruments: "+ keys[i] +" = "+ StringArrayToStr(values, NULL));
+      }
    }
 
 

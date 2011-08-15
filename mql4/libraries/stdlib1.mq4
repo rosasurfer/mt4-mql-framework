@@ -6328,10 +6328,10 @@ abstract*/ int onHistoryChange(int details[]) {
 
 
 /**
- * Fügt das angegebene Objektlabel den bereits gespeicherten Labels hinzu.
+ * Fügt das angegebene Objektlabel den gespeicherten Labels hinzu.
  *
  * @param  string label       - zu speicherndes Label
- * @param  string lpObjects[] - Array mit bereits gespeicherten Labels
+ * @param  string lpObjects[] - Array mit gespeicherten Labels
  *
  * @return int - Fehlerstatus
  */
@@ -6339,7 +6339,7 @@ int RegisterChartObject(string label, string& lpObjects[]) {
    int size = ArraySize(lpObjects);
    ArrayResize(lpObjects, size+1);
    lpObjects[size] = label;
-   return(0);
+   return(NO_ERROR);
 }
 
 
