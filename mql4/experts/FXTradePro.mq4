@@ -1166,12 +1166,11 @@ int VisualizeSequence() {
       return(NO_ERROR);
 
    for (int i=0; i < progressionLevel; i++) {
-      int ticket = levels.ticket[i];
-      int type   = levels.type  [i];
+      int type = levels.type  [i];
 
       // Verbinder
       if (i > 0) {
-         string line = "#"+ ticket +"  Level "+ i +" > "+ (i+1);
+         string line = "FTP."+ sequenceId +"."+ i +" > "+ (i+1);
          if (ObjectFind(line) > -1)
             ObjectDelete(line);
          if (ObjectCreate(line, OBJ_TREND, 0, levels.openTime[i-1], levels.openPrice[i-1], levels.openTime[i], levels.openPrice[i])) {
@@ -1183,7 +1182,7 @@ int VisualizeSequence() {
       }
 
       // Positionsmarker
-      string arrow = "#"+ ticket +"  Level "+ (i+1) +": "+ ifString(type==OP_BUY, "Buy", "Sell") +" "+ NumberToStr(levels.lots[i], ".+") +" lots at "+ NumberToStr(levels.openPrice[i], PriceFormat);
+      string arrow = "FTP."+ sequenceId +"."+ (i+1) +"   "+ ifString(type==OP_BUY, "Buy", "Sell") +" "+ NumberToStr(levels.lots[i], ".+") +" lot"+ ifString(EQ(levels.lots[i], 1), "", "s") +" at "+ NumberToStr(levels.openPrice[i], PriceFormat);
       if (ObjectFind(arrow) > -1)
          ObjectDelete(arrow);
       if (ObjectCreate(arrow, OBJ_ARROW, 0, levels.openTime[i], levels.openPrice[i])) {
@@ -1196,7 +1195,7 @@ int VisualizeSequence() {
    // Sequenzende
    if (progressionLevel > 0) /*&&*/ if (levels.closeTime[i-1] != 0) {
       // letzter Verbinder
-      line = "#"+ levels.ticket[i-1] +"  Level "+ progressionLevel;
+      line = "FTP."+ sequenceId +"."+ progressionLevel;
       if (ObjectFind(line) > -1)
          ObjectDelete(line);
       if (ObjectCreate(line, OBJ_TREND, 0, levels.openTime[i-1], levels.openPrice[i-1], levels.closeTime[i-1], last.closePrice)) {
@@ -1207,7 +1206,7 @@ int VisualizeSequence() {
       else GetLastError();
 
       // letzter Marker
-      arrow = "#"+ levels.ticket[i-1] +"  Level "+ progressionLevel +" finished at "+ NumberToStr(last.closePrice, PriceFormat);
+      arrow = "FTP."+ sequenceId +"."+ progressionLevel +"   Sequence finished at "+ NumberToStr(last.closePrice, PriceFormat);
       if (ObjectFind(arrow) > -1)
          ObjectDelete(arrow);
       if (ObjectCreate(arrow, OBJ_ARROW, 0, levels.closeTime[i-1], last.closePrice)) {
