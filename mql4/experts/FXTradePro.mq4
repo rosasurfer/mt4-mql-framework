@@ -26,6 +26,7 @@
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
+ *  - Sicherheitsabfrage, wenn nach Änderung der Konfiguration sofort Trade getriggert wird
  *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
@@ -81,8 +82,8 @@ extern double Lotsize.Level.6                = 0;
 extern double Lotsize.Level.7                = 0;
 
 extern string _4____________________________ = "==== Sequence to Process ============";
-//extern string Sequence.ID                    = "";
-extern string Sequence.ID                    = "13666";
+extern string Sequence.ID                    = "";
+//extern string Sequence.ID                    = "13666";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
