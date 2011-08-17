@@ -309,13 +309,18 @@ int ChronologicalSortTickets(int& tickets[]) {
 
 
 /**
- * Aktiviert oder deaktiviert Expert Advisers (exakt: aktiviert/deaktiviert den Aufruf der Startfunktion bei Eintreffen von Ticks).
+ * Aktiviert oder deaktiviert die Ausführung von Expert-Advisern.
  *
  * @param  bool enable - gewünschter Status
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE:
+ * -----
+ * Im aktivierten Zustand wird die start()-Funktion bei jedem Tick ausgeführt, im deaktivierten Zustand nicht. Die init()-Funktion wird immer ausgeführt.
  */
-int ToggleEAs(bool enable) {
+int SwitchEAs(bool enable) {
 
    // TODO: In EAs und Scripten SendMessage(), in Indikatoren PostMessage() verwenden (Erkennung des Scripttyps über Thread-ID)
 
@@ -324,13 +329,13 @@ int ToggleEAs(bool enable) {
          SendMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
       }
    }
-   else {
+   else /*disable*/ {
       if (IsExpertEnabled()) {
          SendMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
       }
    }
 
-   return(catch("ToggleEAs()"));
+   return(catch("SwitchEAs()"));
 }
 
 

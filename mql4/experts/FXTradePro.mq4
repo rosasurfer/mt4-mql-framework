@@ -256,7 +256,7 @@ int init() {
       // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
       if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
-         ToggleEAs(true);
+         SwitchEAs(true);
 
 
       // (7) nach Start oder Reload nicht auf den ersten Tick warten
