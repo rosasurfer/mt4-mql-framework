@@ -1,7 +1,6 @@
 /**
  * Öffnet eine Position in einer der LiteForex-Indizes.
  *
- * -------------------------------------------------------------------------------------
  *
  *  Regeln:
  *  -------
@@ -144,7 +143,7 @@ int start() {
 
 
    // (2) Lotsizes berechnen
-   double equity = AccountEquity()-AccountCredit();
+   double equity = AccountEquity() - AccountCredit();
 
    for (int retry, i=0; i < 6; i++) {
       double bid       = MarketInfo(symbols[i], MODE_BID      );
@@ -218,7 +217,7 @@ int start() {
 
    // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler im Double ab
+      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler bei (int) double ab
       int pipDigits = digits & (~1);
       int counter   = GetPositionCounter() + 1;
 
@@ -240,7 +239,7 @@ int start() {
    }
 
 
-   // (7) OpenPrice berechnen und ausgeben
+   // (7) OpenPrice berechnen
    price = 1.0;
 
    for (i=0; i < 6; i++) {
@@ -256,8 +255,12 @@ int start() {
    price = MathPow(price, 1.0/7);
    if (Currency == "JPY")
       price = 1/price;                                               // JPY ist invers notiert
-   log("start()   "+ Currency +" position opened at "+ NumberToStr(price, ifString(Currency=="JPY", ".2'", ".4'")));
 
+
+   // (8) Logmessage ausgeben
+   int    lfxDigits = ifInt   (Currency=="JPY",     3,     5);
+   string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
+   log("start()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(NormalizeDouble(price, lfxDigits), lfxFormat));
 
    return(catch("start(8)"));
 }
