@@ -239,7 +239,7 @@ int start() {
 
 
    // (7) CSV-Datei erzeugen
-   string filename = GetShortAccountCompany() +"/"+ account +"_account_history.csv";
+   string filename = ShortAccountCompany() +"/"+ account +"_account_history.csv";
 
    if (ArrayRange(history, 0) == 0) {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
