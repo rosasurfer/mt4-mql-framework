@@ -223,7 +223,6 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
-   string   GetShortAccountCompany();
    string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolDefault(symbol, symbol)
    string   GetStandardSymbolDefault(string symbol, string defaultValue);
    string   GetStandardSymbolStrict(string symbol);
@@ -250,6 +249,7 @@
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
+   string   ShortAccountCompany();
    int      StringToPeriod(string description);
    int      SwitchEAs(bool enable);
    string   UninitializeReasonDescription(int reason);

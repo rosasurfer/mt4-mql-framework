@@ -1488,7 +1488,7 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   error = UploadConfiguration(GetShortAccountCompany(), AccountNumber(), Symbol(), filename);
+   error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), Symbol(), filename);
    if (error != NO_ERROR) {
       status = STATUS_DISABLED;
       return(error);
@@ -1553,7 +1553,7 @@ int RestoreConfiguration() {
 
    if (!IsFile(filesDir + fileName)) {
       // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(GetShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequence="+ sequenceId;
+      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequence="+ sequenceId;
       string targetFile = filesDir +"\\"+ fileName;
       string logFile    = filesDir +"\\"+ fileName +".log";
       string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";

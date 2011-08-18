@@ -97,7 +97,7 @@ int start() {
 
 
    // (2) Einträge des aktuellen Instruments auslesen
-   string file    = TerminalPath() +"\\experts\\files\\"+ GetShortAccountCompany() +"\\external_positions.ini";
+   string file    = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\external_positions.ini";
    string section = Account.Company +"."+ Account.Number;
    string keys[], positions[];
    ArrayResize(positions, 0);

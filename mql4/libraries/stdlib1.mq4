@@ -1566,7 +1566,7 @@ string GetTradeServerDirectory() {
  *
  * @return string - Kurzname
  */
-string GetShortAccountCompany() {
+string ShortAccountCompany() {
    string server=StringToLower(GetTradeServerDirectory());
 
    if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
@@ -4077,7 +4077,7 @@ int GetAccountHistory(int account, string lpResults[][HISTORY_COLUMNS]) {
    // Cache-Miss, History-Datei auslesen
    string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
 
-   string filename = GetShortAccountCompany() +"/"+ account + "_account_history.csv";
+   string filename = ShortAccountCompany() +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
    if (hFile < 0) {
       int error = GetLastError();
