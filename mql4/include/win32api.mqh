@@ -3,6 +3,12 @@
  */
 #import "kernel32.dll"
 
+   int  _lclose(int hFile);
+   int  _lcreat(string lpPathName, int attributes);
+   int  _llseek(int hFile, int offset, int origin);
+   int  _lopen(string lpPathName, int accessModes);
+   int  _lread(int hFile, int lpBuffer[], int bytes);                               // für string-Parameter lpBuffer ReadFile() verwenden
+   int  _lwrite(int hFile, int lpBuffer[], int bytes);                              // für string-Parameter lpBuffer WriteFile() verwenden
    bool CloseHandle(int hObject);
    bool CreateProcessA(int lpApplicationName, string lpCommandLine, int lpProcessAttributes, int lpThreadAttributes, int bInheritHandles, int dwCreationFlags, int lpEnvironment, int lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
@@ -10,6 +16,7 @@
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
+   int  GetCurrentThreadId();
    int  GetEnvironmentStringsA();
    int  GetFileSize(int hFile, int lpFileSizeHigh);
    int  GetFullPathNameA(string lpFileName, int bufferSize, string lpBuffer, int lpFilePart);
@@ -17,23 +24,20 @@
    int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   //   GetPrivateProfileSectionNamesA(...)                          @use  win32api-alt::GetPrivateProfileSectionNames()
+   //   GetPrivateProfileSectionNamesA(...)                                         @use  win32api-alt::GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
-   //   GetPrivateProfileStringA(lpSection = NULL, ...)              @use  win32api-alt::GetPrivateProfileSectionNames()
-   //   GetPrivateProfileStringA(..., lpKey = NULL, ...)             @use  win32api-alt::GetPrivateProfileKeys()
+   //   GetPrivateProfileStringA(lpSection=NULL, ...)                               @use  win32api-alt::GetPrivateProfileSectionNames()
+   //   GetPrivateProfileStringA(..., lpKey=NULL, ...)                              @use  win32api-alt::GetPrivateProfileKeys()
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
-   int  GetCurrentThreadId();
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);
-   int _lcreat(string lpPathName, int attributes);
-   int _lopen(string lpPathName, int accessModes);
-   int _llseek(int hFile, int offset, int origin);
-   int _lread(int hFile, int lpBuffer[], int bytes);           // für string-Parameter lpBuffer ReadFile() verwenden
-   int _lwrite(int hFile, int lpBuffer[], int bytes);          // für string-Parameter lpBuffer WriteFile() verwenden
-   int _lclose(int hFile);
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
+   //   WritePrivateProfileStringA(..., lpKey=NULL, ...)                            @use  win32api-alt::DeletePrivateProfileSection()
+   //   WritePrivateProfileStringA(..., lpValue=NULL, ...)                          @use  win32api-alt::DeletePrivateProfileKey()
+   //   WritePrivateProfileStringA(lpSection=NULL, lpKey=NULL, lpValue=NULL, ...)   @use  win32api-alt::FlushPrivateProfileCache()
 
 #import "shell32.dll"
 
@@ -54,7 +58,6 @@
    int  GetPrivateProfileKeys(string lpFileName, string lpSection, string lpResults[]);
    int  GetPrivateProfileSectionNames(string lpFileName, string lpResults[]);
 
-   //int  GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName);
 
 
    /*

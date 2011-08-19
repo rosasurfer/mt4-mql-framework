@@ -34,6 +34,7 @@
  *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
@@ -216,17 +217,18 @@ int start() {
 
 
    // (6) neue Position öffnen
+   int    counter     = GetPositionCounter() + 1;
+   string comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
+   int    magicNumber = CreateMagicNumber(counter);
+
    for (i=0; i < 6; i++) {
-      int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler bei (int) double ab
-      int pipDigits = digits & (~1);
-      int counter   = GetPositionCounter() + 1;
+      //int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler bei (int) double ab
+      //int pipDigits = digits & (~1);
 
       double   price       = NULL;
       double   slippage    = 0.1;
       double   sl          = NULL;
       double   tp          = NULL;
-      string   comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
-      int      magicNumber = CreateMagicNumber(counter);
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
@@ -239,8 +241,8 @@ int start() {
    }
 
 
-   // (7) OpenPrice berechnen
-   price = 1.0;
+   // (7) OpenPrice der neuen Position berechnen
+   double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
       if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
@@ -249,20 +251,31 @@ int start() {
             error = ERR_INVALID_TICKET;
          return(catch("start(7)", error));
       }
-      if (StringStartsWith(OrderSymbol(), Currency)) price *= OrderOpenPrice();
-      else                                           price /= OrderOpenPrice();
+      if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
+      else                                           openPrice /= OrderOpenPrice();
    }
-   price = MathPow(price, 1.0/7);
+   openPrice = MathPow(openPrice, 1.0/7);
    if (Currency == "JPY")
-      price = 1/price;                                               // JPY ist invers notiert
+      openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
    // (8) Logmessage ausgeben
-   int    lfxDigits = ifInt   (Currency=="JPY",     3,     5);
+   int    lfxDigits = ifInt(Currency=="JPY", 3, 5);
    string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
-   log("start()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(NormalizeDouble(price, lfxDigits), lfxFormat));
+          openPrice = NormalizeDouble(openPrice, lfxDigits);
+   log("start()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
-   return(catch("start(8)"));
+
+   // (9) Position in ...\SIG\external_positions.ini eintragen
+   string file    = TerminalPath() +"\\experts\\files\\SIG\\external_positions.ini";
+   string section = ShortAccountCompany() +"."+ AccountNumber();
+   string key     = Currency +"."+ counter;
+   string value   = TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
+
+   if (!WritePrivateProfileStringA(section, key, value, file))
+      return(catch("start(8)   kernel32::WritePrivateProfileString() failed, file = \""+ file +"\"", ERR_WINDOWS_ERROR));
+
+   return(catch("start(9)"));
 }
 
 

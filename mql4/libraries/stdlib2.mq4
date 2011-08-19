@@ -9,7 +9,6 @@
 
 #import "kernel32.dll"
 
- //int  GetPrivateProfileIntA(string lpSection, int lpKey, int nDefault, string lpFileName);
    int  GetPrivateProfileStringA(string lpSection, int lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);
 
@@ -71,9 +70,6 @@ int GetPrivateProfileSectionNames(string fileName, string results[]) {
 
 
 
-/**
- *
-int GetPrivateProfileIntA.alt(string lpSection, int lpKey, int nDefault, string lpFileName) {
-   return(GetPrivateProfileIntA(lpSection, lpKey, nDefault, lpFileName));
-}
- */
+
+
+
