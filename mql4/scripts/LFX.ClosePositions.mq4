@@ -9,7 +9,7 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string Position.Labels = "";                      // Label-1 [, Label-n [, ...]]      (Prüfung per OrderComment().StringIStartsWith(value))
+extern string LFX.Labels = "";                           // Label-1 [, Label-n [, ...]]      (Prüfung per OrderComment().StringIStartsWith(value))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,12 +30,12 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    // Parametervalidierung
-   Position.Labels = StringTrim(Position.Labels);
-   if (StringLen(Position.Labels) == 0)
-      return(catch("init(1)  Invalid input parameter Position.Labels = \""+ Position.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   LFX.Labels = StringTrim(LFX.Labels);
+   if (StringLen(LFX.Labels) == 0)
+      return(catch("init(1)  Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // Parameter splitten und die einzelnen Label trimmen
-   sizeOfLabels = Explode(Position.Labels, ",", labels, NULL);
+   sizeOfLabels = Explode(LFX.Labels, ",", labels, NULL);
 
    for (int i=0; i < sizeOfLabels; i++) {
       labels[i] = StringTrim(labels[i]);

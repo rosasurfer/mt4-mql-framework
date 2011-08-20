@@ -222,9 +222,6 @@ int start() {
    int    magicNumber = CreateMagicNumber(counter);
 
    for (i=0; i < 6; i++) {
-      //int digits    = MarketInfo(symbols[i], MODE_DIGITS) +0.1;                            // +0.1 fängt Präzisionsfehler bei (int) double ab
-      //int pipDigits = digits & (~1);
-
       double   price       = NULL;
       double   slippage    = 0.1;
       double   sl          = NULL;
