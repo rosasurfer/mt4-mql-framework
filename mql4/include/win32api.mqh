@@ -55,9 +55,13 @@
 
 #import "win32api-alt.ex4"
 
+   int  DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
+ //int  DeletePrivateProfileSection(string lpFileName, string lpSection);
+ //int  FlushPrivateProfileCache(string lpFileName);
    int  GetPrivateProfileKeys(string lpFileName, string lpSection, string lpResults[]);
    int  GetPrivateProfileSectionNames(string lpFileName, string lpResults[]);
 
+#import
 
 
    /*
@@ -97,8 +101,6 @@
    int  ExitWindowsEx(int uFlags, int dwReserved);
    int  SwapMouseButton(int fSwap);
    */
-
-#import
 
 
 // AnimateWindow() commands

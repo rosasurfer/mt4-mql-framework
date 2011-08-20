@@ -137,7 +137,7 @@ int start() {
       if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))  // Workaround um MQL-Conditions-Bug
          close = false;
 
-      if (close)
+      if (close) /*&&*/ if (!IntInArray(OrderTicket(), tickets))
          ArrayPushInt(tickets, OrderTicket());
    }
 
@@ -153,7 +153,6 @@ int start() {
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
             return(processError(stdlib_PeekLastError()));
-         SendTick(false);
       }
    }
    else {

@@ -222,7 +222,7 @@ int start() {
    int    magicNumber = CreateMagicNumber(counter);
 
    for (i=0; i < 6; i++) {
-      //int digits    = MarketInfo(symbols[i], MODE_DIGITS) + 0.1;                             // +0.1 fängt Präzisionsfehler bei (int) double ab
+      //int digits    = MarketInfo(symbols[i], MODE_DIGITS) +0.1;                            // +0.1 fängt Präzisionsfehler bei (int) double ab
       //int pipDigits = digits & (~1);
 
       double   price       = NULL;
@@ -273,7 +273,7 @@ int start() {
    string value   = TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("start(8)   kernel32::WritePrivateProfileString() failed, file = \""+ file +"\"", ERR_WINDOWS_ERROR));
+      return(catch("start(8)   kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\") failed", ERR_WINDOWS_ERROR));
 
    return(catch("start(9)"));
 }

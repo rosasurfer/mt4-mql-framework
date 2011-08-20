@@ -11,6 +11,7 @@
 
    int  GetPrivateProfileStringA(string lpSection, int lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, int lpValue, string lpFileName);
 
 #import
 
@@ -69,7 +70,11 @@ int GetPrivateProfileSectionNames(string fileName, string results[]) {
 }
 
 
-
-
-
-
+/**
+ *
+ */
+int DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey) {
+   if (!WritePrivateProfileStringA(lpSection, lpKey, NULL, lpFileName))
+      return(catch("DeletePrivateProfileKey()   kernel32::WritePrivateProfileStringA(section=\""+ lpSection +"\", key=\""+ lpKey +"\", value=(int) NULL, fileName=\""+ lpFileName +"\") failed", ERR_WINDOWS_ERROR));
+   return(NO_ERROR);
+}
