@@ -2,6 +2,7 @@
  * Schließt die angegebenen Positionen. Ohne zusätzliche Parameter werden alle offenen Positionen geschlossen.
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
@@ -13,7 +14,10 @@ extern string Position.Labels = "";                      // Label-1 [, Label-n [
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string orderComment;
+int Strategy.Id = 102;                                   // eindeutige ID der Strategie (Bereich 101-1023)
+
+string labels[];
+int    sizeOfLabels;
 
 
 /**
@@ -26,9 +30,17 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    // Parametervalidierung
-   orderComment = StringTrim(Position.Labels);
+   Position.Labels = StringTrim(Position.Labels);
+   if (StringLen(Position.Labels) == 0)
+      return(catch("init(1)  Invalid input parameter Position.Labels = \""+ Position.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
-   return(catch("init()"));
+   // Parameter splitten und die einzelnen Label trimmen
+   sizeOfLabels = Explode(Position.Labels, ",", labels, NULL);
+
+   for (int i=0; i < sizeOfLabels; i++) {
+      labels[i] = StringTrim(labels[i]);
+   }
+   return(catch("init(2)"));
 }
 
 
@@ -54,8 +66,9 @@ int start() {
    // ------------------------
 
 
-   int orders = OrdersTotal();
-   int tickets[]; ArrayResize(tickets, 0);
+   int    orders = OrdersTotal();
+   string positions[]; ArrayResize(positions, 0);
+   int    tickets  []; ArrayResize(tickets, 0);
 
 
    // (1) zu schließende Positionen selektieren
@@ -63,19 +76,42 @@ int start() {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
-      if (StringIStartsWith(OrderComment(), orderComment)) /*&&*/ if (!IntInArray(OrderTicket(), tickets))
-         ArrayPushInt(tickets, OrderTicket());
+      if (IsMyOrder()) {
+         if (OrderType()!=OP_BUY) /*&&*/ if ( OrderType()!=OP_SELL)
+            continue;
+
+         for (int n=0; n < sizeOfLabels; n++) {
+            if (StringIStartsWith(OrderComment(), labels[n])) {
+               string label = LFX.Currency(OrderMagicNumber()) +"."+ LFX.Counter(OrderMagicNumber());
+               if (!StringInArray(label, positions))
+                  ArrayPushString(positions, label);
+               if (!IntInArray(OrderTicket(), tickets))
+                  ArrayPushInt(tickets, OrderTicket());
+               break;
+            }
+         }
+      }
    }
 
 
    // (2) Positionen schließen
-   int selected = ArraySize(tickets);
-   if (selected > 0) {
+   int sizeOfPositions = ArraySize(positions);
+   if (sizeOfPositions > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close the specified "+ ArraySize(tickets) +" open positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox("Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"LFX position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
             return(processError(stdlib_PeekLastError()));
+
+         // (3) Positionen aus ...\SIG\external_positions.ini löschen
+         string file    = TerminalPath() +"\\experts\\files\\SIG\\external_positions.ini";
+         string section = ShortAccountCompany() +"."+ AccountNumber();
+
+         for (i=0; i < sizeOfPositions; i++) {
+            int error = DeletePrivateProfileKey(file, section, positions[i]);
+            if (error != NO_ERROR)
+               return(processError(error));
+         }
       }
    }
    else {
@@ -83,8 +119,15 @@ int start() {
       MessageBox("No matching positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-
-   // (3) Positionen aus ...\SIG\external_positions.ini löschen
-
    return(catch("start()"));
+}
+
+
+/**
+ * Ob die aktuell selektierte Order zu dieser Strategie gehört.
+ *
+ * @return bool
+ */
+bool IsMyOrder() {
+   return(StrategyId(OrderMagicNumber()) == Strategy.Id);
 }

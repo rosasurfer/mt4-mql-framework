@@ -297,7 +297,7 @@ bool ReadOpenPositions() {
 
       // alle offenen Positionen dieser Strategie finden und Daten einlesen
       if (IsMyOrder()) {
-         if (OrderType()!=OP_BUY) /*&&*/ if ( OrderType()!=OP_SELL)
+         if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL)
             continue;
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;
@@ -320,78 +320,6 @@ bool ReadOpenPositions() {
  */
 bool IsMyOrder() {
    return(StrategyId(OrderMagicNumber()) == Strategy.Id);
-}
-
-
-/**
- * Gibt die Strategy-ID einer MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Strategy-ID
- */
-int StrategyId(int magicNumber) {
-   return(magicNumber >> 22);                                        // 10 bit (Bit 23-32) => Bereich 0-1023 (aber immer größer 100)
-}
-
-
-/**
- * Gibt die Currency-ID einer LFX-MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Currency-ID
- */
-int LFX.CurrencyId(int magicNumber) {
-   return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 0-15
-}
-
-
-/**
- * Gibt die Units einer LFX-MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return double - Units
- */
-double LFX.Units(int magicNumber) {
-   return(magicNumber >> 13 & 0x1F / 10.0);                          // 5 bit (Bit 14-18) => Bereich 0-31
-}
-
-
-/**
- * Gibt die Instanz einer LFX-MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Instanz-ID
- */
-int LFX.Instance(int magicNumber) {
-   return(magicNumber >> 4 & 0x1FF);                                 // 9 bit (Bit 5-13) => Bereich 0-511
-}
-
-
-/**
- * Gibt den Wert des Position-Counters einer LFX-MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Counter
- */
-int LFX.Counter(int magicNumber) {
-   return(magicNumber & 0xF);                                        // 4 bit (Bit 1-4 ) => Bereich 0-15
-}
-
-
-/**
- * Gibt die Währung einer LFX-MagicNumber zurück.
- *
- * @param  int magicNumber
- *
- * @return string - Currency
- */
-string LFX.Currency(int magicNumber) {
-   return(GetCurrency(LFX.CurrencyId(magicNumber)));
 }
 
 

@@ -162,6 +162,14 @@
    bool     IsDirectory(string pathName);
    bool     IsFile(string pathName);
 
+   // MagicNumber-Verwaltung in Strategien
+   int      StrategyId(int magicNumber);
+   string   LFX.Currency(int magicNumber);
+   int      LFX.CurrencyId(int magicNumber);
+   int      LFX.Counter(int magicNumber);
+   double   LFX.Units(int magicNumber);
+   int      LFX.Instance(int magicNumber);
+
    // Math, Numbers
    bool     CompareDoubles(double a, double b);                            // MetaQuotes-Alias für EQ()
    bool     LT(double a, double b);
