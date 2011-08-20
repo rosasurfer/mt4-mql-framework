@@ -1,5 +1,5 @@
 /**
- * Schlieﬂt die angegebenen Positionen. Ohne zus‰tzliche Parameter werden alle offenen Positionen geschlossen.
+ * Schlieﬂt die angegebenen LFX-Positionen.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
