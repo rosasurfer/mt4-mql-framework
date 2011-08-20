@@ -8,13 +8,12 @@
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string Close.Labels = "";                         // Label-1 [, Label-n [, ...]]      (Prüfung per OrderComment().StringIStartsWith(value))
+extern string Position.Labels = "";                      // Label-1 [, Label-n [, ...]]      (Prüfung per OrderComment().StringIStartsWith(value))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string orderSymbols[], orderComment;
-int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
+string orderComment;
 
 
 /**
@@ -27,7 +26,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    // Parametervalidierung
-   orderComment = StringTrim(Close.Labels);
+   orderComment = StringTrim(Position.Labels);
 
    return(catch("init()"));
 }

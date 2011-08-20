@@ -14,14 +14,14 @@
  *  ---------
  *  - Verhältnis Spread/StopLoss: hohe Spreads machen den Einsatz teilweise unmöglich
  *  - Verhältnis Tagesvolatilität/Spread: teilweise wurde innerhalb von 10 Sekunden der nächste Level getriggert
- *  - gleiche Volatilität = gleicher StopLoss, aber variabler Spread => Avg(Price) als Trigger verwend#include ""en => Spread eliminiert
+ *  - gleiche Volatilität = gleicher StopLoss, aber variabler Spread => Avg(Price) als Trigger verwenden => Spread eliminiert
  *  - beim Start müßten die obigen Kennziffern überprüft werden
  *
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - Visualisierung der gesamten Sequenz
- *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit vielen Hedges ist fehlerhaft)
+ *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - Visualisierung des Entry.Limits implementieren
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Breakeven-Berechnung implementieren und anzeigen
@@ -35,6 +35,7 @@
  *
  *  TODO:
  *  -----
+ *  - gleichzeitige, parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
