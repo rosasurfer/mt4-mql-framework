@@ -149,7 +149,7 @@ int start() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified "+ ArraySize(tickets), "all "+ ArraySize(tickets) +" open") +" positions?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
             return(processError(stdlib_PeekLastError()));

@@ -162,7 +162,7 @@
    bool     IsDirectory(string pathName);
    bool     IsFile(string pathName);
 
-   // MagicNumber-Verwaltung in Strategien
+   // MagicNumber-Verwaltung
    int      StrategyId(int magicNumber);
    string   LFX.Currency(int magicNumber);
    int      LFX.CurrencyId(int magicNumber);

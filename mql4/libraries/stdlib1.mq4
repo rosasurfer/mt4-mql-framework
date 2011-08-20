@@ -1619,7 +1619,7 @@ string GetTradeServerDirectory() {
       catch("GetTradeServerDirectory(4)", error);
       return("");
    }
-   if (serverDirectory == "") {
+   if (StringLen(serverDirectory) == 0) {
       catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR);
       return("");
    }
@@ -3458,7 +3458,7 @@ datetime EasternToServerTime(datetime easternTime) {
    }
 
    string zone = GetTradeServerTimezone();
-   if (zone == "")
+   if (StringLen(zone) == 0)
       return(-1);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
@@ -4074,7 +4074,7 @@ int Explode(string object, string separator, string& lpResults[], int limit=NULL
       ArrayResize(lpResults, 1);
       lpResults[0] = object;
    }
-   else if (separator == "") {               // String in einzelne Zeichen zerlegen
+   else if (StringLen(separator) == 0) {     // String in einzelne Zeichen zerlegen
       if (limit==NULL || limit > lenObject)
          limit = lenObject;
       ArrayResize(lpResults, limit);
@@ -4270,7 +4270,7 @@ int GetAccountNumber() {
 
    if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalWindow());
-      if (title == "") {
+      if (StringLen(title) == 0) {
          last_error = ERR_TERMINAL_NOT_YET_READY;
          return(0);
       }
@@ -4560,7 +4560,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
    }
 
    string zone = GetTradeServerTimezone();
-   if (zone == "")
+   if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
@@ -4711,7 +4711,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
    }
 
    string timezone = GetTradeServerTimezone();
-   if (timezone == "")
+   if (StringLen(timezone) == 0)
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
 
@@ -5580,7 +5580,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
       timezone = GetGlobalConfigString("Timezones", directory, "");
-      if (timezone == "") {
+      if (StringLen(timezone) == 0) {
          catch("GetTradeServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);
          return("");
       }
@@ -5610,7 +5610,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
    }
 
    string zone = GetTradeServerTimezone();
-   if (zone == "")
+   if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
@@ -5646,7 +5646,7 @@ int GetServerToGmtOffset(datetime serverTime) {
    }
 
    string zone = GetTradeServerTimezone();
-   if (zone == "")
+   if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 

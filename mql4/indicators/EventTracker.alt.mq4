@@ -130,7 +130,7 @@ int init() {
    }
    if (Track.BollingerBands) {
       string strValue = GetConfigString("BollingerBands."+ symbol, "Slow.Timeframe", "");
-      if (strValue == "")
+      if (StringLen(strValue) == 0)
          strValue = GetConfigString("BollingerBands", "Slow.Timeframe", strValue);
       BollingerBands.Timeframe = StringToPeriod(strValue);
       if (BollingerBands.Timeframe == 0) {

@@ -101,7 +101,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int DrawGrid() {
-   if (GetTradeServerTimezone() == "")
+   if (StringLen(GetTradeServerTimezone()) == 0)
       return(processError(stdlib_PeekLastError()));
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();

@@ -455,13 +455,17 @@ int    ChangedBars = -1;
  * -----                                              (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
  */
 int catch(string message="", int error=NO_ERROR) {
+   if (StringLen(__SCRIPT__) == 0)
+      __SCRIPT__ = WindowExpertName();
+
    if (error == NO_ERROR) error = GetLastError();
    else                           GetLastError();     // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      if (message == "")
+      if (StringLen(message) == 0)
          message = "???";
-      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
+
+      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
       if (init) init_error = error;
       else      last_error = error;
    }
@@ -505,7 +509,10 @@ int processError(int error) {
  * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
 int log(string message="", int error=NO_ERROR) {
-   if (message == "")
+   if (StringLen(__SCRIPT__) == 0)
+      __SCRIPT__ = WindowExpertName();
+
+   if (StringLen(message) == 0)
       message = "???";
 
    message = StringConcatenate(__SCRIPT__, "::", message);
@@ -514,7 +521,6 @@ int log(string message="", int error=NO_ERROR) {
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    Print(message);
-
    return(error);
 }
 
@@ -530,6 +536,9 @@ int log(string message="", int error=NO_ERROR) {
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  */
 void debug(string message) {
+   if (StringLen(__SCRIPT__) == 0)
+      __SCRIPT__ = WindowExpertName();
+
    static int debugToLog = -1;
 
    if (debugToLog == -1)
