@@ -9,16 +9,9 @@
 #property indicator_chart_window
 
 
-#define PRICE_SPREAD 0
-#define PRICE_BID    1
-#define PRICE_ASK    2
-
-
 //////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
 
 bool   Sound.Alerts                 = false;
-string Sound.File.Up                = "alert3.wav";
-string Sound.File.Down              = "alert4.wav";
 string Sound.File.PositionOpen      = "OrderFilled.wav";
 string Sound.File.PositionClose     = "PositionClosed.wav";
 
@@ -26,10 +19,6 @@ bool   SMS.Alerts                   = false;
 string SMS.Receiver                 = "";
 
 bool   Track.Positions              = false;
-
-bool   Track.Grid                   = false;
-double Grid.Size                    = 0;              // Gridsize in Units, ie. 0.0020 (20 pip)
-int    Grid.AppliedPrice            = PRICE_SPREAD;   // Spread (default) | Bid | Ask | Median
 
 bool   Track.PivotLevels            = false;
 bool   PivotLevels.PreviousDayRange = false;
@@ -94,23 +83,6 @@ int init() {
    // Positionen
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
 
-   // Kursänderungen
-   Grid.Size = GetConfigInt(symbolSection, "Grid.Size", Grid.Size);           // in Konfiguration wird Grid.Size in Pip erwartet
-   if (Grid.Size > 0) {
-      Track.Grid  = true;
-      Grid.Size   = NormalizeDouble(Grid.Size * Pip, PipDigits);              // ie. Grid.Size = 0.0020
-
-      string appliedPrice = StringToLower(GetGlobalConfigString("AppliedPrice", symbol, "spread"));
-      if      (appliedPrice == "spread") Grid.AppliedPrice = PRICE_SPREAD;
-      else if (appliedPrice == "bid"   ) Grid.AppliedPrice = PRICE_BID;
-      else if (appliedPrice == "ask"   ) Grid.AppliedPrice = PRICE_ASK;
-      else if (appliedPrice == "median") Grid.AppliedPrice = PRICE_MEDIAN;
-      else {
-         catch("init(3)  Invalid configuration value Grid.AppliedPrice \""+ appliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE);
-         Track.Grid = false;
-      }
-   }
-
    /*
    // Pivot-Level
    Track.PivotLevels = GetConfigBool(symbolSection, "PivotLevels", Track.PivotLevels);
@@ -148,7 +120,7 @@ int init() {
       }
    }
    */
-   //debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.Grid="+ Track.Grid + ifString(Track.Grid, " (size="+Grid.Size+")", "") +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
+   //debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
@@ -212,13 +184,6 @@ int start() {
    if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
       HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
       HandleEvent(EVENT_POSITION_OPEN , OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
-   }
-
-   // Kursänderungen
-   if (Track.Grid) {                                           // TODO: Limite nach Config-Änderungen reinitialisieren
-      last_error = CheckGridLimits();
-      if (last_error == ERR_HISTORY_UPDATE)
-         return(last_error);
    }
 
    /*
@@ -348,198 +313,6 @@ int onPositionClose(int tickets[]) {
       PlaySound(Sound.File.PositionClose);
 
    return(catch("onPositionClose(3)"));
-}
-
-
-/**
- * Prüft, ob die normalen Kurslimite erreicht wurden und benachrichtigt entsprechend.
- *
- * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
- */
-int CheckGridLimits() {
-   if (!Track.Grid)
-      return(0);
-
-   static double upperLimit, lowerLimit, limits[2];
-
-   // aktuelle Limite ermitteln, ggf. neu berechnen
-   if (upperLimit == 0) /*&&*/ if (!EventTracker.GetGridLimits(limits)) {
-      if (InitializeGridLimits(upperLimit, lowerLimit) == ERR_HISTORY_UPDATE)
-         return(ERR_HISTORY_UPDATE);
-      EventTracker.SaveGridLimits(upperLimit, lowerLimit);  // Limite timeframe-übergreifend speichern
-      return(catch("CheckGridLimits(1)"));                  // nach Initialisierung ist Test überflüssig
-   }
-   else {
-      lowerLimit = limits[0];                               // aus Library zurückgegebene Limite lokal speichern
-      upperLimit = limits[1];
-   }
-
-   // für die Prüfung zu verwendende Kurse und deren Namen bestimmen
-   double upperPrice, lowerPrice;
-   string upperPriceName="", lowerPriceName="";
-   switch (Grid.AppliedPrice) {
-      case PRICE_SPREAD: if (Grid.Size > 4 * (Ask-Bid)) {
-                            lowerPrice = Bid; lowerPriceName = "Bid: ";
-                            upperPrice = Ask; upperPriceName = "Ask: ";
-                            break;
-                         }
-                         //debug("CheckGridLimits()   spread to large, falling back to PRICE_MEDIAN");
-
-      case PRICE_MEDIAN: lowerPrice = (Bid+Ask)/2; lowerPriceName = "Median: ";
-                         upperPrice = lowerPrice;  upperPriceName = "Median: ";
-                         break;
-
-      case PRICE_BID:    lowerPrice = Bid;
-                         upperPrice = Bid;
-                         break;
-
-      case PRICE_ASK:    lowerPrice = Ask;
-                         upperPrice = Ask;
-                         break;
-   }
-
-   bool eventTriggered = false;
-
-   // Limite überprüfen
-   if (upperPrice >= upperLimit) {
-      eventTriggered = true;
-      string message = symbolName +" => "+ DoubleToStr(upperLimit, PipDigits) +" ("+ upperPriceName + NumberToStr(upperPrice, PriceFormat) +")";
-
-      // Sound abspielen
-      if (Sound.Alerts)
-         PlaySound(Sound.File.Up);
-
-      // Limite nachziehen
-      while (upperPrice >= upperLimit)
-         upperLimit = NormalizeDouble(upperLimit + Grid.Size            , PipDigits) - 0.000000001;
-      lowerLimit    = NormalizeDouble(upperLimit - Grid.Size - Grid.Size, PipDigits) + 0.000000001;
-   }
-   else if (lowerPrice <= lowerLimit) {
-      eventTriggered = true;
-      message = symbolName +" <= "+ DoubleToStr(lowerLimit, PipDigits) +" ("+ lowerPriceName + NumberToStr(lowerPrice, PriceFormat) +")";
-
-      // Sound abspielen
-      if (Sound.Alerts)
-         PlaySound(Sound.File.Down);
-
-      // Limite nachziehen
-      while (lowerPrice <= lowerLimit)
-         lowerLimit = NormalizeDouble(lowerLimit - Grid.Size            , PipDigits) + 0.000000001;
-      upperLimit    = NormalizeDouble(lowerLimit + Grid.Size + Grid.Size, PipDigits) - 0.000000001;
-   }
-
-   if (eventTriggered) {
-      // SMS verschicken
-      if (SMS.Alerts) /*&&*/ if (SendTextMessage(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message) == NO_ERROR)
-         message = "SMS sent to "+ SMS.Receiver +":  "+ message;
-
-      // letzten tatsächlich verletzten Level und neue Limite speichern
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastSignal", NormalizeDouble(lowerLimit + Grid.Size, PipDigits));
-      GlobalVariableSet("EventTracker."+ symbol +".Grid.LastTime", ServerToGMT(TimeCurrent()));    // GMT, um Signale Account-übergreifend auswerten zu können
-      EventTracker.SaveGridLimits(upperLimit, lowerLimit);
-      Print("CheckGridLimits()   ", message, ", grid adjusted: ", DoubleToStr(lowerLimit, PipDigits), "  <=>  ", DoubleToStr(upperLimit, PipDigits));
-   }
-
-   return(catch("CheckGridLimits(2)"));
-}
-
-
-/**
- * Initialisiert die aktuellen Grid-Limite.
- *
- * @param  double& upperLimit - Zeiger auf Variable für das obere Limit
- * @param  double& lowerLimit - Zeiger auf Variable für das untere Limit
- *
- * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
- */
-int InitializeGridLimits(double& upperLimit, double& lowerLimit) {
-   // ausgehend vom Preistyp Ausgangsrange der Limite berechnen
-   double price;
-   switch (Grid.AppliedPrice) {
-      case PRICE_SPREAD: if (Grid.Size > 4 * (Ask-Bid)) {
-                            price = Bid;
-                            break;
-                         }
-                         //debug("InitializeGridLimits()   spread to large, falling back to PRICE_MEDIAN");
-      case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
-      case PRICE_BID   : price =  Bid;        break;
-      case PRICE_ASK   : price =  Ask;        break;
-   }
-   double low   = NormalizeDouble(MathFloor(price/Grid.Size) * Grid.Size, PipDigits) + 0.000000001;      // unteres Limit
-   double high  = NormalizeDouble(low + Grid.Size                       , PipDigits) - 0.000000001;      // oberes Limit (Abstand: 1 x GridSize)
-   //debug("InitializeGridLimits()   Price: "+ DoubleToStr(price, PipDigits) +", starting with "+ DoubleToStr(low, PipDigits) +" <=> "+ DoubleToStr(high, PipDigits));
-
-   // letztes gespeichertes Signal auslesen
-   string varLastSignalValue = "EventTracker."+ symbol +".Grid.LastSignal",
-          varLastSignalTime  = "EventTracker."+ symbol +".Grid.LastTime";
-   bool     lastSignal      = false;
-   double   lastSignalValue = NormalizeDouble(GlobalVariableGet(varLastSignalValue), PipDigits);
-   datetime lastSignalTime  = GlobalVariableGet(varLastSignalTime);
-   int      lastSignalBar   = -1;
-
-   int error = GetLastError();
-   if (error != NO_ERROR) /*&&*/ if (error != ERR_GLOBAL_VARIABLE_NOT_FOUND)
-      return(catch("InitializeGridLimits(1)", error));
-
-   if (lastSignalValue > 0) /*&&*/ if (lastSignalTime > 0) {
-      lastSignal     = true;
-      lastSignalTime = GmtToServerTime(lastSignalTime);
-      //debug("InitializeGridLimits()   stored signal "+ DoubleToStr(lastSignalValue, Grid.Digits) +" at server time "+ TimeToStr(lastSignalTime));
-   }
-
-   // tatsächliches letztes Signal ermitteln und Limit in diese Richtung auf 2 x GridSize erweitern
-   bool increase=false, decrease=false;
-   int  period = Period();                                                    // Ausgangsbasis ist der aktuelle Timeframe
-
-   while (!increase && !decrease) {
-      if (lastSignal) {
-         lastSignalBar = iBarShiftPrevious(NULL, period, lastSignalTime);     // kann ERR_HISTORY_UPDATE auslösen (=> EMPTY_VALUE)
-         if (lastSignalBar == EMPTY_VALUE)
-            return(stdlib_GetLastError());
-      }
-      //debug("InitializeGridLimits()   looking for last signal in timeframe "+ PeriodToStr(period) +" with storedSignalBar = "+ lastSignalBar);
-
-      for (int bar=0; bar <= Bars-1; bar++) {
-         if (bar == lastSignalBar) {
-            increase = (MathMax(lastSignalValue, iHigh(NULL, period, bar)) >= high);
-            decrease = (MathMin(lastSignalValue, iLow (NULL, period, bar)) <= low );
-         }
-         else {
-            increase = (iHigh(NULL, period, bar) >= high);
-            decrease = (iLow (NULL, period, bar) <= low );
-         }
-
-         error = GetLastError();
-         if (error == ERR_HISTORY_UPDATE) return(error);
-         if (error != NO_ERROR          ) return(catch("InitializeGridLimits(2)", error));
-
-         if (increase || decrease) {
-            //if (increase) debug("InitializeGridLimits()   touch up   signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
-            //if (decrease) debug("InitializeGridLimits()   touch down signal found in timeframe "+ PeriodToStr(period) +" at bar = "+ bar);
-            break;
-         }
-      }
-      if (!increase && !decrease)                                             // Grid ist zu groß: Limite bleiben bei Abstand = 1 x GridSize
-         break;
-
-      if (increase && decrease) {                                             // Bar hat beide Limite berührt
-         if (period == PERIOD_M1)
-            break;
-         //debug("InitializeGridLimits()    bar "+ bar +" in timeframe "+ PeriodToStr(period) +" touched both limits, decreasing to lower timeframe");
-         period   = DecreasePeriod(period);                                   // Timeframe verringern
-         increase = false;
-         decrease = false;
-      }
-   }
-
-   if (increase) { high += Grid.Size; } //debug("InitializeGridLimits()   increasing upper limit to "+ DoubleToStr(high, PipDigits)); }
-   if (decrease) { low  -= Grid.Size; } //debug("InitializeGridLimits()   decreasing lower limit to "+ DoubleToStr(low , PipDigits)); }
-
-   upperLimit = NormalizeDouble(high, PipDigits) - 0.000000001;
-   lowerLimit = NormalizeDouble(low , PipDigits) + 0.000000001;
-
-   Print("InitializeGridLimits()   limits initialized: ", DoubleToStr(lowerLimit, PipDigits), "  <=>  ", DoubleToStr(upperLimit, PipDigits));
-   return(catch("InitializeGridLimits(3)"));
 }
 
 

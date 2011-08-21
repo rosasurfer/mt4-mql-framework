@@ -261,6 +261,7 @@ int GetCurrencyId(string currency) {
    if (curr == C_AUD) return(CID_AUD);
    if (curr == C_CAD) return(CID_CAD);
    if (curr == C_CHF) return(CID_CHF);
+   if (curr == C_CNY) return(CID_CNY);
    if (curr == C_CZK) return(CID_CZK);
    if (curr == C_DKK) return(CID_DKK);
    if (curr == C_EUR) return(CID_EUR);
@@ -268,6 +269,7 @@ int GetCurrencyId(string currency) {
    if (curr == C_HKD) return(CID_HKD);
    if (curr == C_HRK) return(CID_HRK);
    if (curr == C_HUF) return(CID_HUF);
+   if (curr == C_INR) return(CID_INR);
    if (curr == C_JPY) return(CID_JPY);
    if (curr == C_LTL) return(CID_LTL);
    if (curr == C_LVL) return(CID_LVL);
@@ -276,9 +278,12 @@ int GetCurrencyId(string currency) {
    if (curr == C_NZD) return(CID_NZD);
    if (curr == C_PLN) return(CID_PLN);
    if (curr == C_RUB) return(CID_RUB);
+   if (curr == C_SAR) return(CID_SAR);
    if (curr == C_SEK) return(CID_SEK);
    if (curr == C_SGD) return(CID_SGD);
+   if (curr == C_THB) return(CID_THB);
    if (curr == C_TRY) return(CID_TRY);
+   if (curr == C_TWD) return(CID_TWD);
    if (curr == C_USD) return(CID_USD);
    if (curr == C_ZAR) return(CID_ZAR);
 
@@ -299,6 +304,7 @@ string GetCurrency(int id) {
       case CID_AUD: return(C_AUD);
       case CID_CAD: return(C_CAD);
       case CID_CHF: return(C_CHF);
+      case CID_CNY: return(C_CNY);
       case CID_CZK: return(C_CZK);
       case CID_DKK: return(C_DKK);
       case CID_EUR: return(C_EUR);
@@ -306,6 +312,7 @@ string GetCurrency(int id) {
       case CID_HKD: return(C_HKD);
       case CID_HRK: return(C_HRK);
       case CID_HUF: return(C_HUF);
+      case CID_INR: return(C_INR);
       case CID_JPY: return(C_JPY);
       case CID_LTL: return(C_LTL);
       case CID_LVL: return(C_LVL);
@@ -314,9 +321,12 @@ string GetCurrency(int id) {
       case CID_NZD: return(C_NZD);
       case CID_PLN: return(C_PLN);
       case CID_RUB: return(C_RUB);
+      case CID_SAR: return(C_SAR);
       case CID_SEK: return(C_SEK);
       case CID_SGD: return(C_SGD);
+      case CID_THB: return(C_THB);
       case CID_TRY: return(C_TRY);
+      case CID_TWD: return(C_TWD);
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
@@ -1661,6 +1671,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
    else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
    else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
+   else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
    else if (StringStartsWith(server, "sig-"               )) return("SIG"             );
    else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
 
@@ -1822,23 +1833,23 @@ string WaitForSingleObjectValueToStr(int value) {
  *
  * NOTE:
  * -----
- * Alias für GetStandardSymbolDefault(symbol, symbol)
+ * Alias für GetStandardSymbolOrAlt(symbol, symbol)
  *
  * @see GetStandardSymbolStrict()
- * @see GetStandardSymbolDefault()
+ * @see GetStandardSymbolOrAlt()
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0) {
       catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
-   return(GetStandardSymbolDefault(symbol, symbol));
+   return(GetStandardSymbolOrAlt(symbol, symbol));
 }
 
 
 /**
  * Gibt für ein broker-spezifisches Symbol das Standardsymbol oder den angegebenen Alternativwert zurück.
- * (z.B. GetStandardSymbolDefault("EURUSDm") => "EURUSD")
+ * (z.B. GetStandardSymbolOrAlt("EURUSDm") => "EURUSD")
  *
  * @param  string symbol   - broker-spezifisches Symbol
  * @param  string altValue - alternativer Rückgabewert, falls kein Standardsymbol gefunden wurde
@@ -1853,9 +1864,9 @@ string GetStandardSymbol(string symbol) {
  *
  * @see GetStandardSymbolStrict()
  */
-string GetStandardSymbolDefault(string symbol, string altValue="") {
+string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbolDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetStandardSymbolOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -1872,12 +1883,12 @@ string GetStandardSymbolDefault(string symbol, string altValue="") {
  * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
  * (z.B. GetStandardSymbolStrict("EURUSDm") => "EURUSD")
  *
- * @param  string symbol   - broker-spezifisches Symbol
+ * @param  string symbol - Broker-spezifisches Symbol
  *
  * @return string - Standardsymbol oder Leerstring, wenn kein Standardsymbol gefunden wurde.
  *
  *
- * @see GetStandardSymbolDefault() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
+ * @see GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
  */
 string GetStandardSymbolStrict(string symbol) {
    if (StringLen(symbol) == 0) {
@@ -1928,6 +1939,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
                 if (StringStartsWith(symbol, "CHFLFX")) return("CHFLFX");
                 if (StringStartsWith(symbol, "CHFSGD")) return("CHFSGD");
+                if (StringStartsWith(symbol, "CHFZAR")) return("CHFZAR");
                 break;
 
       case 'D': break;
@@ -2012,15 +2024,18 @@ string GetStandardSymbolStrict(string symbol) {
                 break;
 
       case 'T': break;
+                if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
 
       case 'U': if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
                 if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
                 if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
+                if (StringStartsWith(symbol, "USDCNY")) return("USDCNY");
                 if (StringStartsWith(symbol, "USDCZK")) return("USDCZK");
                 if (StringStartsWith(symbol, "USDDKK")) return("USDDKK");
                 if (StringStartsWith(symbol, "USDHKD")) return("USDHKD");
                 if (StringStartsWith(symbol, "USDHRK")) return("USDHRK");
                 if (StringStartsWith(symbol, "USDHUF")) return("USDHUF");
+                if (StringStartsWith(symbol, "USDINR")) return("USDINR");
                 if (StringStartsWith(symbol, "USDJPY")) return("USDJPY");
                 if (StringStartsWith(symbol, "USDLFX")) return("USDLFX");
                 if (StringStartsWith(symbol, "USDLTL")) return("USDLTL");
@@ -2031,8 +2046,11 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "USDRUB")) return("USDRUB");
                 if (StringStartsWith(symbol, "USDRUR")) return("USDRUB");
                 if (StringStartsWith(symbol, "USDSEK")) return("USDSEK");
+                if (StringStartsWith(symbol, "USDSAR")) return("USDSAR");
                 if (StringStartsWith(symbol, "USDSGD")) return("USDSGD");
+                if (StringStartsWith(symbol, "USDTHB")) return("USDTHB");
                 if (StringStartsWith(symbol, "USDTRY")) return("USDTRY");
+                if (StringStartsWith(symbol, "USDTWD")) return("USDTWD");
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
                 if (symbol == "USDX")                   return("USDX"  );
                 break;
@@ -2041,13 +2059,16 @@ string GetStandardSymbolStrict(string symbol) {
       case 'W': break;
 
       case 'X': if (StringStartsWith(symbol, "XAGEUR")) return("XAGEUR");
+                if (StringStartsWith(symbol, "XAGJPY")) return("XAGJPY");
                 if (StringStartsWith(symbol, "XAGUSD")) return("XAGUSD");
                 if (StringStartsWith(symbol, "XAUEUR")) return("XAUEUR");
+                if (StringStartsWith(symbol, "XAUJPY")) return("XAUJPY");
                 if (StringStartsWith(symbol, "XAUUSD")) return("XAUUSD");
                 break;
 
-      case 'Y':
-      case 'Z': break;
+      case 'Y': break;
+
+      case 'Z': if (StringStartsWith(symbol, "ZARJPY")) return("ZARJPY");
 
       case '_': if (symbol == "_DJI"   ) return("#DJI.X"  );
                 if (symbol == "_DJT"   ) return("#DJT.X"  );
@@ -2073,23 +2094,23 @@ string GetStandardSymbolStrict(string symbol) {
  *
  * NOTE:
  * -----
- * Alias für GetSymbolNameDefault(symbol, symbol)
+ * Alias für GetSymbolNameOrAlt(symbol, symbol)
  *
  * @see GetSymbolNameStrict()
- * @see GetSymbolNameDefault()
+ * @see GetSymbolNameOrAlt()
  */
 string GetSymbolName(string symbol) {
    if (StringLen(symbol) == 0) {
       catch("GetSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
-   return(GetSymbolNameDefault(symbol, symbol));
+   return(GetSymbolNameOrAlt(symbol, symbol));
 }
 
 
 /**
  * Gibt den Kurznamen eines Symbols zurück oder den angegebenen Alternativwert, wenn das Symbol unbekannt ist.
- * (z.B. GetSymbolNameDefault("EURUSD") => "EUR/USD")
+ * (z.B. GetSymbolNameOrAlt("EURUSD") => "EUR/USD")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
@@ -2098,9 +2119,9 @@ string GetSymbolName(string symbol) {
  *
  * @see GetSymbolNameStrict()
  */
-string GetSymbolNameDefault(string symbol, string altValue="") {
+string GetSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolNameDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2154,6 +2175,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
    if (symbol == "CHFLFX"  ) return("CHF-Index");
    if (symbol == "CHFSGD"  ) return("CHF/SGD"  );
+   if (symbol == "CHFZAR"  ) return("CHF/ZAR"  );
    if (symbol == "EURAUD"  ) return("EUR/AUD"  );
    if (symbol == "EURCAD"  ) return("EUR/CAD"  );
    if (symbol == "EURCHF"  ) return("EUR/CHF"  );
@@ -2201,13 +2223,16 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "NZDUSD"  ) return("NZD/USD"  );
    if (symbol == "SEKJPY"  ) return("SEK/JPY"  );
    if (symbol == "SGDJPY"  ) return("SGD/JPY"  );
+   if (symbol == "TRYJPY"  ) return("TRY/JPY"  );
    if (symbol == "USDCAD"  ) return("USD/CAD"  );
    if (symbol == "USDCHF"  ) return("USD/CHF"  );
+   if (symbol == "USDCNY"  ) return("USD/CNY"  );
    if (symbol == "USDCZK"  ) return("USD/CZK"  );
    if (symbol == "USDDKK"  ) return("USD/DKK"  );
    if (symbol == "USDHKD"  ) return("USD/HKD"  );
    if (symbol == "USDHRK"  ) return("USD/HRK"  );
    if (symbol == "USDHUF"  ) return("USD/HUF"  );
+   if (symbol == "USDINR"  ) return("USD/INR"  );
    if (symbol == "USDJPY"  ) return("USD/JPY"  );
    if (symbol == "USDLFX"  ) return("USD-Index");
    if (symbol == "USDLTL"  ) return("USD/LTL"  );
@@ -2216,15 +2241,21 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "USDNOK"  ) return("USD/NOK"  );
    if (symbol == "USDPLN"  ) return("USD/PLN"  );
    if (symbol == "USDRUB"  ) return("USD/RUB"  );
+   if (symbol == "USDSAR"  ) return("USD/SAR"  );
    if (symbol == "USDSEK"  ) return("USD/SEK"  );
    if (symbol == "USDSGD"  ) return("USD/SGD"  );
+   if (symbol == "USDTHB"  ) return("USD/THB"  );
    if (symbol == "USDTRY"  ) return("USD/TRY"  );
+   if (symbol == "USDTWD"  ) return("USD/TWD"  );
    if (symbol == "USDX"    ) return("USD-Index");
    if (symbol == "USDZAR"  ) return("USD/ZAR"  );
    if (symbol == "XAGEUR"  ) return("XAG/EUR"  );
+   if (symbol == "XAGJPY"  ) return("XAG/JPY"  );
    if (symbol == "XAGUSD"  ) return("XAG/USD"  );
    if (symbol == "XAUEUR"  ) return("XAU/EUR"  );
+   if (symbol == "XAUJPY"  ) return("XAU/JPY"  );
    if (symbol == "XAUUSD"  ) return("XAU/USD"  );
+   if (symbol == "ZARJPY"  ) return("ZAR/JPY"  );
 
    return("");
 }
@@ -2232,7 +2263,7 @@ string GetSymbolNameStrict(string symbol) {
 
 /**
  * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetSymbolLongName("EURUSD") => "EUR/USD")
+ * (z.B. GetLongSymbolName("EURUSD") => "EUR/USD")
  *
  * @param  string symbol - broker-spezifisches Symbol
  *
@@ -2241,36 +2272,36 @@ string GetSymbolNameStrict(string symbol) {
  *
  * NOTE:
  * -----
- * Alias für GetSymbolLongNameDefault(symbol, symbol)
+ * Alias für GetLongSymbolNameOrAlt(symbol, symbol)
  *
- * @see GetSymbolLongNameStrict()
- * @see GetSymbolLongNameDefault()
+ * @see GetLongSymbolNameStrict()
+ * @see GetLongSymbolNameOrAlt()
  */
-string GetSymbolLongName(string symbol) {
+string GetLongSymbolName(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolLongName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
-   return(GetSymbolLongNameDefault(symbol, symbol));
+   return(GetLongSymbolNameOrAlt(symbol, symbol));
 }
 
 
 /**
  * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetSymbolLongNameDefault("USDLFX") => "USD-Index (LiteForex)")
+ * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD-Index (LiteForex)")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
  *
  * @return string - Ergebnis
  */
-string GetSymbolLongNameDefault(string symbol, string altValue="") {
+string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolLongNameDefault()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
-   string value = GetSymbolLongNameStrict(symbol);
+   string value = GetLongSymbolNameStrict(symbol);
 
    if (StringLen(value) == 0)
       value = altValue;
@@ -2281,15 +2312,15 @@ string GetSymbolLongNameDefault(string symbol, string altValue="") {
 
 /**
  * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetSymbolLongNameStrict("USDLFX") => "USD-Index (LiteForex)")
+ * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD-Index (LiteForex)")
  *
  * @param  string symbol - Symbol
  *
  * @return string - Langname oder Leerstring, wenn das Symnol unbekannt ist oder keinen Langnamen hat
  */
-string GetSymbolLongNameStrict(string symbol) {
+string GetLongSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolLongNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2315,8 +2346,10 @@ string GetSymbolLongNameStrict(string symbol) {
    if (symbol == "USDLFX"  ) return("USD-Index (LiteForex)"   );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
+   if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
    if (symbol == "XAGUSD"  ) return("Silver/USD"              );
    if (symbol == "XAUEUR"  ) return("Gold/EUR"                );
+   if (symbol == "XAUJPY"  ) return("Gold/JPY"                );
    if (symbol == "XAUUSD"  ) return("Gold/USD"                );
 
    string prefix = StringLeft(symbol, -3);
@@ -4012,50 +4045,6 @@ int EventTracker.SetBandLimits(double lpLimits[]) {
 }
 
 
-double EventTracker.gridLimit.High,       // sind Timeframe-übergreifend gespeichert
-       EventTracker.gridLimit.Low;
-
-
-/**
- * Gibt die in der Library gespeicherten Grid-Limite des EventTrackers zurück.
- *
- * @param  double lpLimits[2] - Zeiger auf Array für die zu speichernden Limite { LOWER_LIMIT, UPPER_LIMIT }
- *
- * @return bool - TRUE, wenn Daten in der Library gespeichert waren; FALSE andererseits
- */
-bool EventTracker.GetGridLimits(double& lpLimits[]) {
-   if (ArraySize(lpLimits) != 2)
-      return(catch("EventTracker.GetGridLimits()   illegal parameter limits = "+ DoubleArrayToStr(lpLimits), ERR_INCOMPATIBLE_ARRAYS));
-
-   if (EQ(EventTracker.gridLimit.High, 0)) return(false);
-   if (EQ(EventTracker.gridLimit.Low , 0)) return(false);
-
-   lpLimits[0] = EventTracker.gridLimit.Low;
-   lpLimits[1] = EventTracker.gridLimit.High;
-
-   return(true);
-}
-
-
-/**
- * Speichert die übergebenen Grid-Limite des EventTrackers in der Library (timeframe-übergreifend).
- *
- * @param  double upperLimit - oberes Limit
- * @param  double lowerLimit - unteres Limit
- *
- * @return int - Fehlerstatus
- */
-int EventTracker.SaveGridLimits(double upperLimit, double lowerLimit) {
-   if (EQ(upperLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter upperLimit = "+ upperLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (EQ(lowerLimit, 0)) return(catch("EventTracker.SaveGridLimits()  illegal parameter lowerLimit = "+ lowerLimit, ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   EventTracker.gridLimit.High = upperLimit;
-   EventTracker.gridLimit.Low  = lowerLimit;
-
-   return(0);
-}
-
-
 /**
  * Zerlegt einen String in Teilstrings.
  *
@@ -5576,6 +5565,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
+   else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {

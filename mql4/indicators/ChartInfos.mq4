@@ -4,7 +4,6 @@
  * - oben links:     der Name des Instruments
  * - oben rechts:    der aktuelle Kurs
  * - unter dem Kurs: der Spread
- * - unten rechts:   der Schluﬂkurs der letzten H1-Bar, wenn das Chartsymbol in Last.H1.Close.Symbols aufgef¸hrt ist
  * - unten Mitte:    die Grˆﬂe einer Handels-Unit
  * - unten Mitte:    die im Moment gehaltene Position
  */
@@ -18,24 +17,17 @@
 #define PRICE_ASK    2
 
 
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
-
-extern string H1.Close.Symbols = "";         // Symbole, f¸r die der Schluﬂkurs der letzten H1-Bar angezeigt werden soll
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 double Pip;
 int    PipDigits;
 int    PipPoints;
 string PriceFormat;
 
-string instrumentLabel, priceLabel, h1CloseLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
+string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string labels[];
 
-int    appliedPrice = PRICE_MEDIAN;          // Median(default) | Bid | Ask
-double leverage;                             // Hebel zur UnitSize-Berechnung
-bool   showH1Close, positionChecked;
+int    appliedPrice = PRICE_MEDIAN;                   // Median(default) | Bid | Ask
+double leverage;                                      // Hebel zur UnitSize-Berechnung
+bool   positionChecked;
 
 
 /**
@@ -65,25 +57,21 @@ int init() {
    else
       catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
 
-   leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1.0);
+   leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
    if (LT(leverage, 1))
       return(catch("init(2)  Invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
-   showH1Close = StringIContains(","+ StringTrim(H1.Close.Symbols) +",", ","+ symbol +",");
-
    // Label definieren und erzeugen
-   string indicatorName = WindowExpertName();
-   instrumentLabel   = StringConcatenate(indicatorName, ".Instrument"        );
-   priceLabel        = StringConcatenate(indicatorName, ".Price"             );
-   h1CloseLabel      = StringConcatenate(indicatorName, ".H1-Close"          );
-   spreadLabel       = StringConcatenate(indicatorName, ".Spread"            );
-   unitSizeLabel     = StringConcatenate(indicatorName, ".UnitSize"          );
-   positionLabel     = StringConcatenate(indicatorName, ".Position"          );
-   freezeLevelLabel  = StringConcatenate(indicatorName, ".MarginFreezeLevel" );
-   stopoutLevelLabel = StringConcatenate(indicatorName, ".MarginStopoutLevel");
+   instrumentLabel   = StringConcatenate(__SCRIPT__, ".Instrument"        );
+   priceLabel        = StringConcatenate(__SCRIPT__, ".Price"             );
+   spreadLabel       = StringConcatenate(__SCRIPT__, ".Spread"            );
+   unitSizeLabel     = StringConcatenate(__SCRIPT__, ".UnitSize"          );
+   positionLabel     = StringConcatenate(__SCRIPT__, ".Position"          );
+   freezeLevelLabel  = StringConcatenate(__SCRIPT__, ".MarginFreezeLevel" );
+   stopoutLevelLabel = StringConcatenate(__SCRIPT__, ".MarginStopoutLevel");
    CreateLabels();
 
-   // nach Parameter‰nderung nicht auf den n‰chsten Tick warten (nur im "Indicators List" window notwendig)
+   // nach Parameter‰nderung nicht auf den n‰chsten Tick warten (nur im "Indicators List"-Window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
@@ -131,8 +119,6 @@ int start() {
    // -----------------------------------------------------------------------------
 
 
-   //log("start()   Bars="+ Bars + "   ValidBars="+ ValidBars + "   account="+ AccountNumber() +"   accountServer=\""+ AccountServer() +"\"   serverDirectory=\""+ GetTradeServerDirectory());
-
    positionChecked = false;
 
    UpdatePriceLabel();
@@ -140,7 +126,6 @@ int start() {
    UpdateUnitSizeLabel();
    UpdatePositionLabel();
    UpdateMarginLevels();
-   UpdateH1CloseLabel();
 
    return(catch("start()"));
 }
@@ -163,10 +148,10 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   string name = GetSymbolLongNameDefault(Symbol(), GetSymbolName(Symbol()));
+   string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);             // Anzeige wird sofort (und nur hier) gesetzt
+   ObjectSetText(instrumentLabel, name, 9, "Tahoma Fett", Black);                         // Anzeige wird sofort und nur hier gesetzt
 
    // Kurs
    if (ObjectFind(priceLabel) >= 0)
@@ -191,20 +176,6 @@ int CreateLabels() {
       RegisterChartObject(spreadLabel, labels);
    }
    else GetLastError();
-
-   // letzter H1-Schluﬂkurs
-   if (showH1Close) {
-      if (ObjectFind(h1CloseLabel) >= 0)
-         ObjectDelete(h1CloseLabel);
-      if (ObjectCreate(h1CloseLabel, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(h1CloseLabel, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(h1CloseLabel, OBJPROP_XDISTANCE, 11);
-         ObjectSet(h1CloseLabel, OBJPROP_YDISTANCE, 9);
-         ObjectSetText(h1CloseLabel, " ", 1);
-         RegisterChartObject(h1CloseLabel, labels);
-      }
-      else GetLastError();
-   }
 
    // UnitSize
    if (ObjectFind(unitSizeLabel) >= 0)
@@ -297,44 +268,6 @@ int UpdateSpreadLabel() {
 
 
 /**
- * Aktualisiert die Anzeige des letzten H1-Schluﬂkurses.
- *
- * @return int - Fehlerstatus
- */
-int UpdateH1CloseLabel() {
-   if (!showH1Close)
-      return(NO_ERROR);
-
-   double close = iClose(NULL, PERIOD_H1, 1);
-
-   int error = GetLastError();
-   if (error == ERR_HISTORY_UPDATE) {     // bei Start oder Accountwechsel
-      string strClose = " ";
-      return(ERR_HISTORY_UPDATE);
-   }
-   else {
-      static double lastClose;
-      if (EQ(lastClose, close))
-         return(NO_ERROR);
-      lastClose = close;
-      strClose  = StringConcatenate("H1:  ", NumberToStr(close, StringConcatenate(", ", PriceFormat)));
-   }
-
-   ObjectSetText(h1CloseLabel, strClose, 9, "Tahoma", SlateGray);
-
-   if (error == ERR_HISTORY_UPDATE) {
-      catch("UpdateH1CloseLabel(1)");
-      return(ERR_HISTORY_UPDATE);
-   }
-
-   error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("UpdateH1CloseLabel(2)", error));
-}
-
-
-/**
  * Aktualisiert die UnitSize-Anzeige.
  *
  * @return int - Fehlerstatus
@@ -385,7 +318,7 @@ int UpdateUnitSizeLabel() {
          else if (unitSize <  700.00000001) unitSize = MathRound      (MathRound(unitSize/ 50    ) *  50);          //    400-700: Vielfache von  50
          else if (unitSize < 2000.00000001) unitSize = MathRound      (MathRound(unitSize/100    ) * 100);          //   700-2000: Vielfache von 100
       }
-      strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " Lot");
+      strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
@@ -411,8 +344,8 @@ int UpdatePositionLabel() {
       CheckPosition();
 
    if      (!anyPosition)         string strPosition = " ";
-   else if (EQ(totalPosition, 0))        strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " Lot (hedged)");
-   else                                  strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " Lot");
+   else if (EQ(totalPosition, 0))        strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else                                  strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 

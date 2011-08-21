@@ -113,7 +113,7 @@
 #define MODE_ALMA                4     // Arnaud Legoux moving average
 
 
-// Sorting modes , siehe ArraySort()
+// Sorting modes, siehe ArraySort()
 #define MODE_ASCEND              1     // aufsteigend
 #define MODE_DESCEND             2     // absteigend
 
@@ -237,28 +237,34 @@
 #define CID_JPY                  6
 #define CID_USD                  7  // zuerst die ID's der LFX-Währungen, dadurch "passen" diese in 3 Bits
 
-#define CID_CZK                  8
-#define CID_DKK                  9
-#define CID_HKD                 10
-#define CID_HRK                 11
-#define CID_HUF                 12
-#define CID_LTL                 13
-#define CID_LVL                 14
-#define CID_MXN                 15
-#define CID_NOK                 16
-#define CID_NZD                 17
-#define CID_PLN                 18
-#define CID_RUB                 19
-#define CID_SEK                 20
-#define CID_SGD                 21
-#define CID_TRY                 22
-#define CID_ZAR                 23
+#define CID_CNY                  8
+#define CID_CZK                  9
+#define CID_DKK                 10
+#define CID_HKD                 11
+#define CID_HRK                 12
+#define CID_HUF                 13
+#define CID_INR                 14
+#define CID_LTL                 15
+#define CID_LVL                 16
+#define CID_MXN                 17
+#define CID_NOK                 18
+#define CID_NZD                 19
+#define CID_PLN                 20
+#define CID_RUB                 21
+#define CID_SAR                 22
+#define CID_SEK                 23
+#define CID_SGD                 24
+#define CID_THB                 25
+#define CID_TRY                 26
+#define CID_TWD                 27
+#define CID_ZAR                 28
 
 
 // Currency-Kürzel
 #define C_AUD                "AUD"
 #define C_CAD                "CAD"
 #define C_CHF                "CHF"
+#define C_CNY                "CNY"
 #define C_CZK                "CZK"
 #define C_DKK                "DKK"
 #define C_EUR                "EUR"
@@ -266,6 +272,7 @@
 #define C_HKD                "HKD"
 #define C_HRK                "HRK"
 #define C_HUF                "HUF"
+#define C_INR                "INR"
 #define C_JPY                "JPY"
 #define C_LTL                "LTL"
 #define C_LVL                "LVL"
@@ -274,10 +281,13 @@
 #define C_NZD                "NZD"
 #define C_PLN                "PLN"
 #define C_RUB                "RUB"
+#define C_SAR                "SAR"
 #define C_SEK                "SEK"
 #define C_SGD                "SGD"
 #define C_USD                "USD"
+#define C_THB                "THB"
 #define C_TRY                "TRY"
+#define C_TWD                "TWD"
 #define C_ZAR                "ZAR"
 
 

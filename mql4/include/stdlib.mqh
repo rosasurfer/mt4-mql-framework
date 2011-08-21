@@ -142,8 +142,6 @@
    // EventTracker (Indikator)
    bool     EventTracker.GetBandLimits(double lpLimits[3]);
    bool     EventTracker.SetBandLimits(double lpLimits[3]);
-   bool     EventTracker.GetGridLimits(double lpLimits[2]);
-   int      EventTracker.SaveGridLimits(double upperLimit, double lowerLimit);
 
    // Farben
    string   ColorToHtmlStr(color rgb);
@@ -218,50 +216,50 @@
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
 
    // sonstiges
-   string   AppliedPriceDescription(int appliedPrice);
-   string   CreateLegendLabel(string name);
+   double   GetAverageSpread(string symbol);
    int      ChronologicalSortTickets(int tickets[]);
    int      DecreasePeriod(int period);
-   string   ErrorDescription(int error);
    int      GetAccountHistory(int account, string lpResults[]);
    int      GetAccountNumber();
-   double   GetAverageSpread(string symbol);
    int      GetBalanceHistory(int account, datetime lpTimes[], double lpValues[]);
-   string   GetComputerName();
-   string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    int      GetPeriodFlag(int period);
-   string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolDefault(symbol, symbol)
-   string   GetStandardSymbolDefault(string symbol, string defaultValue);
-   string   GetStandardSymbolStrict(string symbol);
-   string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameDefault(symbol, symbol)
-   string   GetSymbolNameDefault(string symbol, string defaultName);
-   string   GetSymbolNameStrict(string symbol);
-   string   GetSymbolLongName(string symbol);                              // Alias für GetSymbolLongNameDefault(symbol, symbol)
-   string   GetSymbolLongNameDefault(string symbol, string defaultName);
-   string   GetSymbolLongNameStrict(string symbol);
    int      GetTerminalWindow();
-   string   GetTradeServerDirectory();
-   string   GetWindowText(int hWnd);
    int      iAccountBalance(int account, double lpBuffer[], int bar);
    int      iAccountBalanceSeries(int account, double lpBuffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
-   string   MovingAverageDescription(int method);
    int      MovingAverageToId(string method);
-   string   OperationTypeDescription(int type);
    int      RegisterChartObject(string label, string lpObjects[]);
    int      RemoveChartObjects(string lpObjects[]);
    int      RepositionLegend();
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SetWindowText(int hWnd, string text);
-   string   ShortAccountCompany();
    int      StringToPeriod(string description);
    int      SwitchEAs(bool enable);
-   string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
+   string   AppliedPriceDescription(int appliedPrice);
+   string   CreateLegendLabel(string name);
+   string   ErrorDescription(int error);
+   string   GetComputerName();
+   string   GetCurrency(int id);
+   string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
+   string   GetLongSymbolNameStrict(string symbol);
+   string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   GetStandardSymbolOrAlt(string symbol, string altValue);
+   string   GetStandardSymbolStrict(string symbol);
+   string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolNameOrAlt(string symbol, string altName);
+   string   GetSymbolNameStrict(string symbol);
+   string   GetTradeServerDirectory();
+   string   GetWindowText(int hWnd);
+   string   MovingAverageDescription(int method);
+   string   OperationTypeDescription(int type);
+   string   ShortAccountCompany();
+   string   UninitializeReasonDescription(int reason);
 
    // toString-Funktionen
    string   AppliedPriceToStr(int appliedPrice);
