@@ -102,7 +102,7 @@ int init() {
    SetIndexLabel(0, indicatorName);
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
-   IndicatorDigits(PipDigits);
+   IndicatorDigits(Digits);
 
    // Legende
    legendLabel = CreateLegendLabel(indicatorName);
@@ -291,10 +291,10 @@ int start() {
    lastTrend = iTrend[0];
 
    // Wertanzeige aktualisieren
-   double normalizedValue = NormalizeDouble(iALMA[0], PipDigits);
+   double normalizedValue = NormalizeDouble(iALMA[0], Digits);
    if (NE(normalizedValue, lastValue)) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorName, "    ", DoubleToStr(normalizedValue, PipDigits)),
+                    StringConcatenate(indicatorName, "    ", NumberToStr(normalizedValue, PriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastValue = normalizedValue;

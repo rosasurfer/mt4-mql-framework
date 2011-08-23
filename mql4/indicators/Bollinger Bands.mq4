@@ -222,7 +222,7 @@ int init() {
    SetIndexLabel(4, NULL);
    SetIndexLabel(5, NULL);
    SetIndexLabel(6, NULL);
-   IndicatorDigits(PipDigits);
+   IndicatorDigits(Digits);
 
    // Legende
    string legendLabel = CreateLegendLabel(indicatorLongName);

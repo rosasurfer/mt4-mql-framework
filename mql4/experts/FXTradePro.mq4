@@ -82,7 +82,7 @@ extern double Lotsize.Level.5                = 0;
 extern double Lotsize.Level.6                = 0;
 extern double Lotsize.Level.7                = 0;
 
-extern string _4____________________________ = "==== Sequence to Process ============";
+extern string _4____________________________ = "==== Sequence to Manage =============";
 extern string Sequence.ID                    = "";
 //extern string Sequence.ID                    = "13666";
 
