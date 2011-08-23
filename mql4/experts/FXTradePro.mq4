@@ -14,15 +14,15 @@
  *  ---------
  *  - Verhältnis Spread/StopLoss: hohe Spreads machen den Einsatz teilweise unmöglich
  *  - Verhältnis Tagesvolatilität/Spread: teilweise wurde innerhalb von 10 Sekunden der nächste Level getriggert
- *  - gleiche Volatilität = gleicher StopLoss, aber variabler Spread => Avg(Price) als Trigger verwenden => Spread eliminiert
- *  - beim Start müßten die obigen Kennziffern überprüft werden
+ *  - gleiche Volatilität bedeutet gleicher StopLoss, unabhängig vom variablen Spread
  *
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - Visualisierung der gesamten Sequenz
- *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - Visualisierung des Entry.Limits implementieren
+ *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
+ *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
