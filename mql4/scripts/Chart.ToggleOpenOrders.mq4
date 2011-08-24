@@ -89,11 +89,14 @@ int start() {
    if (error == ERR_OBJECT_DOES_NOT_EXIST)
       error = NO_ERROR;
 
-   if (markerFound || error!=NO_ERROR)
+   if (markerFound || error!=NO_ERROR) {
+      //debug("start()   chart marker found, positions deleted");
       return(catch("start(1)", error));                           // ...und Rückkehr
+   }
 
 
    // keine Markierungen gefunden: Positionen anzeigen
+   //debug("start()   no chart marker found");
 
 
    // (2) Einträge des aktuellen Instruments auslesen
