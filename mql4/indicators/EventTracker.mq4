@@ -9,11 +9,11 @@
 #property indicator_chart_window
 
 
-//////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) //////////////////////////////////////////////////
 
 bool   Sound.Alerts                 = false;
-string Sound.File.PositionOpen      = "OrderFilled.wav";
-string Sound.File.PositionClose     = "PositionClosed.wav";
+string Sound.PositionOpen           = "OrderFilled.wav";
+string Sound.PositionClose          = "PositionClosed.wav";
 
 bool   SMS.Alerts                   = false;
 string SMS.Receiver                 = "";
@@ -25,9 +25,9 @@ bool   PivotLevels.PreviousDayRange = false;
 
 bool   Track.BollingerBands         = false;
 int    BollingerBands.MA.Periods    = 0;
-string BollingerBands.MA.Timeframe  = "";                // M1, M5, M15, etc.              (default: "" => aktueller Timeframe)
-string BollingerBands.MA.Method     = "SMA";             // SMA | EMA | SMMA | LWMA | ALMA (default: SMA                      )
-double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung                (default: 2.0                      )
+int    BollingerBands.MA.Timeframe  = 0;                 // M1, M5, M15, etc. (0 => aktueller Timeframe)
+int    BollingerBands.MA.Method     = MODE_SMA;          // SMA | EMA | SMMA | LWMA | ALMA
+double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,8 +37,7 @@ int    PipDigits;
 int    PipPoints;
 string PriceFormat;
 
-string symbol, symbolName;
-
+string stdSymbol, symbolName;
 double bbandLimits[3];
 
 
@@ -61,8 +60,8 @@ int init() {
       ArrayInitialize(bbandLimits, 0);
 
    // globale Variablen
-   symbol     = GetStandardSymbol(Symbol());
-   symbolName = GetSymbolName(symbol);
+   stdSymbol  = GetStandardSymbol(Symbol());
+   symbolName = GetSymbolName(stdSymbol);
 
 
    // -- Beginn - Parametervalidierung
@@ -74,7 +73,7 @@ int init() {
    if (SMS.Alerts) {
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
-         catch("init(1)  Invalid or missing configuration value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(1)  Invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          SMS.Alerts = false;
       }
    }
@@ -90,61 +89,48 @@ int init() {
    */
 
    // Track.BollingerBands
-   Track.BollingerBands = GetConfigBool("EventTracker."+ symbol, "BollingerBands", Track.BollingerBands);
+   Track.BollingerBands = GetConfigBool("EventTracker."+ stdSymbol, "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
       // BollingerBands.MA.Periods
-      int iValue = GetConfigInt("EventTracker."+ symbol, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
-      if (iValue < 2) {
-         string iniValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Periods", "");
-         if (StringConcatenate("", iValue) == iniValue) catch("init(2)  Invalid config value [EventTracker."+ symbol +"] BollingerBands.MA.Periods = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         else                                           catch("init(3)  Invalid input parameter value BollingerBands.MA.Periods = "+ BollingerBands.MA.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+      BollingerBands.MA.Periods = GetConfigInt("EventTracker."+ stdSymbol, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
+      if (BollingerBands.MA.Periods < 2) {
+         catch("init(2)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
-      else BollingerBands.MA.Periods = iValue;
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
-      strValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
-      iValue = StringToPeriod(strValue);
-
-      if (iValue == 0) {
-
-         iniValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Timeframe", "");
-
-         if (StringConcatenate("", iValue) == strValue) catch("init(2)  Invalid config value [EventTracker."+ symbol +"] BollingerBands.MA.Periods = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         else                                           catch("init(3)  Invalid input parameter value BollingerBands.MA.Periods = "+ BollingerBands.MA.Periods, ERR_INVALID_INPUT_PARAMVALUE);
-
-
-
-         catch("init(4)  Invalid config value value Slow.Timeframe \""+ strValue +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+      string strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
+      BollingerBands.MA.Timeframe = StringToPeriod(strValue);
+      if (BollingerBands.MA.Timeframe == 0) {
+         if (IsConfigKey("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe")) {
+            catch("init(3)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+            Track.BollingerBands = false;
+         }
+         else {
+            BollingerBands.MA.Timeframe = Period();
+         }
+      }
+   }
+   if (Track.BollingerBands) {
+      // BollingerBands.MA.Method
+      strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Method", MovingAverageDescription(BollingerBands.MA.Method));
+      BollingerBands.MA.Method = MovingAverageToId(strValue);
+      if (BollingerBands.MA.Method == -1) {
+         catch("init(4)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
-
-
-
-      /*
-      MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-      if (MA.Timeframe == "") int maTimeframe = Period();
-      else                        maTimeframe = StringToPeriod(MA.Timeframe);
-      if (maTimeframe == 0)
-         return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-      */
    }
-
-
-
-
    if (Track.BollingerBands) {
-      BollingerBands.Deviation = GetConfigDouble("BollingerBands."+ symbol, "Deviation.EMA", BollingerBands.Deviation);
-      if (EQ(BollingerBands.Deviation, 0))
-         BollingerBands.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.Deviation);
-      if (BollingerBands.Deviation <= 0) {
-         catch("init(5)  Invalid or missing config value Deviation.EMA \""+ BollingerBands.Deviation +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+      // BollingerBands.Deviation
+      BollingerBands.Deviation = GetConfigDouble("EventTracker."+ stdSymbol, "BollingerBands.Deviation", BollingerBands.Deviation);
+      if (LE(BollingerBands.Deviation, 0)) {
+         catch("init(5)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    // -- Ende - Parametervalidierung
-   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
+   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +"/"+ MovingAverageDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
 
 
    // Anzeigeoptionen
@@ -202,7 +188,7 @@ int start() {
    if (AccountNumber() == 0)
       return(ERR_NO_CONNECTION);
 
-   // aktuelle Accountdaten holen und alte Ticks abfangen: alle Events werden nur nach neuen Ticks überprüft
+   // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int accountData[3];                                  // { PreviousAccount.Number, CurrentAccount.Number, CurrentAccount.LoginServertime }
    EventListener.AccountChange(accountData, 0);                // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < accountData[2])
@@ -212,6 +198,15 @@ int start() {
    if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
       HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
       HandleEvent(EVENT_POSITION_OPEN , OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
+   }
+
+   // Bollinger-Bänder
+   if (false && Track.BollingerBands) {
+      if (CheckBollingerBands() == ERR_HISTORY_UPDATE) {
+         last_error = ERR_HISTORY_UPDATE;
+         debug("start()    CheckBollingerBands() => ERR_HISTORY_UPDATE");
+         return(ERR_HISTORY_UPDATE);
+      }
    }
 
    /*
@@ -224,27 +219,13 @@ int start() {
       }
    }
 
-   // Bollinger-Bänder
-   if (false && Track.BollingerBands) {
-      HandleEvent(EVENT_BAR_OPEN, PERIODFLAG_M1);              // einmal je Minute die Limite aktualisieren
-      if (CheckBollingerBands() == ERR_HISTORY_UPDATE) {
-         last_error = ERR_HISTORY_UPDATE;
-         debug("start()    CheckBollingerBands() => ERR_HISTORY_UPDATE");
-         return(ERR_HISTORY_UPDATE);
-      }
-   }
-   */
-
-   /* // TODO: ValidBars ist bei jedem Timeframe-Wechsel 0, wir wollen ValidBars==0 aber nur bei Chartänderungen detektieren
+   // TODO: ValidBars ist bei jedem Timeframe-Wechsel 0, wir wollen ValidBars==0 aber nur bei Chartänderungen detektieren
    if (ValidBars == 0) {
-      ArrayInitialize(gridLimits, 0);
-      EventTracker.SaveGridLimits(gridLimits);
       ArrayInitialize(bbandLimits, 0);
       EventTracker.SetBandLimits(bbandLimits);
-   } */
+   }
+   */
    return(catch("start(2)"));
-
-   double destination[4]; CheckPivotLevels(); CheckBollingerBands(); InitializeBandLimits(); iBollingerBands(0, 0, 0, 0, 0, 0, 0, destination); iOHLCBar(destination, 0, 0, 0); iOHLCBarRange(destination, 0, 0, 0, 0); iOHLCTime(destination, 0, 0, 0); iOHLCTimeRange(destination, 0, 0, 0);
 }
 
 
@@ -257,7 +238,7 @@ int start() {
  */
 int onPositionOpen(int tickets[]) {
    if (!Track.Positions)
-      return(0);
+      return(NO_ERROR);
 
    int positions = ArraySize(tickets);
 
@@ -280,16 +261,16 @@ int onPositionOpen(int tickets[]) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(catch("onPositionOpen(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message);
+         log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         Print("onPositionOpen()   ", message);
+         log(StringConcatenate("onPositionOpen()   ", message));
       }
    }
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
-      PlaySound(Sound.File.PositionOpen);
+      PlaySound(Sound.PositionOpen);
 
    return(catch("onPositionOpen(2)"));
 }
@@ -304,7 +285,7 @@ int onPositionOpen(int tickets[]) {
  */
 int onPositionClose(int tickets[]) {
    if (!Track.Positions)
-      return(0);
+      return(NO_ERROR);
 
    int positions = ArraySize(tickets);
 
@@ -329,24 +310,100 @@ int onPositionClose(int tickets[]) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(catch("onPositionClose(2)   error sending text message to "+ SMS.Receiver, error));
-         Print("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message);
+         log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         Print("onPositionClose()   ", message);
+         log(StringConcatenate("onPositionClose()   ", message));
       }
    }
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
-      PlaySound(Sound.File.PositionClose);
+      PlaySound(Sound.PositionClose);
 
    return(catch("onPositionClose(3)"));
 }
 
 
 /**
- * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
+ * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
+ *
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kurse gerade aktualisiert werden)
  */
+int CheckBollingerBands() {
+   if (!Track.BollingerBands)
+      return(NO_ERROR);
+
+   // Limite ggf. initialisieren
+   if (bbandLimits[0] == 0) if (!EventTracker.GetBandLimits(bbandLimits)) {
+      if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
+         return(ERR_HISTORY_UPDATE);
+      EventTracker.SetBandLimits(bbandLimits);                 // Limite in Library timeframe-übergreifend speichern
+   }
+
+   debug("CheckBollingerBands()   checking bands ...    "+ NumberToStr(bbandLimits[2], PriceFormat) +"  <=  " + NumberToStr(bbandLimits[1], PriceFormat) +"  =>  " + NumberToStr(bbandLimits[0], PriceFormat));
+
+   double upperBand = bbandLimits[0],
+          movingAvg = bbandLimits[1],
+          lowerBand = bbandLimits[2];
+
+   return(catch("CheckBollingerBands(2)"));
+}
+
+
+/**
+ * Initialisiert (berechnet und speichert) die aktuellen BollingerBand-Limite.
+ *
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
+ */
+int InitializeBandLimits() {
+   // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
+   int timeframe = BollingerBands.MA.Timeframe;
+   int periods   = BollingerBands.MA.Periods;
+
+   if (timeframe > PERIOD_M5) {
+      double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
+      timeframe = PERIOD_M5;
+      periods   = MathRound(minutes/PERIOD_M5);
+   }
+
+   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, bbandLimits);
+
+   if (error == ERR_HISTORY_UPDATE) return(error);
+   if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
+
+   debug("InitializeBandLimits()   BollingerBand limits calculated: "+ NumberToStr(bbandLimits[2], PriceFormat) +"  <=  "+ NumberToStr(bbandLimits[1], PriceFormat) +"  =>  "+ NumberToStr(bbandLimits[0], PriceFormat));
+   return(error);
+}
+
+
+/**
+ * Berechnet die BollingerBand-Werte (UpperBand, MovingAverage, LowerBand) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
+ *
+ * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
+ */
+int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& lpResults[]) {
+   if (symbol == "0")         // NULL ist ein Integer (0)
+      symbol = Symbol();
+
+   double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
+   double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
+   lpResults[0] = ma + dev;
+   lpResults[1] = ma;
+   lpResults[2] = ma - dev;
+
+   int error = GetLastError();
+   if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
+   if (error != NO_ERROR          ) return(catch("iBollingerBands()", error));
+
+   debug("iBollingerBands(bar "+ bar +")   symbol="+ symbol +"   timeframe="+ timeframe +"   periods="+ periods +"   maMethod="+ maMethod +"   appliedPrice="+ appliedPrice +"   deviation="+ NumberToStr(deviation, ".+") +"   results: "+ NumberToStr(lpResults[2], PriceFormat) +"  <=  "+ NumberToStr(lpResults[1], PriceFormat) +"  =>  "+ NumberToStr(lpResults[0], PriceFormat));
+   return(error);
+}
+
+
+/**
+ * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
+ *
 int CheckPivotLevels() {
    if (!Track.PivotLevels)
       return(0);
@@ -394,12 +451,13 @@ int CheckPivotLevels() {
    done = true;
    return(catch("CheckPivotLevels(2)"));
 }
+ */
 
 
 /**
  *
- */
-int GetDailyStartEndBars(string symbol/*=NULL*/, int bar, int& lpStartBar, int& lpEndBar) {
+ *
+int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lpEndBar) {
    if (symbol == "0")                                                   // NULL ist ein Integer (0)
       symbol = Symbol();
    int period = PERIOD_H1;
@@ -449,6 +507,7 @@ int GetDailyStartEndBars(string symbol/*=NULL*/, int bar, int& lpStartBar, int& 
 
    return(catch("GetDailyStartEndBars(6)"));
 }
+ */
 
 
 /**
@@ -465,8 +524,8 @@ int GetDailyStartEndBars(string symbol/*=NULL*/, int bar, int& lpStartBar, int& 
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
- */
-int iOHLCBar(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int bar, bool exact=false) {
+ *
+int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar, bool exact=false) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                                       // NULL ist ein Integer (0)
@@ -515,6 +574,7 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int
    }
    return(error);
 }
+*/
 
 
 /**
@@ -534,8 +594,8 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int
  *
  * NOTE:    Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
- */
-int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/, int from, int to) {
+ *
+int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL, int period/*=0, int from, int to) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                           // NULL ist ein Integer (0)
@@ -584,6 +644,7 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/
 
    return(catch("iOHLCBarRange(5)"));
 }
+*/
 
 
 /**
@@ -597,8 +658,8 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL*/, int period/*=0*/
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den Zeitpunkt keine Kurse existieren,
  *                             ggf. ERR_HISTORY_UPDATE
- */
-int iOHLCTime(double& lpResults[4], string symbol/*=NULL*/, int timeframe/*=0*/, datetime time) {
+ *
+int iOHLCTime(double& lpResults[4], string symbol/*=NULL, int timeframe/*=0, datetime time) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
@@ -628,6 +689,7 @@ int iOHLCTime(double& lpResults[4], string symbol/*=NULL*/, int timeframe/*=0*/,
       catch("iOHLCTime(2)", error);
    return(error);
 }
+ */
 
 
 /**
@@ -641,8 +703,8 @@ int iOHLCTime(double& lpResults[4], string symbol/*=NULL*/, int timeframe/*=0*/,
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn im Zeitraum keine Kurse existieren,
  *                             ggf. ERR_HISTORY_UPDATE
- */
-int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL*/, datetime from, datetime to) {
+ *
+int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL, datetime from, datetime to) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
@@ -708,98 +770,4 @@ int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL*/, datetime from, 
 
    return(catch("iOHLCTimeRange(3)"));
 }
-
-
-/**
- * Handler für BarOpen-Events.
- *
- * @param int timeframes[] - Flags der Timeframes, in denen das Event aufgetreten ist
- *
- * @return int - Fehlerstatus
- */
-int onBarOpen(int timeframes[]) {
-   // BollingerBand-Limite zurücksetzen
-   if (Track.BollingerBands) {
-      ArrayInitialize(bbandLimits, 0);
-      EventTracker.SetBandLimits(bbandLimits);     // auch in Library
-   }
-   return(catch("onBarOpen()"));
-}
-
-
-/**
- * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
- *
- * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kurse gerade aktualisiert werden)
- */
-int CheckBollingerBands() {
-   if (!Track.BollingerBands)
-      return(0);
-
-   // Limite ggf. initialisieren
-   if (bbandLimits[0] == 0) if (!EventTracker.GetBandLimits(bbandLimits)) {
-      if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
-         return(ERR_HISTORY_UPDATE);
-      EventTracker.SetBandLimits(bbandLimits);                 // Limite in Library timeframe-übergreifend speichern
-   }
-
-   Print("CheckBollingerBands()   checking bands ...    ", NumberToStr(bbandLimits[2], PriceFormat), "  <=  ", NumberToStr(bbandLimits[1], PriceFormat), "  =>  ", NumberToStr(bbandLimits[0], PriceFormat));
-
-   double upperBand = bbandLimits[0]-0.000001,                 // +- 1/100 pip, um Fehler beim Vergleich von Doubles zu vermeiden
-          movingAvg = bbandLimits[1]+0.000001,
-          lowerBand = bbandLimits[2]+0.000001;
-
-   //Print("CheckBollingerBands()   limits checked");
-   return(catch("CheckBollingerBands(2)"));
-}
-
-
-/**
- * Initialisiert (berechnet und speichert) die aktuellen BollingerBand-Limite.
- *
- * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
- */
-int InitializeBandLimits() {
-   // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
-   int timeframe = BollingerBands.MA.Timeframe;
-   int periods   = BollingerBands.MA.Periods;
-
-   if (timeframe > PERIOD_M5) {
-      double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
-      timeframe = PERIOD_M5;
-      periods   = MathRound(minutes/PERIOD_M5);
-   }
-
-   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, bbandLimits);
-
-   if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
-
-   Print("InitializeBandLimits()   Bollinger band limits calculated: ", NumberToStr(bbandLimits[2], PriceFormat), "  <=  ", NumberToStr(bbandLimits[1], PriceFormat), "  =>  ", NumberToStr(bbandLimits[0], PriceFormat));
-   return(error);
-}
-
-
-/**
- * Berechnet die BollingerBand-Werte (UpperBand, MovingAverage, LowerBand) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
- *
- * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
- */
-int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& lpResults[]) {
-   if (symbol == "0")         // NULL ist ein Integer (0)
-      symbol = Symbol();
-
-   double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
-   double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
-   lpResults[0] = ma + dev;
-   lpResults[1] = ma;
-   lpResults[2] = ma - dev;
-
-   int error = GetLastError();
-   if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
-   if (error != NO_ERROR          ) return(catch("iBollingerBands()", error));
-
-   //Print("iBollingerBands(bar "+ bar +")   symbol: "+ symbol +"   timeframe: "+ timeframe +"   periods: "+ periods +"   maMethod: "+ maMethod +"   appliedPrice: "+ appliedPrice +"   deviation: "+ deviation +"   results: "+ NumberToStr(results[2], ".5") +"  <=  "+ NumberToStr(results[1], ".5") +"  =>  "+ NumberToStr(results[1], ".5"));
-   return(error);
-}
-
+*/
