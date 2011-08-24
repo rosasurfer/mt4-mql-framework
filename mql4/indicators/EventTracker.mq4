@@ -24,10 +24,10 @@ bool   Track.PivotLevels            = false;
 bool   PivotLevels.PreviousDayRange = false;
 
 bool   Track.BollingerBands         = false;
-int    BollingerBands.Periods       = 0;
-int    BollingerBands.Timeframe     = 0;
-int    BollingerBands.MA.Method     = MODE_EMA;
-double BollingerBands.MA.Deviation  = 0;
+int    BollingerBands.MA.Periods    = 0;
+string BollingerBands.MA.Timeframe  = "";                // M1, M5, M15, etc.              (default: "" => aktueller Timeframe)
+string BollingerBands.MA.Method     = "SMA";             // SMA | EMA | SMMA | LWMA | ALMA (default: SMA                      )
+double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung                (default: 2.0                      )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ int    PipDigits;
 int    PipPoints;
 string PriceFormat;
 
-string symbol, symbolName, symbolSection;
+string symbol, symbolName;
 
 double bbandLimits[3];
 
@@ -56,77 +56,105 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
-   // Datenanzeige ausschalten
-   SetIndexLabel(0, NULL);
-
    // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
+   if (UninitializeReason() == REASON_RECOMPILE)
       ArrayInitialize(bbandLimits, 0);
-   }
 
-   // Konfiguration auslesen
-   symbol        = GetStandardSymbol(Symbol());
-   symbolName    = GetSymbolName(symbol);
-   symbolSection = "EventTracker."+ symbol;
+   // globale Variablen
+   symbol     = GetStandardSymbol(Symbol());
+   symbolName = GetSymbolName(symbol);
 
-   // Sound- und SMS-Einstellungen
+
+   // -- Beginn - Parametervalidierung
+   // Sound.Alerts
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
-   SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts"  , SMS.Alerts);
+
+   // SMS.Alerts
+   SMS.Alerts = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
    if (SMS.Alerts) {
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
-         catch("init(2)  Invalid or missing configuration value SMS.Receiver \""+ SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         catch("init(1)  Invalid or missing configuration value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE);
          SMS.Alerts = false;
       }
    }
 
-   // Positionen
+   /*
+   // Track.Positions
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
 
-   /*
-   // Pivot-Level
+   // Track.PivotLevels
    Track.PivotLevels = GetConfigBool(symbolSection, "PivotLevels", Track.PivotLevels);
    if (Track.PivotLevels)
       PivotLevels.PreviousDayRange = GetConfigBool(symbolSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
-
-   // Bollinger-Bänder
-   Track.BollingerBands = GetConfigBool(symbolSection, "BollingerBands", Track.BollingerBands);
-   if (Track.BollingerBands) {
-      BollingerBands.Periods = GetConfigInt("BollingerBands."+ symbol, "Slow.Periods", BollingerBands.Periods);
-      if (BollingerBands.Periods == 0)
-         BollingerBands.Periods = GetConfigInt("BollingerBands", "Slow.Periods", BollingerBands.Periods);
-      if (BollingerBands.Periods < 2) {
-         catch("init(4)  Invalid or missing config value Slow.Periods \""+ GetConfigString("BollingerBands."+ symbol, "Slow.Periods", GetConfigString("BollingerBands", "Slow.Periods", "")) +"\"", ERR_INVALID_INPUT_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
-   }
-   if (Track.BollingerBands) {
-      string strValue = GetConfigString("BollingerBands."+ symbol, "Slow.Timeframe", "");
-      if (StringLen(strValue) == 0)
-         strValue = GetConfigString("BollingerBands", "Slow.Timeframe", strValue);
-      BollingerBands.Timeframe = StringToPeriod(strValue);
-      if (BollingerBands.Timeframe == 0) {
-         catch("init(5)  Invalid config value value Slow.Timeframe \""+ strValue +"\"", ERR_INVALID_INPUT_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
-   }
-   if (Track.BollingerBands) {
-      BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands."+ symbol, "Deviation.EMA", BollingerBands.MA.Deviation);
-      if (EQ(BollingerBands.MA.Deviation, 0))
-         BollingerBands.MA.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.MA.Deviation);
-      if (BollingerBands.MA.Deviation <= 0) {
-         catch("init(6)  Invalid or missing config value Deviation.EMA \""+ BollingerBands.MA.Deviation +"\"", ERR_INVALID_INPUT_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
-   }
    */
-   //debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
+
+   // Track.BollingerBands
+   Track.BollingerBands = GetConfigBool("EventTracker."+ symbol, "BollingerBands", Track.BollingerBands);
+   if (Track.BollingerBands) {
+      // BollingerBands.MA.Periods
+      int iValue = GetConfigInt("EventTracker."+ symbol, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
+      if (iValue < 2) {
+         string iniValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Periods", "");
+         if (StringConcatenate("", iValue) == iniValue) catch("init(2)  Invalid config value [EventTracker."+ symbol +"] BollingerBands.MA.Periods = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         else                                           catch("init(3)  Invalid input parameter value BollingerBands.MA.Periods = "+ BollingerBands.MA.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+      else BollingerBands.MA.Periods = iValue;
+   }
+   if (Track.BollingerBands) {
+      // BollingerBands.MA.Timeframe
+      strValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
+      iValue = StringToPeriod(strValue);
+
+      if (iValue == 0) {
+
+         iniValue = GetConfigString("EventTracker."+ symbol, "BollingerBands.MA.Timeframe", "");
+
+         if (StringConcatenate("", iValue) == strValue) catch("init(2)  Invalid config value [EventTracker."+ symbol +"] BollingerBands.MA.Periods = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         else                                           catch("init(3)  Invalid input parameter value BollingerBands.MA.Periods = "+ BollingerBands.MA.Periods, ERR_INVALID_INPUT_PARAMVALUE);
+
+
+
+         catch("init(4)  Invalid config value value Slow.Timeframe \""+ strValue +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+
+
+
+      /*
+      MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
+      if (MA.Timeframe == "") int maTimeframe = Period();
+      else                        maTimeframe = StringToPeriod(MA.Timeframe);
+      if (maTimeframe == 0)
+         return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      */
+   }
+
+
+
+
+   if (Track.BollingerBands) {
+      BollingerBands.Deviation = GetConfigDouble("BollingerBands."+ symbol, "Deviation.EMA", BollingerBands.Deviation);
+      if (EQ(BollingerBands.Deviation, 0))
+         BollingerBands.Deviation = GetConfigDouble("BollingerBands", "Deviation.EMA", BollingerBands.Deviation);
+      if (BollingerBands.Deviation <= 0) {
+         catch("init(5)  Invalid or missing config value Deviation.EMA \""+ BollingerBands.Deviation +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+         Track.BollingerBands = false;
+      }
+   }
+   // -- Ende - Parametervalidierung
+   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands);
+
+
+   // Anzeigeoptionen
+   SetIndexLabel(0, NULL);
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(7)"));
+   return(catch("init(6)"));
 }
 
 
@@ -733,8 +761,8 @@ int CheckBollingerBands() {
  */
 int InitializeBandLimits() {
    // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
-   int timeframe = BollingerBands.Timeframe;
-   int periods   = BollingerBands.Periods;
+   int timeframe = BollingerBands.MA.Timeframe;
+   int periods   = BollingerBands.MA.Periods;
 
    if (timeframe > PERIOD_M5) {
       double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
@@ -742,7 +770,7 @@ int InitializeBandLimits() {
       periods   = MathRound(minutes/PERIOD_M5);
    }
 
-   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.MA.Deviation, 0, bbandLimits);
+   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, bbandLimits);
 
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
