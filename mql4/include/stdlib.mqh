@@ -42,8 +42,8 @@
    string   ifString(bool condition, string strThen, string strElse);
 
    // Config
-   string   GetLocalConfigPath();
    string   GetGlobalConfigPath();
+   string   GetLocalConfigPath();
    bool     GetConfigBool(string section, string key, bool defaultValue);
    double   GetConfigDouble(string section, string key, double defaultValue);
    int      GetConfigInt(string section, string key, int defaultValue);
@@ -56,6 +56,9 @@
    double   GetLocalConfigDouble(string section, string key, double defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
+   bool     IsConfigKey(string section, string key);
+   bool     IsGlobalConfigKey(string section, string key);
+   bool     IsLocalConfigKey(string section, string key);
 
    // Date/Time
    datetime EasternToGMT(datetime easternTime);

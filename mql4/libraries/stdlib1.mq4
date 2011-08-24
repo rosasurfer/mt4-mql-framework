@@ -4504,8 +4504,74 @@ string GetConfigString(string section, string key, string defaultValue="") {
    // zuerst globale, dann lokale Config auslesen
    string value = GetPrivateProfileString(GetGlobalConfigPath(), section, key, defaultValue);
           value = GetPrivateProfileString(GetLocalConfigPath() , section, key, value       );
-
    return(value);
+}
+
+
+/**
+ * Ob der angegebene Schlüssel in der lokalen Konfigurationsdatei existiert oder nicht.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsLocalConfigKey(string section, string key) {
+   string keys[];
+   GetPrivateProfileKeys(GetLocalConfigPath(), section, keys);
+
+   int size = ArraySize(keys);
+   if (size == 0)
+      return(false);
+
+   key = StringToLower(key);
+
+   for (int i=0; i < size; i++) {
+      if (key == StringToLower(keys[i]))
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der angegebene Schlüssel in der globalen Konfigurationsdatei existiert oder nicht.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsGlobalConfigKey(string section, string key) {
+   string keys[];
+   GetPrivateProfileKeys(GetGlobalConfigPath(), section, keys);
+
+   int size = ArraySize(keys);
+   if (size == 0)
+      return(false);
+
+   key = StringToLower(key);
+
+   for (int i=0; i < size; i++) {
+      if (key == StringToLower(keys[i]))
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der angegebene Schlüssel in der globalen oder lokalen Konfigurationsdatei existiert oder nicht.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsConfigKey(string section, string key) {
+   if (IsGlobalConfigKey(section, key))
+      return(true);
+   return(IsLocalConfigKey(section, key));
 }
 
 
@@ -5413,11 +5479,11 @@ string AppliedPriceDescription(int appliedPrice) {
 
 
 /**
- * Gibt den Integer-Wert einer Timeframe-Bezeichnung zurück.
+ * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
  *
  * @param  string timeframe - M1, M5, M15, M30 etc.
  *
- * @return int - Timeframe-Code oder 0, wenn die Bezeichnung ungültig ist
+ * @return int - Timeframe-Code oder 0, wenn der Bezeichner ungültig ist
  */
 int StringToPeriod(string timeframe) {
    timeframe = StringToUpper(timeframe);
