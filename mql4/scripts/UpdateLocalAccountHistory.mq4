@@ -188,7 +188,7 @@ int start() {
    if (histSize > 0) {
       lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
       lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
-      //log("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
+      //debug("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (orders == 0) {
       if (NE(lastBalance, AccountBalance())) {
