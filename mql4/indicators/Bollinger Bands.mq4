@@ -16,9 +16,7 @@
  * Zu den verschiedenen Berechnungsmethoden:
  * -----------------------------------------
  * - Default ist PRICE_CLOSE. Die Ergebnisse von stdDev(PRICE_CLOSE) und stdDev(PRICE_MEDIAN) stimmen nahezu 100%ig überein.
- *
- * - stdDev(PRICE_HIGH|PRICE_LOW) wäre die technisch exaktere Methode, müßte aber für jede Bar manuell implementiert werden und ist am langsamsten.
- *
+ * - stdDev(PRICE_HIGH|PRICE_LOW) wäre die technisch exakter Methode, müßte aber für jede Bar manuell implementiert werden und ist am langsamsten.
  * - Es gilt: 1.65 * stdDev(PRICE_CLOSE) entspricht ca. 1.4 * stdDev(PRICE_HIGH|PRICE_LOW) (Übereinstimmung von 90-95%)
  */
 #include <stdlib.mqh>
@@ -195,7 +193,7 @@ int init() {
    SetIndexBuffer(6, iMovAvg      );
 
    // Anzeigeoptionen
-   if (MA.Timeframe != "")
+   if (StringLen(MA.Timeframe) > 0)
       MA.Timeframe = "x"+ MA.Timeframe;
    string indicatorShortName = "BollingerBands("+ MA.Periods + MA.Timeframe +")";
    string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageMethodDescription(maMethod1);
