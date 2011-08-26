@@ -113,6 +113,25 @@
 #define MODE_ALMA                4     // Arnaud Legoux moving average
 
 
+// Indicator line identifiers used in iMACD(), iRVI() and iStochastic()
+#define MODE_MAIN                0     // base indicator line
+#define MODE_SIGNAL              1     // signal line
+
+
+// Indicator line identifiers used in iADX()
+#define MODE_MAIN                0     // base indicator line
+#define MODE_PLUSDI              1     // +DI indicator line
+#define MODE_MINUSDI             2     // -DI indicator line
+
+
+// Indicator line identifiers used in iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals() and iGator()
+#define MODE_UPPER               1     // upper line
+#define MODE_LOWER               2     // lower line
+
+#define B_LOWER                  0
+#define B_UPPER                  1
+
+
 // Sorting modes, siehe ArraySort()
 #define MODE_ASCEND              1     // aufsteigend
 #define MODE_DESCEND             2     // absteigend

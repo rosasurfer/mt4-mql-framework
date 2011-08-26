@@ -198,9 +198,9 @@ int init() {
    if (MA.Timeframe != "")
       MA.Timeframe = "x"+ MA.Timeframe;
    string indicatorShortName = "BollingerBands("+ MA.Periods + MA.Timeframe +")";
-   string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageDescription(maMethod1);
+   string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageMethodDescription(maMethod1);
    if (maMethod2 != -1)
-      indicatorLongName = indicatorLongName +","+ MovingAverageDescription(maMethod2);
+      indicatorLongName = indicatorLongName +","+ MovingAverageMethodDescription(maMethod2);
    indicatorLongName = indicatorLongName +" / "+ AppliedPriceDescription(appliedPrice) +" / "+ NumberToStr(deviation1, ".1+");
    if (maMethod2 != -1)
       indicatorLongName = indicatorLongName +","+ NumberToStr(deviation2, ".1+");

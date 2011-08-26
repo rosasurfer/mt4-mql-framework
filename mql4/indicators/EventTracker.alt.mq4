@@ -38,7 +38,7 @@ int    PipPoints;
 string PriceFormat;
 
 string stdSymbol, symbolName;
-double bbandLimits[3];
+double BollingerBand.Limits[2];
 
 
 /**
@@ -57,7 +57,7 @@ int init() {
 
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE)
-      ArrayInitialize(bbandLimits, 0);
+      ArrayInitialize(BollingerBand.Limits, 0);
 
    // globale Variablen
    stdSymbol  = GetStandardSymbol(Symbol());
@@ -114,8 +114,8 @@ int init() {
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
-      strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Method", MovingAverageDescription(BollingerBands.MA.Method));
-      BollingerBands.MA.Method = MovingAverageToId(strValue);
+      strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
+      BollingerBands.MA.Method = MovingAverageMethodToId(strValue);
       if (BollingerBands.MA.Method == -1) {
          catch("init(4)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
@@ -129,8 +129,15 @@ int init() {
          Track.BollingerBands = false;
       }
    }
+   if (Track.BollingerBands) {
+      // für konstante Werte bei Timeframe-Wechseln Timeframe möglichst nach M5 umrechnen
+      if (BollingerBands.MA.Timeframe > PERIOD_M5) {
+         BollingerBands.MA.Periods   = BollingerBands.MA.Timeframe * BollingerBands.MA.Periods / PERIOD_M5;
+         BollingerBands.MA.Timeframe = PERIOD_M5;
+      }
+   }
    // -- Ende - Parametervalidierung
-   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +"/"+ MovingAverageDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
+   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
 
 
    // Anzeigeoptionen
@@ -181,7 +188,7 @@ int start() {
       return(last_error);
    }
    last_error = NO_ERROR;
-   // -----------------------------------------------------------------------------
+   // ------------------------------------------------------------------------------------
 
 
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
@@ -189,9 +196,9 @@ int start() {
       return(ERR_NO_CONNECTION);
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
-   static int accountData[3];                                  // { PreviousAccount.Number, CurrentAccount.Number, CurrentAccount.LoginServertime }
-   EventListener.AccountChange(accountData, 0);                // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
-   if (TimeCurrent() < accountData[2])
+   static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
+   EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
+   if (TimeCurrent() < loginData[2])
       return(catch("start(1)"));
 
    // Positionen
@@ -201,7 +208,7 @@ int start() {
    }
 
    // Bollinger-Bänder
-   if (false && Track.BollingerBands) {
+   if (Track.BollingerBands) {
       if (CheckBollingerBands() == ERR_HISTORY_UPDATE) {
          last_error = ERR_HISTORY_UPDATE;
          debug("start()    CheckBollingerBands() => ERR_HISTORY_UPDATE");
@@ -221,8 +228,8 @@ int start() {
 
    // TODO: ValidBars ist bei jedem Timeframe-Wechsel 0, wir wollen ValidBars==0 aber nur bei Chartänderungen detektieren
    if (ValidBars == 0) {
-      ArrayInitialize(bbandLimits, 0);
-      EventTracker.SetBandLimits(bbandLimits);
+      ArrayInitialize(BollingerBand.Limits, 0);
+      EventTracker.SetBandLimits(BollingerBand.Limits);
    }
    */
    return(catch("start(2)"));
@@ -335,68 +342,58 @@ int CheckBollingerBands() {
       return(NO_ERROR);
 
    // Limite ggf. initialisieren
-   if (bbandLimits[0] == 0) if (!EventTracker.GetBandLimits(bbandLimits)) {
+   if (EQ(BollingerBand.Limits[B_LOWER], 0)) /*&&*/ if (!EventTracker.GetBandLimits(BollingerBand.Limits)) {
       if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
          return(ERR_HISTORY_UPDATE);
-      EventTracker.SetBandLimits(bbandLimits);                 // Limite in Library timeframe-übergreifend speichern
+      EventTracker.StoreBandLimits(BollingerBand.Limits);            // Limite in Library timeframe-übergreifend speichern
    }
 
-   debug("CheckBollingerBands()   checking bands ...    "+ NumberToStr(bbandLimits[2], PriceFormat) +"  <=  " + NumberToStr(bbandLimits[1], PriceFormat) +"  =>  " + NumberToStr(bbandLimits[0], PriceFormat));
 
-   double upperBand = bbandLimits[0],
-          movingAvg = bbandLimits[1],
-          lowerBand = bbandLimits[2];
+   int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
+
+   if (error == ERR_HISTORY_UPDATE) return(error);
+   if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
+
+
+
+   debug("CheckBollingerBands()   checking bands: "+ NumberToStr(BollingerBand.Limits[B_LOWER], PriceFormat) +"  <->  " + NumberToStr(BollingerBand.Limits[B_UPPER], PriceFormat));
 
    return(catch("CheckBollingerBands(2)"));
 }
 
 
 /**
- * Initialisiert (berechnet und speichert) die aktuellen BollingerBand-Limite.
+ * Berechnet und speichert die aktuellen BollingerBand-Limite.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
+ * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
  */
 int InitializeBandLimits() {
-   // für höhere Genauigkeit Timeframe wenn möglich auf M5 umrechnen
-   int timeframe = BollingerBands.MA.Timeframe;
-   int periods   = BollingerBands.MA.Periods;
+   int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
+   if (error == ERR_HISTORY_UPDATE)
+      return(error);
 
-   if (timeframe > PERIOD_M5) {
-      double minutes = timeframe * periods;     // Timeframe * Anzahl Bars = Range in Minuten
-      timeframe = PERIOD_M5;
-      periods   = MathRound(minutes/PERIOD_M5);
-   }
-
-   int error = iBollingerBands(Symbol(), timeframe, periods, BollingerBands.MA.Method, PRICE_MEDIAN, BollingerBands.Deviation, 0, bbandLimits);
-
-   if (error == ERR_HISTORY_UPDATE) return(error);
-   if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
-
-   debug("InitializeBandLimits()   BollingerBand limits calculated: "+ NumberToStr(bbandLimits[2], PriceFormat) +"  <=  "+ NumberToStr(bbandLimits[1], PriceFormat) +"  =>  "+ NumberToStr(bbandLimits[0], PriceFormat));
+   debug("InitializeBandLimits()   band limits initialized: "+ NumberToStr(BollingerBand.Limits[B_LOWER], PriceFormat) +"  <->  "+ NumberToStr(BollingerBand.Limits[B_UPPER], PriceFormat));
    return(error);
 }
 
 
 /**
- * Berechnet die BollingerBand-Werte (UpperBand, MovingAverage, LowerBand) für eine Chart-Bar und speichert die Ergebnisse im angegebenen Array.
+ * Berechnet die BollingerBand-Werte für eine Chart-Bar und schreibt die Ergebnisse ins angegebene Array.
  *
  * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
  */
 int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& lpResults[]) {
-   if (symbol == "0")         // NULL ist ein Integer (0)
+   if (symbol == "0")         // NULL ist ein Integer, (string) NULL => "0"
       symbol = Symbol();
 
    double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
    double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
-   lpResults[0] = ma + dev;
-   lpResults[1] = ma;
-   lpResults[2] = ma - dev;
+   lpResults[B_LOWER] = ma - dev;
+   lpResults[B_UPPER] = ma + dev;
 
    int error = GetLastError();
-   if (error == ERR_HISTORY_UPDATE) return(ERR_HISTORY_UPDATE);
+   if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("iBollingerBands()", error));
-
-   debug("iBollingerBands(bar "+ bar +")   symbol="+ symbol +"   timeframe="+ timeframe +"   periods="+ periods +"   maMethod="+ maMethod +"   appliedPrice="+ appliedPrice +"   deviation="+ NumberToStr(deviation, ".+") +"   results: "+ NumberToStr(lpResults[2], PriceFormat) +"  <=  "+ NumberToStr(lpResults[1], PriceFormat) +"  =>  "+ NumberToStr(lpResults[0], PriceFormat));
    return(error);
 }
 

@@ -143,8 +143,8 @@
    int      onPositionOpen(int tickets[]);
 
    // EventTracker (Indikator)
-   bool     EventTracker.GetBandLimits(double lpLimits[3]);
-   bool     EventTracker.SetBandLimits(double lpLimits[3]);
+   bool     EventTracker.GetBandLimits(double lpLimits[]);
+   bool     EventTracker.StoreBandLimits(double lpLimits[]);
 
    // Farben
    string   ColorToHtmlStr(color rgb);
@@ -233,7 +233,7 @@
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    int      IncreasePeriod(int period);
-   int      MovingAverageToId(string method);
+   int      MovingAverageMethodToId(string method);
    int      RegisterChartObject(string label, string lpObjects[]);
    int      RemoveChartObjects(string lpObjects[]);
    int      RepositionLegend();
@@ -259,9 +259,10 @@
    string   GetSymbolNameStrict(string symbol);
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
-   string   MovingAverageDescription(int method);
+   string   MovingAverageMethodDescription(int method);
    string   OperationTypeDescription(int type);
    string   ShortAccountCompany();
+   int      StringBufferToArray(int buffer[], string results[]);
    string   UninitializeReasonDescription(int reason);
 
    // toString-Funktionen
@@ -277,14 +278,13 @@
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
-   string   MovingAverageToStr(int method);
+   string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
    string   StringArrayToStr(string values[], string separator);
-   int      StringBufferToArray(int buffer[], string results[]);
    string   StructCharToStr(int lpStruct[], int from, int len);
    string   StructToHexStr(int lpStruct[]);
    string   StructToStr(int lpStruct[]);

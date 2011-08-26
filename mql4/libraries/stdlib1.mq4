@@ -3962,8 +3962,8 @@ bool EventListener.HistoryChange(int lpResults[], int flags=0) {
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- * Beim Start des Terminals und während eines Accountwechsels treten in der Initialiserungsphase "Ticks" mit AccountNumber() == 0 auf. Diese fehlerhaften Aufrufe des Terminals
- * werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
+ * Während des Terminal-Starts und Accountwechseln gibt AccountNumber() sehr kurzfristig 0 zurück. Diese start()-Aufrufe des noch nicht vollständig
+ * initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
  * @param  int lpResults[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
  * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
@@ -4006,42 +4006,46 @@ bool EventListener.AccountChange(int lpResults[], int flags=0) {
 }
 
 
-double EventTracker.bandLimits[3];
+double EventTracker.BBandLimits[2];
 
 
 /**
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
  * in der Library gespeichert).
  *
- * @param  double lpResults[3] - Zeiger auf Array für die Ergebnisse { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double lpResults[2] - Array für die Ergebnisse { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE bei nicht existierenden Daten
  */
 bool EventTracker.GetBandLimits(double& lpResults[]) {
-   lpResults[0] = EventTracker.bandLimits[0];
-   lpResults[1] = EventTracker.bandLimits[1];
-   lpResults[2] = EventTracker.bandLimits[2];
+   if (EQ(EventTracker.BBandLimits[B_LOWER], 0))
+      return(false);
 
-   if (EventTracker.bandLimits[0]!=0) /*&&*/ if (EventTracker.bandLimits[1]!=0) /*&&*/ if (EventTracker.bandLimits[2]!=0)
-      return(true);
-   return(false);
+   lpResults[B_LOWER] = EventTracker.BBandLimits[B_LOWER];
+   lpResults[B_UPPER] = EventTracker.BBandLimits[B_UPPER];
+
+   return(true);
 }
 
 
 /**
- * Setzt die aktuellen BollingerBand-Limite des EventTrackers (aus Performancegründen sind sie timeframe-übergreifend
- * in der Library gespeichert).
+ * Speichert die angegebenen BollingerBand-Limite des EventTrackers in der Library.
  *
- * @param  double lpLimits[3] - Array mit den aktuellen Limiten { UPPER_VALUE, MA_VALUE, LOWER_VALUE }
+ * @param  double lpLimits[2] - Array mit den aktuellen Limiten { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
  *
  * @return int - Fehlerstatus
  */
-int EventTracker.SetBandLimits(double lpLimits[]) {
-   EventTracker.bandLimits[0] = lpLimits[0];
-   EventTracker.bandLimits[1] = lpLimits[1];
-   EventTracker.bandLimits[2] = lpLimits[2];
-   return(0);
+int EventTracker.StoreBandLimits(double lpLimits[]) {
+   if (EQ(lpLimits[B_LOWER], 0))
+      return(catch("EventTracker.StoreBandLimits(1)   invalid parameter lpLimits = "+ DoubleArrayToStr(lpLimits), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (EQ(lpLimits[B_UPPER], 0))
+      return(catch("EventTracker.StoreBandLimits(2)   invalid parameter lpLimits = "+ DoubleArrayToStr(lpLimits), ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   EventTracker.BBandLimits[B_LOWER] = lpLimits[B_LOWER];
+   EventTracker.BBandLimits[B_UPPER] = lpLimits[B_UPPER];
+
+   return(catch("EventTracker.StoreBandLimits(3)"));
 }
 
 
@@ -5282,7 +5286,7 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
  *
  * @return string
  */
-string MovingAverageToStr(int method) {
+string MovingAverageMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_EMA : return("MODE_EMA" );
@@ -5290,7 +5294,7 @@ string MovingAverageToStr(int method) {
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   catch("MovingAverageToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("MovingAverageMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5302,7 +5306,7 @@ string MovingAverageToStr(int method) {
  *
  * @return string
  */
-string MovingAverageDescription(int method) {
+string MovingAverageMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
       case MODE_EMA : return("EMA" );
@@ -5310,7 +5314,7 @@ string MovingAverageDescription(int method) {
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   catch("MovingAverageDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("MovingAverageMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5322,7 +5326,7 @@ string MovingAverageDescription(int method) {
  *
  * @return int - MA-Konstante
  */
-int MovingAverageToId(string method) {
+int MovingAverageMethodToId(string method) {
    string value = StringToUpper(method);
 
    if (StringStartsWith(value, "MODE_"))
@@ -5334,7 +5338,7 @@ int MovingAverageToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   catch("MovingAverageToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("MovingAverageMethodToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
