@@ -494,7 +494,8 @@ int catch(string message="", int error=NO_ERROR) {
       if (StringLen(message) == 0)
          message = "???";
 
-      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodToStr(0), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
+      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
+
       if (init) init_error = error;
       else      last_error = error;
    }
@@ -576,7 +577,7 @@ void debug(string message) {
    if (debugToLog == 1)
       log(message);
    else
-      OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodToStr(0), "::", __SCRIPT__, "::", message));
+      OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __SCRIPT__, "::", message));
 
    return(NO_ERROR);
 }

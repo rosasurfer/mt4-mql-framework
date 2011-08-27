@@ -318,21 +318,21 @@ int start() {
 /**
  * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
  *
- * @param  int& lpSortData[] - Zeiger auf Array mit Sortierschlüsseln
+ * @param  int sortData[] - Array mit Sortierschlüsseln
  *
  * @return int - Fehlerstatus
  */
-int SortTickets(int& lpSortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   if (ArrayRange(lpSortData, 1) != 3)
-      return(catch("SortTickets(1)  invalid parameter lpSortData["+ ArrayRange(lpSortData, 0) +"]["+ ArrayRange(lpSortData, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+int SortTickets(int sortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
+   if (ArrayRange(sortData, 1) != 3)
+      return(catch("SortTickets(1)  invalid parameter sortData["+ ArrayRange(sortData, 0) +"]["+ ArrayRange(sortData, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
-   int rows = ArrayRange(lpSortData, 0);
+   int rows = ArrayRange(sortData, 0);
    if (rows < 2)
       return(catch("SortTickets(2)"));                      // single row, nothing to do
 
 
    // (1) alle Zeilen nach CloseTime sortieren
-   ArraySort(lpSortData);
+   ArraySort(sortData);
 
 
    // (2) Zeilen mit derselben CloseTime nach OpenTime sortieren
@@ -340,29 +340,29 @@ int SortTickets(int& lpSortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
    ArrayResize(sameCloses, 1);
 
    for (int i=0; i < rows; i++) {
-      close  = lpSortData[i][0];
-      open   = lpSortData[i][1];
-      ticket = lpSortData[i][2];
+      close  = sortData[i][0];
+      open   = sortData[i][1];
+      ticket = sortData[i][2];
 
       if (close == lastClose) {
          n++;
          ArrayResize(sameCloses, n+1);
       }
       else if (n > 0) {
-         // in sameCloses[] angesammelte Zeilen nach OpenTime sortieren und zurück nach lpSortData[] schreiben
-         SortTickets.SameClose(sameCloses, lpSortData);
+         // in sameCloses[] angesammelte Zeilen nach OpenTime sortieren und zurück nach sortData[] schreiben
+         SortTickets.SameClose(sameCloses, sortData);
          ArrayResize(sameCloses, 1);
          n = 0;
       }
       sameCloses[n][0] = open;
       sameCloses[n][1] = ticket;
-      sameCloses[n][2] = i;                                 // Originalposition der Zeile in lpSortData[]
+      sameCloses[n][2] = i;                                 // Originalposition der Zeile in sortData[]
 
       lastClose = close;
    }
    if (n > 0) {
       // im letzten Schleifendurchlauf in sameCloses[] angesammelte Zeilen müssen auch verarbeitet werden
-      SortTickets.SameClose(sameCloses, lpSortData);
+      SortTickets.SameClose(sameCloses, sortData);
       n = 0;
    }
 
@@ -373,29 +373,29 @@ int SortTickets(int& lpSortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
    lastClose = 0;
 
    for (i=0; i < rows; i++) {
-      close  = lpSortData[i][0];
-      open   = lpSortData[i][1];
-      ticket = lpSortData[i][2];
+      close  = sortData[i][0];
+      open   = sortData[i][1];
+      ticket = sortData[i][2];
 
       if (close==lastClose && open==lastOpen) {
          n++;
          ArrayResize(sameOpens, n+1);
       }
       else if (n > 0) {
-         // in sameOpens[] angesammelte Werte nach Ticket sortieren und zurück nach lpSortData[] schreiben
-         SortTickets.SameOpen(sameOpens, lpSortData);
+         // in sameOpens[] angesammelte Werte nach Ticket sortieren und zurück nach sortData[] schreiben
+         SortTickets.SameOpen(sameOpens, sortData);
          ArrayResize(sameOpens, 1);
          n = 0;
       }
       sameOpens[n][0] = ticket;
-      sameOpens[n][1] = i;                                  // Originalposition der Zeile in lpSortData[]
+      sameOpens[n][1] = i;                                  // Originalposition der Zeile in sortData[]
 
       lastClose = close;
       lastOpen  = open;
    }
    if (n > 0) {
       // im letzten Schleifendurchlauf in sameOpens[] angesammelte Werte müssen auch verarbeitet werden
-      SortTickets.SameOpen(sameOpens, lpSortData);
+      SortTickets.SameOpen(sameOpens, sortData);
    }
 
    return(catch("SortTickets(3)"));
@@ -403,14 +403,14 @@ int SortTickets(int& lpSortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
 
 
 /**
- * Sortiert die in sameCloses[] übergebenen Daten und aktualisiert die entsprechenden Einträge in lpData[].
+ * Sortiert die in sameCloses[] übergebenen Daten und aktualisiert die entsprechenden Einträge in data[].
  *
- * @param  int& sameCloses[] - Zeiger auf Array mit Ausgangsdaten
- * @param  int& lpData[]     - Zeiger auf das zu aktualisierende Originalarray
+ * @param  int  sameCloses[] - Array mit Ausgangsdaten
+ * @param  int& data[]       - das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& lpData[][/*{CloseTime, OpenTime, Ticket}*/]) {
+int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& data[][/*{CloseTime, OpenTime, Ticket}*/]) {
    int sameClosesCopy[][3]; ArrayResize(sameClosesCopy, 0);
    ArrayCopy(sameClosesCopy, sameCloses);                // Originalreihenfolge der Indizes in Kopie speichern
 
@@ -424,8 +424,8 @@ int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& lpDa
       open   = sameCloses    [n][0];
       ticket = sameCloses    [n][1];
       i      = sameClosesCopy[n][2];
-      lpData[i][1] = open;                               // Originaldaten mit den sortierten Werten überschreiben
-      lpData[i][2] = ticket;
+      data[i][1] = open;                                 // Originaldaten mit den sortierten Werten überschreiben
+      data[i][2] = ticket;
    }
 
    return(catch("SortTickets.SameClose()"));
@@ -433,14 +433,14 @@ int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& lpDa
 
 
 /**
- * Sortiert die in sameOpens[] übergebenen Daten nach Ticket und aktualisiert die entsprechenden Einträge in lpData[].
+ * Sortiert die in sameOpens[] übergebenen Daten nach Ticket und aktualisiert die entsprechenden Einträge in data[].
  *
- * @param  int& sameOpens[] - Zeiger auf Array mit Ausgangsdaten
- * @param  int& lpData[]    - Zeiger auf das zu aktualisierende Originalarray
+ * @param  int  sameOpens[] - Array mit Ausgangsdaten
+ * @param  int& data[]      - das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int& lpData[][/*{OpenTime, CloseTime, Ticket}*/]) {
+int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int& data[][/*{OpenTime, CloseTime, Ticket}*/]) {
    int sameOpensCopy[][2]; ArrayResize(sameOpensCopy, 0);
    ArrayCopy(sameOpensCopy, sameOpens);                  // Originalreihenfolge der Indizes in Kopie speichern
 
@@ -452,7 +452,7 @@ int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int& lpData[][/*{Open
    for (int n=0; n < rows; n++) {
       ticket = sameOpens    [n][0];
       i      = sameOpensCopy[n][1];
-      lpData[i][2] = ticket;                             // Originaldaten mit den sortierten Werten überschreiben
+      data[i][2] = ticket;                               // Originaldaten mit den sortierten Werten überschreiben
    }
 
    return(catch("SortTickets.SameOpen()"));

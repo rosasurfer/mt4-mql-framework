@@ -68,7 +68,7 @@ int init() {
 
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int maTimeframe = Period();
-   else                        maTimeframe = StringToPeriod(MA.Timeframe);
+   else                        maTimeframe = PeriodToId(MA.Timeframe);
    if (maTimeframe == 0)
       return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 

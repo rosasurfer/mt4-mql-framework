@@ -102,7 +102,7 @@ int init() {
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
       string strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
-      BollingerBands.MA.Timeframe = StringToPeriod(strValue);
+      BollingerBands.MA.Timeframe = PeriodToId(strValue);
       if (BollingerBands.MA.Timeframe == 0) {
          if (IsConfigKey("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe")) {
             catch("init(3)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
@@ -138,7 +138,7 @@ int init() {
       }
    }
    // -- Ende - Parametervalidierung
-   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
+   //debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
 
 
    // Anzeigeoptionen
@@ -349,9 +349,13 @@ int CheckBollingerBands() {
    double BollingerBands.Deviation;
    */
 
-   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ DoubleToStr(BollingerBands.Deviation, 1));
+   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ DoubleToStr(BollingerBands.Deviation, 1));
 
    return(catch("CheckBollingerBands(1)"));
+
+
+
+
 
 
    // Limite ggf. initialisieren
@@ -362,7 +366,6 @@ int CheckBollingerBands() {
    }
 
    int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
-
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
@@ -391,14 +394,14 @@ int InitializeBandLimits() {
  *
  * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kursreihe gerade aktualisiert wird)
  */
-int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& lpResults[]) {
+int iBollingerBands(string symbol, int timeframe, int periods, int maMethod, int appliedPrice, double deviation, int bar, double& results[]) {
    if (symbol == "0")         // NULL ist ein Integer, (string) NULL => "0"
       symbol = Symbol();
 
    double ma  = iMA    (symbol, timeframe, periods, 0, maMethod, appliedPrice, bar);
    double dev = iStdDev(symbol, timeframe, periods, 0, maMethod, appliedPrice, bar) * deviation;
-   lpResults[B_LOWER] = ma - dev;
-   lpResults[B_UPPER] = ma + dev;
+   results[B_LOWER] = ma - dev;
+   results[B_UPPER] = ma + dev;
 
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) return(error);
@@ -438,7 +441,7 @@ int CheckPivotLevels() {
       ranges[bar][MODE_HIGH ] = range[MODE_HIGH ];
       ranges[bar][MODE_LOW  ] = range[MODE_LOW  ];
       ranges[bar][MODE_CLOSE] = range[MODE_CLOSE];
-      Print("CheckPivotLevels()    "+ PeriodToStr(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
+      Print("CheckPivotLevels()    "+ PeriodDescription(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
 
       // InsideBar-Status bestimmen und speichern
       if (bar > 0) {
@@ -520,32 +523,32 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
  * Ermittelt die OHLC-Werte eines Instruments für eine einzelne Bar einer Periode und schreibt sie in das angegebene Zielarray.
  * Existiert die angegebene Bar nicht, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
- * @param  double& lpResults[4] - Zeiger auf Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
- * @param  string  symbol       - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int     period       - Periode (default: 0 = aktuelle Periode)
- * @param  int     bar          - Bar-Offset
- * @param  bool    exact        - TRUE:  Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der (virtuellen) Tradeserver-Zeitzone
- *                                       "EST+0700,EDT+0700"
- *                              - FALSE: Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
+ * @param  double& results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string  symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  int     period     - Periode (default: 0 = aktuelle Periode)
+ * @param  int     bar        - Bar-Offset
+ * @param  bool    exact      - TRUE:  Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der (virtuellen) Tradeserver-Zeitzone
+ *                                     "EST+0700,EDT+0700"
+ *                            - FALSE: Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
  *
-int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar, bool exact=false) {
+int iOHLCBar(double& results[4], string symbol/*=NULL, int period/*=0, int bar, bool exact=false) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                                       // NULL ist ein Integer (0)
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLCBar(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLCBar(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
 
 
    // schnelle Berechnung für exact=FALSE oder Perioden < H4
    if (!exact || period < PERIOD_H4) {
-      lpResults[MODE_OPEN ] = iOpen (symbol, period, bar);
-      lpResults[MODE_HIGH ] = iHigh (symbol, period, bar);
-      lpResults[MODE_LOW  ] = iLow  (symbol, period, bar);
-      lpResults[MODE_CLOSE] = iClose(symbol, period, bar);
+      results[MODE_OPEN ] = iOpen (symbol, period, bar);
+      results[MODE_HIGH ] = iHigh (symbol, period, bar);
+      results[MODE_LOW  ] = iLow  (symbol, period, bar);
+      results[MODE_CLOSE] = iClose(symbol, period, bar);
       int error = GetLastError();                           // ERR_HISTORY_UPDATE ???
    }
    else {
@@ -559,7 +562,7 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar
             if (error != NO_ERROR     ) return(error);
 
             // OHLC dieser Range ermitteln
-            error = iOHLCBarRange(lpResults, symbol, PERIOD_H1, startBar, endBar);
+            error = iOHLCBarRange(results, symbol, PERIOD_H1, startBar, endBar);
             if (error == ERR_NO_RESULT) catch("iOHLCBar(3)    iOHLCBarRange() => ", error);
             if (error != NO_ERROR     ) return(error);
             break;
@@ -568,14 +571,14 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar
          case PERIOD_W1 :
          case PERIOD_MN1:
          default:
-            return(catch("iOHLCBar(4)   exact calculation for PERIOD_"+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
+            return(catch("iOHLCBar(4)   exact calculation for "+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
       }
    }
 
    if (error != NO_ERROR) {
       if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(5)", error);
    }
-   else if (lpResults[MODE_OPEN] == 0) {
+   else if (results[MODE_OPEN] == 0) {
       error = ERR_NO_RESULT;
    }
    return(error);
@@ -589,11 +592,11 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar
  * Existiert die angegebene Endbar (to) nicht, wird die letzte existierende Bar verwendet.
  * Existiert die resultierende Bar-Range nicht, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
- * @param  double& lpResults[4] - Zeiger auf Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
- * @param  string  symbol       - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int     period       - Periode (default: 0 = aktuelle Periode)
- * @param  int     from         - Offset der Startbar
- * @param  int     to           - Offset der Endbar
+ * @param  double& results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string  symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  int     period     - Periode (default: 0 = aktuelle Periode)
+ * @param  int     from       - Offset der Startbar
+ * @param  int     to         - Offset der Endbar
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert,
  *                             ggf. ERR_HISTORY_UPDATE
@@ -601,7 +604,7 @@ int iOHLCBar(double& lpResults[4], string symbol/*=NULL, int period/*=0, int bar
  * NOTE:    Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  *
-int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL, int period/*=0, int from, int to) {
+int iOHLCBarRange(double& results[4], string symbol/*=NULL, int period/*=0, int from, int to) {
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                           // NULL ist ein Integer (0)
@@ -625,10 +628,10 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL, int period/*=0, in
    }
 
    if (bars-1 < to) {                           // History enthält zu wenig Daten in dieser Periode
-      lpResults[MODE_OPEN ] = 0;
-      lpResults[MODE_HIGH ] = 0;
-      lpResults[MODE_LOW  ] = 0;
-      lpResults[MODE_CLOSE] = 0;
+      results[MODE_OPEN ] = 0;
+      results[MODE_HIGH ] = 0;
+      results[MODE_LOW  ] = 0;
+      results[MODE_CLOSE] = 0;
       last_error = ERR_NO_RESULT;
       return(ERR_NO_RESULT);
    }
@@ -643,10 +646,10 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL, int period/*=0, in
       low  = iLowest (symbol, period, MODE_LOW , from-to+1, to);
    }
 
-   lpResults[MODE_OPEN ] = iOpen (symbol, period, from);
-   lpResults[MODE_HIGH ] = iHigh (symbol, period, high);
-   lpResults[MODE_LOW  ] = iLow  (symbol, period, low );
-   lpResults[MODE_CLOSE] = iClose(symbol, period, to  );
+   results[MODE_OPEN ] = iOpen (symbol, period, from);
+   results[MODE_HIGH ] = iHigh (symbol, period, high);
+   results[MODE_LOW  ] = iLow  (symbol, period, low );
+   results[MODE_CLOSE] = iClose(symbol, period, to  );
 
    return(catch("iOHLCBarRange(5)"));
 }
@@ -657,15 +660,15 @@ int iOHLCBarRange(double& lpResults[4], string symbol/*=NULL, int period/*=0, in
  * Ermittelt die OHLC-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Zielarray.
  * Ergebnis sind die Werte der Bar, die diesen Zeitpunkt abdeckt.
  *
- * @param  double&  lpResults[4] - Zeiger auf Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
- * @param  string   symbol       - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int      timeframe    - Periode (default: 0 = aktuelle Periode)
- * @param  datetime time         - Zeitpunkt
+ * @param  double&  results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string   symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  int      timeframe  - Periode (default: 0 = aktuelle Periode)
+ * @param  datetime time       - Zeitpunkt
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den Zeitpunkt keine Kurse existieren,
  *                             ggf. ERR_HISTORY_UPDATE
  *
-int iOHLCTime(double& lpResults[4], string symbol/*=NULL, int timeframe/*=0, datetime time) {
+int iOHLCTime(double& results[4], string symbol/*=NULL, int timeframe/*=0, datetime time) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
@@ -682,15 +685,15 @@ int iOHLCTime(double& lpResults[4], string symbol/*=NULL, int timeframe/*=0, dat
    }
 
    if (bar == -1) {                             // keine Kurse für diesen Zeitpunkt
-      lpResults[MODE_OPEN ] = 0;
-      lpResults[MODE_HIGH ] = 0;
-      lpResults[MODE_LOW  ] = 0;
-      lpResults[MODE_CLOSE] = 0;
+      results[MODE_OPEN ] = 0;
+      results[MODE_HIGH ] = 0;
+      results[MODE_LOW  ] = 0;
+      results[MODE_CLOSE] = 0;
       last_error = ERR_NO_RESULT;
       return(ERR_NO_RESULT);
    }
 
-   error = iOHLCBar(lpResults, symbol, timeframe, bar);
+   error = iOHLCBar(results, symbol, timeframe, bar);
    if (error == ERR_NO_RESULT)
       catch("iOHLCTime(2)", error);
    return(error);
@@ -702,15 +705,15 @@ int iOHLCTime(double& lpResults[4], string symbol/*=NULL, int timeframe/*=0, dat
  * Ermittelt die OHLC-Werte eines Instruments für einen Zeitraum und schreibt sie in das angegebene Zielarray.
  * Existieren in diesem Zeitraum keine Kurse, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
- * @param  double&  lpResults[4] - Zeiger auf Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
- * @param  string   symbol       - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  datetime from         - Beginn des Zeitraumes
- * @param  datetime to           - Ende des Zeitraumes
+ * @param  double&  results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  string   symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
+ * @param  datetime from       - Beginn des Zeitraumes
+ * @param  datetime to         - Ende des Zeitraumes
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn im Zeitraum keine Kurse existieren,
  *                             ggf. ERR_HISTORY_UPDATE
  *
-int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL, datetime from, datetime to) {
+int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, datetime to) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
@@ -753,10 +756,10 @@ int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL, datetime from, da
    int toBar = iBarShiftPrevious(symbol, period, to-1);
 
    if (fromBar==-1 || toBar==-1) {              // Zeitraum ist zu alt oder zu jung für den Chart
-      lpResults[MODE_OPEN ] = 0;
-      lpResults[MODE_HIGH ] = 0;
-      lpResults[MODE_LOW  ] = 0;
-      lpResults[MODE_CLOSE] = 0;
+      results[MODE_OPEN ] = 0;
+      results[MODE_HIGH ] = 0;
+      results[MODE_LOW  ] = 0;
+      results[MODE_CLOSE] = 0;
       last_error = ERR_NO_RESULT;
       return(ERR_NO_RESULT);
    }
@@ -768,11 +771,11 @@ int iOHLCTimeRange(double& lpResults[4], string symbol/*=NULL, datetime from, da
       highBar = iHighest(symbol, period, MODE_HIGH, fromBar-toBar+1, toBar);
       lowBar  = iLowest (symbol, period, MODE_LOW , fromBar-toBar+1, toBar);
    }
-   lpResults[MODE_OPEN ] = iOpen (symbol, period, fromBar);
-   lpResults[MODE_HIGH ] = iHigh (symbol, period, highBar);
-   lpResults[MODE_LOW  ] = iLow  (symbol, period, lowBar );
-   lpResults[MODE_CLOSE] = iClose(symbol, period, toBar  );
-   //Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodToStr(period));
+   results[MODE_OPEN ] = iOpen (symbol, period, fromBar);
+   results[MODE_HIGH ] = iHigh (symbol, period, highBar);
+   results[MODE_LOW  ] = iLow  (symbol, period, lowBar );
+   results[MODE_CLOSE] = iClose(symbol, period, toBar  );
+   //Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodDescription(period));
 
    return(catch("iOHLCTimeRange(3)"));
 }

@@ -120,16 +120,16 @@
    datetime TimeGMT();
 
    // Eventlistener
-   bool     EventListener(int event, int lpResults[], int flags);
-   bool     EventListener.AccountChange(int lpResults[], int flags);
-   bool     EventListener.AccountPayment(int lpResults[], int flags);
-   bool     EventListener.BarOpen(int lpResults[], int flags);
-   bool     EventListener.HistoryChange(int lpResults[], int flags);
-   bool     EventListener.OrderCancel(int lpResults[], int flags);
-   bool     EventListener.OrderChange(int lpResults[], int flags);
-   bool     EventListener.OrderPlace(int lpResults[], int flags);
-   bool     EventListener.PositionClose(int lpResults[], int flags);
-   bool     EventListener.PositionOpen(int lpResults[], int flags);
+   bool     EventListener(int event, int results[], int flags);
+   bool     EventListener.AccountChange(int results[], int flags);
+   bool     EventListener.AccountPayment(int results[], int flags);
+   bool     EventListener.BarOpen(int results[], int flags);
+   bool     EventListener.HistoryChange(int results[], int flags);
+   bool     EventListener.OrderCancel(int results[], int flags);
+   bool     EventListener.OrderChange(int results[], int flags);
+   bool     EventListener.OrderPlace(int results[], int flags);
+   bool     EventListener.PositionClose(int results[], int flags);
+   bool     EventListener.PositionOpen(int results[], int flags);
 
    // Eventhandler
    int      onAccountChange(int details[]);
@@ -143,8 +143,8 @@
    int      onPositionOpen(int tickets[]);
 
    // EventTracker (Indikator)
-   bool     EventTracker.GetBandLimits(double lpLimits[]);
-   bool     EventTracker.StoreBandLimits(double lpLimits[]);
+   bool     EventTracker.GetBandLimits(double limits[]);
+   bool     EventTracker.StoreBandLimits(double limits[]);
 
    // Farben
    string   ColorToHtmlStr(color rgb);
@@ -153,11 +153,11 @@
    color    HSVToRGBColor(double hsv[3]);
    color    HSVValuesToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
-   int      RGBToHSVColor(color rgb, double lpHSV[]);
-   int      RGBValuesToHSVColor(int red, int green, int blue, double lpHSV[]);
+   int      RGBToHSVColor(color rgb, double hsv[]);
+   int      RGBValuesToHSVColor(int red, int green, int blue, double hsv[]);
 
    // Files, I/O
-   int      FileReadLines(string filename, string lpLines[], bool skipEmptyLines);
+   int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    string   GetShortcutTarget(string lnkFile);
    bool     IsDirectory(string pathName);
@@ -187,7 +187,7 @@
    int      MathSign(double number);
 
    // Strings
-   int      Explode(string object, string separator, string lpResults[], int limit);
+   int      Explode(string object, string separator, string results[], int limit);
    bool     StringContains(string object, string substring);
    bool     StringEndsWith(string object, string postfix);
    int      StringFindR(string object, string search);
@@ -213,41 +213,24 @@
    bool     IsPermanentTradeError(int error);
    bool     IsTemporaryTradeError(int error);
    bool     IsTradeOperationType(int value);
-   bool     OrderCloseByEx(int ticket, int opposite, int lpRemainder[], color markerColor);
+   bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
    bool     OrderCloseMultiple(int tickets[], double slippage, color markerColor);
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
 
    // sonstiges
-   double   GetAverageSpread(string symbol);
-   int      ChronologicalSortTickets(int tickets[]);
-   int      DecreasePeriod(int period);
-   int      GetAccountHistory(int account, string lpResults[]);
-   int      GetAccountNumber();
-   int      GetBalanceHistory(int account, datetime lpTimes[], double lpValues[]);
-   int      GetCurrencyId(string currency);
-   int      GetPeriodFlag(int period);
-   int      GetTerminalWindow();
-   int      iAccountBalance(int account, double lpBuffer[], int bar);
-   int      iAccountBalanceSeries(int account, double lpBuffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);
-   int      iBarShiftPrevious(string symbol, int period, datetime time);
-   int      IncreasePeriod(int period);
-   int      MovingAverageMethodToId(string method);
-   int      RegisterChartObject(string label, string lpObjects[]);
-   int      RemoveChartObjects(string lpObjects[]);
-   int      RepositionLegend();
-   int      SendTextMessage(string receiver, string message);
-   int      SendTick(bool sound);
-   int      SetWindowText(int hWnd, string text);
-   int      StringToPeriod(string description);
-   int      SwitchEAs(bool enable);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
    string   AppliedPriceDescription(int appliedPrice);
+   int      ChronologicalSortTickets(int tickets[]);
    string   CreateLegendLabel(string name);
+   int      DecreasePeriod(int period);
    string   ErrorDescription(int error);
+   int      GetAccountHistory(int account, string results[]);
+   int      GetAccountNumber();
+   double   GetAverageSpread(string symbol);
+   int      GetBalanceHistory(int account, datetime times[], double values[]);
    string   GetComputerName();
    string   GetCurrency(int id);
+   int      GetCurrencyId(string currency);
    string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
@@ -257,13 +240,31 @@
    string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
+   int      GetTerminalWindow();
    string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
+   int      iAccountBalance(int account, double buffer[], int bar);
+   int      iAccountBalanceSeries(int account, double buffer[]);
+   int      iBarShiftNext(string symbol, int period, datetime time);
+   int      iBarShiftPrevious(string symbol, int period, datetime time);
+   int      IncreasePeriod(int period);
    string   MovingAverageMethodDescription(int method);
+   int      MovingAverageMethodToId(string method);
    string   OperationTypeDescription(int type);
+   string   PeriodDescription(int period);
+   int      PeriodFlag(int period);
+   int      PeriodToId(string description);
+   int      RegisterChartObject(string label, string objects[]);
+   int      RemoveChartObjects(string objects[]);
+   int      RepositionLegend();
+   int      SendTextMessage(string receiver, string message);
+   int      SendTick(bool sound);
+   int      SetWindowText(int hWnd, string text);
    string   ShortAccountCompany();
    int      StringBufferToArray(int buffer[], string results[]);
+   int      SwitchEAs(bool enable);
    string   UninitializeReasonDescription(int reason);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
 
    // toString-Funktionen
    string   AppliedPriceToStr(int appliedPrice);
@@ -285,10 +286,10 @@
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
    string   StringArrayToStr(string values[], string separator);
-   string   StructCharToStr(int lpStruct[], int from, int len);
-   string   StructToHexStr(int lpStruct[]);
-   string   StructToStr(int lpStruct[]);
-   string   StructWCharToStr(int lpStruct[], int from, int len);
+   string   StructCharToStr(int struct[], int from, int len);
+   string   StructToHexStr(int struct[]);
+   string   StructToStr(int struct[]);
+   string   StructWCharToStr(int struct[], int from, int len);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
 

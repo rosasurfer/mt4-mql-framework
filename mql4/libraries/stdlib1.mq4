@@ -1095,18 +1095,18 @@ int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                    
 /**
  * Gibt den Inhalt einer Structure als hexadezimalen String zurück.
  *
- * @param  int lpStruct[]
+ * @param  int struct[]
  *
  * @return string
  */
-string StructToHexStr(int lpStruct[]) {
+string StructToHexStr(int struct[]) {
    string result = "";
-   int size = ArraySize(lpStruct);
+   int size = ArraySize(struct);
 
    // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
    // Diese Interpretation muß wieder rückgängig gemacht werden.
    for (int i=0; i < size; i++) {
-      string hex   = IntToHexStr(lpStruct[i]);
+      string hex   = IntToHexStr(struct[i]);
       string byte1 = StringSubstr(hex, 6, 2);
       string byte2 = StringSubstr(hex, 4, 2);
       string byte3 = StringSubstr(hex, 2, 2);
@@ -1127,17 +1127,17 @@ string StructToHexStr(int lpStruct[]) {
  * Gibt den Inhalt einer Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
  * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
  *
- * @param  int lpStruct[]
+ * @param  int struct[]
  *
  * @return string
  */
-string StructToStr(int lpStruct[]) {
+string StructToStr(int struct[]) {
    string result = "";
-   int size = ArraySize(lpStruct);
+   int size = ArraySize(struct);
 
    for (int i=0; i < size; i++) {
       string strInt = "0000";
-      int value, shift=24, integer=lpStruct[i];
+      int value, shift=24, integer=struct[i];
 
       // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
       // Diese Interpretation muß wieder rückgängig gemacht werden.
@@ -1159,9 +1159,9 @@ string StructToStr(int lpStruct[]) {
 /**
  * Gibt den in einer Structure im angegebenen Bereich gespeicherten und mit einem NULL-Character terminierten ANSI-String zurück.
  *
- * @param  int lpStruct[] - Structure
- * @param  int from       - Index des ersten Integers der Charactersequenz
- * @param  int len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ * @param  int struct[] - Structure
+ * @param  int from     - Index des ersten Integers der Charactersequenz
+ * @param  int len      - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
  *
  * @return string
  *
@@ -1169,17 +1169,17 @@ string StructToStr(int lpStruct[]) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructCharToStr(int lpStruct[], int from, int len) {
+string StructCharToStr(int struct[], int from, int len) {
    if (from < 0)
       return(catch("StructCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   int to = from+len, size=ArraySize(lpStruct);
+   int to = from+len, size=ArraySize(struct);
    if (to > size)
       return(catch("StructCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
    for (int i=from; i < to; i++) {
-      int byte, shift=0, integer=lpStruct[i];
+      int byte, shift=0, integer=struct[i];
 
       for (int n=0; n < 4; n++) {
          byte = (integer >> shift) & 0xFF;
@@ -1201,9 +1201,9 @@ string StructCharToStr(int lpStruct[], int from, int len) {
 /**
  * Gibt den in einer Structure im angegebenen Bereich gespeicherten mit einem NULL-Character terminierten WCHAR-String zurück (Multibyte-Characters).
  *
- * @param  int lpStruct[] - Structure
- * @param  int from       - Index des ersten Integers der Charactersequenz
- * @param  int len        - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ * @param  int struct[] - Structure
+ * @param  int from     - Index des ersten Integers der Charactersequenz
+ * @param  int len      - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
  *
  * @return string
  *
@@ -1211,10 +1211,10 @@ string StructCharToStr(int lpStruct[], int from, int len) {
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructWCharToStr(int lpStruct[], int from, int len) {
+string StructWCharToStr(int struct[], int from, int len) {
    if (from < 0)
       return(catch("StructWCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   int to = from+len, size=ArraySize(lpStruct);
+   int to = from+len, size=ArraySize(struct);
    if (to > size)
       return(catch("StructWCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -1222,7 +1222,7 @@ string StructWCharToStr(int lpStruct[], int from, int len) {
 
    for (int i=from; i < to; i++) {
       string strChar;
-      int word, shift=0, integer=lpStruct[i];
+      int word, shift=0, integer=struct[i];
 
       for (int n=0; n < 2; n++) {
          word = (integer >> shift) & 0xFFFF;
@@ -1544,7 +1544,7 @@ int SendTick(bool sound=false) {
 
    int hWnd = WindowHandle(Symbol(), Period());
    if (hWnd <= 0)
-      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodToStr(Period()) +") => "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodDescription(NULL) +") => "+ hWnd, ERR_RUNTIME_ERROR));
    PostMessageA(hWnd, WM_MT4, 2, 1);
 
    if (sound)
@@ -1715,12 +1715,12 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
  * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
  *
  * @param  string filename       - Dateiname mit zu "{terminal-path}\experts\files" relativer Pfadangabe
- * @param  string lpResult[]     - Zeiger auf ein Ergebnisarray für die Zeilen der Datei
+ * @param  string result[]       - Ergebnisarray für die Zeilen der Datei
  * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
  *
  * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
-int FileReadLines(string filename, string lpResult[], bool skipEmptyLines=false) {
+int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    int fieldSeparator = '\t';
 
    // Datei öffnen
@@ -1734,7 +1734,7 @@ int FileReadLines(string filename, string lpResult[], bool skipEmptyLines=false)
    // Schnelle Rückkehr bei leerer Datei
    if (FileSize(hFile) == 0) {
       FileClose(hFile);
-      ArrayResize(lpResult, 0);
+      ArrayResize(result, 0);
       return(ifInt(catch("FileReadLines(2)")==NO_ERROR, 0, -1));
    }
 
@@ -1796,9 +1796,9 @@ int FileReadLines(string filename, string lpResult[], bool skipEmptyLines=false)
    FileClose(hFile);
 
    // Zeilen in Ergebnisarray kopieren
-   ArrayResize(lpResult, i);
+   ArrayResize(result, i);
    if (i > 0)
-      ArrayCopy(lpResult, lines);
+      ArrayCopy(result, lines);
 
    return(ifInt(catch("FileReadLines(3)")==NO_ERROR, i, -1));
 }
@@ -3521,26 +3521,26 @@ datetime EasternToServerTime(datetime easternTime) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
  *
- * @param  int event       - Event
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int event     - Event
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener(int event, int lpResults[], int flags=0) {
+bool EventListener(int event, int results[], int flags=0) {
    switch (event) {
-      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (lpResults, flags));
-      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (lpResults, flags));
-      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (lpResults, flags));
-      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (lpResults, flags));
-      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (lpResults, flags));
-      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (lpResults, flags));
-      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (lpResults, flags));
-      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(lpResults, flags));
-      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (lpResults, flags));
+      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (results, flags));
+      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (results, flags));
+      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (results, flags));
+      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (results, flags));
+      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (results, flags));
+      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (results, flags));
+      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (results, flags));
+      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(results, flags));
+      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
    }
 
-   catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("EventListener()  invalid parameter event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
 }
 
@@ -3548,16 +3548,16 @@ bool EventListener(int event, int lpResults[], int flags=0) {
 /**
  * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
  *
- * @param  int lpResults[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int flags       - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ * @param  int results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.BarOpen(int& lpResults[], int flags=0) {
-   ArrayResize(lpResults, 1);
-   lpResults[0] = 0;
+bool EventListener.BarOpen(int& results[], int flags=0) {
+   ArrayResize(results, 1);
+   results[0] = 0;
 
-   int currentPeriodFlag = GetPeriodFlag(Period());
+   int currentPeriodFlag = PeriodFlag(Period());
    if (flags == 0)
       flags = currentPeriodFlag;
 
@@ -3565,7 +3565,7 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
    if (flags & currentPeriodFlag != 0) {
       static datetime lastOpenTime = 0;
       if (lastOpenTime != 0) if (lastOpenTime != Time[0])
-         lpResults[0] |= currentPeriodFlag;
+         results[0] |= currentPeriodFlag;
       lastOpenTime = Time[0];
    }
 
@@ -3587,7 +3587,7 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
-               lpResults[0] |= PERIODFLAG_M1;
+               results[0] |= PERIODFLAG_M1;
             //Print("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
@@ -3598,14 +3598,14 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
 
    // TODO: verbleibende Timeframe-Flags verarbeiten
    if (false) {
-      if (flags & PERIODFLAG_M5  != 0) lpResults[0] |= PERIODFLAG_M5 ;
-      if (flags & PERIODFLAG_M15 != 0) lpResults[0] |= PERIODFLAG_M15;
-      if (flags & PERIODFLAG_M30 != 0) lpResults[0] |= PERIODFLAG_M30;
-      if (flags & PERIODFLAG_H1  != 0) lpResults[0] |= PERIODFLAG_H1 ;
-      if (flags & PERIODFLAG_H4  != 0) lpResults[0] |= PERIODFLAG_H4 ;
-      if (flags & PERIODFLAG_D1  != 0) lpResults[0] |= PERIODFLAG_D1 ;
-      if (flags & PERIODFLAG_W1  != 0) lpResults[0] |= PERIODFLAG_W1 ;
-      if (flags & PERIODFLAG_MN1 != 0) lpResults[0] |= PERIODFLAG_MN1;
+      if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
+      if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
+      if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
+      if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
+      if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
+      if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
+      if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
+      if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
    }
 
    int error = GetLastError();
@@ -3613,23 +3613,23 @@ bool EventListener.BarOpen(int& lpResults[], int flags=0) {
       catch("EventListener.BarOpen()", error);
       return(false);
    }
-   return(lpResults[0] != 0);
+   return(results[0] != 0);
 }
 
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
  *
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderChange(int lpResults[], int flags=0) {
+bool EventListener.OrderChange(int results[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(lpResults) > 0)
-      ArrayResize(lpResults, 0);
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
 
    // TODO: implementieren
 
@@ -3645,16 +3645,16 @@ bool EventListener.OrderChange(int lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
  *
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderPlace(int lpResults[], int flags=0) {
+bool EventListener.OrderPlace(int results[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(lpResults) > 0)
-      ArrayResize(lpResults, 0);
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
 
    // TODO: implementieren
 
@@ -3670,16 +3670,16 @@ bool EventListener.OrderPlace(int lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
  *
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderCancel(int lpResults[], int flags=0) {
+bool EventListener.OrderCancel(int results[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(lpResults) > 0)
-      ArrayResize(lpResults, 0);
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
 
    // TODO: implementieren
 
@@ -3696,20 +3696,20 @@ bool EventListener.OrderCancel(int lpResults[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionOpen-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int lpTickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
- * @param  int flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                            (default: 0)
+ * @param  int tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
+ * @param  int flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ *                         (default: 0)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
+bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
       return(false);
 
    // Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(lpTickets) > 0)
-      ArrayResize(lpTickets, 0);
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
 
    static int      accountNumber[1];
    static datetime accountInitTime[1];                      // GMT-Zeit
@@ -3785,8 +3785,8 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
-               ArrayResize(lpTickets, ArraySize(lpTickets)+1);
-               lpTickets[ArraySize(lpTickets)-1] = ticket;
+               ArrayResize(tickets, ArraySize(tickets)+1);
+               tickets[ArraySize(tickets)-1] = ticket;
             }
          }
 
@@ -3796,7 +3796,7 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
       }
    }
 
-   bool eventStatus = (ArraySize(lpTickets) > 0);
+   bool eventStatus = (ArraySize(tickets) > 0);
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
@@ -3812,20 +3812,20 @@ bool EventListener.PositionOpen(int& lpTickets[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein PositionClose-Event aufgetreten ist. Werden zusätzliche Orderkriterien angegeben, wird das Event nur
  * dann signalisiert, wenn alle angegebenen Kriterien erfüllt sind.
  *
- * @param  int lpTickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
- * @param  int flags       - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                           (default: 0)
+ * @param  int tickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
+ * @param  int flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
+ *                         (default: 0)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
+bool EventListener.PositionClose(int& tickets[], int flags=0) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
       return(false);
 
    // Ergebnisarray sicherheitshalber zurücksetzen
-   if (ArraySize(lpTickets) > 0)
-      ArrayResize(lpTickets, 0);
+   if (ArraySize(tickets) > 0)
+      ArrayResize(tickets, 0);
 
    static int accountNumber[1];
    static int knownPositions[];                                  // bekannte Positionen
@@ -3861,8 +3861,8 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
             else if (StringEndsWith  (comment, "[tp]")) pending = true;
             else if (StringEndsWith  (comment, "[sl]")) pending = true;
             else if (OrderTakeProfit() > 0) {
-               if      (type == OP_BUY )                        pending = (OrderClosePrice() >= OrderTakeProfit());
-               else if (type == OP_SELL)                        pending = (OrderClosePrice() <= OrderTakeProfit());
+               if      (type == OP_BUY )                pending = (OrderClosePrice() >= OrderTakeProfit());
+               else if (type == OP_SELL)                pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
             if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
@@ -3873,8 +3873,8 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
-               ArrayResize(lpTickets, ArraySize(lpTickets)+1);
-               lpTickets[ArraySize(lpTickets)-1] = knownPositions[i];
+               ArrayResize(tickets, ArraySize(tickets)+1);
+               tickets[ArraySize(tickets)-1] = knownPositions[i];
             }
          }
       }
@@ -3898,7 +3898,7 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
       }
    }
 
-   bool eventStatus = (ArraySize(lpTickets) > 0);
+   bool eventStatus = (ArraySize(tickets) > 0);
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    error = GetLastError();
@@ -3913,16 +3913,16 @@ bool EventListener.PositionClose(int& lpTickets[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountPayment(int lpResults[], int flags=0) {
+bool EventListener.AccountPayment(int results[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(lpResults) > 0)
-      ArrayResize(lpResults, 0);
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
 
    // TODO: implementieren
 
@@ -3938,16 +3938,16 @@ bool EventListener.AccountPayment(int lpResults[], int flags=0) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
  *
- * @param  int lpResults[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.HistoryChange(int lpResults[], int flags=0) {
+bool EventListener.HistoryChange(int results[], int flags=0) {
    bool eventStatus = false;
 
-   if (ArraySize(lpResults) > 0)
-      ArrayResize(lpResults, 0);
+   if (ArraySize(results) > 0)
+      ArrayResize(results, 0);
 
    // TODO: implementieren
 
@@ -3965,12 +3965,12 @@ bool EventListener.HistoryChange(int lpResults[], int flags=0) {
  * Während des Terminal-Starts und Accountwechseln gibt AccountNumber() sehr kurzfristig 0 zurück. Diese start()-Aufrufe des noch nicht vollständig
  * initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int lpResults[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
- * @param  int flags       - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int results[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountChange(int lpResults[], int flags=0) {
+bool EventListener.AccountChange(int results[], int flags=0) {
    static int accountData[3];                         // { last_account_number, current_account_number, current_account_init_servertime }
 
    bool eventStatus = false;
@@ -3993,9 +3993,9 @@ bool EventListener.AccountChange(int lpResults[], int flags=0) {
    }
    //Print("EventListener.AccountChange()   eventStatus: "+ eventStatus);
 
-   if (ArraySize(lpResults) != 3)
-      ArrayResize(lpResults, 3);
-   ArrayCopy(lpResults, accountData);
+   if (ArraySize(results) != 3)
+      ArrayResize(results, 3);
+   ArrayCopy(results, accountData);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
@@ -4013,17 +4013,17 @@ double EventTracker.BBandLimits[2];
  * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
  * in der Library gespeichert).
  *
- * @param  double lpResults[2] - Array für die Ergebnisse { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
+ * @param  double results[2] - Array für die Ergebnisse { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
  *
  * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
  *                               FALSE bei nicht existierenden Daten
  */
-bool EventTracker.GetBandLimits(double& lpResults[]) {
+bool EventTracker.GetBandLimits(double& results[]) {
    if (EQ(EventTracker.BBandLimits[B_LOWER], 0))
       return(false);
 
-   lpResults[B_LOWER] = EventTracker.BBandLimits[B_LOWER];
-   lpResults[B_UPPER] = EventTracker.BBandLimits[B_UPPER];
+   results[B_LOWER] = EventTracker.BBandLimits[B_LOWER];
+   results[B_UPPER] = EventTracker.BBandLimits[B_UPPER];
 
    return(true);
 }
@@ -4032,18 +4032,18 @@ bool EventTracker.GetBandLimits(double& lpResults[]) {
 /**
  * Speichert die angegebenen BollingerBand-Limite des EventTrackers in der Library.
  *
- * @param  double lpLimits[2] - Array mit den aktuellen Limiten { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
+ * @param  double limits[2] - Array mit den aktuellen Limiten { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
  *
  * @return int - Fehlerstatus
  */
-int EventTracker.StoreBandLimits(double lpLimits[]) {
-   if (EQ(lpLimits[B_LOWER], 0))
-      return(catch("EventTracker.StoreBandLimits(1)   invalid parameter lpLimits = "+ DoubleArrayToStr(lpLimits), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (EQ(lpLimits[B_UPPER], 0))
-      return(catch("EventTracker.StoreBandLimits(2)   invalid parameter lpLimits = "+ DoubleArrayToStr(lpLimits), ERR_INVALID_FUNCTION_PARAMVALUE));
+int EventTracker.StoreBandLimits(double limits[]) {
+   if (EQ(limits[B_LOWER], 0))
+      return(catch("EventTracker.StoreBandLimits(1)   invalid parameter limits = "+ DoubleArrayToStr(limits), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (EQ(limits[B_UPPER], 0))
+      return(catch("EventTracker.StoreBandLimits(2)   invalid parameter limits = "+ DoubleArrayToStr(limits), ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   EventTracker.BBandLimits[B_LOWER] = lpLimits[B_LOWER];
-   EventTracker.BBandLimits[B_UPPER] = lpLimits[B_UPPER];
+   EventTracker.BBandLimits[B_LOWER] = limits[B_LOWER];
+   EventTracker.BBandLimits[B_UPPER] = limits[B_UPPER];
 
    return(catch("EventTracker.StoreBandLimits(3)"));
 }
@@ -4052,28 +4052,28 @@ int EventTracker.StoreBandLimits(double lpLimits[]) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string object      - zu zerlegender String
- * @param  string separator   - Trennstring
- * @param  string lpResults[] - Zielarray für die Teilstrings
- * @param  int    limit       - maximale Anzahl von Teilstrings (default: kein Limit)
+ * @param  string object    - zu zerlegender String
+ * @param  string separator - Trennstring
+ * @param  string results[] - Zielarray für die Teilstrings
+ * @param  int    limit     - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
-int Explode(string object, string separator, string& lpResults[], int limit=NULL) {
+int Explode(string object, string separator, string& results[], int limit=NULL) {
    int lenObject    = StringLen(object),
        lenSeparator = StringLen(separator);
 
    if (lenObject == 0) {                     // Leerstring
-      ArrayResize(lpResults, 1);
-      lpResults[0] = object;
+      ArrayResize(results, 1);
+      results[0] = object;
    }
    else if (StringLen(separator) == 0) {     // String in einzelne Zeichen zerlegen
       if (limit==NULL || limit > lenObject)
          limit = lenObject;
-      ArrayResize(lpResults, limit);
+      ArrayResize(results, limit);
 
       for (int i=0; i < limit; i++) {
-         lpResults[i] = StringSubstr(object, i, 1);
+         results[i] = StringSubstr(object, i, 1);
       }
    }
    else {                                    // String in Substrings zerlegen
@@ -4081,28 +4081,28 @@ int Explode(string object, string separator, string& lpResults[], int limit=NULL
       i = 0;
 
       while (i < lenObject) {
-         ArrayResize(lpResults, size+1);
+         ArrayResize(results, size+1);
 
          pos = StringFind(object, separator, i);
          if (limit == size+1)
             pos = -1;
          if (pos == -1) {
-            lpResults[size] = StringSubstr(object, i);
+            results[size] = StringSubstr(object, i);
             break;
          }
          else if (pos == i) {
-            lpResults[size] = "";
+            results[size] = "";
          }
          else {
-            lpResults[size] = StringSubstrFix(object, i, pos-i);
+            results[size] = StringSubstrFix(object, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
       }
 
       if (i == lenObject) {                  // bei abschließendem Separator Substrings mit Leerstring beenden
-         ArrayResize(lpResults, size+1);
-         lpResults[size] = "";               // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende überprüfen
+         ArrayResize(results, size+1);
+         results[size] = "";                 // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende überprüfen
       }
    }
 
@@ -4111,30 +4111,30 @@ int Explode(string object, string separator, string& lpResults[], int limit=NULL
       catch("Explode()", error);
       return(-1);
    }
-   return(ArraySize(lpResults));
+   return(ArraySize(results));
 }
 
 
 /**
  * Liest die History eines Accounts aus dem Dateisystem in das angegebene Array ein (Daten werden als Strings gespeichert).
  *
- * @param  int    account                      - Account-Nummer
- * @param  string lpResults[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
+ * @param  int    account                    - Account-Nummer
+ * @param  string results[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
  *
  * @return int - Fehlerstatus
  */
-int GetAccountHistory(int account, string lpResults[][HISTORY_COLUMNS]) {
-   if (ArrayRange(lpResults, 1) != HISTORY_COLUMNS)
-      return(catch("GetAccountHistory(1)   invalid parameter lpResults["+ ArrayRange(lpResults, 0) +"]["+ ArrayRange(lpResults, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
+   if (ArrayRange(results, 1) != HISTORY_COLUMNS)
+      return(catch("GetAccountHistory(1)   invalid parameter results["+ ArrayRange(results, 0) +"]["+ ArrayRange(results, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    int    cache.account[1];
    string cache[][HISTORY_COLUMNS];
 
-   ArrayResize(lpResults, 0);
+   ArrayResize(results, 0);
 
    // Daten nach Möglichkeit aus dem Cache liefern
    if (cache.account[0] == account) {
-      ArrayCopy(lpResults, cache);
+      ArrayCopy(results, cache);
       log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(2)"));
    }
@@ -4236,7 +4236,7 @@ int GetAccountHistory(int account, string lpResults[][HISTORY_COLUMNS]) {
 
    // Daten in Zielarray kopieren und cachen
    if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
-      ArrayCopy(lpResults, result);
+      ArrayCopy(results, result);
 
       cache.account[0] = account;
       ArrayResize(cache, 0);
@@ -4313,19 +4313,19 @@ double GetAverageSpread(string symbol) {
 /**
  * Schreibt die Balance-History eines Accounts in die angegebenen Ergebnisarrays (aufsteigend nach Zeitpunkt sortiert).
  *
- * @param  int      account    - Account-Nummer
- * @param  datetime lpTimes[]  - Zeiger auf Ergebnisarray für die Zeitpunkte der Balanceänderung
- * @param  double   lpValues[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
+ * @param  int      account  - Account-Nummer
+ * @param  datetime times[]  - Zeiger auf Ergebnisarray für die Zeitpunkte der Balanceänderung
+ * @param  double   values[] - Zeiger auf Ergebnisarray der entsprechenden Balancewerte
  *
  * @return int - Fehlerstatus
  */
-int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
+int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    int      cache.account[1];
    datetime cache.times[];
    double   cache.values[];
 
-   ArrayResize(lpTimes,  0);
-   ArrayResize(lpValues, 0);
+   ArrayResize(times,  0);
+   ArrayResize(values, 0);
 
    // Daten nach Möglichkeit aus dem Cache liefern       TODO: paralleles Cachen mehrerer Wertereihen ermöglichen
    if (cache.account[0] == account) {
@@ -4336,8 +4336,8 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
        * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
        * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)  [4051 - invalid function parameter value]
        */
-      ArrayCopy(lpTimes , cache.times);
-      ArrayCopy(lpValues, cache.values);
+      ArrayCopy(times , cache.times);
+      ArrayCopy(values, cache.values);
       log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" balance values for account "+ account +" from cache");
       return(catch("GetBalanceHistory(1)"));
    }
@@ -4362,22 +4362,22 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
 
       // der erste Datensatz wird immer geschrieben...
       if (i == 0) {
-         ArrayResize(lpTimes,  n+1);
-         ArrayResize(lpValues, n+1);
-         lpTimes [n] = time;
-         lpValues[n] = balance;
+         ArrayResize(times,  n+1);
+         ArrayResize(values, n+1);
+         times [n] = time;
+         values[n] = balance;
          n++;                                // n: Anzahl der existierenden Ergebnisdaten => ArraySize(lpTimes)
       }
       else if (balance != lastBalance) {
          // ... alle weiteren nur, wenn die Balance sich geändert hat
          if (time == lastTime) {             // Existieren mehrere Balanceänderungen zum selben Zeitpunkt,
-            lpValues[n-1] = balance;         // wird der letzte Wert nur mit dem aktuellen überschrieben.
+            values[n-1] = balance;           // wird der letzte Wert nur mit dem aktuellen überschrieben.
          }
          else {
-            ArrayResize(lpTimes,  n+1);
-            ArrayResize(lpValues, n+1);
-            lpTimes [n] = time;
-            lpValues[n] = balance;
+            ArrayResize(times,  n+1);
+            ArrayResize(values, n+1);
+            times [n] = time;
+            values[n] = balance;
             n++;
          }
       }
@@ -4387,9 +4387,9 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
 
    // Daten cachen
    cache.account[0] = account;
-   ArrayResize(cache.times,  0); ArrayCopy(cache.times,  lpTimes );
-   ArrayResize(cache.values, 0); ArrayCopy(cache.values, lpValues);
-   log("GetBalanceHistory()   caching "+ ArraySize(lpTimes) +" balance values for account "+ account);
+   ArrayResize(cache.times,  0); ArrayCopy(cache.times,  times );
+   ArrayResize(cache.values, 0); ArrayCopy(cache.values, values);
+   log("GetBalanceHistory()   caching "+ ArraySize(times) +" balance values for account "+ account);
 
    return(catch("GetBalanceHistory(5)"));
 }
@@ -4402,10 +4402,10 @@ int GetBalanceHistory(int account, datetime& lpTimes[], double& lpValues[]) {
  */
 string GetComputerName() {
    string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
-   int lpBufferSize[1]; lpBufferSize[0] = StringLen(buffer[0]);
+   int bufferSize[1]; bufferSize[0] = StringLen(buffer[0]);
 
-   if (!GetComputerNameA(buffer[0], lpBufferSize)) {
-      catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ lpBufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
+   if (!GetComputerNameA(buffer[0], bufferSize)) {
+      catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ bufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
       return("");
    }
 
@@ -5489,8 +5489,11 @@ string AppliedPriceDescription(int appliedPrice) {
  *
  * @return int - Timeframe-Code oder 0, wenn der Bezeichner ungültig ist
  */
-int StringToPeriod(string timeframe) {
+int PeriodToId(string timeframe) {
    timeframe = StringToUpper(timeframe);
+
+   if (StringStartsWith(timeframe, "PERIOD_"))
+      timeframe = StringRight(timeframe, -7);
 
    if (timeframe == "M1" ) return(PERIOD_M1 );     //     1  1 minute
    if (timeframe == "M5" ) return(PERIOD_M5 );     //     5  5 minutes
@@ -5502,20 +5505,48 @@ int StringToPeriod(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   log("StringToPeriod()  invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   log("PeriodToId()  invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
 
 /**
- * Gibt die lesbare Version eines Timeframe-Codes zurück.
+ * Gibt die lesbare Konstante einer Timeframe-ID zurück.
  *
  * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
  *
  * @return string
  */
-string PeriodToStr(int period=0) {
-   if (period == 0)
+string PeriodToStr(int period=NULL) {
+   if (period == NULL)
+      period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return("PERIOD_M1" );     //     1  1 minute
+      case PERIOD_M5 : return("PERIOD_M5" );     //     5  5 minutes
+      case PERIOD_M15: return("PERIOD_M15");     //    15  15 minutes
+      case PERIOD_M30: return("PERIOD_M30");     //    30  30 minutes
+      case PERIOD_H1 : return("PERIOD_H1" );     //    60  1 hour
+      case PERIOD_H4 : return("PERIOD_H4" );     //   240  4 hour
+      case PERIOD_D1 : return("PERIOD_D1" );     //  1440  daily
+      case PERIOD_W1 : return("PERIOD_W1" );     // 10080  weekly
+      case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
+   }
+
+   catch("PeriodToStr()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   return("");
+}
+
+
+/**
+ * Gibt die Beschreibung eines Timeframe-Codes zurück.
+ *
+ * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
+ *
+ * @return string
+ */
+string PeriodDescription(int period=NULL) {
+   if (period == NULL)
       period = Period();
 
    switch (period) {
@@ -5530,7 +5561,7 @@ string PeriodToStr(int period=0) {
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
 
-   catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("PeriodDescription()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5542,8 +5573,8 @@ string PeriodToStr(int period=0) {
  *
  * @return int - Timeframe-Flag
  */
-int GetPeriodFlag(int period=0) {
-   if (period == 0)
+int PeriodFlag(int period=NULL) {
+   if (period == NULL)
       period = Period();
 
    switch (period) {
@@ -5558,7 +5589,7 @@ int GetPeriodFlag(int period=0) {
       case PERIOD_MN1: return(PERIODFLAG_MN1);
    }
 
-   catch("GetPeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("PeriodFlag()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -5903,17 +5934,17 @@ datetime GmtToServerTime(datetime gmtTime) {
 /**
  * Berechnet den Balancewert eines Accounts am angegebenen Offset des aktuellen Charts und schreibt ihn in das Ergebnisarray.
  *
- * @param  int    account  - Account, für den der Wert berechnet werden soll
- * @param  double lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
- * @param  int    bar      - Barindex des zu berechnenden Wertes (Chart-Offset)
+ * @param  int    account - Account, für den der Wert berechnet werden soll
+ * @param  double buffer  - Ergebnisarray (z.B. Indikatorpuffer)
+ * @param  int    bar     - Barindex des zu berechnenden Wertes (Chart-Offset)
  *
  * @return int - Fehlerstatus
  */
-int iAccountBalance(int account, double lpBuffer[], int bar) {
+int iAccountBalance(int account, double buffer[], int bar) {
 
    // TODO: Berechnung einzelner Bar implementieren (zur Zeit wird der Indikator hier noch komplett neuberechnet)
 
-   if (iAccountBalanceSeries(account, lpBuffer) == ERR_HISTORY_UPDATE) {
+   if (iAccountBalanceSeries(account, buffer) == ERR_HISTORY_UPDATE) {
       catch("iAccountBalance(1)");
       return(ERR_HISTORY_UPDATE);
    }
@@ -5925,15 +5956,15 @@ int iAccountBalance(int account, double lpBuffer[], int bar) {
 /**
  * Berechnet den Balanceverlauf eines Accounts für alle Bars des aktuellen Charts und schreibt die Werte in das angegebene Zielarray.
  *
- * @param  int    account  - Account-Nummer
- * @param  double lpBuffer - Zeiger auf Ergebnisarray (z.B. Indikatorpuffer)
+ * @param  int    account - Account-Nummer
+ * @param  double buffer  - Ergebnisarray (z.B. Indikatorpuffer)
  *
  * @return int - Fehlerstatus
  */
-int iAccountBalanceSeries(int account, double& lpBuffer[]) {
-   if (ArraySize(lpBuffer) != Bars) {
-      ArrayResize(lpBuffer, Bars);
-      ArrayInitialize(lpBuffer, EMPTY_VALUE);
+int iAccountBalanceSeries(int account, double& buffer[]) {
+   if (ArraySize(buffer) != Bars) {
+      ArrayResize(buffer, Bars);
+      ArrayInitialize(buffer, EMPTY_VALUE);
    }
 
    // Balance-History holen
@@ -5960,18 +5991,18 @@ int iAccountBalanceSeries(int account, double& lpBuffer[]) {
       // Lücken mit vorherigem Balancewert füllen
       if (bar < lastBar-1) {
          for (int z=lastBar-1; z > bar; z--) {
-            lpBuffer[z] = lpBuffer[lastBar];
+            buffer[z] = buffer[lastBar];
          }
       }
 
       // aktuellen Balancewert eintragen
-      lpBuffer[bar] = values[i];
+      buffer[bar] = values[i];
       lastBar = bar;
    }
 
    // Ergebnisarray bis zur ersten Bar mit dem letzten bekannten Balancewert füllen
    for (bar=lastBar-1; bar >= 0; bar--) {
-      lpBuffer[bar] = lpBuffer[lastBar];
+      buffer[bar] = buffer[lastBar];
    }
 
    return(catch("iAccountBalanceSeries(2)"));
@@ -6467,15 +6498,15 @@ abstract*/ int onHistoryChange(int details[]) {
 /**
  * Fügt das angegebene Objektlabel den gespeicherten Labels hinzu.
  *
- * @param  string label       - zu speicherndes Label
- * @param  string lpObjects[] - Array mit gespeicherten Labels
+ * @param  string label     - zu speicherndes Label
+ * @param  string objects[] - Array mit gespeicherten Labels
  *
  * @return int - Fehlerstatus
  */
-int RegisterChartObject(string label, string& lpObjects[]) {
-   int size = ArraySize(lpObjects);
-   ArrayResize(lpObjects, size+1);
-   lpObjects[size] = label;
+int RegisterChartObject(string label, string& objects[]) {
+   int size = ArraySize(objects);
+   ArrayResize(objects, size+1);
+   objects[size] = label;
    return(NO_ERROR);
 }
 
@@ -6483,19 +6514,19 @@ int RegisterChartObject(string label, string& lpObjects[]) {
 /**
  * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
  *
- * @param  string lpLabels[] - Array mit Objektlabels
+ * @param  string labels[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects(string lpLabels[]) {
-   int size = ArraySize(lpLabels);
+int RemoveChartObjects(string labels[]) {
+   int size = ArraySize(labels);
    if (size == 0)
       return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(lpLabels[i]);
+      ObjectDelete(labels[i]);
    }
-   ArrayResize(lpLabels, 0);
+   ArrayResize(labels, 0);
 
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST)
@@ -7031,27 +7062,27 @@ string ColorToRGBStr(color rgb) {
 /**
  * Konvertiert drei RGB-Farbwerte in den HSV-Farbraum (Hue-Saturation-Value).
  *
- * @param  int    red     - Rotanteil  (0-255)
- * @param  int    green   - Grünanteil (0-255)
- * @param  int    blue    - Blauanteil (0-255)
- * @param  double lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ * @param  int    red   - Rotanteil  (0-255)
+ * @param  int    green - Grünanteil (0-255)
+ * @param  int    blue  - Blauanteil (0-255)
+ * @param  double hsv[] - Array zur Aufnahme der HSV-Werte
  *
  * @return int - Fehlerstatus
  */
-int RGBValuesToHSVColor(int red, int green, int blue, double lpHSV[]) {
-   return(RGBToHSVColor(RGB(red, green, blue), lpHSV));
+int RGBValuesToHSVColor(int red, int green, int blue, double hsv[]) {
+   return(RGBToHSVColor(RGB(red, green, blue), hsv));
 }
 
 
 /**
  * Konvertiert eine RGB-Farbe in den HSV-Farbraum (Hue-Saturation-Value).
  *
- * @param  color  rgb     - Farbe
- * @param  double lpHSV[] - Zeiger auf Array zur Aufnahme der HSV-Werte
+ * @param  color  rgb   - Farbe
+ * @param  double hsv[] - Array zur Aufnahme der HSV-Werte
  *
  * @return int - Fehlerstatus
  */
-int RGBToHSVColor(color rgb, double& lpHSV[]) {
+int RGBToHSVColor(color rgb, double& hsv[]) {
    int red   = rgb     & 0xFF;
    int green = rgb>> 8 & 0xFF;
    int blue  = rgb>>16 & 0xFF;
@@ -7082,12 +7113,12 @@ int RGBToHSVColor(color rgb, double& lpHSV[]) {
       else if (hue > 1) { hue -= 1; }
    }
 
-   if (ArraySize(lpHSV) != 3)
-      ArrayResize(lpHSV, 3);
+   if (ArraySize(hsv) != 3)
+      ArrayResize(hsv, 3);
 
-   lpHSV[0] = hue * 360;
-   lpHSV[1] = sat;
-   lpHSV[2] = val;
+   hsv[0] = hue * 360;
+   hsv[1] = sat;
+   hsv[2] = val;
 
    return(catch("RGBToHSVColor()"));
 }
@@ -7872,14 +7903,14 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
  * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab, behandelt sie entsprechend und
  * gibt ggf. die Ticket-Nr. einer resultierenden Restposition zurück.
  *
- * @param  int   ticket        - Ticket-Nr. der zu schließenden Position
- * @param  int   opposite      - Ticket-Nr. der entgegengesetzten zu schließenden Position
- * @param  int   lpRemainder[] - Zeiger auf ein Array zur Aufnahme der Ticket-Nr. einer resultierenden Restposition (wenn zutreffend)
- * @param  color markerColor   - Farbe des Chart-Markers (default: kein Marker)
+ * @param  int   ticket      - Ticket-Nr. der zu schließenden Position
+ * @param  int   opposite    - Ticket-Nr. der entgegengesetzten zu schließenden Position
+ * @param  int   remainder[] - Array zur Aufnahme der Ticket-Nr. einer resultierenden Restposition (wenn zutreffend)
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerColor=CLR_NONE) {
+bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -7939,24 +7970,24 @@ bool OrderCloseByEx(int ticket, int opposite, int& lpRemainder[], color markerCo
 
          if (OrderCloseBy(smaller, larger, markerColor)) {
             time2 = GetTickCount();
-            ArrayResize(lpRemainder, 0);
+            ArrayResize(remainder, 0);
             string strRemainder = ": none";
 
             if (NE(firstLots, hedgeLots)) {
-               // Restposition suchen und in lpRemainder speichern
+               // Restposition suchen und in remainder speichern
                string comment = StringConcatenate("from #", smaller);
                for (int i=OrdersTotal()-1; i >= 0; i--) {
                   if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
                      continue;
                   if (OrderComment() == comment) {
-                     ArrayResize(lpRemainder, 1);
-                     lpRemainder[0] = OrderTicket();
+                     ArrayResize(remainder, 1);
+                     remainder[0] = OrderTicket();
                      break;
                   }
                }
-               if (ArraySize(lpRemainder) == 0)
+               if (ArraySize(remainder) == 0)
                   return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
-               strRemainder = StringConcatenate(" #", lpRemainder[0]);
+               strRemainder = StringConcatenate(" #", remainder[0]);
             }
             PlaySound("OrderOk.wav");
             log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position", strRemainder, ", used time: ", time2-time1, " ms"));

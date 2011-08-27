@@ -73,8 +73,8 @@ int GetPrivateProfileSectionNames(string fileName, string results[]) {
 /**
  *
  */
-int DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey) {
-   if (!WritePrivateProfileStringA(lpSection, lpKey, NULL, lpFileName))
-      return(catch("DeletePrivateProfileKey()   kernel32::WritePrivateProfileStringA(section=\""+ lpSection +"\", key=\""+ lpKey +"\", value=(int) NULL, fileName=\""+ lpFileName +"\") failed", ERR_WINDOWS_ERROR));
+int DeletePrivateProfileKey(string fileName, string section, string key) {
+   if (!WritePrivateProfileStringA(section, key, NULL, fileName))
+      return(catch("DeletePrivateProfileKey()   kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=(int) NULL, fileName=\""+ fileName +"\") failed", ERR_WINDOWS_ERROR));
    return(NO_ERROR);
 }
