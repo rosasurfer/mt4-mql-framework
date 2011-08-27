@@ -59,6 +59,7 @@ int init() {
    if (UninitializeReason() == REASON_RECOMPILE)
       ArrayInitialize(BollingerBand.Limits, 0);
 
+
    // globale Variablen
    stdSymbol  = GetStandardSymbol(Symbol());
    symbolName = GetSymbolName(stdSymbol);
@@ -183,7 +184,7 @@ int start() {
       return(init_error);
 
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0) {                                   // tritt u.U. bei Terminal-Start auf
+   if (Bars == 0) {                                            // tritt u.U. bei Terminal-Start auf
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
    }
@@ -192,28 +193,29 @@ int start() {
 
 
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
-   if (AccountNumber() == 0)
+   if (AccountNumber() == 0) {
+      debug("start()   ERR_NO_CONNECTION");
       return(ERR_NO_CONNECTION);
+   }
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
-   if (TimeCurrent() < loginData[2])
-      return(catch("start(1)"));
+   if (TimeCurrent() < loginData[2]) {
+      //debug("start()   old tick");
+      //return(catch("start(1)"));
+   }
 
    // Positionen
    if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
       HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
-      HandleEvent(EVENT_POSITION_OPEN , OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
+      HandleEvent(EVENT_POSITION_OPEN,  OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
    }
 
    // Bollinger-Bänder
    if (Track.BollingerBands) {
-      if (CheckBollingerBands() == ERR_HISTORY_UPDATE) {
-         last_error = ERR_HISTORY_UPDATE;
-         debug("start()    CheckBollingerBands() => ERR_HISTORY_UPDATE");
-         return(ERR_HISTORY_UPDATE);
-      }
+      if (CheckBollingerBands() != NO_ERROR)
+         return(last_error);
    }
 
    /*
@@ -340,6 +342,17 @@ int onPositionClose(int tickets[]) {
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(NO_ERROR);
+   /*
+   int    BollingerBands.MA.Periods;
+   int    BollingerBands.MA.Timeframe;          // M1, M5, M15 etc.
+   int    BollingerBands.MA.Method;             // SMA | EMA | SMMA | LWMA | ALMA
+   double BollingerBands.Deviation;
+   */
+
+   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodToStr(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ DoubleToStr(BollingerBands.Deviation, 1));
+
+   return(catch("CheckBollingerBands(1)"));
+
 
    // Limite ggf. initialisieren
    if (EQ(BollingerBand.Limits[B_LOWER], 0)) /*&&*/ if (!EventTracker.GetBandLimits(BollingerBand.Limits)) {
@@ -348,16 +361,12 @@ int CheckBollingerBands() {
       EventTracker.StoreBandLimits(BollingerBand.Limits);            // Limite in Library timeframe-übergreifend speichern
    }
 
-
    int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
 
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
-
-
-   debug("CheckBollingerBands()   checking bands: "+ NumberToStr(BollingerBand.Limits[B_LOWER], PriceFormat) +"  <->  " + NumberToStr(BollingerBand.Limits[B_UPPER], PriceFormat));
-
+   //debug("CheckBollingerBands()   checking bands: "+ NumberToStr(BollingerBand.Limits[B_LOWER], PriceFormat) +"  <->  " + NumberToStr(BollingerBand.Limits[B_UPPER], PriceFormat));
    return(catch("CheckBollingerBands(2)"));
 }
 
