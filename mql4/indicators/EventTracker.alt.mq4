@@ -337,7 +337,7 @@ int onPositionClose(int tickets[]) {
 /**
  * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
  *
- * @return int - Fehlerstatus (ERR_HISTORY_UPDATE, falls die Kurse gerade aktualisiert werden)
+ * @return int - Fehlerstatus
  */
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
@@ -348,8 +348,32 @@ int CheckBollingerBands() {
    int    BollingerBands.MA.Method;             // SMA | EMA | SMMA | LWMA | ALMA
    double BollingerBands.Deviation;
    */
+   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
 
-   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ DoubleToStr(BollingerBands.Deviation, 1));
+   double history[][6];
+   int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
+   debug("CheckBollingerBands()   history bars = "+ bars +" (size="+ ArrayRange(history, 0) +")   last="+ TimeToStr(history[0][RATE_TIME]) +"   Open="+ NumberToStr(history[0][RATE_OPEN], PriceFormat));
+
+
+
+   double upperBand[10], lowerBand[10];
+   ArrayInitialize(upperBand, 0);
+   ArrayInitialize(lowerBand, 0);
+
+   // Schleife über alle zu berechnenden Bars
+   for (int bar=ArraySize(upperBand)-1; bar >= 0; bar--) {
+      double ma      = iMA    (NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
+      double dev     = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
+      upperBand[bar] = ma + dev;
+      lowerBand[bar] = ma - dev;
+   }
+
+
+
+
+   string msg = StringConcatenate(NL, NL, NL, NL, NL);
+          msg = msg + "CheckBollingerBands()   "+ NumberToStr(NormalizeDouble(lowerBand[0], Digits), PriceFormat) +"  <->  " + NumberToStr(NormalizeDouble(upperBand[0], Digits), PriceFormat);
+   Comment(msg);
 
    return(catch("CheckBollingerBands(1)"));
 
