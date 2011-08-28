@@ -342,19 +342,49 @@ int onPositionClose(int tickets[]) {
 int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(NO_ERROR);
-   /*
-   int    BollingerBands.MA.Periods;
-   int    BollingerBands.MA.Timeframe;          // M1, M5, M15 etc.
-   int    BollingerBands.MA.Method;             // SMA | EMA | SMMA | LWMA | ALMA
-   double BollingerBands.Deviation;
-   */
-   debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
 
-   double history[][6];
-   int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
-   debug("CheckBollingerBands()   history bars = "+ bars +" (size="+ ArrayRange(history, 0) +")   last="+ TimeToStr(history[0][RATE_TIME]) +"   Open="+ NumberToStr(history[0][RATE_OPEN], PriceFormat));
+   if (Tick == 1) debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
 
 
+   // (1) BollingerBands initialisieren
+   static double history[][6];                  // Zeiger, kein normales Array
+   static int    bars, oldBars;
+   static bool   err_history_update = false;
+
+   bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
+   int error = GetLastError();
+   if (error == ERR_HISTORY_UPDATE) {
+      debug("CheckBollingerBands()   ArrayCopyRates() => ERR_HISTORY_UPDATE   "+ bars +" bars   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]));
+      err_history_update = true;
+      oldBars = bars;
+      return(processError(error));
+   }
+
+   if (err_history_update) /*&&*/ if (bars==oldBars) {// Chart-Tick, der nicht durch ERR_HISTORY_UPDATE der BollingerBand-Periode ausgelöst wurde
+      catch("CheckBollingerBands(0.1)   strange tick   err_history_update="+ err_history_update +"   bars==oldBars ("+ bars +")   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]), ERR_RUNTIME_ERROR);
+      return(catch("CheckBollingerBands(1)"));
+   }
+
+   if (bars != oldBars) {
+      // Anzahl der Bars hat sich geändert
+      err_history_update = false;
+
+      if (bars == oldBars+1) {
+         // BarOpen-Event: aktuelle und letzte Bar neu berechnen
+         debug("CheckBollingerBands()   BarOpen-Event   last="+ TimeToStr(history[1][RATE_TIME]) +"   current="+ TimeToStr(history[0][RATE_TIME]));
+      }
+      else {
+         // History-Update (Datenchunk geladen): komplette Bänder und letztes Crossing neu berechnen
+         debug("CheckBollingerBands()   History"+ ifString(oldBars==0, " loaded", "-Update") +"   "+ bars +" bars   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]));
+      }
+   }
+   oldBars = bars;
+   return(catch("CheckBollingerBands(2)"));
+
+
+
+
+   // (2) BollingerBands prüfen
 
    double upperBand[10], lowerBand[10];
    ArrayInitialize(upperBand, 0);
@@ -362,13 +392,22 @@ int CheckBollingerBands() {
 
    // Schleife über alle zu berechnenden Bars
    for (int bar=ArraySize(upperBand)-1; bar >= 0; bar--) {
-      double ma      = iMA    (NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
-      double dev     = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
+      double ma = iMA(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
+      error = GetLastError();
+      if (error == ERR_HISTORY_UPDATE) {
+         debug("CheckBollingerBands()   iMA() => ERR_HISTORY_UPDATE");
+         return(processError(error));
+      }
+
+      double dev = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
+      error = GetLastError();
+      if (error == ERR_HISTORY_UPDATE) {
+         debug("CheckBollingerBands()   iStdDev() => ERR_HISTORY_UPDATE");
+         return(processError(error));
+      }
       upperBand[bar] = ma + dev;
       lowerBand[bar] = ma - dev;
    }
-
-
 
 
    string msg = StringConcatenate(NL, NL, NL, NL, NL);
@@ -378,10 +417,12 @@ int CheckBollingerBands() {
    return(catch("CheckBollingerBands(1)"));
 
 
-
-
-
-
+   /*
+   int    BollingerBands.MA.Periods;
+   int    BollingerBands.MA.Timeframe;          // M1, M5, M15 etc.
+   int    BollingerBands.MA.Method;             // SMA | EMA | SMMA | LWMA | ALMA
+   double BollingerBands.Deviation;
+   */
    // Limite ggf. initialisieren
    if (EQ(BollingerBand.Limits[B_LOWER], 0)) /*&&*/ if (!EventTracker.GetBandLimits(BollingerBand.Limits)) {
       if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
@@ -389,7 +430,7 @@ int CheckBollingerBands() {
       EventTracker.StoreBandLimits(BollingerBand.Limits);            // Limite in Library timeframe-übergreifend speichern
    }
 
-   int error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
+   error = iBollingerBands(Symbol(), BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, BollingerBands.MA.Method, PRICE_CLOSE,  BollingerBands.Deviation, 0, BollingerBand.Limits);
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
