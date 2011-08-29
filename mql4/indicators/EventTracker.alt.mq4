@@ -202,8 +202,8 @@ int start() {
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
-      //debug("start()   old tick");
-      //return(catch("start(1)"));
+      debug("start()   old tick");
+      return(catch("start(1)"));
    }
 
    // Positionen
@@ -343,49 +343,48 @@ int CheckBollingerBands() {
    if (!Track.BollingerBands)
       return(NO_ERROR);
 
+   // Parameteranzeige
    if (Tick == 1) debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
 
 
-   // (1) BollingerBands initialisieren
-   static double history[][6];                  // Zeiger, kein normales Array
-   static int    bars, oldBars;
-   static bool   err_history_update = false;
-
+   // (1) Daten aktualisieren
+   static double   history[][6];                                     // Zeiger (verhält sich wie ein Integer)
+   static int      oldBars;
+   static datetime oldestBar, newestBar;
+          int      bars, lValidBars, lChangedBars;
+          datetime last, first;
    bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
+
+
+   // (2) ChangedBars/ValidBars berechnen, emuliert IndicatorCounted()
+   last  = history[bars-1][RATE_TIME] +0.1;                          // (datetime) double
+   first = history[     0][RATE_TIME] +0.1;
+   if      (oldBars == 0)         lValidBars = 0;                    // erstes Laden der History
+   else if (bars == oldBars)      lValidBars = oldBars - 1;          // Baranzahl unverändert (normaler Tick)
+   else if (last  != oldestBar) { lValidBars = 0;           debug("CheckBollingerBands()   Bars hinten angefügt");    } // Bars hinten angefügt
+   else if (first != newestBar) { lValidBars = oldBars - 1; debug("CheckBollingerBands()   Bars vorn angefügt");      } // Bars vorn angefügt (deckt BarOpen-Event ab)
+   else                         { lValidBars = 0;           debug("CheckBollingerBands()   Bars in Lücke eingefügt"); } // Bars in Chartlücke eingefügt
+   lChangedBars = bars - lValidBars;
+
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) {
-      debug("CheckBollingerBands()   ArrayCopyRates() => ERR_HISTORY_UPDATE   "+ bars +" bars   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]));
-      err_history_update = true;
-      oldBars = bars;
+      debug("CheckBollingerBands()   ArrayCopyRates() => ERR_HISTORY_UPDATE");
+      oldBars = 0;
       return(processError(error));
    }
+   oldBars   = bars;
+   oldestBar = last;
+   newestBar = first;
 
-   if (err_history_update) /*&&*/ if (bars==oldBars) {// Chart-Tick, der nicht durch ERR_HISTORY_UPDATE der BollingerBand-Periode ausgelöst wurde
-      catch("CheckBollingerBands(0.1)   strange tick   err_history_update="+ err_history_update +"   bars==oldBars ("+ bars +")   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]), ERR_RUNTIME_ERROR);
-      return(catch("CheckBollingerBands(1)"));
-   }
 
-   if (bars != oldBars) {
-      // Anzahl der Bars hat sich geändert
-      err_history_update = false;
+   debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
+   return(catch("CheckBollingerBands(1)"));
 
-      if (bars == oldBars+1) {
-         // BarOpen-Event: aktuelle und letzte Bar neu berechnen
-         debug("CheckBollingerBands()   BarOpen-Event   last="+ TimeToStr(history[1][RATE_TIME]) +"   current="+ TimeToStr(history[0][RATE_TIME]));
-      }
-      else {
-         // History-Update (Datenchunk geladen): komplette Bänder und letztes Crossing neu berechnen
-         debug("CheckBollingerBands()   History"+ ifString(oldBars==0, " loaded", "-Update") +"   "+ bars +" bars   from="+ TimeToStr(history[bars-1][RATE_TIME]) +"   to="+ TimeToStr(history[0][RATE_TIME]));
-      }
-   }
-   oldBars = bars;
-   return(catch("CheckBollingerBands(2)"));
 
 
 
 
    // (2) BollingerBands prüfen
-
    double upperBand[10], lowerBand[10];
    ArrayInitialize(upperBand, 0);
    ArrayInitialize(lowerBand, 0);
