@@ -202,7 +202,7 @@ int start() {
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
-      debug("start()   old tick");
+      debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       return(catch("start(1)"));
    }
 
@@ -344,70 +344,71 @@ int CheckBollingerBands() {
       return(NO_ERROR);
 
    // Parameteranzeige
-   if (Tick == 1) debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
+   static bool done;
+   if (!done) {
+      debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
+      done = true;
+   }
 
 
-   // (1) Daten aktualisieren
+   // (1) Datenreihe aktualisieren
    static double   history[][6];                                     // Zeiger (verhält sich wie ein Integer)
    static int      oldBars;
    static datetime oldestBar, newestBar;
-          int      bars, lValidBars, lChangedBars;
-          datetime last, first;
-   bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
 
-
-   // (2) ChangedBars/ValidBars berechnen, emuliert IndicatorCounted()
-   last  = history[bars-1][RATE_TIME] +0.1;                          // (datetime) double
-   first = history[     0][RATE_TIME] +0.1;
-   if      (oldBars == 0)         lValidBars = 0;                    // erstes Laden der History
-   else if (bars == oldBars)      lValidBars = oldBars - 1;          // Baranzahl unverändert (normaler Tick)
-   else if (last  != oldestBar) { lValidBars = 0;           debug("CheckBollingerBands()   Bars hinten angefügt");    } // Bars hinten angefügt
-   else if (first != newestBar) { lValidBars = oldBars - 1; debug("CheckBollingerBands()   Bars vorn angefügt");      } // Bars vorn angefügt (deckt BarOpen-Event ab)
-   else                         { lValidBars = 0;           debug("CheckBollingerBands()   Bars in Lücke eingefügt"); } // Bars in Chartlücke eingefügt
-   lChangedBars = bars - lValidBars;
-
+   int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) {
       debug("CheckBollingerBands()   ArrayCopyRates() => ERR_HISTORY_UPDATE");
       oldBars = 0;
       return(processError(error));
    }
-   oldBars   = bars;
-   oldestBar = last;
-   newestBar = first;
 
 
-   debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
-   return(catch("CheckBollingerBands(1)"));
+   // (2) IndicatorCounted() emulieren => ChangedBars, ValidBars
+   datetime last  = history[bars-1][RATE_TIME] +0.1;                 // (datetime) double
+   datetime first = history[     0][RATE_TIME] +0.1;
+   int lValidBars;
+   if      (oldBars == 0)         lValidBars = 0;                    // erstes Laden der History
+   else if (bars == oldBars)      lValidBars = oldBars - 1;          // Baranzahl unverändert (normaler Tick)
+   else if (last  != oldestBar) { lValidBars = 0;           debug("CheckBollingerBands()   Bars hinten angefügt");    } // Bars hinten angefügt
+   else if (first != newestBar) { lValidBars = oldBars - 1; debug("CheckBollingerBands()   Bars vorn angefügt");      } // Bars vorn angefügt (deckt BarOpen-Event ab)
+   else                         { lValidBars = 0;           debug("CheckBollingerBands()   Bars in Lücke eingefügt"); } // Bars in Chartlücke eingefügt
+   int lChangedBars = bars - lValidBars;
+   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
 
 
+   // (3) BollingerBands berechnen
+   double upperBand[], lowerBand[];
+   if (bars != oldBars) {
+      ArrayResize(upperBand, bars); ArrayInitialize(upperBand, EMPTY_VALUE);
+      ArrayResize(lowerBand, bars); ArrayInitialize(lowerBand, EMPTY_VALUE);
+   }
 
+   int endBar = MathMin(lChangedBars-1, bars-BollingerBands.MA.Periods);
+   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars +"   endBar="+ endBar);
 
-
-   // (2) BollingerBands prüfen
-   double upperBand[10], lowerBand[10];
-   ArrayInitialize(upperBand, 0);
-   ArrayInitialize(lowerBand, 0);
-
-   // Schleife über alle zu berechnenden Bars
-   for (int bar=ArraySize(upperBand)-1; bar >= 0; bar--) {
-      double ma = iMA(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
-      error = GetLastError();
-      if (error == ERR_HISTORY_UPDATE) {
-         debug("CheckBollingerBands()   iMA() => ERR_HISTORY_UPDATE");
-         return(processError(error));
-      }
-
+   // Schleife von jüngster zu ältester zu berechnender Bar
+   for (int bar=0; bar <= endBar; bar++) {
+      double ma  = iMA    (NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
       double dev = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
       error = GetLastError();
       if (error == ERR_HISTORY_UPDATE) {
-         debug("CheckBollingerBands()   iStdDev() => ERR_HISTORY_UPDATE");
+         catch("CheckBollingerBands()   iMA()|iStdDev() => ERR_HISTORY_UPDATE", ERR_RUNTIME_ERROR);
+         oldBars = 0;
          return(processError(error));
       }
       upperBand[bar] = ma + dev;
       lowerBand[bar] = ma - dev;
    }
 
+
+
+
+
+   oldBars   = bars;
+   oldestBar = last;
+   newestBar = first;
 
    string msg = StringConcatenate(NL, NL, NL, NL, NL);
           msg = msg + "CheckBollingerBands()   "+ NumberToStr(NormalizeDouble(lowerBand[0], Digits), PriceFormat) +"  <->  " + NumberToStr(NormalizeDouble(upperBand[0], Digits), PriceFormat);
@@ -416,12 +417,9 @@ int CheckBollingerBands() {
    return(catch("CheckBollingerBands(1)"));
 
 
-   /*
-   int    BollingerBands.MA.Periods;
-   int    BollingerBands.MA.Timeframe;          // M1, M5, M15 etc.
-   int    BollingerBands.MA.Method;             // SMA | EMA | SMMA | LWMA | ALMA
-   double BollingerBands.Deviation;
-   */
+
+
+
    // Limite ggf. initialisieren
    if (EQ(BollingerBand.Limits[B_LOWER], 0)) /*&&*/ if (!EventTracker.GetBandLimits(BollingerBand.Limits)) {
       if (InitializeBandLimits() == ERR_HISTORY_UPDATE)
@@ -433,7 +431,6 @@ int CheckBollingerBands() {
    if (error == ERR_HISTORY_UPDATE) return(error);
    if (error != NO_ERROR          ) return(catch("InitializeBandLimits()", error));
 
-   //debug("CheckBollingerBands()   checking bands: "+ NumberToStr(BollingerBand.Limits[B_LOWER], PriceFormat) +"  <->  " + NumberToStr(BollingerBand.Limits[B_UPPER], PriceFormat));
    return(catch("CheckBollingerBands(2)"));
 }
 

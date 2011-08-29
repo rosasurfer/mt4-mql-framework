@@ -309,7 +309,7 @@ int start() {
       return(init_error);
 
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iUpperBand1) == 0) {       // tritt u.U. bei Terminal-Start auf
+   if (Bars == 0 || ArraySize(iUpperBand1) == 0) {                   // tritt u.U. bei Terminal-Start auf
       last_error = ERR_TERMINAL_NOT_YET_READY;
       return(last_error);
    }
@@ -326,10 +326,10 @@ int start() {
       ArrayInitialize(iUpperBand2_1, EMPTY_VALUE);
       ArrayInitialize(iLowerBand2_1, EMPTY_VALUE);
       ArrayInitialize(iMovAvg,       EMPTY_VALUE);
-      SetIndicatorStyles();                     // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
    }
 
-   if (MA.Periods < 2)                          // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+   if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
    // Startbar ermitteln
