@@ -3311,10 +3311,8 @@ bool LE(double double1, double double2) {
  */
 bool EQ(double double1, double double2) {
    double diff = double1 - double2;
-
    if (diff < 0)                             // Wir prüfen die Differenz anhand der 14. Nachkommastelle und nicht wie
       diff = -diff;                          // die Original-MetaQuotes-Funktion anhand der 8. (benutzt NormalizeDouble()).
-
    return(diff <= 0.00000000000001);         // siehe auch: NormalizeDouble() in MQL.doc
 }
 
