@@ -199,9 +199,17 @@ int init() {
    string indicatorLongName  = "BollingerBands("+ MA.Periods + MA.Timeframe +" / "+ MovingAverageMethodDescription(maMethod1);
    if (maMethod2 != -1)
       indicatorLongName = indicatorLongName +","+ MovingAverageMethodDescription(maMethod2);
-   indicatorLongName = indicatorLongName +" / "+ AppliedPriceDescription(appliedPrice) +" / "+ NumberToStr(deviation1, ".1+");
-   if (maMethod2 != -1)
-      indicatorLongName = indicatorLongName +","+ NumberToStr(deviation2, ".1+");
+   if (appliedPrice != PRICE_CLOSE)                                     // AppliedPrice nur anzeigen, wenn != PRICE_CLOSE
+      indicatorLongName = indicatorLongName +" / "+ AppliedPriceDescription(appliedPrice);
+   if (EQ(deviation1, 2)) {                                             // Deviations nur anzeigen, wenn != 2.0
+      if (maMethod2!=-1) /*&&*/ if (NE(deviation2, 2))
+         indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+") +","+ NumberToStr(deviation2, ".1+");
+   }
+   else {
+      indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+");
+      if (maMethod2 != -1)
+         indicatorLongName = indicatorLongName +","+ NumberToStr(deviation2, ".1+");
+   }
    indicatorLongName = indicatorLongName +")";
    IndicatorShortName(indicatorShortName);
 

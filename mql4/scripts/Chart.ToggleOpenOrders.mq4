@@ -96,7 +96,6 @@ int start() {
 
 
    // keine Markierungen gefunden: Positionen anzeigen
-   //debug("start()   no chart marker found");
 
 
    // (2) Einträge des aktuellen Instruments auslesen
@@ -221,7 +220,7 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
       ObjectSet(name, OBJPROP_BACK , true);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits), PriceFormat)));
+      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits), PriceFormat)));
    }
    else GetLastError();
 

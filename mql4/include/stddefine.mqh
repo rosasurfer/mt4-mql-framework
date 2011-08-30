@@ -564,8 +564,14 @@ int log(string message="", int error=NO_ERROR) {
 
 /**
  * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
+ *
+ * @param  string message - Message
+ * @param  int    error   - Error-Code
+ *
+ * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
+ * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
  */
-void debug(string message) {
+void debug(string message, int error=NO_ERROR) {
    if (StringLen(__SCRIPT__) == 0)
       __SCRIPT__ = WindowExpertName();
 
@@ -574,12 +580,14 @@ void debug(string message) {
    if (debugToLog == -1)
       debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
 
-   if (debugToLog == 1)
-      log(message);
-   else
+   if (debugToLog == 1) {
+      log(message, error);
+   }
+   else {
+      if (error != NO_ERROR)
+         message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
       OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __SCRIPT__, "::", message));
-
-   return(NO_ERROR);
+   }
 }
 
 
