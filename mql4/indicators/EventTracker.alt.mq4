@@ -379,12 +379,12 @@ int CheckBollingerBands() {
 
 
    // (3) BollingerBands auf Crossing überprüfen
-   double ma, dev, upperValue, lowerValue;
+   double ma, dev, upperBB, lowerBB;
    int    bar, endBar=MathMin(lChangedBars-1, bars-BollingerBands.MA.Periods);
    //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars +"   endBar="+ endBar);
 
    if (lValidBars == 0) {
-      // bei Initialisierung Bänder von neu nach alt bis zum ersten Crossing berechnen (zeitmäßig bis zum jüngsten)
+      // bei Initialisierung Bänder von neu nach alt bis zum ersten Crossing berechnen (zeitmäßig das jüngste)
       for (bar=0; bar <= endBar; bar++) {
          ma  = iMA    (NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
          dev = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
@@ -393,12 +393,12 @@ int CheckBollingerBands() {
             oldBars = 0;
             return(catch("CheckBollingerBands(1)   iMA()|iStdDev()", error));
          }
-         upperValue = ma + dev;
-         lowerValue = ma - dev;
-         if      (LE(upperValue, history[bar][RATE_HIGH])) { lastCrossing =  1; break; }
-         else if (LE(history[bar][RATE_LOW],  lowerValue)) { lastCrossing = -1; break; }
+         upperBB = ma + dev;
+         lowerBB = ma - dev;
+         if      (history[bar][RATE_HIGH] > upperBB) { lastCrossing =  1; break; }  // GE()/LE() sind hier nicht nötig
+         else if (history[bar][RATE_LOW ] < lowerBB) { lastCrossing = -1; break; }
       }
-      if (lastCrossing != 0) debug("CheckBollingerBands()   "+ ifString(lastCrossing==-1, "low", "up") +" crossing found at bar["+ bar +"] = "+ TimeToStr(history[bar][RATE_TIME]));
+      if (lastCrossing != 0) debug("CheckBollingerBands()   last "+ ifString(lastCrossing==-1, "low", "up") +" crossing found at bar["+ bar +"] = "+ TimeToStr(history[bar][RATE_TIME]));
    }
    else {
       // nur die ungültigen Werte von alt nach neu berechnen und dabei auf neues Crossing prüfen
@@ -409,13 +409,13 @@ int CheckBollingerBands() {
             oldBars = 0;
             return(catch("CheckBollingerBands(2)   iMA()|iStdDev()", error));
          }
-         upperValue = ma + dev;
-         lowerValue = ma - dev;
-         if      (LE(upperValue, history[bar][RATE_HIGH])) {
+         upperBB = ma + dev;
+         lowerBB = ma - dev;
+         if      (LE(upperBB, history[bar][RATE_HIGH])) {
             lastCrossing =  1;
             break;
          }
-         else if (LE(history[bar][RATE_LOW],  lowerValue)) {
+         else if (LE(history[bar][RATE_LOW], lowerBB)) {
             lastCrossing = -1;
             break;
          }
@@ -436,7 +436,7 @@ int CheckBollingerBands() {
 
 
    string msg = StringConcatenate(NL, NL, NL, NL, NL);
-          msg = msg + "CheckBollingerBands()   "+ NumberToStr(NormalizeDouble(lowerValue, Digits), PriceFormat) +"  <->  " + NumberToStr(NormalizeDouble(upperValue, Digits), PriceFormat);
+          msg = msg + "CheckBollingerBands()   "+ NumberToStr(NormalizeDouble(lowerBB, Digits), PriceFormat) +"  <->  " + NumberToStr(NormalizeDouble(upperBB, Digits), PriceFormat);
    Comment(msg);
 
 
