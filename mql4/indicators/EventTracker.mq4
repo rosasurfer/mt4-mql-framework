@@ -351,10 +351,16 @@ int CheckBollingerBands() {
    }
 
 
-   // (1) Datenreihen aktualisieren
-   static double   history[][6];                                     // Zeiger (verhält sich wie ein Integer)
-   static int      oldBars, lastCrossing;                            // letztes Crossing war:  -1 = lowCrossing, +1 = upCrossing, 0 = kein oder zwei Crossings gefunden
-   static datetime oldestBar, newestBar;
+   #define CR_UNKNOWN 0
+   #define CR_HIGH    1
+   #define CR_LOW     2
+   #define CR_BOTH    3
+
+
+   // (1) Datenreihe aktualisieren
+   static double   history[][6];                                     // Zeiger: verhält sich wie ein Integer
+   static int      oldBars, lastCrossing;                            // letztes Crossing war: CR_UNKNOWN | CR_HIGH | CR_LOW | CR_BOTH
+   static datetime oldestBar, newestBar, lastCrossingTime;
 
    int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
    int error = GetLastError();
