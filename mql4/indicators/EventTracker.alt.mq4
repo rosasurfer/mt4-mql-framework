@@ -39,7 +39,6 @@ string PriceFormat;
 
 string stdSymbol, symbolName;
 string chartObjects[];
-string stringTest[];
 
 
 /**
@@ -55,13 +54,6 @@ int init() {
    PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
-
-   // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE) {
-      //ArrayInitialize(BollingerBand.Limits, 0);
-      debug("init()   REASON_RECOMPILE, stringTest = "+ StringArrayToStr(stringTest, NULL));
-   }
-
 
    // globale Variablen
    stdSymbol  = GetStandardSymbol(Symbol());
@@ -161,9 +153,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   ArrayPushString(stringTest, "test");
-   //debug("deinit()   stringTest = "+ StringArrayToStr(stringTest, NULL));
-
    RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
@@ -182,8 +171,6 @@ int start() {
    else                                               ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
-
-   debug("start()   tick "+ Tick);
 
    // init() ggf. nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
@@ -204,7 +191,7 @@ int start() {
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0) {
       debug("start()   ERR_NO_CONNECTION");
-      //return(ERR_NO_CONNECTION);
+      return(ERR_NO_CONNECTION);
    }
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
@@ -212,7 +199,7 @@ int start() {
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
       debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      //return(catch("start(1)"));
+      return(catch("start(1)"));
    }
 
    // Positionen
@@ -227,16 +214,6 @@ int start() {
          return(last_error);
    }
 
-   /*
-   // Pivot-Level
-   if (Track.PivotLevels) {
-      if (CheckPivotLevels() == ERR_HISTORY_UPDATE) {
-         last_error = ERR_HISTORY_UPDATE;
-         debug("start()    CheckPivotLevels() => ERR_HISTORY_UPDATE");
-         return(ERR_HISTORY_UPDATE);
-      }
-   }
-   */
    return(catch("start(2)"));
 }
 
@@ -389,7 +366,7 @@ int CheckBollingerBands() {
    oldestBar    = last;
    newestBar    = first;
    lChangedBars = bars - lValidBars;
-   debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
+   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
 
 
    double   ma, dev, lowerBB, upperBB, low, high, close;
