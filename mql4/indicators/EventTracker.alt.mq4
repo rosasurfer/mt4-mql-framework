@@ -362,13 +362,14 @@ int CheckBollingerBands() {
    static datetime oldestBar, newestBar, crossingTime;
 
    int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
-
+   if (bars < 1)
+      return(catch("CheckBollingerBands(1)   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") returned "+ bars +" bars", ERR_RUNTIME_ERROR));
    datetime last  = history[bars-1][RATE_TIME] +0.1;                 // (datetime) double
    datetime first = history[     0][RATE_TIME] +0.1;
 
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) {
-      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +")   from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
+      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
       oldBars = 0;
       return(processError(error));
    }
@@ -411,7 +412,7 @@ int CheckBollingerBands() {
       MarkCrossing(crossing, crossingTime, lowerBB, upperBB);
 
       // bei Initialisierung (ValidBars==0) kann niemals Signal getriggert werden => Rückkehr
-      return(catch("CheckBollingerBands(1)"));
+      return(catch("CheckBollingerBands(2)"));
    }
 
 
@@ -496,7 +497,7 @@ int CheckBollingerBands() {
       case CR_LOW:     break;
    }
 
-   return(catch("CheckBollingerBands(2)"));
+   return(catch("CheckBollingerBands(3)"));
 }
 
 
