@@ -254,7 +254,6 @@
    string   PeriodDescription(int period);
    int      PeriodFlag(int period);
    int      PeriodToId(string description);
-   int      RegisterChartObject(string label, string objects[]);
    int      RemoveChartObjects(string objects[]);
    int      RepositionLegend();
    int      SendTextMessage(string receiver, string message);

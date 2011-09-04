@@ -15,7 +15,7 @@ extern color Grid.Color = LightGray;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-string objectLabels[];
+string chartObjects[];
 
 
 /**
@@ -32,7 +32,7 @@ int init() {
 
    // nach Recompilation statische Arrays zurücksetzen
    if (UninitializeReason() == REASON_RECOMPILE) {
-      ArrayResize(objectLabels, 0);
+      ArrayResize(chartObjects, 0);
    }
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
@@ -49,7 +49,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(objectLabels);
+   RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
 
@@ -175,7 +175,7 @@ int DrawGrid() {
          ObjectSet(label, OBJPROP_STYLE, sStyle);
          ObjectSet(label, OBJPROP_COLOR, sColor);
          ObjectSet(label, OBJPROP_BACK , true  );
-         RegisterChartObject(label, objectLabels);
+         ArrayPushString(chartObjects, label);
       }
       else GetLastError();
 

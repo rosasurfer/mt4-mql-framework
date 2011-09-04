@@ -6493,37 +6493,21 @@ abstract*/ int onHistoryChange(int details[]) {
 
 
 /**
- * Fügt das angegebene Objektlabel den gespeicherten Labels hinzu.
+ * Entfernt die angegebenen Objekte aus dem aktuellen Chart.
  *
- * @param  string label     - zu speicherndes Label
- * @param  string objects[] - Array mit gespeicherten Labels
+ * @param  string objects[] - Array mit Objektlabels
  *
  * @return int - Fehlerstatus
  */
-int RegisterChartObject(string label, string& objects[]) {
+int RemoveChartObjects(string objects[]) {
    int size = ArraySize(objects);
-   ArrayResize(objects, size+1);
-   objects[size] = label;
-   return(NO_ERROR);
-}
-
-
-/**
- * Entfernt die Objekte mit den angegebenen Labels aus dem aktuellen Chart.
- *
- * @param  string labels[] - Array mit Objektlabels
- *
- * @return int - Fehlerstatus
- */
-int RemoveChartObjects(string labels[]) {
-   int size = ArraySize(labels);
    if (size == 0)
       return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(labels[i]);
+      ObjectDelete(objects[i]);
    }
-   ArrayResize(labels, 0);
+   ArrayResize(objects, 0);
 
    int error = GetLastError();
    if (error == ERR_OBJECT_DOES_NOT_EXIST)

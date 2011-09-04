@@ -44,7 +44,7 @@ double iSMA[], iTrend[], iBarDiff[];                  // nicht sichtbare Buffer
 double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
 
 int    appliedPrice;
-string objectLabels[], legendLabel, indicatorName;
+string chartObjects[], legendLabel, indicatorName;
 
 
 /**
@@ -106,7 +106,7 @@ int init() {
 
    // Legende
    legendLabel = CreateLegendLabel(indicatorName);
-   RegisterChartObject(legendLabel, objectLabels);
+   ArrayPushString(chartObjects, legendLabel);
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
@@ -153,7 +153,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(objectLabels);
+   RemoveChartObjects(chartObjects);
    RepositionLegend();
    return(catch("deinit()"));
 }

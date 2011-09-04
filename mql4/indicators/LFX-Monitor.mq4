@@ -13,7 +13,8 @@ color  fontColor = Blue;
 color  bgColor   = C'212,208,200';
 
 string symbols[] = { "USDLFX","AUDLFX","CADLFX","CHFLFX","EURLFX","GBPLFX","JPYLFX" };
-string labels[];
+string chartObjects[];
+
 
 #define USDLFX  0
 #define AUDLFX  1
@@ -47,7 +48,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(labels);
+   RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
 
@@ -105,7 +106,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 33);
       ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      RegisterChartObject(label, labels);
+      ArrayPushString(chartObjects, label);
    }
    else GetLastError();
 
@@ -118,7 +119,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 13);
       ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      RegisterChartObject(label, labels);
+      ArrayPushString(chartObjects, label);
    }
    else GetLastError();
 
@@ -134,7 +135,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE,  119);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, StringLeft(symbols[i], 3) +":", fontSize, fontName, fontColor);
-         RegisterChartObject(label, labels);
+         ArrayPushString(chartObjects, label);
          symbols[i] = label;
       }
       else GetLastError();
@@ -147,7 +148,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE, 59);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         RegisterChartObject(label, labels);
+         ArrayPushString(chartObjects, label);
       }
       else GetLastError();
 
@@ -159,7 +160,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE, 19);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         RegisterChartObject(label, labels);
+         ArrayPushString(chartObjects, label);
       }
       else GetLastError();
    }

@@ -38,7 +38,8 @@ int    PipPoints;
 string PriceFormat;
 
 string stdSymbol, symbolName;
-double BollingerBand.Limits[2];
+string chartObjects[];
+string stringTest[];
 
 
 /**
@@ -56,8 +57,10 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE)
-      ArrayInitialize(BollingerBand.Limits, 0);
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      //ArrayInitialize(BollingerBand.Limits, 0);
+      debug("init()   REASON_RECOMPILE, stringTest = "+ StringArrayToStr(stringTest, NULL));
+   }
 
 
    // globale Variablen
@@ -158,6 +161,10 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   ArrayPushString(stringTest, "test");
+   //debug("deinit()   stringTest = "+ StringArrayToStr(stringTest, NULL));
+
+   RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
 
@@ -175,6 +182,8 @@ int start() {
    else                                               ValidBars = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    stdlib_onTick(ValidBars);
+
+   debug("start()   tick "+ Tick);
 
    // init() ggf. nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
@@ -195,14 +204,14 @@ int start() {
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0) {
       debug("start()   ERR_NO_CONNECTION");
-      return(ERR_NO_CONNECTION);
+      //return(ERR_NO_CONNECTION);
    }
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
-      //debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       //return(catch("start(1)"));
    }
 
@@ -226,12 +235,6 @@ int start() {
          debug("start()    CheckPivotLevels() => ERR_HISTORY_UPDATE");
          return(ERR_HISTORY_UPDATE);
       }
-   }
-
-   // TODO: ValidBars ist bei jedem Timeframe-Wechsel 0, wir wollen ValidBars==0 aber nur bei Chartänderungen detektieren
-   if (ValidBars == 0) {
-      ArrayInitialize(BollingerBand.Limits, 0);
-      EventTracker.SetBandLimits(BollingerBand.Limits);
    }
    */
    return(catch("start(2)"));
@@ -386,7 +389,7 @@ int CheckBollingerBands() {
    oldestBar    = last;
    newestBar    = first;
    lChangedBars = bars - lValidBars;
-   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
+   debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
 
 
    double   ma, dev, lowerBB, upperBB, low, high, close;
@@ -418,7 +421,7 @@ int CheckBollingerBands() {
 
    // (4) ChangedBars > 1: ChangedBars von alt nach neu neuberechnen und dabei alle außer der ersten Bar auf neues Crossing prüfen
    if (lChangedBars > 1) {
-      for (bar=endBar; bar > 0; bar--) {              // Bar[0] wird hier nicht berechnet
+      for (bar=endBar; bar > 0; bar--) {                             // Bar[0] wird hier nicht berechnet
          ma      = iMA    (NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar);
          dev     = iStdDev(NULL, BollingerBands.MA.Timeframe, BollingerBands.MA.Periods, 0, BollingerBands.MA.Method, PRICE_CLOSE, bar) * BollingerBands.Deviation;
          upperBB = NormalizeDouble(ma + dev, Digits);
@@ -432,48 +435,32 @@ int CheckBollingerBands() {
          switch (crossing) {
             case CR_UNKNOWN: if      (LE(low,  lowerBB)) crossing = ifInt(GE(high, upperBB), CR_BOTH, CR_LOW);
                              else if (GE(high, upperBB)) crossing = CR_HIGH;
-                             if (crossing != lastCrossing)
-                                crossingTime = barTime;
                              break;
 
-            case CR_BOTH:    if (crossingTime < barTime) {
-                                if (LE(low, lowerBB)) {
-                                   if (LT(high, upperBB)) {
-                                      crossing     = CR_LOW;
-                                      crossingTime = barTime;
-                                   }
+            case CR_BOTH:    if (crossingTime < barTime || lChangedBars==2) {    // Bei BarOpen-Event (ChangedBars==2) kann mit dem letzten Tick der
+                                if (LE(low, lowerBB)) {                          // alten Bar ein neues, zu signalisierendes Crossing auftreten.
+                                   if (LT(high, upperBB))   crossing = CR_LOW;
                                 }
-                                else if (GE(high, upperBB)) {
-                                   crossing     = CR_HIGH;
-                                   crossingTime = barTime;
-                                }
+                                else if (GE(high, upperBB)) crossing = CR_HIGH;
                              }
                              break;
 
-            case CR_HIGH:    if (crossingTime < barTime) {
-                               if (LE(low, lowerBB)) {
-                                  crossing     = ifInt(GE(high, upperBB), CR_BOTH, CR_LOW);
-                                  crossingTime = barTime;
-                               }
-                             }
+            case CR_HIGH:    if (crossingTime < barTime || lChangedBars==2)
+                                if (LE(low, lowerBB))  crossing = ifInt(GE(high, upperBB), CR_BOTH, CR_LOW);
                              break;
 
-            case CR_LOW:     if (crossingTime < barTime) {
-                               if (GE(high, upperBB)) {
-                                  crossing     = ifInt(LE(low, lowerBB), CR_BOTH, CR_HIGH);
-                                  crossingTime = barTime;
-                               }
-                             }
+            case CR_LOW:     if (crossingTime < barTime || lChangedBars==2)
+                                if (GE(high, upperBB)) crossing = ifInt(LE(low, lowerBB), CR_BOTH, CR_HIGH);
                              break;
          }
 
+         // Crossing markieren und bei BarOpen-Event (ChangedBars==2) signalisieren
          if (crossing != lastCrossing) {
-            // bei ChangedBars==2 kann in Bar[1] Signal getriggert worden sein (letzter Tick der vorherigen Bar bei BarOpen-Event)
-            // TODO: hier ist ein Bug drin: crossing wird nur != lastCrossing sein, wenn crossingTime < barTime; beim letzten Tick der vorherigen Bar ist das aber nicht erfüllt
-            if (lChangedBars == 2) {                                       // bar ist immer 1
-               crossingTime += BollingerBands.MA.Timeframe*MINUTES - 1;    // letzter Tick => letzte Sekunde der vorherigen Bar
+            crossingTime = barTime;
+            if (lChangedBars == 2)
+               crossingTime += BollingerBands.MA.Timeframe*MINUTES - 1;          // letzte Sekunde der alten Bar
+            if (lastCrossing != CR_UNKNOWN)
                SignalCrossing(crossing, crossingTime, lowerBB, upperBB);
-            }
             MarkCrossing(crossing, crossingTime, lowerBB, upperBB);
          }
       }
@@ -490,6 +477,14 @@ int CheckBollingerBands() {
    close   = history[0][RATE_CLOSE];
    barTime = history[0][RATE_TIME ] +0.1;                            // (datetime) double
 
+   if      (lChangedBars == 1) {       // einzelner Tick innerhalb der Bar
+   }
+   else if (lChangedBars == 2) {       // erster Tick einer neuen Bar (BarOpen-Event)
+   }
+   else {                              // History-Update (kann/kann nicht mit normalem Tick zusammenfallen)
+   }
+
+
    switch (lastCrossing) {
       case CR_UNKNOWN: break;
       case CR_BOTH:    break;
@@ -504,12 +499,62 @@ int CheckBollingerBands() {
 /**
  * @return int - Fehlerstatus
  */
-int MarkCrossing(int crossing, datetime crossingTime, double lowerValue, double upperValue) {
+int MarkCrossing(int crossing, datetime crossingTime, double lowerBBValue, double upperBBValue) {
+   string arrowLabel = "";
+   color  arrowColor = DeepSkyBlue;
+
    switch (crossing) {
-      case CR_LOW    : debug("MarkCrossing()   low crossing at "+  TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  <= "+ NumberToStr(lowerValue, PriceFormat)); break;
-      case CR_HIGH   : debug("MarkCrossing()   high crossing at "+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  => "+ NumberToStr(upperValue, PriceFormat)); break;
-      case CR_BOTH   : debug("MarkCrossing()   two crossings at "+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  <= "+ NumberToStr(lowerValue, PriceFormat)  +" && => "+ NumberToStr(upperValue, PriceFormat)); break;
-      case CR_UNKNOWN: debug("MarkCrossing()   unknown crossing"); break;
+      // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      case CR_LOW : arrowLabel = __SCRIPT__ +".bbCrossing.Low."+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"/"+ NumberToStr(lowerBBValue, PriceFormat);
+                    if (ObjectFind(arrowLabel) > -1)
+                       ObjectDelete(arrowLabel);
+                    if (ObjectCreate(arrowLabel, OBJ_ARROW, 0, crossingTime, lowerBBValue)) {
+                       ObjectSet(arrowLabel, OBJPROP_ARROWCODE, 1);
+                       ObjectSet(arrowLabel, OBJPROP_COLOR, arrowColor);
+                    }
+                    else GetLastError();
+                    ArrayPushString(chartObjects, arrowLabel);
+                    debug("MarkCrossing()   low crossing at "+  TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  <= "+ NumberToStr(lowerBBValue, PriceFormat));
+                    break;
+      // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      case CR_HIGH: arrowLabel = __SCRIPT__ +".bbCrossing.High."+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"/"+ NumberToStr(upperBBValue, PriceFormat);
+                    if (ObjectFind(arrowLabel) > -1)
+                       ObjectDelete(arrowLabel);
+                    if (ObjectCreate(arrowLabel, OBJ_ARROW, 0, crossingTime, upperBBValue)) {
+                       ObjectSet(arrowLabel, OBJPROP_ARROWCODE, 1);
+                       ObjectSet(arrowLabel, OBJPROP_COLOR, arrowColor);
+                    }
+                    else GetLastError();
+                    ArrayPushString(chartObjects, arrowLabel);
+                    debug("MarkCrossing()   high crossing at "+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  => "+ NumberToStr(upperBBValue, PriceFormat));
+                    break;
+      // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      case CR_BOTH: arrowLabel = __SCRIPT__ +".bbCrossing.Low."+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"/"+ NumberToStr(lowerBBValue, PriceFormat);
+                    if (ObjectFind(arrowLabel) > -1)
+                       ObjectDelete(arrowLabel);
+                    if (ObjectCreate(arrowLabel, OBJ_ARROW, 0, crossingTime, lowerBBValue)) {
+                       ObjectSet(arrowLabel, OBJPROP_ARROWCODE, 1);
+                       ObjectSet(arrowLabel, OBJPROP_COLOR, arrowColor);
+                    }
+                    else GetLastError();
+                    ArrayPushString(chartObjects, arrowLabel);
+
+                    arrowLabel = __SCRIPT__ +".bbCrossing.High."+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"/"+ NumberToStr(upperBBValue, PriceFormat);
+                    if (ObjectFind(arrowLabel) > -1)
+                       ObjectDelete(arrowLabel);
+                    if (ObjectCreate(arrowLabel, OBJ_ARROW, 0, crossingTime, upperBBValue)) {
+                       ObjectSet(arrowLabel, OBJPROP_ARROWCODE, 1);
+                       ObjectSet(arrowLabel, OBJPROP_COLOR, arrowColor);
+                    }
+                    else GetLastError();
+                    ArrayPushString(chartObjects, arrowLabel);
+                    debug("MarkCrossing()   two crossings at "+ TimeToStr(crossingTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  <= "+ NumberToStr(lowerBBValue, PriceFormat)  +" && => "+ NumberToStr(upperBBValue, PriceFormat));
+                    break;
+      // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      case CR_UNKNOWN:
+                    debug("MarkCrossing()   unknown crossing");
+                    break;
+      // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       default:
          return(catch("MarkCrossing(1)   invalid parameter crossing = "+ crossing, ERR_INVALID_FUNCTION_PARAMVALUE));
    }

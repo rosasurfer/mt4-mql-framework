@@ -60,7 +60,7 @@ double deviation1, deviation2;
 bool   ALMA = false;
 double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: Gewichtungen der einzelnen Bars etc.
 
-string objectLabels[];
+string chartObjects[];
 
 
 /**
@@ -232,7 +232,7 @@ int init() {
 
    // Legende
    string legendLabel = CreateLegendLabel(indicatorLongName);
-   RegisterChartObject(legendLabel, objectLabels);
+   ArrayPushString(chartObjects, legendLabel);
    ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
@@ -290,7 +290,7 @@ int deinit() {
 
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
 
-   RemoveChartObjects(objectLabels);
+   RemoveChartObjects(chartObjects);
    RepositionLegend();
    return(catch("deinit()"));
 }
