@@ -540,7 +540,7 @@ int SignalCrossing(int type, datetime time, double lowerValue, double upperValue
 
    // ggf. SMS verschicken
    if (SMS.Alerts) {
-      string message = StringConcatenate(ifString(type==CR_LOW, "lower", "upper"), " BollingerBand(", BollingerBands.MA.Timeframe, "x", PeriodDescription(BollingerBands.MA.Periods), ") in ", symbolName, " crossed @ ", NumberToStr(ifDouble(type==CR_LOW, lowerValue, upperValue), PriceFormat));
+      string message = StringConcatenate(symbolName, ifString(type==CR_LOW, " lower", " upper"), " BollingerBand(", BollingerBands.MA.Periods, "x", PeriodDescription(BollingerBands.MA.Timeframe), ") @ ", NumberToStr(ifDouble(type==CR_LOW, lowerValue, upperValue), PriceFormat), " crossed");
       int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
       if (error != NO_ERROR)
          return(catch("SignalCrossing(2)   error sending text message to "+ SMS.Receiver, error));

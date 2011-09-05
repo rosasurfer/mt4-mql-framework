@@ -6542,9 +6542,12 @@ int SendTextMessage(string receiver, string message) {
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1)  execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1)  kernel32::WinExec(cmdLine=\""+ cmdLine +"\") failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
    /**
+    * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
+    *
+    *
     * TODO: Fehlerauswertung nach dem Versand
     *
     * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to={receiver}&text={text}
