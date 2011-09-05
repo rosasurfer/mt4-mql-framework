@@ -249,7 +249,7 @@ int onPositionOpen(int tickets[]) {
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(catch("onPositionOpen(2)   error sending text message to "+ SMS.Receiver, error));
+            return(processError(error));
          log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
@@ -298,7 +298,7 @@ int onPositionClose(int tickets[]) {
       if (SMS.Alerts) {
          error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(catch("onPositionClose(2)   error sending text message to "+ SMS.Receiver, error));
+            return(processError(error));
          log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
@@ -310,7 +310,7 @@ int onPositionClose(int tickets[]) {
    if (Sound.Alerts)
       PlaySound(Sound.PositionClose);
 
-   return(catch("onPositionClose(3)"));
+   return(catch("onPositionClose(2)"));
 }
 
 
@@ -543,7 +543,7 @@ int SignalCrossing(int type, datetime time, double lowerValue, double upperValue
       string message = StringConcatenate(symbolName, ifString(type==CR_LOW, " lower", " upper"), " BollingerBand(", BollingerBands.MA.Periods, "x", PeriodDescription(BollingerBands.MA.Timeframe), ") @ ", NumberToStr(ifDouble(type==CR_LOW, lowerValue, upperValue), PriceFormat), " crossed");
       int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
       if (error != NO_ERROR)
-         return(catch("SignalCrossing(2)   error sending text message to "+ SMS.Receiver, error));
+         return(processError(error));
       log(StringConcatenate("SignalCrossing()   SMS sent to ", SMS.Receiver, ":  ", message));
    }
    else {
@@ -554,7 +554,7 @@ int SignalCrossing(int type, datetime time, double lowerValue, double upperValue
    if (Sound.Alerts)
       PlaySound("Close order.wav");
 
-   return(catch("SignalCrossing(3)"));
+   return(catch("SignalCrossing(2)"));
 }
 
 
