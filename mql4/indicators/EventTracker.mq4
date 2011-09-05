@@ -38,6 +38,7 @@ int    PipPoints;
 string PriceFormat;
 
 string stdSymbol, symbolName;
+int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
 string chartObjects[];
 
 
@@ -127,6 +128,9 @@ int init() {
    }
    if (Track.BollingerBands) {
       // für konstante Werte bei Timeframe-Wechseln Timeframe möglichst nach M5 umrechnen
+      BBands.MA.Periods.orig   = BollingerBands.MA.Periods;
+      BBands.MA.Timeframe.orig = BollingerBands.MA.Timeframe;
+
       if (BollingerBands.MA.Timeframe > PERIOD_M5) {
          BollingerBands.MA.Periods   = BollingerBands.MA.Timeframe * BollingerBands.MA.Periods / PERIOD_M5;
          BollingerBands.MA.Timeframe = PERIOD_M5;
@@ -462,19 +466,19 @@ int CheckBollingerBands() {
                           else                     crossing = ifInt(upTick, CR_HIGH, CR_LOW);
                        }
                        else if (GE(high, upperBB)) crossing = CR_HIGH;
-                       break;                                           // kein Signal
+                       break;                                                 // kein Signal
       // ------------------------------------------------------------------------------------
       case CR_BOTH:    if (LE(low, lowerBB)) {
                           if (LT(high, upperBB))   crossing = CR_LOW;
                        }
                        else if (GE(high, upperBB)) crossing = CR_HIGH;
-                       break;                                           // kein Signal
+                       break;                                                 // kein Signal
       // ------------------------------------------------------------------------------------
       case CR_HIGH:    if (LE(low, lowerBB))       crossing = CR_LOW;
-                       break;                                           // Signal
+                       break;                                                 // Signal
       // ------------------------------------------------------------------------------------
       case CR_LOW:     if (GE(high, upperBB))      crossing = CR_HIGH;
-                       break;                                           // Signal
+                       break;                                                 // Signal
       // ------------------------------------------------------------------------------------
    }
    if (crossing != lastCrossing) {
@@ -540,7 +544,7 @@ int SignalCrossing(int type, datetime time, double lowerValue, double upperValue
 
    // ggf. SMS verschicken
    if (SMS.Alerts) {
-      string message = StringConcatenate(symbolName, ifString(type==CR_LOW, " lower", " upper"), " BollingerBand(", BollingerBands.MA.Periods, "x", PeriodDescription(BollingerBands.MA.Timeframe), ") @ ", NumberToStr(ifDouble(type==CR_LOW, lowerValue, upperValue), PriceFormat), " crossed");
+      string message = StringConcatenate(symbolName, ifString(type==CR_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(ifDouble(type==CR_LOW, lowerValue, upperValue), PriceFormat), " crossed");
       int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
       if (error != NO_ERROR)
          return(processError(error));
