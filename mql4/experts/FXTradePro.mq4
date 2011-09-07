@@ -1,5 +1,5 @@
 /**
- * FXTradePro Martingale EA
+ * FXTradePro Semi-Martingale EA
  *
  * @see FXTradePro Strategy:     http://www.forexfactory.com/showthread.php?t=43221
  *      FXTradePro Journal:      http://www.forexfactory.com/showthread.php?t=82544
@@ -19,12 +19,12 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
+ *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
  *  - Visualisierung der gesamten Sequenz
  *  - Visualisierung des Entry.Limits implementieren
- *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
- *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
- *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Breakeven-Berechnung implementieren und anzeigen
+ *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
+ *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - Sicherheitsabfrage, wenn nach Änderung der Konfiguration sofort Trade getriggert wird
  *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
@@ -1231,7 +1231,7 @@ int ShowStatus() {
       status = STATUS_DISABLED;
 
 
-   // Comment -> Zeile 3: Lotsizes der gesamten Sequenz
+   // Zeile 3: Lotsizes der gesamten Sequenz
    static string str.levels.lots = "";
    if (levels.lots.changed) {
       str.levels.lots = JoinDoubles(levels.lots, ",  ");
@@ -1284,8 +1284,8 @@ int ShowStatus() {
                           "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                                                     NL,
                           "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2),                                                         NL);
 
-   // 2 Zeilen Abstand nach oben für Instrumentanzeige
-   Comment(StringConcatenate(NL, NL, msg));
+   // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
+   Comment(StringConcatenate(NL, NL, NL, NL, NL, NL, msg));
 
    return(catch("ShowStatus(2)"));
    StatusToStr(NULL);
