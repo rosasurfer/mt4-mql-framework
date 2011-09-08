@@ -67,20 +67,28 @@
 
 extern string _1____________________________ = "==== Entry Options ===================";
 extern string Entry.Direction                = "long";
-extern double Entry.Limit                    = 0;
+//extern double Entry.Limit                    = 0;
+extern double Entry.Limit                    = 1.39;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 50;
 extern int    StopLoss                       = 10;
 
 extern string _3____________________________ = "==== Lotsizes =======================";
-extern double Lotsize.Level.1                = 0;
-extern double Lotsize.Level.2                = 0;
-extern double Lotsize.Level.3                = 0;
-extern double Lotsize.Level.4                = 0;
-extern double Lotsize.Level.5                = 0;
-extern double Lotsize.Level.6                = 0;
-extern double Lotsize.Level.7                = 0;
+//extern double Lotsize.Level.1                = 0;
+//extern double Lotsize.Level.2                = 0;
+//extern double Lotsize.Level.3                = 0;
+//extern double Lotsize.Level.4                = 0;
+//extern double Lotsize.Level.5                = 0;
+//extern double Lotsize.Level.6                = 0;
+//extern double Lotsize.Level.7                = 0;
+extern double Lotsize.Level.1                = 0.1;
+extern double Lotsize.Level.2                = 0.2;
+extern double Lotsize.Level.3                = 0.3;
+extern double Lotsize.Level.4                = 0.4;
+extern double Lotsize.Level.5                = 0.5;
+extern double Lotsize.Level.6                = 0.6;
+extern double Lotsize.Level.7                = 0.7;
 
 extern string _4____________________________ = "==== Sequence to Manage =============";
 extern string Sequence.ID                    = "";
@@ -395,12 +403,81 @@ int CreateMagicNumber() {
 }
 
 
+
+
+/**
+ * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
+ *
+ * @return int - Fehlerstatus
+ */
+int CheckBollingerBands() {
+   int    BollingerBands.MA.Periods   = 35;
+   int    BollingerBands.MA.Timeframe = PERIOD_M5;
+   int    BollingerBands.MA.Method    = MODE_EMA;
+   double BollingerBands.Deviation    = 2.0;
+
+   // Parameteranzeige
+   static bool done;
+   if (!done) {
+      debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
+      done = true;
+   }
+
+   #define CR_UNKNOWN 0
+   #define CR_HIGH    1
+   #define CR_LOW     2
+   #define CR_BOTH    3
+
+
+   // (1) Datenreihe aktualisieren
+   static double   history[][6];                                     // Zeiger, verhält sich wie ein Integer
+   static int      oldBars, crossing, lastCrossing;                  // das letzte Crossing: CR_UNKNOWN | CR_HIGH | CR_LOW | CR_BOTH
+   static datetime oldestBar, newestBar, crossingTime;
+
+   int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
+   if (bars < 1)
+      return(catch("CheckBollingerBands(1)   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") returned "+ bars +" bars", ERR_RUNTIME_ERROR));
+   datetime last  = history[bars-1][RATE_TIME] +0.1;                 // (datetime) double
+   datetime first = history[     0][RATE_TIME] +0.1;
+
+   int error = GetLastError();
+   if (error == ERR_HISTORY_UPDATE) {
+      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") "+ bars +" bars from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
+      oldBars = 0;
+      return(error);
+      //return(processError(error));   // TODO: last_error setzen und ERR_HISTORY_UPDATE bei STATUS_DISABLED ignorieren
+   }
+   if (error != NO_ERROR)
+      return(catch("CheckBollingerBands(2)", error));
+
+
+   // (2) IndicatorCounted() emulieren => ChangedBars, ValidBars
+   int lChangedBars, lValidBars;
+   if      (oldBars == 0)         lValidBars = 0;             // erstes Laden der History
+   else if (bars == oldBars)      lValidBars = oldBars - 1;   // Baranzahl unverändert (normaler Tick)
+   else if (last  != oldestBar) { lValidBars = 0;           } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" hinten angefügt"   ); }
+   else if (first != newestBar) { lValidBars = oldBars - 1; } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" vorn angefügt"     ); }
+   else                         { lValidBars = 0;           } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" in Lücke eingefügt"); }
+   oldBars      = bars;
+   oldestBar    = last;
+   newestBar    = first;
+   lChangedBars = bars - lValidBars;
+   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
+
+}
+
+
 /**
  * Ob das konfigurierte Entry.Limit erreicht oder überschritten wurde.  Wurde kein Limit angegeben, gibt die Funktion immer TRUE zurück.
  *
  * @return bool
  */
 bool IsEntryLimitReached() {
+
+   // BollingerBands prüfen
+   //CheckBollingerBands();
+
+
    if (EQ(Entry.Limit, 0))                                           // kein Limit definiert
       return(true);
 

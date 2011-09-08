@@ -194,7 +194,7 @@ int start() {
 
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0) {
-      debug("start()   ERR_NO_CONNECTION");
+      //debug("start()   ERR_NO_CONNECTION");
       return(ERR_NO_CONNECTION);
    }
 
@@ -202,7 +202,7 @@ int start() {
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
-      debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       return(catch("start(1)"));
    }
 
@@ -353,10 +353,12 @@ int CheckBollingerBands() {
 
    int error = GetLastError();
    if (error == ERR_HISTORY_UPDATE) {
-      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
+      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") "+ bars +" bars from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
       oldBars = 0;
       return(processError(error));
    }
+   if (error != NO_ERROR)
+      return(catch("CheckBollingerBands(2)", error));
 
 
    // (2) IndicatorCounted() emulieren => ChangedBars, ValidBars
@@ -399,7 +401,7 @@ int CheckBollingerBands() {
          crossingTime += BollingerBands.MA.Timeframe*MINUTES - 1;    // letzte Sekunde der Bar
          MarkCrossing(crossing, crossingTime, lowerBB, upperBB);
       }
-      return(catch("CheckBollingerBands(2)"));                       // bei ValidBars==0 kann niemals Signal getriggert werden => Rückkehr
+      return(catch("CheckBollingerBands(3)"));                       // bei ValidBars==0 kann niemals Signal getriggert werden => Rückkehr
    }
 
 
@@ -488,7 +490,7 @@ int CheckBollingerBands() {
          SignalCrossing(crossing, crossingTime, lowerBB, upperBB);
    }
 
-   return(catch("CheckBollingerBands(3)"));
+   return(catch("CheckBollingerBands(4)"));
 }
 
 
