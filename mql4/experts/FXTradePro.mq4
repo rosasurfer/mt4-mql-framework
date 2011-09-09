@@ -40,7 +40,7 @@
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
- *  - CheckStatus(): Commission-Berechnung an OrderCloseBy() anpassen
+ *  - UpdateStatus(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
@@ -93,8 +93,6 @@ extern double Lotsize.Level.7                = 0.7;
 extern string _4____________________________ = "==== Sequence to Manage =============";
 extern string Sequence.ID                    = "";
 //extern string Sequence.ID                    = "13666";
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Input-Parameter sind nicht statisch und müssen bei REASON_CHARTCHANGE manuell zwischengespeichert und restauriert werden.
 string intern.Entry.Direction;
@@ -151,6 +149,8 @@ bool     levels.swap.changed = true;
 
 bool     firstTick = true;
 int      status;
+
+string   chartObjects[];
 
 
 /**
@@ -256,7 +256,7 @@ int init() {
       }
       else if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
       else                           status = STATUS_FINISHED;
-      CheckStatus();
+      UpdateStatus();
    }
    ShowStatus();
 
@@ -303,6 +303,7 @@ int deinit() {
    intern.Sequence.ID     = Sequence.ID;
    intern                 = true;               // Statusflag setzen
 
+   RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
 
@@ -329,7 +330,7 @@ int start() {
       return(last_error);
 
 
-   if (CheckStatus()) {
+   if (UpdateStatus()) {
       if (progressionLevel == 0) {
          if (!IsEntryLimitReached())            status = STATUS_ENTRYLIMIT;
          else                                   StartSequence();              // kein Limit definiert oder Limit erreicht
@@ -403,79 +404,23 @@ int CreateMagicNumber() {
 }
 
 
+#include <bollingerbandCrossing.mqh>
 
 
 /**
- * Prüft, ob die aktuellen BollingerBand-Limite verletzt wurden und benachrichtigt entsprechend.
- *
- * @return int - Fehlerstatus
- */
-int CheckBollingerBands() {
-   int    BollingerBands.MA.Periods   = 35;
-   int    BollingerBands.MA.Timeframe = PERIOD_M5;
-   int    BollingerBands.MA.Method    = MODE_EMA;
-   double BollingerBands.Deviation    = 2.0;
-
-   // Parameteranzeige
-   static bool done;
-   if (!done) {
-      debug("CheckBollingerBands()   "+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +", "+ MovingAverageMethodDescription(BollingerBands.MA.Method) +", "+ NumberToStr(BollingerBands.Deviation, ".1+"));
-      done = true;
-   }
-
-   #define CR_UNKNOWN 0
-   #define CR_HIGH    1
-   #define CR_LOW     2
-   #define CR_BOTH    3
-
-
-   // (1) Datenreihe aktualisieren
-   static double   history[][6];                                     // Zeiger, verhält sich wie ein Integer
-   static int      oldBars, crossing, lastCrossing;                  // das letzte Crossing: CR_UNKNOWN | CR_HIGH | CR_LOW | CR_BOTH
-   static datetime oldestBar, newestBar, crossingTime;
-
-   int bars = ArrayCopyRates(history, NULL, BollingerBands.MA.Timeframe);
-   if (bars < 1)
-      return(catch("CheckBollingerBands(1)   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") returned "+ bars +" bars", ERR_RUNTIME_ERROR));
-   datetime last  = history[bars-1][RATE_TIME] +0.1;                 // (datetime) double
-   datetime first = history[     0][RATE_TIME] +0.1;
-
-   int error = GetLastError();
-   if (error == ERR_HISTORY_UPDATE) {
-      debug("CheckBollingerBands()   ArrayCopyRates("+ Symbol() +","+ PeriodDescription(BollingerBands.MA.Timeframe) +") "+ bars +" bars from "+ TimeToStr(last) +" to "+ TimeToStr(first), error);
-      oldBars = 0;
-      return(error);
-      //return(processError(error));   // TODO: last_error setzen und ERR_HISTORY_UPDATE bei STATUS_DISABLED ignorieren
-   }
-   if (error != NO_ERROR)
-      return(catch("CheckBollingerBands(2)", error));
-
-
-   // (2) IndicatorCounted() emulieren => ChangedBars, ValidBars
-   int lChangedBars, lValidBars;
-   if      (oldBars == 0)         lValidBars = 0;             // erstes Laden der History
-   else if (bars == oldBars)      lValidBars = oldBars - 1;   // Baranzahl unverändert (normaler Tick)
-   else if (last  != oldestBar) { lValidBars = 0;           } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" hinten angefügt"   ); }
-   else if (first != newestBar) { lValidBars = oldBars - 1; } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" vorn angefügt"     ); }
-   else                         { lValidBars = 0;           } //debug("CheckBollingerBands()   "+ (bars-oldBars) +" Bar"+ ifString(bars-oldBars==1, "", "s") +" in Lücke eingefügt"); }
-   oldBars      = bars;
-   oldestBar    = last;
-   newestBar    = first;
-   lChangedBars = bars - lValidBars;
-   //debug("CheckBollingerBands()   "+ bars +" bars   ValidBars="+ lValidBars + "   ChangedBars="+ lChangedBars);
-
-}
-
-
-/**
- * Ob das konfigurierte Entry.Limit erreicht oder überschritten wurde.  Wurde kein Limit angegeben, gibt die Funktion immer TRUE zurück.
+ * Signalgeber für StartSequence(). Ob das konfigurierte Entry.Limit erreicht oder überschritten wurde. Wurde kein Limit angegeben,
+ * gibt die Funktion TRUE zurück.
  *
  * @return bool
  */
 bool IsEntryLimitReached() {
-
    // BollingerBands prüfen
-   //CheckBollingerBands();
+   int    BollingerBands.MA.Periods   = 35;
+   int    BollingerBands.MA.Timeframe = PERIOD_M5;
+   int    BollingerBands.MA.Method    = MODE_EMA;
+   double BollingerBands.Deviation    = 2.0;
+   CheckBollingerBands();
+
 
 
    if (EQ(Entry.Limit, 0))                                           // kein Limit definiert
@@ -514,6 +459,7 @@ bool IsEntryLimitReached() {
    Entry.LastBid = Bid;
 
    return(false);
+   CheckBollingerBands();
 }
 
 
@@ -627,7 +573,7 @@ int StartSequence() {
 
    // Status aktualisieren
    status = STATUS_PROGRESSING;
-   CheckStatus();
+   UpdateStatus();
 
    return(catch("StartSequence(4)"));
 }
@@ -681,7 +627,7 @@ int IncreaseProgression() {
    else                       effectiveLots -= OrderLots();
 
    // Status aktualisieren
-   CheckStatus();
+   UpdateStatus();
 
    return(catch("IncreaseProgression(4)"));
 }
@@ -717,7 +663,7 @@ int FinishSequence() {
 
    // Status aktualisieren
    status = STATUS_FINISHED;
-   CheckStatus();                                                    // alle Positionen geschlossen => CheckStatus() löst komplettes ReadSequence() aus
+   UpdateStatus();                                                    // alle Positionen geschlossen => UpdateStatus() löst komplettes ReadSequence() aus
 
    return(catch("FinishSequence(2)"));
 }
@@ -757,11 +703,11 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Überprüft die offenen Positionen der Sequenz auf Änderungen und berechnet die aktuellen Kennziffern (P/L, Breakeven etc.)
+ * Überprüft die offenen Positionen der Sequenz auf Änderungen und aktualisiert die aktuellen Kennziffern (P/L, Breakeven etc.)
  *
  * @return bool - Erfolgsstatus
  */
-bool CheckStatus() {
+bool UpdateStatus() {
    // (1) offene Positionen auf Änderungen prüfen (OrderCloseTime(), OrderLots(), OrderSwap()) und Sequenzdaten ggf. aktualisieren
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf offen war
@@ -770,7 +716,7 @@ bool CheckStatus() {
             if (error == NO_ERROR)
                error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("CheckStatus(1)", error)==NO_ERROR);
+            return(catch("UpdateStatus(1)", error)==NO_ERROR);
          }
          if (OrderCloseTime() != 0) {                                // Ticket wurde geschlossen           => Sequenz neu einlesen
             error = ReadSequence(sequenceId);
@@ -795,8 +741,8 @@ bool CheckStatus() {
    // (3) P/L-Berechnung: aktuelle MarketInfo()-Daten auslesen
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    error = GetLastError();                                           // ERR_MARKETINFO_UPDATE abfangen
-   if (error != NO_ERROR)                 { status = STATUS_DISABLED; return(catch("CheckStatus(2)", error)==NO_ERROR);                                                                   }
-   if (tickValue < 0.5 || tickValue > 20) { status = STATUS_DISABLED; return(catch("CheckStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
+   if (error != NO_ERROR)                 { status = STATUS_DISABLED; return(catch("UpdateStatus(2)", error)==NO_ERROR);                                                                   }
+   if (tickValue < 0.5 || tickValue > 20) { status = STATUS_DISABLED; return(catch("UpdateStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
    double pipValue = Pip / tickSize * tickValue;
 
 
@@ -815,7 +761,7 @@ bool CheckStatus() {
             if (error == NO_ERROR)
                error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("CheckStatus(5)", error)==NO_ERROR);
+            return(catch("UpdateStatus(5)", error)==NO_ERROR);
          }
          levels.openProfit[i] = 0;
 
@@ -872,7 +818,7 @@ bool CheckStatus() {
    }
 
 
-   if (catch("CheckStatus(6)") != NO_ERROR) {
+   if (catch("UpdateStatus(6)") != NO_ERROR) {
       status = STATUS_DISABLED;
       return(false);
    }
@@ -1500,8 +1446,9 @@ int ForcedSequenceId() {
 
    if (StringLen(strValue) == 0) {
       Sequence.ID = strValue;
-      return(iValue);
+      return(0);
    }
+
    if (StringIsInteger(strValue)) {
       iValue = StrToInteger(strValue);
       if (1000 <= iValue) /*&&*/ if (iValue <= 16383) {

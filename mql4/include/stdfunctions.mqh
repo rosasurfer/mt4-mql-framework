@@ -461,13 +461,13 @@
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung
-string __SCRIPT__  = "";
-bool   init        = false;
-int    init_error  = NO_ERROR;
-int    last_error  = NO_ERROR;
-int    Tick        =  0;
-int    ValidBars   = -1;
-int    ChangedBars = -1;
+string __SCRIPT__    = "";
+bool   init          = false;
+int    init_error    = NO_ERROR;
+int    last_error    = NO_ERROR;
+int    Tick          =  0;
+int    UnchangedBars = -1;
+int    ChangedBars   = -1;
 
 
 /**
@@ -592,37 +592,36 @@ void debug(string message, int error=NO_ERROR) {
 
 
 /**
- * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft ggf. deren Eventhandler auf.
+ * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft bei Zutreffen deren Eventhandler auf.
  *
  * @param  int events - ein oder mehrere durch logisches ODER verknüpfte Eventbezeichner
- * @param  int flags  - zusätzliche eventspezifische Flags (default: 0), bei verknüpften Eventbezeichnern nur sinnvoll, wenn die Flags
- *                      für alle Events zutreffend sind
  *
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
- *
- * NOTE:   Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
- * -----
+ *  NOTE:
+ *  -----
+ *  (1) Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ *  (2) Um zusätzliche event-spezifische Parameter für die Prüfung anzugeben, muß HandleEvent() für jedes Event einzeln aufgerufen werden.
  */
-int HandleEvents(int events, int flags=0) {
+bool HandleEvents(int events) {
    int status = 0;
 
-   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN       , flags);
-   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    , flags);
-   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   , flags);
-   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   , flags);
-   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN  , flags);
-   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE , flags);
-   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE , flags);
-   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT, flags);
-   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE , flags);
+   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN       );
+   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    );
+   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   );
+   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   );
+   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN  );
+   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE );
+   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE );
+   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
+   if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE );
 
    return(status!=0 && catch("HandleEvents()")==NO_ERROR);
 }
 
 
 /**
- * Prüft, ob ein einzelnes Event aufgetreten ist und ruft ggf. dessen Eventhandler auf.
+ * Prüft, ob ein Event aufgetreten ist und ruft bei Zutreffen dessen Eventhandler auf.
  * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
  *
  * @param  int event - Eventbezeichner

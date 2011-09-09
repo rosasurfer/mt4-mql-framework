@@ -42,19 +42,19 @@ void stdlib_init(string scriptName) {
 
 /**
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
- * oder eines neuen Ticks erfolgt (z.B. in EventListenern). Außerdem kann damit in der Library IndicatorCounted() emuliert werden.
+ * oder eines neuen Ticks erfolgt (z.B. in EventListenern). Damit kann in der Library IndicatorCounted() emuliert werden.
  *
- * @param  int validBars - Anzahl der gültigen Bars *oder* Indikatorwerte (je nach Aufrufer)
+ * @param  int unchangedBars - Anzahl der seit dem letzten Tick unveränderten Bars
  */
-void stdlib_onTick(int validBars) {
-   if (validBars < 0) {
-      catch("stdlib_onTick()  invalid parameter validBars = "+ validBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+void stdlib_onTick(int unchangedBars) {
+   if (unchangedBars < 0) {
+      catch("stdlib_onTick()  invalid parameter unchangedBars = "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
       return;
    }
 
    Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
-   ValidBars   = validBars;
-   ChangedBars = Bars - ValidBars;
+   UnchangedBars = unchangedBars;
+   ChangedBars   = Bars - UnchangedBars;
 }
 
 
@@ -1561,15 +1561,15 @@ int SendTick(bool sound=false) {
  * @return string
  */
 string GetTradeServerDirectory() {
-   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von UnchangedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
    // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
+   // Erst UnchangedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
    static string cache.directory[];
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn UnchangedBars==0 && neuer Tick, Cache verwerfen
+   if (UnchangedBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.directory, 0);
    lastTick = Tick;
 
@@ -3607,10 +3607,9 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
    }
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.BarOpen()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.BarOpen()", error)==NO_ERROR);
+
    return(results[0] != 0);
 }
 
@@ -3632,10 +3631,9 @@ bool EventListener.OrderChange(int results[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.OrderChange()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.OrderChange()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3657,10 +3655,9 @@ bool EventListener.OrderPlace(int results[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.OrderPlace()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.OrderPlace()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3682,10 +3679,9 @@ bool EventListener.OrderCancel(int results[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.OrderCancel()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.OrderCancel()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3798,10 +3794,9 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.PositionOpen()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.PositionOpen()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3900,10 +3895,9 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.PositionClose(2)", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.PositionClose(2)", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3925,10 +3919,9 @@ bool EventListener.AccountPayment(int results[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.AccountPayment()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.AccountPayment()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3950,10 +3943,9 @@ bool EventListener.HistoryChange(int results[], int flags=0) {
    // TODO: implementieren
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.HistoryChange()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.HistoryChange()", error)==NO_ERROR);
+
    return(eventStatus);
 }
 
@@ -3996,54 +3988,10 @@ bool EventListener.AccountChange(int results[], int flags=0) {
    ArrayCopy(results, accountData);
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EventListener.AccountChange()", error);
-      return(false);
-   }
+   if (error != NO_ERROR)
+      return(catch("EventListener.AccountChange()", error)==NO_ERROR);
+
    return(eventStatus);
-}
-
-
-double EventTracker.BBandLimits[2];
-
-
-/**
- * Gibt die aktuellen BollingerBand-Limite des EventTrackers zurück (aus Performancegründen sind sie timeframe-übergreifend
- * in der Library gespeichert).
- *
- * @param  double results[2] - Array für die Ergebnisse { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
- *
- * @return bool - Erfolgsstatus: TRUE, wenn die Daten erfolgreich gelesen wurden,
- *                               FALSE bei nicht existierenden Daten
- */
-bool EventTracker.GetBandLimits(double& results[]) {
-   if (EQ(EventTracker.BBandLimits[B_LOWER], 0))
-      return(false);
-
-   results[B_LOWER] = EventTracker.BBandLimits[B_LOWER];
-   results[B_UPPER] = EventTracker.BBandLimits[B_UPPER];
-
-   return(true);
-}
-
-
-/**
- * Speichert die angegebenen BollingerBand-Limite des EventTrackers in der Library.
- *
- * @param  double limits[2] - Array mit den aktuellen Limiten { LOWER_BAND_VALUE, UPPER_BAND_VALUE }
- *
- * @return int - Fehlerstatus
- */
-int EventTracker.StoreBandLimits(double limits[]) {
-   if (EQ(limits[B_LOWER], 0))
-      return(catch("EventTracker.StoreBandLimits(1)   invalid parameter limits = "+ DoubleArrayToStr(limits), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (EQ(limits[B_UPPER], 0))
-      return(catch("EventTracker.StoreBandLimits(2)   invalid parameter limits = "+ DoubleArrayToStr(limits), ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   EventTracker.BBandLimits[B_LOWER] = limits[B_LOWER];
-   EventTracker.BBandLimits[B_UPPER] = limits[B_UPPER];
-
-   return(catch("EventTracker.StoreBandLimits(3)"));
 }
 
 
@@ -5626,15 +5574,15 @@ string PeriodFlagToStr(int flags) {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetTradeServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
+   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von UnchangedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
+   // Erst UnchangedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
 
    static string cache.timezone[];
    static int    lastTick;                               // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn UnchangedBars==0 && neuer Tick, Cache verwerfen
+   if (UnchangedBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.timezone, 0);
    lastTick = Tick;
 

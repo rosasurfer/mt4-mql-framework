@@ -74,11 +74,11 @@ int init() {
  */
 int start() {
    Tick++;
-   if      (init_error != NO_ERROR)                   ValidBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
-   else                                               ValidBars = IndicatorCounted();
-   ChangedBars = Bars - ValidBars;
-   stdlib_onTick(ValidBars);
+   if      (init_error != NO_ERROR)                   UnchangedBars = 0;
+   else if (last_error == ERR_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
+   else                                               UnchangedBars = IndicatorCounted();
+   ChangedBars = Bars - UnchangedBars;
+   stdlib_onTick(UnchangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)

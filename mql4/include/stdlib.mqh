@@ -8,7 +8,7 @@
 
    // Laufzeitfunktionen
    void     stdlib_init(string scriptName);
-   void     stdlib_onTick(int validBars);
+   void     stdlib_onTick(int unchangedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 
@@ -141,10 +141,6 @@
    int      onOrderPlace(int tickets[]);
    int      onPositionClose(int tickets[]);
    int      onPositionOpen(int tickets[]);
-
-   // EventTracker (Indikator)
-   bool     EventTracker.GetBandLimits(double limits[]);
-   bool     EventTracker.StoreBandLimits(double limits[]);
 
    // Farben
    string   ColorToHtmlStr(color rgb);
