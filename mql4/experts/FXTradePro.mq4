@@ -326,7 +326,7 @@ int start() {
 
 
    if (status==STATUS_FINISHED || status==STATUS_DISABLED)
-      return(NO_ERROR);
+      return(last_error);
 
 
    if (CheckStatus()) {
