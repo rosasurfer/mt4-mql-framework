@@ -1,5 +1,8 @@
 /**
  * Schlieﬂt die angegebenen LFX-Positionen.
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>

@@ -2,6 +2,9 @@
  * EventTracker
  *
  * Überwacht ein Instrument auf verschiedene Signale und benachrichtigt akustisch und/oder per SMS.
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 
@@ -184,12 +187,10 @@ int start() {
       return(init_error);
 
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0) {                                            // tritt u.U. bei Terminal-Start auf
-      last_error = ERR_TERMINAL_NOT_YET_READY;
-      return(last_error);
-   }
+   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
+      return(processError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
-   // ------------------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------------------------------
 
 
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
@@ -327,48 +328,33 @@ int onPositionClose(int tickets[]) {
  * @return int - Fehlerstatus
  */
 int CheckBollingerBands() {
-   // erst EventListener und bei Erfolg EventHandler aufrufen
    double event[3];
 
-   if (EventListener.BBandCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, true, event)) {
+   // EventListener aufrufen und bei Erfolg Event signalisieren
+   if (EventListener.BBandCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
       int      type  = event[CROSSING_TYPE ] +0.1;                   // (int) double
       datetime time  = event[CROSSING_TIME ] +0.1;
       double   value = event[CROSSING_VALUE];
-      SignalCrossing(type, time, value);
+      debug("CheckBollingerBands()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+
+      // ggf. SMS verschicken
+      if (SMS.Alerts) {
+         string message = StringConcatenate(symbolName, ifString(type==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
+         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         if (error != NO_ERROR)
+            return(processError(error));
+         log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
+      }
+      else {
+         log(StringConcatenate("CheckBollingerBands()   ", message));
+      }
+
+      // ggf. Sound abspielen
+      if (Sound.Alerts)
+         PlaySound("Close order.wav");
    }
 
    return(catch("CheckBollingerBands()"));
-}
-
-
-/**
- * @return int - Fehlerstatus
- */
-int SignalCrossing(int type, datetime time, double value) {
-   switch (type) {
-      case CROSSING_LOW : debug("SignalCrossing()   new low crossing at "+  TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  <= "+ NumberToStr(NormalizeDouble(value, Digits), PriceFormat)); break;
-      case CROSSING_HIGH: debug("SignalCrossing()   new high crossing at "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"  => "+ NumberToStr(NormalizeDouble(value, Digits), PriceFormat)); break;
-      default:
-         return(catch("SignalCrossing(1)   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
-   }
-
-   // ggf. SMS verschicken
-   if (SMS.Alerts) {
-      string message = StringConcatenate(symbolName, ifString(type==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(NormalizeDouble(value, Digits), PriceFormat), " crossed");
-      int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-      if (error != NO_ERROR)
-         return(processError(error));
-      log(StringConcatenate("SignalCrossing()   SMS sent to ", SMS.Receiver, ":  ", message));
-   }
-   else {
-      log(StringConcatenate("SignalCrossing()   ", message));
-   }
-
-   // ggf. Sound abspielen
-   if (Sound.Alerts)
-      PlaySound("Close order.wav");
-
-   return(catch("SignalCrossing(2)"));
 }
 
 

@@ -1,5 +1,8 @@
 /**
  * win32api-alt.mq4
+ *
+ *
+ *
  */
 #property library
 

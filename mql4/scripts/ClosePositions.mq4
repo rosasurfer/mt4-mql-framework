@@ -1,5 +1,8 @@
 /**
  * Schlieﬂt die angegebenen Positionen. Ohne zus‰tzliche Parameter werden alle offenen Positionen geschlossen.
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 

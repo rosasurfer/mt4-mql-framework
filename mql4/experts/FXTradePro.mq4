@@ -50,6 +50,9 @@
  *  - SMS-Benachrichtigungen implementieren
  *  - Equity-Chart der laufenden Sequenz implementieren
  *  - ShowStatus() übersichtlicher gestalten (Textlabel statt Comment())
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -301,9 +304,13 @@ int deinit() {
    intern.Lotsize.Level.6 = Lotsize.Level.6;
    intern.Lotsize.Level.7 = Lotsize.Level.7;
    intern.Sequence.ID     = Sequence.ID;
-   intern                 = true;               // Statusflag setzen
+   intern                 = true;                           // Flag zur späteren Erkennung in init() setzen
 
-   RemoveChartObjects(chartObjects);
+
+   // TODO: haut nicht hin bei Symbolwechsel
+   if (UninitializeReason() != REASON_CHARTCHANGE)
+      RemoveChartObjects(chartObjects);
+
    return(catch("deinit()"));
 }
 
@@ -314,6 +321,7 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int start() {
+   Tick++;
    init = false;
    if (init_error != NO_ERROR) return(init_error);
    if (last_error != NO_ERROR) return(last_error);
@@ -414,12 +422,25 @@ int CreateMagicNumber() {
  * @return bool
  */
 bool IsEntryLimitReached() {
-   // BollingerBands prüfen
-   int    BollingerBands.MA.Periods   = 35;
-   int    BollingerBands.MA.Timeframe = PERIOD_M5;
-   int    BollingerBands.MA.Method    = MODE_EMA;
-   double BollingerBands.Deviation    = 2.0;
-   CheckBollingerBands();
+   // BollingerBand prüfen
+   double event[3];
+   int    bb.periods   = 35;
+   int    bb.timeframe = PERIOD_M5;
+   int    bb.method    = MODE_EMA;
+   double bb.deviation = 2.0;
+
+   // EventListener aufrufen und bei Erfolg Event signalisieren
+   if (EventListener.BBandCrossing(bb.periods, bb.timeframe, bb.method, bb.deviation, event, DeepSkyBlue)) {
+      int      type  = event[CROSSING_TYPE ] +0.1;                   // (int) double
+      datetime time  = event[CROSSING_TIME ] +0.1;
+      double   value = event[CROSSING_VALUE];
+      debug("IsEntryLimitReached()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+
+      // Sound abspielen
+      PlaySound("Close order.wav");
+   }
+   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
@@ -459,7 +480,6 @@ bool IsEntryLimitReached() {
    Entry.LastBid = Bid;
 
    return(false);
-   CheckBollingerBands();
 }
 
 

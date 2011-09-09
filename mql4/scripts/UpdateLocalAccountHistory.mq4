@@ -2,6 +2,9 @@
  * UpdateLocalAccountHistory
  *
  * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Margin Credits werden nicht mitgespeichert.
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 

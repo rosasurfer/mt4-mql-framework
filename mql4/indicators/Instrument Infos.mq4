@@ -2,6 +2,9 @@
  * Instrument Infos.mq4
  *
  * Zeigt die Eigenschaften eines Instruments an.
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 
@@ -88,12 +91,10 @@ int start() {
       return(init_error);
 
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0) {                                   // tritt u.U. bei Terminal-Start auf
-      last_error = ERR_TERMINAL_NOT_YET_READY;
-      return(last_error);
-   }
+   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
+      return(processError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
-   // -----------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------------------------------
 
 
    static int error = NO_ERROR;

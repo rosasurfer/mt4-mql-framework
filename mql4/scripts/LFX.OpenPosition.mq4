@@ -32,6 +32,9 @@
  *  Units:          5 bit (Bit 14-18) => Bereich 0-31   (Vielfaches von 0.1 zwischen 0.1 und 1.5)
  *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
  *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>

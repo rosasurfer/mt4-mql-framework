@@ -1,5 +1,8 @@
 /**
  * Balance-Verlauf des aktuellen Accounts als Linienchart im Indikator-Subfenster
+ *
+ *
+ *
  */
 #include <stdlib.mqh>
 

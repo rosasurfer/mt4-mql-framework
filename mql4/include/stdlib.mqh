@@ -1,5 +1,8 @@
 /**
  * stdlib.mqh
+ *
+ *
+ *
  */
 #include <stddefine.mqh>
 
@@ -168,7 +171,7 @@
    int      LFX.Instance(int magicNumber);
 
    // Math, Numbers
-   bool     CompareDoubles(double a, double b);                            // MetaQuotes-Alias für EQ()
+   bool     CompareDoubles(double a, double b);                            // MetaQuotes-Alias fï¿½r EQ()
    bool     LT(double a, double b);
    bool     LE(double a, double b);
    bool     EQ(double a, double b);
@@ -227,13 +230,13 @@
    string   GetComputerName();
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
-   string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                              // Alias fï¿½r GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
-   string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   GetStandardSymbol(string symbol);                              // Alias fï¿½r GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
-   string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                  // Alias fï¿½r GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
    int      GetTerminalWindow();
@@ -266,13 +269,13 @@
    string   BoolArrayToStr(bool values[], string separator);
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);
-   string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
+   string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias fï¿½r DoubleToStrEx()
    string   DoubleArrayToStr(double values[], string separator);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
    string   IntArrayToStr(int values[], string separator);
    string   IntToHexStr(int integer);
-   string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
+   string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias fï¿½r IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string mask);
@@ -360,7 +363,7 @@
 #import
 
 
-// ShowWindow()-Konstanten für WinExecWait()
+// ShowWindow()-Konstanten fï¿½r WinExecWait()
 #define SW_SHOW                           5        // Details zu den Werten in win32api.mqh
 #define SW_SHOWNA                         8
 #define SW_HIDE                           0
