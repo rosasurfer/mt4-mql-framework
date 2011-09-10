@@ -69,13 +69,13 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-extern string Entry.Direction                = "long";
-//extern double Entry.Limit                    = 0;
+extern string Entry.Direction                = "long";            // long | short | both
+//extern double Entry.Limit                  = 0;                 // 1.3950 | BollingerBand(35xM5, EMA, 2.0) | Envelope(75xM15, ALMA, 2.0)
 extern double Entry.Limit                    = 1.39;
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
-extern int    TakeProfit                     = 50;
-extern int    StopLoss                       = 10;
+extern int    TakeProfit                     = 50;                // 50 | 60 | 62
+extern int    StopLoss                       = 10;                // 10 | 12 | 12
 
 extern string _3____________________________ = "==== Lotsizes =======================";
 //extern double Lotsize.Level.1                = 0;
@@ -427,14 +427,13 @@ bool IsEntryLimitReached() {
    int    bb.timeframe = PERIOD_M5;
    int    bb.method    = MODE_EMA;
    double bb.deviation = 2.0;
-   double event[3];
+   double event[2];
 
-   // EventListener aufrufen und bei Erfolg Event signalisieren
+   // EventListener aufrufen und ggf. Event signalisieren
    if (EventListener.BBandCrossing(bb.periods, bb.timeframe, bb.method, bb.deviation, event, DeepSkyBlue)) {
-      int      type  = event[CROSSING_TYPE ] +0.1;                   // (int) double
-      datetime time  = event[CROSSING_TIME ] +0.1;
-      double   value = event[CROSSING_VALUE];
-      debug("IsEntryLimitReached()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+      int    type  = event[CROSSING_TYPE ] +0.1;                     // (int) double
+      double value = event[CROSSING_VALUE];
+      debug("IsEntryLimitReached()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 
       // Sound abspielen
       PlaySound("Close order.wav");
