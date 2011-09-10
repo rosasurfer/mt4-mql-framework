@@ -1674,8 +1674,10 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
    else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
    else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
+   else if (StringStartsWith(server, "migbank-"           )) return("MIG"             );
    else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
    else if (StringStartsWith(server, "sig-"               )) return("SIG"             );
+   else if (StringStartsWith(server, "sts-"               )) return("STS"             );
    else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
 
    return(AccountCompany());
@@ -5616,8 +5618,10 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
+   else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
       timezone = GetGlobalConfigString("Timezones", directory, "");
