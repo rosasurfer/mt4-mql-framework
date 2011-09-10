@@ -2670,7 +2670,7 @@ string StringSubstrFix(string object, int start, int length=EMPTY_VALUE) {
 
 
 /**
- * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (arbeitet nicht rekursiv).
+ * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
  *
  * @param  string object  - Ausgangsstring
  * @param  string search  - Suchstring
@@ -5271,9 +5271,9 @@ string MovingAverageMethodDescription(int method) {
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string method - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA]
+ * @param  string method - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA]
  *
- * @return int - MA-Konstante
+ * @return int - MA-Konstante oder -1, wenn der Methodenbezeichner unbekannt ist
  */
 int MovingAverageMethodToId(string method) {
    string value = StringToUpper(method);
@@ -5287,7 +5287,7 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   catch("MovingAverageMethodToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   log("MovingAverageMethodToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -5436,7 +5436,7 @@ string AppliedPriceDescription(int appliedPrice) {
  *
  * @param  string timeframe - M1, M5, M15, M30 etc.
  *
- * @return int - Timeframe-Code oder 0, wenn der Bezeichner ungültig ist
+ * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
 int PeriodToId(string timeframe) {
    timeframe = StringToUpper(timeframe);
@@ -5455,7 +5455,7 @@ int PeriodToId(string timeframe) {
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
    log("PeriodToId()  invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(0);
+   return(-1);
 }
 
 

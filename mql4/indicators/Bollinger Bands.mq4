@@ -107,7 +107,7 @@ int init() {
       MA.Timeframe = GetGlobalConfigString(configSection, configLabel +".MA.Timeframe", MA.Timeframe);
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
-   if (maTimeframe == 0)
+   if (maTimeframe == -1)
       return(catch("init(3)  Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methoden

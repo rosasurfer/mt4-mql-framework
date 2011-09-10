@@ -70,7 +70,7 @@ int init() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
-   if (maTimeframe == 0)
+   if (maTimeframe == -1)
       return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    string price = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));

@@ -102,7 +102,7 @@ int init() {
       // BollingerBands.MA.Timeframe
       string strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
       BollingerBands.MA.Timeframe = PeriodToId(strValue);
-      if (BollingerBands.MA.Timeframe == 0) {
+      if (BollingerBands.MA.Timeframe == -1) {
          if (IsConfigKey("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe")) {
             catch("init(3)  Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
             Track.BollingerBands = false;
