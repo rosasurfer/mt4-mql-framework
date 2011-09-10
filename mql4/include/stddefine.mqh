@@ -23,7 +23,7 @@
 
 
 // Mathematische Konstanten
-#define Math.PI                  3.14159265358979323846264338327950288419716939937510     // intern 3.1415926535897931 (15 korrekte Dezimalstellen)
+#define Math.PI                  3.14159265358979323846264338327950288419716939937510     // intern 3.141592653589793 (15 korrekte Dezimalstellen)
 
 
 // Zeitkonstanten

@@ -423,11 +423,11 @@ int CreateMagicNumber() {
  */
 bool IsEntryLimitReached() {
    // BollingerBand prüfen
-   double event[3];
    int    bb.periods   = 35;
    int    bb.timeframe = PERIOD_M5;
    int    bb.method    = MODE_EMA;
    double bb.deviation = 2.0;
+   double event[3];
 
    // EventListener aufrufen und bei Erfolg Event signalisieren
    if (EventListener.BBandCrossing(bb.periods, bb.timeframe, bb.method, bb.deviation, event, DeepSkyBlue)) {
