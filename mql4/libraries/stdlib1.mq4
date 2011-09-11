@@ -4011,12 +4011,16 @@ bool EventListener.AccountChange(int results[], int flags=0) {
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
 int Explode(string object, string separator, string& results[], int limit=NULL) {
-   int lenObject    = StringLen(object),
+   // Der Parameter object *KANN* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // vor Modifikation von results[] eine Kopie von object und verwenden diese.
+   string _object = StringConcatenate(object, "");
+
+   int lenObject    = StringLen(_object),
        lenSeparator = StringLen(separator);
 
    if (lenObject == 0) {                     // Leerstring
       ArrayResize(results, 1);
-      results[0] = object;
+      results[0] = _object;
    }
    else if (StringLen(separator) == 0) {     // String in einzelne Zeichen zerlegen
       if (limit==NULL || limit > lenObject)
@@ -4024,7 +4028,7 @@ int Explode(string object, string separator, string& results[], int limit=NULL) 
       ArrayResize(results, limit);
 
       for (int i=0; i < limit; i++) {
-         results[i] = StringSubstr(object, i, 1);
+         results[i] = StringSubstr(_object, i, 1);
       }
    }
    else {                                    // String in Substrings zerlegen
@@ -4034,18 +4038,18 @@ int Explode(string object, string separator, string& results[], int limit=NULL) 
       while (i < lenObject) {
          ArrayResize(results, size+1);
 
-         pos = StringFind(object, separator, i);
+         pos = StringFind(_object, separator, i);
          if (limit == size+1)
             pos = -1;
          if (pos == -1) {
-            results[size] = StringSubstr(object, i);
+            results[size] = StringSubstr(_object, i);
             break;
          }
          else if (pos == i) {
             results[size] = "";
          }
          else {
-            results[size] = StringSubstrFix(object, i, pos-i);
+            results[size] = StringSubstrFix(_object, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;

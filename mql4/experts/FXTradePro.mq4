@@ -78,7 +78,8 @@ int EA.uniqueId = 101;                                // eindeutige ID der Strat
 
 extern string _1____________________________ = "==== Entry Options ===================";
 extern string Entry.Direction                = "long";            // long | short | both
-extern string Entry.Condition                = "1.3950";          // {LimitValue} | [Bollinger]Bands(35xM5, EMA, 2.0) | Envelopes(75xM15, ALMA, 2.0)
+//extern string Entry.Condition                = "1.3950";        // {LimitValue} | [Bollinger]Bands(35xM5, EMA, 2.0) | Envelopes(75xM15, ALMA, 2.0)
+extern string Entry.Condition                = "BollingerBands(35xM5, EMA, 2.0)";
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 50;                // 50 | 60 | 62
@@ -1270,7 +1271,6 @@ int ShowStatus() {
    if (last_error != NO_ERROR)
       status = STATUS_DISABLED;
 
-
    // Zeile 3: Lotsizes der gesamten Sequenz
    static string str.levels.lots = "";
    if (levels.lots.changed) {
@@ -1279,7 +1279,6 @@ int ShowStatus() {
    }
 
    string msg = "";
-
    switch (status) {
       case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
       case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  sequence ", sequenceId, " waiting for Stop ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.limit, PriceFormat)); break;
@@ -1293,7 +1292,6 @@ int ShowStatus() {
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
-
    msg = StringConcatenate(__SCRIPT__, msg,                                              NL,
                                                                                          NL,
                           "Progression Level:   ", progressionLevel, " / ", sequenceLength);
@@ -1317,12 +1315,21 @@ int ShowStatus() {
       i = 0;                                                         // in Progression-Level 0 TakeProfit- und StopLoss-Anzeige für ersten Level
    }
 
-   msg = StringConcatenate(msg,                                                                                                                                                                      NL,
-                          "Lot sizes:               ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
-                          "TakeProfit:            ",   TakeProfit,                         " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                           NL,
-                          "StopLoss:              ",   StopLoss,                           " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                         NL,
-                          "Breakeven:           ",     DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),                                                                     NL,
-                          "Profit/Loss:           ",   DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2),                                                         NL);
+   if (sequenceLength > 0) {
+      msg = StringConcatenate(msg,                                                                                                                                                                      NL,
+                             "Lot sizes:               ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
+                             "TakeProfit:            ",   TakeProfit, " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                                                   NL,
+                             "StopLoss:              ",   StopLoss,   " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                                                 NL);
+   }
+   else {
+      msg = StringConcatenate(msg,                                               NL,
+                             "Lot sizes:               ", str.levels.lots,       NL,
+                             "TakeProfit:            ",   TakeProfit, " pip = ", NL,
+                             "StopLoss:              ",   StopLoss,   " pip = ", NL);
+   }
+      msg = StringConcatenate(msg,
+                             "Breakeven:           ",   DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
+                             "Profit/Loss:           ", DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
 
    // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, NL, NL, NL, msg));
