@@ -1,7 +1,4 @@
 /**
- * stdlib.mq4
- *
- *
  * Datentypen und Speichergrößen in C, Win32-API (16-bit word size) und MQL:
  * =========================================================================
  *
@@ -2293,7 +2290,7 @@ string GetLongSymbolName(string symbol) {
 
 /**
  * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD-Index (LiteForex)")
+ * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD-Index (LFX)")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
@@ -2317,7 +2314,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
 
 /**
  * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD-Index (LiteForex)")
+ * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD-Index (LFX)")
  *
  * @param  string symbol - Symbol
  *
@@ -2340,15 +2337,15 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD-Index (LiteForex)"   );
-   if (symbol == "CADLFX"  ) return("CAD-Index (LiteForex)"   );
-   if (symbol == "CHFLFX"  ) return("CHF-Index (LiteForex)"   );
-   if (symbol == "EURLFX"  ) return("EUR-Index (LiteForex)"   );
+   if (symbol == "AUDLFX"  ) return("AUD-Index (LFX)"         );
+   if (symbol == "CADLFX"  ) return("CAD-Index (LFX)"         );
+   if (symbol == "CHFLFX"  ) return("CHF-Index (LFX)"         );
+   if (symbol == "EURLFX"  ) return("EUR-Index (LFX)"         );
    if (symbol == "EURX"    ) return("EUR-Index (CME)"         );
-   if (symbol == "GBPLFX"  ) return("GBP-Index (LiteForex)"   );
-   if (symbol == "LFXJPY"  ) return("1/JPY-Index (LiteForex)" );
-   if (symbol == "NZDLFX"  ) return("NZD-Index (LiteForex)"   );
-   if (symbol == "USDLFX"  ) return("USD-Index (LiteForex)"   );
+   if (symbol == "GBPLFX"  ) return("GBP-Index (LFX)"         );
+   if (symbol == "LFXJPY"  ) return("1/JPY-Index (LFX)"       );
+   if (symbol == "NZDLFX"  ) return("NZD-Index (LFX)"         );
+   if (symbol == "USDLFX"  ) return("USD-Index (LFX)"         );
    if (symbol == "USDX"    ) return("USD-Index (CME)"         );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
    if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
