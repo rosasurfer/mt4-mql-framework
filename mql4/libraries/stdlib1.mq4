@@ -402,7 +402,7 @@ int ChronologicalSortTickets(int& tickets[]) {
  * -----
  * Im aktivierten Zustand wird die start()-Funktion bei jedem Tick ausgeführt, im deaktivierten Zustand nicht. Die init()-Funktion wird immer ausgeführt.
  */
-int SwitchEAs(bool enable) {
+int SwitchExperts(bool enable) {
 
    // TODO: In EAs und Scripten SendMessage(), in Indikatoren PostMessage() verwenden (Erkennung des Scripttyps über Thread-ID)
 
@@ -417,7 +417,7 @@ int SwitchEAs(bool enable) {
       }
    }
 
-   return(catch("SwitchEAs()"));
+   return(catch("SwitchExperts()"));
 }
 
 

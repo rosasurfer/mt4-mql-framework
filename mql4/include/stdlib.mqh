@@ -258,7 +258,7 @@
    int      SetWindowText(int hWnd, string text);
    string   ShortAccountCompany();
    int      StringBufferToArray(int buffer[], string results[]);
-   int      SwitchEAs(bool enable);
+   int      SwitchExperts(bool enable);
    string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 

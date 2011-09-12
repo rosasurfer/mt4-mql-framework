@@ -326,17 +326,17 @@ int onPositionClose(int tickets[]) {
  * @return int - Fehlerstatus
  */
 int CheckBollingerBands() {
-   double event[2];
+   double event[3];
 
    // EventListener aufrufen und bei Erfolg Event signalisieren
-   if (EventListener.BandCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
-      int    type  = event[CROSSING_TYPE ] +0.1;                     // (int) double
-      double value = event[CROSSING_VALUE];
-      debug("CheckBollingerBands()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+   if (EventListener.BandsCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
+      int    crossing = event[CROSSING_TYPE ] +0.1;                  // (int) double
+      double value    = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
+      debug("CheckBollingerBands()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         string message = StringConcatenate(symbolName, ifString(type==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
+         string message = StringConcatenate(symbolName, ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
          int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(processError(error));

@@ -83,8 +83,6 @@
 #define OP_SELLSTOP              5     // stop sell order
 #define OP_BALANCE               6     // account credit or withdrawel transaction
 #define OP_CREDIT                7     // credit facility, no transaction
-#define OP_BUYSELL               8     // custom type indicating both trade directions
-#define OP_LONGSHORT    OP_BUYSELL
 
 
 // Custom Operation-Types

@@ -58,28 +58,33 @@
 #include <win32api.mqh>
 
 
-#define STATUS_UNDEFINED      0
-#define STATUS_INITIALIZED    1
-#define STATUS_ENTRYLIMIT     2
-#define STATUS_PROGRESSING    3
-#define STATUS_FINISHED       4
-#define STATUS_DISABLED       5
+#define STATUS_UNDEFINED                 0
+#define STATUS_INITIALIZED               1
+#define STATUS_WAITING                   2
+#define STATUS_PROGRESSING               3
+#define STATUS_FINISHED                  4
+#define STATUS_DISABLED                  5
 
-#define ENTRYTYPE_UNDEFINED   0
-#define ENTRYTYPE_LIMIT       1
-#define ENTRYTYPE_BANDS       2
-#define ENTRYTYPE_ENVELOPES   3
+#define ENTRYTYPE_UNDEFINED              0
+#define ENTRYTYPE_LIMIT                  1
+#define ENTRYTYPE_BANDS                  2
+#define ENTRYTYPE_ENVELOPES              3
+
+#define ENTRYDIRECTION_UNDEFINED        -1
+#define ENTRYDIRECTION_LONG        OP_LONG      //  0
+#define ENTRYDIRECTION_SHORT      OP_SHORT      //  1
+#define ENTRYDIRECTION_LONGSHORT         2
 
 
-int EA.uniqueId = 101;                                // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
+int EA.uniqueId = 101;                                               // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string _1____________________________ = "==== Entry Options ===================";
-extern string Entry.Direction                = "long";            // long | short | both
 //extern string Entry.Condition                = "1.3950";        // {LimitValue} | [Bollinger]Bands(35xM5, EMA, 2.0) | Envelopes(75xM15, ALMA, 2.0)
 extern string Entry.Condition                = "BollingerBands(35xM5, EMA, 2.0)";
+extern string Entry.Direction                = "both";            // long | short | longshort | both
 
 extern string _2____________________________ = "==== TP and SL Settings ==============";
 extern int    TakeProfit                     = 50;                // 50 | 60 | 62
@@ -100,8 +105,8 @@ extern string Sequence.ID                    = "";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string   intern.Entry.Direction;                      // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
-string   intern.Entry.Condition;                      // werden in diesen Hilfsvariablen zwischengespeichert und nach REASON_CHARTCHANGE restauriert.
+string   intern.Entry.Condition;                      // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
+string   intern.Entry.Direction;                      // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE restauriert.
 int      intern.TakeProfit;
 int      intern.StopLoss;
 double   intern.Lotsize.Level.1;
@@ -122,7 +127,7 @@ string   PriceFormat;
 double   tickSize;
 
 int      Entry.type       = ENTRYTYPE_UNDEFINED;
-int      Entry.iDirection = OP_UNDEFINED;
+int      Entry.iDirection = ENTRYDIRECTION_UNDEFINED;
 int      Entry.MA.periods;
 int      Entry.MA.timeframe;
 int      Entry.MA.method;
@@ -156,8 +161,6 @@ bool     levels.swap.changed = true;
 bool     firstTick = true;
 int      status;
 
-string   chartObjects[];
-
 
 /**
  * Initialisierung
@@ -181,8 +184,8 @@ int init() {
 
    // (1) ggf. Input-Parameter restaurieren (externe Parameter sind nicht statisch)
    if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
-      Entry.Direction = intern.Entry.Direction;
       Entry.Condition = intern.Entry.Condition;
+      Entry.Direction = intern.Entry.Direction;
       TakeProfit      = intern.TakeProfit;
       StopLoss        = intern.StopLoss;
       Lotsize.Level.1 = intern.Lotsize.Level.1;
@@ -207,13 +210,12 @@ int init() {
    // (3) ggf. neue Sequenz anlegen, neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
    if (sequenceId == 0) {
       if (!ValidateConfiguration()) {
-         status = STATUS_DISABLED;
          ShowStatus();
          return(init_error);
       }
       sequenceId = CreateSequenceId();
-      if (NE(Entry.limit, 0))                                     // ohne Entry.Limit wird Konfiguration erst nach Abfrage in StartSequence() gespeichert
-         SaveConfiguration();
+      if (Entry.type!=ENTRYTYPE_LIMIT || NE(Entry.limit, 0))         // Bei ENTRYTYPE_LIMIT und Entry.Limit==0 erfolgt sofortiger Einstieg, in diesem Fall
+         SaveConfiguration();                                        // wird die Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert.
    }
    else if (UninitializeReason() == REASON_PARAMETERS) {
       if (ValidateConfiguration())
@@ -252,14 +254,14 @@ int init() {
 
 
    // (4) aktuellen Status bestimmen und anzeigen
-   if (init_error != NO_ERROR)       status = STATUS_DISABLED;
+   if (init_error != NO_ERROR)                                  status = STATUS_DISABLED;
    if (status != STATUS_DISABLED) {
       if (progressionLevel == 0) {
-         if (EQ(Entry.limit, 0))     status = STATUS_INITIALIZED;
-         else                        status = STATUS_ENTRYLIMIT;
+         if (Entry.type==ENTRYTYPE_LIMIT && EQ(Entry.limit, 0)) status = STATUS_INITIALIZED;
+         else                                                   status = STATUS_WAITING;
       }
-      else if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
-      else                           status = STATUS_FINISHED;
+      else if (NE(effectiveLots, 0))                            status = STATUS_PROGRESSING;
+      else                                                      status = STATUS_FINISHED;
       UpdateStatus();
    }
    ShowStatus();
@@ -269,7 +271,7 @@ int init() {
       // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
       if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
-         SwitchEAs(true);
+         SwitchExperts(true);
 
 
       // (7) nach Start oder Reload nicht auf den ersten Tick warten
@@ -293,8 +295,8 @@ int init() {
  */
 int deinit() {
    // externe Input-Parameter sind nicht statisch und müssen im nächsten init() restauriert werden
-   intern.Entry.Direction = Entry.Direction;
    intern.Entry.Condition = Entry.Condition;
+   intern.Entry.Direction = Entry.Direction;
    intern.TakeProfit      = TakeProfit;
    intern.StopLoss        = StopLoss;
    intern.Lotsize.Level.1 = Lotsize.Level.1;
@@ -306,11 +308,6 @@ int deinit() {
    intern.Lotsize.Level.7 = Lotsize.Level.7;
    intern.Sequence.ID     = Sequence.ID;
    intern                 = true;                           // Flag zur späteren Erkennung in init() setzen
-
-
-   // TODO: haut nicht hin bei Symbolwechsel
-   if (UninitializeReason() != REASON_CHARTCHANGE)
-      RemoveChartObjects(chartObjects);
 
    return(catch("deinit()"));
 }
@@ -339,7 +336,7 @@ int start() {
 
    if (UpdateStatus()) {
       if (progressionLevel == 0) {
-         if (!IsEntryLimitReached())            status = STATUS_ENTRYLIMIT;
+         if (!IsEntryLimitReached())            status = STATUS_WAITING;
          else                                   StartSequence();              // kein Limit definiert oder Limit erreicht
       }
       else if (IsStopLossReached()) {
@@ -425,9 +422,8 @@ bool IsEntryLimitReached() {
       status = STATUS_DISABLED;
       return(catch("IsEntryLimitReached(1)   illegal Entry.type = "+ EntryTypeToStr(Entry.type), ERR_RUNTIME_ERROR)==NO_ERROR);
    }
-   double event[2];
-   int    type;
-   double value;
+   double event[3];
+   int    crossing;
 
 
    switch (Entry.type) {
@@ -471,25 +467,33 @@ bool IsEntryLimitReached() {
 
       // ---------------------------------------------------------------------------------------------------------------------------------
       case ENTRYTYPE_BANDS:                                             // EventListener aufrufen und ggf. Event signalisieren
-         if (EventListener.BandCrossing(Entry.MA.periods, Entry.MA.timeframe, Entry.MA.method, Entry.MA.deviation, event, DeepSkyBlue)) {
-            type  = event[CROSSING_TYPE ] +0.1;                         // (int) double
-            value = event[CROSSING_VALUE];
-            debug("IsEntryLimitReached()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+         if (EventListener.BandsCrossing(Entry.MA.periods, Entry.MA.timeframe, Entry.MA.method, Entry.MA.deviation, event, DeepSkyBlue)) {
+            crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
+            Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
+            Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
+
+            debug("IsEntryLimitReached()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(Entry.limit, PriceFormat));
             PlaySound("Close order.wav");
             return(true);
          }
-         return(false);
+         else {
+            return(false);
+         }
 
       // ---------------------------------------------------------------------------------------------------------------------------------
       case ENTRYTYPE_ENVELOPES:                                         // EventListener aufrufen und ggf. Event signalisieren
          if (EventListener.EnvelopesCrossing(Entry.MA.periods, Entry.MA.timeframe, Entry.MA.method, Entry.MA.deviation, event, DeepSkyBlue)) {
-            type  = event[CROSSING_TYPE ] +0.1;                         // (int) double
-            value = event[CROSSING_VALUE];
-            debug("IsEntryLimitReached()   new "+ ifString(type==CROSSING_LOW, "low", "high") +" crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(type==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+            crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
+            Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
+            Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
+
+            debug("IsEntryLimitReached()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" envelopes crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(Entry.limit, PriceFormat));
             PlaySound("Close order.wav");
             return(true);
          }
-         return(false);
+         else {
+            return(false);
+         }
 
       // ---------------------------------------------------------------------------------------------------------------------------------
       default:
@@ -868,7 +872,7 @@ bool UpdateStatus() {
  * @return int - Fehlerstatus
  */
 int ResetAll() {
-   Entry.iDirection = OP_UNDEFINED;
+   Entry.iDirection = ENTRYDIRECTION_UNDEFINED;
    Entry.lastBid    = 0;
 
    sequenceId       = 0;
@@ -1286,8 +1290,13 @@ int VisualizeSequence() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (last_error != NO_ERROR)
+   if (init) {
+      if (init_error != NO_ERROR)
+         status = STATUS_DISABLED;
+   }
+   else if (last_error != NO_ERROR)
       status = STATUS_DISABLED;
+
 
    // Zeile 3: Lotsizes der gesamten Sequenz
    static string str.levels.lots = "";
@@ -1299,7 +1308,7 @@ int ShowStatus() {
    string msg = "";
    switch (status) {
       case STATUS_INITIALIZED: msg = StringConcatenate(":  sequence ", sequenceId, " initialized");                                                                                                  break;
-      case STATUS_ENTRYLIMIT : msg = StringConcatenate(":  sequence ", sequenceId, " waiting for Stop ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.limit, PriceFormat)); break;
+      case STATUS_WAITING:     msg = StringConcatenate(":  sequence ", sequenceId, " waiting for Stop ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.limit, PriceFormat)); break;
       case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing...");                                                                                               break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");                                                                                                     break;
       case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled");
@@ -1365,118 +1374,129 @@ bool ValidateConfiguration() {
    // TODO: Nach Progressionstart unmögliche Parameteränderungen abfangen, z.B. Parameter werden geändert,
    //       ohne vorher im Input-Dialog die Konfigurationsdatei der Sequenz zu laden.
 
-   // Entry.Direction
-   string strValue = StringToLower(StringTrim(Entry.Direction));
-   if (StringLen(strValue) == 0)
-      return(catch("ValidateConfiguration(1)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-   switch (StringGetChar(strValue, 0)) {
-      case 'l':    Entry.Direction = "long";  Entry.iDirection = OP_LONG;      break;
-      case 's':    Entry.Direction = "short"; Entry.iDirection = OP_SHORT;     break;
-      case 'b': if (strValue == "both") {
-                   Entry.Direction = "both";  Entry.iDirection = OP_LONGSHORT; break;
-                }
-      default:
-         return(catch("ValidateConfiguration(2)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-   }
-
    // Entry.Condition
-   strValue = StringReplace(Entry.Condition, " ", "");
+   string strValue = StringReplace(Entry.Condition, " ", "");
    string values[];
    // LimitValue | BollingerBands(35xM5, EMA, 2.0) | Envelopes(75xM15, ALMA, 2.0)
    if (Explode(strValue, "|", values, NULL) != 1)                    // vorerst wird nur eine Entry.Condition akzeptiert
-      return(catch("ValidateConfiguration(3)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      return(catch("ValidateConfiguration(1)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    strValue = values[0];
    if (StringLen(strValue) == 0)
-      return(catch("ValidateConfiguration(4)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      return(catch("ValidateConfiguration(2)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    // LimitValue
    if (StringIsNumeric(strValue)) {
       Entry.limit = StrToDouble(strValue);
       if (LT(Entry.limit, 0))
-         return(catch("ValidateConfiguration(5)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(3)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       Entry.type = ENTRYTYPE_LIMIT;
    }
    else if (!StringEndsWith(strValue, ")")) {
-      return(catch("ValidateConfiguration(6)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      return(catch("ValidateConfiguration(4)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    }
    else {
       // BollingerBands(35xM5, EMA, 2.0)
       strValue = StringToLower(StringLeft(strValue, -1));
       if (Explode(strValue, "(", values, NULL) != 2)
-         return(catch("ValidateConfiguration(7)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(5)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       if      (values[0] == "bands"         ) Entry.type = ENTRYTYPE_BANDS;
       else if (values[0] == "bollingerbands") Entry.type = ENTRYTYPE_BANDS;
       else if (values[0] == "envelopes"     ) Entry.type = ENTRYTYPE_ENVELOPES;
       else
-         return(catch("ValidateConfiguration(8)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(6)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // 35xM5, EMA, 2.0
       if (Explode(values[1], ",", values, NULL) != 3)
-         return(catch("ValidateConfiguration(9)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(7)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // MA-Deviation
       if (!StringIsNumeric(values[2]))
-         return(catch("ValidateConfiguration(10)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(8)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       Entry.MA.deviation = StrToDouble(values[2]);
       if (LE(Entry.MA.deviation, 0))
-         return(catch("ValidateConfiguration(11)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(9)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // MA-Method
       Entry.MA.method = MovingAverageMethodToId(values[1]);
       if (Entry.MA.method == -1)
-         return(catch("ValidateConfiguration(12)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(10)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // MA-Periods(x)MA-Timeframe
       if (Explode(values[0], "x", values, NULL) != 2)
-         return(catch("ValidateConfiguration(13)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(11)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // MA-Periods
       if (!StringIsDigit(values[0]))
-         return(catch("ValidateConfiguration(14)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(12)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       Entry.MA.periods = StrToInteger(values[0]);
       if (Entry.MA.periods < 1)
-         return(catch("ValidateConfiguration(15)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(13)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       // MA-Timeframe
       Entry.MA.timeframe = PeriodToId(values[1]);
       if (Entry.MA.timeframe == -1)
-         return(catch("ValidateConfiguration(16)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(14)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    }
 
-   // Entry.Limit
-   if (LT(Entry.limit, 0))
-      return(catch("ValidateConfiguration(17)  Invalid input parameter Entry.Limit = "+ NumberToStr(Entry.limit, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+   // Entry.Direction
+   strValue = StringToLower(StringTrim(Entry.Direction));
+   if (StringLen(strValue) == 0)
+      return(catch("ValidateConfiguration(15)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+   switch (StringGetChar(strValue, 0)) {
+      case 'b': if      (strValue == "buy"      ) { Entry.Direction = "long";  Entry.iDirection = ENTRYDIRECTION_LONG;      }
+                else if (strValue == "both"     ) { Entry.Direction = "both";  Entry.iDirection = ENTRYDIRECTION_LONGSHORT; }
+                else return(catch("ValidateConfiguration(16)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+                break;
+
+      case 'l': if      (strValue == "long"     ) { Entry.Direction = "long";  Entry.iDirection = ENTRYDIRECTION_LONG;      }
+                else if (strValue == "longshort") { Entry.Direction = "both";  Entry.iDirection = ENTRYDIRECTION_LONGSHORT; }
+                else return(catch("ValidateConfiguration(17)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+                break;
+
+      case 's': Entry.Direction = "short"; Entry.iDirection = ENTRYDIRECTION_SHORT;
+                break;
+      default:
+         return(catch("ValidateConfiguration(18)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+   }
+
+   // Entry.Condition <-> Entry.Direction
+   if (Entry.type == ENTRYTYPE_LIMIT) {
+      if (Entry.iDirection == ENTRYDIRECTION_LONGSHORT)
+         return(catch("ValidateConfiguration(19)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+   }
+   else if (Entry.iDirection != ENTRYDIRECTION_LONGSHORT)
+      return(catch("ValidateConfiguration(20)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
 
    // TakeProfit
    if (TakeProfit < 1)
-      return(catch("ValidateConfiguration(18)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      return(catch("ValidateConfiguration(21)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
 
    // StopLoss
    if (StopLoss < 1)
-      return(catch("ValidateConfiguration(19)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      return(catch("ValidateConfiguration(22)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
 
    // Lotsizes
    ArrayResize(levels.lots, 0);
    levels.lots.changed = true;
 
-   if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(20)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+   if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(23)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    ArrayPushDouble(levels.lots, Lotsize.Level.1);
 
    if (NE(Lotsize.Level.2, 0)) {
-      if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(21)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(24)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       ArrayPushDouble(levels.lots, Lotsize.Level.2);
 
       if (NE(Lotsize.Level.3, 0)) {
-         if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(22)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(25)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
          ArrayPushDouble(levels.lots, Lotsize.Level.3);
 
          if (NE(Lotsize.Level.4, 0)) {
-            if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(23)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+            if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(26)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
             ArrayPushDouble(levels.lots, Lotsize.Level.4);
 
             if (NE(Lotsize.Level.5, 0)) {
-               if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(24)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+               if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(27)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
                ArrayPushDouble(levels.lots, Lotsize.Level.5);
 
                if (NE(Lotsize.Level.6, 0)) {
-                  if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(25)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+                  if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(28)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
                   ArrayPushDouble(levels.lots, Lotsize.Level.6);
 
                   if (NE(Lotsize.Level.7, 0)) {
-                     if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(26)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+                     if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(29)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
                      ArrayPushDouble(levels.lots, Lotsize.Level.7);
                   }
                }
@@ -1488,9 +1508,9 @@ bool ValidateConfiguration() {
    // Sequence.ID
    strValue = StringTrim(Sequence.ID);
    if (StringLen(strValue) > 0) {
-      if (!StringIsInteger(strValue))      return(catch("ValidateConfiguration(27)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      if (!StringIsInteger(strValue))      return(catch("ValidateConfiguration(30)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       int iValue = StrToInteger(strValue);
-      if (iValue < 1000 || iValue > 16383) return(catch("ValidateConfiguration(28)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      if (iValue < 1000 || iValue > 16383) return(catch("ValidateConfiguration(31)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       strValue = iValue;
    }
    Sequence.ID = strValue;
@@ -1499,17 +1519,17 @@ bool ValidateConfiguration() {
    if (sequenceId == 0) {
       sequenceLength = ArraySize(levels.lots);
    }
-   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(29)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
+   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(32)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
          if (NE(levels.lots[last], ifInt(levels.type[last]==OP_BUY, 1, -1) * effectiveLots))
-            return(catch("ValidateConfiguration(30)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
+            return(catch("ValidateConfiguration(33)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       }
-      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(31)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(34)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
    }
 
-   return(catch("ValidateConfiguration(32)")==NO_ERROR);
+   return(catch("ValidateConfiguration(35)")==NO_ERROR);
 }
 
 
@@ -1541,8 +1561,8 @@ int ForcedSequenceId() {
 
 
 /**
- * Speichert die aktuelle Konfiguration und Laufzeitdaten der Instanz, um die korrekte und nahtlose Wiederauf- und Übernahme
- * durch eine andere Instanz im selben oder einem anderen Terminal zu ermöglichen.
+ * Speichert aktuelle Konfiguration und Laufzeitdaten der Instanz, um die nahtlose Wiederauf- und Übernahme durch eine
+ * andere Instanz im selben oder einem anderen Terminal zu ermöglichen.
  *
  * @return int - Fehlerstatus
  */
@@ -1558,8 +1578,8 @@ int SaveConfiguration() {
    string lines[];  ArrayResize(lines, 0);
 
    ArrayPushString(lines, /*int   */ "sequenceId="      +             sequenceId            );
+   ArrayPushString(lines, /*string*/ "Entry.Condition=" +             Entry.Condition       );
    ArrayPushString(lines, /*string*/ "Entry.Direction=" +             Entry.Direction       );
-   ArrayPushString(lines, /*double*/ "Entry.Limit="     + NumberToStr(Entry.limit, ".+")    );
    ArrayPushString(lines, /*int   */ "TakeProfit="      +             TakeProfit            );
    ArrayPushString(lines, /*int   */ "StopLoss="        +             StopLoss              );
    ArrayPushString(lines, /*double*/ "Lotsize.Level.1=" + NumberToStr(Lotsize.Level.1, ".+"));
@@ -1591,7 +1611,7 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), Symbol(), filename);
+   error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), GetStandardSymbol(Symbol()), filename);
    if (error != NO_ERROR) {
       status = STATUS_DISABLED;
       return(error);
@@ -1618,6 +1638,8 @@ int SaveConfiguration() {
  */
 int UploadConfiguration(string company, int account, string symbol, string filename) {
    string parts[]; int size = Explode(filename, "\\", parts, NULL);
+
+   // TODO: Existenz von wget.exe prüfen
 
    // Befehlszeile für Shellaufruf zusammensetzen
    string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(parts[size-1]);
@@ -1650,13 +1672,15 @@ bool RestoreConfiguration() {
    if (sequenceId == 0)
       return(catch("RestoreConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
 
+   // TODO: Existenz von wget.exe prüfen
+
    // (1) bei nicht existierender lokaler Konfiguration die Datei vom Server laden
    string filesDir = TerminalPath() +"\\experts\\files\\";
    string fileName = "presets\\FTP."+ sequenceId +".set";
 
    if (!IsFile(filesDir + fileName)) {
       // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(Symbol()) +"&sequence="+ sequenceId;
+      string url        = "http://sub.domain.tld/downloadFTPConfiguration.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(GetStandardSymbol(Symbol())) +"&sequence="+ sequenceId;
       string targetFile = filesDir +"\\"+ fileName;
       string logFile    = filesDir +"\\"+ fileName +".log";
       string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
@@ -1685,8 +1709,8 @@ bool RestoreConfiguration() {
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Datentypen validieren und Daten übernehmen
    int parameters[12]; ArrayInitialize(parameters, 0);
    #define I_SEQUENCEID       0
-   #define I_ENTRY_DIRECTION  1
-   #define I_ENTRY_LIMIT      2
+   #define I_ENTRY_CONDITION  1
+   #define I_ENTRY_DIRECTION  2
    #define I_TAKEPROFIT       3
    #define I_STOPLOSS         4
    #define I_LOTSIZE_LEVEL_1  5
@@ -1706,62 +1730,61 @@ bool RestoreConfiguration() {
          if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId) return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          parameters[I_SEQUENCEID] = 1;
       }
+      else if (key == "Entry.Condition") {
+         Entry.Condition = value;
+         parameters[I_ENTRY_CONDITION] = 1;
+      }
       else if (key == "Entry.Direction") {
          Entry.Direction = value;
          parameters[I_ENTRY_DIRECTION] = 1;
       }
-      else if (key == "Entry.Limit") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
-         Entry.limit = StrToDouble(value);
-         parameters[I_ENTRY_LIMIT] = 1;
-      }
       else if (key == "TakeProfit") {
-         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          TakeProfit = StrToInteger(value);
          parameters[I_TAKEPROFIT] = 1;
       }
       else if (key == "StopLoss") {
-         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          StopLoss = StrToInteger(value);
          parameters[I_STOPLOSS] = 1;
       }
       else if (key == "Lotsize.Level.1") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.1 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_1] = 1;
       }
       else if (key == "Lotsize.Level.2") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.2 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_2] = 1;
       }
       else if (key == "Lotsize.Level.3") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.3 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_3] = 1;
       }
       else if (key == "Lotsize.Level.4") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.4 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_4] = 1;
       }
       else if (key == "Lotsize.Level.5") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.5 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_5] = 1;
       }
       else if (key == "Lotsize.Level.6") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.6 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_6] = 1;
       }
       else if (key == "Lotsize.Level.7") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(14)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.7 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_7] = 1;
       }
    }
-   if (IntInArray(0, parameters))                                      return(catch("RestoreConfiguration(15)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
+   if (IntInArray(0, parameters))                                      return(catch("RestoreConfiguration(14)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
 
    return(catch("RestoreConfiguration(16)")==NO_ERROR);
    StatusToStr(NULL);
@@ -1780,7 +1803,7 @@ string StatusToStr(int status) {
    switch (status) {
       case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
       case STATUS_INITIALIZED: return("STATUS_INITIALIZED");
-      case STATUS_ENTRYLIMIT : return("STATUS_ENTRYLIMIT" );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
       case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
       case STATUS_FINISHED   : return("STATUS_FINISHED"   );
       case STATUS_DISABLED   : return("STATUS_DISABLED"   );
