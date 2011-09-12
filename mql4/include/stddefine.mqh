@@ -1,6 +1,4 @@
 /**
- * stddefine.mqh
- *
  * Globale MQL-Funktionen, Variablen und Konstanten.
  *
  *
