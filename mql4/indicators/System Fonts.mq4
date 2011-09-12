@@ -1,6 +1,4 @@
 /**
- * System Fonts
- *
  * Zeigt einen Schriftzug in unterschiedlichen Größen und Schriften an.
  *
  *

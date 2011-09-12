@@ -1,6 +1,4 @@
 /**
- * Instrument Infos.mq4
- *
  * Zeigt die Eigenschaften eines Instruments an.
  *
  *
