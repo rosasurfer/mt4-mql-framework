@@ -6380,7 +6380,7 @@ bool StringInArray(string needle, string &haystack[]) {
  *
  *
 abstract*/ int onBarOpen(int details[]) {
-   return(catch("onBarOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onBarOpen()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6388,7 +6388,7 @@ abstract*/ int onBarOpen(int details[]) {
  *
  *
 abstract*/ int onOrderPlace(int details[]) {
-   return(catch("onOrderPlace()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onOrderPlace()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6396,7 +6396,7 @@ abstract*/ int onOrderPlace(int details[]) {
  *
  *
 abstract*/ int onOrderChange(int details[]) {
-   return(catch("onOrderChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onOrderChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6404,7 +6404,7 @@ abstract*/ int onOrderChange(int details[]) {
  *
  *
 abstract*/ int onOrderCancel(int details[]) {
-   return(catch("onOrderCancel()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onOrderCancel()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6416,7 +6416,7 @@ abstract*/ int onOrderCancel(int details[]) {
  * @return int - Fehlerstatus
  *
 abstract*/ int onPositionOpen(int tickets[]) {
-   return(catch("onPositionOpen()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onPositionOpen()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6424,7 +6424,7 @@ abstract*/ int onPositionOpen(int tickets[]) {
  *
  *
 abstract*/ int onPositionClose(int details[]) {
-   return(catch("onPositionClose()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onPositionClose()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6432,7 +6432,7 @@ abstract*/ int onPositionClose(int details[]) {
  *
  *
 abstract*/ int onAccountChange(int details[]) {
-   return(catch("onAccountChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onAccountChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6440,7 +6440,7 @@ abstract*/ int onAccountChange(int details[]) {
  *
  *
 abstract*/ int onAccountPayment(int details[]) {
-   return(catch("onAccountPayment()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onAccountPayment()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -6448,7 +6448,7 @@ abstract*/ int onAccountPayment(int details[]) {
  *
  *
 abstract*/ int onHistoryChange(int details[]) {
-   return(catch("onHistoryChange()   implementation not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("onHistoryChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
