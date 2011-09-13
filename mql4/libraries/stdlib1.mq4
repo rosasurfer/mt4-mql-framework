@@ -1662,6 +1662,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
    else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
    else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
+   else if (StringStartsWith(server, "finfx-"             )) return("FinFX"           );
    else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
    else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
    else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
@@ -5611,6 +5612,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
+   else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
