@@ -1,7 +1,7 @@
 /**
  * Übergangszeiten von Normal- zu Sommerzeit und zurück für die einzelnen Zeitzonen.
  *
- * Daten sind ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und bei
+ * Ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und bei
  * Compile-Fehlern falsche Zeilennummern zurückgibt.
  *
  *
