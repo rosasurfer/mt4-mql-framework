@@ -161,7 +161,7 @@ int start() {
       if (error != NO_ERROR)
          return(catch("start(1)   \""+ symbols[i] +"\"", error));
 
-      // auf ERR_MARKETINFO_UPDATE prüfen
+      // auf ERR_INVALID_MARKETINFO prüfen
       string errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 150)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = StringConcatenate("TickSize(\"" , symbols[i], "\") = ", NumberToStr(tickSize , ".+"));
@@ -170,7 +170,7 @@ int start() {
       else if (LT(maxLot, 50)                             ) errorMsg = StringConcatenate("MaxLot(\""   , symbols[i], "\") = ", NumberToStr(maxLot   , ".+"));
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = StringConcatenate("LotStep(\""  , symbols[i], "\") = ", NumberToStr(lotStep  , ".+"));
 
-      // ERR_MARKETINFO_UPDATE behandeln
+      // ERR_INVALID_MARKETINFO behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                                       // 3 stille Versuche, korrekte Werte zu lesen
             Sleep(200);
@@ -179,7 +179,7 @@ int start() {
             continue;
          }
          PlaySound("notify.wav");                                                               // danach Bestätigung per Dialog
-         int button = MessageBox("Market data in update state.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
             continue;

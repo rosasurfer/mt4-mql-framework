@@ -459,7 +459,7 @@
 #define ERR_INVALID_CONFIG_PARAMVALUE                5003   // invalid configuration parameter value
 #define ERR_TERMINAL_NOT_YET_READY                   5004   // terminal not yet ready
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
-#define ERR_MARKETINFO_UPDATE                        5006   // function MarketInfo() in update state
+#define ERR_INVALID_MARKETINFO                       5006   // invalid MarketInfo() data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
 
 

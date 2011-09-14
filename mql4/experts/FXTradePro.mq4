@@ -176,9 +176,9 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-   int error = GetLastError();                                       // ERR_MARKETINFO_UPDATE abfangen
-   if (error != NO_ERROR)                   { status = STATUS_DISABLED; return(catch("init(1)", error));                                                                   }
-   if (tickSize < 0.000009 || tickSize > 1) { status = STATUS_DISABLED; return(catch("init(2)   MODE_TICKSIZE = "+ NumberToStr(tickSize,   ".+"), ERR_MARKETINFO_UPDATE)); }
+   int error = GetLastError();
+   if (error != NO_ERROR)                   { status = STATUS_DISABLED; return(catch("init(1)", error));                                                             }
+   if (tickSize < 0.000009 || tickSize > 1) { status = STATUS_DISABLED; return(catch("init(2)   TickSize = "+ NumberToStr(tickSize, ".+"), ERR_INVALID_MARKETINFO)); }
 
 
    // (1) ggf. Input-Parameter restaurieren (externe Parameter sind nicht statisch)
@@ -206,7 +206,7 @@ int init() {
    }
 
 
-   // (3) ggf. neue Sequenz anlegen, neue und geänderte Konfigurationen speichern, alte Konfigurationen restaurieren
+   // (3) ggf. neue Sequenz anlegen, neue und geänderte Konfigurationen speichern, alte Konfiguration restaurieren
    if (sequenceId == 0) {
       if (!ValidateConfiguration()) {
          ShowStatus();
@@ -792,11 +792,13 @@ bool UpdateStatus() {
    }
 
 
-   // (3) P/L-Berechnung: aktuelle MarketInfo()-Daten auslesen
+   // (3) P/L-Berechnung: aktuellen TickValue auslesen
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();                                           // ERR_MARKETINFO_UPDATE abfangen
-   if (error != NO_ERROR)                 { status = STATUS_DISABLED; return(catch("UpdateStatus(2)", error)==NO_ERROR);                                                                   }
-   if (tickValue < 0.5 || tickValue > 20) { status = STATUS_DISABLED; return(catch("UpdateStatus(4)   MODE_TICKVALUE = "+ NumberToStr(tickValue, ".+"), ERR_MARKETINFO_UPDATE)==NO_ERROR); }
+   error = GetLastError();                                           // ERR_INVALID_MARKETINFO abfangen
+   if (error!=NO_ERROR || tickValue < 0.1) {
+      status = STATUS_DISABLED;
+      return(catch("UpdateStatus(2)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
+   }
    double pipValue = Pip / tickSize * tickValue;
 
 
@@ -815,7 +817,7 @@ bool UpdateStatus() {
             if (error == NO_ERROR)
                error = ERR_INVALID_TICKET;
             status = STATUS_DISABLED;
-            return(catch("UpdateStatus(5)", error)==NO_ERROR);
+            return(catch("UpdateStatus(3)", error)==NO_ERROR);
          }
          levels.openProfit[i] = 0;
 
@@ -872,7 +874,7 @@ bool UpdateStatus() {
    }
 
 
-   if (catch("UpdateStatus(6)") != NO_ERROR) {
+   if (catch("UpdateStatus(4)") != NO_ERROR) {
       status = STATUS_DISABLED;
       return(false);
    }
@@ -1493,48 +1495,59 @@ bool ValidateConfiguration() {
       return(catch("ValidateConfiguration(20)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
 
    // Lotsizes
-   ArrayResize(levels.lots, 0);
+   int levels = ArrayResize(levels.lots, 0);
    levels.lots.changed = true;
 
    if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(21)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-   ArrayPushDouble(levels.lots, Lotsize.Level.1);
+   levels = ArrayPushDouble(levels.lots, Lotsize.Level.1);
 
    if (NE(Lotsize.Level.2, 0)) {
       if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(catch("ValidateConfiguration(22)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-      ArrayPushDouble(levels.lots, Lotsize.Level.2);
+      levels = ArrayPushDouble(levels.lots, Lotsize.Level.2);
 
       if (NE(Lotsize.Level.3, 0)) {
          if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(catch("ValidateConfiguration(23)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-         ArrayPushDouble(levels.lots, Lotsize.Level.3);
+         levels = ArrayPushDouble(levels.lots, Lotsize.Level.3);
 
          if (NE(Lotsize.Level.4, 0)) {
             if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(catch("ValidateConfiguration(24)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-            ArrayPushDouble(levels.lots, Lotsize.Level.4);
+            levels = ArrayPushDouble(levels.lots, Lotsize.Level.4);
 
             if (NE(Lotsize.Level.5, 0)) {
                if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(catch("ValidateConfiguration(25)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-               ArrayPushDouble(levels.lots, Lotsize.Level.5);
+               levels = ArrayPushDouble(levels.lots, Lotsize.Level.5);
 
                if (NE(Lotsize.Level.6, 0)) {
                   if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(catch("ValidateConfiguration(26)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-                  ArrayPushDouble(levels.lots, Lotsize.Level.6);
+                  levels = ArrayPushDouble(levels.lots, Lotsize.Level.6);
 
                   if (NE(Lotsize.Level.7, 0)) {
                      if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(catch("ValidateConfiguration(27)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-                     ArrayPushDouble(levels.lots, Lotsize.Level.7);
+                     levels = ArrayPushDouble(levels.lots, Lotsize.Level.7);
                   }
                }
             }
          }
       }
    }
+   double minLot  = MarketInfo(Symbol(), MODE_MINLOT);
+   double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT);
+   double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
+   int error  = GetLastError();
+   if (error != NO_ERROR)                             return(catch("ValidateConfiguration(28)   symbol=\""+ Symbol() +"\"", error)==NO_ERROR);
+
+   for (int i=0; i < levels; i++) {
+      if (LT(levels.lots[i], minLot))                 return(catch("ValidateConfiguration(29)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (GT(levels.lots[i], maxLot))                 return(catch("ValidateConfiguration(30)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (NE(MathModFix(levels.lots[i], lotStep), 0)) return(catch("ValidateConfiguration(31)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT_PARAMVALUE));
+   }
 
    // Sequence.ID
    strValue = StringTrim(Sequence.ID);
    if (StringLen(strValue) > 0) {
-      if (!StringIsInteger(strValue))      return(catch("ValidateConfiguration(28)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      if (!StringIsInteger(strValue))      return(catch("ValidateConfiguration(32)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       int iValue = StrToInteger(strValue);
-      if (iValue < 1000 || iValue > 16383) return(catch("ValidateConfiguration(29)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+      if (iValue < 1000 || iValue > 16383) return(catch("ValidateConfiguration(33)  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
       strValue = iValue;
    }
    Sequence.ID = strValue;
@@ -1543,17 +1556,17 @@ bool ValidateConfiguration() {
    if (sequenceId == 0) {
       sequenceLength = ArraySize(levels.lots);
    }
-   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(30)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
+   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(34)   illegal sequence state, input parameters Lotsize.* ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
          if (NE(levels.lots[last], ifInt(levels.type[last]==OP_BUY, 1, -1) * effectiveLots))
-            return(catch("ValidateConfiguration(31)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
+            return(catch("ValidateConfiguration(35)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       }
-      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(32)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(36)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
    }
 
-   return(catch("ValidateConfiguration(33)")==NO_ERROR);
+   return(catch("ValidateConfiguration(37)")==NO_ERROR);
 }
 
 
