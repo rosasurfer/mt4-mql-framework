@@ -1,8 +1,5 @@
 /**
  * Zeigt die Eigenschaften eines Instruments an.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

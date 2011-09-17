@@ -1,8 +1,5 @@
 /**
  * Berechnet die Kurse der momentan verfügbaren LiteForex-Indizes und zeigt sie an.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

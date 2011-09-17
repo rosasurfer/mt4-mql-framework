@@ -1,8 +1,5 @@
 /**
  * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

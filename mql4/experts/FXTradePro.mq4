@@ -50,9 +50,6 @@
  *  - SMS-Benachrichtigungen implementieren
  *  - Equity-Chart der laufenden Sequenz implementieren
  *  - ShowStatus() übersichtlicher gestalten (Textlabel statt Comment())
- *
- *
- *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>

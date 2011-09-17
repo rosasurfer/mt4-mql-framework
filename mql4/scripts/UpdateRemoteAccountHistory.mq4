@@ -1,9 +1,6 @@
 /**
  * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten übertragen.
  * Die Auswertung und Zuordnung erfolgt auf dem Server.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

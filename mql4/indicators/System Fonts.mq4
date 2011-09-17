@@ -1,8 +1,5 @@
 /**
  * Zeigt einen Schriftzug in unterschiedlichen Größen und Schriften an.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

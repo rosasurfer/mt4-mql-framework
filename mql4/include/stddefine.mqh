@@ -1,10 +1,6 @@
 /**
  * Globale MQL-Funktionen, Variablen und Konstanten.
- *
- *
- *
  */
-
 
 // Special constants
 #define NULL                     0     //

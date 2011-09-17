@@ -6,9 +6,6 @@
  * - unter dem Kurs: der Spread
  * - unten Mitte:    die Größe einer Handels-Unit
  * - unten Mitte:    die im Moment gehaltene Position
- *
- *
- *
  */
 #include <stdlib.mqh>
 

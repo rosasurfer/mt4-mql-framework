@@ -1,12 +1,10 @@
 /**
  * Blendet Markierungen für die aktuell offenen Positionen ein oder aus.
  * In LiteForex-Charts werden die im konfigurierten externen Account gehaltenen Positionen angezeigt.
- *
- *
- *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
+
 
 //#property show_inputs
 

@@ -1,8 +1,5 @@
 /**
  * Überwacht ein Instrument auf verschiedene Signale und benachrichtigt akustisch und/oder per SMS.
- *
- *
- *
  */
 #include <stdlib.mqh>
 

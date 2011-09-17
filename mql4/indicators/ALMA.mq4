@@ -2,7 +2,6 @@
  * Arnaud Legoux Moving Average
  *
  * @see        http://www.arnaudlegoux.com/
- *
  */
 #include <stdlib.mqh>
 

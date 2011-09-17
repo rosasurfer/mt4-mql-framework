@@ -1,12 +1,9 @@
 /**
  *
- *
  */
 #property library
 
-
 #include <stdlib.mqh>
-
 
 #import "kernel32.dll"
 

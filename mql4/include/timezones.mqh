@@ -3,9 +3,6 @@
  *
  * Ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und bei
  * Compile-Fehlern falsche Zeilennummern zurückgibt.
- *
- *
- *
  */
 
 // Europe/Kiev GMT+0200,GMT+0300

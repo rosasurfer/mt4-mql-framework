@@ -1,8 +1,5 @@
 /**
  * Lädt die Konfigurationsdateien der MetaTrader-Instanz in den Editor.
- *
- *
- *
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
