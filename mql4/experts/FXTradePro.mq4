@@ -1323,7 +1323,7 @@ int ShowStatus() {
       case STATUS_UNDEFINED:   msg = StringConcatenate(":  sequence ", sequenceId, " initialized");    break;
       case STATUS_WAITING:     if      (Entry.type       == ENTRYTYPE_LIMIT         ) msg = StringConcatenate(":  sequence ", sequenceId, " waiting to ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.limit, PriceFormat));
                                else if (Entry.iDirection == ENTRYDIRECTION_UNDEFINED) msg = StringConcatenate(":  sequence ", sequenceId, " waiting for next ", Entry.Condition, " crossing");
-                               else                                                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting for ", ifString(Entry.iDirection==OP_BUY, "higher", "lower"), " crossing of ", Entry.Condition, " to ", OperationTypeDescription(Entry.iDirection), ":  ", NumberToStr(Entry.limit, PriceFormat));
+                               else                                                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting for ", ifString(Entry.iDirection==OP_BUY, "high", "low"), " crossing of ", Entry.Condition, " to ", OperationTypeDescription(Entry.iDirection), ":  ", NumberToStr(Entry.limit, PriceFormat));
                                break;
       case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing..."); break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");       break;
