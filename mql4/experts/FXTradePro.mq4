@@ -1606,7 +1606,6 @@ int SaveConfiguration() {
    // (1) Daten zusammenstellen
    string lines[];  ArrayResize(lines, 0);
 
-   ArrayPushString(lines, /*int   */ "sequenceId="      +             sequenceId            );
    ArrayPushString(lines, /*string*/ "Entry.Condition=" +             Entry.Condition       );
    ArrayPushString(lines, /*string*/ "Entry.Direction=" +             Entry.Direction       );
    ArrayPushString(lines, /*int   */ "TakeProfit="      +             TakeProfit            );
@@ -1737,29 +1736,24 @@ bool RestoreConfiguration() {
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Datentypen validieren und Daten übernehmen
    int parameters[12]; ArrayInitialize(parameters, 0);
-   #define I_SEQUENCEID       0
-   #define I_ENTRY_CONDITION  1
-   #define I_ENTRY_DIRECTION  2
-   #define I_TAKEPROFIT       3
-   #define I_STOPLOSS         4
-   #define I_LOTSIZE_LEVEL_1  5
-   #define I_LOTSIZE_LEVEL_2  6
-   #define I_LOTSIZE_LEVEL_3  7
-   #define I_LOTSIZE_LEVEL_4  8
-   #define I_LOTSIZE_LEVEL_5  9
-   #define I_LOTSIZE_LEVEL_6 10
-   #define I_LOTSIZE_LEVEL_7 11
+   #define I_ENTRY_CONDITION  0
+   #define I_ENTRY_DIRECTION  1
+   #define I_TAKEPROFIT       2
+   #define I_STOPLOSS         3
+   #define I_LOTSIZE_LEVEL_1  4
+   #define I_LOTSIZE_LEVEL_2  5
+   #define I_LOTSIZE_LEVEL_3  6
+   #define I_LOTSIZE_LEVEL_4  7
+   #define I_LOTSIZE_LEVEL_5  8
+   #define I_LOTSIZE_LEVEL_6  9
+   #define I_LOTSIZE_LEVEL_7 10
 
    string parts[];
    for (int i=0; i < lines; i++) {
       if (Explode(config[i], "=", parts, 2) != 2)                      return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
       string key=parts[0], value=parts[1];
 
-      if (key == "sequenceId") {
-         if (!StringIsDigit(value) || StrToInteger(value)!=sequenceId) return(catch("RestoreConfiguration(4)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
-         parameters[I_SEQUENCEID] = 1;
-      }
-      else if (key == "Entry.Condition") {
+      if (key == "Entry.Condition") {
          Entry.Condition = value;
          parameters[I_ENTRY_CONDITION] = 1;
       }
