@@ -128,7 +128,7 @@ int start() {
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine Order geschlossen oder gestrichen
          break;
-      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL)
+      if (OrderType() > OP_SELL)                                     // Nicht-Positionen überspringen
          continue;
 
       bool close = true;
