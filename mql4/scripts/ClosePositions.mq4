@@ -126,16 +126,18 @@ int start() {
 
    // zu schlieﬂende Positionen selektieren
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: w‰hrend des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: w‰hrend des Auslesens wird in einem anderen Thread eine Order geschlossen oder gestrichen
          break;
+      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL)
+         continue;
 
       bool close = true;
-      if (close) close = (ArraySize(orderSymbols)== 0 || StringInArray(OrderSymbol(),   orderSymbols));
-      if (close) close = (orderType              ==-1 || OrderType() == orderType                    );
-      if (close) close = (ArraySize(orderTickets)== 0 || IntInArray(OrderTicket(),      orderTickets));
-      if (close) close = (ArraySize(orderMagics) == 0 || IntInArray(OrderMagicNumber(), orderMagics ));
+      if (close) close = (ArraySize(orderSymbols)== 0            || StringInArray(OrderSymbol(), orderSymbols));
+      if (close) close = (orderType              == OP_UNDEFINED || OrderType() == orderType);
+      if (close) close = (ArraySize(orderTickets)== 0            || IntInArray(OrderTicket(), orderTickets));
+      if (close) close = (ArraySize(orderMagics) == 0            || IntInArray(OrderMagicNumber(), orderMagics));
 
-      if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))  // Workaround um MQL-Conditions-Bug
+      if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))
          close = false;
 
       if (close) /*&&*/ if (!IntInArray(OrderTicket(), tickets))
@@ -143,14 +145,14 @@ int start() {
    }
 
 
-   bool filtered = !(ArraySize(orderSymbols)+orderType+ArraySize(orderTickets)+ArraySize(orderMagics)==-1 && orderComment=="");
+   bool isInput = !(ArraySize(orderSymbols)+ArraySize(orderTickets)+ArraySize(orderMagics)+orderType==-1 && orderComment=="");
 
 
    // Positionen schlieﬂen
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close "+ ifString(filtered, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox("Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
             return(processError(stdlib_PeekLastError()));
@@ -158,7 +160,7 @@ int start() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No "+ ifString(filtered, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start()"));
