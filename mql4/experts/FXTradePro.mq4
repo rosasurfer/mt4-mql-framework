@@ -1735,7 +1735,7 @@ bool RestoreConfiguration() {
    }
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Datentypen validieren und Daten übernehmen
-   int parameters[12]; ArrayInitialize(parameters, 0);
+   int parameters[11]; ArrayInitialize(parameters, 0);
    #define I_ENTRY_CONDITION  0
    #define I_ENTRY_DIRECTION  1
    #define I_TAKEPROFIT       2
