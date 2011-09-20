@@ -1135,8 +1135,9 @@ int ReadSequence(int id = NULL) {
             for (n=0; n < closedTickets; n++)
                if (hist.tickets[n] == ticket)
                   break;
-            if (n == closedTickets) return(catch("ReadSequence(5)  cannot find counterpart for hedging position #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
-            if (i == n            ) return(catch("ReadSequence(6)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +": \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR));
+            // TODO: Counterpart-Ticket wird nicht gefunden, wenn die Sequenz manuell per Hedge geschlossen wurde
+            if (n == closedTickets) return(catch("ReadSequence(5)  cannot find counterpart #"+ ticket +" for hedge #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR));
+            if (i == n            ) return(catch("ReadSequence(6)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR));
 
             int first, second;
             if      (hist.openTimes[i] < hist.openTimes[n])                                      { first = i; second = n; }
