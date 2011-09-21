@@ -135,7 +135,7 @@ int init() {
       }
    }
    // -- Ende - Parametervalidierung
-   debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
+   //debug("init()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
 
 
    // Anzeigeoptionen
