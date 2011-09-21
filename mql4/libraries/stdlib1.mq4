@@ -7617,6 +7617,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
          log("OrderSendEx()   trade context busy, retrying...");
+         Sleep(300);                               // 0.3 Sekunden warten
       }
       else {
          if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
@@ -7645,7 +7646,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
-      Sleep(300);                                  // 0.3 Sekunden warten
    }
 
    catch("OrderSendEx(14)   permanent trade error after "+ (time2-time1) +" ms", error);
@@ -7768,6 +7768,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
          log("OrderCloseEx()   trade context busy, retrying...");
+         Sleep(300);                                        // 0.3 Sekunden warten
       }
       else {
          price         = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
@@ -7792,7 +7793,6 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
-      Sleep(300);                                           // 0.3 Sekunden warten
    }
 
    catch("OrderCloseEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);

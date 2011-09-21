@@ -1475,14 +1475,15 @@ bool ValidateConfiguration() {
    if (sequenceId == 0) {
       sequenceLength = ArraySize(levels.lots);
    }
-   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(33)   illegal sequence state, number of input parameters Lotsize.Levels ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
+   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(33)   illegal sequence state, number of Lotsize.Levels ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
          if (NE(levels.lots[last], ifInt(levels.type[last]==OP_BUY, 1, -1) * effectiveLots))
-            return(catch("ValidateConfiguration(34)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured Lotsize.Level."+ progressionLevel +" = "+ NumberToStr(levels.lots[last], ".+") +" lots", ERR_RUNTIME_ERROR)==NO_ERROR);
+            return(catch("ValidateConfiguration(34)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured lot size of level "+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       }
-      if (levels.type[0] != Entry.iDirection) return(catch("ValidateConfiguration(35)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (Entry.type==ENTRYTYPE_LIMIT) /*&&*/ if (levels.type[0]!=Entry.iDirection)
+         return(catch("ValidateConfiguration(35)   illegal sequence state, Entry.Direction = \""+ Entry.Direction +"\" doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_RUNTIME_ERROR)==NO_ERROR);
    }
 
    return(catch("ValidateConfiguration(36)")==NO_ERROR);
