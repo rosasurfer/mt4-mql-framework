@@ -39,9 +39,9 @@ int    PipDigits;
 int    PipPoints;
 string PriceFormat;
 
-double iALMA[], iUpTrend[], iDownTrend[];             // sichtbare Indikatorbuffer
-double iSMA[], iTrend[], iBarDiff[];                  // nicht sichtbare Buffer
-double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA
+double iALMA[], iUpTrend[], iDownTrend[];                            // sichtbare Indikatorbuffer
+double iSMA[], iTrend[], iBarDiff[];                                 // nicht sichtbare Buffer
+double wALMA[];                                                      // Gewichtungen der einzelnen Bars des MA
 
 int    appliedPrice;
 string chartObjects[], legendLabel, indicatorName;
@@ -57,7 +57,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 

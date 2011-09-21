@@ -50,7 +50,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 

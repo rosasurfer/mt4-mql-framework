@@ -25,8 +25,8 @@ string PriceFormat;
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string chartObjects[];
 
-int    appliedPrice = PRICE_MEDIAN;                   // Median(default) | Bid | Ask
-double leverage;                                      // Hebel zur UnitSize-Berechnung
+int    appliedPrice = PRICE_MEDIAN;                                  // Median(default) | Bid | Ask
+double leverage;                                                     // Hebel zur UnitSize-Berechnung
 bool   positionChecked;
 
 
@@ -40,7 +40,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
@@ -230,7 +230,7 @@ int UpdatePriceLabel() {
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
 }
@@ -242,10 +242,10 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   int spread = MarketInfo(Symbol(), MODE_SPREAD) + 0.1;    // +0.1 fängt beim Casten Genauigkeitsfehler im Double ab: (int) double
+   int spread = MarketInfo(Symbol(), MODE_SPREAD) +0.1;              // (int) double
    int error  = GetLastError();
 
-   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001) {     // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
+   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001) {              // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
       string strSpread = " ";
    }
    else {
@@ -259,7 +259,7 @@ int UpdateSpreadLabel() {
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)   // bei offenem Properties-Dialog oder Object::onDrag()
+   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
 }

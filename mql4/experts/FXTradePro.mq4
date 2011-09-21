@@ -167,7 +167,7 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) + 0.1;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
@@ -402,7 +402,7 @@ bool IsEntrySignal() {
 
          // Das Limit ist erreicht, wenn der Bid-Preis es seit dem letzten Tick berührt oder gekreuzt hat.
          if (EQ(Bid, Entry.limit) || EQ(Entry.lastBid, Entry.limit)) {  // Bid liegt oder lag beim letzten Tick exakt auf dem Limit
-            debug(StringConcatenate("IsEntrySignal()   Bid=", NumberToStr(Bid, PriceFormat), " liegt genau auf dem Entry.limit=", NumberToStr(Entry.limit, PriceFormat)));
+            //debug(StringConcatenate("IsEntrySignal()   Bid=", NumberToStr(Bid, PriceFormat), " liegt genau auf dem Entry.limit=", NumberToStr(Entry.limit, PriceFormat)));
             Entry.lastBid = Entry.limit;                                // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
             return(true);                                               // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
          }
@@ -415,13 +415,13 @@ bool IsEntrySignal() {
          else {
             if (LT(Entry.lastBid, Entry.limit)) {
                if (GT(Bid, Entry.limit)) {                              // Bid hat Limit von unten nach oben gekreuzt
-                  debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von unten (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach oben (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
+                  //debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von unten (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach oben (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                   Entry.lastBid = Entry.limit;
                   return(true);
                }
             }
             else if (LT(Bid, Entry.limit)) {                            // Bid hat Limit von oben nach unten gekreuzt
-               debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von oben (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach unten (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
+               //debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von oben (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach unten (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                Entry.lastBid = Entry.limit;
                return(true);
             }
@@ -439,9 +439,8 @@ bool IsEntrySignal() {
             crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
-
-            debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " bands crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
-            PlaySound("Close order.wav");
+            //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " bands crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
+            //PlaySound("Close order.wav");
             return(true);
          }
          else {
@@ -463,9 +462,8 @@ bool IsEntrySignal() {
             crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
-
-            debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " envelopes crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
-            PlaySound("Close order.wav");
+            //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " envelopes crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
+            //PlaySound("Close order.wav");
             return(true);
          }
          else {
@@ -625,7 +623,7 @@ int IncreaseProgression() {
 
    progressionLevel++;
 
-   int ticket = OpenPosition(new.type, last.lots + levels.lots[last+1]);   // alte Position hedgen und nächste öffnen
+   int ticket = OpenPosition(new.type, last.lots + levels.lots[last+1]);   // nächste Position öffnen und alte dabei hedgen
    if (ticket == -1) {
       status = STATUS_DISABLED;
       progressionLevel--;
@@ -682,7 +680,7 @@ int FinishSequence() {
    }
 
    // Tickets schließen
-   if (!OrderCloseMultiple(tickets, 0.1, CLR_NONE)) {
+   if (!OrderCloseMultiple(tickets, 0.5, CLR_NONE)) {
       status = STATUS_DISABLED;
       return(processError(stdlib_PeekLastError()));
    }
@@ -699,7 +697,7 @@ int FinishSequence() {
  * Öffnet eine neue Position in angegebener Richtung und Größe.
  *
  * @param  int    type    - Ordertyp: OP_BUY | OP_SELL
- * @param  double lotsize - Lotsize der Order (variiert je nach Progression-Level und Hedging-Fähigkeit des Accounts)
+ * @param  double lotsize - Lotsize der Order
  *
  * @return int - Ticket der neuen Position oder -1, falls ein Fehler auftrat
  */
@@ -715,7 +713,7 @@ int OpenPosition(int type, double lotsize) {
 
    int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
-   double slippage    = 0.1;
+   double slippage    = 0.5;
    color  markerColor = ifInt(type==OP_BUY, Blue, Red);
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);

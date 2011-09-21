@@ -7260,7 +7260,7 @@ string DoubleToStrEx(double value, int digits) {
 
    for (int i=0; i < digits; i++) {
       double fraction  = MathFloor(remainder/10);
-      int    digit     = MathRound(remainder - fraction*10) + 0.1;
+      int    digit     = MathRound(remainder - fraction*10) +0.1;    // (int) double
       strRemainder = digit + strRemainder;
       remainder    = fraction;
    }
@@ -7538,7 +7538,7 @@ string NumberToStr(double number, string mask) {
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, double slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // symbol
-   if (symbol == "0")         // = NULL
+   if (symbol == "0")      // = NULL
       symbol = Symbol();
    int    digits  = MarketInfo(symbol, MODE_DIGITS);
    double minLot  = MarketInfo(symbol, MODE_MINLOT);
@@ -7591,7 +7591,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
-   if (comment == "0")        // = NULL
+   if (comment == "0")     // = NULL
       comment = "";
    else if (StringLen(comment) > 27) {
       catch("OrderSendEx(10)   too long parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
@@ -7610,22 +7610,22 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    // -- Ende Parametervalidierung --
 
    int    pipDigits   = digits & (~1);
-   int    pipPoints   = MathPow(10, digits-pipDigits) + 0.1;
+   int    pipPoints   = MathPow(10, digits-pipDigits) +0.1;          // (int) double
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
          log("OrderSendEx()   trade context busy, retrying...");
-         Sleep(300);                               // 0.3 Sekunden warten
+         Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
          if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
          else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
          price         = NormalizeDouble(price, digits);
-         int iSlippage = MathFloor(slippage * pipPoints) + 0.1;
+         int iSlippage = MathFloor(slippage * pipPoints) +0.1;       // (int) double
 
-         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat)));
+         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
 
          int time1  = GetTickCount();
          int ticket = OrderSend(symbol, type, lots, price, iSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
@@ -7636,12 +7636,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             PlaySound("OrderOk.wav");
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, price, digits, time2-time1));
             catch("OrderSendEx(13)");
-            return(ticket);                        // regular exit
+            return(ticket);                                          // regular exit
          }
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))        // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
          Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
@@ -7761,20 +7761,20 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    // -- Ende Parametervalidierung --
 
    int    pipDigits   = digits & (~1);
-   int    pipPoints   = MathPow(10, digits-pipDigits) + 0.1;
+   int    pipPoints   = MathPow(10, digits-pipDigits) +0.1;          // (int) double
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
          log("OrderCloseEx()   trade context busy, retrying...");
-         Sleep(300);                                        // 0.3 Sekunden warten
+         Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
          price         = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
-         int iSlippage = MathFloor(slippage * pipPoints) + 0.1;
+         int iSlippage = MathFloor(slippage * pipPoints) +0.1;       // (int) double
 
-         log(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat)));
+         log(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat), "..."));
 
          int time2, time1=GetTickCount();
          if (OrderClose(ticket, lots, price, iSlippage, markerColor)) {
@@ -7782,13 +7782,13 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             // ausführliche Logmessage generieren
             PlaySound("OrderOk.wav");
             log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, time2-time1));
-            return(catch("OrderCloseEx(11)")==NO_ERROR);    // regular exit
+            return(catch("OrderCloseEx(11)")==NO_ERROR);             // regular exit
          }
          time2 = GetTickCount();
          error = GetLastError();
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                 // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
          Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
@@ -7906,7 +7906,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
          log("OrderCloseByEx()   trade context busy, retrying...");
       }
       else {
-         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, " (", NumberToStr(hedgeLots, ".+"), ")"));
+         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, " (", NumberToStr(hedgeLots, ".+"), ")..."));
          int time2, time1=GetTickCount();
 
          if (OrderCloseBy(smaller, larger, markerColor)) {
@@ -7952,12 +7952,12 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
 
 
 /**
- * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden mit einer einzigen Order per Hedge
- * geschlossen, Brokerbetrug durch Berechnung doppelter Spreads wird verhindert.
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden (wenn möglich) mit einer Hedgeposition
+ * flat gestellt, die Berechnung doppelter Spreads wird dadurch verhindert.
  *
  * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
- * @param  double slippage    - akzeptable Slippage in Pip (default: 0          )
- * @param  color  markerColor - Farbe des Chart-Markers    (default: kein Marker)
+ * @param  double slippage    - zu akzeptierende Slippage in Pip (default:           0)
+ * @param  color  markerColor - Farbe des Chart-Markers          (default: kein Marker)
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */

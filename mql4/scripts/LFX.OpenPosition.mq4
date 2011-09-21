@@ -333,12 +333,12 @@ int CreateMagicNumber(int counter) {
       catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   int strategy  = Strategy.Id & 0x3FF << 22;                  // 10 bit (Bits 23-32)
-   int iCurrency = GetCurrencyId(Currency) & 0xF << 18;        //  4 bit (Bits 19-22)
-   int iUnits    = MathRound(Units * 10) + 0.1;
-       iUnits    = iUnits & 0x1F << 13;                        //  5 bit (Bits 14-18)
-   int instance  = GetInstance() & 0x1FF << 4;                 //  9 bit (Bits  5-13)
-   int pCounter  = counter & 0xF;                              //  4 bit (Bits  1-4 )
+   int strategy  = Strategy.Id & 0x3FF << 22;                        // 10 bit (Bits 23-32)
+   int iCurrency = GetCurrencyId(Currency) & 0xF << 18;              //  4 bit (Bits 19-22)
+   int iUnits    = MathRound(Units * 10) +0.1;                       // (int) double
+       iUnits    = iUnits & 0x1F << 13;                              //  5 bit (Bits 14-18)
+   int instance  = GetInstance() & 0x1FF << 4;                       //  9 bit (Bits  5-13)
+   int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
 
    int error = GetLastError();
    if (error != NO_ERROR) {
