@@ -402,7 +402,7 @@ bool IsEntrySignal() {
 
          // Das Limit ist erreicht, wenn der Bid-Preis es seit dem letzten Tick berührt oder gekreuzt hat.
          if (EQ(Bid, Entry.limit) || EQ(Entry.lastBid, Entry.limit)) {  // Bid liegt oder lag beim letzten Tick exakt auf dem Limit
-            log("IsEntrySignal()   Bid="+ NumberToStr(Bid, PriceFormat) +" liegt genau auf dem Entry.limit="+ NumberToStr(Entry.limit, PriceFormat));
+            debug(StringConcatenate("IsEntrySignal()   Bid=", NumberToStr(Bid, PriceFormat), " liegt genau auf dem Entry.limit=", NumberToStr(Entry.limit, PriceFormat)));
             Entry.lastBid = Entry.limit;                                // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
             return(true);                                               // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
          }
@@ -415,13 +415,13 @@ bool IsEntrySignal() {
          else {
             if (LT(Entry.lastBid, Entry.limit)) {
                if (GT(Bid, Entry.limit)) {                              // Bid hat Limit von unten nach oben gekreuzt
-                  log("IsEntrySignal()   Tick hat Entry.limit="+ NumberToStr(Entry.limit, PriceFormat) +" von unten (lastBid="+ NumberToStr(Entry.lastBid, PriceFormat) +") nach oben (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
+                  debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von unten (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach oben (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                   Entry.lastBid = Entry.limit;
                   return(true);
                }
             }
             else if (LT(Bid, Entry.limit)) {                            // Bid hat Limit von oben nach unten gekreuzt
-               log("IsEntrySignal()   Tick hat Entry.limit="+ NumberToStr(Entry.limit, PriceFormat) +" von oben (lastBid="+ NumberToStr(Entry.lastBid, PriceFormat) +") nach unten (Bid="+ NumberToStr(Bid, PriceFormat) +") gekreuzt");
+               debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von oben (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach unten (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                Entry.lastBid = Entry.limit;
                return(true);
             }
@@ -440,7 +440,7 @@ bool IsEntrySignal() {
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
 
-            debug("IsEntrySignal()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(Entry.limit, PriceFormat));
+            debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " bands crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
             PlaySound("Close order.wav");
             return(true);
          }
@@ -464,7 +464,7 @@ bool IsEntrySignal() {
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
 
-            debug("IsEntrySignal()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" envelopes crossing at "+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(Entry.limit, PriceFormat));
+            debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " envelopes crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
             PlaySound("Close order.wav");
             return(true);
          }
@@ -514,7 +514,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      log("IsStopLossReached()   Stoploss für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.loss/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      debug(StringConcatenate("IsStopLossReached()   Stoploss für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.loss/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
       return(true);
    }
    return(false);
@@ -546,7 +546,7 @@ bool IsProfitTargetReached() {
    }
 
    if (GE(last.profit, TakeProfit*Pip)) {
-      log("IsProfitTargetReached()   Profit target für "+ last.directions[last.type] +" position erreicht: "+ DoubleToStr(last.profit/Pip, Digits-PipDigits) +" pip (openPrice="+ NumberToStr(last.openPrice, PriceFormat) +", "+ last.priceNames[last.type] +"="+ NumberToStr(last.price, PriceFormat) +")");
+      debug(StringConcatenate("IsProfitTargetReached()   Profit target für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.profit/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
       return(true);
    }
    return(false);
