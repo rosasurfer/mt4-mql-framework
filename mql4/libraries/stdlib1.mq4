@@ -7517,7 +7517,7 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * TODO: Zur Zeit werden nur Market-Orders unterstützt !!!
+ * TODO: Zur Zeit werden nur Market-Orders unterstützt.
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
@@ -7526,9 +7526,9 @@ string NumberToStr(double number, string mask) {
  * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei pending Orders)
  * @param  double   slippage    - akzeptable Slippage in Pips     (default: 0          )
- * @param  double   stopLoss    - StopLoss-Level                  (default: - kein -   )
- * @param  double   takeProfit  - TakeProfit-Level                (default: - kein -   )
- * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: - kein -   )
+ * @param  double   stopLoss    - StopLoss-Level                  (default: -kein-     )
+ * @param  double   takeProfit  - TakeProfit-Level                (default: -kein-     )
+ * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: -kein-     )
  * @param  int      magicNumber - MagicNumber                     (default: 0          )
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
  * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
@@ -7609,12 +7609,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // -- Ende Parametervalidierung --
 
-   int    pipDigits   = digits & (~1);
-   int    pipPoints   = MathPow(10, digits-pipDigits) +0.1;          // (int) double
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    pipDigits      = digits & (~1);
+   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
+   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
+
+   int    ticket, time1, time2, firstTime1, requotes;
+   double firstPrice;                                                // erster OrderPrice (falls ERR_REQUOTE auftritt)
+
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
+      error = NO_ERROR;
+
       if (IsTradeContextBusy()) {
          log("OrderSendEx()   trade context busy, retrying...");
          Sleep(300);                                                 // 0.3 Sekunden warten
@@ -7622,33 +7629,38 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       else {
          if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
          else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
-         price         = NormalizeDouble(price, digits);
-         int iSlippage = MathFloor(slippage * pipPoints) +0.1;       // (int) double
+         price = NormalizeDouble(price, digits);
 
-         log(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
-
-         int time1  = GetTickCount();
-         int ticket = OrderSend(symbol, type, lots, price, iSlippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
-         int time2  = GetTickCount();
+         //debug(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
+         time1 = GetTickCount();
+         if (firstTime1 == 0) {
+            firstTime1 = time1;
+            firstPrice = price;                                      // OrderPrice und Zeit der ersten Ausführung merken
+         }
+         ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
+         time2  = GetTickCount();
 
          if (ticket > 0) {
-            // ausführliche Logmessage generieren
-            PlaySound("OrderOk.wav");
-            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, price, digits, time2-time1));
+            // Logmessage generieren
+            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
+            PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
             catch("OrderSendEx(13)");
             return(ticket);                                          // regular exit
          }
          error = GetLastError();
+         if (error == ERR_REQUOTE) {
+            requotes++;
+            continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
+         }
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms, retrying...");
       }
-      error = NO_ERROR;
    }
 
-   catch("OrderSendEx(14)   permanent trade error after "+ (time2-time1) +" ms", error);
+   catch("OrderSendEx(14)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms", error);
    return(-1);
 }
 
@@ -7656,16 +7668,17 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 /**
  * Generiert eine ausführliche Logmessage für eine erfolgreich abgeschickte oder ausgeführte Order.
  *
- * @param  int    ticket  - Ticket-Nummer der Order
- * @param  int    type    - gewünschter Ordertyp
- * @param  double lots    - gewünschtes Ordervolumen
- * @param  double price   - gewünschter Orderpreis
- * @param  int    digits  - Nachkommastellen des Ordersymbols
- * @param  int    time    - zur Orderausführung benötigte Zeit
+ * @param  int    ticket   - Ticket-Nummer der Order
+ * @param  int    type     - gewünschter Ordertyp
+ * @param  double lots     - gewünschtes Ordervolumen
+ * @param  double price    - gewünschter Orderpreis
+ * @param  int    digits   - Nachkommastellen des Ordersymbols
+ * @param  int    time     - zur Orderausführung benötigte Zeit
+ * @param  int    requotes - Anzahl der aufgetretenen Requotes
  *
  * @return string - Logmessage
  */
-/*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time) {
+/*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time, int requotes) {
    int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -7691,7 +7704,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          if (NE(price, OrderOpenPrice())) {
             string strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
-            bool plus = GT(OrderOpenPrice(), price);
+            bool   plus        = GT(OrderOpenPrice(), price);
             if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
             else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
          }
@@ -7704,7 +7717,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice);
    if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
    if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
-                                 message = StringConcatenate(message, ", used time: ", time, " ms");
+                                 message = StringConcatenate(message, " after ");
+   if (requotes != 0)            message = StringConcatenate(message, requotes, " requotes and ");
+                                 message = StringConcatenate(message, time, " ms");
 
    error = GetLastError();
    if (error != NO_ERROR) {
@@ -7760,42 +7775,58 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
-   int    pipDigits   = digits & (~1);
-   int    pipPoints   = MathPow(10, digits-pipDigits) +0.1;          // (int) double
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    pipDigits      = digits & (~1);
+   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
+   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
+
+   int    time1, time2, firstTime1, requotes;
+   double firstPrice;                                                // erster OrderPrice (falls ERR_REQUOTE auftritt)
+   bool   orderClosed;
+
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
+      error = NO_ERROR;
+
       if (IsTradeContextBusy()) {
          log("OrderCloseEx()   trade context busy, retrying...");
          Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
-         price         = NormalizeDouble(MarketInfo(OrderSymbol(), ifInt(OrderType()==OP_BUY, MODE_BID, MODE_ASK)), digits);
-         int iSlippage = MathFloor(slippage * pipPoints) +0.1;       // (int) double
+         if      (OrderType() == OP_BUY ) price = MarketInfo(OrderSymbol(), MODE_BID);
+         else if (OrderType() == OP_SELL) price = MarketInfo(OrderSymbol(), MODE_ASK);
+         price = NormalizeDouble(price, digits);
 
-         log(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat), "..."));
+         //debug(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat), "..."));
+         time1 = GetTickCount();
+         if (firstTime1 == 0) {
+            firstTime1 = time1;
+            firstPrice = price;                                      // OrderPrice und Zeit der ersten Ausführung merken
+         }
+         orderClosed = OrderClose(ticket, lots, price, slippagePoints, markerColor);
+         time2       = GetTickCount();
 
-         int time2, time1=GetTickCount();
-         if (OrderClose(ticket, lots, price, iSlippage, markerColor)) {
-            time2 = GetTickCount();
-            // ausführliche Logmessage generieren
-            PlaySound("OrderOk.wav");
-            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, price, digits, time2-time1));
+         if (orderClosed) {
+            // Logmessage generieren
+            log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
+            PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
             return(catch("OrderCloseEx(11)")==NO_ERROR);             // regular exit
          }
-         time2 = GetTickCount();
          error = GetLastError();
+         if (error == ERR_REQUOTE) {
+            requotes++;
+            continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
+         }
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms, retrying...");
       }
-      error = NO_ERROR;
    }
 
-   catch("OrderCloseEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
+   catch("OrderCloseEx(12)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms", error);
    return(false);
 }
 
@@ -7803,7 +7834,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 /**
  *
  */
-/*private*/ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time) {
+/*private*/ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time, int requotes) {
    int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -7824,12 +7855,14 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    string strPrice = NumberToStr(OrderClosePrice(), priceFormat);
    if (NE(price, OrderClosePrice())) {
       string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
-      bool plus = GT(OrderClosePrice(), price);
+      bool   plus        = GT(OrderClosePrice(), price);
       if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
       else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
    }
 
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, ", used time: ", time, " ms");
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ");
+   if (requotes != 0) message = StringConcatenate(message, requotes, " requotes and ");
+                      message = StringConcatenate(message, time, " ms");
 
    error = GetLastError();
    if (error != NO_ERROR) {
@@ -7931,7 +7964,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
             PlaySound("OrderOk.wav");
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position", strRemainder, ", used time: ", time2-time1, " ms"));
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position", strRemainder, " after ", time2-time1, " ms"));
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
          time2 = GetTickCount();
@@ -7989,7 +8022,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
       return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor));
 
 
-   // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
+   // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, arbeiten wir auf einer Kopie.
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    ArrayCopy(ticketsCopy, tickets);
 

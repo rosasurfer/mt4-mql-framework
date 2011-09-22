@@ -20,8 +20,6 @@
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
- *  - Visualisierung der gesamten Sequenz
- *  - Visualisierung des Entry.Limits implementieren
  *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -36,6 +34,8 @@
  *  TODO:
  *  -----
  *  - gleichzeitige, parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
+ *  - Visualisierung der gesamten Sequenz
+ *  - Visualisierung des Entry.Limits implementieren
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
@@ -291,10 +291,6 @@ int start() {
    init = false;
    if (init_error != NO_ERROR) return(init_error);
    if (last_error != NO_ERROR) return(last_error);
-
-   // temporäre Laufzeitanalyse
-   if (Bid < 0.00000001) return(catch("start(1)   Bid = "+ NumberToStr(Bid, PriceFormat), ERR_RUNTIME_ERROR));
-   if (Ask < 0.00000001) return(catch("start(2)   Ask = "+ NumberToStr(Ask, PriceFormat), ERR_RUNTIME_ERROR));
    // --------------------------------------------
 
 
@@ -316,7 +312,7 @@ int start() {
    ShowStatus();
 
    firstTick = false;
-   return(catch("start(3)"));
+   return(catch("start()"));
 }
 
 
@@ -559,7 +555,7 @@ bool IsProfitTargetReached() {
 int StartSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("StartSequence(1)"));
@@ -610,7 +606,7 @@ int StartSequence() {
 int IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("IncreaseProgression(1)"));
@@ -664,7 +660,7 @@ int IncreaseProgression() {
 int FinishSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you want to finish the sequence now?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("FinishSequence(1)"));
