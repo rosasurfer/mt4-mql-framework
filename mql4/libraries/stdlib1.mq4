@@ -7656,11 +7656,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms, retrying...");
+         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms, retrying...");
       }
    }
 
-   catch("OrderSendEx(14)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms", error);
+   catch("OrderSendEx(14)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms", error);
    return(-1);
 }
 
@@ -7718,7 +7718,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
    if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
                                  message = StringConcatenate(message, " after ");
-   if (requotes != 0)            message = StringConcatenate(message, requotes, " requotes and ");
+   if      (requotes == 1)       message = StringConcatenate(message, requotes, " requote and ");
+   else if (requotes  > 1)       message = StringConcatenate(message, requotes, " requotes and ");
                                  message = StringConcatenate(message, time, " ms");
 
    error = GetLastError();
@@ -7822,11 +7823,11 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms, retrying...");
+         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms, retrying...");
       }
    }
 
-   catch("OrderCloseEx(12)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requotes and ") + (time2-firstTime1) +" ms", error);
+   catch("OrderCloseEx(12)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms", error);
    return(false);
 }
 
@@ -7861,8 +7862,9 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    }
 
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ");
-   if (requotes != 0) message = StringConcatenate(message, requotes, " requotes and ");
-                      message = StringConcatenate(message, time, " ms");
+   if      (requotes == 1) message = StringConcatenate(message, requotes, " requote and ");
+   else if (requotes  > 1) message = StringConcatenate(message, requotes, " requotes and ");
+                           message = StringConcatenate(message, time, " ms");
 
    error = GetLastError();
    if (error != NO_ERROR) {
@@ -7963,8 +7965,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder ", strRemainder, " after ", time2-time1, " ms"));
             PlaySound("OrderOk.wav");
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainding position", strRemainder, " after ", time2-time1, " ms"));
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
          time2 = GetTickCount();
