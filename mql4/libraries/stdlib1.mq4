@@ -7656,11 +7656,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms, retrying...");
+         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")) +", retrying...");
       }
    }
 
-   catch("OrderSendEx(14)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms", error);
+   catch("OrderSendEx(14)   permanent trade error after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
 }
 
@@ -7717,10 +7717,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice);
    if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
    if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
-                                 message = StringConcatenate(message, " after ");
-   if      (requotes == 1)       message = StringConcatenate(message, requotes, " requote and ");
-   else if (requotes  > 1)       message = StringConcatenate(message, requotes, " requotes and ");
-                                 message = StringConcatenate(message, time, " ms");
+                                 message = StringConcatenate(message, " after ", time, " ms");
+   if (requotes > 0) {
+      message = StringConcatenate(message, " and ", requotes, " requote");
+      if (requotes > 1)
+         message = StringConcatenate(message, "s");
+   }
 
    error = GetLastError();
    if (error != NO_ERROR) {
@@ -7823,11 +7825,11 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms, retrying...");
+         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")) +", retrying...");
       }
    }
 
-   catch("OrderCloseEx(12)   permanent trade error after "+ ifString(requotes==0, "", requotes +" requote"+ ifString(requotes==1, "", "s") +" and ") + (time2-firstTime1) +" ms", error);
+   catch("OrderCloseEx(12)   permanent trade error after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(false);
 }
 
@@ -7861,10 +7863,12 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
       else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
    }
 
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ");
-   if      (requotes == 1) message = StringConcatenate(message, requotes, " requote and ");
-   else if (requotes  > 1) message = StringConcatenate(message, requotes, " requotes and ");
-                           message = StringConcatenate(message, time, " ms");
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", time, " ms");
+   if (requotes > 0) {
+      message = StringConcatenate(message, " and ", requotes, " requote");
+      if (requotes > 1)
+         message = StringConcatenate(message, "s");
+   }
 
    error = GetLastError();
    if (error != NO_ERROR) {
