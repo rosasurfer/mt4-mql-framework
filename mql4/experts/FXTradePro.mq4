@@ -19,8 +19,9 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
+ *  - Breakeven berechnen und anzeigen
+ *  - gleichzeitige, parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
- *  - Breakeven-Berechnung implementieren und anzeigen
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
@@ -29,13 +30,13 @@
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
+ *  - Visualisierung der gesamten Sequenz
+ *  - Visualisierung des Entry.Limits implementieren
  *
  *
  *  TODO:
  *  -----
- *  - gleichzeitige, parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
- *  - Visualisierung der gesamten Sequenz
- *  - Visualisierung des Entry.Limits implementieren
+ *  - mehrere EA's schalten sich gegenseitig ab, wenn sie ohne Lock SwitchExperts(true) aufrufen
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
@@ -239,8 +240,10 @@ int init() {
    if (init_error == NO_ERROR) {
       // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
+      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1)) {
+         // TODO: Bug, wenn mehr als ein EA den EA-Modus einschalten wollen, deaktiviert jeder zweite den ersteren
          SwitchExperts(true);
+      }
 
 
       // (7) nach Start oder Reload nicht auf den ersten Tick warten
