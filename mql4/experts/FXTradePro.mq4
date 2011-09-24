@@ -155,7 +155,6 @@ double   levels.maxDrawdown[];
 double   levels.breakeven  [];
 
 bool     levels.lots.changed = true;
-bool     levels.swap.changed = true;
 
 
 /**
@@ -731,9 +730,9 @@ int OpenPosition(int type, double lotsize) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatus() {
-   // (1) offene Positionen auf Änderungen prüfen (OrderCloseTime(), OrderLots(), OrderSwap()) und Sequenzdaten ggf. aktualisieren
+   // (1) offene Positionen auf Änderungen prüfen
    for (int i=0; i < progressionLevel; i++) {
-      if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf offen war
+      if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
          if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
             int error = GetLastError();
             if (error == NO_ERROR)
@@ -741,18 +740,16 @@ bool UpdateStatus() {
             status = STATUS_DISABLED;
             return(catch("UpdateStatus(1)", error)==NO_ERROR);
          }
-         if (OrderCloseTime() != 0) {                                // Ticket wurde geschlossen           => Sequenz neu einlesen
+         if (OrderCloseTime() != 0) {                                // OrderCloseTime: Ticket wurde geschlossen => gesamte Sequenz neu einlesen
             error = ReadSequence(sequenceId);
             break;
          }
-         if (NE(OrderLots(), levels.openLots[i])) {                  // Ticket wurde teilweise geschlossen => Sequenz neu einlesen
+         if (NE(OrderLots(), levels.openLots[i])) {                  // OrderLots: Ticket wurde teilweise geschlossen => gesamte Sequenz neu einlesen
             error = ReadSequence(sequenceId);
             break;
          }
-         if (NE(OrderSwap(), levels.openSwap[i])) {                  // Swap hat sich geändert             => aktualisieren
+         if (NE(OrderSwap(), levels.openSwap[i]))                    // OrderSwap: Swap hat sich geändert => Wert aktualisieren
             levels.openSwap[i] = OrderSwap();
-            levels.swap.changed = true;
-         }
       }
    }
    if (error != NO_ERROR) {
@@ -761,22 +758,23 @@ bool UpdateStatus() {
    }
 
 
-   // (3) P/L-Berechnung: aktuellen TickValue auslesen
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();                                           // ERR_INVALID_MARKETINFO abfangen
-   if (error!=NO_ERROR || tickValue < 0.1) {
+   // (3) P/L-Berechnung
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // aktuellen TickValue auslesen
+   error = GetLastError();
+   if (error!=NO_ERROR || tickValue < 0.1) {                         // ERR_INVALID_MARKETINFO abfangen
       status = STATUS_DISABLED;
       return(catch("UpdateStatus(2)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
    }
    double pipValue = Pip / tickSize * tickValue;
 
 
-   // (2) aktuellen Profit/Loss des Levels neu berechnen
+   // (2) Profit/Loss des Levels neu berechnen
    all.swaps       = 0;
    all.commissions = 0;
    all.profits     = 0;
 
-   double priceDiff, tmp.openLots[]; ArrayResize(tmp.openLots, 0);
+   double priceDiff, tmp.openLots[];
+   ArrayResize(tmp.openLots, 0);
    ArrayCopy(tmp.openLots, levels.openLots);
 
    for (i=0; i < progressionLevel; i++) {
@@ -827,7 +825,7 @@ bool UpdateStatus() {
    }
 
 
-   // (3) zu erwartenden Profit/Loss des Levels neu berechnen
+   // (3) TakeProfit- und StopLoss-Beträge des Levels neu berechnen
    double sl, prevDrawdown = 0;
    int    level = progressionLevel-1;
 
@@ -921,8 +919,6 @@ void ResizeArrays(int size) {
  * @return int - Fehlerstatus
  */
 int ReadSequence(int id = NULL) {
-   levels.swap.changed = true;                                       // Swap-Flag zurücksetzen
-
    if (id==0 || sequenceLength==0) {
       ResetAll();                                                    // komplettes Reset, wenn keine internen Daten vorhanden ist
    }
@@ -1247,7 +1243,7 @@ int ShowStatus() {
       case STATUS_UNDEFINED:   msg = StringConcatenate(":  sequence ", sequenceId, " initialized");    break;
       case STATUS_WAITING:     if      (Entry.type       == ENTRYTYPE_LIMIT         ) msg = StringConcatenate(":  sequence ", sequenceId, " waiting to ", OperationTypeDescription(Entry.iDirection), " at ", NumberToStr(Entry.limit, PriceFormat));
                                else if (Entry.iDirection == ENTRYDIRECTION_UNDEFINED) msg = StringConcatenate(":  sequence ", sequenceId, " waiting for next ", Entry.Condition, " crossing");
-                               else                                                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting for ", ifString(Entry.iDirection==OP_BUY, "high", "low"), " ", Entry.Condition, " crossing to ", OperationTypeDescription(Entry.iDirection), ":  ", NumberToStr(Entry.limit, PriceFormat));
+                               else                                                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting for ", Entry.Condition, ifString(Entry.iDirection==OP_BUY, " high", " low"), " crossing to ", OperationTypeDescription(Entry.iDirection), ":  ", NumberToStr(Entry.limit, PriceFormat));
                                break;
       case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing..."); break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");       break;
