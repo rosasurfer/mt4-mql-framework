@@ -243,12 +243,8 @@ int start() {
    double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-         error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_INVALID_TICKET;
-         return(catch("start(7)", error));
-      }
+      if (!OrderSelectByTicket(tickets[i]))
+         return(peekLastError());                                    // catch("start(7)")
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }

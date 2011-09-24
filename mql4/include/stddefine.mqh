@@ -510,8 +510,7 @@ int catch(string message="", int error=NO_ERROR) {
 
 
 /**
- * Speichert je nachdem, ob der Aufruf in der Funktion init() erfolgt oder nicht, den in einer Libraray aufgetretenen Fehler in den globalen Variablen
- * init_error oder last_error.
+ * Speichert den angegebenen Fehler in den globalen Variablen init_error oder last_error (je nachdem, ob der Aufruf in init() erfolgt oder nicht).
  *
  * @param  int error - Fehler-Code
  *
@@ -523,6 +522,18 @@ int processError(int error) {
       else      last_error = error;
    }
    return(error);
+}
+
+
+/**
+ * Gibt den letzten im aktuellen Script aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
+ *
+ * @return int - Fehlercode
+ */
+int peekLastError() {
+   if (init)
+      return(init_error);
+   return(last_error);
 }
 
 

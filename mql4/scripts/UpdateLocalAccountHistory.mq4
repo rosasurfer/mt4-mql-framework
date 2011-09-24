@@ -52,7 +52,7 @@ int start() {
    ArrayResize(sortData, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {                     // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
          ArrayResize(sortData, i);
          orders = i;
          break;
@@ -87,19 +87,15 @@ int start() {
 
    for (i=0, n=0; i < orders; i++) {
       int ticket = sortData[i][2];
-      if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-         int error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_INVALID_TICKET;
-         return(catch("start(1)  OrderSelect(ticket="+ ticket +")", error));
-      }
-      int type = OrderType();                                                 // gecancelte Orders und Margin Credits überspringen
+      if (!OrderSelectByTicket(ticket))
+         return(peekLastError());                                    // catch("start(1)  OrderSelect(ticket="+ ticket +")")
+      int type = OrderType();                                        // gecancelte Orders und Margin Credits überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
       tickets        [n] = ticket;
       types          [n] = type;
       symbols        [n] = OrderSymbol(); if (type!=OP_BALANCE) symbols[n] = GetStandardSymbol(OrderSymbol());
-      lotSizes       [n] = ifDouble(type==OP_BALANCE, 0, OrderLots());        // OP_BALANCE: OrderLots() enthält fälschlich 0.01
+      lotSizes       [n] = ifDouble(type==OP_BALANCE, 0, OrderLots());  // OP_BALANCE: OrderLots() enthält fälschlich 0.01
       openTimes      [n] = OrderOpenTime();
       closeTimes     [n] = OrderCloseTime();
       openPrices     [n] = OrderOpenPrice();
@@ -175,7 +171,7 @@ int start() {
    // (4) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
    string history[][HISTORY_COLUMNS];
 
-   error = GetAccountHistory(account, history);
+   int error = GetAccountHistory(account, history);
    if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)                     // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
       return(catch("start(5)", error));
 

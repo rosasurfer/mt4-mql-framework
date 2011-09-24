@@ -232,12 +232,8 @@ int onPositionOpen(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-         int error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_INVALID_TICKET;
-         return(catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error));
-      }
+      if (!OrderSelectByTicket(tickets[i]))
+         return(peekLastError());                                    // catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error)
 
       // alle Positionen werden im aktuellen Instrument gehalten
       string type    = OperationTypeDescription(OrderType());
@@ -247,7 +243,7 @@ int onPositionOpen(int tickets[]) {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(processError(error));
          log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
@@ -279,13 +275,8 @@ int onPositionClose(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-         int error = GetLastError();
-         if (error == NO_ERROR)
-            error = ERR_INVALID_TICKET;
-         catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
-         continue;
-      }
+      if (!OrderSelectByTicket(tickets[i]))
+         continue;                                                   //catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
 
       // alle Positionen wurden im aktuellen Instrument gehalten
       string type       = OperationTypeDescription(OrderType());
@@ -296,7 +287,7 @@ int onPositionClose(int tickets[]) {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(processError(error));
          log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));

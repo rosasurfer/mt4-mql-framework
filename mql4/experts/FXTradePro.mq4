@@ -138,10 +138,10 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 
-int      levels.ticket    [];                         // offenes Ticket des Levels (ein Ticket kann offen und mehrere geschlossen sein)
-int      levels.type      [];
-double   levels.lots      [], effectiveLots;          // Soll-Lotsize des Levels und aktuelle effektive Lotsize
-double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive Hedges)
+int      levels.ticket    [];                         // Ticket des Levels
+int      levels.type      [];                         // Trade-Direction
+double   levels.lots      [], effectiveLots;          // konfigurierte Lotsize der einzelnen Level und aktuelle effektive Lotsize
+double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive evt. Hedges)
 double   levels.openPrice [], last.closePrice;
 datetime levels.openTime  [];
 datetime levels.closeTime [];                         // Unterscheidung zwischen offenen und geschlossenen Positionen
@@ -209,7 +209,7 @@ int init() {
          return(init_error);
       }
       sequenceId = CreateSequenceId();
-      if (Entry.type!=ENTRYTYPE_LIMIT || NE(Entry.limit, 0))         // Bei ENTRYTYPE_LIMIT und Entry.Limit==0 erfolgt sofortiger Einstieg, in diesem Fall
+      if (Entry.type!=ENTRYTYPE_LIMIT || NE(Entry.limit, 0))         // Bei ENTRYTYPE_LIMIT und Entry.Limit=0 erfolgt sofortiger Einstieg, in diesem Fall
          SaveConfiguration();                                        // wird die Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert.
    }
    else if (UninitializeReason() == REASON_PARAMETERS) {
@@ -575,13 +575,9 @@ int StartSequence() {
    }
 
    // Sequenzdaten aktualisieren
-   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      int error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_INVALID_TICKET;
-      status = STATUS_DISABLED;
+   if (!OrderSelectByTicket(ticket)) {
       progressionLevel--;
-      return(catch("StartSequence(3)", error));
+      return(peekLastError());
    }
 
    levels.ticket   [0] = OrderTicket();
@@ -629,13 +625,9 @@ int IncreaseProgression() {
    }
 
    // Sequenzdaten aktualisieren
-   if (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      int error = GetLastError();
-      if (error == NO_ERROR)
-         error = ERR_INVALID_TICKET;
-      status = STATUS_DISABLED;
+   if (!OrderSelectByTicket(ticket)) {
       progressionLevel--;
-      return(catch("IncreaseProgression(3)", error));
+      return(peekLastError());
    }
 
    int this = progressionLevel-1;
@@ -733,15 +725,11 @@ bool UpdateStatus() {
    // (1) offene Positionen auf Änderungen prüfen
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            int error = GetLastError();
-            if (error == NO_ERROR)
-               error = ERR_INVALID_TICKET;
-            status = STATUS_DISABLED;
-            return(catch("UpdateStatus(1)", error)==NO_ERROR);
-         }
+         if (!OrderSelectByTicket(levels.ticket[i]))
+            return(false);
+
          if (OrderCloseTime() != 0) {                                // OrderCloseTime: Ticket wurde geschlossen => gesamte Sequenz neu einlesen
-            error = ReadSequence(sequenceId);
+            int error = ReadSequence(sequenceId);
             break;
          }
          if (NE(OrderLots(), levels.openLots[i])) {                  // OrderLots: Ticket wurde teilweise geschlossen => gesamte Sequenz neu einlesen
@@ -758,8 +746,8 @@ bool UpdateStatus() {
    }
 
 
-   // (3) P/L-Berechnung
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // aktuellen TickValue auslesen
+   // (2) aktuellen TickValue auslesen für P/L-Berechnung bestimmen  !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es statt jedes nur ein Mal notwendig
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    error = GetLastError();
    if (error!=NO_ERROR || tickValue < 0.1) {                         // ERR_INVALID_MARKETINFO abfangen
       status = STATUS_DISABLED;
@@ -768,7 +756,7 @@ bool UpdateStatus() {
    double pipValue = Pip / tickSize * tickValue;
 
 
-   // (2) Profit/Loss des Levels neu berechnen
+   // (3) Profit/Loss des Levels neu berechnen
    all.swaps       = 0;
    all.commissions = 0;
    all.profits     = 0;
@@ -779,13 +767,8 @@ bool UpdateStatus() {
 
    for (i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // offene Position
-         if (!OrderSelect(levels.ticket[i], SELECT_BY_TICKET)) {
-            error = GetLastError();
-            if (error == NO_ERROR)
-               error = ERR_INVALID_TICKET;
-            status = STATUS_DISABLED;
-            return(catch("UpdateStatus(3)", error)==NO_ERROR);
-         }
+         if (!OrderSelectByTicket(levels.ticket[i]))
+            return(false);
          levels.openProfit[i] = 0;
 
          if (GT(tmp.openLots[i], 0)) {                               // P/L offener Hedges verrechnen
@@ -799,7 +782,7 @@ bool UpdateStatus() {
                      tmp.openLots     [i]  = 0;
                      break;
                   }
-                  else  /*(GT(tmp.openLots[i], tmp.openLots[n]))*/ {
+                  else  /*(tmp.openLots[i] > tmp.openLots[n])*/ {
                      levels.openProfit[i] += priceDiff / tickSize * tickValue * tmp.openLots[n];
                      tmp.openLots     [i] -= tmp.openLots[n];
                      tmp.openLots     [n]  = 0;
@@ -825,16 +808,15 @@ bool UpdateStatus() {
    }
 
 
-   // (3) TakeProfit- und StopLoss-Beträge des Levels neu berechnen
+   // (3) TakeProfit- und StopLoss-Beträge des Levels neu berechnen  !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
    double sl, prevDrawdown = 0;
-   int    level = progressionLevel-1;
 
    for (i=0; i < sequenceLength; i++) {
-      if (progressionLevel > 0 && i < progressionLevel-1) {                                     // tatsächlich angefallenen Verlust verwenden
+      if (progressionLevel > 0 && i < progressionLevel-1) {          // tatsächlich angefallenen Verlust verwenden
          if (levels.type[i] == OP_BUY) sl = (levels.openPrice[i  ]-levels.openPrice[i+1]) / Pip;
          else                          sl = (levels.openPrice[i+1]-levels.openPrice[i  ]) / Pip;
       }
-      else                             sl = StopLoss;                                           // konfigurierten StopLoss verwenden
+      else                             sl = StopLoss;                // konfigurierten StopLoss verwenden
       levels.maxProfit  [i] = prevDrawdown + levels.lots[i] * TakeProfit * pipValue;
       levels.maxDrawdown[i] = prevDrawdown - levels.lots[i] * sl         * pipValue;
       prevDrawdown          = levels.maxDrawdown[i];
@@ -1472,7 +1454,7 @@ bool ValidateConfiguration() {
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
-         if (NE(levels.lots[last], ifInt(levels.type[last]==OP_BUY, 1, -1) * effectiveLots))
+         if (NE(levels.lots[last], MathAbs(effectiveLots)))
             return(catch("ValidateConfiguration(34)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       }
       if (Entry.type==ENTRYTYPE_LIMIT) /*&&*/ if (levels.type[0]!=Entry.iDirection)
@@ -1792,4 +1774,25 @@ string EntryTypeDescription(int type) {
    }
    catch("EntryTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
+}
+
+
+/**
+ * Selektiert eine Order anhand des Tickets.
+ *
+ * @param  int ticket - Ticket
+ *
+ * @return bool - Erfolgsstatus (im Fehlerfall wird der EA deaktiviert)
+ */
+bool OrderSelectByTicket(int ticket) {
+   if (OrderSelect(ticket, SELECT_BY_TICKET))
+      return(true);
+
+   int error = GetLastError();
+   if (error == NO_ERROR)
+      error = ERR_INVALID_TICKET;
+   catch("OrderSelectByTicket()", error);
+
+   status = STATUS_DISABLED;
+   return(false);
 }
