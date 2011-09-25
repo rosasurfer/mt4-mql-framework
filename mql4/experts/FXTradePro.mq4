@@ -26,7 +26,7 @@
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - Sicherheitsabfrage, wenn nach Änderung der Konfiguration sofort Trade getriggert wird
- *  - bei STATUS_FINISHED und STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
+ *  - bei STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
@@ -174,20 +174,19 @@ int init() {
 
    int error = GetLastError();
    if (error!=NO_ERROR || TickSize < 0.000009) {
-      error = catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
+      error = catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
       ShowStatus();
       return(error);
    }
 
 
-   // (0)
-   if (UninitializeReason() == REASON_RECOMPILE) {
+   // (1) nach Recompile vorhergehenden Status restaurieren
+   if (UninitializeReason() == REASON_RECOMPILE)
       RestoreStatusAfterRecompile();
-   }
 
 
-   // (1) ggf. Input-Parameter restaurieren (externe Parameter sind nicht statisch)
-   if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
+   // (2) ggf. Input-Parameter restaurieren
+   if (intern) /*&&*/ if (UninitializeReason()!=REASON_PARAMETERS) {
       Entry.Condition = intern.Entry.Condition;
       Entry.Direction = intern.Entry.Direction;
       TakeProfit      = intern.TakeProfit;
@@ -203,14 +202,14 @@ int init() {
    }
 
 
-   // (2) falls noch keine Sequenz definiert, die angegebene oder erste Sequenz suchen und einlesen
+   // (3) falls noch keine Sequenz definiert, die angegebene oder erste Sequenz suchen und einlesen
    if (sequenceId == 0) /*&&*/ if (!ReadSequence(ForcedSequenceId())) {
       ShowStatus();
       return(init_error);
    }
 
 
-   // (3) ggf. neue Sequenz anlegen, neue und geänderte Konfigurationen speichern, alte Konfiguration restaurieren
+   // (4) ggf. neue Sequenz anlegen, neue und geänderte Konfiguration speichern bzw. alte Konfiguration restaurieren
    if (sequenceId == 0) {
       if (!ValidateConfiguration()) {
          ShowStatus();
@@ -232,7 +231,7 @@ int init() {
       ResizeArrays(sequenceLength);
 
 
-   // (4) aktuellen Status bestimmen und anzeigen
+   // (5) aktuellen Status bestimmen und anzeigen
    if (init_error != NO_ERROR)     status = STATUS_DISABLED;
    if (status != STATUS_DISABLED) {
       if (progressionLevel > 0) {
@@ -247,41 +246,17 @@ int init() {
    if (init_error == NO_ERROR) {
       // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1)) {
-         //debug("init()   SwitchExperts(true)");
+      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
          SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
-      }
 
 
       // (7) nach Start oder Reload nicht auf den nächsten Tick warten
       int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-      if (IntInArray(UninitializeReason(), reasons2)) {
-         //debug("init()   SendTick()");
+      if (IntInArray(UninitializeReason(), reasons2))
          SendTick(false);
-      }
    }
 
-
-
-   int hWnds[], hChild, hWnd=WindowHandle(Symbol(), Period());
-   ArrayResize(hWnds, 0);
-
-   while (hWnd != 0) {
-      ArrayPushInt(hWnds, hWnd);
-      hChild = hWnd;
-      hWnd   = GetParent(hChild);
-   }
-   ArrayPushInt(hWnds, hWnd);
-   ReverseIntArray(hWnds);
-
-   debug("init()   hWnds = "+ IntArrayToStr(hWnds, NULL));
-
-
-
-   error = GetLastError();
-   if (error != NO_ERROR)
-      catch("init(3)", error);
-   return(init_error);
+   return(catch("init(2)"));
 }
 
 
@@ -304,37 +279,56 @@ int deinit() {
    intern.Lotsize.Level.6 = Lotsize.Level.6;
    intern.Lotsize.Level.7 = Lotsize.Level.7;
    intern.Sequence.ID     = Sequence.ID;
-   intern                 = true;                           // Flag zur späteren Erkennung in init() setzen
+   intern                 = true;                                    // Flag zur späteren Erkennung in init() setzen
 
-   if (UninitializeReason() == REASON_RECOMPILE) {
+   // vor Recompile den aktuellen Status speichern
+   if (UninitializeReason() == REASON_RECOMPILE)
       PersistStatusForRecompile();
-   }
+
    return(catch("deinit()"));
 }
 
 
 /**
+ * Speichert die Sequenz-ID im Chart, sodaß der aktuelle Status des EA's nach einem Recompile-Event restauriert werden kann.
  *
  * @return int - Fehlerstatus
  */
 int PersistStatusForRecompile() {
-   // Sequenz-ID im Chart speichern speichern (mit dieser läßt sich der restliche Status restaurieren)
+   int hChWnd = WindowHandle(Symbol(), Period());
 
-   debug("PersistStatusForRecompile()   sequenceId = "+ sequenceId +"   hWnd = "+ WindowHandle(Symbol(), Period()));
+   string label = __SCRIPT__ +".hidden_storage";
 
+   if (ObjectFind(label) != -1)
+      ObjectDelete(label);
+   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
+   ObjectSet(label, OBJPROP_YDISTANCE, -hChWnd);
+
+   //debug("PersistStatusForRecompile()     sequenceId="+ sequenceId +"   hWnd="+ WindowHandle(Symbol(), Period()));
    return(catch("PersistStatusForRecompile()"));
 }
 
 
 /**
+ * Restauriert nach einem Recompile-Event anhand der im Chart gespeicherten Sequenz-ID den Status des EA's.
  *
  * @return int - Fehlerstatus
  */
 int RestoreStatusAfterRecompile() {
+   string label = __SCRIPT__ +".hidden_storage";
 
-   debug("RestoreStatusAfterRecompile()   sequenceId = "+ sequenceId +"   hWnd = "+ WindowHandle(Symbol(), Period()));
+   if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
+      int hWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
+      int sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;     // (int) double
 
-   return(catch("RestoreStatusAfterRecompile()"));
+      if (hWnd == WindowHandle(Symbol(), Period())) {
+         Sequence.ID = sequenceId;                                            // Input-Variable setzen => EA verhält sich gemäß ForcedSequenceId()
+         //debug("RestoreStatusAfterRecompile()   restored Sequence.ID="+ sequenceId +" for hWnd="+ hWnd);
+         return(catch("RestoreStatusAfterRecompile(1)"));
+      }
+   }
+   return(catch("RestoreStatusAfterRecompile(2)"));
 }
 
 
@@ -1490,7 +1484,7 @@ bool ValidateConfiguration() {
    if (sequenceId == 0) {
       sequenceLength = ArraySize(levels.lots);
    }
-   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(33)   illegal sequence state, number of configured levels ("+ ArraySize(levels.lots) +" levels) doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
+   else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(33)   illegal sequence state, number of configured levels ("+ ArraySize(levels.lots) +") doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
    else if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
@@ -1543,7 +1537,7 @@ int SaveConfiguration() {
       status = STATUS_DISABLED;
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
    }
-   debug("SaveConfiguration()   saving configuration for sequence #"+ sequenceId);
+   debug("SaveConfiguration()   saving configuration for sequence "+ sequenceId);
 
 
    // (1) Daten zusammenstellen
@@ -1656,25 +1650,25 @@ bool RestoreConfiguration() {
       string logFile    = filesDir +"\\"+ fileName +".log";
       string cmdLine    = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
 
-      debug("RestoreConfiguration()   downloading configuration for sequence #"+ sequenceId);
+      debug("RestoreConfiguration()   downloading configuration for sequence "+ sequenceId);
 
       int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
       if (error != NO_ERROR)
          return(processError(error)==NO_ERROR);
 
-      debug("RestoreConfiguration()   configuration for sequence #"+ sequenceId +" successfully downloaded");
+      debug("RestoreConfiguration()   configuration for sequence "+ sequenceId +" successfully downloaded");
       FileDelete(fileName +".log");
    }
 
    // (2) Datei einlesen
-   debug("RestoreConfiguration()   restoring configuration for sequence #"+ sequenceId);
+   debug("RestoreConfiguration()   restoring configuration for sequence "+ sequenceId);
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines < 0)
       return(processError(stdlib_PeekLastError())==NO_ERROR);
    if (lines == 0) {
       FileDelete(fileName);
-      return(catch("RestoreConfiguration(2)   no configuration found for sequence #"+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
+      return(catch("RestoreConfiguration(2)   no configuration found for sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
    }
 
    // (3) Zeilen in Schlüssel-Wert-Paare aufbrechen, Datentypen validieren und Daten übernehmen
