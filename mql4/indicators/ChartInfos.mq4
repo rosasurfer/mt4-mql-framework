@@ -20,6 +20,7 @@
 double Pip;
 int    PipDigits;
 int    PipPoints;
+double TickSize;
 string PriceFormat;
 
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
@@ -272,8 +273,8 @@ int UpdateSpreadLabel() {
  */
 int UpdateUnitSizeLabel() {
    bool   tradeAllowed = NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);
-   double tickSize     =    MarketInfo(Symbol(), MODE_TICKSIZE    );
-   double tickValue    =    MarketInfo(Symbol(), MODE_TICKVALUE   );
+   double tickSize     =    MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue    =    MarketInfo(Symbol(), MODE_TICKVALUE);
 
    int error = GetLastError();
    string strUnitSize;
