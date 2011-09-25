@@ -180,6 +180,12 @@ int init() {
    }
 
 
+   // (0)
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      RestoreStatusAfterRecompile();
+   }
+
+
    // (1) ggf. Input-Parameter restaurieren (externe Parameter sind nicht statisch)
    if (UninitializeReason()!=REASON_PARAMETERS) /*&&*/ if (intern) {
       Entry.Condition = intern.Entry.Condition;
@@ -195,8 +201,6 @@ int init() {
       Lotsize.Level.7 = intern.Lotsize.Level.7;
       Sequence.ID     = intern.Sequence.ID;
    }
-
-   debug("init()   levels.profit = "+ DoubleArrayToStr(levels.profit, NULL));
 
 
    // (2) falls noch keine Sequenz definiert, die angegebene oder erste Sequenz suchen und einlesen
@@ -244,16 +248,34 @@ int init() {
       // (6) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
       if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1)) {
-         // TODO: Bug, wenn mehr als ein EA den EA-Modus einschalten wollen, deaktiviert jeder zweite den ersteren
-         SwitchExperts(true);
+         //debug("init()   SwitchExperts(true)");
+         SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
       }
 
 
-      // (7) nach Start oder Reload nicht auf den ersten Tick warten
+      // (7) nach Start oder Reload nicht auf den nächsten Tick warten
       int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-      if (IntInArray(UninitializeReason(), reasons2))
+      if (IntInArray(UninitializeReason(), reasons2)) {
+         //debug("init()   SendTick()");
          SendTick(false);
+      }
    }
+
+
+
+   int hWnds[], hChild, hWnd=WindowHandle(Symbol(), Period());
+   ArrayResize(hWnds, 0);
+
+   while (hWnd != 0) {
+      ArrayPushInt(hWnds, hWnd);
+      hChild = hWnd;
+      hWnd   = GetParent(hChild);
+   }
+   ArrayPushInt(hWnds, hWnd);
+   ReverseIntArray(hWnds);
+
+   debug("init()   hWnds = "+ IntArrayToStr(hWnds, NULL));
+
 
 
    error = GetLastError();
@@ -269,9 +291,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-
-   debug("deinit()   UninitializeReason = "+ UninitializeReasonToStr(UninitializeReason()));
-
    // externe Input-Parameter sind nicht statisch und müssen im nächsten init() restauriert werden
    intern.Entry.Condition = Entry.Condition;
    intern.Entry.Direction = Entry.Direction;
@@ -286,7 +305,36 @@ int deinit() {
    intern.Lotsize.Level.7 = Lotsize.Level.7;
    intern.Sequence.ID     = Sequence.ID;
    intern                 = true;                           // Flag zur späteren Erkennung in init() setzen
+
+   if (UninitializeReason() == REASON_RECOMPILE) {
+      PersistStatusForRecompile();
+   }
    return(catch("deinit()"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int PersistStatusForRecompile() {
+   // Sequenz-ID im Chart speichern speichern (mit dieser läßt sich der restliche Status restaurieren)
+
+   debug("PersistStatusForRecompile()   sequenceId = "+ sequenceId +"   hWnd = "+ WindowHandle(Symbol(), Period()));
+
+   return(catch("PersistStatusForRecompile()"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int RestoreStatusAfterRecompile() {
+
+   debug("RestoreStatusAfterRecompile()   sequenceId = "+ sequenceId +"   hWnd = "+ WindowHandle(Symbol(), Period()));
+
+   return(catch("RestoreStatusAfterRecompile()"));
 }
 
 

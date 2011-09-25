@@ -1561,7 +1561,7 @@ int SendTick(bool sound=false) {
    if (sound)
       PlaySound("tick1.wav");
 
-   return(catch("SendTick()"));
+   return(catch("SendTick(2)"));
 }
 
 
