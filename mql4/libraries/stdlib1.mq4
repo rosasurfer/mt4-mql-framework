@@ -7707,14 +7707,15 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (NE(lots, OrderLots()))
       strLots = StringConcatenate(strLots, " (instead of ", NumberToStr(lots, ".+"), ")");
 
-   string strPrice = NumberToStr(OrderOpenPrice(), priceFormat);
+   string strPrice    = NumberToStr(OrderOpenPrice(), priceFormat);
+   string strSlippage = "";
    if (type == OrderType()) {
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          if (NE(price, OrderOpenPrice())) {
-            string strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
-            bool   plus        = GT(OrderOpenPrice(), price);
-            if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
-            else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
+            strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
+            bool plus   = GT(OrderOpenPrice(), price);
+            if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
+            else                                                                  strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
          }
       }
       else if (NE(price, OrderOpenPrice())) {
