@@ -76,7 +76,7 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(processError(ERR_TERMINAL_NOT_YET_READY));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
    // ---------------------------------------------------------------------------------------------------
 
@@ -308,7 +308,7 @@ int UpdateInfos() {
 
    int error = GetLastError();
    if (error==ERR_HISTORY_UPDATE)
-      return(processError(error));
+      return(SetLastError(error));
    if (error!=NO_ERROR && error!=ERR_UNKNOWN_SYMBOL)
       return(catch("UpdateInfos(1)", error));
 

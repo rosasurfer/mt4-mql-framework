@@ -230,12 +230,12 @@ int start() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
-      if (stdlib_PeekLastError() != NO_ERROR) return(processError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
+      if (stdlib_PeekLastError() != NO_ERROR) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (catch("start(6)")      != NO_ERROR) return(last_error);
 
       tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (tickets[i] == -1)
-         return(processError(stdlib_PeekLastError()));
+         return(SetLastError(stdlib_PeekLastError()));
    }
 
 
@@ -244,7 +244,7 @@ int start() {
 
    for (i=0; i < 6; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(peekLastError());                                    // catch("start(7)")
+         return(PeekLastError());                                    // catch("start(7)")
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }

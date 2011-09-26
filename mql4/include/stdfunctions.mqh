@@ -352,7 +352,7 @@
 
 // trade server errors
 #define ERR_NO_RESULT                                   1
-#define ERR_COMMON_ERROR                                2   // manual confirmation denied | broker rejects order
+#define ERR_COMMON_ERROR                                2   // trade confirmation denied | broker rejects order
 #define ERR_INVALID_TRADE_PARAMETERS                    3
 #define ERR_SERVER_BUSY                                 4
 #define ERR_OLD_VERSION                                 5
@@ -457,6 +457,7 @@
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
 #define ERR_INVALID_MARKETINFO                       5006   // invalid MarketInfo() data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
+#define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user intervention
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung
@@ -500,12 +501,14 @@ int catch(string message="", int error=NO_ERROR) {
    }
    return(error);
 
-   // unreachable Code, unterdrückt Compilerwarnungen über unreferenzierte Funktionen
-   processError(NULL);
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
    log(NULL);
    debug(NULL);
+   SetLastError(NULL);
+   PeekLastError();
    HandleEvent(NULL);
    HandleEvents(NULL);
+   OrderSelectByTicket(NULL);
 }
 
 
@@ -516,7 +519,7 @@ int catch(string message="", int error=NO_ERROR) {
  *
  * @return int - derselbe Fehler-Code
  */
-int processError(int error) {
+int SetLastError(int error) {
    if (error != NO_ERROR) {
       if (init) init_error = error;
       else      last_error = error;
@@ -530,7 +533,7 @@ int processError(int error) {
  *
  * @return int - Fehlercode
  */
-int peekLastError() {
+int PeekLastError() {
    if (init)
       return(init_error);
    return(last_error);
@@ -665,3 +668,25 @@ int HandleEvent(int event, int flags=0) {
    return(status && catch("HandleEvent(2)")==NO_ERROR);
 }
 
+
+/**
+ * Selektiert eine Order anhand des Tickets (mit Fehlerkontrolle).
+ *
+ * @param  int ticket - Ticket
+ *
+ * @return bool - Erfolgsstatus
+ *
+ *  NOTE:
+ *  -----
+ *  Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen im selben Script aufgerufen werden müssen.
+ */
+bool OrderSelectByTicket(int ticket) {
+   if (OrderSelect(ticket, SELECT_BY_TICKET))
+      return(true);
+
+   int error = GetLastError();
+   if (error == NO_ERROR)
+      error = ERR_INVALID_TICKET;
+   catch("OrderSelectByTicket()", error);
+   return(false);
+}

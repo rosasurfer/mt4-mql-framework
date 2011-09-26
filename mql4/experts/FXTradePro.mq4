@@ -608,8 +608,8 @@ int StartSequence() {
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
-         status = STATUS_DISABLED;
-         return(catch("StartSequence(1)"));
+         catch("StartSequence(1)");
+         return(SetLastError(ERR_CANCELLED_BY_USER));
       }
       SaveConfiguration();                                                 // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
    }
@@ -618,7 +618,6 @@ int StartSequence() {
 
    int ticket = OpenPosition(Entry.iDirection, levels.lots[0]);            // Position in Entry.Direction öffnen
    if (ticket == -1) {
-      status = STATUS_DISABLED;
       progressionLevel--;
       return(catch("StartSequence(2)"));
    }
@@ -626,7 +625,7 @@ int StartSequence() {
    // Sequenzdaten aktualisieren
    if (!OrderSelectByTicket(ticket)) {
       progressionLevel--;
-      return(peekLastError());
+      return(PeekLastError());
    }
 
    levels.ticket   [0] = OrderTicket();
@@ -655,8 +654,8 @@ int IncreaseProgression() {
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
-         status = STATUS_DISABLED;
-         return(catch("IncreaseProgression(1)"));
+         catch("IncreaseProgression(1)");
+         return(SetLastError(ERR_CANCELLED_BY_USER));
       }
    }
 
@@ -668,15 +667,15 @@ int IncreaseProgression() {
 
    int ticket = OpenPosition(new.type, last.lots + levels.lots[last+1]);   // nächste Position öffnen und alte dabei hedgen
    if (ticket == -1) {
-      status = STATUS_DISABLED;
       progressionLevel--;
-      return(catch("IncreaseProgression(2)"));
+      catch("IncreaseProgression(2)");
+      return(PeekLastError());
    }
 
    // Sequenzdaten aktualisieren
    if (!OrderSelectByTicket(ticket)) {
       progressionLevel--;
-      return(peekLastError());
+      return(PeekLastError());
    }
 
    int this = progressionLevel-1;
@@ -721,7 +720,7 @@ int FinishSequence() {
    // Tickets schließen
    if (!OrderCloseMultiple(tickets, 0.5, CLR_NONE)) {
       status = STATUS_DISABLED;
-      return(processError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_PeekLastError()));
    }
 
    // Status aktualisieren
@@ -757,7 +756,7 @@ int OpenPosition(int type, double lotsize) {
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
    if (ticket == -1)
-      processError(stdlib_PeekLastError());
+      SetLastError(stdlib_PeekLastError());
 
    if (catch("OpenPosition(3)") != NO_ERROR)
       return(-1);
@@ -1146,7 +1145,7 @@ bool ReadSequence(int id = NULL) {
             continue;
          }
          catch("ReadSequence(10)");
-         return(processError(ERR_COMMON_ERROR)==NO_ERROR);
+         return(SetLastError(ERR_CANCELLED_BY_USER)==NO_ERROR);
       }
 
 
@@ -1161,7 +1160,7 @@ bool ReadSequence(int id = NULL) {
                break;
             }
             catch("ReadSequence(11)");
-            return(processError(ERR_COMMON_ERROR)==NO_ERROR);
+            return(SetLastError(ERR_CANCELLED_BY_USER)==NO_ERROR);
          }
       }
    }
@@ -1244,7 +1243,7 @@ int VisualizeSequence() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (peekLastError() != NO_ERROR)
+   if (PeekLastError() != NO_ERROR)
       status = STATUS_DISABLED;
 
    // Zeile 3: Lotsizes der gesamten Sequenz
@@ -1654,7 +1653,7 @@ bool RestoreConfiguration() {
 
       int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
       if (error != NO_ERROR)
-         return(processError(error)==NO_ERROR);
+         return(SetLastError(error)==NO_ERROR);
 
       debug("RestoreConfiguration()   configuration for sequence "+ sequenceId +" successfully downloaded");
       FileDelete(fileName +".log");
@@ -1665,7 +1664,7 @@ bool RestoreConfiguration() {
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines < 0)
-      return(processError(stdlib_PeekLastError())==NO_ERROR);
+      return(SetLastError(stdlib_PeekLastError())==NO_ERROR);
    if (lines == 0) {
       FileDelete(fileName);
       return(catch("RestoreConfiguration(2)   no configuration found for sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
@@ -1808,25 +1807,4 @@ string EntryTypeDescription(int type) {
    }
    catch("EntryTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
-}
-
-
-/**
- * Selektiert eine Order anhand des Tickets.
- *
- * @param  int ticket - Ticket
- *
- * @return bool - Erfolgsstatus (im Fehlerfall wird der EA deaktiviert)
- */
-bool OrderSelectByTicket(int ticket) {
-   if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);
-
-   int error = GetLastError();
-   if (error == NO_ERROR)
-      error = ERR_INVALID_TICKET;
-   catch("OrderSelectByTicket()", error);
-
-   status = STATUS_DISABLED;
-   return(false);
 }

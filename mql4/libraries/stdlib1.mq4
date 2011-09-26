@@ -346,7 +346,7 @@ int ChronologicalSortTickets(int& tickets[]) {
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(peekLastError());
+         return(PeekLastError());
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
    }
@@ -380,25 +380,6 @@ int ChronologicalSortTickets(int& tickets[]) {
    }
 
    return(catch("ChronologicalSortTickets(2)"));
-}
-
-
-/**
- * Selektiert eine Order anhand des Tickets (mit Fehlerkontrolle).
- *
- * @param  int ticket - Ticket
- *
- * @return bool - Erfolgsstatus
- */
-bool OrderSelectByTicket(int ticket) {
-   if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);
-
-   int error = GetLastError();
-   if (error == NO_ERROR)
-      error = ERR_INVALID_TICKET;
-   catch("OrderSelectByTicket()", error);
-   return(false);
 }
 
 
@@ -529,7 +510,7 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   manual confirmation denied | broker rejects order
+      case ERR_COMMON_ERROR:                 //        2   trade confirmation denied | broker rejects order
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
@@ -1677,6 +1658,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "finfx-"             )) return("FinFX"           );
    else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
    else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
+   else if (StringStartsWith(server, "fxprimus-"          )) return("FX Primus"       );
    else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
    else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
    else if (StringStartsWith(server, "gcmfx-"             )) return("Gallant"         );
@@ -4925,7 +4907,7 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
-      case ERR_COMMON_ERROR               : return("common error"                                                  ); //    2 manual confirmation denied | broker rejects order
+      case ERR_COMMON_ERROR               : return("trade denied"                                                  ); //    2 trade confirmation denied | broker rejects order
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
       case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
       case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
@@ -5029,6 +5011,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5005
       case ERR_INVALID_MARKETINFO         : return("invalid MarketInfo() data"                                     ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user intervention"                                ); // 5008
    }
    return("unknown error");
 }
@@ -5151,6 +5134,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
       case ERR_INVALID_MARKETINFO         : return("ERR_INVALID_MARKETINFO"         ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
+      case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
    }
    return(error);
 }
@@ -5623,6 +5607,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
+   else if (StringStartsWith(directory, "fxprimus-"          )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";

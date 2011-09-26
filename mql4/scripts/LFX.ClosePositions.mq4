@@ -102,7 +102,7 @@ int start() {
       int button = MessageBox("Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderCloseMultiple(tickets, 0.1, Orange))
-            return(processError(stdlib_PeekLastError()));
+            return(SetLastError(stdlib_PeekLastError()));
 
 
          // (3) Positionen aus ...\SIG\external_positions.ini löschen
@@ -111,7 +111,7 @@ int start() {
          for (i=0; i < sizeOfPositions; i++) {
             int error = DeletePrivateProfileKey(file, section, positions[i]);
             if (error != NO_ERROR)
-               return(processError(error));
+               return(SetLastError(error));
          }
       }
    }

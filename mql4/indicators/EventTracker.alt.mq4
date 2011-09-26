@@ -183,7 +183,7 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(processError(ERR_TERMINAL_NOT_YET_READY));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
    // ---------------------------------------------------------------------------------------------------
 
@@ -233,7 +233,7 @@ int onPositionOpen(int tickets[]) {
 
    for (int i=0; i < positions; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(peekLastError());                                    // catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error)
+         return(PeekLastError());                                    // catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error)
 
       // alle Positionen werden im aktuellen Instrument gehalten
       string type    = OperationTypeDescription(OrderType());
@@ -245,7 +245,7 @@ int onPositionOpen(int tickets[]) {
       if (SMS.Alerts) {
          int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(processError(error));
+            return(SetLastError(error));
          log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
@@ -289,7 +289,7 @@ int onPositionClose(int tickets[]) {
       if (SMS.Alerts) {
          int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(processError(error));
+            return(SetLastError(error));
          log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
@@ -327,7 +327,7 @@ int CheckBollingerBands() {
          string message = StringConcatenate(symbolName, ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
          int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
-            return(processError(error));
+            return(SetLastError(error));
          log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {

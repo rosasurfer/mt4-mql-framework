@@ -113,7 +113,7 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(processError(ERR_TERMINAL_NOT_YET_READY));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
    // ---------------------------------------------------------------------------------------------------
 

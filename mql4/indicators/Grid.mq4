@@ -75,7 +75,7 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(processError(ERR_TERMINAL_NOT_YET_READY));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    last_error = NO_ERROR;
    // ---------------------------------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ int start() {
  */
 int DrawGrid() {
    if (StringLen(GetTradeServerTimezone()) == 0)
-      return(processError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_PeekLastError()));
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();
    int      easternDow, bar, sColor, sStyle;
