@@ -7695,28 +7695,27 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    string strPrice    = NumberToStr(OrderOpenPrice(), priceFormat);
    string strSlippage = "";
    if (type == OrderType()) {
-      if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
-         if (NE(price, OrderOpenPrice())) {
-            strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
-            bool plus   = GT(OrderOpenPrice(), price);
-            if ((OrderType()==OP_BUY && plus) || (OrderType()==OP_SELL && !plus)) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
-            else                                                                  strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
-         }
-      }
-      else if (NE(price, OrderOpenPrice())) {
+      if (NE(price, OrderOpenPrice())) {
          strPrice = StringConcatenate(strPrice, " (instead of ", NumberToStr(price, priceFormat), ")");
+         if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
+            strSlippage = NumberToStr(MathAbs(OrderOpenPrice()-price)/pip, ".+");
+            int plus    = GT(OrderOpenPrice(), price);
+            if (OrderType() == plus^1) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
+            else                       strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
+         }
       }
    }
 
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice);
-   if (OrderMagicNumber() !=  0) message = StringConcatenate(message, ", magic=", OrderMagicNumber());
-   if (OrderComment()     != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
-                                 message = StringConcatenate(message, " after ", time, " ms");
+   if (OrderComment() != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
+                             message = StringConcatenate(message, " after ", DoubleToStr(time/1000.0, 3), " s");
    if (requotes > 0) {
       message = StringConcatenate(message, " and ", requotes, " requote");
       if (requotes > 1)
          message = StringConcatenate(message, "s");
    }
+
+   message = StringConcatenate(message, strSlippage);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
@@ -7840,20 +7839,25 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    string strType = OperationTypeDescription(OrderType());
    string strLots = NumberToStr(OrderLots(), ".+");
 
-   string strPrice = NumberToStr(OrderClosePrice(), priceFormat);
+   string strPrice    = NumberToStr(OrderClosePrice(), priceFormat);
+   string strSlippage = "";
    if (NE(price, OrderClosePrice())) {
-      string strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
-      bool   plus        = GT(OrderClosePrice(), price);
-      if ((OrderType()==OP_BUY && !plus) || (OrderType()==OP_SELL && plus)) strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip slippage)");
-      else                                                                  strPrice = StringConcatenate(strPrice, " (", strSlippage, " pip positive slippage)");
+      strPrice    = StringConcatenate(strPrice, " (instead of ", NumberToStr(price, priceFormat), ")");
+      strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
+      int plus    = GT(OrderClosePrice(), price);
+      if ((OrderType() == plus^1)) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
+      else                         strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
    }
 
-   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", time, " ms");
+   string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", DoubleToStr(time/1000.0, 3), " s");
+
    if (requotes > 0) {
       message = StringConcatenate(message, " and ", requotes, " requote");
       if (requotes > 1)
          message = StringConcatenate(message, "s");
    }
+
+   message = StringConcatenate(message, strSlippage);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
