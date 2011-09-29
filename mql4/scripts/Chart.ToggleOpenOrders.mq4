@@ -42,7 +42,7 @@ int init() {
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
-      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __SCRIPT__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
       init_error = ERR_RUNTIME_ERROR;
       return(init_error);
    }

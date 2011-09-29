@@ -177,7 +177,7 @@ int start() {
             continue;
          }
          PlaySound("notify.wav");                                                               // danach Bestätigung per Dialog
-         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __SCRIPT__ +" - start()", MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
             continue;
@@ -207,7 +207,7 @@ int start() {
 
    // (4) Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__ +" - start()", MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("start(5)"));
 
@@ -291,7 +291,7 @@ bool ReadOpenPositions() {
 
       // alle offenen Positionen dieser Strategie finden und Daten einlesen
       if (IsMyOrder()) {
-         if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL)
+         if (OrderType() > OP_SELL)
             continue;
          if (IntInArray(OrderMagicNumber(), positions.magic))
             continue;

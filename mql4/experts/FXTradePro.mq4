@@ -20,7 +20,7 @@
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - Breakeven berechnen und anzeigen
- *  - gleichzeitige, parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
+ *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -150,7 +150,7 @@ double   levels.swap      [], levels.openSwap      [], levels.closedSwap      []
 double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [], all.profits;
 
-double   levels.maxProfit  [];
+double   levels.maxProfit  [];                        // maximal möglicher P/L des Levels; wird nur in ShowStatus()-Anzeige verwendet
 double   levels.maxDrawdown[];
 double   levels.breakeven  [];
 
@@ -180,7 +180,7 @@ int init() {
    }
 
 
-   // (1) nach Recompile vorhergehenden Status restaurieren
+   // (1) ggf. vorhergehenden Status restaurieren
    if (UninitializeReason() == REASON_RECOMPILE)
       RestoreStatusAfterRecompile();
 
@@ -286,49 +286,6 @@ int deinit() {
       PersistStatusForRecompile();
 
    return(catch("deinit()"));
-}
-
-
-/**
- * Speichert die Sequenz-ID im Chart, sodaß der aktuelle Status des EA's nach einem Recompile-Event restauriert werden kann.
- *
- * @return int - Fehlerstatus
- */
-int PersistStatusForRecompile() {
-   int hChWnd = WindowHandle(Symbol(), Period());
-
-   string label = __SCRIPT__ +".hidden_storage";
-
-   if (ObjectFind(label) != -1)
-      ObjectDelete(label);
-   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
-   ObjectSet(label, OBJPROP_YDISTANCE, -hChWnd);
-
-   //debug("PersistStatusForRecompile()     sequenceId="+ sequenceId +"   hWnd="+ WindowHandle(Symbol(), Period()));
-   return(catch("PersistStatusForRecompile()"));
-}
-
-
-/**
- * Restauriert nach einem Recompile-Event anhand der im Chart gespeicherten Sequenz-ID den Status des EA's.
- *
- * @return int - Fehlerstatus
- */
-int RestoreStatusAfterRecompile() {
-   string label = __SCRIPT__ +".hidden_storage";
-
-   if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
-      int hWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
-      int sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;     // (int) double
-
-      if (hWnd == WindowHandle(Symbol(), Period())) {
-         Sequence.ID = sequenceId;                                            // Input-Variable setzen => EA verhält sich gemäß ForcedSequenceId()
-         //debug("RestoreStatusAfterRecompile()   restored Sequence.ID="+ sequenceId +" for hWnd="+ hWnd);
-         return(catch("RestoreStatusAfterRecompile(1)"));
-      }
-   }
-   return(catch("RestoreStatusAfterRecompile(2)"));
 }
 
 
@@ -606,7 +563,7 @@ bool IsProfitTargetReached() {
 int StartSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          catch("StartSequence(1)");
          return(SetLastError(ERR_CANCELLED_BY_USER));
@@ -652,7 +609,7 @@ int StartSequence() {
 int IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          catch("IncreaseProgression(1)");
          return(SetLastError(ERR_CANCELLED_BY_USER));
@@ -702,7 +659,7 @@ int IncreaseProgression() {
 int FinishSequence() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          status = STATUS_DISABLED;
          return(catch("FinishSequence(1)"));
@@ -765,7 +722,7 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Überprüft die offenen Positionen der Sequenz auf Änderungen und aktualisiert die aktuellen Kennziffern (P/L, Breakeven etc.)
+ * Überprüft die offenen Positionen auf Änderungen und aktualisiert die aktuellen Kennziffern (P/L, Breakeven etc.)
  *
  * @return bool - Erfolgsstatus
  */
@@ -777,11 +734,13 @@ bool UpdateStatus() {
             return(false);
 
          if (OrderCloseTime() != 0) {                                // OrderCloseTime: Ticket wurde geschlossen => gesamte Sequenz neu einlesen
-            if (ReadSequence(sequenceId)) break;
+            if (ReadSequence(sequenceId))
+               break;
             return(false);
          }
          if (NE(OrderLots(), levels.openLots[i])) {                  // OrderLots: Ticket wurde teilweise geschlossen => gesamte Sequenz neu einlesen
-            if (ReadSequence(sequenceId)) break;
+            if (ReadSequence(sequenceId))
+               break;
             return(false);
          }
          if (NE(OrderSwap(), levels.openSwap[i]))                    // OrderSwap: Swap hat sich geändert => Wert aktualisieren
@@ -790,15 +749,14 @@ bool UpdateStatus() {
    }
 
 
-   // (2) aktuellen TickValue für P/L-Berechnung bestimmen           !!! TODO: wenn QuoteCurrency == AccountCurrency, ist das nur ein statt jedes Mal notwendig
+   // (2) aktuellen TickValue für P/L-Berechnung bestimmen           !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es nur ein statt jedes Mal notwendig
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
    if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
       return(catch("UpdateStatus(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
-   double pipValue = Pip / TickSize * tickValue;
 
 
-   // (3) Profit/Loss des Levels neu berechnen
+   // (3) Profit/Loss der Level mit offenen Positionen neu berechnen
    all.swaps       = 0;
    all.commissions = 0;
    all.profits     = 0;
@@ -808,7 +766,7 @@ bool UpdateStatus() {
    ArrayCopy(tmp.openLots, levels.openLots);
 
    for (i=0; i < progressionLevel; i++) {
-      if (levels.closeTime[i] == 0) {                                // offene Position
+      if (levels.closeTime[i] == 0) {
          if (!OrderSelectByTicket(levels.ticket[i]))
             return(false);
          levels.openProfit[i] = 0;
@@ -850,21 +808,41 @@ bool UpdateStatus() {
    }
 
 
-   // (4) TakeProfit- und StopLoss-Beträge des Levels neu berechnen  !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
-   double sl, prevDrawdown = 0;
+   // (4) TakeProfit- und StopLoss-Beträge der Level aktualisieren   !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
+   if (UpdateProfitLossLimits())
+      return(catch("UpdateStatus(2)")==NO_ERROR);
+   return(false);
+}
 
-   for (i=0; i < sequenceLength; i++) {
-      if (progressionLevel > 0 && i < progressionLevel-1) {          // tatsächlich angefallenen Verlust verwenden
-         if (levels.type[i] == OP_BUY) sl = (levels.openPrice[i  ]-levels.openPrice[i+1]) / Pip;
-         else                          sl = (levels.openPrice[i+1]-levels.openPrice[i  ]) / Pip;
-      }
-      else                             sl = StopLoss;                // konfigurierten StopLoss verwenden
+
+/**
+ * Aktualisiert die P/L-Grenzwerte der einzelnen Level.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateProfitLossLimits() {
+   // aktuellen TickValue bestimmen                                  !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es nur ein statt jedes Mal notwendig
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   int error = GetLastError();
+   if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
+      return(catch("UpdateProfitLossLimits(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
+
+   // aktuellen PipValue bestimmen
+   double pipValue = Pip / TickSize * tickValue;
+
+   double drawdown, prevDrawdown;                                    // Drawdown in Pips
+
+   for (int i=0; i < sequenceLength; i++) {
+      if (i >= progressionLevel-1)       drawdown = StopLoss;                                               // aktueller und folgende Level: konfigurierten StopLoss verwenden
+      else if (levels.type[i] == OP_BUY) drawdown = (levels.openPrice[i  ] - levels.openPrice[i+1]) / Pip;  // vorherige Level: tatsächlichen Drawdown verwenden
+      else                               drawdown = (levels.openPrice[i+1] - levels.openPrice[i  ]) / Pip;
+
+      levels.maxDrawdown[i] = prevDrawdown - levels.lots[i] * drawdown   * pipValue;
       levels.maxProfit  [i] = prevDrawdown + levels.lots[i] * TakeProfit * pipValue;
-      levels.maxDrawdown[i] = prevDrawdown - levels.lots[i] * sl         * pipValue;
       prevDrawdown          = levels.maxDrawdown[i];
    }
 
-   return(catch("UpdateStatus(2)") == NO_ERROR);
+   return(catch("UpdateProfitLossLimits(2)")==NO_ERROR);
 }
 
 
@@ -886,7 +864,7 @@ int ResetAll() {
    all.commissions  = 0;
    all.profits      = 0;
 
-   status           = STATUS_UNDEFINED;
+   status = STATUS_UNDEFINED;
 
    if (ArraySize(levels.ticket) > 0)
       ResizeArrays(0);
@@ -1023,7 +1001,7 @@ bool ReadSequence(int id = NULL) {
       for (i=0, n=0; i < closedTickets; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History verkürzt
             break;
-         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // fremde Tickets und Nicht-Trades überspringen
+         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // Nicht-Trades und fremde Tickets überspringen
             continue;
 
          // (4.1) Sequenz- und manuelle Trades zwischenspeichern
@@ -1138,13 +1116,17 @@ bool ReadSequence(int id = NULL) {
 
       // (5) insgesamt muß mindestens ein Ticket gefunden worden sein
       if (progressionLevel == 0) {
+         // überhaupt nichts gefunden; anhand der Konfigurationsdatei prüfen, ob das Script im STATUS_WAITING läuft
+         if (IsFile(TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set"))
+            return(catch("ReadSequence(10)")==NO_ERROR);
+
          PlaySound("notify.wav");
-         int button = MessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+         int button = MessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             retry = true;
             continue;
          }
-         catch("ReadSequence(10)");
+         catch("ReadSequence(11)");
          return(SetLastError(ERR_CANCELLED_BY_USER)==NO_ERROR);
       }
 
@@ -1154,12 +1136,12 @@ bool ReadSequence(int id = NULL) {
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
             PlaySound("notify.wav");
-            button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+            button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
             if (button == IDRETRY) {
                retry = true;
                break;
             }
-            catch("ReadSequence(11)");
+            catch("ReadSequence(12)");
             return(SetLastError(ERR_CANCELLED_BY_USER)==NO_ERROR);
          }
       }
@@ -1167,7 +1149,7 @@ bool ReadSequence(int id = NULL) {
 
 
    // (7) Sequenz visualisieren
-   if (catch("ReadSequence(12)") == NO_ERROR)
+   if (catch("ReadSequence(13)") == NO_ERROR)
       return(VisualizeSequence()==NO_ERROR);
    return(false);
 }
@@ -1460,7 +1442,7 @@ bool ValidateConfiguration() {
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT);
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT);
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
-   int error  = GetLastError();
+   int error = GetLastError();
    if (error != NO_ERROR)                             return(catch("ValidateConfiguration(27)   symbol=\""+ Symbol() +"\"", error)==NO_ERROR);
 
    for (int i=0; i < levels; i++) {
@@ -1480,11 +1462,12 @@ bool ValidateConfiguration() {
    Sequence.ID = strValue;
 
    // Konfiguration mit aktuellen Daten einer laufenden Sequenz vergleichen
-   if (sequenceId == 0) {
+   if (sequenceId==0 || UninitializeReason()==REASON_RECOMPILE) {
       sequenceLength = ArraySize(levels.lots);
    }
    else if (ArraySize(levels.lots) != sequenceLength) return(catch("ValidateConfiguration(33)   illegal sequence state, number of configured levels ("+ ArraySize(levels.lots) +") doesn't match sequenceLength "+ sequenceLength +" of sequence "+ sequenceId, ERR_RUNTIME_ERROR)==NO_ERROR);
-   else if (progressionLevel > 0) {
+
+   if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
          int last = progressionLevel-1;
          if (NE(levels.lots[last], MathAbs(effectiveLots)))
@@ -1556,8 +1539,8 @@ int SaveConfiguration() {
 
 
    // (2) Daten in lokale Datei schreiben
-   string filename = "presets\\FTP."+ sequenceId +".set";
-
+   string filename = "presets\\FTP."+ sequenceId +".set";            // ".\experts\files\presets" ist ein Softlink auf ".\experts\presets", dadurch ist
+                                                                     // das Presets-Verzeichnis für die MQL-Dateifunktionen erreichbar.
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
    if (hFile < 0) {
       status = STATUS_DISABLED;
@@ -1593,32 +1576,32 @@ int SaveConfiguration() {
 /**
  * Lädt die angegebene Konfigurationsdatei auf den Server.
  *
- * @param  string company  - Account-Company
- * @param  int    account  - Account-Number
- * @param  string symbol   - Symbol der Konfiguration
- * @param  string filename - Dateiname, relativ zu "{terminal-directory}\experts\files"
+ * @param  string company     - Account-Company
+ * @param  int    account     - Account-Number
+ * @param  string symbol      - Symbol der Konfiguration
+ * @param  string presetsFile - Dateiname, relativ zu "{terminal-directory}\experts"
  *
  * @return int - Fehlerstatus
  */
-int UploadConfiguration(string company, int account, string symbol, string filename) {
-   string parts[]; int size = Explode(filename, "\\", parts, NULL);
-
+int UploadConfiguration(string company, int account, string symbol, string presetsFile) {
    // TODO: Existenz von wget.exe prüfen
 
+   string parts[]; int size = Explode(presetsFile, "\\", parts, NULL);
+   string file = parts[size-1];                                         // einfacher Dateiname ohne Verzeichnisse
+
    // Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(parts[size-1]);
-   string filesDir     = TerminalPath() +"\\experts\\files\\";
-   string dataFile     = filesDir + filename;
-   string responseFile = filesDir + filename +".response";
-   string logFile      = filesDir + filename +".log";
-   string cmdLine      = "wget.exe -b \""+ url +"\" --post-file=\""+ dataFile +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string presetsPath  = TerminalPath() +"\\experts\\" + presetsFile;   // Dateinamen mit vollständigen Pfaden
+   string responsePath = presetsPath +".response";
+   string logPath      = presetsPath +".log";
+   string url          = "http://sub.domain.tld/uploadFTPConfiguration.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(file);
+   string cmdLine      = "wget.exe -b \""+ url +"\" --post-file=\""+ presetsPath +"\" --header=\"Content-Type: text/plain\" -O \""+ responsePath +"\" -a \""+ logPath +"\"";
 
    // Existenz der Datei prüfen
-   if (!IsFile(dataFile))
-      return(catch("UploadConfiguration(1)   file not found: \""+ dataFile +"\"", ERR_FILE_NOT_FOUND));
+   if (!IsFile(presetsPath))
+      return(catch("UploadConfiguration(1)   file not found: \""+ presetsPath +"\"", ERR_FILE_NOT_FOUND));
 
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
-   int error = WinExec(cmdLine, SW_HIDE);                // SW_SHOWNORMAL|SW_HIDE
+   int error = WinExec(cmdLine, SW_HIDE);                               // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
       return(catch("UploadConfiguration(2)   execution of \""+ cmdLine +"\" failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
 
@@ -1639,8 +1622,8 @@ bool RestoreConfiguration() {
    // TODO: Existenz von wget.exe prüfen
 
    // (1) bei nicht existierender lokaler Konfiguration die Datei vom Server laden
-   string filesDir = TerminalPath() +"\\experts\\files\\";
-   string fileName = "presets\\FTP."+ sequenceId +".set";
+   string filesDir = TerminalPath() +"\\experts\\files\\";           // ".\experts\files\presets" ist ein Softlink auf ".\experts\presets", dadurch
+   string fileName = "presets\\FTP."+ sequenceId +".set";            // ist das Presets-Verzeichnis für die MQL-Dateifunktionen erreichbar.
 
    if (!IsFile(filesDir + fileName)) {
       // Befehlszeile für Shellaufruf zusammensetzen
@@ -1651,7 +1634,7 @@ bool RestoreConfiguration() {
 
       debug("RestoreConfiguration()   downloading configuration for sequence "+ sequenceId);
 
-      int error = WinExecAndWait(cmdLine, SW_HIDE);      // SW_SHOWNORMAL|SW_HIDE
+      int error = WinExecAndWait(cmdLine, SW_HIDE);                  // SW_SHOWNORMAL|SW_HIDE
       if (error != NO_ERROR)
          return(SetLastError(error)==NO_ERROR);
 
@@ -1686,7 +1669,7 @@ bool RestoreConfiguration() {
 
    string parts[];
    for (int i=0; i < lines; i++) {
-      if (Explode(config[i], "=", parts, 2) != 2)                      return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (Explode(config[i], "=", parts, 2) != 2) return(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
       string key=parts[0], value=parts[1];
 
       if (key == "Entry.Condition") {
@@ -1698,57 +1681,54 @@ bool RestoreConfiguration() {
          parameters[I_ENTRY_DIRECTION] = 1;
       }
       else if (key == "TakeProfit") {
-         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsDigit(value))               return(catch("RestoreConfiguration(5)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          TakeProfit = StrToInteger(value);
          parameters[I_TAKEPROFIT] = 1;
       }
       else if (key == "StopLoss") {
-         if (!StringIsDigit(value))                                    return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsDigit(value))               return(catch("RestoreConfiguration(6)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          StopLoss = StrToInteger(value);
          parameters[I_STOPLOSS] = 1;
       }
       else if (key == "Lotsize.Level.1") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(7)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.1 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_1] = 1;
       }
       else if (key == "Lotsize.Level.2") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(8)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.2 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_2] = 1;
       }
       else if (key == "Lotsize.Level.3") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(9)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.3 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_3] = 1;
       }
       else if (key == "Lotsize.Level.4") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(10)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.4 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_4] = 1;
       }
       else if (key == "Lotsize.Level.5") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(11)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.5 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_5] = 1;
       }
       else if (key == "Lotsize.Level.6") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(12)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.6 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_6] = 1;
       }
       else if (key == "Lotsize.Level.7") {
-         if (!StringIsNumeric(value))                                  return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!StringIsNumeric(value))             return(catch("RestoreConfiguration(13)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
          Lotsize.Level.7 = StrToDouble(value);
          parameters[I_LOTSIZE_LEVEL_7] = 1;
       }
    }
-   if (IntInArray(0, parameters))                                      return(catch("RestoreConfiguration(14)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
+   if (IntInArray(0, parameters))                 return(catch("RestoreConfiguration(14)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
 
    return(catch("RestoreConfiguration(16)")==NO_ERROR);
-   StatusToStr(NULL);
-   EntryTypeToStr(NULL);
-   EntryTypeDescription(NULL);
 }
 
 
@@ -1808,3 +1788,52 @@ string EntryTypeDescription(int type) {
    catch("EntryTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
+
+
+/**
+ * Speichert die Sequenz-ID im Chart, sodaß der aktuelle Status des EA's nach einem Recompile-Event restauriert werden kann.
+ *
+ * @return int - Fehlerstatus
+ */
+int PersistStatusForRecompile() {
+   int hChWnd = WindowHandle(Symbol(), Period());
+
+   string label = __SCRIPT__ +".hidden_storage";
+
+   if (ObjectFind(label) != -1)
+      ObjectDelete(label);
+   ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
+   ObjectSet(label, OBJPROP_YDISTANCE, -hChWnd);
+
+   //debug("PersistStatusForRecompile()     sequenceId="+ sequenceId +"   hWnd="+ WindowHandle(Symbol(), Period()));
+   return(catch("PersistStatusForRecompile()"));
+}
+
+
+/**
+ * Restauriert nach einem Recompile-Event anhand der im Chart gespeicherten Sequenz-ID den Status des EA's.
+ *
+ * @return int - Fehlerstatus
+ */
+int RestoreStatusAfterRecompile() {
+   string label = __SCRIPT__ +".hidden_storage";
+
+   if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
+      int hWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
+      int sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;     // (int) double
+
+      if (hWnd == WindowHandle(Symbol(), Period())) {
+         Sequence.ID = sequenceId;                                            // EA verhält sich wie bei ForcedSequenceId()
+         //debug("RestoreStatusAfterRecompile()   restored Sequence.ID="+ sequenceId +" for hWnd="+ hWnd);
+         return(catch("RestoreStatusAfterRecompile(1)"));
+      }
+   }
+   return(catch("RestoreStatusAfterRecompile(2)"));
+
+   // Dummy-Calls, um Compilerwarnungen über unreferenzierte Funktionen zu unterdrücken
+   StatusToStr(NULL);
+   EntryTypeToStr(NULL);
+   EntryTypeDescription(NULL);
+}
+

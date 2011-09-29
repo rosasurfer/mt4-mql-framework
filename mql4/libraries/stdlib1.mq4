@@ -7741,15 +7741,15 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket))
-      return(false);                                         //     catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error)
-   if (OrderCloseTime() != 0)                                return(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-   if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+      return(false);          //     catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error)
+   if (OrderCloseTime() != 0) return(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType() > OP_SELL) return(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (error != NO_ERROR)                   return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
+   if (error != NO_ERROR) return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
@@ -7882,9 +7882,9 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket))                         return(false);   // catch("OrderCloseByEx(1)   invalid parameter ticket = "+ ticket, error)
-   if (OrderCloseTime() != 0)                                return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-   if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   if (!OrderSelectByTicket(ticket)) return(false);   // catch("OrderCloseByEx(1)   invalid parameter ticket = "+ ticket, error)
+   if (OrderCloseTime() != 0)        return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderType() > OP_SELL)        return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    int    ticketType     = OrderType();
    double ticketLots     = OrderLots();
    string symbol         = OrderSymbol();
@@ -7986,9 +7986,9 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
    if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i]))                     return(false); // catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)
-      if (OrderCloseTime() != 0)                                return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-      if (OrderType()!=OP_BUY) /*&&*/ if (OrderType()!=OP_SELL) return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+      if (!OrderSelectByTicket(tickets[i])) return(false); // catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)
+      if (OrderCloseTime() != 0)            return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderType() > OP_SELL)            return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
    // slippage
    if (LT(slippage, 0))                                         return(catch("OrderCloseMultiple(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
