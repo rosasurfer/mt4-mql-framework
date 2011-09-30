@@ -41,7 +41,7 @@
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
- *  - UpdateStatus(): Commission-Berechnung an OrderCloseBy() anpassen
+ *  - UpdateCurrentProfitLoss(): Commission-Berechnung an OrderCloseBy() anpassen
  *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
@@ -238,7 +238,7 @@ int init() {
          if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
          else                      status = STATUS_FINISHED;
       }
-      UpdateStatus();
+      UpdateCurrentProfitLoss();
    }
    ShowStatus();
 
@@ -306,7 +306,7 @@ int start() {
       return(last_error);
 
 
-   if (UpdateStatus()) {
+   if (UpdateCurrentProfitLoss()) {
       if (progressionLevel == 0) {
          if (!IsEntrySignal())                  status = STATUS_WAITING;
          else                                   StartSequence();              // kein Limit definiert oder Limit erreicht
@@ -594,9 +594,11 @@ int StartSequence() {
    if (OrderType() == OP_BUY) effectiveLots =  OrderLots();
    else                       effectiveLots = -OrderLots();
 
-   // Status aktualisieren
    status = STATUS_PROGRESSING;
-   UpdateStatus();
+
+   // aktuellen und maximal erreichbaren P/L des Levels berechnen
+   UpdateCurrentProfitLoss();
+   UpdateMaximumProfitLoss();
 
    return(catch("StartSequence(3)"));
 }
@@ -645,8 +647,9 @@ int IncreaseProgression() {
    if (OrderType() == OP_BUY) effectiveLots += OrderLots();
    else                       effectiveLots -= OrderLots();
 
-   // Status aktualisieren
-   UpdateStatus();
+   // aktuellen und maximal erreichbaren P/L des Levels berechnen
+   UpdateCurrentProfitLoss();
+   UpdateMaximumProfitLoss();
 
    return(catch("IncreaseProgression(3)"));
 }
@@ -682,7 +685,7 @@ int FinishSequence() {
 
    // Status aktualisieren
    status = STATUS_FINISHED;
-   UpdateStatus();                                                    // alle Positionen geschlossen => UpdateStatus() löst komplettes ReadSequence() aus
+   UpdateCurrentProfitLoss();                                        // alle Positionen geschlossen => UpdateCurrentProfitLoss() löst komplettes ReadSequence() aus
 
    return(catch("FinishSequence(2)"));
 }
@@ -726,7 +729,7 @@ int OpenPosition(int type, double lotsize) {
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateStatus() {
+bool UpdateCurrentProfitLoss() {
    // (1) offene Positionen auf Änderungen prüfen
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
@@ -753,7 +756,7 @@ bool UpdateStatus() {
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
    if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
-      return(catch("UpdateStatus(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
+      return(catch("UpdateCurrentProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
 
 
    // (3) Profit/Loss der Level mit offenen Positionen neu berechnen
@@ -808,26 +811,24 @@ bool UpdateStatus() {
    }
 
 
-   // (4) TakeProfit- und StopLoss-Beträge der Level aktualisieren   !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
-   if (UpdateProfitLossLimits())
-      return(catch("UpdateStatus(2)")==NO_ERROR);
+   // (4) maximal erreichbare Profit-/Lossbeträge aktualisieren      !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
+   if (UpdateMaximumProfitLoss())
+      return(catch("UpdateCurrentProfitLoss(2)")==NO_ERROR);
    return(false);
 }
 
 
 /**
- * Aktualisiert die P/L-Grenzwerte der einzelnen Level.
+ * Aktualisiert die maximal erreichbaren P/L-Werte der einzelnen Level.
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateProfitLossLimits() {
-   // aktuellen TickValue bestimmen                                  !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es nur ein statt jedes Mal notwendig
+bool UpdateMaximumProfitLoss() {
+   // aktuellen Tick- und PipValue bestimmen                         !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es nur ein statt jedes Mal notwendig
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
    if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
-      return(catch("UpdateProfitLossLimits(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
-
-   // aktuellen PipValue bestimmen
+      return(catch("UpdateMaximumProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
    double pipValue = Pip / TickSize * tickValue;
 
    double drawdown, prevDrawdown;                                    // Drawdown in Pips
@@ -842,7 +843,7 @@ bool UpdateProfitLossLimits() {
       prevDrawdown          = levels.maxDrawdown[i];
    }
 
-   return(catch("UpdateProfitLossLimits(2)")==NO_ERROR);
+   return(catch("UpdateMaximumProfitLoss(2)")==NO_ERROR);
 }
 
 
