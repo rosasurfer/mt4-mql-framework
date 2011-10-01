@@ -102,7 +102,7 @@ extern string Sequence.ID                    = "";
 
 
 string   intern.Entry.Condition;                      // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
-string   intern.Entry.Direction;                      // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE restauriert.
+string   intern.Entry.Direction;                      // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE daraus restauriert.
 int      intern.TakeProfit;
 int      intern.StopLoss;
 double   intern.Lotsize.Level.1;
@@ -233,14 +233,12 @@ int init() {
       ResizeArrays(sequenceLength);
 
 
-   // (5) ggf. maximal erreichbaren P/L der Level neuberechnen
-   if (EQ(levels.maxDrawdown[sequenceLength-1], 0)) {
-      if (!UpdateMaximumProfitLoss())
-         return(false);
-   }
+   // (5) ggf. maximale P/L-Werte der Level neuberechnen
+   if (EQ(levels.maxDrawdown[sequenceLength-1], 0))
+      UpdateMaximumProfitLoss();
 
 
-   // (6) aktuellen Status bestimmen und anzeigen
+   // (6) aktuellen Status bestimmen
    if (init_error != NO_ERROR)     status = STATUS_DISABLED;
    if (status != STATUS_DISABLED) {
       if (progressionLevel > 0) {
@@ -248,21 +246,25 @@ int init() {
          else                      status = STATUS_FINISHED;
       }
    }
+
+
+   // (7) aktuellen Status anzeigen
    ShowStatus();
 
-
-   if (init_error == NO_ERROR) {
-      // (7) bei Start ggf. EA's aktivieren
-      int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-      if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
-         SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
+   if (init_error != NO_ERROR)
+      return(init_error);
 
 
-      // (8) nach Start oder Reload nicht auf den nächsten Tick warten
-      int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-      if (IntInArray(UninitializeReason(), reasons2))
-         SendTick(false);
-   }
+   // (8) bei Start ggf. EA's aktivieren
+   int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
+   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
+      SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
+
+
+   // (9) nach Start oder Reload nicht auf den nächsten Tick warten (wartet nur bei REASON_CHARTCHANGE und REASON_ACCOUNT)
+   int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
+   if (IntInArray(UninitializeReason(), reasons2))
+      SendTick(false);
 
    return(catch("init(2)"));
 }
@@ -452,7 +454,6 @@ bool IsEntrySignal() {
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
             //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " bands crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
-            //PlaySound("Close order.wav");
             return(true);
          }
          else {
@@ -475,7 +476,6 @@ bool IsEntrySignal() {
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
             //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " envelopes crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
-            //PlaySound("Close order.wav");
             return(true);
          }
          else {
@@ -524,7 +524,7 @@ bool IsStopLossReached() {
    }
 
    if (GT(last.loss, StopLoss*Pip)) {
-      debug(StringConcatenate("IsStopLossReached()   Stoploss für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.loss/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
+      //debug(StringConcatenate("IsStopLossReached()   Stoploss für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.loss/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
       return(true);
    }
    return(false);
@@ -556,7 +556,7 @@ bool IsProfitTargetReached() {
    }
 
    if (GE(last.profit, TakeProfit*Pip)) {
-      debug(StringConcatenate("IsProfitTargetReached()   Profit target für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.profit/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
+      //debug(StringConcatenate("IsProfitTargetReached()   Profit target für ", last.directions[last.type], " position erreicht: ", DoubleToStr(last.profit/Pip, Digits-PipDigits), " pip (openPrice=", NumberToStr(last.openPrice, PriceFormat), ", ", last.priceNames[last.type], "=", NumberToStr(last.price, PriceFormat), ")"));
       return(true);
    }
    return(false);
@@ -887,7 +887,7 @@ int ResetAll() {
  * @return void
  */
 void ResizeArrays(int size) {
-   // alle außer levels.lots[]: enthält Konfiguration und wird nur in ValidateConfiguration() modifiziert
+   // außer levels.lots[]: enthält Konfiguration und wird nur in ValidateConfiguration() modifiziert
 
    ArrayResize(levels.ticket          , size);
    ArrayResize(levels.type            , size); if (size > 0) ArrayInitialize(levels.type, OP_UNDEFINED);
