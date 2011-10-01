@@ -203,9 +203,11 @@ int init() {
 
 
    // (3) falls noch keine Sequenz definiert, die angegebene oder erste Sequenz suchen und einlesen
-   if (sequenceId == 0) /*&&*/ if (!ReadSequence(ForcedSequenceId())) {
-      ShowStatus();
-      return(init_error);
+   if (sequenceId == 0) {
+      if (!ReadSequence(ForcedSequenceId())) {
+         ShowStatus();
+         return(init_error);
+      }
    }
 
 
@@ -231,26 +233,32 @@ int init() {
       ResizeArrays(sequenceLength);
 
 
-   // (5) aktuellen Status bestimmen und anzeigen
+   // (5) ggf. maximal erreichbaren P/L der Level neuberechnen
+   if (EQ(levels.maxDrawdown[sequenceLength-1], 0)) {
+      if (!UpdateMaximumProfitLoss())
+         return(false);
+   }
+
+
+   // (6) aktuellen Status bestimmen und anzeigen
    if (init_error != NO_ERROR)     status = STATUS_DISABLED;
    if (status != STATUS_DISABLED) {
       if (progressionLevel > 0) {
          if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
          else                      status = STATUS_FINISHED;
       }
-      UpdateCurrentProfitLoss();
    }
    ShowStatus();
 
 
    if (init_error == NO_ERROR) {
-      // (6) bei Start ggf. EA's aktivieren
+      // (7) bei Start ggf. EA's aktivieren
       int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
       if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
          SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
 
 
-      // (7) nach Start oder Reload nicht auf den nächsten Tick warten
+      // (8) nach Start oder Reload nicht auf den nächsten Tick warten
       int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
       if (IntInArray(UninitializeReason(), reasons2))
          SendTick(false);
@@ -596,7 +604,7 @@ int StartSequence() {
 
    status = STATUS_PROGRESSING;
 
-   // aktuellen und maximal erreichbaren P/L des Levels berechnen
+   // aktuellen und maximal erreichbaren P/L der Level neuberechnen
    UpdateCurrentProfitLoss();
    UpdateMaximumProfitLoss();
 
@@ -647,7 +655,7 @@ int IncreaseProgression() {
    if (OrderType() == OP_BUY) effectiveLots += OrderLots();
    else                       effectiveLots -= OrderLots();
 
-   // aktuellen und maximal erreichbaren P/L des Levels berechnen
+   // aktuellen und maximal erreichbaren P/L der Level neuberechnen
    UpdateCurrentProfitLoss();
    UpdateMaximumProfitLoss();
 
@@ -660,7 +668,7 @@ int IncreaseProgression() {
  * @return int - Fehlerstatus
  */
 int FinishSequence() {
-   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
@@ -683,8 +691,9 @@ int FinishSequence() {
       return(SetLastError(stdlib_PeekLastError()));
    }
 
-   // Status aktualisieren
    status = STATUS_FINISHED;
+
+   // aktuellen P/L neu berechnen
    UpdateCurrentProfitLoss();                                        // alle Positionen geschlossen => UpdateCurrentProfitLoss() löst komplettes ReadSequence() aus
 
    return(catch("FinishSequence(2)"));
@@ -725,7 +734,7 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Überprüft die offenen Positionen auf Änderungen und aktualisiert die aktuellen Kennziffern (P/L, Breakeven etc.)
+ * Überprüft die offenen Positionen auf Änderungen und berechnet den aktuellen P/L neu.
  *
  * @return bool - Erfolgsstatus
  */
@@ -810,11 +819,7 @@ bool UpdateCurrentProfitLoss() {
       all.profits     += levels.profit    [i];
    }
 
-
-   // (4) maximal erreichbare Profit-/Lossbeträge aktualisieren      !!! TODO: ist nur beim ersten Aufruf im jeweiligen Level notwendig
-   if (UpdateMaximumProfitLoss())
-      return(catch("UpdateCurrentProfitLoss(2)")==NO_ERROR);
-   return(false);
+   return(catch("UpdateCurrentProfitLoss(2)")==NO_ERROR);
 }
 
 
@@ -1149,10 +1154,20 @@ bool ReadSequence(int id = NULL) {
    }
 
 
-   // (7) Sequenz visualisieren
-   if (catch("ReadSequence(13)") == NO_ERROR)
-      return(VisualizeSequence()==NO_ERROR);
-   return(false);
+   // (7) wenn Konfiguration eingelesen wurde, maximal erreichbaren P/L der Level neuberechnen
+   int levels = ArraySize(levels.lots);
+   if (levels > 0) /*&&*/ if (EQ(levels.maxDrawdown[levels-1], 0)) {
+      if (!UpdateMaximumProfitLoss())
+         return(false);
+   }
+
+
+   // (8) Sequenz visualisieren
+   if (VisualizeSequence() != NO_ERROR)
+      return(false);
+
+
+   return(catch("ReadSequence(13)") == NO_ERROR);
 }
 
 
