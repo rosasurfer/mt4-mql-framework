@@ -7654,11 +7654,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")) +", retrying...");
+         Alert("OrderSendEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
       }
    }
 
-   catch("OrderSendEx(14)   permanent trade error after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
 }
 
@@ -7814,11 +7814,11 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")) +", retrying...");
+         Alert("OrderCloseEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
       }
    }
 
-   catch("OrderCloseEx(12)   permanent trade error after "+ (time2-firstTime1) +" ms"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderCloseEx(12)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(false);
 }
 
@@ -7948,7 +7948,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder ", strRemainder, " after ", time2-time1, " ms"));
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder ", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             PlaySound("OrderOk.wav");
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
@@ -7958,13 +7958,13 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseByEx()   temporary trade error "+ ErrorToStr(error) +" after "+ (time2-time1) +" ms, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+         Alert("OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
       }
       error = NO_ERROR;
       Sleep(300);                                                          // 0.3 Sekunden warten
    }
 
-   catch("OrderCloseByEx(12)   permanent trade error after "+ (time2-time1) +" ms", error);
+   catch("OrderCloseByEx(12)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error);
    return(false);
 }
 
