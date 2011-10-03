@@ -626,6 +626,8 @@ bool ReadSequence(int id) {
    ResetAll();
    sequenceId = id;
 
+   bool sequenceFinished = true;
+
 
    // (1) offene Positionen einlesen
    for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -659,6 +661,7 @@ bool ReadSequence(int id) {
 
          if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // effektive Lotsize berechnen
          else                       effectiveLots -= OrderLots();
+         sequenceFinished = false;
       }
    }
 
@@ -826,7 +829,7 @@ bool ReadSequence(int id) {
       }
 
 
-      // (4) Tickets auf Vollständigkeit überprüfen
+      // (4) Tickets auf Vollständigkeit prüfen
       retry = false;
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
@@ -845,13 +848,13 @@ bool ReadSequence(int id) {
    Entry.iDirection = levels.type[0];
 
 
-   // (5) laufende Sequenz mit Konfiguration abgleichen
+   // (5) Sequenz mit Konfiguration abgleichen
    if (sequenceLength != ArraySize(levels.lots))
       return(catch("ReadSequence(12)   illegal state of sequence "+ sequenceId +", sequenceLength "+ sequenceLength +" doesn't match the number of configured levels ("+ ArraySize(levels.lots) +")", ERR_RUNTIME_ERROR)==NO_ERROR);
 
    if (progressionLevel > 0) {
       int last = progressionLevel-1;
-      if (NE(MathAbs(effectiveLots), levels.lots[last]))
+      if (!sequenceFinished) /*&&*/ if (NE(MathAbs(effectiveLots), levels.lots[last]))
          return(catch("ReadSequence(13)   illegal state of sequence "+ sequenceId +", current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       if (Entry.type == ENTRYTYPE_LIMIT) {
          if (levels.type[0]==ENTRYDIRECTION_LONG ) /*&&*/ if (Entry.Direction!="long" ) return(catch("ReadSequence(14)   illegal state of sequence "+ sequenceId +", the "+ OperationTypeDescription(levels.type[0]) +" order at level 1 doesn't match the configured Entry.Direction = \""+ Entry.Direction +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);

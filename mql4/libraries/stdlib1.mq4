@@ -7948,7 +7948,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder ", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             PlaySound("OrderOk.wav");
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
