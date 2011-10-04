@@ -169,8 +169,8 @@ int init() {
    PipDigits   = Digits & (~1);
    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    int error = GetLastError();
    if (error!=NO_ERROR || TickSize < 0.000009) {
@@ -1149,14 +1149,45 @@ bool UpdateProfitLoss() {
 
 
 /**
- * Aktualisiert den Breakeven-Point (in Pip und als absoluter Kurswert). Diese Berechnung erfolgt nach Neueinlesen der Sequenz und
- * je einmal nach Wechsel auf den nächsten Level.
+ * Aktualisiert den Breakeven-Point (in Pip und als absoluten Kurswert). Die Berechnung benötigt einen korrekten P/L-Wert (erfordert
+ * vorheriges UpdateProfitLoss() und erfolgt je einmal nach Wechsel auf den nächsten Level oder nach Neueinlesen der Sequenz.
  *
  * @return bool - Erfolgsstatus
  */
 bool UpdateBreakeven() {
-   //debug("UpdateBreakeven()   all.swaps="+ DoubleToStr(all.swaps, 2) +"   all.commissions="+ DoubleToStr(all.commissions, 2) +"   all.profits="+ DoubleToStr(all.profits, 2));
+   double breakeven;
+
+   if (progressionLevel > 0) {
+      int last = progressionLevel-1;
+      double pipValue = GetPipValue();
+      if (EQ(pipValue, 0))
+         return(false);
+
+      double profitLoss     = all.swaps + all.commissions + all.profits;
+      double profitLossPips = profitLoss / pipValue;
+
+      //debug("UpdateBreakeven()   profitLoss="+ DoubleToStr(profitLoss, 2) +"   profitLossPips="+ NumberToStr(profitLossPips, ".1+"));
+   }
+
    return(catch("UpdateBreakeven()")==NO_ERROR);
+}
+
+
+/**
+ * Gibt den PipValue der angegebenen Lotsize im aktuellen Instrument zurück (mit Fehlerkontrolle).
+ *
+ * @param  double lots - Lotsize
+ *
+ * @return double - PipValue oder 0, wenn ein Fehler auftrat
+ */
+double GetPipValue(double lots = 1) {
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+
+   int error = GetLastError();
+   if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
+      return(catch("GetPipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
+
+   return(Pip / TickSize * tickValue * lots);
 }
 
 
