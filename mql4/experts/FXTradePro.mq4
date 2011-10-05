@@ -21,6 +21,7 @@
  *  -------------------------------------
  *  - Breakeven berechnen und anzeigen
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
+ *  - Sequenzlänge veränderbar machen (sequenceLength aus MagicNumber entfernen)
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -68,12 +69,12 @@
 #define ENTRYTYPE_ENVELOPES              3
 
 #define ENTRYDIRECTION_UNDEFINED        -1
-#define ENTRYDIRECTION_LONG        OP_LONG   // 0
-#define ENTRYDIRECTION_SHORT      OP_SHORT   // 1
+#define ENTRYDIRECTION_LONG        OP_LONG            // 0
+#define ENTRYDIRECTION_SHORT      OP_SHORT            // 1
 #define ENTRYDIRECTION_LONGSHORT         2
 
 
-int EA.uniqueId = 101;                                               // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
+int EA.uniqueId = 101;                                // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
