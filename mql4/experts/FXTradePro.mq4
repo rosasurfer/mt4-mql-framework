@@ -334,7 +334,6 @@ int start() {
    if (last_error != NO_ERROR) return(last_error);
    // --------------------------------------------
 
-
    if (status==STATUS_FINISHED || status==STATUS_DISABLED)
       return(last_error);
 
@@ -353,6 +352,7 @@ int start() {
    ShowStatus();
 
    firstTick = false;
+
    return(catch("start()"));
 }
 
@@ -627,7 +627,7 @@ bool ReadSequence(int id) {
    ResetAll();
    sequenceId = id;
 
-   bool sequenceFinished = true;
+   bool openPositions = false;
 
 
    // (1) offene Positionen einlesen
@@ -636,6 +636,7 @@ bool ReadSequence(int id) {
          continue;
 
       if (IsMyOrder(sequenceId)) {
+         openPositions = true;
          if (sequenceLength == 0) {
             sequenceLength = OrderMagicNumber() >> 4 & 0xF;          //  4 Bits (Bits 5-8 ) => sequenceLength
             ResizeArrays(sequenceLength);
@@ -662,7 +663,6 @@ bool ReadSequence(int id) {
 
          if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // effektive Lotsize berechnen
          else                       effectiveLots -= OrderLots();
-         sequenceFinished = false;
       }
    }
 
@@ -802,9 +802,8 @@ bool ReadSequence(int id) {
       }
 
 
-      // (3) insgesamt muß mindestens ein Ticket gefunden worden sein
+      // (3) falls kein Ticket existiert, anhand der Konfigurationsdatei prüfen, ob der EA im STATUS_WAITING läuft
       if (progressionLevel == 0) {
-         // überhaupt nichts gefunden; anhand der Konfigurationsdatei prüfen, ob das Script im STATUS_WAITING läuft
          if (IsFile(TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set")) {
             // Datei existiert und muß vorher validiert worden sein: Konfigurationsdaten wiederherstellen
             Entry.iDirection = orig.Entry.iDirection;
@@ -813,9 +812,10 @@ bool ReadSequence(int id) {
             sequenceLength   = ArraySize(levels.lots);
             ResizeArrays(sequenceLength);
 
-            if (UpdateMaxProfitLoss())                               // Profit/Loss und Breakeven sind 0, es gibt nichts zu visualisieren
-               return(catch("ReadSequence(9)")==NO_ERROR);
-            return(false);
+            if (!UpdateMaxProfitLoss()) return(false);               // Profit/Loss und Breakeven sind 0
+            if (!VisualizeSequence()  ) return(false);
+
+            return(catch("ReadSequence(9)")==NO_ERROR);
          }
 
          PlaySound("notify.wav");
@@ -855,7 +855,7 @@ bool ReadSequence(int id) {
 
    if (progressionLevel > 0) {
       int last = progressionLevel-1;
-      if (!sequenceFinished) /*&&*/ if (NE(MathAbs(effectiveLots), levels.lots[last]))
+      if (openPositions) /*&&*/ if (NE(MathAbs(effectiveLots), levels.lots[last]))
          return(catch("ReadSequence(13)   illegal state of sequence "+ sequenceId +", current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       if (Entry.type == ENTRYTYPE_LIMIT) {
          if (levels.type[0]==ENTRYDIRECTION_LONG ) /*&&*/ if (Entry.Direction!="long" ) return(catch("ReadSequence(14)   illegal state of sequence "+ sequenceId +", the "+ OperationTypeDescription(levels.type[0]) +" order at level 1 doesn't match the configured Entry.Direction = \""+ Entry.Direction +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
@@ -864,15 +864,13 @@ bool ReadSequence(int id) {
    }
 
 
-   // (6) P/L und Breakeven-Werte neuberechnen
-   if (UpdateProfitLoss()   ) /*&&*/
-   if (UpdateBreakeven()    ) /*&&*/
-   if (UpdateMaxProfitLoss()) /*&&*/
-   if (VisualizeSequence()  )                                        // abschließend die Sequenz visualisieren
-      return(catch("ReadSequence(16)")==NO_ERROR);
+   // (6) P/L und Breakeven neuberechnen und alles visualisieren
+   if (!UpdateProfitLoss()   ) return(false);
+   if (!UpdateBreakeven()    ) return(false);
+   if (!UpdateMaxProfitLoss()) return(false);
+   if (!VisualizeSequence()  ) return(false);
 
-   catch("ReadSequence(17)");
-   return(false);
+   return(catch("ReadSequence(16)")==NO_ERROR);
 }
 
 
@@ -882,7 +880,7 @@ bool ReadSequence(int id) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence() {
-   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
@@ -890,12 +888,12 @@ bool StartSequence() {
          catch("StartSequence(1)");
          return(false);
       }
-      SaveConfiguration();                                                 // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
+      SaveConfiguration();                                           // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
    }
 
    progressionLevel = 1;
 
-   int ticket = OpenPosition(Entry.iDirection, levels.lots[0]);            // Position in Entry.Direction öffnen
+   int ticket = OpenPosition(Entry.iDirection, levels.lots[0]);      // Position in Entry.Direction öffnen
    if (ticket == -1) {
       progressionLevel--;
       return(catch("StartSequence(2)")==NO_ERROR);
@@ -918,12 +916,10 @@ bool StartSequence() {
 
    status = STATUS_PROGRESSING;
 
-   // P/L und Breakeven-Werte neuberechnen
-   if (UpdateProfitLoss()   ) /*&&*/
-   if (UpdateBreakeven()    ) /*&&*/
-   if (UpdateMaxProfitLoss())
-      return(catch("StartSequence(3)")==NO_ERROR);
-   return(false);
+   // Sequenz neu einlesen
+   if (!ReadSequence(sequenceId))
+      return(false);
+   return(catch("StartSequence(3)")==NO_ERROR);
 }
 
 
@@ -972,12 +968,10 @@ bool IncreaseProgression() {
    if (OrderType() == OP_BUY) effectiveLots += OrderLots();
    else                       effectiveLots -= OrderLots();
 
-   // P/L und Breakeven-Werte neuberechnen
-   if (UpdateProfitLoss()   ) /*&&*/
-   if (UpdateBreakeven()    ) /*&&*/
-   if (UpdateMaxProfitLoss())
-      return(catch("IncreaseProgression(3)")==NO_ERROR);
-   return(false);
+   // Sequenz neu einlesen
+   if (!ReadSequence(sequenceId))
+      return(false);
+   return(catch("IncreaseProgression(3)")==NO_ERROR);
 }
 
 
@@ -1014,15 +1008,10 @@ bool FinishSequence() {
 
    status = STATUS_FINISHED;
 
-   // alle Positionen geschlossen, Sequenz komplett neu einlesen
-   ReadSequence(sequenceId);
-
-   // P/L und Breakeven-Werte aktualisieren
-   if (UpdateProfitLoss()   ) /*&&*/
-   if (UpdateBreakeven()    ) /*&&*/
-   if (UpdateMaxProfitLoss())
-      return(catch("FinishSequence(3)")==NO_ERROR);
-   return(false);
+   // Sequenz neu einlesen
+   if (!ReadSequence(sequenceId))
+      return(false);
+   return(catch("FinishSequence(3)")==NO_ERROR);
 }
 
 
@@ -1047,9 +1036,8 @@ int OpenPosition(int type, double lotsize) {
    int    magicNumber = CreateMagicNumber();
    string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
    double slippage    = 0.5;
-   color  markerColor = ifInt(type==OP_BUY, Blue, Red);
 
-   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, markerColor);
+   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, CLR_NONE);
    if (ticket == -1)
       SetLastError(stdlib_PeekLastError());
 
