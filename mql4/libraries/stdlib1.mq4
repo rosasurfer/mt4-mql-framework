@@ -38,8 +38,8 @@ void stdlib_init(string scriptName) {
 
 
 /**
- * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Libraray-Funktionen zu erkennen, ob der Aufruf während desselben
- * oder eines neuen Ticks erfolgt (z.B. in EventListenern). Damit kann in der Library IndicatorCounted() emuliert werden.
+ * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Library-Funktionen zu erkennen, ob der Aufruf während desselben
+ * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
  *
  * @param  int unchangedBars - Anzahl der seit dem letzten Tick unveränderten Bars
  */
@@ -7924,7 +7924,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
          log("OrderCloseByEx()   trade context busy, retrying...");
       }
       else {
-         log(StringConcatenate("OrderCloseByEx()   closing #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, " (", NumberToStr(hedgeLots, ".+"), ")..."));
+         log(StringConcatenate("OrderCloseByEx()   closing #", first, " (", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, ") by #", hedge, " (", OperationTypeDescription(hedgeType), " ", NumberToStr(hedgeLots, ".+"), " ", symbol, ")"));
          int time2, time1=GetTickCount();
 
          if (OrderCloseBy(smaller, larger, markerColor)) {
@@ -7945,10 +7945,10 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   }
                }
                if (ArraySize(remainder) == 0)
-                  return(catch("OrderCloseByEx(10)   remainding position of ticket #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) and hedging ticket #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
+                  return(catch("OrderCloseByEx(10)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " ", OperationTypeDescription(firstType), " ", NumberToStr(firstLots, ".+"), " ", symbol, " by hedge #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
+            log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             PlaySound("OrderOk.wav");
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
@@ -8108,7 +8108,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    else {                                                            // Gesamtposition hedgen
       int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
 
-      log(StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for multiple positions in ", OrderSymbol()));
+      string message = StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for ", sizeOfTickets, " ", OrderSymbol(), " position");
+      if (sizeOfTickets > 1)
+         message = StringConcatenate(message, "s");
+      log(message);
 
       int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
       if (hedge == -1)
@@ -8138,7 +8141,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       return(false);                                                 // catch("OrderMultiClose.Hedges(1)", error)
 
    int sizeOfTickets = ArraySize(ticketsCopy);
-   log(StringConcatenate("OrderMultiClose.Hedges()   closing multiple hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
+
+   log(StringConcatenate("OrderMultiClose.Hedges()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
 
 
    // alle Teilpositionen nacheinander auflösen
