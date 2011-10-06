@@ -30,7 +30,7 @@
  *  - bei STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
- *  - OrderCloseMultiple.HedgeSymbol() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
+ *  - OrderMultiClose.Flatten() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
  *  - Visualisierung der gesamten Sequenz
  *  - Visualisierung des Entry.Limits implementieren
  *
@@ -996,7 +996,7 @@ bool FinishSequence() {
    }
 
    // Tickets schließen
-   if (!OrderCloseMultiple(tickets, 0.5, CLR_NONE)) {
+   if (!OrderMultiClose(tickets, 0.5, CLR_NONE)) {
       SetLastError(stdlib_PeekLastError());
       catch("FinishSequence(2)");
       return(false);

@@ -7979,21 +7979,21 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
-bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
+bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0) return(catch("OrderCloseMultiple(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (sizeOfTickets == 0) return(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i])) return(false); // catch("OrderCloseMultiple(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)
-      if (OrderCloseTime() != 0)            return(catch("OrderCloseMultiple(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-      if (OrderType() > OP_SELL)            return(catch("OrderCloseMultiple(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+      if (!OrderSelectByTicket(tickets[i])) return(false); // catch("OrderMultiClose(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)
+      if (OrderCloseTime() != 0)            return(catch("OrderMultiClose(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderType() > OP_SELL)            return(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
    // slippage
-   if (LT(slippage, 0))                                         return(catch("OrderCloseMultiple(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0))                                         return(catch("OrderMultiClose(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderCloseMultiple(6)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderMultiClose(6)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 
@@ -8013,7 +8013,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
 
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(ticketsCopy[i]))
-         return(false);                                              // catch("OrderCloseMultiple(7)", error)
+         return(false);                                              // catch("OrderMultiClose(7)", error)
       int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
       if (symbolIndex == -1)
          symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
@@ -8040,10 +8040,11 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
                return(false);
          }
          else {
-            // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, muß zunächst
-            // per Hedge die Gesamtposition ausgeglichen und die Teilpositionen erst zum Schluß geschlossen werden.
+            // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, wird zuerst nur die Gesamtposition
+            // je Symbol ausgeglichen (schnellstmögliche Variante: eine Close-Order je Symbol). Die einzelnen Teilpositionen werden erst nach Ausgleich
+            // der Gesamtpositionen aller Symbole geschlossen (dies dauert ggf. etliche Sekunden).
             int hedge;
-            if (!OrderCloseMultiple.HedgeSymbol(perSymbolTickets, hedge, slippage))
+            if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage))
                return(false);
             if (hedge != 0) {
                sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
@@ -8062,22 +8063,22 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
             if (ticketSymbols[n] == symbolIndex)
                ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
-         if (!OrderCloseMultiple.CloseHedge(perSymbolTickets, markerColor))
+         if (!OrderMultiClose.Hedges(perSymbolTickets, markerColor))
             return(false);
       }
-      return(catch("OrderCloseMultiple(8)")==NO_ERROR);
+      return(catch("OrderMultiClose(8)")==NO_ERROR);
    }
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehören
-   if (!OrderCloseMultiple.HedgeSymbol(ticketsCopy, hedge, slippage))      // Gesamtposition ggf. hedgen...
+   if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage))          // Gesamtposition ggf. hedgen...
       return(false);
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
-   if (!OrderCloseMultiple.CloseHedge(ticketsCopy, markerColor))           // ...und Gesamtposition auflösen
+   if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
       return(false);
 
-   return(catch("OrderCloseMultiple(9)")==NO_ERROR);
+   return(catch("OrderMultiClose(9)")==NO_ERROR);
 }
 
 
@@ -8090,13 +8091,13 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool OrderCloseMultiple.HedgeSymbol(int tickets[], int& hedgeTicket, double slippage=0) {
+/*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage=0) {
    int    sizeOfTickets = ArraySize(tickets);
    double totalLots;
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(false);                                              // catch("OrderCloseMultiple.HedgeSymbol(1)", error)
+         return(false);                                              // catch("OrderMultiClose.Flatten(1)", error)
       if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
       else                       totalLots -= OrderLots();
    }
@@ -8107,7 +8108,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
    else {                                                            // Gesamtposition hedgen
       int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
 
-      log(StringConcatenate("OrderCloseMultiple.HedgeSymbol()   opening ", OperationTypeDescription(type), " hedge for multiple positions in ", OrderSymbol()));
+      log(StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for multiple positions in ", OrderSymbol()));
 
       int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
       if (hedge == -1)
@@ -8116,7 +8117,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
       hedgeTicket = hedge;
    }
 
-   return(catch("OrderCloseMultiple.HedgeSymbol(2)")==NO_ERROR);
+   return(catch("OrderMultiClose.Flatten(2)")==NO_ERROR);
 }
 
 
@@ -8128,16 +8129,16 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool OrderCloseMultiple.CloseHedge(int tickets[], color markerColor=CLR_NONE) {
+/*private*/ bool OrderMultiClose.Hedges(int tickets[], color markerColor=CLR_NONE) {
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    ArrayCopy(ticketsCopy, tickets);
 
    if (!OrderSelectByTicket(ticketsCopy[0]))                         // OrderSymbol() für Logmessage auslesen
-      return(false);                                                 // catch("OrderCloseMultiple.CloseHedge(1)", error)
+      return(false);                                                 // catch("OrderMultiClose.Hedges(1)", error)
 
    int sizeOfTickets = ArraySize(ticketsCopy);
-   log(StringConcatenate("OrderCloseMultiple.CloseHedge()   closing multiple hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
+   log(StringConcatenate("OrderMultiClose.Hedges()   closing multiple hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
 
 
    // alle Teilpositionen nacheinander auflösen
@@ -8146,18 +8147,18 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
 
       int hedge, first=ticketsCopy[0];
       if (!OrderSelectByTicket(first))
-         return(false);                                              // catch("OrderCloseMultiple.CloseHedge(2)", error)
+         return(false);                                              // catch("OrderMultiClose.Hedges(2)", error)
       int firstType = OrderType();
 
       for (int i=1; i < sizeOfTickets; i++) {
          if (!OrderSelectByTicket(ticketsCopy[i]))
-            return(false);                                           // catch("OrderCloseMultiple.CloseHedge(3)", error)
+            return(false);                                           // catch("OrderMultiClose.Hedges(3)", error)
          if (OrderType() == firstType ^ 1) {
             hedge = ticketsCopy[i];                                  // hedgende Position ermitteln
             break;
          }
       }
-      if (hedge == 0) return(catch("OrderCloseMultiple.CloseHedge(4)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (hedge == 0) return(catch("OrderMultiClose.Hedges(4)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
 
       int remainder[];
       if (!OrderCloseByEx(first, hedge, remainder, markerColor))     // erste und hedgende Position schließen
@@ -8175,7 +8176,7 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
          sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
    }
 
-   return(catch("OrderCloseMultiple.CloseHedge(5)")==NO_ERROR);
+   return(catch("OrderMultiClose.Hedges(5)")==NO_ERROR);
 }
 
 

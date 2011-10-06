@@ -154,7 +154,7 @@ int start() {
       PlaySound("notify.wav");
       int button = MessageBox("Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__ +" - start()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
-         if (!OrderCloseMultiple(tickets, 0.1, Orange))
+         if (!OrderMultiClose(tickets, 0.1, Orange))
             return(SetLastError(stdlib_PeekLastError()));
       }
    }
