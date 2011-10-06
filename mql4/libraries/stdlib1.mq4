@@ -8070,11 +8070,11 @@ bool OrderCloseMultiple(int tickets[], double slippage=0, color markerColor=CLR_
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehören
-   if (!OrderCloseMultiple.HedgeSymbol(ticketsCopy, hedge, slippage))      // ggf. hedgen ...
+   if (!OrderCloseMultiple.HedgeSymbol(ticketsCopy, hedge, slippage))      // Gesamtposition ggf. hedgen...
       return(false);
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
-   if (!OrderCloseMultiple.CloseHedge(ticketsCopy, markerColor))           // ... und auflösen
+   if (!OrderCloseMultiple.CloseHedge(ticketsCopy, markerColor))           // ...und Gesamtposition auflösen
       return(false);
 
    return(catch("OrderCloseMultiple(9)")==NO_ERROR);

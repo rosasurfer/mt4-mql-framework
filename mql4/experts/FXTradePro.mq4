@@ -417,16 +417,12 @@ int CreateMagicNumber() {
 
 
 /**
- * Signalgeber für eine neue StartSequence(). Wurde ein Limit von 0.0 angegeben, gibt die Funktion TRUE zurück und die neue Sequenz
- * wird mit dem ersten Tick gestartet.
+ * Signalgeber für StartSequence(). Wurde ein Limit von 0 angegeben, gibt die Funktion TRUE zurück und die neue Sequenz wird mit dem
+ * nächsten Tick gestartet.
  *
- * @return bool - Ob die konfigurierte Entry.Condition erfüllt ist.
+ * @return bool - ob die konfigurierte Entry.Condition erfüllt ist
  */
 bool IsEntrySignal() {
-   if (Entry.type == ENTRYTYPE_UNDEFINED) {
-      status = STATUS_DISABLED;
-      return(catch("IsEntrySignal(1)   illegal Entry.type = "+ EntryTypeToStr(Entry.type), ERR_RUNTIME_ERROR)==NO_ERROR);
-   }
    double event[3];
    int    crossing;
 
@@ -516,7 +512,7 @@ bool IsEntrySignal() {
 
       // ---------------------------------------------------------------------------------------------------------------------------------
       default:
-         return(catch("IsEntrySignal(2)   invalid Entry.type = "+ Entry.type, ERR_RUNTIME_ERROR)==NO_ERROR);
+         return(catch("IsEntrySignal()   illegal Entry.type = "+ Entry.type, ERR_RUNTIME_ERROR)==NO_ERROR);
    }
    return(false);
 }
