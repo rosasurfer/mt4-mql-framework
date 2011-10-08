@@ -180,13 +180,16 @@ int init() {
       return(error);
    }
 
-
-   // (1) Zuerst sequenceId, dann Konfiguration, dann Sequenz restaurieren: wir unterscheiden 4 grundsätzliche init()-Szenarien
-   //
-   // (1.1) Neustart des EA   (keine internen Daten, externe Referenz evt. vorhanden)
-   // (1.2) Recompilation     (keine internen Daten, externe Referenz immer vorhanden)
-   // (1.3) Parameteränderung (alle internen Daten vorhanden, externe Referenz unnötig)
-   // (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Referenz unnötig)
+   /**
+    * (1) Zuerst wird die Sequenz-ID bestimmt, dann deren Konfiguration geladen und zum Schluß die Sequenz restauriert.
+    *
+    *  Es gibt 4 grundsätzliche init()-Szenarien:
+    *
+    * (1.1) Neustart des EA   (keine internen Daten, externe Sequenz-ID evt. vorhanden)
+    * (1.2) Recompilation     (keine internen Daten, externe Sequenz-ID immer vorhanden)
+    * (1.3) Parameteränderung (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+    * (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+    */
 
    // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1 oder 1.2
    if (sequenceId == 0) {
@@ -241,7 +244,7 @@ int init() {
       }
    }
 
-   // (1.4) Timeframe- oder Symbolwechsel ---------------------------------------------------------------------------------------------------------------------
+   // (1.4) Timeframewechsel ----------------------------------------------------------------------------------------------------------------------------------
    else if (UninitializeReason() == REASON_CHARTCHANGE) {
       Entry.Condition = intern.Entry.Condition;                      // Alle internen Daten sind vorhanden, es werden nur die nicht-statischen
       Entry.Direction = intern.Entry.Direction;                      // Inputvariablen restauriert.
@@ -262,12 +265,9 @@ int init() {
 
 
    // (6) aktuellen Status bestimmen
-   if (init_error != NO_ERROR)     status = STATUS_DISABLED;
-   if (status != STATUS_DISABLED) {
-      if (progressionLevel > 0) {
-         if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
-         else                      status = STATUS_FINISHED;
-      }
+   if (progressionLevel > 0) {
+      if (NE(effectiveLots, 0)) status = STATUS_PROGRESSING;
+      else                      status = STATUS_FINISHED;
    }
 
 
@@ -429,15 +429,15 @@ bool IsEntrySignal() {
 
    switch (Entry.type) {
       // ---------------------------------------------------------------------------------------------------------------------------------
+      // Das Limit ist erreicht, wenn der Bid-Preis es seit dem letzten Tick berührt oder gekreuzt hat.
       case ENTRYTYPE_LIMIT:
-         if (EQ(Entry.limit, 0))                                        // kein Limit definiert
+         if (EQ(Entry.limit, 0))                                        // kein Limit definiert => immer TRUE
             return(true);
 
-         // Das Limit ist erreicht, wenn der Bid-Preis es seit dem letzten Tick berührt oder gekreuzt hat.
          if (EQ(Bid, Entry.limit) || EQ(Entry.lastBid, Entry.limit)) {  // Bid liegt oder lag beim letzten Tick exakt auf dem Limit
             //debug(StringConcatenate("IsEntrySignal()   Bid=", NumberToStr(Bid, PriceFormat), " liegt genau auf dem Entry.limit=", NumberToStr(Entry.limit, PriceFormat)));
             Entry.lastBid = Entry.limit;                                // Tritt während der weiteren Verarbeitung des Ticks ein behandelbarer Fehler auf, wird durch
-            return(true);                                               // Entry.LastPrice = Entry.Limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
+            return(true);                                               // Entry.lastPrice = Entry.limit das Limit, einmal getriggert, nachfolgend immer wieder getriggert.
          }
 
          static bool lastBid.init = false;
@@ -448,13 +448,11 @@ bool IsEntrySignal() {
          else {
             if (LT(Entry.lastBid, Entry.limit)) {
                if (GT(Bid, Entry.limit)) {                              // Bid hat Limit von unten nach oben gekreuzt
-                  //debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von unten (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach oben (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                   Entry.lastBid = Entry.limit;
                   return(true);
                }
             }
             else if (LT(Bid, Entry.limit)) {                            // Bid hat Limit von oben nach unten gekreuzt
-               //debug(StringConcatenate("IsEntrySignal()   Tick hat Entry.limit=", NumberToStr(Entry.limit, PriceFormat), " von oben (lastBid=", NumberToStr(Entry.lastBid, PriceFormat), ") nach unten (Bid=", NumberToStr(Bid, PriceFormat), ") gekreuzt"));
                Entry.lastBid = Entry.limit;
                return(true);
             }
@@ -472,13 +470,12 @@ bool IsEntrySignal() {
             crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
-            //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " bands crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
             return(true);
          }
          else {
             crossing = event[CROSSING_TYPE] +0.1;                       // (int) double
             if (crossing == CROSSING_UNKNOWN) {
-               Entry.limit      = 0.0;
+               Entry.limit      = 0;
                Entry.iDirection = ENTRYDIRECTION_UNDEFINED;
             }
             else {
@@ -494,13 +491,12 @@ bool IsEntrySignal() {
             crossing         = event[CROSSING_TYPE] +0.1;               // (int) double
             Entry.limit      = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
             Entry.iDirection = ifInt(crossing==CROSSING_LOW, OP_SELL, OP_BUY);
-            //debug(StringConcatenate("IsEntrySignal()   new ", ifString(crossing==CROSSING_LOW, "low", "high"), " envelopes crossing at ", TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ifString(crossing==CROSSING_LOW, "  <= ", "  => "), NumberToStr(Entry.limit, PriceFormat)));
             return(true);
          }
          else {
             crossing = event[CROSSING_TYPE] +0.1;                       // (int) double
             if (crossing == CROSSING_UNKNOWN) {
-               Entry.limit      = 0.0;
+               Entry.limit      = 0;
                Entry.iDirection = ENTRYDIRECTION_UNDEFINED;
             }
             else {
@@ -616,17 +612,13 @@ bool ReadSequence(int id) {
    if (id < 1000)
       return(catch("ReadSequence(1)   illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
 
-   int    orig.Entry.iDirection = Entry.iDirection;
-   double orig.Entry.lastBid    = Entry.lastBid;
-   int    orig.status           = status;
-
    ResetAll();
    sequenceId = id;
 
-   bool openPositions = false;
-
 
    // (1) offene Positionen einlesen
+   bool openPositions = false;
+
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
          continue;
@@ -801,14 +793,11 @@ bool ReadSequence(int id) {
       // (3) falls kein Ticket existiert, anhand der Konfigurationsdatei prüfen, ob der EA im STATUS_WAITING läuft
       if (progressionLevel == 0) {
          if (IsFile(TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set")) {
-            // Datei existiert und muß vorher validiert worden sein: Konfigurationsdaten wiederherstellen
-            Entry.iDirection = orig.Entry.iDirection;
-            Entry.lastBid    = orig.Entry.lastBid;
-            status           = orig.status;
-            sequenceLength   = ArraySize(levels.lots);
+            // Datei existiert und muß vorher erfolgreich validiert worden sein: Konfigurationsdaten wiederherstellen
+            sequenceLength = ArraySize(levels.lots);
             ResizeArrays(sequenceLength);
 
-            if (!UpdateMaxProfitLoss()) return(false);               // Profit/Loss und Breakeven sind 0
+            if (!UpdateMaxProfitLoss()) return(false);               // Profit/Loss und Breakeven sind 0 und brauchen nicht berechnet werden
             if (!VisualizeSequence()  ) return(false);
 
             return(catch("ReadSequence(9)")==NO_ERROR);
@@ -842,7 +831,6 @@ bool ReadSequence(int id) {
          }
       }
    }
-   Entry.iDirection = levels.type[0];
 
 
    // (5) Sequenz mit Konfiguration abgleichen
@@ -1215,9 +1203,6 @@ bool UpdateMaxProfitLoss() {
  * @return int - Fehlerstatus
  */
 int ResetAll() {
-   Entry.iDirection = ENTRYDIRECTION_UNDEFINED;
-   Entry.lastBid    = 0;
-
    sequenceId       = 0;
    sequenceLength   = 0;
    progressionLevel = 0;
@@ -1226,8 +1211,6 @@ int ResetAll() {
    all.swaps        = 0;
    all.commissions  = 0;
    all.profits      = 0;
-
-   status = STATUS_UNDEFINED;
 
    if (ArraySize(levels.ticket) > 0)
       ResizeArrays(0);
@@ -1601,7 +1584,7 @@ bool ValidateConfiguration() {
 
    // Sequence.ID: wurde schon in ValidateExplicitSequenceId() validiert
 
-   // Konfiguration mit aktuellen Daten einer laufenden Sequenz vergleichen (greift nur UninitializeReason() == REASON_PARAMETERS)
+   // Nach Parameteränderung die neue Konfiguration mit der aktuellen Sequenz vergleichen
    // TODO: nicht nur den letzten Level abgleichen, sondern sicherstellen, daß nur zukünftige Level geändert wurden
    if (progressionLevel > 0) {
       if (NE(effectiveLots, 0)) {
