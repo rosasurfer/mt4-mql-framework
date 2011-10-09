@@ -31,7 +31,6 @@
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderMultiClose.Flatten() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
- *  - Visualisierung der gesamten Sequenz
  *  - Visualisierung des Entry.Limits implementieren
  *
  *
@@ -43,7 +42,6 @@
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
  *  - UpdateProfitLoss(): Commission-Berechnung an OrderCloseBy() anpassen
- *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
