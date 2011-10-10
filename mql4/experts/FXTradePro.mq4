@@ -31,22 +31,20 @@
  *  - Heartbeat-Order einrichten
  *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderMultiClose.Flatten() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
- *  - Visualisierung der gesamten Sequenz
  *  - Visualisierung des Entry.Limits implementieren
+ *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
+ *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
+ *  - mehrere EA's schalten sich gegenseitig ab, wenn sie ohne Lock SwitchExperts(true) aufrufen
  *
  *
  *  TODO:
  *  -----
- *  - mehrere EA's schalten sich gegenseitig ab, wenn sie ohne Lock SwitchExperts(true) aufrufen
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
  *  - die Konfiguration einer gefundenen Sequenz muß automatisch in den Input-Dialog geladen werden
  *  - UpdateProfitLoss(): Commission-Berechnung an OrderCloseBy() anpassen
- *  - bei fehlender Konfiguration müssen die Daten aus der laufenden Instanz weitmöglichst ausgelesen werden
  *  - Symbolwechsel (REASON_CHARTCHANGE) und Accountwechsel (REASON_ACCOUNT) abfangen
- *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
- *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
  *  - Spreadänderungen bei Limit-Checks berücksichtigen
  *  - StopLoss -> Breakeven und TakeProfit -> Breakeven implementieren
  *  - SMS-Benachrichtigungen implementieren
@@ -171,7 +169,7 @@ int init() {
    Pip         = 1/MathPow(10, PipDigits);
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
-   
+
    int error = GetLastError();
    if (error!=NO_ERROR || TickSize < 0.000009) {
       error = catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
@@ -218,7 +216,6 @@ int init() {
             ResizeArrays(sequenceLength);
             UpdateMaxProfitLoss();
             VisualizeSequence();
-            status = STATUS_WAITING;
          }
       }
 
