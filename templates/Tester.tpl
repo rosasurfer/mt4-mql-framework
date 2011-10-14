@@ -8757,20 +8757,5 @@ weight_0=0
 period_flags=0
 show_data=0
 </indicator>
-<indicator>
-name=Custom Indicator
-<expert>
-name=ChartInfos
-flags=347
-window_num=0
-</expert>
-shift_0=0
-draw_0=0
-color_0=0
-style_0=0
-weight_0=0
-period_flags=0
-show_data=0
-</indicator>
 </window>
 </chart>
