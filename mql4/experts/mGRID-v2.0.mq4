@@ -1,5 +1,5 @@
 
-// Post 20: http://www.forexfactory.com/showthread.php?p=2245310#post2245310
+// Post 1: http://www.forexfactory.com/showthread.php?p=2245310#post2245310
 
 //---- input parameters ---------------------------------------------+
 
@@ -127,7 +127,7 @@ int start()
    }
 //+------------------------------------------------------------------+
 
-    Comment("mGRID EXPERT ADVISOR v2.1\n",
+    Comment("mGRID EXPERT ADVISOR v2.0\n",
             "FX Acc Server:",AccountServer(),"\n",
             "Date: ",Month(),"-",Day(),"-",Year()," Server Time: ",Hour(),":",Minute(),":",Seconds(),"\n",
             "Minimum Lot Sizing: ",MarketInfo(Symbol(),MODE_MINLOT),"\n",
