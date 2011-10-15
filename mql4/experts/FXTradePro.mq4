@@ -1,5 +1,5 @@
 /**
- * FXTradePro Semi-Martingale EA
+ * FXTradePro Martingale EA
  *
  * @see FXTradePro Strategy:     http://www.forexfactory.com/showthread.php?t=43221
  *      FXTradePro Journal:      http://www.forexfactory.com/showthread.php?t=82544
@@ -20,6 +20,7 @@
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - Breakeven berechnen und anzeigen
+ *  - Gewinnverteilung der Sequenzen ausbalancieren
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - Sequenzlänge veränderbar machen (sequenceLength aus MagicNumber entfernen)
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
@@ -39,6 +40,7 @@
  *
  *  TODO:
  *  -----
+ *  - Sequenzlänge konfigurierbar gestalten
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können

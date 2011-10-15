@@ -1,9 +1,20 @@
+/**
+ * mGRID v7.0
+ *
+ *  <Jwentro>
+ *  1. Maybe instead of having a fixed dollar amount of what we are willing to lose before the EA closes all trades we could have an option for
+ *     a fixed percentage of your account you're willing to lose (15-20%).
+ *  2. Maybe a mode to close all trades if your equity is a certain amount over your account balance. This setting could be useful if you were
+ *     running the EA across multiple pairs and one pair was killing your account while another was saving it.
+ *  3. Been playing around with the idea of putting 2 or 3 as the increment and 30-50 levels. That way we can capture relatively simple up and
+ *     down price movements or "ride the waves".
+ *
+ *  <ForexFlash>
+ *  Jwentro, here is your request. Loss is now based on margin %.  This EA is totaly recoded, the logic is different and more efficient.
+ *
+ * @see http://www.forexfactory.com/showthread.php?p=2280173#post2280173
+ */
 
-// Post 151: http://www.forexfactory.com/showthread.php?p=2280173#post2280173
-
-//+------------------------------------------------------------------+
-#property copyright ""
-#property link      ""
 
 //---- EA input parameters
 extern double lots             = 0.03;   // Starting levels pips
