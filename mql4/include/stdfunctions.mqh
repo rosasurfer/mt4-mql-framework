@@ -502,13 +502,7 @@ int catch(string message="", int error=NO_ERROR) {
    return(error);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL);
-   debug(NULL);
-   SetLastError(NULL);
-   PeekLastError();
-   HandleEvent(NULL);
-   HandleEvents(NULL);
-   OrderSelectByTicket(NULL);
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -525,6 +519,9 @@ int SetLastError(int error) {
       else      last_error = error;
    }
    return(error);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -537,6 +534,9 @@ int PeekLastError() {
    if (init)
       return(init_error);
    return(last_error);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -565,6 +565,9 @@ int log(string message="", int error=NO_ERROR) {
 
    Print(message);
    return(error);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -601,6 +604,10 @@ void debug(string message, int error=NO_ERROR) {
          message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
       OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __SCRIPT__, "::", message));
    }
+   return;
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -630,6 +637,9 @@ bool HandleEvents(int events) {
    if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE );
 
    return(status!=0 && catch("HandleEvents()")==NO_ERROR);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -666,6 +676,9 @@ int HandleEvent(int event, int flags=0) {
    }
 
    return(status && catch("HandleEvent(2)")==NO_ERROR);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -689,4 +702,7 @@ bool OrderSelectByTicket(int ticket) {
       error = ERR_INVALID_TICKET;
    catch("OrderSelectByTicket()", error);
    return(false);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
