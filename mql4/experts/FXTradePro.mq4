@@ -173,7 +173,7 @@ int init() {
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    int error = GetLastError();
-   if (error!=NO_ERROR || TickSize < 0.000009) {
+   if (error!=NO_ERROR || TickSize < 0.00000001) {
       error = catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
       ShowStatus();
       return(error);
