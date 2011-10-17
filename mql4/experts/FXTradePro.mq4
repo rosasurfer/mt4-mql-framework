@@ -20,7 +20,6 @@
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
  *  - Breakeven berechnen und anzeigen
- *  - Gewinnverteilung der Sequenzen ausbalancieren
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - Sequenzlänge veränderbar machen (sequenceLength aus MagicNumber entfernen)
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
@@ -138,9 +137,9 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 
-int      levels.ticket    [];                         // Ticket des Levels
+int      levels.ticket    [];                         // Ticket
 int      levels.type      [];                         // Trade-Direction
-double   levels.lots      [], effectiveLots;          // konfigurierte Lotsize der einzelnen Level und aktuelle effektive Gesamtlotsize
+double   levels.lots      [], effectiveLots;          // konfigurierte Lotsize und aktuelle effektive Gesamtlotsize
 double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive evt. Hedges)
 double   levels.openPrice [], last.closePrice;
 datetime levels.openTime  [];
@@ -150,11 +149,11 @@ double   levels.swap      [], levels.openSwap      [], levels.closedSwap      []
 double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [], all.profits;
 
-double   levels.maxProfit  [];                        // maximal möglicher P/L der Level, wird nur in ShowStatus() verwendet
-double   levels.maxDrawdown[];
-double   levels.breakeven  [];
+double   levels.maxProfit  [];                        // maximal möglicher P/L
+double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
+double   levels.breakeven  [];                        // Breakeven in ???
 
-bool     levels.lots.changed = true;
+string   str.levels.lots;                             // (string) levels.lots (für ShowStatus())
 
 
 /**
@@ -188,6 +187,8 @@ int init() {
     * (1.2) Recompilation     (keine internen Daten, externe Sequenz-ID immer vorhanden)
     * (1.3) Parameteränderung (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
     * (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+    *
+    *  TODO: Start im Tester
     */
 
    // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1 oder 1.2
@@ -330,7 +331,14 @@ int start() {
       return(last_error);
 
 
-   if (UpdateProfitLoss()) {
+   // Sequenzdaten prüfen und aktualisieren
+   bool success;
+   if (!CheckOpenPositions()) success = ReadSequence();              // offene Positionen haben sich geändert => Sequenz neu einlesen
+   else                       success = UpdateProfitLoss();          // nur P/L aktualisieren (für Breakeven-Handler)
+
+
+   // Handelslogik ausführen
+   if (success) {
       if (progressionLevel == 0) {
          if (IsEntrySignal())                   StartSequence();     // kein Limit definiert oder Limit erreicht
       }
@@ -340,10 +348,12 @@ int start() {
       }
       else if (IsProfitTargetReached())         FinishSequence();
    }
+
+
+   // Status anzeigen
    ShowStatus();
 
    firstTick = false;
-
    return(catch("start()"));
 }
 
@@ -832,7 +842,7 @@ bool ReadSequence() {
    status = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
 
 
-   // (8) P/L und Breakeven neuberechnen und alles visualisieren
+   // (8) P/L und Breakeven neuberechnen und Sequenz visualisieren
    if (!UpdateProfitLoss()   ) return(false);
    if (!UpdateBreakeven()    ) return(false);
    if (!UpdateMaxProfitLoss()) return(false);
@@ -885,6 +895,7 @@ bool StartSequence() {
    // Sequenz neu einlesen
    if (!ReadSequence())
       return(false);
+
    return(catch("StartSequence(3)")==NO_ERROR);
 }
 
@@ -937,6 +948,7 @@ bool IncreaseProgression() {
    // Sequenz neu einlesen
    if (!ReadSequence())
       return(false);
+
    return(catch("IncreaseProgression(3)")==NO_ERROR);
 }
 
@@ -975,6 +987,7 @@ bool FinishSequence() {
    // Sequenz neu einlesen
    if (!ReadSequence())
       return(false);
+
    return(catch("FinishSequence(3)")==NO_ERROR);
 }
 
@@ -1012,41 +1025,45 @@ int OpenPosition(int type, double lotsize) {
 
 
 /**
- * Überprüft die offenen Positionen auf Änderungen und berechnet den aktuellen P/L neu.
+ * Überprüft die offenen Positionen der Sequenz auf Übereinstimmung mit den im EA gespeicherten Daten.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - TRUE, wenn die gespeicherten Daten mit den offenen Positionen übereinstimmen,
+ *                FALSE andererseits
  */
-bool UpdateProfitLoss() {
-   // (1) offene Positionen auf Änderungen prüfen
+bool CheckOpenPositions() {
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
          if (!OrderSelectByTicket(levels.ticket[i]))
             return(false);
 
-         if (OrderCloseTime() != 0) {                                // OrderCloseTime: Ticket wurde geschlossen => gesamte Sequenz neu einlesen
-            if (ReadSequence())
-               break;
+         if (OrderCloseTime() != 0)                                  // Ticket wurde geschlossen
             return(false);
-         }
-         if (NE(OrderLots(), levels.openLots[i])) {                  // OrderLots: Ticket wurde teilweise geschlossen => gesamte Sequenz neu einlesen
-            if (ReadSequence())
-               break;
+
+         if (NE(OrderLots(), levels.openLots[i]))                    // Ticket wurde teilweise geschlossen
             return(false);
-         }
-         if (NE(OrderSwap(), levels.openSwap[i]))                    // OrderSwap: Swap hat sich geändert => Wert aktualisieren
+
+         if (NE(OrderSwap(), levels.openSwap[i]))                    // Swap-Betrag hat sich geändert => Wert kann hier aktualisiert werden
             levels.openSwap[i] = OrderSwap();
       }
    }
+   return(true);
+}
 
 
-   // (2) aktuellen TickValue für P/L-Berechnung bestimmen           !!! TODO: wenn QuoteCurrency == AccountCurrency, ist es nur ein statt jedes Mal notwendig
+/**
+ * Berechnet den aktuellen P/L der Sequenz neu.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateProfitLoss() {
+   // (1) aktuellen TickValue für P/L-Berechnung bestimmen           !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein statt jedes Mal notwendig
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
    if (error!=NO_ERROR || tickValue < 0.1)                           // ERR_INVALID_MARKETINFO abfangen
       return(catch("UpdateProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error))==NO_ERROR);
 
 
-   // (3) Profit/Loss der Level mit offenen Positionen neu berechnen
+   // (2) Profit/Loss der Level mit offenen Positionen neu berechnen
    all.swaps       = 0;
    all.commissions = 0;
    all.profits     = 0;
@@ -1055,7 +1072,7 @@ bool UpdateProfitLoss() {
    ArrayResize(tmp.openLots, 0);
    ArrayCopy(tmp.openLots, levels.openLots);
 
-   for (i=0; i < progressionLevel; i++) {
+   for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {
          if (!OrderSelectByTicket(levels.ticket[i]))
             return(false);
@@ -1133,7 +1150,7 @@ bool UpdateBreakeven() {
  *
  * @return double - PipValue oder 0, wenn ein Fehler auftrat
  */
-double GetPipValue(double lots = 1) {
+double GetPipValue(double lots = 1.0) {
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
 
    int error = GetLastError();
@@ -1281,13 +1298,6 @@ bool VisualizeSequence() {
 int ShowStatus() {
    if (PeekLastError() != NO_ERROR)
       status = STATUS_DISABLED;
-
-   // Zeile 3: Lotsizes der gesamten Sequenz
-   static string str.levels.lots = "";
-   if (levels.lots.changed) {
-      str.levels.lots = JoinDoubles(levels.lots, ",  ");
-      levels.lots.changed = false;
-   }
 
    string msg = "";
    switch (status) {
@@ -1493,7 +1503,6 @@ bool ValidateConfiguration() {
 
    // Lotsizes
    int levels = ArrayResize(levels.lots, 0);
-   levels.lots.changed = true;                                       // wird nur zur Performancesteigerung in ShowStatus() benötigt
 
    if (LE(Lotsize.Level.1, 0)) return(catch("ValidateConfiguration(20)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    levels = ArrayPushDouble(levels.lots, Lotsize.Level.1);
@@ -1527,6 +1536,8 @@ bool ValidateConfiguration() {
          }
       }
    }
+   str.levels.lots = JoinDoubles(levels.lots, ",  ");
+
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT);
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT);
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
