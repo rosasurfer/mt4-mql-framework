@@ -29,8 +29,7 @@ string chartObjects[];
 int    appliedPrice = PRICE_MEDIAN;                                  // Median(default) | Bid | Ask
 double leverage;                                                     // Hebel zur UnitSize-Berechnung
 
-bool   positionChecked;
-bool   noPosition;
+bool   noPosition, flatPosition, positionChecked;
 double longPosition, shortPosition, totalPosition;
 
 
@@ -357,10 +356,9 @@ int CheckPosition() {
          else if (OrderType() == OP_SELL) shortPosition += OrderLots();
       }
    }
-   totalPosition = longPosition - shortPosition;
-   bool anyPosition   = (longPosition > 0.00000001 || shortPosition > 0.00000001);
-   noPosition = !anyPosition;
-
+   totalPosition   = longPosition - shortPosition;
+   flatPosition    = EQ(totalPosition, 0);
+   noPosition      = EQ(longPosition, 0) && EQ(shortPosition, 0);
    positionChecked = true;
 
    return(catch("CheckPosition()"));
@@ -378,9 +376,9 @@ int UpdatePositionLabel() {
 
    string strPosition;
 
-   if      (noPosition)           strPosition = " ";
-   else if (EQ(totalPosition, 0)) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
-   else                           strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
+   if      (noPosition)   strPosition = " ";
+   else if (flatPosition) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else                   strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
 
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
@@ -400,7 +398,7 @@ int UpdateMarginLevels() {
    if (!positionChecked)
       CheckPosition();
 
-   if (noPosition) {                                                          // keine Position im Markt: ggf. vorhandene Marker löschen
+   if (flatPosition) {                                                        // keine Position im Markt: ggf. vorhandene Marker löschen
       ObjectDelete(freezeLevelLabel);
       ObjectDelete(stopoutLevelLabel);
    }
