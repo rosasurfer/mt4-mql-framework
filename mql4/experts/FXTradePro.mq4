@@ -143,7 +143,7 @@ double   levels.lots      [], effectiveLots;          // konfigurierte Lotsize u
 double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive evt. Hedges)
 double   levels.openPrice [], last.closePrice;
 datetime levels.openTime  [];
-datetime levels.closeTime [];                         // Unterscheidung zwischen offenen und geschlossenen Positionen
+datetime levels.closeTime [];
 
 double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [], all.swaps;
 double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
@@ -153,7 +153,7 @@ double   levels.maxProfit  [];                        // maximal möglicher P/L
 double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
 double   levels.breakeven  [];                        // Breakeven in ???
 
-string   str.levels.lots;                             // (string) levels.lots (für ShowStatus())
+string   str.levels.lots;                             // (string) levels.lots: für ShowStatus()
 
 
 /**
