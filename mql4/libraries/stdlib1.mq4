@@ -2400,17 +2400,17 @@ string BoolToStr(bool value) {
 /**
  * Konvertiert ein Boolean-Array in einen lesbaren String.
  *
- * @param  bool   array[]
+ * @param  bool   values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string
  */
-string BoolArrayToStr(bool array[], string separator=", ") {
-   if (ArraySize(array) == 0)
+string BoolArrayToStr(bool values[], string separator=", ") {
+   if (ArraySize(values) == 0)
       return("{}");
    if (separator == "0")   // NULL
       separator = ", ";
-   return(StringConcatenate("{", JoinBools(array, separator), "}"));
+   return(StringConcatenate("{", JoinBools(values, separator), "}"));
 }
 
 
@@ -6139,17 +6139,38 @@ string JoinDoubles(double values[], string separator) {
 /**
  * Konvertiert ein Double-Array in einen lesbaren String.
  *
- * @param  double array[]
+ * @param  double values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string
  */
-string DoubleArrayToStr(double array[], string separator=", ") {
-   if (ArraySize(array) == 0)
+string DoubleArrayToStr(double values[], string separator=", ") {
+   if (ArraySize(values) == 0)
       return("{}");
    if (separator == "0")   // NULL
       separator = ", ";
-   return(StringConcatenate("{", JoinDoubles(array, separator), "}"));
+   return(StringConcatenate("{", JoinDoubles(values, separator), "}"));
+}
+
+
+/**
+ * Konvertiert ein Array mit Geldbeträgen in einen lesbaren String.
+ *
+ * @param  double values[]
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string - String bestehend aus Geldbeträgen mit je 2 Nachkommastellen
+ */
+string MoneyArrayToStr(double values[], string separator=", ") {
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = DoubleToStr(values[i], 2);
+   }
+   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
 }
 
 
@@ -6178,27 +6199,27 @@ string JoinInts(int values[], string separator) {
 /**
  * Konvertiert ein Integer-Array in einen lesbaren String.
  *
- * @param  int    array[]
+ * @param  int    values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string
  */
-string IntArrayToStr(int array[][], string separator=", ") {
+string IntArrayToStr(int values[][], string separator=", ") {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   int dimensions = ArrayDimension(array);
+   int dimensions = ArrayDimension(values);
 
    // ein-dimensionales Array
    if (dimensions == 1) {
-      if (ArraySize(array) == 0)
+      if (ArraySize(values) == 0)
          return("{}");
-      return(StringConcatenate("{", JoinInts(array, separator), "}"));
+      return(StringConcatenate("{", JoinInts(values, separator), "}"));
    }
 
    // zwei-dimensionales Array
    if (dimensions == 2) {
-      int size1=ArrayRange(array, 0), size2=ArrayRange(array, 1);
+      int size1=ArrayRange(values, 0), size2=ArrayRange(values, 1);
       if (size2 == 0)
          return("{}");
 
@@ -6207,7 +6228,7 @@ string IntArrayToStr(int array[][], string separator=", ") {
 
       for (int i=0; i < size1; i++) {
          for (int z=0; z < size2; z++) {
-            iTmp[z] = array[i][z];
+            iTmp[z] = values[i][z];
          }
          strTmp[i] = IntArrayToStr(iTmp);
       }
@@ -6216,6 +6237,27 @@ string IntArrayToStr(int array[][], string separator=", ") {
 
    // multi-dimensional
    return("{too many dimensions}");
+}
+
+
+/**
+ * Konvertiert ein DateTime-Array in einen lesbaren String.
+ *
+ * @param  datetime values[]
+ * @param  string   separator - Separator (default: ", ")
+ *
+ * @return string
+ */
+string DateTimeArrayToStr(int values[], string separator=", ") {
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = TimeToStr(values[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+   }
+   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
 }
 
 
@@ -6247,19 +6289,19 @@ string JoinStrings(string values[], string separator) {
 /**
  * Konvertiert ein String-Array in einen lesbaren String.
  *
- * @param  string array[]
+ * @param  string values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string
  */
-string StringArrayToStr(string array[], string separator=", ") {
-   if (ArraySize(array) == 0)
+string StringArrayToStr(string values[], string separator=", ") {
+   if (ArraySize(values) == 0)
       return("{}");
 
    if (separator == "0")   // NULL
       separator = ", ";
 
-   return(StringConcatenate("{\"", JoinStrings(array, StringConcatenate("\"", separator, "\"")), "\"}"));
+   return(StringConcatenate("{\"", JoinStrings(values, StringConcatenate("\"", separator, "\"")), "\"}"));
 }
 
 

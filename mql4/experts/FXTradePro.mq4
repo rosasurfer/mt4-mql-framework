@@ -681,7 +681,7 @@ bool ReadSequence() {
       for (i=0, n=0; i < closedTickets; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History verkürzt
             break;
-         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // Nicht-Trades und fremde Tickets überspringen
+         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // Nicht-Trades und Trades anderer Symbole überspringen
             continue;
 
          // (3.1) alle Tradedaten im aktuellen Symbol zwischenspeichern
@@ -695,7 +695,7 @@ bool ReadSequence() {
          hist.swaps       [n] = OrderSwap();
          hist.commissions [n] = OrderCommission();
          hist.profits     [n] = OrderProfit();
-         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet manuelle von automatisierten Trades
+         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet eigene von fremden Trades
          hist.comments    [n] = OrderComment();
          n++;
       }
@@ -714,14 +714,13 @@ bool ReadSequence() {
          ArrayResize(hist.comments    , n);
          closedTickets = n;
       }
-      //debug("ReadSequence()   hist.magicNumbers("+ closedTickets +") = "+ IntArrayToStr(hist.magicNumbers, NULL));
 
       // (3.2) Hedges analysieren: relevante Daten der ersten Position zuordnen, hedgende Position verwerfen
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets     [i] == 0) continue;                    // als 'verworfen' markiertes Ticket
-         if (hist.magicNumbers[i] == 0) continue;                    // manueller Trade, der später evt. als Hedge benötigt wird
+         if (hist.magicNumbers[i] == 0) continue;                    // fremder Trade, der später evt. als Hedge benötigt wird
 
-         if (EQ(hist.lots[i], 0)) {                                  // hist.lots = 0.00: Hedge-Position
+         if (EQ(hist.lots[i], 0.0)) {                                // hist.lots = 0.0: Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
                return(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
 
@@ -732,7 +731,6 @@ bool ReadSequence() {
                   break;
             if (n == closedTickets) return(catch("ReadSequence(3)  cannot find ticket #"+ hist.tickets[i] +"'s counterpart (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
             if (i == n            ) return(catch("ReadSequence(4)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
-            //debug("ReadSequence()   hedge position="+ hist.tickets[i] +"   counterpart="+ hist.tickets[n] +"   magic="+ hist.magicNumbers[n] +"   comment="+ hist.comments[n]);
 
             // Reihenfolge beider Trades bestimmen
             int first, second;
@@ -740,7 +738,7 @@ bool ReadSequence() {
             else if (hist.openTimes[i]== hist.openTimes[n] && hist.tickets[i] < hist.tickets[n]) { first = i; second = n; }
             else                                                                                 { first = n; second = i; }
 
-            // manuelle Trades müssen immer 'second' sein            !!! TODO: stimmt nicht
+            // fremde Trades müssen immer 'second' sein              !!! TODO: stimmt natürlich nicht
             if (hist.magicNumbers[n]==0) /*&&*/ if (n != second)
                return(catch("ReadSequence(5)  manuel hedge #"+ hist.tickets[n] +" of sequence ticket #"+ hist.tickets[i] +" is not the younger trade", ERR_RUNTIME_ERROR)==NO_ERROR);
 
@@ -753,7 +751,18 @@ bool ReadSequence() {
                hist.profits    [first] = hist.profits    [second];
             }
             hist.closeTimes[first] = hist.openTimes[second];
-            hist.tickets  [second] = 0;                              // zweites Ticket als 'verworfen' markieren
+
+            if (hist.magicNumbers[second] == 0) {                    // zweites Ticket nur dann 'verwerfen', wenn es nicht zur Sequenz gehört...
+               hist.tickets[second] = 0;
+            }
+            else {                                                   // ...gehört es zur Sequenz, alle Transaktionsdaten auf 0 setzen
+               hist.lots       [second] = hist.lots[i];
+               hist.closeTimes [second] = 0;
+               hist.closePrices[second] = 0.0;
+               hist.swaps      [second] = 0.0;
+               hist.commissions[second] = 0.0;
+               hist.profits    [second] = 0.0;
+            }
          }
       }
 
@@ -762,11 +771,10 @@ bool ReadSequence() {
       // (3.3) levels.* mit den geschlossenen Tickets aktualisieren
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets     [i] == 0) continue;                    // als 'verworfen' markiertes Ticket
-         if (hist.magicNumbers[i] == 0) continue;                    // manueller Trade, der evt. als Hedge benötigt wurde
+         if (hist.magicNumbers[i] == 0) continue;                    // fremder Trade, der evt. als Hedge benötigt wurde
 
          level = hist.magicNumbers[i] & 0xF;                         // 4 Bits (Bits 1-4) => progressionLevel
          if (level > sequenceLength) return(catch("ReadSequence(6)   illegal sequence state, progression level "+ level +" of ticket #"+ hist.magicNumbers[i] +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)==NO_ERROR);
-         debug("ReadSequence()   trade for level "+ level);
 
          if (level > progressionLevel)
             progressionLevel = level;
@@ -783,6 +791,9 @@ bool ReadSequence() {
          else if (levels.type[level] != hist.types[i]) {
             return(catch("ReadSequence(7)  illegal sequence state, operation type "+ OperationTypeDescription(levels.type[level]) +" (level "+ (level+1) +") doesn't match "+ OperationTypeDescription(hist.types[i]) +" of closed position #"+ hist.tickets[i], ERR_RUNTIME_ERROR)==NO_ERROR);
          }
+         else if (levels.closeTime[level]==0 && hist.closeTimes[i]!=0) {
+            levels.closeTime[level] = hist.closeTimes[i];
+         }
          levels.closedSwap      [level] += hist.swaps      [i];
          levels.closedCommission[level] += hist.commissions[i];
          levels.closedProfit    [level] += hist.profits    [i];
@@ -792,6 +803,9 @@ bool ReadSequence() {
             last.closePrice = hist.closePrices[i];
          }
       }
+      int last = progressionLevel-1;
+      if (levels.closeTime[last] == 0)
+         levels.closeTime [last] = last.closeTime;
 
 
       // (4) falls kein Ticket existiert, anhand der Konfigurationsdatei prüfen, ob der EA im STATUS_WAITING läuft
@@ -835,7 +849,7 @@ bool ReadSequence() {
 
    // (6) Sequenz mit Konfiguration abgleichen
    if (progressionLevel > 0) {
-      int last = progressionLevel-1;
+      last = progressionLevel-1;
       if (openPositions) /*&&*/ if (NE(MathAbs(effectiveLots), levels.lots[last]))
          return(catch("ReadSequence(11)   illegal state of sequence "+ sequenceId +", current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
       if (Entry.type == ENTRYTYPE_LIMIT) {
@@ -1885,7 +1899,5 @@ bool RestoreHiddenSequenceId() {
    return(false);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
-   StatusToStr(NULL);
-   EntryTypeToStr(NULL);
-   EntryTypeDescription(NULL);
+   StatusToStr(NULL); EntryTypeToStr(NULL); EntryTypeDescription(NULL);
 }

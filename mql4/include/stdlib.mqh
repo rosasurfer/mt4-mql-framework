@@ -265,6 +265,7 @@
    string   AppliedPriceToStr(int appliedPrice);
    string   BoolArrayToStr(bool values[], string separator);
    string   BoolToStr(bool value);
+   string   DateTimeArrayToStr(int values[], string separator);
    string   DoubleToStrEx(double value, int digits);
    string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
    string   DoubleArrayToStr(double values[], string separator);
@@ -274,6 +275,7 @@
    string   IntToHexStr(int integer);
    string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
+   string   MoneyArrayToStr(double values[], string separator);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string mask);
    string   OperationTypeToStr(int type);
