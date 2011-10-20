@@ -145,15 +145,20 @@ double   levels.openPrice [], last.closePrice;
 datetime levels.openTime  [];
 datetime levels.closeTime [];
 
-double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [], all.swaps;
-double   levels.commission[], levels.openCommission[], levels.closedCommission[], all.commissions;
-double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [], all.profits;
+double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [];   // Werte der einzelnen Level
+double   levels.commission[], levels.openCommission[], levels.closedCommission[];
+double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [];
 
+double   levels.sumProfit  [];                        // Gesamtprofit aller Level
 double   levels.maxProfit  [];                        // maximal möglicher P/L
 double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
 double   levels.breakeven  [];                        // Breakeven in ???
 
 string   str.levels.lots;                             // (string) levels.lots: für ShowStatus()
+
+double   all.swaps;
+double   all.commissions;
+double   all.profits;
 
 
 /**
@@ -615,10 +620,6 @@ bool ReadSequence() {
    ResizeArrays(sequenceLength);
 
    effectiveLots    = 0;
-   all.swaps        = 0;
-   all.commissions  = 0;
-   all.profits      = 0;
-
    progressionLevel = 0;
 
 
@@ -630,9 +631,9 @@ bool ReadSequence() {
          continue;
 
       if (IsMyOrder(sequenceId)) {
-         openPositions = true;
-         if (OrderType() > OP_SELL)                                  // Nicht-Trades überspringen
+         if (OrderType() > OP_SELL)                                  // Nicht-Positionen überspringen
             continue;
+         openPositions = true;
 
          int level = OrderMagicNumber() & 0xF;                       //  4 Bits (Bits 1-4)  => progressionLevel
          if (level > sequenceLength) return(catch("ReadSequence(1)   illegal sequence state, progression level "+ level +" of ticket #"+ OrderTicket() +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)==NO_ERROR);
@@ -641,6 +642,7 @@ bool ReadSequence() {
             progressionLevel = level;
          level--;
 
+         // je Level kann es höchstens eine offene Position geben
          levels.ticket        [level] = OrderTicket();
          levels.type          [level] = OrderType();
          levels.openLots      [level] = OrderLots();
@@ -651,13 +653,13 @@ bool ReadSequence() {
          levels.openCommission[level] = OrderCommission();
          levels.openProfit    [level] = OrderProfit();
 
-         if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // effektive Lotsize berechnen
+         if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // tatsächliche effektive Lotsize ermitteln
          else                       effectiveLots -= OrderLots();
       }
    }
 
 
-   // (3) geschlossene Positionen einlesen
+   // (3) geschlossene Positionen (= Trades) einlesen
    last.closePrice = 0;
    bool retry = true;
 
@@ -682,7 +684,7 @@ bool ReadSequence() {
          if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // Nicht-Trades und fremde Tickets überspringen
             continue;
 
-         // (3.1) Sequenz- und manuelle Trades zwischenspeichern
+         // (3.1) alle Tradedaten im aktuellen Symbol zwischenspeichern
          hist.tickets     [n] = OrderTicket();
          hist.types       [n] = OrderType();
          hist.lots        [n] = OrderLots();
@@ -692,8 +694,8 @@ bool ReadSequence() {
          hist.closeTimes  [n] = OrderCloseTime();
          hist.swaps       [n] = OrderSwap();
          hist.commissions [n] = OrderCommission();
-         hist.profits     [n] = OrderProfit();                       // MagicNumber unterscheidet manuelle von autom. Trades
-         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);
+         hist.profits     [n] = OrderProfit();
+         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet manuelle von automatisierten Trades
          hist.comments    [n] = OrderComment();
          n++;
       }
@@ -712,11 +714,12 @@ bool ReadSequence() {
          ArrayResize(hist.comments    , n);
          closedTickets = n;
       }
+      //debug("ReadSequence()   hist.magicNumbers("+ closedTickets +") = "+ IntArrayToStr(hist.magicNumbers, NULL));
 
       // (3.2) Hedges analysieren: relevante Daten der ersten Position zuordnen, hedgende Position verwerfen
       for (i=0; i < closedTickets; i++) {
          if (hist.tickets     [i] == 0) continue;                    // als 'verworfen' markiertes Ticket
-         if (hist.magicNumbers[i] == 0) continue;                    // manueller Trade, der evt. als Hedge benötigt wird
+         if (hist.magicNumbers[i] == 0) continue;                    // manueller Trade, der später evt. als Hedge benötigt wird
 
          if (EQ(hist.lots[i], 0)) {                                  // hist.lots = 0.00: Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
@@ -729,12 +732,15 @@ bool ReadSequence() {
                   break;
             if (n == closedTickets) return(catch("ReadSequence(3)  cannot find ticket #"+ hist.tickets[i] +"'s counterpart (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
             if (i == n            ) return(catch("ReadSequence(4)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+            //debug("ReadSequence()   hedge position="+ hist.tickets[i] +"   counterpart="+ hist.tickets[n] +"   magic="+ hist.magicNumbers[n] +"   comment="+ hist.comments[n]);
 
+            // Reihenfolge beider Trades bestimmen
             int first, second;
             if      (hist.openTimes[i] < hist.openTimes[n])                                      { first = i; second = n; }
             else if (hist.openTimes[i]== hist.openTimes[n] && hist.tickets[i] < hist.tickets[n]) { first = i; second = n; }
             else                                                                                 { first = n; second = i; }
-            // ein manueller Trade muß immer 'second' sein
+
+            // manuelle Trades müssen immer 'second' sein            !!! TODO: stimmt nicht
             if (hist.magicNumbers[n]==0) /*&&*/ if (n != second)
                return(catch("ReadSequence(5)  manuel hedge #"+ hist.tickets[n] +" of sequence ticket #"+ hist.tickets[i] +" is not the younger trade", ERR_RUNTIME_ERROR)==NO_ERROR);
 
@@ -760,6 +766,7 @@ bool ReadSequence() {
 
          level = hist.magicNumbers[i] & 0xF;                         // 4 Bits (Bits 1-4) => progressionLevel
          if (level > sequenceLength) return(catch("ReadSequence(6)   illegal sequence state, progression level "+ level +" of ticket #"+ hist.magicNumbers[i] +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)==NO_ERROR);
+         debug("ReadSequence()   trade for level "+ level);
 
          if (level > progressionLevel)
             progressionLevel = level;
@@ -889,9 +896,6 @@ bool StartSequence() {
    levels.openPrice[0] = OrderOpenPrice();
    levels.openTime [0] = OrderOpenTime();
 
-   if (OrderType() == OP_BUY) effectiveLots =  OrderLots();
-   else                       effectiveLots = -OrderLots();
-
    // Sequenz neu einlesen
    if (!ReadSequence())
       return(false);
@@ -941,9 +945,6 @@ bool IncreaseProgression() {
    levels.openLots [this] = OrderLots();
    levels.openPrice[this] = OrderOpenPrice();
    levels.openTime [this] = OrderOpenTime();
-
-   if (OrderType() == OP_BUY) effectiveLots += OrderLots();
-   else                       effectiveLots -= OrderLots();
 
    // Sequenz neu einlesen
    if (!ReadSequence())
@@ -1329,7 +1330,7 @@ int ShowStatus() {
          lastPrice = last.closePrice;
       }
       else {                                                         // TODO: NumberToStr(x, "+- ") implementieren
-         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", ""), NumberToStr(effectiveLots, ".+"), " lot");
+         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", ""), NumberToStr(levels.lots[i], ".+"), " lots");
          lastPrice = ifDouble(levels.type[i]==OP_BUY, Bid, Ask);
       }
       profitLossPips = ifDouble(levels.type[i]==OP_BUY, lastPrice-levels.openPrice[i], levels.openPrice[i]-lastPrice) / Pip;
