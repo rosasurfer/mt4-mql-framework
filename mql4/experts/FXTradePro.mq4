@@ -21,7 +21,7 @@
  *  -------------------------------------
  *  - Breakeven berechnen und anzeigen
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
- *  - Sequenzlänge veränderbar machen (sequenceLength aus MagicNumber entfernen)
+ *  - Sequenzlänge veränderbar machen und 7/7-Sequenz implementieren
  *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
@@ -39,7 +39,6 @@
  *
  *  TODO:
  *  -----
- *  - Sequenzlänge konfigurierbar gestalten
  *  - Input-Parameter müssen änderbar sein, ohne den EA anzuhalten
  *  - NumberToStr() reparieren: positives Vorzeichen, 1000-Trennzeichen
  *  - EA muß automatisch in beliebige Templates hineingeladen werden können
@@ -139,8 +138,8 @@ int      progressionLevel;
 
 int      levels.ticket    [];                         // Ticket
 int      levels.type      [];                         // Trade-Direction
-double   levels.lots      [], effectiveLots;          // konfigurierte Lotsize und aktuelle effektive Gesamtlotsize
-double   levels.openLots  [];                         // aktuelle Order-Lotsize (inklusive evt. Hedges)
+double   levels.lots      [];                         // Lotsizes der Konfiguration
+double   levels.openLots  [], effectiveLots;          // Orderlotsize (inkl. Hedges) und aktuelle effektive Gesamtlotsize
 double   levels.openPrice [], last.closePrice;
 datetime levels.openTime  [];
 datetime levels.closeTime [];
@@ -148,8 +147,8 @@ datetime levels.closeTime [];
 double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [];   // Werte der einzelnen Level
 double   levels.commission[], levels.openCommission[], levels.closedCommission[];
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [];
+double   levels.sumProfit [];                                                       // Gesamtprofit aller Level
 
-double   levels.sumProfit  [];                        // Gesamtprofit aller Level
 double   levels.maxProfit  [];                        // maximal möglicher P/L
 double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
 double   levels.breakeven  [];                        // Breakeven in ???
@@ -653,7 +652,7 @@ bool ReadSequence() {
          levels.openCommission[level] = OrderCommission();
          levels.openProfit    [level] = OrderProfit();
 
-         if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // tatsächliche effektive Lotsize ermitteln
+         if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // aktuelle tatsächliche Lotsize ermitteln
          else                       effectiveLots -= OrderLots();
       }
    }
