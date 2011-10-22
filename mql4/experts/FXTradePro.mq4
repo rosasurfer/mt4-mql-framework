@@ -136,24 +136,25 @@ int      sequenceId;
 int      sequenceLength;
 int      progressionLevel;
 
-int      levels.ticket    [];                         // Ticket
-int      levels.type      [];                         // Trade-Direction
-double   levels.lots      [];                         // Lotsizes der Konfiguration
-double   levels.openLots  [], effectiveLots;          // Orderlotsize (inkl. Hedges) und aktuelle effektive Gesamtlotsize
-double   levels.openPrice [], last.closePrice;
+double   levels.lots[];                               // Lotsizes der Konfiguration
+string   str.levels.lots;                             // (string) levels.lots: für ShowStatus()
+
+int      levels.ticket    [];
+int      levels.type      [];
+double   levels.openLots  [];                         // offene Orderlotsize des Levels (siehe Erläuterungen bei ReadSequence())
+double   levels.openPrice [];
 datetime levels.openTime  [];
+double   levels.closePrice[], last.closePrice;
 datetime levels.closeTime [];
 
-double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [];   // Werte der einzelnen Level
+double   levels.swap      [], levels.openSwap      [], levels.closedSwap      [];   // Werte des einzelnen Levels
 double   levels.commission[], levels.openCommission[], levels.closedCommission[];
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [];
-double   levels.sumProfit [];                                                       // Gesamtprofit aller Level
 
+double   levels.sumProfit  [];                        // Gesamtprofit aller Level
 double   levels.maxProfit  [];                        // maximal möglicher P/L
 double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
 double   levels.breakeven  [];                        // Breakeven in ???
-
-string   str.levels.lots;                             // (string) levels.lots: für ShowStatus()
 
 double   all.swaps;
 double   all.commissions;
@@ -607,18 +608,45 @@ bool SetRunningSequenceId() {
 
 
 /**
- * Liest die aktuelle Sequenz komplett neu ein. Die Konfiguration der einzulesenden Sequenz ist beim Aufruf immer gültig,
- * die Variablen sequenceId, sequenceLength und levels.lots[] können beim Einlesen also benutzt werden.
+ * Liest die aktuelle Sequenz komplett neu ein. Die Konfiguration der Sequenz ist beim Aufruf immer gültig,
+ * die Variablen sequenceId, sequenceLength und levels.lots[] können also beim Einlesen benutzt werden.
  *
  * @return bool - Erfolgsstatus
  */
 bool ReadSequence() {
+   /*
+   Nicht alle Werte der Sequenz können beim Einlesen exakt restauriert werden, für einen einwandfreien Ablauf sind auch nicht alle
+   zwingend notwendig.
+
+   Die Lotsizes und P/L-Daten von geschlossenen Positionen werden beim Einlesen je nach Hedge-Reihenfolge auf andere Level verteilt.
+   Die Daten in den einzelnen Leveln stimmen also nicht mit den tatsächlichen Werten überein, ihre Summe entspricht jedoch der korrekten
+   Gesamtsumme des letzten Levels bzw. der gesamten Sequenz.
+
+   int      levels.ticket    [];
+   int      levels.type      [];
+   double   levels.openLots  [];    // nur die aktuell *offene* Lotsize des Levels (nicht nötig für geschlossene Positionen)
+   double   levels.openPrice [];
+   datetime levels.openTime  [];
+   double   levels.closePrice[];    // identisch zum openPrice des nächsten Levels
+   datetime levels.closeTime [];
+
+   double   levels.swap      [];
+   double   levels.commission[];
+   double   levels.profit    [];
+
+   double   levels.sumProfit  [];   // Gesamtprofit der Sequnz zum jeweiligen Zeitpunkt
+   double   levels.maxProfit  [];   // maximal möglicher P/L
+   double   levels.maxDrawdown[];   // maximal möglicher Drawdown
+   double   levels.breakeven  [];   // Breakeven in ???
+   */
+
+
    // (1) Arrays zurücksetzen
    if (ArraySize(levels.ticket) > 0)
       ResizeArrays(0);
    ResizeArrays(sequenceLength);
 
-   effectiveLots    = 0;
+   double effectiveLots;
    progressionLevel = 0;
 
 
@@ -1223,6 +1251,7 @@ void ResizeArrays(int size) {
    ArrayResize(levels.openLots        , size);
    ArrayResize(levels.openPrice       , size);
    ArrayResize(levels.openTime        , size);
+   ArrayResize(levels.closePrice      , size);
    ArrayResize(levels.closeTime       , size);
 
    ArrayResize(levels.swap            , size);
@@ -1237,6 +1266,7 @@ void ResizeArrays(int size) {
    ArrayResize(levels.closedCommission, size);
    ArrayResize(levels.closedProfit    , size);
 
+   ArrayResize(levels.sumProfit       , size);
    ArrayResize(levels.maxProfit       , size);
    ArrayResize(levels.maxDrawdown     , size);
    ArrayResize(levels.breakeven       , size);
@@ -1568,18 +1598,13 @@ bool ValidateConfiguration() {
    // Sequence.ID: wurde schon in ValidateExplicitSequenceId() validiert
 
    // Nach Parameteränderung die neue Konfiguration mit der aktuellen Sequenz vergleichen
-   // TODO: nicht nur den letzten Level abgleichen, sondern sicherstellen, daß nur zukünftige Level geändert wurden
    if (progressionLevel > 0) {
-      if (NE(effectiveLots, 0)) {
-         int last = progressionLevel-1;
-         if (NE(levels.lots[last], MathAbs(effectiveLots)))
-            return(catch("ValidateConfiguration(31)   illegal input parameter Lotsize.Level."+ progressionLevel +" ("+ NumberToStr(levels.lots[last], ".+") +" lots), it doesn't match the current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots)", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
-      }
+      // TODO: Wurden die Level geändert, sicherstellen, daß nur zukünftige Level geändert wurden.
       if (Entry.type==ENTRYTYPE_LIMIT) /*&&*/ if (levels.type[0]!=Entry.iDirection)
-         return(catch("ValidateConfiguration(32)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
+         return(catch("ValidateConfiguration(31)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_INVALID_INPUT_PARAMVALUE)==NO_ERROR);
    }
 
-   return(catch("ValidateConfiguration(33)")==NO_ERROR);
+   return(catch("ValidateConfiguration(32)")==NO_ERROR);
 }
 
 
