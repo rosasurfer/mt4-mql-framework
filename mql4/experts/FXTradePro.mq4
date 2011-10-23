@@ -616,7 +616,7 @@ bool ReadSequence() {
    Nicht alle Werte der Sequenz können beim Einlesen exakt restauriert werden, für einen einwandfreien Ablauf sind auch nicht alle zwingend notwendig.
 
    Die P/L-Daten von geschlossenen Positionen werden beim Einlesen je nach Hedge-Reihenfolge auf andere Level verteilt. Die Daten in den einzelnen Leveln
-   stimmen also nicht mit den tatsächlichen Werten überein, ihre Summe entspricht jedoch der korrekten Gesamtsumme des letzten Levels bzw. der gesamten Sequenz.
+   stimmen also nicht mit den tatsächlichen Werten überein, ihre Summe entspricht jedoch der korrekten Gesamtsumme des letzten Levels und der gesamten Sequenz.
 
    int      levels.ticket    [];
    int      levels.type      [];
@@ -810,8 +810,8 @@ bool ReadSequence() {
 
       // (8) Schlußtrade analysieren
       /*
-      Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der gesamten Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
-      in welcher Reihenfolge eine einzelne Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
+      Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
+      in welcher Reihenfolge eine Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
       Teilpositionen aufgebrochen worden sein.
 
       Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position gehedgt war.
@@ -822,7 +822,7 @@ bool ReadSequence() {
 
          datetime lastOpenTime, lastCloseTime;
          double   lastOpenPrice, lastClosePrice;
-         bool     openIsRelevant = true;                                         // ob Open oder Close der Schlußtrades für das Sequenzende maßgeblich sind
+         bool     openIsRelevant = false;                                        // ob Open oder Close der Schlußtrades für das Sequenzende maßgeblich sind
          int      last = progressionLevel-1;
 
          for (i=0; i < size; i++) {
@@ -834,8 +834,8 @@ bool ReadSequence() {
                lastCloseTime  = hist.closeTimes [closeTrades[i]];
                lastClosePrice = hist.closePrices[closeTrades[i]];
             }
-            if (hist.openTimes[closeTrades[i]] <= levels.openTime[last])         // mindestens ein Schlußtrade liegt vor Eröffnung des letzten Levels
-               openIsRelevant = false;
+            if (hist.openTimes[closeTrades[i]] > levels.openTime[last])          // mindestens ein Schlußtrade wurde nach Eröffnung des letzten Levels initiiert
+               openIsRelevant = true;
 
             levels.closedSwap      [last] += hist.swaps      [closeTrades[i]];   // vorhandene Beträge aufaddieren
             levels.closedCommission[last] += hist.commissions[closeTrades[i]];
