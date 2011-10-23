@@ -278,9 +278,11 @@
    string   MoneyArrayToStr(double values[], string separator);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string mask);
+   string   OperationTypeArrayToStr(int values[], string separator);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
+   string   PriceArrayToStr(double values[], string format, string separator);
    string   ShellExecuteErrorToStr(int error);
    string   StringArrayToStr(string values[], string separator);
    string   StructCharToStr(int struct[], int from, int len);

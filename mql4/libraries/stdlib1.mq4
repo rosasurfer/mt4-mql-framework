@@ -6154,6 +6154,33 @@ string DoubleArrayToStr(double values[], string separator=", ") {
 
 
 /**
+ * Konvertiert ein Array mit Kursen in einen lesbaren String.
+ *
+ * @param  double values[]
+ * @param  string format    - Zahlenformat entsprechend NumberToStr()
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string
+ */
+string PriceArrayToStr(double values[], string format, string separator=", ") {
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   if (separator == "0")   // NULL
+      separator = ", ";
+
+   for (int i=0; i < size; i++) {
+      strings[i] = NumberToStr(values[i], format);
+   }
+   return(StringConcatenate("{", JoinStrings(strings, separator), "}"));
+}
+
+
+/**
  * Konvertiert ein Array mit Geldbeträgen in einen lesbaren String.
  *
  * @param  double values[]
@@ -6162,15 +6189,7 @@ string DoubleArrayToStr(double values[], string separator=", ") {
  * @return string - String bestehend aus Geldbeträgen mit je 2 Nachkommastellen
  */
 string MoneyArrayToStr(double values[], string separator=", ") {
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStr(values[i], 2);
-   }
-   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
+   return(PriceArrayToStr(values, ".2", separator));
 }
 
 
@@ -6249,13 +6268,38 @@ string IntArrayToStr(int values[][], string separator=", ") {
  * @return string
  */
 string DateTimeArrayToStr(int values[], string separator=", ") {
-   string strings[];
-
    int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   string strings[];
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
       strings[i] = TimeToStr(values[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+   }
+   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
+}
+
+
+/**
+ * Konvertiert ein OperationType-Array in einen lesbaren String.
+ *
+ * @param  int    values[]
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string
+ */
+string OperationTypeArrayToStr(int values[], string separator=", ") {
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = OperationTypeToStr(values[i]);
    }
    return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
 }
