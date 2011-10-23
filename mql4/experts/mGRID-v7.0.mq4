@@ -13,6 +13,7 @@
  *  Jwentro, here is your request. Loss is now based on margin %.  This EA is totaly recoded, the logic is different and more efficient.
  *
  * @see http://www.forexfactory.com/showthread.php?p=2280173#post2280173
+ * @see http://www.forexfactory.com/showthread.php?p=4571002#post4571002     <eTrader>'s Setup
  */
 
 

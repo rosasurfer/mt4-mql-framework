@@ -183,31 +183,30 @@ int init() {
       return(error);
    }
 
-   /**
-    * (1) Zuerst wird die Sequenz-ID bestimmt, dann deren Konfiguration geladen und zum Schluß die Sequenz restauriert.
-    *
-    *  Es gibt 4 grundsätzliche init()-Szenarien:
-    *
-    * (1.1) Neustart des EA   (keine internen Daten, externe Sequenz-ID evt. vorhanden)
-    * (1.2) Recompilation     (keine internen Daten, externe Sequenz-ID immer vorhanden)
-    * (1.3) Parameteränderung (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
-    * (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
-    *
-    *  TODO: Start im Tester
-    */
+   /*
+   Zuerst wird die Sequenz-ID bestimmt, dann deren Konfiguration geladen und zum Schluß die Sequenz restauriert.
+   Es gibt 4 grundsätzliche init()-Szenarien:
+
+   (1.1) Neustart des EA   (keine internen Daten, externe Sequenz-ID evt. vorhanden)
+   (1.2) Recompilation     (keine internen Daten, externe Sequenz-ID immer vorhanden)
+   (1.3) Parameteränderung (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+   (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+   ---------------------------
+   (1.5) TODO: Start im Tester
+   */
 
    // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1 oder 1.2
    if (sequenceId == 0) {
 
       // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
       if (UninitializeReason() != REASON_RECOMPILE) {
-         if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID auswerten,...
+         if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID auswerten...
             if (SetInputSequenceId())
                if (RestoreConfiguration())
                   if (ValidateConfiguration())
                      ReadSequence();
          }
-         else if (RestoreHiddenSequenceId()) {                       // ...dann eine versteckt gespeicherte Sequenz-ID restaurieren,...
+         else if (RestoreHiddenSequenceId()) {                       // ...dann eine versteckt gespeicherte Sequenz-ID restaurieren...
             if (RestoreConfiguration())
                if (ValidateConfiguration())
                   ReadSequence();
@@ -269,19 +268,19 @@ int init() {
    else catch("init(3)   unknown init() scenario", ERR_RUNTIME_ERROR);
 
 
-   // (6) Status anzeigen
+   // (2) Status anzeigen
    ShowStatus();
    if (init_error != NO_ERROR)
       return(init_error);
 
 
-   // (7) ggf. EA's aktivieren
+   // (3) ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
    if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
       SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
 
 
-   // (8) nach Reload nicht auf den nächsten Tick warten (nur bei REASON_CHARTCHANGE oder REASON_ACCOUNT)
+   // (4) nach Reload nicht auf den nächsten Tick warten (nur bei REASON_CHARTCHANGE oder REASON_ACCOUNT)
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
    if (IntInArray(UninitializeReason(), reasons2))
       SendTick(false);
@@ -431,7 +430,6 @@ int CreateMagicNumber() {
 bool IsEntrySignal() {
    double event[3];
    int    crossing;
-
 
    switch (Entry.type) {
       // ---------------------------------------------------------------------------------------------------------------------------------
