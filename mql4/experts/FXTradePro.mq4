@@ -741,6 +741,11 @@ bool ReadSequence() {
          if (hist.magicNumbers[i] == 0) continue;                    // fremde Position, die evt. Teil des Schlußtrades ist
 
          if (EQ(hist.lots[i], 0.0)) {                                // 0.0 = Hedge-Position
+
+            // TODO: Es reicht nicht, auf lots = 0.0 zu prüfen. Der fremde und nicht der eigene Trade kann auf lots=0.0 stehen. In diesem Fall sollte der Comment des Sequenztrades auf
+            //       "partial close" stehen, doch MetaTrader modifiziert den Comment bei manuellem MultipleCloseBy teilweise nicht (z.B. FTP.5347 in GBP/USD am 22.09.2011 in Alpari {account-no}).
+            //       Lösung: Zusätzlich über alle fremden Trades iterieren und auf Referenzen auf die Sequenz prüfen.
+
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
                return(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
 
@@ -752,10 +757,13 @@ bool ReadSequence() {
             if (n == closedTickets) return(catch("ReadSequence(3)  cannot find ticket #"+ hist.tickets[i] +"'s counterpart (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
             if (i == n)             return(catch("ReadSequence(4)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
 
-            if (hist.magicNumbers[n] == 0)                           // Schlußtrade
+            if (hist.magicNumbers[n] == 0) {                         // Schlußtrade
                ArrayPushInt(closeTrades, n);                         // Zeiger auf Schlußposition zwischenspeichern
+               //debug("ReadSequence()   "+ hist.tickets[n] +"        -       "+ NumberToStr(hist.lots[n], ".2") +"   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   "+ hist.comments[n]);
+            }
          }
          ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i]);
+         //debug("ReadSequence()   "+ hist.tickets[i] +"   FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF) +"   "+ NumberToStr(hist.lots[i], ".2") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ hist.comments[i]);
       }
 
 
