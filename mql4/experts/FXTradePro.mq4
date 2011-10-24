@@ -1290,7 +1290,7 @@ bool VisualizeSequence() {
       int type = levels.type[i];
 
       // Positionsmarker
-      arrow = "FTP."+ sequenceId +"."+ (i+1) +"   "+ ifString(type==OP_BUY, "Buy", "Sell") +" "+ NumberToStr(levels.lots[i], ".+") +" lot"+ ifString(EQ(levels.lots[i], 1), "", "s") +" at "+ NumberToStr(levels.openPrice[i], PriceFormat);
+      arrow = "FTP."+ sequenceId +"."+ (i+1) +"   "+ ifString(type==OP_BUY, "Buy", "Sell") +" "+ NumberToStr(levels.lots[i], ".+") +" lot at "+ NumberToStr(levels.openPrice[i], PriceFormat);
       if (ObjectFind(arrow) > -1)
          ObjectDelete(arrow);
       if (ObjectCreate(arrow, OBJ_ARROW, 0, levels.openTime[i], levels.openPrice[i])) {
