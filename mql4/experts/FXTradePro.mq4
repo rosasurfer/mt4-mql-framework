@@ -22,7 +22,7 @@
  *  - Breakeven berechnen und anzeigen
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - Sequenzlänge veränderbar machen und 7/7-Sequenz implementieren
- *  - für alle Signalberechnungen statt Bid/Ask MedianPrice verwenden (die tatsächlich erzielten Entry-Preise sind sekundär)
+ *  - für alle Signalberechnungen MedianPrice vom ursprünglichen Signal verwenden (die tatsächlich erzielten Entry-Preise und Slippage sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
@@ -1380,7 +1380,7 @@ int ShowStatus() {
          lastPrice = levels.closePrice[i];
       }
       else {                                                         // TODO: NumberToStr(x, "+- ") implementieren
-         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", ""), NumberToStr(levels.lots[i], ".+"), " lots");
+         msg         = StringConcatenate(msg, "  =  ", ifString(levels.type[i]==OP_BUY, "+", "-"), NumberToStr(levels.lots[i], ".+"), " lot");
          lastPrice = ifDouble(levels.type[i]==OP_BUY, Bid, Ask);
       }
       profitLossPips = ifDouble(levels.type[i]==OP_BUY, lastPrice-levels.openPrice[i], levels.openPrice[i]-lastPrice) / Pip;
