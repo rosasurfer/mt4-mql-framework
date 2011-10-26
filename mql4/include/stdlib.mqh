@@ -195,9 +195,11 @@
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
    string   StringLeft(string value, int n);
+   string   StringLeftPad(string input, int length, string pad_string);
    string   StringRepeat(string input, int times);
    string   StringReplace(string object, string search, string replace);
    string   StringRight(string value, int n);
+   string   StringRightPad(string input, int length, string pad_string);
    bool     StringStartsWith(string object, string prefix);
    string   StringSubstrFix(string object, int start, int length);
    string   StringToLower(string value);

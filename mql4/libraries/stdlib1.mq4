@@ -2700,6 +2700,52 @@ string StringReplace(string object, string search, string replace) {
 
 
 /**
+ * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
+ *
+ * @param  string input      - Ausgangsstring
+ * @param  int    pad_length - gewünschte Mindestlänge
+ * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ *
+ * @return string
+ */
+string StringLeftPad(string input, int pad_length, string pad_string=" ") {
+   int length = StringLen(input);
+
+   while (length < pad_length) {
+      input  = StringConcatenate(pad_string, input);
+      length = StringLen(input);
+   }
+   if (length > pad_length)
+      input = StringRight(input, pad_length);
+
+   return(input);
+}
+
+
+/**
+ * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
+ *
+ * @param  string input      - Ausgangsstring
+ * @param  int    pad_length - gewünschte Mindestlänge
+ * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ *
+ * @return string
+ */
+string StringRightPad(string input, int pad_length, string pad_string=" ") {
+   int length = StringLen(input);
+
+   while (length < pad_length) {
+      input  = StringConcatenate(input, pad_string);
+      length = StringLen(input);
+   }
+   if (length > pad_length)
+      input = StringLeft(input, pad_length);
+
+   return(input);
+}
+
+
+/**
  * Gibt die Startzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
  * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
@@ -8713,24 +8759,6 @@ string TFToStr(int tf) {
       case 43200: return("MN" );
    }
    return(0);
-}
-
-
-/**
- * Prepends occurrences of the string STR2 to the string STR to make a string N characters long
- * Usage:    string x=StringLeftPad("ABCDEFG",9," ")  returns x = "  ABCDEFG"
- */
-string StringLeftPad(string str, int n, string str2) {
-   return(StringRepeat(str2, n-StringLen(str)) + str);
-}
-
-
-/**
- * Appends occurrences of the string STR2 to the string STR to make a string N characters long
- * Usage:    string x=StringRightPad("ABCDEFG",9," ")  returns x = "ABCDEFG  "
- */
-string StringRightPad(string str, int n, string str2) {
-   return(str + StringRepeat(str2, n-StringLen(str)));
 }
 
 
