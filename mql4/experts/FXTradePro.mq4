@@ -19,8 +19,9 @@
  *
  *  Voraussetzungen für Produktivbetrieb:
  *  -------------------------------------
- *  - Breakeven berechnen und anzeigen
+ *  - Testbarkeit
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
+ *  - Breakeven berechnen und anzeigen
  *  - Sequenzlänge veränderbar machen und 7/7-Sequenz implementieren
  *  - für alle Signalberechnungen MedianPrice vom ursprünglichen Signal verwenden (die tatsächlich erzielten Entry-Preise und Slippage sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
