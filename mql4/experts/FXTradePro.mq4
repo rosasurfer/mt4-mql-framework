@@ -56,7 +56,7 @@
 #include <win32api.mqh>
 
 
-#define STATUS_WAITING                   0
+#define STATUS_WAITING                   0            // mögliche Sequenzstatus-Werte
 #define STATUS_PROGRESSING               1
 #define STATUS_FINISHED                  2
 #define STATUS_DISABLED                  3
@@ -100,8 +100,8 @@ extern string Sequence.ID                    = "";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string   intern.Entry.Condition;                      // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
-string   intern.Entry.Direction;                      // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE daraus restauriert.
+string   intern.Entry.Condition;                            // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
+string   intern.Entry.Direction;                            // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE daraus restauriert.
 int      intern.TakeProfit;
 int      intern.StopLoss;
 double   intern.Lotsize.Level.1;
@@ -112,7 +112,7 @@ double   intern.Lotsize.Level.5;
 double   intern.Lotsize.Level.6;
 double   intern.Lotsize.Level.7;
 string   intern.Sequence.ID;
-bool     intern;                                      // Statusflag: TRUE = zwischengespeicherte Werte vorhanden
+bool     intern;                                            // Statusflag: TRUE = zwischengespeicherte Werte vorhanden
 
 
 double   Pip;
@@ -121,12 +121,9 @@ int      PipPoints;
 double   TickSize;
 string   PriceFormat;
 
-int      status            = STATUS_WAITING;
-bool     firstTick         = true;
-
 int      Entry.type        = ENTRYTYPE_UNDEFINED;
 int      Entry.iDirection  = ENTRYDIRECTION_UNDEFINED;
-int      Entry.MA.periods,   Entry.MA.periods.orig;
+int      Entry.MA.periods,   Entry.MA.periods.orig;         // *.orig: Werte vor Umrechnung nach M5
 int      Entry.MA.timeframe, Entry.MA.timeframe.orig;
 int      Entry.MA.method;
 double   Entry.MA.deviation;
@@ -135,14 +132,15 @@ double   Entry.lastBid;
 
 int      sequenceId;
 int      sequenceLength;
+int      sequenceStatus    = STATUS_WAITING;
 int      progressionLevel;
 
-double   levels.lots[];                               // Lotsizes der Konfiguration
-string   str.levels.lots;                             // (string) levels.lots, für ShowStatus()
+double   levels.lots[];                                     // Lotsizes der Konfiguration
+string   str.levels.lots;                                   // (string) levels.lots, für ShowStatus()
 
 int      levels.ticket    [];
 int      levels.type      [];
-double   levels.openLots  [];                         // offene Orderlotsize des Levels (Erläuterungen bei ReadSequence())
+double   levels.openLots  [];                               // offene Orderlotsize des Levels (Erläuterungen bei ReadSequence())
 datetime levels.openTime  [];
 double   levels.openPrice [];
 datetime levels.closeTime [];
@@ -152,14 +150,16 @@ double   levels.swap      [], levels.openSwap      [], levels.closedSwap      []
 double   levels.commission[], levels.openCommission[], levels.closedCommission[];
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [];
 
-double   levels.sumProfit  [];                        // Gesamtprofit aller Level
-double   levels.maxProfit  [];                        // maximal möglicher P/L
-double   levels.maxDrawdown[];                        // maximal möglicher Drawdown
-double   levels.breakeven  [];                        // Breakeven in ???
+double   levels.sumProfit  [];                              // Gesamtprofit aller Level
+double   levels.maxProfit  [];                              // maximal möglicher P/L
+double   levels.maxDrawdown[];                              // maximal möglicher Drawdown
+double   levels.breakeven  [];                              // Breakeven in ???
 
 double   all.swaps;
 double   all.commissions;
 double   all.profits;
+
+bool     firstTick = true;
 
 
 /**
@@ -332,7 +332,7 @@ int start() {
    if (last_error != NO_ERROR) return(last_error);
    // --------------------------------------------
 
-   if (status==STATUS_FINISHED || status==STATUS_DISABLED)
+   if (sequenceStatus==STATUS_FINISHED || sequenceStatus==STATUS_DISABLED)
       return(last_error);
 
 
@@ -771,7 +771,7 @@ bool ReadSequence() {
       // (4) falls kein Ticket existiert, anhand der Konfigurationsdatei prüfen, ob der EA im STATUS_WAITING läuft
       if (progressionLevel == 0) {
          if (IsFile(TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set")) {
-            status = STATUS_WAITING;
+            sequenceStatus = STATUS_WAITING;
             if (UpdateMaxProfitLoss() && VisualizeSequence())        // im STATUS_WAITING sind Profit/Loss und Breakeven 0.00 und brauchen nicht berechnet werden
                return(catch("ReadSequence(5)")==NO_ERROR);           // regular exit for progressionLevel = 0
             return(false);
@@ -814,7 +814,7 @@ bool ReadSequence() {
 
 
       // (7) Status setzen
-      status = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
+      sequenceStatus = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
 
 
       // (8) Schlußtrade analysieren
@@ -825,7 +825,7 @@ bool ReadSequence() {
 
       Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position gehedgt war.
       */
-      if (status == STATUS_FINISHED) {
+      if (sequenceStatus == STATUS_FINISHED) {
          int size = ArraySize(closeTrades);
          if (size == 0) return(catch("ReadSequence(8)   illegal sequence state, no close trades found for finished sequence", ERR_RUNTIME_ERROR)==NO_ERROR);
 
@@ -857,7 +857,7 @@ bool ReadSequence() {
 
 
    // (9) Sequenz mit Konfiguration abgleichen
-   if (status == STATUS_PROGRESSING) {
+   if (sequenceStatus == STATUS_PROGRESSING) {
       last = progressionLevel-1;
       if (NE(MathAbs(effectiveLots), levels.lots[last]))
          return(catch("ReadSequence(9)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
@@ -1315,7 +1315,7 @@ bool VisualizeSequence() {
    }
 
    // Sequenzende
-   if (status == STATUS_FINISHED) {
+   if (sequenceStatus == STATUS_FINISHED) {
       // Verbinder zum Sequenzende
       line = "FTP."+ sequenceId +"."+ progressionLevel;
       if (ObjectFind(line) > -1)
@@ -1349,10 +1349,10 @@ bool VisualizeSequence() {
  */
 int ShowStatus() {
    if (PeekLastError() != NO_ERROR)
-      status = STATUS_DISABLED;
+      sequenceStatus = STATUS_DISABLED;
 
    string msg = "";
-   switch (status) {
+   switch (sequenceStatus) {
       case STATUS_WAITING:     if (Entry.type == ENTRYTYPE_LIMIT) {                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting to ", OperationTypeDescription(Entry.iDirection));
                                   if (NE(Entry.limit, 0))                             msg = StringConcatenate(msg, " at ", NumberToStr(Entry.limit, PriceFormat)); }
                                else if (Entry.iDirection == ENTRYDIRECTION_UNDEFINED) msg = StringConcatenate(":  sequence ", sequenceId, " waiting for next ", Entry.Condition, " crossing");
@@ -1366,7 +1366,7 @@ int ShowStatus() {
                                   msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]");
                                break;
       default:
-         return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
+         return(catch("ShowStatus(1)   illegal sequence status = "+ sequenceStatus, ERR_RUNTIME_ERROR));
    }
    msg = StringConcatenate(__SCRIPT__, msg,                                              NL,
                                                                                          NL,
@@ -1377,7 +1377,7 @@ int ShowStatus() {
 
    if (progressionLevel > 0) {
       i = progressionLevel-1;
-      if (status == STATUS_FINISHED) {
+      if (sequenceStatus == STATUS_FINISHED) {
          lastPrice = levels.closePrice[i];
       }
       else {                                                         // TODO: NumberToStr(x, "+- ") implementieren
@@ -1831,20 +1831,20 @@ bool RestoreConfiguration() {
 
 
 /**
- * Gibt die lesbare Konstante eines Status-Codes zurück.
+ * Gibt die lesbare Konstante eines Sequenzstatus-Codes zurück.
  *
  * @param  int status - Status-Code
  *
  * @return string
  */
-string StatusToStr(int status) {
+string SequenceStatusToStr(int status) {
    switch (status) {
       case STATUS_WAITING    : return("STATUS_WAITING"    );
       case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
       case STATUS_FINISHED   : return("STATUS_FINISHED"   );
       case STATUS_DISABLED   : return("STATUS_DISABLED"   );
    }
-   catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("SequenceStatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -1931,5 +1931,5 @@ bool RestoreHiddenSequenceId() {
    return(false);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
-   StatusToStr(NULL); EntryTypeToStr(NULL); EntryTypeDescription(NULL);
+   SequenceStatusToStr(NULL); EntryTypeToStr(NULL); EntryTypeDescription(NULL);
 }
