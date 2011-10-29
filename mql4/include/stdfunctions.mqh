@@ -10,10 +10,14 @@
 #define WHOLE_ARRAY              0     //
 
 
-// String maximaler Länge
-#define MAX_STRING_LITERAL     "..............................................................................................................................................................................................................................................................."
-#define MAX_STRING_LITERAL_LEN 255
-#define NL                     "\n"    // new line, entspricht CR+LF in MQL
+// Strings                             // Literal maximaler Länge (255 Zeichen)
+#define MAX_STRING_LITERAL       "..............................................................................................................................................................................................................................................................."
+#define NL                       "\n"  // new line (entspricht in MQL CR+LF)
+
+
+// Chars
+#define PLACEHOLDER_ZERO_CHAR    '…'   // 0x85 - Platzhalter für NULL-Byte,         siehe BufferToStr()
+#define PLACEHOLDER_CONTROL_CHAR '•'   // 0x95 - Platzhalter für Control-Character, siehe BufferToStr()
 
 
 // Mathematische Konstanten

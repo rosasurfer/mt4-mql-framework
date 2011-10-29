@@ -7,11 +7,25 @@
 
 #import "kernel32.dll"
 
+   int  GetModuleHandleA(int lpModuleName);
    int  GetPrivateProfileStringA(string lpSection, int lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);
    bool WritePrivateProfileStringA(string lpSection, string lpKey, int lpValue, string lpFileName);
 
 #import
+
+
+/**
+ *
+ */
+int GetModuleHandle() {
+   int hModule = GetModuleHandleA(NULL);
+
+   if (hModule == 0)
+      catch("GetModuleHandle()   kernel32::GetModuleHandleA(lpModuleName=NULL) failed", ERR_WINDOWS_ERROR);
+
+   return(hModule);
+}
 
 
 /**
@@ -35,7 +49,7 @@ int GetPrivateProfileKeys(string fileName, string section, string results[]) {
       ArrayResize(results, 0);                  // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
    }
    else {
-      StringBufferToArray(buffer, results);
+      ExplodeStrings(buffer, results);
    }
    return(ArraySize(results));
 }
@@ -62,7 +76,7 @@ int GetPrivateProfileSectionNames(string fileName, string results[]) {
       ArrayResize(results, 0);                  // keine Sections gefunden (File nicht gefunden oder leer)
    }
    else {
-      StringBufferToArray(buffer, results);
+      ExplodeStrings(buffer, results);
    }
    return(ArraySize(results));
 }

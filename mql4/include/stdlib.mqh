@@ -12,53 +12,82 @@
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 
+
    // Arrays
-   int      ArrayPushDouble(double array[], double value);
    int      ArrayPushInt(int array[], int value);
+   int      ArrayPushDouble(double array[], double value);
    int      ArrayPushString(string array[], string value);
-   int      ArraySearchDouble(double needle, double haystack[]);
-   int      ArraySearchInt(int needle, int haystack[]);
-   int      ArraySearchString(string needle, string haystack[]);
-   double   ArrayShiftDouble(double array[]);
+
    int      ArrayShiftInt(int array[]);
+   double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
-   bool     DoubleInArray(double needle, double haystack[]);
+
    bool     IntInArray(int needle, int haystack[]);
-   bool     IsReverseIndexedDoubleArray(double array[]);
-   bool     IsReverseIndexedIntArray(int array[]);
-   bool     IsReverseIndexedSringArray(string array[]);
-   string   JoinBools(bool values[], string separator);
-   string   JoinDoubles(double values[], string separator);
-   string   JoinInts(int values[], string separator);
-   string   JoinStrings(string values[], string separator);
-   bool     ReverseDoubleArray(double array[]);
-   bool     ReverseIntArray(int array[]);
-   bool     ReverseStringArray(string array[]);
+   bool     DoubleInArray(double needle, double haystack[]);
    bool     StringInArray(string needle, string haystack[]);
 
+   int      ArraySearchInt(int needle, int haystack[]);
+   int      ArraySearchDouble(double needle, double haystack[]);
+   int      ArraySearchString(string needle, string haystack[]);
+
+   bool     ReverseIntArray(int array[]);
+   bool     ReverseDoubleArray(double array[]);
+   bool     ReverseStringArray(string array[]);
+
+   bool     IsReverseIndexedIntArray(int array[]);
+   bool     IsReverseIndexedDoubleArray(double array[]);
+   bool     IsReverseIndexedSringArray(string array[]);
+
+   string   JoinBools(bool values[], string separator);
+   string   JoinInts(int values[], string separator);
+   string   JoinDoubles(double values[], string separator);
+   string   JoinStrings(string values[], string separator);
+
+
+   // Buffer-Funktionen
+   int      CreateBuffer(int buffer[], int length);
+   string   CreateString(int length);
+   int      CreateStringBuffer(string buffer[], int length);
+
+   string   BufferToStr(int buffer[]);
+   string   BufferToHexStr(int buffer[]);
+
+   string   BufferCharsToStr(int buffer[], int from, int length);
+   string   BufferWCharsToStr(int buffer[], int from, int length);
+
+   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);      // Alias
+   int      ExplodeStringsW(int buffer[], string results[]);
+
+
    // Conditional Statements
-   double   ifDouble(bool condition, double dThen, double dElse);
    int      ifInt(bool condition, int iThen, int iElse);
+   double   ifDouble(bool condition, double dThen, double dElse);
    string   ifString(bool condition, string strThen, string strElse);
 
-   // Config
-   string   GetGlobalConfigPath();
+
+   // Configuration
    string   GetLocalConfigPath();
-   bool     GetConfigBool(string section, string key, bool defaultValue);
-   double   GetConfigDouble(string section, string key, double defaultValue);
-   int      GetConfigInt(string section, string key, int defaultValue);
-   string   GetConfigString(string section, string key, string defaultValue);
-   bool     GetGlobalConfigBool(string section, string key, bool defaultValue);
-   double   GetGlobalConfigDouble(string section, string key, double defaultValue);
-   int      GetGlobalConfigInt(string section, string key, int defaultValue);
-   string   GetGlobalConfigString(string section, string key, string defaultValue);
-   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
-   double   GetLocalConfigDouble(string section, string key, double defaultValue);
-   int      GetLocalConfigInt(string section, string key, int defaultValue);
-   string   GetLocalConfigString(string section, string key, string defaultValue);
+   string   GetGlobalConfigPath();
+
    bool     IsConfigKey(string section, string key);
-   bool     IsGlobalConfigKey(string section, string key);
    bool     IsLocalConfigKey(string section, string key);
+   bool     IsGlobalConfigKey(string section, string key);
+
+   bool     GetConfigBool(string section, string key, bool defaultValue);
+   int      GetConfigInt(string section, string key, int defaultValue);
+   double   GetConfigDouble(string section, string key, double defaultValue);
+   string   GetConfigString(string section, string key, string defaultValue);
+
+   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
+   int      GetLocalConfigInt(string section, string key, int defaultValue);
+   double   GetLocalConfigDouble(string section, string key, double defaultValue);
+   string   GetLocalConfigString(string section, string key, string defaultValue);
+
+   bool     GetGlobalConfigBool(string section, string key, bool defaultValue);
+   int      GetGlobalConfigInt(string section, string key, int defaultValue);
+   double   GetGlobalConfigDouble(string section, string key, double defaultValue);
+   string   GetGlobalConfigString(string section, string key, string defaultValue);
+
 
    // Date/Time
    datetime EasternToGMT(datetime easternTime);
@@ -119,47 +148,62 @@
    string   GetTradeServerTimezone();
    datetime TimeGMT();
 
+
    // Eventlistener
    bool     EventListener(int event, int results[], int flags);
+   bool     EventListener.BarOpen(int results[], int flags);
+
    bool     EventListener.AccountChange(int results[], int flags);
    bool     EventListener.AccountPayment(int results[], int flags);
-   bool     EventListener.BarOpen(int results[], int flags);
    bool     EventListener.HistoryChange(int results[], int flags);
-   bool     EventListener.OrderCancel(int results[], int flags);
-   bool     EventListener.OrderChange(int results[], int flags);
+
    bool     EventListener.OrderPlace(int results[], int flags);
-   bool     EventListener.PositionClose(int results[], int flags);
+   bool     EventListener.OrderChange(int results[], int flags);
+   bool     EventListener.OrderCancel(int results[], int flags);
+
    bool     EventListener.PositionOpen(int results[], int flags);
+   bool     EventListener.PositionClose(int results[], int flags);
+
 
    // Eventhandler
+   int      onBarOpen(int details[]);
    int      onAccountChange(int details[]);
    int      onAccountPayment(int tickets[]);
-   int      onBarOpen(int details[]);
    int      onHistoryChange(int tickets[]);
-   int      onOrderCancel(int tickets[]);
-   int      onOrderChange(int tickets[]);
+
    int      onOrderPlace(int tickets[]);
-   int      onPositionClose(int tickets[]);
+   int      onOrderChange(int tickets[]);
+   int      onOrderCancel(int tickets[]);
+
    int      onPositionOpen(int tickets[]);
+   int      onPositionClose(int tickets[]);
+
 
    // Farben
-   string   ColorToHtmlStr(color rgb);
-   string   ColorToRGBStr(color rgb);
-   color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
-   color    HSVToRGBColor(double hsv[3]);
-   color    HSVValuesToRGBColor(double hue, double saturation, double value);
    color    RGB(int red, int green, int blue);
+
    int      RGBToHSVColor(color rgb, double hsv[]);
    int      RGBValuesToHSVColor(int red, int green, int blue, double hsv[]);
 
+   color    HSVToRGBColor(double hsv[3]);
+   color    HSVValuesToRGBColor(double hue, double saturation, double value);
+
+   color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
+
+   string   ColorToRGBStr(color rgb);
+   string   ColorToHtmlStr(color rgb);
+
+
    // Files, I/O
+   bool     IsFile(string pathName);
+   bool     IsDirectory(string pathName);
+
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    string   GetShortcutTarget(string lnkFile);
-   bool     IsDirectory(string pathName);
-   bool     IsFile(string pathName);
 
-   // MagicNumber-Verwaltung
+
+   // MagicNumbers
    int      StrategyId(int magicNumber);
    string   LFX.Currency(int magicNumber);
    int      LFX.CurrencyId(int magicNumber);
@@ -167,132 +211,155 @@
    double   LFX.Units(int magicNumber);
    int      LFX.Instance(int magicNumber);
 
+
    // Math, Numbers
-   bool     CompareDoubles(double a, double b);                            // MetaQuotes-Alias für EQ()
+   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);     // MetaQuotes-Alias
+   bool     NE(double a, double b);
+
    bool     LT(double a, double b);
    bool     LE(double a, double b);
-   bool     EQ(double a, double b);
-   bool     NE(double a, double b);
-   bool     GE(double a, double b);
+
    bool     GT(double a, double b);
-   int      CountDecimals(double number);
-   string   DecimalToHex(int number);
-   string   FormatNumber(double number, string mask);
+   bool     GE(double a, double b);
+
    double   MathModFix(double a, double b);
    double   MathRoundFix(double number, int decimals);
    int      MathSign(double number);
 
+   int      CountDecimals(double number);
+
+   string   DecimalToHex(int number);
+
+
    // Strings
-   int      Explode(string object, string separator, string results[], int limit);
-   bool     StringContains(string object, string substring);
-   bool     StringEndsWith(string object, string postfix);
-   int      StringFindR(string object, string search);
-   bool     StringICompare(string string1, string string2);
-   bool     StringIContains(string object, string substring);
-   bool     StringIEndsWith(string object, string postfix);
-   bool     StringIStartsWith(string object, string prefix);
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
-   string   StringLeft(string value, int n);
-   string   StringLeftPad(string input, int length, string pad_string);
-   string   StringRepeat(string input, int times);
-   string   StringReplace(string object, string search, string replace);
-   string   StringRight(string value, int n);
-   string   StringRightPad(string input, int length, string pad_string);
+
+   bool     StringContains(string object, string substring);
+   bool     StringIContains(string object, string substring);
+
    bool     StringStartsWith(string object, string prefix);
-   string   StringSubstrFix(string object, int start, int length);
+   bool     StringEndsWith(string object, string postfix);
+   bool     StringIStartsWith(string object, string prefix);
+   bool     StringIEndsWith(string object, string postfix);
+   bool     StringICompare(string string1, string string2);
+
+   string   StringLeft(string value, int n);
+   string   StringRight(string value, int n);
+
+   string   StringTrim(string value);
+   string   StringLeftPad(string input, int length, string pad_string);
+   string   StringRightPad(string input, int length, string pad_string);
+
    string   StringToLower(string value);
    string   StringToUpper(string value);
-   string   StringTrim(string value);
+
+   int      StringFindR(string object, string search);
+   string   StringRepeat(string input, int times);
+   string   StringReplace(string object, string search, string replace);
+   string   StringSubstrFix(string object, int start, int length);
+
+   int      Explode(string object, string separator, string results[], int limit);
    string   UrlEncode(string value);
 
-   // Orderhandling-/Trade-Funktionen
-   bool     IsPermanentTradeError(int error);
-   bool     IsTemporaryTradeError(int error);
+
+   // Orderhandling-/Tradefunktionen
    bool     IsTradeOperationType(int value);
-   bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
-   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
+   bool     IsTemporaryTradeError(int error);
+   bool     IsPermanentTradeError(int error);
+
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
+   bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
+   bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
+
 
    // sonstiges
-   string   AppliedPriceDescription(int appliedPrice);
-   int      ChronologicalSortTickets(int tickets[]);
-   string   CreateLegendLabel(string name);
-   int      DecreasePeriod(int period);
-   string   ErrorDescription(int error);
-   int      GetAccountHistory(int account, string results[]);
    int      GetAccountNumber();
-   double   GetAverageSpread(string symbol);
+   int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
-   string   GetComputerName();
+   int      ChronologicalSortTickets(int tickets[]);
+   string   ShortAccountCompany();
+
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
-   string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
-   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   string   GetLongSymbolNameStrict(string symbol);
+
    string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
+
    string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
-   int      GetTerminalWindow();
-   string   GetTradeServerDirectory();
-   string   GetWindowText(int hWnd);
+
+   string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
+   string   GetLongSymbolNameStrict(string symbol);
+
+   int      IncreasePeriod(int period);
+   int      DecreasePeriod(int period);
+
+   int      MovingAverageMethodToId(string method);
+   int      PeriodFlag(int period);
+   int      PeriodToId(string description);
+
+   string   AppliedPriceDescription(int appliedPrice);
+   string   ErrorDescription(int error);
+   string   MovingAverageMethodDescription(int method);
+   string   OperationTypeDescription(int type);
+   string   PeriodDescription(int period);
+   string   UninitializeReasonDescription(int reason);
+
+   string   CreateLegendLabel(string name);
+   int      RepositionLegend();
+   int      RemoveChartObjects(string objects[]);
+
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
-   int      IncreasePeriod(int period);
-   string   MovingAverageMethodDescription(int method);
-   int      MovingAverageMethodToId(string method);
-   string   OperationTypeDescription(int type);
-   string   PeriodDescription(int period);
-   int      PeriodFlag(int period);
-   int      PeriodToId(string description);
-   int      RemoveChartObjects(string objects[]);
-   int      RepositionLegend();
-   int      SendTextMessage(string receiver, string message);
-   int      SendTick(bool sound);
+
+   string   GetComputerName();
+   int      GetTerminalWindow();
+   string   GetTradeServerDirectory();
+   string   GetWindowText(int hWnd);
    int      SetWindowText(int hWnd, string text);
-   string   ShortAccountCompany();
-   int      StringBufferToArray(int buffer[], string results[]);
-   int      SwitchExperts(bool enable);
-   string   UninitializeReasonDescription(int reason);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
+   int      SendTextMessage(string receiver, string message);
+   int      SendTick(bool sound);
+   int      SwitchExperts(bool enable);
+   double   GetAverageSpread(string symbol);
+
+
    // toString-Funktionen
-   string   AppliedPriceToStr(int appliedPrice);
-   string   BoolArrayToStr(bool values[], string separator);
    string   BoolToStr(bool value);
+   string   IntToHexStr(int integer);                 string IntegerToHexStr(int integer);                              // MetaQuotes-Alias
+   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double number, int precision);    // MetaQuotes-Alias
+
+   string   BoolArrayToStr(bool values[], string separator);
+   string   IntArrayToStr(int values[], string separator);
    string   DateTimeArrayToStr(int values[], string separator);
-   string   DoubleToStrEx(double value, int digits);
-   string   DoubleToStrMorePrecision(double number, int precision);        // MetaQuotes-Alias für DoubleToStrEx()
+   string   OperationTypeArrayToStr(int values[], string separator);
    string   DoubleArrayToStr(double values[], string separator);
+   string   MoneyArrayToStr(double values[], string separator);
+   string   PriceArrayToStr(double values[], string format, string separator);
+   string   StringArrayToStr(string values[], string separator);
+
+   string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   IntArrayToStr(int values[], string separator);
-   string   IntToHexStr(int integer);
-   string   IntegerToHexStr(int integer);                                  // MetaQuotes-Alias für IntToHexStr()
    string   MessageBoxCmdToStr(int cmd);
-   string   MoneyArrayToStr(double values[], string separator);
    string   MovingAverageMethodToStr(int method);
-   string   NumberToStr(double number, string mask);
-   string   OperationTypeArrayToStr(int values[], string separator);
+   string   NumberToStr(double number, string format);
    string   OperationTypeToStr(int type);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
-   string   PriceArrayToStr(double values[], string format, string separator);
    string   ShellExecuteErrorToStr(int error);
-   string   StringArrayToStr(string values[], string separator);
-   string   StructCharToStr(int struct[], int from, int len);
-   string   StructToHexStr(int struct[]);
-   string   StructToStr(int struct[]);
-   string   StructWCharToStr(int struct[], int from, int len);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
+
 
    // Win32-Structs Getter und Setter
    int      pi.hProcess                   (/*PROCESS_INFORMATION*/ int pi[]);

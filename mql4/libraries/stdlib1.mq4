@@ -78,6 +78,80 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Initialisiert einen Buffer zur Aufnahme von beliebigen Bytes in der gewünschten Länge. Byte-Buffer können in MQL nur über Integer-Arrays dargestellt werden.
+ *
+ * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
+ * @param  int length   - Länge des Buffers in Bytes
+ *
+ * @return int - Fehlerstatus
+ */
+int CreateBuffer(int buffer[], int length) {
+   if (ArrayDimension(buffer) > 1)
+      return(catch("CreateBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)
+      return(catch("CreateBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 = length % 4
+   else                    length = length >> 2 + 1;
+
+   if (ArraySize(buffer) < length)
+      ArrayResize(buffer, length);
+
+   return(catch("CreateBuffer(3)"));
+}
+
+
+/**
+ * Initialisiert einen Buffer zur Aufnahme von Strings in der gewünschten Länge.
+ *
+ * @param  string buffer[] - das für den Buffer zu verwendende String-Array
+ * @param  int    length   - Länge des Buffers in Zeichen
+ *
+ * @return int - Fehlerstatus
+ */
+int CreateStringBuffer(string& buffer[], int length) {
+   if (ArrayDimension(buffer) > 1)
+      return(catch("CreateStringBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)
+      return(catch("CreateStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (ArraySize(buffer) == 0)
+      ArrayResize(buffer, 1);
+
+   buffer[0] = CreateString(length);
+
+   return(catch("CreateStringBuffer(3)"));
+}
+
+
+/**
+ * Erzeugt einen neuen String der gewünschten Länge.
+ *
+ * @param  int length - Länge
+ *
+ * @return string
+ */
+string CreateString(int length) {
+   if (length < 0) {
+      catch("CreateString()  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return("");
+   }
+
+   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");        // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
+   int strLen = StringLen(newStr);                                   // Daher wird auch beim Initialisieren StringConcatenate() verwendet (siehe MQL.doc).
+
+   while (strLen < length) {
+      newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
+      strLen = StringLen(newStr);
+   }
+
+   if (strLen != length)
+      newStr = StringSubstr(newStr, 0, length);
+   return(newStr);
+}
+
+
+/**
  * Gibt die Strategy-ID einer MagicNumber zurück.
  *
  * @param  int magicNumber
@@ -806,7 +880,7 @@ bool ReverseStringArray(string array[]) {
  *    TCHAR    cAlternateFileName[14];    //  14     => wfd[76]      A:  14 * 1 byte      W:  14 * 2 byte
  * } WIN32_FIND_DATA, wfd;                // 318 byte = int[80]      2 byte Überhang
  *
- * StructToHexStr(WIN32_FIND_DATA) = 20000000
+ * BufferToHexStr(WIN32_FIND_DATA) = 20000000
  *                                   C0235A72 81BDC801
  *                                   00F0D85B C9CBCB01
  *                                   00884084 D32BC101
@@ -840,8 +914,8 @@ bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wf
 bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
 bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
 bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/ int wfd[]) { return(StructCharToStr(wfd, 11, 65)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]) { return(StructCharToStr(wfd, 76,  4)); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/ int wfd[]) { return(BufferCharsToStr(wfd, 44, MAX_PATH)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]) { return(BufferCharsToStr(wfd, 304, 14)); }
 
 
 /**
@@ -885,7 +959,7 @@ string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int wdf[]) {
  *    DWORD dwHighDateTime;
  * } FILETIME, ft;
  *
- * StructToHexStr(FILETIME) =
+ * BufferToHexStr(FILETIME) =
  */
 
 
@@ -899,7 +973,7 @@ string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int wdf[]) {
  *    DWORD  dwThreadId;
  * } PROCESS_INFORMATION, pi;       // = 16 byte = int[4]
  *
- * StructToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
+ * BufferToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
  */
 int pi.hProcess (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[0]); }
 int pi.hThread  (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[1]); }
@@ -916,7 +990,7 @@ int pi.ThreadId (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[3]); }
  *    BOOL   bInheritHandle;
  * } SECURITY_ATTRIBUTES, sa;       // = 12 byte = int[3]
  *
- * StructToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
+ * BufferToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
  */
 int  sa.Length            (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[0]); }
 int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[1]); }
@@ -947,7 +1021,7 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[2] != 0
  *    HANDLE hStdError;                 =>  si[16]
  * } STARTUPINFO, si;       // = 68 byte = int[17]
  *
- * StructToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
+ * BufferToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
  */
 int si.cb            (/*STARTUPINFO*/ int si[]) { return(si[ 0]); }
 int si.Desktop       (/*STARTUPINFO*/ int si[]) { return(si[ 2]); }
@@ -1041,7 +1115,7 @@ string si.ShowWindowToStr(/*STARTUPINFO*/ int si[]) {
  *    WORD wMilliseconds;
  * } SYSTEMTIME, st;       // = 16 byte = int[4]
  *
- * StructToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
+ * BufferToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
 int st.Year     (/*SYSTEMTIME*/ int st[]) { return(st[0] &  0x0000FFFF); }
 int st.Month    (/*SYSTEMTIME*/ int st[]) { return(st[0] >> 16        ); }
@@ -1066,7 +1140,7 @@ int st.MilliSec (/*SYSTEMTIME*/ int st[]) { return(st[3] >> 16        ); }
  *    LONG       DaylightBias;        //     4     => tzi[42]
  * } TIME_ZONE_INFORMATION, tzi;      // = 172 byte = int[43]
  *
- * StructToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
+ * BufferToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
  *                                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
  *                                         G   T    B   .    N   o    r   m    a   l    z   e    i   t
  *                                         00000A00 00000500 04000000 00000000
@@ -1077,22 +1151,54 @@ int st.MilliSec (/*SYSTEMTIME*/ int st[]) { return(st[3] >> 16        ); }
  *                                         C4FFFFFF
  */
 int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[0]); }                               // Bias in Minuten
-string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(StructWCharToStr(tzi, 1, 16)); }
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(BufferWCharsToStr(tzi, 1, 16)); }
 void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
 int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[21]); }                              // Bias in Minuten
-string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(StructWCharToStr(tzi, 22, 16)); }
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(BufferWCharsToStr(tzi, 22, 16)); }
 void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
 int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[42]); }                              // Bias in Minuten
 
 
 /**
- * Gibt den Inhalt einer Structure als hexadezimalen String zurück.
+ * Gibt den kompletten Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), alle anderen nicht darstellbaren Zeichen fett (•) dargestellt.
+ * Nützlich, um im Buffer enthaltene Daten schnell visualisieren zu können.
  *
- * @param  int struct[]
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  *
  * @return string
  */
-string StructToHexStr(int struct[]) {
+string BufferToStr(int buffer[]) {
+   int    size   = ArraySize(buffer);
+   string result = CreateString(size << 2);                       // ein Integer = 4 Byte = 4 Zeichen
+
+   for (int i=0; i < size; i++) {
+      int integer = buffer[i];                                    // Integers nacheinander verarbeiten
+                                                                                                            // +---+------------+------+
+      for (int n=0; n < 4; n++) {                                                                           // | n |    byte    | char |
+         int byte = integer & 0xFF;                               // einzelnes Byte des Integers lesen      // +---+------------+------+
+         if (byte < 0x20) {                                       // nicht darstellbare Zeichen ersetzen    // | 0 | 0x000000FF |   1  |
+            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NULL-Byte (…)                          // | 1 | 0x0000FF00 |   2  |
+            else              byte = PLACEHOLDER_CONTROL_CHAR;    // sonstiger Control-Character (•)        // | 2 | 0x00FF0000 |   3  |
+         }                                                                                                  // | 3 | 0xFF000000 |   4  |
+         result = StringSetChar(result, i<<2 + n, byte);          // Zeichen setzen                         // +---+------------+------+
+         integer >>= 8;
+      }
+   }
+
+   if (catch("BufferToStr()") != NO_ERROR)
+      return("");
+   return(result);
+}
+
+
+/**
+ * Gibt den kompletten Inhalt eines Byte-Buffers als hexadezimalen String zurück.
+ *
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ *
+ * @return string
+ */
+string BufferToHexStr(int struct[]) {
    string result = "";
    int size = ArraySize(struct);
 
@@ -1110,119 +1216,90 @@ string StructToHexStr(int struct[]) {
    if (size > 0)
       result = StringSubstr(result, 1);
 
-   if (catch("StructToHexStr()") != NO_ERROR)
+   if (catch("BufferToHexStr()") != NO_ERROR)
       return("");
    return(result);
 }
 
 
 /**
- * Gibt den Inhalt einer Structure als lesbaren String zurück. Nicht darstellbare Zeichen werden als Punkt "." dargestellt.
- * Nützlich, um im Struct enthaltene Strings schnell identifizieren zu können.
+ * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte ANSI-Charactersequenz zurück.
  *
- * @param  int struct[]
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ * @param  int from     - Index des ersten Bytes des für die Charactersequenz reservierten Bereichs, beginnend mit 0
+ * @param  int length   - Anzahl der im Buffer für die Charactersequenz reservierten Bytes
  *
- * @return string
+ * @return string       - ANSI-String
  */
-string StructToStr(int struct[]) {
-   string result = "";
-   int size = ArraySize(struct);
+string BufferCharsToStr(int buffer[], int from, int length) {
+   int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   for (int i=0; i < size; i++) {
-      string strInt = "0000";
-      int value, shift=24, integer=struct[i];
+   if (fromChar < 0)            { catch("BufferCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
+   if (fromChar >= bufferChars) { catch("BufferCharsToStr(2)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
+   if (length < 0)              { catch("BufferCharsToStr(3)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
+   if (toChar >= bufferChars)   { catch("BufferCharsToStr(4)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
 
-      // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
-      // Diese Interpretation muß wieder rückgängig gemacht werden.
-      for (int n=0; n < 4; n++) {
-         value = (integer >> shift) & 0xFF;                                // Integer in Bytes zerlegen
-         if (value < 0x20) strInt = StringSetChar(strInt, 3-n, '.');
-         else              strInt = StringSetChar(strInt, 3-n, value);     // jedes Byte an der richtigen Stelle darstellen
-         shift -= 8;
-      }
-      result = StringConcatenate(result, strInt);
-   }
-
-   if (catch("StructToStr()") != NO_ERROR)
+   if (length == 0)
       return("");
-   return(result);
-}
-
-
-/**
- * Gibt den in einer Structure im angegebenen Bereich gespeicherten und mit einem NULL-Character terminierten ANSI-String zurück.
- *
- * @param  int struct[] - Structure
- * @param  int from     - Index des ersten Integers der Charactersequenz
- * @param  int len      - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
- *
- * @return string
- *
- *
- * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
- * ----
- */
-string StructCharToStr(int struct[], int from, int len) {
-   if (from < 0)
-      return(catch("StructCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   int to = from+len, size=ArraySize(struct);
-   if (to > size)
-      return(catch("StructCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
+   int chars, fromInt=fromChar>>2, toInt=toChar>>2, n=fromChar&0x03; // Indizes der relevanten Array-Integers und des ersten Chars (liegt evt. nicht auf Integer-Boundary)
 
-   for (int i=from; i < to; i++) {
-      int byte, shift=0, integer=struct[i];
+   for (int i=fromInt; i <= toInt; i++) {
+      int byte, integer=buffer[i];
 
-      for (int n=0; n < 4; n++) {
-         byte = (integer >> shift) & 0xFF;
-         if (byte == 0)                                        // termination character (0x00)
+      for (; n < 4; n++) {                                           // n: 0-1-2-3
+         if (chars == length)
+            break;
+         byte = integer >> (n<<3) & 0xFF;                            // integer >> 0-8-16-24
+         if (byte == 0x00)                                           // NULL-Byte: Ausbruch aus innerer Schleife
             break;
          result = StringConcatenate(result, CharToStr(byte));
-         shift += 8;
+         chars++;
       }
-      if (byte == 0)
+      if (byte == 0x00)                                              // NULL-Byte: Ausbruch aus äußerer Schleife
          break;
+      n = 0;
    }
 
-   if (catch("StructCharToStr(3)") != NO_ERROR)
+   if (catch("BufferCharsToStr(5)") != NO_ERROR)
       return("");
    return(result);
 }
 
 
 /**
- * Gibt den in einer Structure im angegebenen Bereich gespeicherten mit einem NULL-Character terminierten WCHAR-String zurück (Multibyte-Characters).
+ * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters).
  *
- * @param  int struct[] - Structure
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Charactersequenz
- * @param  int len      - Anzahl der Integers des im Struct für die Charactersequenz reservierten Bereiches
+ * @param  int length   - Anzahl der Integers des im Buffer für die Charactersequenz reservierten Bereiches
  *
- * @return string
+ * @return string       - ANSI-String
  *
  *
  * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  * ----
  */
-string StructWCharToStr(int struct[], int from, int len) {
+string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
-      return(catch("StructWCharToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   int to = from+len, size=ArraySize(struct);
+      return(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   int to = from+length, size=ArraySize(buffer);
    if (to > size)
-      return(catch("StructWCharToStr(2)  invalid parameter len = "+ len, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
    for (int i=from; i < to; i++) {
       string strChar;
-      int word, shift=0, integer=struct[i];
+      int word, shift=0, integer=buffer[i];
 
       for (int n=0; n < 2; n++) {
          word = (integer >> shift) & 0xFFFF;
          if (word == 0)                                        // termination character (0x00)
             break;
-         int byte1 = (word >> 0) & 0xFF;
-         int byte2 = (word >> 8) & 0xFF;
+         int byte1 = word      & 0xFF;
+         int byte2 = word >> 8 & 0xFF;
 
          if (byte1!=0 && byte2==0) strChar = CharToStr(byte1);
          else                      strChar = "?";              // multi-byte character
@@ -1233,7 +1310,7 @@ string StructWCharToStr(int struct[], int from, int len) {
          break;
    }
 
-   if (catch("StructWCharToStr(3)") != NO_ERROR)
+   if (catch("BufferWCharsToStr(3)") != NO_ERROR)
       return("");
    return(result);
 }
@@ -1247,7 +1324,7 @@ string StructWCharToStr(int struct[], int from, int len) {
  *
  * @return int - Anzahl der konvertierten Strings
  */
-int StringBufferToArray(int buffer[], string& results[]) {
+int ExplodeStrings(int buffer[], string& results[]) {
    int  bufferSize = ArraySize(buffer);
    bool separator  = true;
 
@@ -1259,7 +1336,7 @@ int StringBufferToArray(int buffer[], string& results[]) {
 
       // Die Reihenfolge von HIBYTE, LOBYTE, HIWORD und LOWORD eines Integers muß in die eines Strings konvertiert werden.
       for (int n=0; n < 4; n++) {
-         value = (integer >> shift) & 0xFF;           // Integer in Bytes zerlegen
+         value = integer >> shift & 0xFF;             // Integer in Bytes zerlegen
 
          if (value != 0x00) {                         // kein Trennzeichen, Character in Array ablegen
             if (separator) {
@@ -1281,20 +1358,36 @@ int StringBufferToArray(int buffer[], string& results[]) {
       }
    }
 
-   if (catch("StringBufferToArray()") != NO_ERROR)
+   if (catch("ExplodeStrings()") != NO_ERROR)
       return(0);
    return(ArraySize(results));
 }
 
 
 /**
+ * Alias für ExplodeStringsA()
+ */
+int ExplodeStringsA(int buffer[], string& results[]) {
+   return(ExplodeStrings(buffer, results));
+}
+
+
+/**
+ *
+ */
+int ExplodeStringsW(int buffer[], string& results[]) {
+   return(catch("ExplodeStringsW()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
  * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
  *
- * @return string lnkFile - Pfadangabe zum Shortcut
+ * @return string lnkFilename - Pfadangabe zum Shortcut
  *
  * @return string - Dateipfad der Zieldatei
  */
-string GetShortcutTarget(string lnkFile) {
+string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    // How to read the target's path from a .lnk-file:
    // --------------------------------------------------------------------------
@@ -1341,41 +1434,42 @@ string GetShortcutTarget(string lnkFile) {
    // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
-   if (StringLen(lnkFile) < 4 || StringRight(lnkFile, 4)!=".lnk") {
-      catch("GetShortcutTarget(1)  invalid parameter lnkFile = \""+ lnkFile +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk") {
+      catch("GetShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
-   int hFile = _lopen(string lnkFile, OF_READ);
+   int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR) {                     // kernel32::GetLastError() ist nicht erreichbar, Existenz daher manuell prüfen
-      if (IsFile(lnkFile)) catch("GetShortcutTarget(2)  access denied to \""+ lnkFile +"\"", ERR_CANNOT_OPEN_FILE);
-      else                 catch("GetShortcutTarget(3)  file not found: \""+ lnkFile +"\"", ERR_CANNOT_OPEN_FILE);
+      if (IsFile(lnkFilename)) catch("GetShortcutTarget(2)  access denied to \""+ lnkFilename +"\"", ERR_CANNOT_OPEN_FILE);
+      else                     catch("GetShortcutTarget(3)  file not found: \""+ lnkFilename +"\"", ERR_CANNOT_OPEN_FILE);
       return("");
    }
    int fileSize = GetFileSize(hFile, NULL);
-   int ints     = MathCeil(fileSize/4.0);          // noch keinen Weg gefunden, Strings mit 0-Bytes einzulesen, daher int-Array als Buffer
-   int buffer[]; ArrayResize(buffer, ints);        // buffer[] ist maximal 3 Bytes größer als notwendig
+   int buffer[]; CreateBuffer(buffer, fileSize);
 
-   int bytes = _lread(hFile, buffer, ints * 4);    // 1 Integer = 4 Bytes
+   int bytes = _lread(hFile, buffer, fileSize);
    _lclose(hFile);
 
    if (bytes != fileSize) {
-      catch("GetShortcutTarget(4)  error reading \""+ lnkFile +"\"", ERR_WINDOWS_ERROR);
+      catch("GetShortcutTarget(4)  error reading \""+ lnkFilename +"\"", ERR_WINDOWS_ERROR);
       return("");
    }
    if (bytes < 24) {
-      catch("GetShortcutTarget(5)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
+   int integers  = ArraySize(buffer);
    int charsSize = bytes;
    int chars[]; ArrayResize(chars, charsSize);     // int-Array in char-Array umwandeln
-   for (int i, n=0; i < ints; i++) {
-      for (int shift=0; shift < 32 && n < charsSize; shift+=8, n++) {
-         chars[n] = (buffer[i] >> shift) & 0xFF;
+
+   for (int i, n=0; i < integers; i++) {
+      for (int shift=0; shift<32 && n<charsSize; shift+=8, n++) {
+         chars[n] = buffer[i] >> shift & 0xFF;
       }
    }
 
@@ -1386,7 +1480,7 @@ string GetShortcutTarget(string lnkFile) {
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
    if (chars[0] != 'L') {                          // test the magic value
-      catch("GetShortcutTarget(6)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    if (chars[ 4] != 0x01 ||                        // test the GUID
@@ -1405,7 +1499,7 @@ string GetShortcutTarget(string lnkFile) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      catch("GetShortcutTarget(7)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1432,7 +1526,7 @@ string GetShortcutTarget(string lnkFile) {
    bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
 
    if (!pointsToFileOrDir) {
-      log("GetShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFile +"\"");
+      log("GetShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
       return("");
    }
 
@@ -1443,7 +1537,7 @@ string GetShortcutTarget(string lnkFile) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2) {
-         catch("GetShortcutTarget(9)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+         catch("GetShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
          return("");
       }
       A  = chars[76];               // little endian format
@@ -1458,7 +1552,7 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(10)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int B  = chars[i];       i++;    // little endian format
@@ -1474,7 +1568,7 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(11)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int C  = chars[i];       i++;    // little endian format
@@ -1487,7 +1581,7 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1) {
-      catch("GetShortcutTarget(12)  unknown .lnk-file format in \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(12)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    string target = "";
@@ -1497,7 +1591,7 @@ string GetShortcutTarget(string lnkFile) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (StringLen(target) == 0) {
-      catch("GetShortcutTarget(13)  invalid target in .lnk-file \""+ lnkFile +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(13)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1506,8 +1600,7 @@ string GetShortcutTarget(string lnkFile) {
    // --------------------------------------------------------------------------
    // GetLongPathNameA() fails if the target file doesn't exist!
    // --------------------------------------------------------------------------
-   string lfnBuffer[1]; lfnBuffer[0] = StringConcatenate(MAX_STRING_LITERAL, ".....");    // 255 + 5 = MAX_PATH
-
+   string lfnBuffer[]; CreateStringBuffer(lfnBuffer, MAX_PATH);
    if (!GetLongPathNameA(target, lfnBuffer[0], MAX_PATH))
       return(target);                                                                     // file doesn't exist
    target = lfnBuffer[0];
@@ -2612,8 +2705,8 @@ bool StringIEndsWith(string object, string postfix) {
  * @return string
  */
 string StringLeft(string value, int n) {
-   if      (n > 0) return(StringSubstr(value, 0, n));
-   else if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
+   if (n > 0) return(StringSubstr   (value, 0, n                 ));
+   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
    return("");
 }
 
@@ -2633,15 +2726,15 @@ string StringLeft(string value, int n) {
  * @return string
  */
 string StringRight(string value, int n) {
-   if      (n > 0) return(StringSubstr(value, StringLen(value)-n));
-   else if (n < 0) return(StringSubstr(value, -n));
+   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
+   if (n < 0) return(StringSubstr(value, -n                ));
    return("");
 }
 
 
 /**
  * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
- * Ermöglicht die Angabe negativer Werte für start und length
+ * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
  * @param  string object
  * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
@@ -4391,8 +4484,8 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
  * @return string - Name
  */
 string GetComputerName() {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
-   int bufferSize[1]; bufferSize[0] = StringLen(buffer[0]);
+   int bufferSize[1]; bufferSize[0] = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize)) {
       catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ bufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
@@ -4417,8 +4510,9 @@ string GetComputerName() {
  */
 bool GetConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
-   int bufferSize = StringLen(buffer[0]);
+
+   int bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
@@ -4448,8 +4542,8 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");   // Zeigerproblematik (siehe MetaTrader.doc)
-   int bufferSize = StringLen(buffer[0]);
+   int bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
@@ -4642,9 +4736,11 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-                                                                                 // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
+
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
    bool result = true;
@@ -4669,9 +4765,10 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-                                                                                 // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetGlobalConfigPath());
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -4813,8 +4910,8 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
  * @return string
  */
 string GetPrivateProfileString(string fileName, string section, string key, string defaultValue="") {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-   int bufferSize = StringLen(buffer[0]);
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
 
    int result = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
 
@@ -4842,9 +4939,11 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
  */
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-                                                                                 // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
+
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetLocalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
    bool result = true;
@@ -4869,9 +4968,10 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  * @return double - Konfigurationswert
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
-                                                                                 // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], StringLen(buffer[0]), GetLocalConfigPath());
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -5247,7 +5347,7 @@ string EventToStr(int event) {
  */
 int GetLocalToGmtOffset(datetime localTime=-1) {
    if (localTime != -1) {
-      catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_RUNTIME_ERROR);
+      catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
       return(EMPTY_VALUE);
    }
 
@@ -5861,9 +5961,10 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text
  */
 string GetWindowText(int hWnd) {
-   string buffer[1]; buffer[0] = StringConcatenate(MAX_STRING_LITERAL, "");      // Zeigerproblematik (siehe MetaTrader.doc)
+   int    bufferSize = 255;
+   string buffer[]; CreateStringBuffer(buffer, bufferSize);
 
-   GetWindowTextA(hWnd, buffer[0], StringLen(buffer[0]));
+   GetWindowTextA(hWnd, buffer[0], bufferSize);
 
    if (catch("GetWindowText()") != NO_ERROR)
       return("");
@@ -6175,7 +6276,7 @@ string JoinDoubles(double values[], string separator) {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = FormatNumber(values[i], ".1+");
+      strings[i] = NumberToStr(values[i], ".1+");
    }
 
    return(JoinStrings(strings, separator));
@@ -7122,9 +7223,9 @@ string ColorToHtmlStr(color rgb) {
  * Beispiel: ColorToRGBStr(White) => "255,255,255"
  */
 string ColorToRGBStr(color rgb) {
-   int red   = rgb     & 0xFF;
-   int green = rgb>> 8 & 0xFF;
-   int blue  = rgb>>16 & 0xFF;
+   int red   = rgb       & 0xFF;
+   int green = rgb >>  8 & 0xFF;
+   int blue  = rgb >> 16 & 0xFF;
 
    return(StringConcatenate(red, ",", green, ",", blue));
 }
@@ -7154,9 +7255,9 @@ int RGBValuesToHSVColor(int red, int green, int blue, double hsv[]) {
  * @return int - Fehlerstatus
  */
 int RGBToHSVColor(color rgb, double& hsv[]) {
-   int red   = rgb     & 0xFF;
-   int green = rgb>> 8 & 0xFF;
-   int blue  = rgb>>16 & 0xFF;
+   int red   = rgb       & 0xFF;
+   int green = rgb >>  8 & 0xFF;
+   int blue  = rgb >> 16 & 0xFF;
 
    double r=red/255.0, g=green/255.0, b=blue/255.0;      // scale to unity (0-1)
 
@@ -7450,8 +7551,8 @@ double MathRoundFix(double number, int decimals) {
  * @return int - sign (-1, 0, +1)
  */
 int MathSign(double number) {
-   if      (number > 0) return( 1);
-   else if (number < 0) return(-1);
+   if (GT(number, 0)) return( 1);
+   if (LT(number, 0)) return(-1);
    return(0);
 }
 
@@ -7466,12 +7567,12 @@ int MathSign(double number) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0) {
-      catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
-   if (StringLen(input) == 0) return("");
    if (times ==  0)           return("");
+   if (StringLen(input) == 0) return("");
 
    string output = input;
    for (int i=1; i < times; i++) {
@@ -7482,30 +7583,22 @@ string StringRepeat(string input, int times) {
 
 
 /**
- * Alias für NumberToStr().
- */
-string FormatNumber(double number, string mask) {
-   return(NumberToStr(number, mask));
-}
-
-
-/**
  * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
  * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
  *
  * Mask parameters:
  *
- *   n        = number of digits to the left of the decimal point, e.g. FormatNumber(123.456, "5") => "123"
- *   n.d      = number of left and right digits, e.g. FormatNumber(123.456, "5.2") => "123.45"
- *   n.       = number of left and all right digits, e.g. FormatNumber(123.456, "2.") => "23.456"
- *    .d      = all left and number of right digits, e.g. FormatNumber(123.456, ".2") => "123.45"
- *    .d'     = all left and number of right digits plus 1 additional subpip digit, e.g. FormatNumber(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. FormatNumber(123.456, ".2+") => "123.456"
+ *   n        = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
+ *   n.d      = number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *   n.       = number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
+ *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
+ *    .d'     = all left and number of right digits plus 1 additional subpip digit, e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
+ *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits, e.g. NumberToStr(123.456, ".2+") => "123.456"
  *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
- *    R       = round result in the last displayed digit, e.g. FormatNumber(123.456, "R3.2") => "123.46", e.g. FormatNumber(123.7, "R3") => "124"
- *    ;       = Separatoren tauschen (Europäisches Format), e.g. FormatNumber(123456.789, "6.2;") => "123456,78"
- *    ,       = Tausender-Separatoren einfügen, e.g. FormatNumber(123456.789, "6.2,") => "123,456.78"
- *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. FormatNumber(123456.789, ", 6.2") => "123 456.78"
+ *    R       = round result in the last displayed digit, e.g. NumberToStr(123.456, "R3.2") => "123.46", e.g. NumberToStr(123.7, "R3") => "124"
+ *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
+ *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
+ *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ", 6.2") => "123 456.78"
  *
  * @param  double number
  * @param  string mask

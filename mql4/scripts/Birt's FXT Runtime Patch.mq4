@@ -1,12 +1,13 @@
 /**
- * Birt's Terminal Runtime Patch
+ * Birt's FXT Runtime Patch
  *
- * An mein Framework angepaßte Version der Originalversion Birt's vom 11.09.2011. Die Funktionalität wurde nicht verändert.
+ * An mein Framework angepaßte und modifizierte Version der Originalversion Birt's vom 11.09.2011. Die Funktionalität selbst ist unverändert.
  *
  * @author  Cristi Dumitrescu <birt@eareview.net>
- * @see     http://www.eareview.net/
+ * @see     http://www.eareview.net/tickdata
  */
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 
 #property show_inputs
@@ -16,36 +17,14 @@
 
 extern bool   Dont.Overwrite.FXT.Files       = true;
 extern string _1____________________________ = "The 2GB limit removal works in Windows 7 and Vista only.";
-extern bool   Remove.2GB.FXT.Limit           = false;
+extern bool   Remove.2GB.Limit               = false;
 extern string _2____________________________ = "Using the variable spread option requires variable spread FXT files.";
-extern bool   Variable.Spread.FXT.Files      = false;
+extern bool   Use.Variable.Spread.Files      = false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#define MEM_COMMIT               0x1000
-#define PAGE_EXECUTE_READWRITE   0x40
-#define MAX_PATH                 260
-
-#define LAST_BUILD_KNOWN         406
-
-#import "kernel32.dll"
-   int  GetCurrentProcess();
-   int  WriteProcessMemory(int handle, int address, int& buffer[], int size, int& written);
-   int  ReadProcessMemory(int handle, int address, int& buffer[], int size, int& read);
-   int  LoadLibraryA(string file);
-   int  GetProcAddress(int hmodule, string procname);
-   int  VirtualAlloc(int addr, int size, int type, int protect);
-   int  GetModuleHandleA(int modName);
-   int  GetModuleFileNameA(int hmod, int &buffer[], int len);
-
-#import "Version.dll"
-   int  GetFileVersionInfoSizeA(int &filename[], int h);
-   bool GetFileVersionInfoA(int &filename[], int h, int len, int& lpData[]);
-#import
-
-
-int terminalBuild;
+int mt4Build;
 
 
 /**
@@ -70,23 +49,40 @@ int deinit() {
 }
 
 
+#define MEM_COMMIT               0x1000
+#define PAGE_EXECUTE_READWRITE   0x40
+#define LAST_BUILD_KNOWN         406
+
+#import "kernel32.dll"
+   int  GetCurrentProcess();
+   int  WriteProcessMemory(int handle, int address, int& buffer[], int size, int& written);
+   int  ReadProcessMemory(int handle, int address, int& buffer[], int size, int& read);
+   int  LoadLibraryA(string file);
+   int  GetProcAddress(int hmodule, string procname);
+   int  VirtualAlloc(int addr, int size, int type, int protect);
+#import
+
+
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int start() {
-   terminalBuild = GetTerminalBuildVersion();
-   Print("MT4 build "+ terminalBuild +" detected.");
+   mt4Build = GetTerminalBuild();
+   if (mt4Build == 0)
+      return(last_error);
 
-   if (terminalBuild > LAST_BUILD_KNOWN) {
+   Print("MT4 build "+ mt4Build +" detected.");
+
+   if (mt4Build > LAST_BUILD_KNOWN) {
       Print("The patch you are running was not tested with this build so it may or may not work.");
       Print("You should check for a new patch at http://eareview.net/tick-data");
    }
 
-   if (Dont.Overwrite.FXT.Files)  FXTOverwritePatch();
-   if (Remove.2GB.FXT.Limit)      Remove2GBLimitPatch();
-   if (Variable.Spread.FXT.Files) VariableSpreadPatch();
+   if (Dont.Overwrite.FXT.Files)  DontOverwriteFXTPatch();
+   if (Remove.2GB.Limit)          Remove2GBLimitPatch();
+   if (Use.Variable.Spread.Files) VariableSpreadPatch();
 
    return(catch("start()"));
 }
@@ -95,38 +91,51 @@ int start() {
 /**
  *
  */
-int GetTerminalBuildVersion() {
-   int vSize, vInfo[];
-   int hMod = GetModuleHandleA(0);
-   int exePath[];
-   ArrayResize(exePath, MAX_PATH/4);
-   GetModuleFileNameA(hMod, exePath, MAX_PATH);
-   string vChar[4];
-   vSize = GetFileVersionInfoSizeA(exePath, 0);
-   ArrayResize(vInfo, vSize / 4);
-   GetFileVersionInfoA(exePath, 0, vSize, vInfo);
-   string vString = "";
-   for(int i = 0; i < vSize / 4; i++){
-      vChar[0] = CharToStr(vInfo[i] & 0x000000FF);
+int GetTerminalBuild() {
+   string filename[]; CreateStringBuffer(filename, MAX_PATH);
+   GetModuleFileNameA(0, filename[0], MAX_PATH);
+
+   int vSize = GetFileVersionInfoSizeA(filename[0], 0);
+   int vInfo[]; CreateBuffer(vInfo, vSize);
+   GetFileVersionInfoA(filename[0], 0, vSize, vInfo);
+   debug("GetTerminalBuild()   vInfo = "+ BufferToStr(vInfo));
+
+   //vInfo = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
+
+
+   string vString="", vChar[4]={"","","",""};
+
+   for (int i=0; i < vSize/4; i++) {
+      vChar[0] = CharToStr(vInfo[i]       & 0x000000FF);
       vChar[1] = CharToStr(vInfo[i] >>  8 & 0x000000FF);
       vChar[2] = CharToStr(vInfo[i] >> 16 & 0x000000FF);
-      if(vChar[0] == "" && vChar[3] == "") vString = vString + " ";
-      else vString = vString + vChar[0];
+
+      if (vChar[0]=="" && vChar[3]=="") vString = vString +" ";
+      else                              vString = vString + vChar[0];
+
       vChar[3] = CharToStr(vInfo[i] >> 24 & 0x000000FF);
-      if(vChar[1] == "" && vChar[0] == "") vString = vString + " ";
-      else vString = vString + vChar[1];
-      if(vChar[2] == "" && vChar[1] == "") vString = vString + " ";
-      else vString = vString + vChar[2];
-      if(vChar[3] == "" && vChar[2] == "") vString = vString + " ";
-      else vString = vString + vChar[3];
+
+      if (vChar[1]=="" && vChar[0]=="") vString = vString +" ";
+      else                              vString = vString + vChar[1];
+
+      if (vChar[2]=="" && vChar[1]=="") vString = vString +" ";
+      else                              vString = vString + vChar[2];
+
+      if (vChar[3]=="" && vChar[2]=="") vString = vString +" ";
+      else                              vString = vString + vChar[3];
    }
+
+   debug("GetTerminalBuild()   vString = "+ vString);
+   //vString = Ð4  VS_VERSION_INFO    ½ïþ [  á    á  ?        [              0 [StringFileInfo   [000004b0  L[Comments  http://www.metaquotes.net  T[CompanyName    MetaQuotes Software Corp.  >[FileDescription    MetaTrader    6[FileVersion    4.0.0.225      6[InternalName  MetaTrader    †1[LegalCopyright  Copyleft removed    @[LegalTrademarks    MetaTrader®  (  [OriginalFilename     [PrivateBuild  6[ProductName    MetaTrader    :[ProductVersion  4.0.0.225         [SpecialBuild  D  [VarFileInfo    $  Translation      °FE2X
+
    vString = StringTrimRight(StringTrimLeft(StringSubstr(vString, StringFind(vString, "FileVersion") + 11, 15)));
-   for (i = 0; i < 3; i++) {
+
+   for (i=0; i < 3; i++) {
       vString = StringSubstr(vString, StringFind(vString, ".") + 1);
    }
    int build = StrToInteger(vString);
 
-   if (catch("GetTerminalBuildVersion()") != NO_ERROR)
+   if (catch("GetTerminalBuild()") != NO_ERROR)
       return(0);
    return(build);
 }
@@ -135,7 +144,7 @@ int GetTerminalBuildVersion() {
 /**
  *
  */
-void FXTOverwritePatch() {
+void DontOverwriteFXTPatch() {
    /*
    .text:00540E75 83 C4 1C                                add     esp, 1Ch
    .text:00540E78 85 C0                                   test    eax, eax
@@ -179,7 +188,7 @@ void FXTOverwritePatch() {
    else {
       Print("FXT overwriting already disabled or unable to find the location to patch.");
    }
-   catch("FXTOverwritePatch()");
+   catch("DontOverwriteFXTPatch()");
 }
 
 
@@ -198,7 +207,7 @@ void Remove2GBLimitPatch() {
       catch("Remove2GBLimitPatch(1)");
       return;
    }
-   if (terminalBuild < 399) {
+   if (mt4Build < 399) {
       string lib = "msvcrt.dll";
       h = LoadLibraryA(lib);
       if (h != 0) addr1 = GetProcAddress(h, "_fseeki64");
@@ -276,7 +285,7 @@ void Remove2GBLimitPatch() {
       StoreDword(offset, b);
       PatchZone(new + 30, b); // fix the returning jump
    }
-   else if (terminalBuild <= 402) {
+   else if (mt4Build <= 402) {
       lib = "msvcrt.dll";
       h = LoadLibraryA(lib);
       if (h != 0) addr1 = GetProcAddress(h, "_fseeki64");
