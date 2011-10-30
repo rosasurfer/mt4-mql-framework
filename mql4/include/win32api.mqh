@@ -16,6 +16,9 @@
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);
    bool GetComputerNameA(string lpBuffer, int lpBufferSize[]);
+   int  GetCurrentProcess();
+   int  GetCurrentProcessId();
+   int  GetCurrentThread();
    int  GetCurrentThreadId();
    int  GetEnvironmentStringsA();
    int  GetFileSize(int hFile, int lpFileSizeHigh);
@@ -38,6 +41,10 @@
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
+
+   int  VirtualAlloc(int lpAddress/*=NULL*/, int size, int flAllocationType, int flProtect);
+   //   VirtualAlloc(int lpAddress!=NULL, ...);                                        @use  win32api-alt::VirtualAllocEx()
+
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);
 
@@ -77,6 +84,7 @@
    int  GetModuleHandle();
    int  GetPrivateProfileKeys(string lpFileName, string lpSection, string lpResults[]);
    int  GetPrivateProfileSectionNames(string lpFileName, string lpResults[]);
+   int  VirtualAllocEx(int address/*!=NULL*/, int size, int flAllocationType, int flProtect);
 
 #import
 
@@ -318,8 +326,23 @@
 
 
 // Keyboard events
-#define KEYEVENTF_EXTENDEDKEY                    0x0001
-#define KEYEVENTF_KEYUP                          0x0002
+#define KEYEVENTF_EXTENDEDKEY                      0x01
+#define KEYEVENTF_KEYUP                            0x02
+
+
+// Memory protection constants, see VirtualAlloc()
+#define PAGE_EXECUTE                               0x10     // options
+#define PAGE_EXECUTE_READ                          0x20
+#define PAGE_EXECUTE_READWRITE                     0x40
+#define PAGE_EXECUTE_WRITECOPY                     0x80
+#define PAGE_NOACCESS                              0x01
+#define PAGE_READONLY                              0x02
+#define PAGE_READWRITE                             0x04
+#define PAGE_WRITECOPY                             0x08
+
+#define PAGE_GUARD                                0x100     // modifier
+#define PAGE_NOCACHE                              0x200
+#define PAGE_WRITECOMBINE                         0x400
 
 
 // Messages
@@ -573,7 +596,6 @@ int     WM_MT4;                                             // wird bei der erst
 #define SW_SHOWDEFAULT                   10  // Sets the show state based on the SW_ flag specified in the STARTUPINFO structure passed to the CreateProcess() function by
                                              // the program that started the application.
 
-
 // ShellExecute() error codes
 #define SE_ERR_FNF                                    2     // File not found.
 #define SE_ERR_PNF                                    3     // Path not found.
@@ -604,6 +626,16 @@ int     WM_MT4;                                             // wird bei der erst
 #define STARTF_USESTDHANDLES                 0x00000100
 
 
+// VirtualAlloc() allocation type flags
+#define MEM_COMMIT                           0x00001000
+#define MEM_RESERVE                          0x00002000
+#define MEM_RESET                            0x00080000
+#define MEM_TOP_DOWN                         0x00100000
+#define MEM_WRITE_WATCH                      0x00200000
+#define MEM_PHYSICAL                         0x00400000
+#define MEM_LARGE_PAGES                      0x20000000
+
+
 // Wait function constants, see WaitForSingleObject()
 #define WAIT_ABANDONED                       0x00000080
 #define WAIT_OBJECT_0                        0x00000000
@@ -612,6 +644,6 @@ int     WM_MT4;                                             // wird bei der erst
 #define INFINITE                             0xFFFFFFFF     // infinite timeout
 
 
-// Windows error codes (nur in MQL tatsächlich verwendete, alle anderen -> FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
+// Windows error codes (nur in MQL tatsächlich verwendete, für alle anderen @use FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
 #define ERROR_SUCCESS                                 0
 #define ERROR_BAD_FORMAT                             11

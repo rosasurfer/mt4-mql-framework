@@ -453,7 +453,7 @@
 #define ERR_SOME_OBJECT_ERROR                        4207
 
 // custom errors
-#define ERR_WINDOWS_ERROR                            5000   // win32 api error
+#define ERR_WIN32_ERROR                              5000   // win32 api error
 #define ERR_FUNCTION_NOT_IMPLEMENTED                 5001   // function not implemented
 #define ERR_INVALID_INPUT_PARAMVALUE                 5002   // invalid input parameter value
 #define ERR_INVALID_CONFIG_PARAMVALUE                5003   // invalid configuration parameter value

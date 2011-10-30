@@ -10,9 +10,25 @@
    int  GetModuleHandleA(int lpModuleName);
    int  GetPrivateProfileStringA(string lpSection, int lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);
+   int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    bool WritePrivateProfileStringA(string lpSection, string lpKey, int lpValue, string lpFileName);
 
 #import
+
+
+/**
+ * VirtualAlloc() mit Adresse als erstem Parameter (kein NULL-Pointer).
+ */
+int VirtualAllocEx(int address, int size, int flAllocationType, int flProtect) {
+   int lpAddress[1]; lpAddress[0] = address;
+
+   int base = VirtualAlloc(lpAddress, size, flAllocationType, flProtect);
+
+   if (base == NULL)
+      catch("VirtualAllocEx() ->kernel32.VirtualAlloc()", ERR_WIN32_ERROR);
+
+   return(base);
+}
 
 
 /**
@@ -22,7 +38,7 @@ int GetModuleHandle() {
    int hModule = GetModuleHandleA(NULL);
 
    if (hModule == 0)
-      catch("GetModuleHandle()   kernel32::GetModuleHandleA(lpModuleName=NULL) failed", ERR_WINDOWS_ERROR);
+      catch("GetModuleHandle() ->kernel32.GetModuleHandleA()", ERR_WIN32_ERROR);
 
    return(hModule);
 }
@@ -87,6 +103,6 @@ int GetPrivateProfileSectionNames(string fileName, string results[]) {
  */
 int DeletePrivateProfileKey(string fileName, string section, string key) {
    if (!WritePrivateProfileStringA(section, key, NULL, fileName))
-      return(catch("DeletePrivateProfileKey()   kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=(int) NULL, fileName=\""+ fileName +"\") failed", ERR_WINDOWS_ERROR));
+      return(catch("DeletePrivateProfileKey() ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=(int) NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
    return(NO_ERROR);
 }

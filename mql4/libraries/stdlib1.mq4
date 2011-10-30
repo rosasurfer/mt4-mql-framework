@@ -86,17 +86,17 @@ string GetTerminalVersion() {
    string filename[]; InitializeStringBuffer(filename, MAX_PATH);
    int chars = GetModuleFileNameA(0, filename[0], MAX_PATH);
    if (chars == 0) {
-      catch("GetTerminalVersion(1)   kernel32::GetModuleFileNameA() failed", ERR_WINDOWS_ERROR);
+      catch("GetTerminalVersion(1) ->kernel32.GetModuleFileNameA()", ERR_WIN32_ERROR);
       return("");
    }
    int infoSize = GetFileVersionInfoSizeA(filename[0], 0);
    if (infoSize == 0) {
-      catch("GetTerminalVersion(2)   version::GetFileVersionInfoSizeA() failed", ERR_WINDOWS_ERROR);
+      catch("GetTerminalVersion(2) ->version.GetFileVersionInfoSizeA()", ERR_WIN32_ERROR);
       return("");
    }
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer)) {
-      catch("GetTerminalVersion(3)   version::GetFileVersionInfoA() failed", ERR_WINDOWS_ERROR);
+      catch("GetTerminalVersion(3) ->version.GetFileVersionInfoA()", ERR_WIN32_ERROR);
       return("");
    }
 
@@ -355,7 +355,7 @@ string GetLocalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
-            catch("GetLocalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
+            catch("GetLocalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR);
             return("");
          }
          _lclose(hFile);
@@ -403,7 +403,7 @@ string GetGlobalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
-            catch("GetGlobalConfigPath(1)   kernel32::_lcreat()   error creating \""+ iniFile +"\"", ERR_WINDOWS_ERROR);
+            catch("GetGlobalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR);
             return("");
          }
          _lclose(hFile);
@@ -1575,12 +1575,13 @@ string GetShortcutTarget(string lnkFilename) {
    int buffer[]; InitializeBuffer(buffer, fileSize);
 
    int bytes = _lread(hFile, buffer, fileSize);
-   _lclose(hFile);
-
    if (bytes != fileSize) {
-      catch("GetShortcutTarget(4)  error reading \""+ lnkFilename +"\"", ERR_WINDOWS_ERROR);
+      catch("GetShortcutTarget(4) ->kernel32._lread()  error reading \""+ lnkFilename +"\"", ERR_WIN32_ERROR);
+      _lclose(hFile);
       return("");
    }
+   _lclose(hFile);
+
    if (bytes < 24) {
       catch("GetShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
@@ -1817,7 +1818,7 @@ string GetTradeServerDirectory() {
                   FindClose(hFindFile);
                   serverDirectory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(catch("GetTradeServerDirectory(2)   kernel32::DeleteFile(\""+ pattern +"\") => FALSE", ERR_WINDOWS_ERROR));
+                     return(catch("GetTradeServerDirectory(2) ->kernel32.DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR));
                   break;
                }
             }
@@ -1825,7 +1826,7 @@ string GetTradeServerDirectory() {
          result = FindNextFileA(hFindDir, wfd);
       }
       if (result == INVALID_HANDLE_VALUE) {
-         catch("GetTradeServerDirectory(3)  kernel32::FindFirstFile(\""+ pattern +"\") => INVALID_HANDLE_VALUE", ERR_WINDOWS_ERROR);
+         catch("GetTradeServerDirectory(3) ->kernel32.FindFirstFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR);
          return("");
       }
       FindClose(hFindDir);
@@ -1909,13 +1910,13 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
 
    if (!CreateProcessA(NULL, cmdLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
-      return(catch("WinExecAndWait(1)   CreateProcess() failed", ERR_WINDOWS_ERROR));
+      return(catch("WinExecAndWait(1) ->kernel32.CreateProcessA()", ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2)   WaitForSingleObject() => WAIT_FAILED", ERR_WINDOWS_ERROR);
-      else                       log("WinExecAndWait()   WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2) ->kernel32.WaitForSingleObject()", ERR_WIN32_ERROR);
+      else                       log("WinExecAndWait() ->kernel32.WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi.hProcess(pi));
@@ -4611,7 +4612,7 @@ string GetComputerName() {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize)) {
-      catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ bufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
+      catch("GetComputerName(1) ->kernel32.GetComputerNameA()", ERR_WIN32_ERROR);
       return("");
    }
 
@@ -5272,7 +5273,7 @@ string ErrorDescription(int error) {
       case ERR_SOME_OBJECT_ERROR          : return("object error"                                                  ); // 4207
 
       // custom errors
-      case ERR_WINDOWS_ERROR              : return("Windows error"                                                 ); // 5000
+      case ERR_WIN32_ERROR                : return("win32 api error"                                               ); // 5000
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                      ); // 5001
       case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                                 ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                         ); // 5003
@@ -5395,7 +5396,7 @@ string ErrorToStr(int error) {
       case ERR_SOME_OBJECT_ERROR          : return("ERR_SOME_OBJECT_ERROR"          ); // 4207
 
       // custom errors
-      case ERR_WINDOWS_ERROR              : return("ERR_WINDOWS_ERROR"              ); // 5000
+      case ERR_WIN32_ERROR                : return("ERR_WIN32_ERROR"                ); // 5000
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("ERR_FUNCTION_NOT_IMPLEMENTED"   ); // 5001
       case ERR_INVALID_INPUT_PARAMVALUE   : return("ERR_INVALID_INPUT_PARAMVALUE"   ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
@@ -6851,7 +6852,7 @@ int SendTextMessage(string receiver, string message) {
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1)  kernel32::WinExec(cmdLine=\""+ cmdLine +"\") failed with error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WINDOWS_ERROR));
+      return(catch("SendTextMessage(1) ->kernel32.WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
 
    /**
     * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
@@ -6946,7 +6947,7 @@ datetime ServerToGMT(datetime serverTime) {
  */
 int SetWindowText(int hWnd, string text) {
    if (!SetWindowTextA(hWnd, text))
-      return(catch("SetWindowText()   user32.SetWindowText(hWnd="+ hWnd +", lpString=\""+ text +"\") => FALSE", ERR_WINDOWS_ERROR));
+      return(catch("SetWindowText() ->user32.SetWindowTextA()", ERR_WIN32_ERROR));
 
    return(0);
 }

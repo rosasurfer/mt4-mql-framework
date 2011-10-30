@@ -1,10 +1,10 @@
 /**
  * Birt's FXT Runtime Patch
  *
- * An mein Framework angepaﬂte und modifizierte Version der Originalversion Birt's vom 11.09.2011. Die Funktionalit‰t selbst ist unver‰ndert.
+ * ‹berarbeitete Version seiner Originalversion vom 11.09.2011. Die Funktionalit‰t selbst ist unver‰ndert.
  *
  * @author  Cristi Dumitrescu <birt@eareview.net>
- * @see     http://www.eareview.net/tickdata
+ * @see     http://eareview.net/tickdata
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -16,7 +16,7 @@
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern bool   Dont.Overwrite.FXT.Files       = true;
-extern string _1____________________________ = "The 2GB limit removal works in Windows 7 and Vista only.";
+extern string _1____________________________ = "The 2GB limit removal works in Windows 7, Vista and Server 2008 only.";
 extern bool   Remove.2GB.Limit               = false;
 extern string _2____________________________ = "Using the variable spread option requires variable spread FXT files.";
 extern bool   Use.Variable.Spread.Files      = false;
@@ -49,17 +49,13 @@ int deinit() {
 }
 
 
-#define LAST_BUILD_KNOWN         406
-#define MEM_COMMIT               0x1000
-#define PAGE_EXECUTE_READWRITE   0x40
+#define LAST_BUILD_KNOWN   406
 
 #import "kernel32.dll"
-   int  GetCurrentProcess();
    int  WriteProcessMemory(int handle, int address, int& buffer[], int size, int& written);
    int  ReadProcessMemory(int handle, int address, int& buffer[], int size, int& read);
    int  LoadLibraryA(string file);
    int  GetProcAddress(int hmodule, string procname);
-   int  VirtualAlloc(int addr, int size, int type, int protect);
 #import
 
 
