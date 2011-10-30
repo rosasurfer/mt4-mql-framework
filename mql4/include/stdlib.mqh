@@ -55,7 +55,7 @@
    string   BufferCharsToStr(int buffer[], int from, int length);
    string   BufferWCharsToStr(int buffer[], int from, int length);
 
-   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);      // Alias
+   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);   // Alias
    int      ExplodeStringsW(int buffer[], string results[]);
 
 
@@ -213,7 +213,7 @@
 
 
    // Math, Numbers
-   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);     // MetaQuotes-Alias
+   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);  // MetaQuotes-Alias
    bool     NE(double a, double b);
 
    bool     LT(double a, double b);
@@ -327,15 +327,17 @@
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
 
-   string   GetComputerName();
-   string   GetWindowText(int hWnd);
-   int      SetWindowText(int hWnd, string text);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
-
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SwitchExperts(bool enable);
    double   GetAverageSpread(string symbol);
+
+   string   GetComputerName();
+   string   GetWindowText(int hWnd);
+   int      SetWindowText(int hWnd, string text);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
+   int      GetPrivateProfileSectionNames(string fileName, string names[]);
+   int      DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
 
 
    // toString-Funktionen

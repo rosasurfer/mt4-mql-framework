@@ -191,7 +191,9 @@ void Remove2GBLimitPatch() {
       }
 
       ProcessPatch(patchaddr, 0xe9);
-      int new = VirtualAlloc(0, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+      int iNull[];
+      int new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
       int offset = new - calcbase;
       int b[4];
@@ -270,7 +272,7 @@ build 399:
       }
 
       ProcessPatch(patchaddr, 0xe9);
-      new = VirtualAlloc(0, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
@@ -385,7 +387,7 @@ build 399:
 
       ProcessPatch(patchaddr, 0x53);
       ProcessPatch(patchaddr + 1, 0xe9);
-      new = VirtualAlloc(0, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);

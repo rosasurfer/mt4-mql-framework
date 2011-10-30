@@ -78,25 +78,78 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Gibt die Namen aller Abschnitte einer ini-Datei zurück.
+ *
+ * @param  string fileName - Name der ini-Datei (wenn NULL, wird WIN.INI durchsucht)
+ * @param  string names[]  - Array zur Aufnahme der gefundenen Abschnittsnamen
+ *
+ * @return int - Anzahl der gefundenen Abschnitte oder -1, falls ein Fehler auftrat
+ */
+int GetPrivateProfileSectionNames(string fileName, string names[]) {
+   int bufferSize = 200;
+   int buffer[]; InitializeBuffer(buffer, bufferSize);
+
+   int chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
+
+   // zu kleinen Buffer abfangen
+   while (chars == bufferSize-2) {
+      bufferSize <<= 1;
+      InitializeBuffer(buffer, bufferSize);
+      chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
+   }
+
+   int length;
+
+   if (chars == 0) length = ArrayResize(names, 0);                   // keine Sections gefunden (File nicht gefunden oder leer)
+   else            length = ExplodeStrings(buffer, names);
+
+   if (catch("GetPrivateProfileSectionNames") != NO_ERROR)
+      return(-1);
+   return(length);
+}
+
+
+/**
+ * Löscht einen einzelnen Eintrag einer ini-Datei.
+ *
+ * @param  string fileName - Name der ini-Datei
+ * @param  string section  - Abschnitt des Eintrags
+ * @param  string key      - Name des zu löschenden Eintrags
+ *
+ * @return int - Fehlerstatus
+ */
+int DeletePrivateProfileKey(string fileName, string section, string key) {
+   string sNull;
+
+   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
+      return(catch("DeletePrivateProfileKey() ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+   return(NO_ERROR);
+}
+
+
+/**
  * Gibt den Versionsstring des Terminals zurück.
  *
  * @return string - Version oder Leerstring, wenn ein Fehler auftrat
  */
 string GetTerminalVersion() {
-   string filename[]; InitializeStringBuffer(filename, MAX_PATH);
-   int chars = GetModuleFileNameA(0, filename[0], MAX_PATH);
+   int    bufferSize = MAX_PATH;
+   string filename[]; InitializeStringBuffer(filename, bufferSize);
+   int chars = GetModuleFileNameA(NULL, filename[0], bufferSize);
    if (chars == 0) {
-      catch("GetTerminalVersion(1) ->kernel32.GetModuleFileNameA()", ERR_WIN32_ERROR);
+      catch("GetTerminalVersion(1) ->kernel32.GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
-   int infoSize = GetFileVersionInfoSizeA(filename[0], 0);
+   int iNull[];
+   int infoSize = GetFileVersionInfoSizeA(filename[0], iNull);
    if (infoSize == 0) {
-      catch("GetTerminalVersion(2) ->version.GetFileVersionInfoSizeA()", ERR_WIN32_ERROR);
+      catch("GetTerminalVersion(2) ->version.GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer)) {
-      catch("GetTerminalVersion(3) ->version.GetFileVersionInfoA()", ERR_WIN32_ERROR);
+      catch("GetTerminalVersion(3) ->version.GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
 
@@ -193,8 +246,9 @@ int InitializeBuffer(int buffer[], int length) {
    if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 = length % 4
    else                    length = length >> 2 + 1;
 
-   if (ArraySize(buffer) < length)
+   if (ArraySize(buffer) != length)
       ArrayResize(buffer, length);
+   ArrayInitialize(buffer, 0);
 
    return(catch("InitializeBuffer(3)"));
 }
@@ -355,7 +409,7 @@ string GetLocalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
-            catch("GetLocalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR);
+            catch("GetLocalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
             return("");
          }
          _lclose(hFile);
@@ -403,7 +457,7 @@ string GetGlobalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR) {
-            catch("GetGlobalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR);
+            catch("GetGlobalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
             return("");
          }
          _lclose(hFile);
@@ -1566,17 +1620,22 @@ string GetShortcutTarget(string lnkFilename) {
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
-   if (hFile == HFILE_ERROR) {                     // kernel32::GetLastError() ist nicht erreichbar, Existenz daher manuell prüfen
-      if (IsFile(lnkFilename)) catch("GetShortcutTarget(2)  access denied to \""+ lnkFilename +"\"", ERR_CANNOT_OPEN_FILE);
-      else                     catch("GetShortcutTarget(3)  file not found: \""+ lnkFilename +"\"", ERR_CANNOT_OPEN_FILE);
+   if (hFile == HFILE_ERROR) {
+      catch("GetShortcutTarget(2) ->kernel32._lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
-   int fileSize = GetFileSize(hFile, NULL);
+   int null[];
+   int fileSize = GetFileSize(hFile, null);
+   if (fileSize == 0xFFFFFFFF) {
+      catch("GetShortcutTarget(3) ->kernel32.GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      _lclose(hFile);
+      return("");
+   }
    int buffer[]; InitializeBuffer(buffer, fileSize);
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
-      catch("GetShortcutTarget(4) ->kernel32._lread()  error reading \""+ lnkFilename +"\"", ERR_WIN32_ERROR);
+      catch("GetShortcutTarget(4) ->kernel32._lread(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
@@ -1661,7 +1720,7 @@ string GetShortcutTarget(string lnkFilename) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2) {
-         catch("GetShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+         catch("GetShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
          return("");
       }
       A  = chars[76];               // little endian format
@@ -1676,7 +1735,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int B  = chars[i];       i++;    // little endian format
@@ -1692,7 +1751,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int C  = chars[i];       i++;    // little endian format
@@ -1705,7 +1764,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1) {
-      catch("GetShortcutTarget(12)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    string target = "";
@@ -1715,7 +1774,7 @@ string GetShortcutTarget(string lnkFilename) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (StringLen(target) == 0) {
-      catch("GetShortcutTarget(13)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1725,13 +1784,12 @@ string GetShortcutTarget(string lnkFilename) {
    // GetLongPathNameA() fails if the target file doesn't exist!
    // --------------------------------------------------------------------------
    string lfnBuffer[]; InitializeStringBuffer(lfnBuffer, MAX_PATH);
-   if (!GetLongPathNameA(target, lfnBuffer[0], MAX_PATH))
-      return(target);                                                                     // file doesn't exist
-   target = lfnBuffer[0];
+   if (GetLongPathNameA(target, lfnBuffer[0], MAX_PATH) != 0)        // file does exist
+      target = lfnBuffer[0];
 
-   //debug("GetShortcutTarget()   chars = "+ ArraySize(chars) +"   A = "+ A +"   B = "+ B +"   C = "+ C +"   target = "+ target);
+   //debug("GetShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-   if (catch("GetShortcutTarget(14)") != NO_ERROR)
+   if (catch("GetShortcutTarget(13)") != NO_ERROR)
       return("");
    return(target);
 }
@@ -1818,7 +1876,7 @@ string GetTradeServerDirectory() {
                   FindClose(hFindFile);
                   serverDirectory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(catch("GetTradeServerDirectory(2) ->kernel32.DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR));
+                     return(catch("GetTradeServerDirectory(2) ->kernel32.DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
                   break;
                }
             }
@@ -1826,7 +1884,7 @@ string GetTradeServerDirectory() {
          result = FindNextFileA(hFindDir, wfd);
       }
       if (result == INVALID_HANDLE_VALUE) {
-         catch("GetTradeServerDirectory(3) ->kernel32.FindFirstFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR);
+         catch("GetTradeServerDirectory(3) ->kernel32.FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
          return("");
       }
       FindClose(hFindDir);
@@ -1903,19 +1961,23 @@ string ShortAccountCompany() {
  * @return int - Fehlerstatus
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
-   int /*STARTUPINFO*/ si[17]; ArrayInitialize(si, 0);
+   string sNull;
+   int    iNull[];
+
+   int /*STARTUPINFO*/ si[]; InitializeBuffer(si, 68);
       si.setCb        (si, 68);
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
-   int /*PROCESS_INFORMATION*/ pi[4]; ArrayInitialize(pi, 0);
 
-   if (!CreateProcessA(NULL, cmdLine, NULL, NULL, false, 0, NULL, NULL, si, pi))
-      return(catch("WinExecAndWait(1) ->kernel32.CreateProcessA()", ERR_WIN32_ERROR));
+   int /*PROCESS_INFORMATION*/ pi[]; InitializeBuffer(pi, 16);
+
+   if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
+      return(catch("WinExecAndWait(1) ->kernel32.CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2) ->kernel32.WaitForSingleObject()", ERR_WIN32_ERROR);
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2) ->kernel32.WaitForSingleObject()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       else                       log("WinExecAndWait() ->kernel32.WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
@@ -4605,19 +4667,17 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
 /**
  * Gibt den Rechnernamen des laufenden Systems zurück.
  *
- * @return string - Name
+ * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
 string GetComputerName() {
-   int bufferSize[1]; bufferSize[0] = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
+   int    bufferSize = 255;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+   int    lpBufferSize[1]; lpBufferSize[0] = bufferSize;
 
-   if (!GetComputerNameA(buffer[0], bufferSize)) {
-      catch("GetComputerName(1) ->kernel32.GetComputerNameA()", ERR_WIN32_ERROR);
+   if (!GetComputerNameA(buffer[0], lpBufferSize)) {
+      catch("GetComputerName() ->kernel32.GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
-
-   if (catch("GetComputerName(2)") != NO_ERROR)
-      return("");
    return(buffer[0]);
 }
 
@@ -5037,13 +5097,13 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   int result = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
+   int chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
 
    // zu kleinen Buffer abfangen
-   while (result == bufferSize-1) {
-      buffer[0]  = StringConcatenate(buffer[0], MAX_STRING_LITERAL);
-      bufferSize = StringLen(buffer[0]);
-      result     = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
+   while (chars == bufferSize-1) {
+      bufferSize <<= 1;
+      InitializeStringBuffer(buffer, bufferSize);
+      chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
    if (catch("GetPrivateProfileString()") != NO_ERROR)
@@ -6947,7 +7007,7 @@ datetime ServerToGMT(datetime serverTime) {
  */
 int SetWindowText(int hWnd, string text) {
    if (!SetWindowTextA(hWnd, text))
-      return(catch("SetWindowText() ->user32.SetWindowTextA()", ERR_WIN32_ERROR));
+      return(catch("SetWindowText() ->user32.SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(0);
 }
