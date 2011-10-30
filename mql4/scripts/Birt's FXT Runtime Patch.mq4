@@ -49,9 +49,9 @@ int deinit() {
 }
 
 
+#define LAST_BUILD_KNOWN         406
 #define MEM_COMMIT               0x1000
 #define PAGE_EXECUTE_READWRITE   0x40
-#define LAST_BUILD_KNOWN         406
 
 #import "kernel32.dll"
    int  GetCurrentProcess();
@@ -71,7 +71,7 @@ int deinit() {
 int start() {
    mt4Build = GetTerminalBuild();
    if (mt4Build == 0)
-      return(last_error);
+      return(SetLastError(stdlib_PeekLastError()));
 
    Print("MT4 build "+ mt4Build +" detected.");
 
@@ -85,59 +85,6 @@ int start() {
    if (Use.Variable.Spread.Files) VariableSpreadPatch();
 
    return(catch("start()"));
-}
-
-
-/**
- *
- */
-int GetTerminalBuild() {
-   string filename[]; CreateStringBuffer(filename, MAX_PATH);
-   GetModuleFileNameA(0, filename[0], MAX_PATH);
-
-   int vSize = GetFileVersionInfoSizeA(filename[0], 0);
-   int vInfo[]; CreateBuffer(vInfo, vSize);
-   GetFileVersionInfoA(filename[0], 0, vSize, vInfo);
-   debug("GetTerminalBuild()   vInfo = "+ BufferToStr(vInfo));
-
-   //vInfo = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
-
-
-   string vString="", vChar[4]={"","","",""};
-
-   for (int i=0; i < vSize/4; i++) {
-      vChar[0] = CharToStr(vInfo[i]       & 0x000000FF);
-      vChar[1] = CharToStr(vInfo[i] >>  8 & 0x000000FF);
-      vChar[2] = CharToStr(vInfo[i] >> 16 & 0x000000FF);
-
-      if (vChar[0]=="" && vChar[3]=="") vString = vString +" ";
-      else                              vString = vString + vChar[0];
-
-      vChar[3] = CharToStr(vInfo[i] >> 24 & 0x000000FF);
-
-      if (vChar[1]=="" && vChar[0]=="") vString = vString +" ";
-      else                              vString = vString + vChar[1];
-
-      if (vChar[2]=="" && vChar[1]=="") vString = vString +" ";
-      else                              vString = vString + vChar[2];
-
-      if (vChar[3]=="" && vChar[2]=="") vString = vString +" ";
-      else                              vString = vString + vChar[3];
-   }
-
-   debug("GetTerminalBuild()   vString = "+ vString);
-   //vString = Ð4  VS_VERSION_INFO    ½ïþ [  á    á  ?        [              0 [StringFileInfo   [000004b0  L[Comments  http://www.metaquotes.net  T[CompanyName    MetaQuotes Software Corp.  >[FileDescription    MetaTrader    6[FileVersion    4.0.0.225      6[InternalName  MetaTrader    †1[LegalCopyright  Copyleft removed    @[LegalTrademarks    MetaTrader®  (  [OriginalFilename     [PrivateBuild  6[ProductName    MetaTrader    :[ProductVersion  4.0.0.225         [SpecialBuild  D  [VarFileInfo    $  Translation      °FE2X
-
-   vString = StringTrimRight(StringTrimLeft(StringSubstr(vString, StringFind(vString, "FileVersion") + 11, 15)));
-
-   for (i=0; i < 3; i++) {
-      vString = StringSubstr(vString, StringFind(vString, ".") + 1);
-   }
-   int build = StrToInteger(vString);
-
-   if (catch("GetTerminalBuild()") != NO_ERROR)
-      return(0);
-   return(build);
 }
 
 

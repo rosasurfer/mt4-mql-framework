@@ -78,18 +78,117 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme von beliebigen Bytes in der gewünschten Länge. Byte-Buffer können in MQL nur über Integer-Arrays dargestellt werden.
+ * Gibt den Versionsstring des Terminals zurück.
+ *
+ * @return string - Version oder Leerstring, wenn ein Fehler auftrat
+ */
+string GetTerminalVersion() {
+   string filename[]; InitializeStringBuffer(filename, MAX_PATH);
+   int chars = GetModuleFileNameA(0, filename[0], MAX_PATH);
+   if (chars == 0) {
+      catch("GetTerminalVersion(1)   kernel32::GetModuleFileNameA() failed", ERR_WINDOWS_ERROR);
+      return("");
+   }
+   int infoSize = GetFileVersionInfoSizeA(filename[0], 0);
+   if (infoSize == 0) {
+      catch("GetTerminalVersion(2)   version::GetFileVersionInfoSizeA() failed", ERR_WINDOWS_ERROR);
+      return("");
+   }
+   int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
+   if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer)) {
+      catch("GetTerminalVersion(3)   version::GetFileVersionInfoA() failed", ERR_WINDOWS_ERROR);
+      return("");
+   }
+
+   string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
+   //debug("GetTerminalVersion()   infoString = "+ infoString);
+   //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
+
+   string Z                  = CharToStr(PLACEHOLDER_ZERO_CHAR);
+   string C                  = CharToStr(PLACEHOLDER_CTL_CHAR);
+   string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
+   string key.FileVersion    = StringConcatenate(C,Z,"F",Z,"i",Z,"l",Z,"e",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
+
+   int pos = StringFind(infoString, key.ProductVersion);             // zuerst nach ProductVersion suchen...
+   if (pos != -1) {
+      pos += StringLen(key.ProductVersion);
+   }
+   else {
+      debug("GetTerminalVersion()   FileVersionInfo->ProductVersion not found");
+      pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
+      if (pos == -1) {
+         debug("GetTerminalVersion()   FileVersionInfo->FileVersion not found");
+         catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR);
+         return("");
+      }
+      pos += StringLen(key.FileVersion);
+   }
+
+   // erstes Nicht-NULL-Byte nach dem Version-Key finden
+   for (; pos < infoSize; pos++) {
+      if (BufferGetChar(infoBuffer, pos) != 0x00)
+         break;
+   }
+   if (pos == infoSize) {
+      debug("GetTerminalVersion()   no non-NULL byte after version key found");
+      catch("GetTerminalVersion(5)   terminal version info value not found", ERR_RUNTIME_ERROR);
+      return("");
+   }
+
+   // Unicode-Value auslesen
+   string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
+
+   if (catch("GetTerminalVersion(6)") != NO_ERROR)
+      return("");
+   return(version);
+}
+
+
+/**
+ * Gibt die Build-Version des Terminals zurück.
+ *
+ * @return int - Build-Version oder 0, wenn ein Fehler auftrat
+ */
+int GetTerminalBuild() {
+   string version = GetTerminalVersion();
+   if (version == "")
+      return(0);
+
+   string strings[];
+
+   int size = Explode(version, ".", strings);
+   if (size != 4) {
+      catch("GetTerminalBuild(1)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR);
+      return(0);
+   }
+
+   if (!StringIsDigit(strings[size-1])) {
+      catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR);
+      return(0);
+   }
+
+   int build = StrToInteger(strings[size-1]);
+
+   if (catch("GetTerminalBuild(3)") != NO_ERROR)
+      return(0);
+
+   return(build);
+}
+
+
+/**
+ * Initialisiert einen Buffer zur Aufnahme von Bytes in der gewünschten Länge. Byte-Buffer können in MQL nur über Integer-Arrays dargestellt werden.
  *
  * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
  * @param  int length   - Länge des Buffers in Bytes
  *
  * @return int - Fehlerstatus
  */
-int CreateBuffer(int buffer[], int length) {
+int InitializeBuffer(int buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("CreateBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
-      return(catch("CreateBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("InitializeBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 = length % 4
    else                    length = length >> 2 + 1;
@@ -97,30 +196,30 @@ int CreateBuffer(int buffer[], int length) {
    if (ArraySize(buffer) < length)
       ArrayResize(buffer, length);
 
-   return(catch("CreateBuffer(3)"));
+   return(catch("InitializeBuffer(3)"));
 }
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme von Strings in der gewünschten Länge.
+ * Initialisiert einen Buffer zur Aufnahme eines Strings der gewünschten Länge.
  *
  * @param  string buffer[] - das für den Buffer zu verwendende String-Array
  * @param  int    length   - Länge des Buffers in Zeichen
  *
  * @return int - Fehlerstatus
  */
-int CreateStringBuffer(string& buffer[], int length) {
+int InitializeStringBuffer(string& buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("CreateStringBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeStringBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
-      return(catch("CreateStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("InitializeStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (ArraySize(buffer) == 0)
       ArrayResize(buffer, 1);
 
    buffer[0] = CreateString(length);
 
-   return(catch("CreateStringBuffer(3)"));
+   return(catch("InitializeStringBuffer(3)"));
 }
 
 
@@ -1160,7 +1259,7 @@ int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                    
 
 
 /**
- * Gibt den kompletten Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), alle anderen nicht darstellbaren Zeichen fett (•) dargestellt.
+ * Gibt den kompletten Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), Control-Character (<0x20) fett (•) dargestellt.
  * Nützlich, um im Buffer enthaltene Daten schnell visualisieren zu können.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
@@ -1177,8 +1276,8 @@ string BufferToStr(int buffer[]) {
       for (int n=0; n < 4; n++) {                                                                           // | n |    byte    | char |
          int byte = integer & 0xFF;                               // einzelnes Byte des Integers lesen      // +---+------------+------+
          if (byte < 0x20) {                                       // nicht darstellbare Zeichen ersetzen    // | 0 | 0x000000FF |   1  |
-            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NULL-Byte (…)                          // | 1 | 0x0000FF00 |   2  |
-            else              byte = PLACEHOLDER_CONTROL_CHAR;    // sonstiger Control-Character (•)        // | 2 | 0x00FF0000 |   3  |
+            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NULL-Byte                   (…)        // | 1 | 0x0000FF00 |   2  |
+            else              byte = PLACEHOLDER_CTL_CHAR;        // sonstiges Control-Character (•)        // | 2 | 0x00FF0000 |   3  |
          }                                                                                                  // | 3 | 0xFF000000 |   4  |
          result = StringSetChar(result, i<<2 + n, byte);          // Zeichen setzen                         // +---+------------+------+
          integer >>= 8;
@@ -1223,6 +1322,30 @@ string BufferToHexStr(int struct[]) {
 
 
 /**
+ * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position des Buffers zurück.
+ *
+ * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ * @param  int pos      - Zeichen-Position
+ *
+ * @return int - Zeichen-Code oder -1, wenn ein Fehler auftrat
+ */
+int BufferGetChar(int buffer[], int pos) {
+   int chars = ArraySize(buffer) << 2;
+
+   if (pos < 0)      { catch("BufferGetChar(1)  invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
+   if (pos >= chars) { catch("BufferGetChar(2)  invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
+
+   int i = pos >> 2;                      // Index des relevanten Integers des Arrays     // +---+------------+
+   int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
+                                                                                          // +---+------------+
+   int integer = buffer[i] >> (b<<3);                                                     // | 0 | 0x000000FF |
+   int char    = integer & 0xFF;                                                          // | 1 | 0x0000FF00 |
+                                                                                          // | 2 | 0x00FF0000 |
+   return(char);                                                                          // | 3 | 0xFF000000 |
+}                                                                                         // +---+------------+
+
+
+/**
  * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte ANSI-Charactersequenz zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
@@ -1243,7 +1366,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
       return("");
 
    string result = "";
-   int chars, fromInt=fromChar>>2, toInt=toChar>>2, n=fromChar&0x03; // Indizes der relevanten Array-Integers und des ersten Chars (liegt evt. nicht auf Integer-Boundary)
+   int    chars, fromInt=fromChar>>2, toInt=toChar>>2, n=fromChar&0x03; // Indizes der relevanten Array-Integers und des ersten Chars (liegt evt. nicht auf Integer-Boundary)
 
    for (int i=fromInt; i <= toInt; i++) {
       int byte, integer=buffer[i];
@@ -1295,7 +1418,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
       int word, shift=0, integer=buffer[i];
 
       for (int n=0; n < 2; n++) {
-         word = (integer >> shift) & 0xFFFF;
+         word = integer >> shift & 0xFFFF;
          if (word == 0)                                        // termination character (0x00)
             break;
          int byte1 = word      & 0xFF;
@@ -1449,7 +1572,7 @@ string GetShortcutTarget(string lnkFilename) {
       return("");
    }
    int fileSize = GetFileSize(hFile, NULL);
-   int buffer[]; CreateBuffer(buffer, fileSize);
+   int buffer[]; InitializeBuffer(buffer, fileSize);
 
    int bytes = _lread(hFile, buffer, fileSize);
    _lclose(hFile);
@@ -1600,7 +1723,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    // GetLongPathNameA() fails if the target file doesn't exist!
    // --------------------------------------------------------------------------
-   string lfnBuffer[]; CreateStringBuffer(lfnBuffer, MAX_PATH);
+   string lfnBuffer[]; InitializeStringBuffer(lfnBuffer, MAX_PATH);
    if (!GetLongPathNameA(target, lfnBuffer[0], MAX_PATH))
       return(target);                                                                     // file doesn't exist
    target = lfnBuffer[0];
@@ -4485,7 +4608,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
  */
 string GetComputerName() {
    int bufferSize[1]; bufferSize[0] = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize[0]);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize)) {
       catch("GetComputerName(1)   kernel32::GetComputerName(buffer, "+ bufferSize[0] +") = FALSE", ERR_WINDOWS_ERROR);
@@ -4512,7 +4635,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
 
    int bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
@@ -4543,7 +4666,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetConfigDouble(string section, string key, double defaultValue=0) {
    int bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
@@ -4738,7 +4861,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
 
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
 
@@ -4766,7 +4889,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
@@ -4911,7 +5034,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
  */
 string GetPrivateProfileString(string fileName, string section, string key, string defaultValue="") {
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    int result = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
 
@@ -4941,7 +5064,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    string strDefault = defaultValue;
 
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetLocalConfigPath());
 
@@ -4969,7 +5092,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
  */
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
 
@@ -5962,7 +6085,7 @@ string UninitializeReasonToStr(int reason) {
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
-   string buffer[]; CreateStringBuffer(buffer, bufferSize);
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    GetWindowTextA(hWnd, buffer[0], bufferSize);
 
@@ -6981,7 +7104,7 @@ int StringFindR(string object, string search) {
  */
 string StringToLower(string value) {
    string result = value;
-   int char, len = StringLen(value);
+   int char, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
       char = StringGetChar(value, i);
@@ -7015,7 +7138,7 @@ string StringToLower(string value) {
  */
 string StringToUpper(string value) {
    string result = value;
-   int char, len = StringLen(value);
+   int char, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
       char = StringGetChar(value, i);

@@ -45,13 +45,13 @@
 
 
    // Buffer-Funktionen
-   int      CreateBuffer(int buffer[], int length);
-   string   CreateString(int length);
-   int      CreateStringBuffer(string buffer[], int length);
+   int      InitializeBuffer(int buffer[], int length);
+   int      InitializeStringBuffer(string buffer[], int length);
 
    string   BufferToStr(int buffer[]);
    string   BufferToHexStr(int buffer[]);
 
+   int      BufferGetChar(int buffer[], int pos);
    string   BufferCharsToStr(int buffer[], int from, int length);
    string   BufferWCharsToStr(int buffer[], int from, int length);
 
@@ -232,6 +232,8 @@
 
 
    // Strings
+   string   CreateString(int length);
+
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
@@ -276,11 +278,16 @@
 
 
    // sonstiges
+   string   GetTerminalVersion();
+   int      GetTerminalBuild();
+   int      GetTerminalWindow();
+
    int      GetAccountNumber();
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
    int      ChronologicalSortTickets(int tickets[]);
    string   ShortAccountCompany();
+   string   GetTradeServerDirectory();
 
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
@@ -321,8 +328,6 @@
    int      iBarShiftPrevious(string symbol, int period, datetime time);
 
    string   GetComputerName();
-   int      GetTerminalWindow();
-   string   GetTradeServerDirectory();
    string   GetWindowText(int hWnd);
    int      SetWindowText(int hWnd, string text);
    int      WinExecAndWait(string cmdLine, int cmdShow);
