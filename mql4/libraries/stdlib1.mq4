@@ -1048,24 +1048,24 @@ bool ReverseStringArray(string array[]) {
  *                                   52484F44 4F447E31 2E424D50 00000000
  *                                    R H O D  O D ~ 1  . B M P
  */
-int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0]); }
-bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ); }
-bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ); }
-bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ); }
-bool   wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ); }
-bool   wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ); }
-bool   wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ); }
-bool   wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ); }
-bool   wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ); }
-bool   wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ); }
-bool   wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT); }
-bool   wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ); }
-bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ); }
-bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
-bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
-bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/ int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/ int wfd[]) { return(BufferCharsToStr(wfd, 44, MAX_PATH)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]) { return(BufferCharsToStr(wfd, 304, 14)); }
+int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0]); }
+bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ); }
+bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ); }
+bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ); }
+bool   wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ); }
+bool   wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ); }
+bool   wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ); }
+bool   wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ); }
+bool   wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ); }
+bool   wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ); }
+bool   wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT); }
+bool   wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ); }
+bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ); }
+bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ); }
+bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ); }
+bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(BufferCharsToStr(wfd, 44, MAX_PATH)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(BufferCharsToStr(wfd, 304, 14)); }
 
 
 /**
@@ -1075,7 +1075,7 @@ string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/ int wfd[]) { return(Bu
  *
  * @return string
  */
-string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int wdf[]) {
+string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/int wdf[]) {
    string result = "";
    int flags = wfd.FileAttributes(wdf);
 
@@ -1125,10 +1125,10 @@ string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/ int wdf[]) {
  *
  * BufferToHexStr(PROCESS_INFORMATION) = 68020000 74020000 D40E0000 B80E0000
  */
-int pi.hProcess (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[0]); }
-int pi.hThread  (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[1]); }
-int pi.ProcessId(/*PROCESS_INFORMATION*/ int pi[]) { return(pi[2]); }
-int pi.ThreadId (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[3]); }
+int pi.hProcess (/*PROCESS_INFORMATION*/int pi[]) { return(pi[0]); }
+int pi.hThread  (/*PROCESS_INFORMATION*/int pi[]) { return(pi[1]); }
+int pi.ProcessId(/*PROCESS_INFORMATION*/int pi[]) { return(pi[2]); }
+int pi.ThreadId (/*PROCESS_INFORMATION*/int pi[]) { return(pi[3]); }
 
 
 /**
@@ -1142,9 +1142,9 @@ int pi.ThreadId (/*PROCESS_INFORMATION*/ int pi[]) { return(pi[3]); }
  *
  * BufferToHexStr(SECURITY_ATTRIBUTES) = 0C000000 00000000 00000000
  */
-int  sa.Length            (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[0]); }
-int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[1]); }
-bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[2] != 0); }
+int  sa.Length            (/*SECURITY_ATTRIBUTES*/int sa[]) { return(sa[0]); }
+int  sa.SecurityDescriptor(/*SECURITY_ATTRIBUTES*/int sa[]) { return(sa[1]); }
+bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/int sa[]) { return(sa[2] != 0); }
 
 
 /**
@@ -1173,25 +1173,25 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/ int sa[]) { return(sa[2] != 0
  *
  * BufferToHexStr(STARTUPINFO) = 44000000 103E1500 703E1500 D83D1500 00000000 00000000 00000000 00000000 00000000 00000000 00000000 010E0000 03000000 00000000 41060000 01000100 00000000
  */
-int si.cb            (/*STARTUPINFO*/ int si[]) { return(si[ 0]); }
-int si.Desktop       (/*STARTUPINFO*/ int si[]) { return(si[ 2]); }
-int si.Title         (/*STARTUPINFO*/ int si[]) { return(si[ 3]); }
-int si.X             (/*STARTUPINFO*/ int si[]) { return(si[ 4]); }
-int si.Y             (/*STARTUPINFO*/ int si[]) { return(si[ 5]); }
-int si.XSize         (/*STARTUPINFO*/ int si[]) { return(si[ 6]); }
-int si.YSize         (/*STARTUPINFO*/ int si[]) { return(si[ 7]); }
-int si.XCountChars   (/*STARTUPINFO*/ int si[]) { return(si[ 8]); }
-int si.YCountChars   (/*STARTUPINFO*/ int si[]) { return(si[ 9]); }
-int si.FillAttribute (/*STARTUPINFO*/ int si[]) { return(si[10]); }
-int si.Flags         (/*STARTUPINFO*/ int si[]) { return(si[11]); }
-int si.ShowWindow    (/*STARTUPINFO*/ int si[]) { return(si[12] & 0xFFFF); }
-int si.hStdInput     (/*STARTUPINFO*/ int si[]) { return(si[14]); }
-int si.hStdOutput    (/*STARTUPINFO*/ int si[]) { return(si[15]); }
-int si.hStdError     (/*STARTUPINFO*/ int si[]) { return(si[16]); }
+int si.cb            (/*STARTUPINFO*/int si[]) { return(si[ 0]); }
+int si.Desktop       (/*STARTUPINFO*/int si[]) { return(si[ 2]); }
+int si.Title         (/*STARTUPINFO*/int si[]) { return(si[ 3]); }
+int si.X             (/*STARTUPINFO*/int si[]) { return(si[ 4]); }
+int si.Y             (/*STARTUPINFO*/int si[]) { return(si[ 5]); }
+int si.XSize         (/*STARTUPINFO*/int si[]) { return(si[ 6]); }
+int si.YSize         (/*STARTUPINFO*/int si[]) { return(si[ 7]); }
+int si.XCountChars   (/*STARTUPINFO*/int si[]) { return(si[ 8]); }
+int si.YCountChars   (/*STARTUPINFO*/int si[]) { return(si[ 9]); }
+int si.FillAttribute (/*STARTUPINFO*/int si[]) { return(si[10]); }
+int si.Flags         (/*STARTUPINFO*/int si[]) { return(si[11]); }
+int si.ShowWindow    (/*STARTUPINFO*/int si[]) { return(si[12] & 0xFFFF); }
+int si.hStdInput     (/*STARTUPINFO*/int si[]) { return(si[14]); }
+int si.hStdOutput    (/*STARTUPINFO*/int si[]) { return(si[15]); }
+int si.hStdError     (/*STARTUPINFO*/int si[]) { return(si[16]); }
 
-int si.setCb         (/*STARTUPINFO*/ int& si[], int size   ) { si[ 0] =  size; }
-int si.setFlags      (/*STARTUPINFO*/ int& si[], int flags  ) { si[11] = flags; }
-int si.setShowWindow (/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
+int si.setCb         (/*STARTUPINFO*/int& si[], int size   ) { si[ 0] =  size; }
+int si.setFlags      (/*STARTUPINFO*/int& si[], int flags  ) { si[11] = flags; }
+int si.setShowWindow (/*STARTUPINFO*/int& si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
 
 
 /**
@@ -1201,7 +1201,7 @@ int si.setShowWindow (/*STARTUPINFO*/ int& si[], int cmdShow) { si[12] = (si[12]
  *
  * @return string
  */
-string si.FlagsToStr(/*STARTUPINFO*/ int si[]) {
+string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
    string result = "";
    int flags = si.Flags(si);
 
@@ -1232,7 +1232,7 @@ string si.FlagsToStr(/*STARTUPINFO*/ int si[]) {
  *
  * @return string
  */
-string si.ShowWindowToStr(/*STARTUPINFO*/ int si[]) {
+string si.ShowWindowToStr(/*STARTUPINFO*/int si[]) {
    switch (si.ShowWindow(si)) {
       case SW_HIDE           : return("SW_HIDE"           );
       case SW_SHOWNORMAL     : return("SW_SHOWNORMAL"     );
@@ -1267,14 +1267,14 @@ string si.ShowWindowToStr(/*STARTUPINFO*/ int si[]) {
  *
  * BufferToHexStr(SYSTEMTIME) = DB070100 06000F00 12003600 05000A03
  */
-int st.Year     (/*SYSTEMTIME*/ int st[]) { return(st[0] &  0x0000FFFF); }
-int st.Month    (/*SYSTEMTIME*/ int st[]) { return(st[0] >> 16        ); }
-int st.DayOfWeek(/*SYSTEMTIME*/ int st[]) { return(st[1] &  0x0000FFFF); }
-int st.Day      (/*SYSTEMTIME*/ int st[]) { return(st[1] >> 16        ); }
-int st.Hour     (/*SYSTEMTIME*/ int st[]) { return(st[2] &  0x0000FFFF); }
-int st.Minute   (/*SYSTEMTIME*/ int st[]) { return(st[2] >> 16        ); }
-int st.Second   (/*SYSTEMTIME*/ int st[]) { return(st[3] &  0x0000FFFF); }
-int st.MilliSec (/*SYSTEMTIME*/ int st[]) { return(st[3] >> 16        ); }
+int st.Year     (/*SYSTEMTIME*/int st[]) { return(st[0] &  0x0000FFFF); }
+int st.Month    (/*SYSTEMTIME*/int st[]) { return(st[0] >> 16        ); }
+int st.DayOfWeek(/*SYSTEMTIME*/int st[]) { return(st[1] &  0x0000FFFF); }
+int st.Day      (/*SYSTEMTIME*/int st[]) { return(st[1] >> 16        ); }
+int st.Hour     (/*SYSTEMTIME*/int st[]) { return(st[2] &  0x0000FFFF); }
+int st.Minute   (/*SYSTEMTIME*/int st[]) { return(st[2] >> 16        ); }
+int st.Second   (/*SYSTEMTIME*/int st[]) { return(st[3] &  0x0000FFFF); }
+int st.MilliSec (/*SYSTEMTIME*/int st[]) { return(st[3] >> 16        ); }
 
 
 /**
@@ -1300,13 +1300,13 @@ int st.MilliSec (/*SYSTEMTIME*/ int st[]) { return(st[3] >> 16        ); }
  *                                         00000300 00000500 03000000 00000000
  *                                         C4FFFFFF
  */
-int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[0]); }                               // Bias in Minuten
-string tzi.StandardName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(BufferWCharsToStr(tzi, 1, 16)); }
-void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
-int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[21]); }                              // Bias in Minuten
-string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(BufferWCharsToStr(tzi, 22, 16)); }
-void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/ int tzi[], /*SYSTEMTIME*/ int st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
-int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/ int tzi[])                          { return(tzi[42]); }                              // Bias in Minuten
+int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(tzi[0]); }                               // Bias in Minuten
+string tzi.StandardName(/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(BufferWCharsToStr(tzi, 1, 16)); }
+void   tzi.StandardDate(/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]) { ArrayCopy(st, tzi, 0, 17, 4); }
+int    tzi.StandardBias(/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(tzi[21]); }                              // Bias in Minuten
+string tzi.DaylightName(/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(BufferWCharsToStr(tzi, 22, 16)); }
+void   tzi.DaylightDate(/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]) { ArrayCopy(st, tzi, 0, 38, 4); }
+int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(tzi[42]); }                              // Bias in Minuten
 
 
 /**
@@ -1348,14 +1348,14 @@ string BufferToStr(int buffer[]) {
  *
  * @return string
  */
-string BufferToHexStr(int struct[]) {
+string BufferToHexStr(int buffer[]) {
    string result = "";
-   int size = ArraySize(struct);
+   int size = ArraySize(buffer);
 
    // Structs werden in MQL mit Hilfe von Integer-Arrays nachgebildet. Integers sind interpretierte binäre Werte (Reihenfolge von HIBYTE, LOBYTE, HIWORD, LOWORD).
    // Diese Interpretation muß wieder rückgängig gemacht werden.
    for (int i=0; i < size; i++) {
-      string hex   = IntToHexStr(struct[i]);
+      string hex   = IntToHexStr(buffer[i]);
       string byte1 = StringSubstr(hex, 6, 2);
       string byte2 = StringSubstr(hex, 4, 2);
       string byte3 = StringSubstr(hex, 2, 2);
@@ -1858,7 +1858,7 @@ string GetTradeServerDirectory() {
 
       // Datei suchen und Tradeserver-Pfad auslesen
       string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
-      int /*WIN32_FIND_DATA*/ wfd[80];
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
 
       int hFindDir = FindFirstFileA(pattern, wfd), result=hFindDir;
       while (result > 0) {
@@ -1961,12 +1961,12 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    string sNull;
    int    iNull[];
 
-   int /*STARTUPINFO*/ si[]; InitializeBuffer(si, 68);
+   /*STARTUPINFO*/int si[]; InitializeBuffer(si, STARTUPINFO.size);
       si.setCb        (si, 68);
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
 
-   int /*PROCESS_INFORMATION*/ pi[]; InitializeBuffer(pi, 16);
+   /*PROCESS_INFORMATION*/int pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
       return(catch("WinExecAndWait(1) ->kernel32.CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
@@ -2696,7 +2696,7 @@ string BoolArrayToStr(bool values[], string separator=", ") {
  * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
-   int /*SYSTEMTIME*/ st[4];     // struct SYSTEMTIME = 16 byte
+   /*SYSTEMTIME*/int st[]; InitializeBuffer(st, SYSTEMTIME.size);
    GetSystemTime(st);
 
    int year  = st.Year(st);
@@ -5532,7 +5532,7 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
       return(EMPTY_VALUE);
    }
 
-   int /*TIME_ZONE_INFORMATION*/ tzi[43];       // struct TIME_ZONE_INFORMATION = 172 byte
+   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeBuffer(tzi, TIME_ZONE_INFORMATION.size);
    int type = GetTimeZoneInformation(tzi);
 
    int offset = 0;
@@ -7283,7 +7283,7 @@ bool IsFile(string pathName) {
    bool result = false;
 
    if (StringLen(pathName) > 0) {
-      int /*WIN32_FIND_DATA*/ wfd[80];
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
 
       int hSearch = FindFirstFileA(pathName, wfd);
 
@@ -7309,7 +7309,7 @@ bool IsDirectory(string pathName) {
    bool result = false;
 
    if (StringLen(pathName) > 0) {
-      int /*WIN32_FIND_DATA*/ wfd[80];
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
 
       int hSearch = FindFirstFileA(pathName, wfd);
 
@@ -8594,7 +8594,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
 
 /**
- * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols, and so forth, according to the instructions provided in the 'mask'.
+ * This formats a number (int or double) into a string, performing alignment, rounding, inserting commas (0,000,000 etc), floating signs, currency symbols,
+ * and so forth, according to the instructions provided in the 'mask'.
  *
  * The basic mask is "n" or "n.d" where n is the number of digits to the left of the decimal point, and d the number to the right,
  * e.g. NumberToStr(123.456,"5") will return "<space><space>123"

@@ -9,10 +9,6 @@
 
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
 
-#import "ntdll.dll"
-
-   int  RtlGetLastWin32Error();
-
 #import
 
 

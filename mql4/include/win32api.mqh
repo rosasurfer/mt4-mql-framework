@@ -590,7 +590,7 @@ int     WM_MT4;                                             // wird bei der erst
 #define SE_ERR_DLLNOTFOUND                           32     // Dynamic-link library not found.
 
 
-// STARTUPINFO structure flags
+// STARTUPINFO {} flags
 #define STARTF_FORCEONFEEDBACK               0x00000040
 #define STARTF_FORCEOFFFEEDBACK              0x00000080
 #define STARTF_PREVENTPINNING                0x00002000
@@ -604,6 +604,15 @@ int     WM_MT4;                                             // wird bei der erst
 #define STARTF_USESHOWWINDOW                 0x00000001
 #define STARTF_USESIZE                       0x00000002
 #define STARTF_USESTDHANDLES                 0x00000100
+
+
+// Struct sizes
+#define PROCESS_INFORMATION.size                     16
+#define SECURITY_ATTRIBUTES.size                     12
+#define STARTUPINFO.size                             68
+#define SYSTEMTIME.size                              16
+#define TIME_ZONE_INFORMATION.size                  172
+#define WIN32_FIND_DATA.size                        318
 
 
 // VirtualAlloc() allocation type flags
