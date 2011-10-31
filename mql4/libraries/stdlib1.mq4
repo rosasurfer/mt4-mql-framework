@@ -154,9 +154,7 @@ string GetTerminalVersion() {
    }
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
-   //debug("GetTerminalVersion()   infoString = "+ infoString);
    //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
-
    string Z                  = CharToStr(PLACEHOLDER_ZERO_CHAR);
    string C                  = CharToStr(PLACEHOLDER_CTL_CHAR);
    string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
@@ -188,7 +186,7 @@ string GetTerminalVersion() {
       return("");
    }
 
-   // Unicode-Value auslesen
+   // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
    if (catch("GetTerminalVersion(6)") != NO_ERROR)
@@ -224,7 +222,6 @@ int GetTerminalBuild() {
 
    if (catch("GetTerminalBuild(3)") != NO_ERROR)
       return(0);
-
    return(build);
 }
 
@@ -5928,9 +5925,9 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
@@ -5948,7 +5945,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
    else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
