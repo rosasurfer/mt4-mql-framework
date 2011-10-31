@@ -204,8 +204,12 @@
    bool     IsDirectory(string pathName);
 
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
-   string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    string   GetShortcutTarget(string lnkFile);
+
+   int      GetPrivateProfileSectionNames(string fileName, string names[]);
+   int      GetPrivateProfileKeys(string lpFileName, string lpSection, string lpKeys[]);
+   string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
+   int      DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
 
 
    // MagicNumbers
@@ -341,8 +345,6 @@
    string   GetWindowText(int hWnd);
    int      SetWindowText(int hWnd, string text);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      GetPrivateProfileSectionNames(string fileName, string names[]);
-   int      DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
 
 
    // toString-Funktionen

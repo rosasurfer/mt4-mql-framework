@@ -19,12 +19,17 @@
  * |         |         |        |        |        |                 |                       |  9.223.372.036.854.775.807   |                                |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
+#property library
+
 #include <stddefine.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
 
+#import "win32-alt.dll"
 
-#property library
+   int GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
+
+#import
 
 
 /**
@@ -106,6 +111,20 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    if (catch("GetPrivateProfileSectionNames") != NO_ERROR)
       return(-1);
    return(length);
+}
+
+
+/**
+ * Gibt die Namen aller Einträge eines Abschnitts einer ini-Datei zurück.
+ *
+ * @param  string fileName - Name der ini-Datei
+ * @param  string section  - Name des Abschnitts
+ * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
+ *
+ * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
+ */
+int GetPrivateProfileKeys(string fileName, string section, string keys[]) {
+   return(GetPrivateProfileKeys.2(fileName, section, keys));
 }
 
 

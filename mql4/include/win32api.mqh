@@ -36,7 +36,7 @@
    void OutputDebugStringA(string lpMessage);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
-   int  WinExec(string lpCmdLine, int cmdShow);                                                          // @see  win32api-alt.GetPrivateProfileKeys()
+   int  WinExec(string lpCmdLine, int cmdShow);
    bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);   // @see  stdlib.DeletePrivateProfileSection()
                                                                                                          // @see  stdlib.DeletePrivateProfileKey()
 #import "ntdll.dll"                                                                                      // @see  stdlib.FlushPrivateProfileCache()
@@ -61,10 +61,6 @@
 
    bool GetFileVersionInfoA(string lpFilename, int handle, int bufferSize, int lpBuffer[]);
    int  GetFileVersionInfoSizeA(string lpFilename, int lpHandle[]);
-
-#import "win32api-alt.ex4"
-
-   int  GetPrivateProfileKeys(string lpFileName, string lpSection, string lpResults[]);
 
 #import
 
