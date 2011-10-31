@@ -7,10 +7,10 @@
    int  _lcreat(string lpPathName, int attributes);
    int  _llseek(int hFile, int offset, int origin);
    int  _lopen(string lpPathName, int accessModes);
-   int  _lread(int hFile, int lpBuffer[], int bytes);                                                    // !!! TODO: für string-Parameter lpBuffer ReadFile() verwenden
-   int  _lwrite(int hFile, int lpBuffer[], int bytes);                                                   // !!! TODO: für string-Parameter lpBuffer WriteFile() verwenden
+   int  _lread(int hFile, int lpBuffer[], int bytes);
+   int  _lwrite(int hFile, int lpBuffer[], int bytes);
    bool CloseHandle(int hObject);
-   bool CreateProcessA(string lpApplicationName, string lpCommandLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
+   bool CreateProcessA(string lpApplicationName, string lpCmdLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
    bool FindClose(int hFindFile);
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
