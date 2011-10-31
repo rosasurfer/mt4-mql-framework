@@ -25,7 +25,7 @@
 #include <timezones.mqh>
 #include <win32api.mqh>
 
-#import "win32-alt.dll"
+#import "stdlib2.dll"
 
    int GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
 
