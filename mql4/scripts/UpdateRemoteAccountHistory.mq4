@@ -43,7 +43,7 @@ int start() {
    if (account == 0) {
       log("start()  no trade server connection");
       PlaySound("notify.wav");
-      MessageBox("No trade server connection.", __SCRIPT__ +" - start()", MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       return(ERR_NO_CONNECTION);
    }
 
@@ -85,7 +85,7 @@ int start() {
             if (error == ERR_UNKNOWN_SYMBOL) {
                log("start()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
-               MessageBox("Add \""+ OrderSymbol() +"\" to the Market Watch window !", __SCRIPT__ +" - start()", MB_ICONEXCLAMATION|MB_OK);
+               MessageBox("Add \""+ OrderSymbol() +"\" to the Market Watch window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
                return(error);
             }
             if (error != NO_ERROR)
@@ -203,11 +203,11 @@ int start() {
    // (4) Antwort auswerten und Rückmeldung an den User geben
    if (result==200 || result==201) {
       PlaySound("ding.wav");
-      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), __SCRIPT__ +" - start()", MB_ICONINFORMATION|MB_OK);
+      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), __SCRIPT__, MB_ICONINFORMATION|MB_OK);
    }
    else {
       PlaySound("notify.wav");
-      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__ +" - start()", MB_ICONEXCLAMATION|MB_OK);
+      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start(10)"));

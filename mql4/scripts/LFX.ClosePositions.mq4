@@ -98,7 +98,7 @@ int start() {
    int sizeOfPositions = ArraySize(positions);
    if (sizeOfPositions > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__ +" - start()", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox("Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderMultiClose(tickets, 0.1, Orange))
             return(SetLastError(stdlib_PeekLastError()));
@@ -116,7 +116,7 @@ int start() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No matching positions found.", __SCRIPT__ +" - start()", MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("start()"));
