@@ -2231,6 +2231,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "CADSGD")) return("CADSGD");
                 if (StringStartsWith(symbol, "CHFJPY")) return("CHFJPY");
                 if (StringStartsWith(symbol, "CHFLFX")) return("CHFLFX");
+                if (StringStartsWith(symbol, "CHFPLN")) return("CHFPLN");
                 if (StringStartsWith(symbol, "CHFSGD")) return("CHFSGD");
                 if (StringStartsWith(symbol, "CHFZAR")) return("CHFZAR");
                 break;
@@ -2274,6 +2275,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "GBPLFX")) return("GBPLFX");
                 if (StringStartsWith(symbol, "GBPNOK")) return("GBPNOK");
                 if (StringStartsWith(symbol, "GBPNZD")) return("GBPNZD");
+                if (StringStartsWith(symbol, "GBPPLN")) return("GBPPLN");
                 if (StringStartsWith(symbol, "GBPRUB")) return("GBPRUB");
                 if (StringStartsWith(symbol, "GBPRUR")) return("GBPRUB");
                 if (StringStartsWith(symbol, "GBPSEK")) return("GBPSEK");
@@ -2306,8 +2308,11 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "NZDUSD")) return("NZDUSD");
                 break;
 
-      case 'O':
-      case 'P':
+      case 'O': break;
+
+      case 'P': if (StringStartsWith(symbol, "PLNJPY")) return("PLNJPY");
+                break;
+
       case 'Q': break;
 
       case 'S': if (StringStartsWith(symbol, "SEKJPY")) return("SEKJPY");
@@ -2467,6 +2472,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "CADSGD"  ) return("CAD/SGD"  );
    if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
    if (symbol == "CHFLFX"  ) return("CHF-Index");
+   if (symbol == "CHFPLN"  ) return("CHF/PLN"  );
    if (symbol == "CHFSGD"  ) return("CHF/SGD"  );
    if (symbol == "CHFZAR"  ) return("CHF/ZAR"  );
    if (symbol == "EURAUD"  ) return("EUR/AUD"  );
@@ -2499,6 +2505,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "GBPLFX"  ) return("GBP-Index");
    if (symbol == "GBPNOK"  ) return("GBP/NOK"  );
    if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
+   if (symbol == "GBPPLN"  ) return("GBP/PLN"  );
    if (symbol == "GBPRUB"  ) return("GBP/RUB"  );
    if (symbol == "GBPSEK"  ) return("GBP/SEK"  );
    if (symbol == "GBPUSD"  ) return("GBP/USD"  );
@@ -2514,6 +2521,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "NZDLFX"  ) return("NZD-Index");
    if (symbol == "NZDSGD"  ) return("NZD/SGD"  );
    if (symbol == "NZDUSD"  ) return("NZD/USD"  );
+   if (symbol == "PLNJPY"  ) return("PLN/JPY"  );
    if (symbol == "SEKJPY"  ) return("SEK/JPY"  );
    if (symbol == "SGDJPY"  ) return("SGD/JPY"  );
    if (symbol == "TRYJPY"  ) return("TRY/JPY"  );
