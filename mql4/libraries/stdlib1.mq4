@@ -5069,7 +5069,13 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
 
-   if (timezone == "Europe/Kiev") {              // GMT+0200,GMT+0300
+   if (timezone == "Europe/Minsk") {             // GMT+0200,GMT+0300
+      if      (gmtTime < EMST_transitions[year][2]) offset = -2 * HOURS;
+      else if (gmtTime < EMST_transitions[year][3]) offset = -3 * HOURS;
+      else                                          offset = -2 * HOURS;
+   }
+
+   else if (timezone == "Europe/Kiev") {         // GMT+0200,GMT+0300
       if      (gmtTime < EEST_transitions[year][2]) offset = -2 * HOURS;
       else if (gmtTime < EEST_transitions[year][3]) offset = -3 * HOURS;
       else                                          offset = -2 * HOURS;
@@ -5972,7 +5978,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
+   else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
@@ -6047,7 +6053,13 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
 
-   if (zone == "Europe/Kiev") {                     // GMT+0200,GMT+0300
+   if (zone == "Europe/Minsk") {                    // GMT+0200,GMT+0300
+      if      (serverTime < EMST_transitions[year][0]) offset = 2 * HOURS;
+      else if (serverTime < EMST_transitions[year][1]) offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
+   }
+
+   else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
