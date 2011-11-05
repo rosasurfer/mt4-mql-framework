@@ -237,8 +237,6 @@
 
    int      CountDecimals(double number);
 
-   string   DecimalToHex(int number);
-
 
    // Strings
    string   CreateString(int length);
@@ -349,8 +347,12 @@
 
    // toString-Funktionen
    string   BoolToStr(bool value);
-   string   IntToHexStr(int integer);                 string IntegerToHexStr(int integer);                              // MetaQuotes-Alias
-   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double number, int precision);    // MetaQuotes-Alias
+   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);     // MetaQuotes-Alias
+
+   string   DecimalToHexStr(int number);
+   string   ByteToHexStr(int number);  string CharToHexStr(int number);                                                 // eigener Alias
+   string   WordToHexStr(int number);
+   string   DWordToHexStr(int number); string IntToHexStr(int integer); string IntegerToHexStr(int integer);            // eigener und MetaQuotes-Alias
 
    string   BoolArrayToStr(bool values[], string separator);
    string   IntArrayToStr(int values[], string separator);

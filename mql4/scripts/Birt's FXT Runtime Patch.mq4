@@ -52,8 +52,6 @@ int deinit() {
 #define LAST_BUILD_KNOWN   406
 
 #import "kernel32.dll"
-   int  WriteProcessMemory(int handle, int address, int& buffer[], int size, int& written);
-   int  ReadProcessMemory(int handle, int address, int& buffer[], int size, int& read);
    int  LoadLibraryA(string file);
    int  GetProcAddress(int hmodule, string procname);
 #import
@@ -73,7 +71,7 @@ int start() {
 
    if (mt4Build > LAST_BUILD_KNOWN) {
       Print("The patch you are running was not tested with this build so it may or may not work.");
-      Print("You should check for a new patch at http://eareview.net/tick-data");
+      Print("Check for a new patch at http://eareview.net/tick-data");
    }
 
    if (Dont.Overwrite.FXT.Files)  DontOverwriteFXTPatch();
@@ -112,21 +110,21 @@ void DontOverwriteFXTPatch() {
    */
    int search3[] = { 0x8b, 0x42, 0x18, 0x85, 0xc0, 0x0f, 0x85 };
 
-   int patchaddr1 = FindMemory(0x510000, 0x570000, search1);
+   int patchaddr1 = FindMemoryAddress(0x510000, 0x570000, search1);
    if (patchaddr1 != 0) {
-      int patchaddr2 = FindMemory(patchaddr1, patchaddr1 + 32768, search2);
+      int patchaddr2 = FindMemoryAddress(patchaddr1, patchaddr1 + 32768, search2);
       if (patchaddr2 == 0)
-         patchaddr2 = FindMemory(patchaddr1, patchaddr1 + 32768, search2a);
+         patchaddr2 = FindMemoryAddress(patchaddr1, patchaddr1 + 32768, search2a);
 
-      int patchaddr3 = FindMemory(patchaddr1, patchaddr1 + 32768, search3);
+      int patchaddr3 = FindMemoryAddress(patchaddr1, patchaddr1 + 32768, search3);
    }
 
    if (patchaddr1!=0 && patchaddr2!=0 && patchaddr3!=0) {
       int patch[] = { 0x00, 0x00 };
-      PatchZone(patchaddr1 + 7, patch);
-      PatchZone(patchaddr2 + 9, patch);
-      PatchZone(patchaddr3 + 7, patch);
-      Print("FXT overwriting disabled. Addresses patched: 0x"+ Dec2Hex(patchaddr1) +", 0x"+ Dec2Hex(patchaddr2) +", 0x"+ Dec2Hex(patchaddr3) +".");
+      PatchProcess(patchaddr1 + 7, patch);
+      PatchProcess(patchaddr2 + 9, patch);
+      PatchProcess(patchaddr3 + 7, patch);
+      Print("FXT overwriting disabled. Addresses patched: 0x"+ DecimalToHexStr(patchaddr1) +", 0x"+ DecimalToHexStr(patchaddr2) +", 0x"+ DecimalToHexStr(patchaddr3) +".");
    }
    else {
       Print("FXT overwriting already disabled or unable to find the location to patch.");
@@ -170,7 +168,7 @@ void Remove2GBLimitPatch() {
 .text:00541441 FF 15 98 4D 56 00                       call    ds:fseek // themida messes it up in 226+
 */
       int search[] = { 0x8d, 0x14, 0x40, 0x8d, 0x04, 0x90, 0xc1, 0xe0, 0x02, 0x50, 0x51 };
-      int patcharea = FindMemory(0x510000, 0x570000, search);
+      int patcharea = FindMemoryAddress(0x510000, 0x570000, search);
       if (patcharea == 0) {
          Print("Process already patched for the 2gb limit removal or we just can't find the area to patch.");
          catch("Remove2GBLimitPatch(3)");
@@ -182,23 +180,23 @@ void Remove2GBLimitPatch() {
 .text:0054144C 74 0A                                   jz      short loc_541458
 */
       int search2[] = { 0x74, 0x0A };
-      int returnaddr = FindMemory(patcharea, patchaddr + 1024, search2);
+      int returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search2);
 
       if (returnaddr == 0) {
          Print("Can't locate return address for 2gb patch limit removal, skipping patch.");
          catch("Remove2GBLimitPatch(4)");
          return;
       }
-
-      ProcessPatch(patchaddr, 0xe9);
+      int byte[] = { 0xe9 };
+      PatchProcess(patchaddr, byte);
 
       int iNull[];
       int new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
+      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
       int offset = new - calcbase;
       int b[4];
       StoreDword(offset, b);
-      PatchZone(patchaddr + 1, b);
+      PatchProcess(patchaddr + 1, b);
 
 /*
 .0054116E: 51                             push        ecx
@@ -216,19 +214,29 @@ void Remove2GBLimitPatch() {
 .00541189: 85C0                           test        eax,eax
 .0054118B: E93C0E0000                     jmp        .000541FCC
 */
+      /*
+      int patch[] = {0x51, 0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34,
+                      0xff, 0x15, 0xa0, 0x11, 0x54, 0x00,
+                      0x59, 0x52, 0x50, 0x51,
+                      0xff, 0x15, 0xa4, 0x11, 0x54, 0x00,
+                      0x83, 0xc4, 0x0C,
+                      0x85, 0xc0,
+                      0xe9};
+      */
       int patch[] = {0x51, 0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34, 0xff, 0x15, 0xa0, 0x11, 0x54, 0x00, 0x59, 0x52, 0x50, 0x51, 0xff, 0x15, 0xa4, 0x11, 0x54, 0x00, 0x83, 0xc4, 0x0C, 0x85, 0xc0, 0xe9};
-      PatchZone(new, patch);
+
+      PatchProcess(new, patch);
       StoreDword(addr1, b);
-      PatchZone(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
+      PatchProcess(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
       StoreDword(addr2, b);
-      PatchZone(new + 132, b); // _allmul goes at the alloced memory area + 132
+      PatchProcess(new + 132, b); // _allmul goes at the alloced memory area + 132
       StoreDword(new + 132, b);
-      PatchZone(new + 10, b); // fix the _allmul call
+      PatchProcess(new + 10, b); // fix the _allmul call
       StoreDword(new + 128, b);
-      PatchZone(new + 20, b); // fix the _fseeki64 call
+      PatchProcess(new + 20, b); // fix the _fseeki64 call
       offset = returnaddr - (new + 30 + 4);
       StoreDword(offset, b);
-      PatchZone(new + 30, b); // fix the returning jump
+      PatchProcess(new + 30, b); // fix the returning jump
    }
    else if (mt4Build <= 402) {
       lib = "msvcrt.dll";
@@ -255,7 +263,7 @@ build 399:
 .text:005470B3 74 0A                             jz      short loc_5470BF
 */
       int search3[] = { 0x8d, 0x0c, 0x40, 0x8d, 0x14, 0x88, 0x8b, 0x86, 0xd8, 0x02, 0x00 };
-      patcharea = FindMemory(0x510000, 0x570000, search3);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search3);
       if (patcharea == 0) {
          Print("Process already patched for the 2gb limit removal or we just can't find the area to patch.");
          catch("Remove2GBLimitPatch(6)");
@@ -264,19 +272,21 @@ build 399:
       patchaddr = patcharea;
       calcbase = patchaddr + 5;
       int search4[] = { 0x74, 0x0A };
-      returnaddr = FindMemory(patcharea, patchaddr + 1024, search4);
+      returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search4);
       if (returnaddr == 0) {
          Print("Can't locate return address for 2gb patch limit removal, skipping patch.");
          catch("Remove2GBLimitPatch(7)");
          return;
       }
 
-      ProcessPatch(patchaddr, 0xe9);
+      byte[0] = 0xe9;
+      PatchProcess(patchaddr, byte);
+
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
+      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
-      PatchZone(patchaddr + 1, b); // fix jump
+      PatchProcess(patchaddr + 1, b); // fix jump
 
 /*
 .005475E7: 6A00                           push        0
@@ -293,19 +303,31 @@ build 399:
 .00547606: 85C0                           test        eax,eax
 .00547608: E900000000                     jmp        .00054760D --?4
 */
+      /*
+      int patch1[] = {  0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34,
+                        0xff, 0x15, 0x00, 0x00, 0x00, 0x00,
+                        0x52, 0x50,
+                        0x8b, 0x86, 0xd8, 0x02, 0x00, 0x00,
+                        0x50,
+                        0xff, 0x15, 0x00, 0x00, 0x00, 0x00,
+                        0x83, 0xc4, 0x10,
+                        0x85, 0xc0,
+                        0xe9, 0x00, 0x00, 0x00, 0x00 };
+      */
       int patch1[] = {  0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34, 0xff, 0x15, 0x00, 0x00, 0x00, 0x00, 0x52, 0x50, 0x8b, 0x86, 0xd8, 0x02, 0x00, 0x00, 0x50, 0xff, 0x15, 0x00, 0x00, 0x00, 0x00, 0x83, 0xc4, 0x10, 0x85, 0xc0, 0xe9, 0x00, 0x00, 0x00, 0x00 };
-      PatchZone(new, patch1);
+
+      PatchProcess(new, patch1);
       StoreDword(addr1, b);
-      PatchZone(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
+      PatchProcess(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
       StoreDword(addr2, b);
-      PatchZone(new + 132, b); // _allmul goes at the alloced memory area + 132
+      PatchProcess(new + 132, b); // _allmul goes at the alloced memory area + 132
       StoreDword(new + 132, b);
-      PatchZone(new + 9, b); // fix the _allmul call
+      PatchProcess(new + 9, b); // fix the _allmul call
       StoreDword(new + 128, b);
-      PatchZone(new + 24, b); // fix the _fseeki64 call
+      PatchProcess(new + 24, b); // fix the _fseeki64 call
       offset = returnaddr - (new + ArraySize(patch1));
       StoreDword(offset, b);
-      PatchZone(new + ArraySize(patch1) - 4, b); // fix the returning jump
+      PatchProcess(new + ArraySize(patch1) - 4, b); // fix the returning jump
    }
    else { // 405+
       lib = "msvcrt.dll";
@@ -347,7 +369,7 @@ build 399:
 .text:00556B90 E8 4D B5 02 00                    call    fseek
 */
       int search5[] = { 0x8d, 0x14, 0x40, 0x8d, 0x04, 0x90, 0x53, 0xc1, 0xe0, 0x02, 0x50, 0x51 };
-      patcharea = FindMemory(0x510000, 0x570000, search5);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search5);
       if (patcharea == 0) {
          Print("Process already patched for the 2gb limit removal or we just can't find the area to patch.");
          catch("Remove2GBLimitPatch(9)");
@@ -363,12 +385,12 @@ build 399:
          catch("Remove2GBLimitPatch(10)");
          return;
       }
-      Print("Patcharea: 0x" +Dec2Hex(patcharea));
+      Print("Patcharea: 0x" +DecimalToHexStr(patcharea));
       patcharea += 17;
       offset = fseek - patcharea;
       patcharea -= 4;
       StoreDword(offset, b);
-      PatchZone(patcharea, b);
+      PatchProcess(patcharea, b);
 */
 
       patchaddr = patcharea;
@@ -377,21 +399,21 @@ build 399:
 .text:0054144C 74 0A                                   jz      short loc_541458
 */
       int search6[] = { 0x74, 0x0A };
-      returnaddr = FindMemory(patcharea, patchaddr + 1024, search6);
+      returnaddr = FindMemoryAddress(patcharea, patchaddr + 1024, search6);
 
       if (returnaddr == 0) {
          Print("Can't locate return address for 2gb patch limit removal, skipping patch.");
          catch("Remove2GBLimitPatch(11)");
          return;
       }
+      int bytes[] = { 0x53, 0xe9 };
+      PatchProcess(patchaddr, bytes);
 
-      ProcessPatch(patchaddr, 0x53);
-      ProcessPatch(patchaddr + 1, 0xe9);
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + Dec2Hex(patcharea) + ". 2gb limit removal patch is being installed at 0x" + Dec2Hex(new) + ".");
+      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
-      PatchZone(patchaddr + 2, b);
+      PatchProcess(patchaddr + 2, b);
 
 /*
 .0054116E: 51                             push        ecx
@@ -409,19 +431,29 @@ build 399:
 .00541189: 85C0                           test        eax,eax
 .0054118B: E93C0E0000                     jmp        .000541FCC
 */
+      /*
+      int patch3[] = {0x51, 0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34,
+                      0xff, 0x15, 0xa0, 0x11, 0x54, 0x00,
+                      0x59, 0x52, 0x50, 0x51,
+                      0xff, 0x15, 0xa4, 0x11, 0x54, 0x00,
+                      0x83, 0xc4, 0x10,
+                      0x85, 0xc0,
+                      0xe9};
+      */
       int patch3[] = {0x51, 0x6a, 0x00, 0x50, 0x6a, 0x00, 0x6a, 0x34, 0xff, 0x15, 0xa0, 0x11, 0x54, 0x00, 0x59, 0x52, 0x50, 0x51, 0xff, 0x15, 0xa4, 0x11, 0x54, 0x00, 0x83, 0xc4, 0x10, 0x85, 0xc0, 0xe9};
-      PatchZone(new, patch3);
+
+      PatchProcess(new, patch3);
       StoreDword(fseeki64, b);
-      PatchZone(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
+      PatchProcess(new + 128, b); // _fseeki64 goes at the alloced memory area + 128
       StoreDword(addr2, b);
-      PatchZone(new + 132, b); // _allmul goes at the alloced memory area + 132
+      PatchProcess(new + 132, b); // _allmul goes at the alloced memory area + 132
       StoreDword(new + 132, b);
-      PatchZone(new + 10, b); // fix the _allmul call
+      PatchProcess(new + 10, b); // fix the _allmul call
       StoreDword(new + 128, b);
-      PatchZone(new + 20, b); // fix the _fseeki64 call
+      PatchProcess(new + 20, b); // fix the _fseeki64 call
       offset = returnaddr - (new + 30 + 4);
       StoreDword(offset, b);
-      PatchZone(new + 30, b); // fix the returning jump
+      PatchProcess(new + 30, b); // fix the returning jump
 
 /*
 406:
@@ -432,7 +464,7 @@ build 399:
 .text:00556AA4 75 23                             jnz     short loc_556AC9
 */
       int search7[] = { 0x83, 0xc4, 0x24, 0x3b, 0xc3, 0x89, 0x86, 0xd8, 0x02, 0x00, 0x00 };
-      patcharea = FindMemory(0x510000, 0x570000, search7);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search7);
       if (patcharea == 0) {
          Alert("Failed to fully patch the 2GB limit!");
          Alert("Backtesting will probably result in a crash!");
@@ -442,7 +474,7 @@ build 399:
       offset = fopen - patcharea;
       patcharea -= 4;
       StoreDword(offset, b);
-      PatchZone(patcharea, b);
+      PatchProcess(patcharea, b);
 /*
 406:
 .text:005412FE FF 15 94 4D 56 00                       call    ds:fclose
@@ -451,7 +483,7 @@ build 399:
 .text:0054130D 8B 86 04 03 00 00                       mov     eax, [esi+304h]
 */
       int search8[] = { 0x83, 0xc4, 0x04, 0x89, 0x9e, 0xd8, 0x02, 0x00, 0x00, 0x8b, 0x86, 0x04, 0x03, 0x00, 0x00 };
-      patcharea = FindMemory(0x510000, 0x570000, search8);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search8);
       if (patcharea == 0) {
          Alert("Failed to fully patch the 2GB limit!");
          Alert("Backtesting will probably result in a crash!");
@@ -461,7 +493,7 @@ build 399:
       offset = fclose - patcharea;
       patcharea -= 4;
       StoreDword(offset, b);
-      PatchZone(patcharea, b);
+      PatchProcess(patcharea, b);
 /*
 406:
 .text:00556BCD 8D 04 7F                          lea     eax, [edi+edi*2]
@@ -473,7 +505,7 @@ build 399:
 .text:00556BDA E8 26 AE 02 00                    call    fread
 */
       int search9[] = { 0x8d, 0x04, 0x7f, 0x8d, 0x0c, 0x87, 0x6a, 0x01, 0xc1, 0xe1, 0x02, 0x51, 0x52, 0xe8 };
-      patcharea = FindMemory(0x510000, 0x570000, search9);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search9);
       if (patcharea == 0) {
          Alert("Failed to fully patch the 2GB limit!");
          Alert("Backtesting will probably result in a crash!");
@@ -484,7 +516,7 @@ build 399:
       offset = fread - patcharea;
       patcharea -= 4;
       StoreDword(offset, b);
-      PatchZone(patcharea, b);
+      PatchProcess(patcharea, b);
 /*
 .text:00556ACD E8 A9 AE 02 00                    call    _filelength
 .text:00556AD2 8B C8                             mov     ecx, eax
@@ -496,7 +528,7 @@ build 399:
 .text:00556AE7 89 96 F4 02 00 00                 mov     [esi+2F4h], edx
 */
       int search10[] = { 0x8b, 0xc8, 0x81, 0xe9, 0xd8, 0x02, 0x00, 0x00, 0xb8, 0x4f, 0xec, 0xc4, 0x4e, 0xf7, 0xe1, 0x83, 0xc4, 0x04 };
-      patcharea = FindMemory(0x510000, 0x570000, search10);
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search10);
       if (patcharea == 0) {
          Alert("Failed to fully patch the 2GB limit!");
          Alert("Backtesting will probably result in a crash!");
@@ -506,7 +538,7 @@ build 399:
       offset = filelength - patcharea;
       patcharea -= 4;
       StoreDword(offset, b);
-      PatchZone(patcharea, b);
+      PatchProcess(patcharea, b);
    }
 }
 
@@ -520,8 +552,14 @@ void VariableSpreadPatch() {
 .text:00541D86 DD 42 1C                                fld     qword ptr [edx+1Ch]
 .text:00541D89 DC 83 20 03 00 00                       fadd    qword ptr [ebx+320h]
 */
+   /*
+   int search[] = { 0x02, 0x00, 0x00,
+                    0xdd, 0x42, 0x1c,
+                    0xdc, 0x83, 0x20, 0x03, 0x00, 0x00 };
+   */
    int search[] = { 0x02, 0x00, 0x00, 0xdd, 0x42, 0x1c, 0xdc, 0x83, 0x20, 0x03, 0x00, 0x00 };
-   int patcharea = FindMemory(0x510000, 0x570000, search);
+
+   int patcharea = FindMemoryAddress(0x510000, 0x570000, search);
    if (patcharea != 0) {
       int patchaddr = patcharea + 6;
 /*
@@ -531,7 +569,7 @@ void VariableSpreadPatch() {
 0054120E       90                      NOP
 */
       int patch[] = { 0xdc, 0x42, 0x24, 0x90, 0x90, 0x90 };
-      PatchZone(patchaddr, patch);
+      PatchProcess(patchaddr, patch);
    }
    else {
 // build 406 (405+ is like this)
@@ -541,13 +579,20 @@ void VariableSpreadPatch() {
 .text:00556956 8B 54 24 20                       mov     edx, [esp+10h+arg_C]
 .text:0055695A DC 83 20 03 00 00                 fadd    qword ptr [ebx+320h]
 */
+      /*
+      int search1a[] = { 0x02, 0x00, 0x00,
+                        0xdd, 0x42, 0x1c,
+                        0x8b, 0x54, 0x24, 0x20,
+                        0xdc, 0x83, 0x20, 0x03, 0x00, 0x00 };
+      */
       int search1a[] = { 0x02, 0x00, 0x00, 0xdd, 0x42, 0x1c, 0x8b, 0x54, 0x24, 0x20, 0xdc, 0x83, 0x20, 0x03, 0x00, 0x00 };
-      patcharea = FindMemory(0x510000, 0x570000, search1a);
+
+      patcharea = FindMemoryAddress(0x510000, 0x570000, search1a);
       if (patcharea != 0) {
          patchaddr = patcharea + 6;
       }
       int patch1[] = { 0xdc, 0x42, 0x24, 0x8b, 0x54, 0x24, 0x20, 0x90, 0x90, 0x90 };
-      PatchZone(patchaddr, patch1);
+      PatchProcess(patchaddr, patch1);
    }
    if (patcharea == 0) {
       Print("Process already patched for variable spread or we just can't find the area to patch.");
@@ -568,16 +613,17 @@ void VariableSpreadPatch() {
 00541546   |.  3BFB                    |CMP EDI,EBX
 */
    int search2[] = { 0xdf, 0xe0, 0xf6, 0xc4, 0x41, 0x75, 0x40, 0x4f, 0x83, 0xc1, 0x34, 0x3b, 0xfb };
-   int patcharea2 = FindMemory(0x510000, 0x570000, search2);
+   int patcharea2 = FindMemoryAddress(0x510000, 0x570000, search2);
    string volstr;
    if (patcharea2 != 0) {
-      ProcessPatch(patcharea2 + 6, 0); // remove the volume check
-      volstr = " Volume check removed at 0x" + Dec2Hex(patcharea2 + 6) + ".";
+      int byte[] = { 0 };
+      PatchProcess(patcharea2 + 6, byte); // remove the volume check
+      volstr = " Volume check removed at 0x" + DecimalToHexStr(patcharea2 + 6) + ".";
    }
    else {
       Print("Volume check NOT removed. You may encounter problems when spread is 0.");
    }
-   Print("Process patched for variable spread at 0x" + Dec2Hex(patchaddr) + "." + volstr);
+   Print("Process patched for variable spread at 0x" + DecimalToHexStr(patchaddr) + "." + volstr);
 
    catch("VariableSpreadPatch(2)");
 }
@@ -586,30 +632,31 @@ void VariableSpreadPatch() {
 /**
  *
  */
-int FindMemory(int start, int end, int cmp[]) {
-   int mem[1];
-   int out;
-   int hproc = GetCurrentProcess();
-   for (int i = start; i <= end; i++) {
-      mem[0] = 0;
-      ReadProcessMemory(hproc, i, mem, 1, out);
-      if (mem[0] == cmp[0]) {
+int FindMemoryAddress(int from, int to, int pattern[]) {
+   int buffer[1], null[], hProcess=GetCurrentProcess();
+   int patternLength = ArraySize(pattern);
+
+   for (int i=from; i <= to; i++) {
+      buffer[0] = 0;
+      if (!ReadProcessMemory(hProcess, i, buffer, 1, null)) { catch("FindMemoryAddress(1) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR); return(0); }
+
+      if (buffer[0] == pattern[0]) {
          bool found = true;
-         for (int j = 1; j < ArraySize(cmp); j++) {
-            mem[0] = 0;
-            ReadProcessMemory(hproc, i + j, mem, 1, out);
-            if (mem[0] != cmp[j]) {
+
+         for (int n=1; n < patternLength; n++) {
+            buffer[0] = 0;
+            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, null)) { catch("FindMemoryAddress(2) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR); return(0); }
+
+            if (buffer[0] != pattern[n]) {
                found = false;
                break;
             }
          }
-         if (found) {
-            catch("FindMemory(1)");
+         if (found)
             return(i);
-         }
       }
    }
-   catch("FindMemory(2)");
+   catch("FindMemoryAddress(3)");
    return(0);
 }
 
@@ -617,31 +664,11 @@ int FindMemory(int start, int end, int cmp[]) {
 /**
  *
  */
-void ReadDword(int addr, int& arr[]) {
-   int mem[1];
-   int out;
-   int hproc = GetCurrentProcess();
-   ReadProcessMemory(hproc, addr, mem, 1, out);
-   arr[0] = mem[0];
-   ReadProcessMemory(hproc, addr + 1, mem, 1, out);
-   arr[1] = mem[0];
-   ReadProcessMemory(hproc, addr + 2, mem, 1, out);
-   arr[2] = mem[0];
-   ReadProcessMemory(hproc, addr + 3, mem, 1, out);
-   arr[3] = mem[0];
-
-   catch("ReadDword()");
-}
-
-
-/**
- *
- */
-void StoreDword(int addr, int& arr[]) {
-   arr[0] = addr & 0xFF;
-   arr[1] = (addr & 0xFF00) >> 8;
-   arr[2] = (addr & 0xFF0000) >> 16;
-   arr[3] = (addr & 0xFF000000) >> 24;
+void StoreDword(int addr, int& bytes[]) {
+   bytes[0] = addr       & 0xFF;
+   bytes[1] = addr >>  8 & 0xFF;
+   bytes[2] = addr >> 16 & 0xFF;
+   bytes[3] = addr >> 24 & 0xFF;
 
    catch("StoreDword()");
 }
@@ -650,69 +677,15 @@ void StoreDword(int addr, int& arr[]) {
 /**
  *
  */
-void PatchZone(int address, int patch[]) {
-   int mem[1];
-   int out;
-   int hproc = GetCurrentProcess();
-   for (int i = 0; i < ArraySize(patch); i++) {
-      mem[0] = patch[i];
-      WriteProcessMemory(hproc, address + i, mem, 1, out);
+bool PatchProcess(int address, int bytes[]) {
+   int size     = ArraySize(bytes);
+   int hProcess = GetCurrentProcess();
+   int buffer[1], null[];
+
+   for (int i=0; i < size; i++) {
+      buffer[0] = bytes[i];
+      if (!WriteProcessMemory(hProcess, address+i, buffer, 1, null))
+         return(catch("PatchProcess() ->kernel32.WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)==NO_ERROR);
    }
-   catch("PatchZone()");
-}
-
-
-/**
- *
- */
-int ProcessPatch(int address, int byte) {
-   int mem[1];
-   int out;
-   mem[0] = byte;
-   int hproc = GetCurrentProcess();
-   int result = WriteProcessMemory(hproc, address, mem, 1, out);
-
-   catch("ProcessPatch()");
-   return(result);
-}
-
-
-/**
- *
- */
-string Dec2Hex(int n) {
-   string result = "";
-   while(n > 0) {
-      int d = n % 16;
-      string c;
-      if (d == 10) {
-         c = "A";
-      }
-      else if (d == 11) {
-         c = "B";
-      }
-      else if (d == 12) {
-         c = "C";
-      }
-      else if (d == 13) {
-         c = "D";
-      }
-      else if (d == 14) {
-         c = "E";
-      }
-      else if (d == 15) {
-         c = "F";
-      }
-      else {
-         c = d;
-      }
-      result = c + result;
-      n = n / 16;
-   }
-
-   catch("Dec2Hex()");
-   return (result);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   int array[]; ReadDword(NULL, array); StoreDword(NULL, array);
+   return(true);
 }

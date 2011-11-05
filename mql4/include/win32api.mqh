@@ -28,18 +28,20 @@
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);               // @see  stdlib.GetPrivateProfileSectionNames()
+   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                        // @see  stdlib.GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    void OutputDebugStringA(string lpMessage);
+   bool ReadProcessMemory(int hProcess, int lpBaseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
-   int  WinExec(string lpCmdLine, int cmdShow);
-   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);   // @see  stdlib.DeletePrivateProfileSection()
-                                                                                                         // @see  stdlib.DeletePrivateProfileKey()
-#import "ntdll.dll"                                                                                      // @see  stdlib.FlushPrivateProfileCache()
+   int  WinExec(string lpCmdLine, int cmdShow);                                                                   //         +-- stdlib.DeletePrivateProfileSection()
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);            // @see  --+-- stdlib.DeletePrivateProfileKey()
+   bool WriteProcessMemory(int hProcess, int lpAddress, int lpBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib.FlushPrivateProfileCache()
+
+#import "ntdll.dll"
 
    int  RtlGetLastWin32Error();
 

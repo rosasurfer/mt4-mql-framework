@@ -3718,30 +3718,116 @@ bool CompareDoubles(double double1, double double2) {
 
 
 /**
- * Gibt die hexadezimale Representation eines Integers zurück.
+ * Gibt die hexadezimale Repräsentation einer Ganzzahl zurück.
  *
- * @param  int i - Integer
+ * @param  int value - Ganzzahl
  *
  * @return string - hexadezimaler Wert
  *
- * TODO: kann keine negativen Zahlen verarbeiten (gibt 0 zurück)
+ * Beispiel: DecimalToHexStr(2058) => "80A"
  */
-string DecimalToHex(int i) {
-   static string hexValues = "0123456789ABCDEF";
-   string result = "";
+string DecimalToHexStr(int value) {
+   if (value == 0)
+      return("0");
 
-   int a = i % 16;   // a = Divisionsrest
-   int b = i / 16;   // b = ganzes Vielfaches
+   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
 
-   if (b > 15) result = StringConcatenate(DecimalToHex(b), StringSubstr(hexValues, a, 1));
-   else        result = StringConcatenate(StringSubstr(hexValues, b, 1), StringSubstr(hexValues, a, 1));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("DecimalToHex()", error);
-      return("");
+   while (value != 0) {
+      char   = chars[value & 0x0F];                // value % 16
+      hexStr = StringConcatenate(char, hexStr);
+      value >>= 4;                                 // value / 16
    }
-   return(result);
+   return(hexStr);
+}
+
+
+/**
+ * Gibt die hexadezimale Repräsentation eines Bytes zurück.
+ *
+ * @param  int byte - Byte
+ *
+ * @return string - hexadezimaler Wert
+ *
+ * Beispiel: ByteToHexStr(10) => "0A"
+ */
+string ByteToHexStr(int byte) {
+   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   int    value = byte;
+
+   for (int i=0; i < 2; i++) {
+      char   = chars[value & 0x0F];                // value % 16
+      hexStr = StringConcatenate(char, hexStr);
+      value >>= 4;                                 // value / 16
+   }
+   return(hexStr);
+}
+
+
+/**
+ * Alias
+ */
+string CharToHexStr(int char) {
+   return(ByteToHexStr(char));
+}
+
+
+/**
+ * Gibt die hexadezimale Repräsentation eines Words zurück.
+ *
+ * @param  int word - Word (2 Byte)
+ *
+ * @return string - hexadezimaler Wert
+ *
+ * Beispiel: WordToHexStr(2595) => "0A23"
+ */
+string WordToHexStr(int word) {
+   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   int    value = word;
+
+   for (int i=0; i < 4; i++) {
+      char   = chars[value & 0x0F];                // value % 16
+      hexStr = StringConcatenate(char, hexStr);
+      value >>= 4;                                 // value / 16
+   }
+   return(hexStr);
+}
+
+
+/**
+ * Gibt die hexadezimale Repräsentation eines Dwords zurück.
+ *
+ * @param  int dword - Dword (4 Byte, entspricht einem MQL-Integer)
+ *
+ * @return string - hexadezimaler Wert
+ *
+ * Beispiel: DwordToHexStr(13465610) => "00CD780A"
+ */
+string DwordToHexStr(int dword) {
+   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   int    value = dword;
+
+   for (int i=0; i < 8; i++) {
+      char   = chars[value & 0x0F];                // value % 16
+      hexStr = StringConcatenate(char, hexStr);
+      value >>= 4;                                 // value / 16
+   }
+   return(hexStr);
+}
+
+
+/**
+ * Alias
+ */
+string IntToHexStr(int integer) {
+   return(DwordToHexStr(integer));
+}
+
+
+/**
+ * MetaQuotes-Alias
+ */
+string IntegerToHexStr(int integer) {
+   return(DwordToHexStr(integer));
 }
 
 
@@ -7280,34 +7366,23 @@ string StringTrim(string value) {
  * @return string - URL-kodierter String
  */
 string UrlEncode(string value) {
-   int char, len=StringLen(value);
-   string charStr, result="";
+   string strChar, result="";
+   int    char, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
-      charStr = StringSubstr(value, i, 1);
-      char    = StringGetChar(charStr, 0);
+      strChar = StringSubstr(value, i, 1);
+      char    = StringGetChar(strChar, 0);
 
-      if ((47 < char && char < 58) || (64 < char && char < 91) || (96 < char && char < 123))
-         result = StringConcatenate(result, charStr);
-      else if (char == 32)
-         result = StringConcatenate(result, "+");
-      else
-         result = StringConcatenate(result, "%", DecimalToHex(char));
+      if      (47 < char && char <  58) result = StringConcatenate(result, strChar);                  // 0-9
+      else if (64 < char && char <  91) result = StringConcatenate(result, strChar);                  // A-Z
+      else if (96 < char && char < 123) result = StringConcatenate(result, strChar);                  // a-z
+      else if (char == ' ')             result = StringConcatenate(result, "+");
+      else                              result = StringConcatenate(result, "%", CharToHexStr(char));
    }
 
    if (catch("UrlEncode()") != NO_ERROR)
       return("");
    return(result);
-}
-
-
-/**
- * Alias für IntToHexStr()
- *
- * Konvertiert einen Integer in seine hexadezimale Representation.
- */
-string IntegerToHexStr(int integer) {
-   return(IntToHexStr(integer));
 }
 
 
@@ -7359,29 +7434,6 @@ bool IsDirectory(string pathName) {
    }
 
    catch("IsDirectory()");
-   return(result);
-}
-
-
-/**
- * Konvertiert einen Integer in seine hexadezimale Representation.
- *
- * @param  string value
- *
- * @return string
- *
- * Beispiel: IntToHexStr(2026701066) => "78CD010A"
- */
-string IntToHexStr(int integer) {
-   string result = "00000000";
-   int value, shift = 28;
-
-   for (int i=0; i < 8; i++) {
-      value = (integer >> shift) & 0x0F;
-      if (value < 10) result = StringSetChar(result, i,  value     +'0');  // 0x30 = '0'        // Integer in Nibbles zerlegen und jedes
-      else            result = StringSetChar(result, i, (value-10) +'A');  // 0x41 = 'A'        // einzelne Nibble hexadezimal darstellen
-      shift -= 4;
-   }
    return(result);
 }
 
@@ -7704,7 +7756,7 @@ string DoubleToStrEx(double value, int digits) {
    }
 
    double integer    = MathFloor(value);
-   string strInteger = DoubleToStr(integer + 0.1, 0);
+   string strInteger = DoubleToStr(integer +0.1, 0);
 
    double remainder    = MathRound((value-integer) * decimals[digits]);
    string strRemainder = "";
@@ -7730,11 +7782,9 @@ string DoubleToStrEx(double value, int digits) {
 
 /**
  * MetaQuotes-Alias für DoubleToStrEx()
- *
- * Konvertiert einen Double in einen String mit bis zu 16 Nachkommastellen.
  */
-string DoubleToStrMorePrecision(double number, int precision) {
-   return(DoubleToStrEx(number, precision));
+string DoubleToStrMorePrecision(double value, int precision) {
+   return(DoubleToStrEx(value, precision));
 }
 
 
