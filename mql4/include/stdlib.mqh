@@ -352,7 +352,7 @@
    string   IntegerToHexStr(int integer); string DecimalToHexStr(int integer);                                          // Alias
    string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                                // Alias
    string   WordToHexStr(int word);
-   string   DWordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
+   string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
 
    string   BoolArrayToStr(bool values[], string separator);
    string   IntArrayToStr(int values[], string separator);
