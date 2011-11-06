@@ -3720,17 +3720,18 @@ bool CompareDoubles(double double1, double double2) {
 /**
  * Gibt die hexadezimale Repräsentation einer Ganzzahl zurück.
  *
- * @param  int value - Ganzzahl
+ * @param  int integer - Ganzzahl
  *
- * @return string - hexadezimaler Wert
+ * @return string - hexadezimaler Wert entsprechender Länge
  *
- * Beispiel: DecimalToHexStr(2058) => "80A"
+ * Beispiel: IntegerToHexStr(2058) => "80A"
  */
-string DecimalToHexStr(int value) {
-   if (value == 0)
+string IntegerToHexStr(int integer) {
+   if (integer == 0)
       return("0");
 
    string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   int    value = integer;
 
    while (value != 0) {
       char   = chars[value & 0x0F];                // value % 16
@@ -3742,11 +3743,19 @@ string DecimalToHexStr(int value) {
 
 
 /**
+ * Alias
+ */
+string DecimalToHexStr(int integer) {
+   return(IntegerToHexStr(integer));
+}
+
+
+/**
  * Gibt die hexadezimale Repräsentation eines Bytes zurück.
  *
  * @param  int byte - Byte
  *
- * @return string - hexadezimaler Wert
+ * @return string - hexadezimaler Wert mit 2 Stellen
  *
  * Beispiel: ByteToHexStr(10) => "0A"
  */
@@ -3776,7 +3785,7 @@ string CharToHexStr(int char) {
  *
  * @param  int word - Word (2 Byte)
  *
- * @return string - hexadezimaler Wert
+ * @return string - hexadezimaler Wert mit 4 Stellen
  *
  * Beispiel: WordToHexStr(2595) => "0A23"
  */
@@ -3798,7 +3807,7 @@ string WordToHexStr(int word) {
  *
  * @param  int dword - Dword (4 Byte, entspricht einem MQL-Integer)
  *
- * @return string - hexadezimaler Wert
+ * @return string - hexadezimaler Wert mit 8 Stellen
  *
  * Beispiel: DwordToHexStr(13465610) => "00CD780A"
  */
@@ -3819,14 +3828,6 @@ string DwordToHexStr(int dword) {
  * Alias
  */
 string IntToHexStr(int integer) {
-   return(DwordToHexStr(integer));
-}
-
-
-/**
- * MetaQuotes-Alias
- */
-string IntegerToHexStr(int integer) {
    return(DwordToHexStr(integer));
 }
 

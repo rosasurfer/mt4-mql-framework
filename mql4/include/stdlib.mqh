@@ -349,10 +349,10 @@
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);     // MetaQuotes-Alias
 
-   string   DecimalToHexStr(int number);
-   string   ByteToHexStr(int number);  string CharToHexStr(int number);                                                 // eigener Alias
-   string   WordToHexStr(int number);
-   string   DWordToHexStr(int number); string IntToHexStr(int integer); string IntegerToHexStr(int integer);            // eigener und MetaQuotes-Alias
+   string   IntegerToHexStr(int integer); string DecimalToHexStr(int integer);                                          // Alias
+   string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                                // Alias
+   string   WordToHexStr(int word);
+   string   DWordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
 
    string   BoolArrayToStr(bool values[], string separator);
    string   IntArrayToStr(int values[], string separator);

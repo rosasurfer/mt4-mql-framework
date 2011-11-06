@@ -30,9 +30,11 @@
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                        // @see  stdlib.GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
+   int  GetProcAddress(int hModule, string lpProcedureName);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
+   int  LoadLibraryA(string lpLibFileName);
    void OutputDebugStringA(string lpMessage);
    bool ReadProcessMemory(int hProcess, int lpBaseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
