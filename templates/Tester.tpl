@@ -8739,6 +8739,7 @@ background=1
 value_0=1.680000
 </object>
 </indicator>
+
 <indicator>
 name=Custom Indicator
 <expert>
