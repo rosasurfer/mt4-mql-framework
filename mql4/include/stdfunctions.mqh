@@ -335,6 +335,17 @@
 #define MB_DEFBUTTON3                              0x0200
 #define MB_DEFBUTTON4                              0x0300
 
+#define MB_APPLMODAL                           0x00000000
+#define MB_SYSTEMMODAL                         0x00001000
+#define MB_TASKMODAL                           0x00002000
+
+#define MB_DEFAULT_DESKTOP_ONLY                0x00020000
+#define MB_RIGHT                               0x00080000
+#define MB_RTLREADING                          0x00100000
+#define MB_SETFOREGROUND                       0x00010000
+#define MB_TOPMOST                             0x00040000
+#define MB_SERVICE_NOTIFICATION                0x00200000
+
 
 // MessageBox() command IDs (return codes)
 #define IDOK                                            1
@@ -474,6 +485,21 @@ int    UnchangedBars = -1;
 int    ChangedBars   = -1;
 
 
+#import "user32.dll"
+
+   int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+
+#import "winmm.dll"
+
+   bool PlaySoundA(string lpSound, int hMod, int fSound);
+
+#import
+
+
+#define SND_ASYNC           0x0001     // play asynchronously
+#define SND_FILENAME    0x00020000     // name is file name
+
+
 /**
  * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Bei Aufruf in einer init()-Funktion wird der Fehler in der globalen
  * Variable init_error gespeichert, außerhalb von init() in der globalen Variable last_error. Der mit der MQL-Funktion GetLastError() auslesbare interne
@@ -499,6 +525,20 @@ int catch(string message="", int error=NO_ERROR) {
          message = "???";
 
       Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
+
+      // Im Tester werden Alerts() aus Experts übergangen, deshalb Fehler manuell signalisieren
+      if (IsTesting()) {
+         // Sound abspielen
+         string soundfile = StringConcatenate(TerminalPath(), "\\sounds\\alert.wav");
+         PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
+
+         // Messagebox anzeigen
+         string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+         string strings[];
+         if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL+NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
+         else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL+NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
+         MessageBoxA(NULL, message, caption, MB_OK|MB_ICONERROR|MB_TOPMOST);
+      }
 
       if (init) init_error = error;
       else      last_error = error;

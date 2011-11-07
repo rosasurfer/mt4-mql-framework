@@ -8743,7 +8743,7 @@ value_0=1.680000
 <indicator>
 name=Custom Indicator
 <expert>
-name=Grid
+name=TestIndicator
 flags=347
 window_num=0
 <inputs>
