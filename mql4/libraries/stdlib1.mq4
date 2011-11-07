@@ -6184,32 +6184,55 @@ int GetServerToGmtOffset(datetime serverTime) {
 }
 
 
-int hWndTerminal;                               // überlebt Timeframe-Wechsel
-
-
 /**
  * Gibt das Handle des Hauptfensters des MetaTrader-Terminals zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTerminalWindow() {
-   if (hWndTerminal != 0)
-      return(hWndTerminal);
+   /*static*/ int hWnd;                      // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   if (hWnd != 0)
+      return(hWnd);
 
-   // TODO: in Indicator::init() ist WindowHandle() unbrauchbar
-   int hWndParent = WindowHandle(Symbol(), Period());
-   if (hWndParent == 0)
-      return(0);
+   static string terminalClassName = "MetaQuotes::MetaTrader::4.00";
 
-   while (hWndParent != 0) {
-      int hWndChild  = hWndParent;
-      hWndParent = GetParent(hWndChild);
+   // WindowHandle()
+   hWnd = WindowHandle(Symbol(), NULL);      // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart)
+   if (hWnd != 0) {
+      hWnd = GetAncestor(hWnd, GA_ROOT);
+      if (GetClassName(hWnd) != terminalClassName) {
+         catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from WindowHandle()", ERR_RUNTIME_ERROR);
+         hWnd = 0;
+      }
+      return(hWnd);
    }
-   hWndTerminal = hWndChild;
 
-   if (catch("GetTerminalWindow()") != NO_ERROR)
-      return(0);
-   return(hWndTerminal);
+   // GetActiveWindow()
+   hWnd = GetActiveWindow();                 // schlägt im Tester fehl, wenn IsVisualMode() FALSE ist
+   if (hWnd != 0) {
+      hWnd = GetAncestor(hWnd, GA_ROOT);
+      if (GetClassName(hWnd) != terminalClassName) {
+         catch("GetTerminalWindow(2)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from GetActiveWindow()", ERR_RUNTIME_ERROR);
+         hWnd = 0;
+      }
+      return(hWnd);
+   }
+
+   // the long way: enumerating the top level windows
+   int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
+
+   while (hWndNext != 0) {
+      GetWindowThreadProcessId(hWndNext, processId);
+      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==terminalClassName)
+         break;
+      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
+   }
+   if (hWndNext == 0) {
+      catch("GetTerminalWindow(3)   could not find terminal window", ERR_RUNTIME_ERROR);
+      hWnd = 0;
+   }
+
+   return(hWnd);
 }
 
 
@@ -6271,10 +6294,28 @@ string GetWindowText(int hWnd) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   GetWindowTextA(hWnd, buffer[0], bufferSize);
+   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
 
-   if (catch("GetWindowText()") != NO_ERROR)
+   return(buffer[0]);
+}
+
+
+/**
+ * Gibt den Klassennamen des angegebenen Fensters zurück.
+ *
+ * @param  int hWnd - Handle des Fensters
+ *
+ * @return string - Klassenname
+ */
+string GetClassName(int hWnd) {
+   int    bufferSize = 255;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
+   if (chars == 0) {
+      catch("GetClassName() ->user32.GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
+   }
    return(buffer[0]);
 }
 

@@ -38,26 +38,8 @@ int start() {
       return(init_error);
    // ------------------------
 
-   string null;
-   int hModule = GetModuleHandleA(null);   // NULL-Pointer
 
-   if (hModule == NULL)
-      return(catch("start(1) ->kernel32.GetModuleHandleA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-
-   debug("start()   hModule = "+ hModule);
-
-
-
-   string filename = "F:/MetaTrader/shared/metatrader-global-config.ini";
-   string names[];
-   GetPrivateProfileSectionNames(filename, names);
-
-   debug("start()   sections = "+ StringArrayToStr(names, NULL));
-
-
-
-
-   //SendTick(true);
+   SendTick(true);
    return(catch("start()"));
 }
 

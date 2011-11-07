@@ -54,8 +54,14 @@
 #import "user32.dll"
 
    int  GetActiveWindow();
+   int  GetAncestor(int hWnd, int cmd);
+   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);       // @see stdlib.GetClassName()
+   int  GetDesktopWindow();
    int  GetParent(int hWnd);
-   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);
+   int  GetTopWindow(int hWnd);
+   int  GetWindow(int hWnd, int cmd);
+   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);      // @see stdlib.GetWindowText()
+   int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
    int  RegisterWindowMessageA(string lpString);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
@@ -79,7 +85,6 @@
 
    // windows
    int  FindWindowA(string lpClassName, string lpWindowName);
-   int  GetWindow(int hWnd, int uCmd);
    int  GetWindowTextLengthA(int hWnd);
    int  UpdateWindow(int hWnd);
    int  EnableWindow(int hWnd, int bEnable);
@@ -204,6 +209,12 @@
 #define HFILE_ERROR                          0xFFFFFFFF     // -1
 
 
+// GetAncestor() constants
+#define GA_PARENT                                     1
+#define GA_ROOT                                       2
+#define GA_ROOTOWNER                                  3
+
+
 // GetSystemMetrics() codes
 #define SM_CXSCREEN                                   0
 #define SM_CYSCREEN                                   1
@@ -299,6 +310,7 @@
 #define GW_HWNDPREV                                   3
 #define GW_OWNER                                      4
 #define GW_CHILD                                      5
+#define GW_ENABLEDPOPUP                               6
 
 
 // Handles

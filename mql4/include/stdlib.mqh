@@ -339,6 +339,7 @@
    int      SwitchExperts(bool enable);
    double   GetAverageSpread(string symbol);
 
+   string   GetClassName(int hWnd);
    string   GetComputerName();
    string   GetWindowText(int hWnd);
    int      SetWindowText(int hWnd, string text);
