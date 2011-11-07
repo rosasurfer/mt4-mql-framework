@@ -6231,6 +6231,7 @@ int GetTerminalWindow() {
       catch("GetTerminalWindow(3)   could not find terminal window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
+   hWnd = hWndNext;
 
    return(hWnd);
 }

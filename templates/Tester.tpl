@@ -8747,7 +8747,6 @@ name=TestIndicator
 flags=347
 window_num=0
 <inputs>
-Grid.Color=13882323
 </inputs>
 </expert>
 shift_0=0
