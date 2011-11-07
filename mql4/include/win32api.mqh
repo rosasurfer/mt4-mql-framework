@@ -74,6 +74,10 @@
    bool GetFileVersionInfoA(string lpFilename, int handle, int bufferSize, int lpBuffer[]);
    int  GetFileVersionInfoSizeA(string lpFilename, int lpHandle[]);
 
+#import "winmm.dll"
+
+   bool PlaySoundA(string lpSound, int hMod, int fSound);
+
 #import
 
 
