@@ -6,7 +6,7 @@
 
 #import "stdlib.ex4"
 
-   // Laufzeitfunktionen
+   // Library-Funktionen
    void     stdlib_init(string scriptName);
    void     stdlib_onTick(int unchangedBars);
    int      stdlib_GetLastError();
@@ -204,7 +204,6 @@
    bool     IsDirectory(string pathName);
 
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
-   string   GetShortcutTarget(string lnkFile);
 
    int      GetPrivateProfileSectionNames(string fileName, string names[]);
    int      GetPrivateProfileKeys(string lpFileName, string lpSection, string lpKeys[]);
@@ -285,10 +284,6 @@
 
 
    // sonstiges
-   string   GetTerminalVersion();
-   int      GetTerminalBuild();
-   int      GetTerminalWindow();
-
    int      GetAccountNumber();
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
@@ -339,12 +334,6 @@
    int      SwitchExperts(bool enable);
    double   GetAverageSpread(string symbol);
 
-   string   GetClassName(int hWnd);
-   string   GetComputerName();
-   string   GetWindowText(int hWnd);
-   int      SetWindowText(int hWnd, string text);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
-
 
    // toString-Funktionen
    string   BoolToStr(bool value);
@@ -376,6 +365,20 @@
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
+
+
+   // Win32-Laufzeit- und Statusfunktionen
+   string   GetTerminalVersion();
+   int      GetTerminalBuild();
+   int      GetTerminalWindow();
+   int      GetUIThreadId();
+
+   string   GetClassName(int hWnd);
+   string   GetComputerName();
+   string   GetWin32ShortcutTarget(string lnkFile);
+   string   GetWindowText(int hWnd);
+   int      SetWindowText(int hWnd, string text);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
 
 
    // Win32-Structs Getter und Setter

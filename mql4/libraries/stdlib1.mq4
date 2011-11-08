@@ -26,19 +26,23 @@
 #include <win32api.mqh>
 
 #import "stdlib2.ex4"
-
    int GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
-
 #import
 
 
 /**
- * Initialisierung interner Variablen der Library zur Verbesserung des Debuggings.
+ * Initialisierung interner Variablen der Library.
  *
  * @param  string scriptName - Name des Scriptes, das die Library lädt
  */
 void stdlib_init(string scriptName) {
    __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
+
+   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt aufgerufen wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
+   // bei Shutdown). Da sich das Handle des Hauptfensters innerhalb der Instanz nicht ändert und GetTerminalWindow() den Wert cacht, wird die Funktion sofort
+   // bei Initialisierung der Library aufgerufen. Analog dazu wird das Handle des UI-Threads sofort ermittelt (ist auf gültiges Hauptfenster-Handle angewiesen).
+   GetTerminalWindow();
+   GetUIThreadId();
 }
 
 
@@ -415,7 +419,7 @@ string GetLocalConfigPath() {
       string lnkFile = StringConcatenate(iniFile, ".lnk");
 
       if (IsFile(lnkFile)) {
-         iniFile = GetShortcutTarget(lnkFile);
+         iniFile = GetWin32ShortcutTarget(lnkFile);
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -463,7 +467,7 @@ string GetGlobalConfigPath() {
       string lnkFile = StringConcatenate(iniFile, ".lnk");
 
       if (IsFile(lnkFile)) {
-         iniFile = GetShortcutTarget(lnkFile);
+         iniFile = GetWin32ShortcutTarget(lnkFile);
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -1580,7 +1584,7 @@ int ExplodeStringsW(int buffer[], string& results[]) {
  *
  * @return string - Dateipfad der Zieldatei
  */
-string GetShortcutTarget(string lnkFilename) {
+string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    // How to read the target's path from a .lnk-file:
    // --------------------------------------------------------------------------
@@ -1628,7 +1632,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk") {
-      catch("GetShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -1637,13 +1641,13 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR) {
-      catch("GetShortcutTarget(2) ->kernel32._lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("GetWin32ShortcutTarget(2) ->kernel32._lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       return("");
    }
-   int null[];
-   int fileSize = GetFileSize(hFile, null);
+   int iNull[];
+   int fileSize = GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
-      catch("GetShortcutTarget(3) ->kernel32.GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("GetWin32ShortcutTarget(3) ->kernel32.GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
@@ -1651,14 +1655,14 @@ string GetShortcutTarget(string lnkFilename) {
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
-      catch("GetShortcutTarget(4) ->kernel32._lread(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("GetWin32ShortcutTarget(4) ->kernel32._lread(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
    _lclose(hFile);
 
    if (bytes < 24) {
-      catch("GetShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1679,7 +1683,7 @@ string GetShortcutTarget(string lnkFilename) {
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
    if (chars[0] != 'L') {                          // test the magic value
-      catch("GetShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    if (chars[ 4] != 0x01 ||                        // test the GUID
@@ -1698,7 +1702,7 @@ string GetShortcutTarget(string lnkFilename) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      catch("GetShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1725,7 +1729,7 @@ string GetShortcutTarget(string lnkFilename) {
    bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
 
    if (!pointsToFileOrDir) {
-      log("GetShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
+      log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
       return("");
    }
 
@@ -1736,7 +1740,7 @@ string GetShortcutTarget(string lnkFilename) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2) {
-         catch("GetShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+         catch("GetWin32ShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
          return("");
       }
       A  = chars[76];               // little endian format
@@ -1751,7 +1755,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int B  = chars[i];       i++;    // little endian format
@@ -1767,7 +1771,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4) {
-      catch("GetShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    int C  = chars[i];       i++;    // little endian format
@@ -1780,7 +1784,7 @@ string GetShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1) {
-      catch("GetShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
    string target = "";
@@ -1790,7 +1794,7 @@ string GetShortcutTarget(string lnkFilename) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (StringLen(target) == 0) {
-      catch("GetShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
+      catch("GetWin32ShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
       return("");
    }
 
@@ -1803,9 +1807,9 @@ string GetShortcutTarget(string lnkFilename) {
    if (GetLongPathNameA(target, lfnBuffer[0], MAX_PATH) != 0)        // file does exist
       target = lfnBuffer[0];
 
-   //debug("GetShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
+   //debug("GetWin32ShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-   if (catch("GetShortcutTarget(13)") != NO_ERROR)
+   if (catch("GetWin32ShortcutTarget(13)") != NO_ERROR)
       return("");
    return(target);
 }
@@ -6190,50 +6194,57 @@ int GetServerToGmtOffset(datetime serverTime) {
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTerminalWindow() {
-   /*static*/ int hWnd;                      // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   static int hWnd;                             // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
    if (hWnd != 0)
       return(hWnd);
 
-   static string terminalClassName = "MetaQuotes::MetaTrader::4.00";
-
    // WindowHandle()
-   hWnd = WindowHandle(Symbol(), NULL);      // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart)
-   if (hWnd != 0) {
-      hWnd = GetAncestor(hWnd, GA_ROOT);
-      if (GetClassName(hWnd) != terminalClassName) {
-         catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from WindowHandle()", ERR_RUNTIME_ERROR);
-         hWnd = 0;
+   if (!IsTesting() || IsVisualMode()) {
+      hWnd = WindowHandle(Symbol(), NULL);      // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
+      if (hWnd != 0) {
+         hWnd = GetAncestor(hWnd, GA_ROOT);
+         if (GetClassName(hWnd) != MT4_TERMINAL_CLASSNAME) {
+            catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from WindowHandle()", ERR_RUNTIME_ERROR);
+            hWnd = 0;
+         }
+         return(hWnd);
       }
-      return(hWnd);
    }
 
-   // GetActiveWindow()
-   hWnd = GetActiveWindow();                 // schlägt im Tester fehl, wenn IsVisualMode() FALSE ist
-   if (hWnd != 0) {
-      hWnd = GetAncestor(hWnd, GA_ROOT);
-      if (GetClassName(hWnd) != terminalClassName) {
-         catch("GetTerminalWindow(2)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from GetActiveWindow()", ERR_RUNTIME_ERROR);
-         hWnd = 0;
-      }
-      return(hWnd);
-   }
-
-   // the long way: enumerating the top level windows
+   // alle Top-level-Windows durchlaufen
    int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
 
    while (hWndNext != 0) {
       GetWindowThreadProcessId(hWndNext, processId);
-      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==terminalClassName)
+      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==MT4_TERMINAL_CLASSNAME)
          break;
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
    if (hWndNext == 0) {
-      catch("GetTerminalWindow(3)   could not find terminal window", ERR_RUNTIME_ERROR);
+      catch("GetTerminalWindow(2)   could not find terminal window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
    hWnd = hWndNext;
 
    return(hWnd);
+}
+
+
+/**
+ * Gibt die ID des Userinterface-Threads zurück.
+ *
+ * @return int - tatsächliche Thread-ID (nicht das Pseudo-Handle)
+ */
+int GetUIThreadId() {
+   static int hThread;                       // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   if (hThread != 0)
+      return(hThread);
+
+   int iNull[];
+   hThread = GetWindowThreadProcessId(GetTerminalWindow(), iNull);
+
+   catch("GetUIThreadId()");
+   return(hThread);
 }
 
 
