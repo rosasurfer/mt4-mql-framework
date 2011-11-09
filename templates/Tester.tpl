@@ -8743,19 +8743,19 @@ value_0=1.680000
 <indicator>
 name=Custom Indicator
 <expert>
-name=TestIndicator
-flags=347
+name=Bollinger Bands
+flags=339
 window_num=0
 <inputs>
+MA.Periods=35
+MA.Timeframe=M15
+MA.Methods=EMA
+Color.Bands=14772545
 </inputs>
 </expert>
-shift_0=0
-draw_0=0
-color_0=0
-style_0=0
-weight_0=0
 period_flags=0
 show_data=0
 </indicator>
+
 </window>
 </chart>
