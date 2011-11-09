@@ -8193,7 +8193,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             // Logmessage generieren
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-            catch("OrderSendEx(13)");
+
+            if (catch("OrderSendEx(13)")!=NO_ERROR)
+               return(-1);
             return(ticket);                                          // regular exit
          }
          error = GetLastError();
