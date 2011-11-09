@@ -1823,17 +1823,19 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  * @return int - Fehlerstatus (-1, wenn das Script im Backtester läuft und WindowHandle() nicht benutzt werden kann)
  */
 int SendTick(bool sound=false) {
-   if (IsTesting())
+   if (IsTesting()) {
+      debug("SendTick()   skipping in tester");    // TODO: IsTesting() funktioniert nicht bei Indikatoren
       return(-1);
+   }
 
-   if (WM_MT4 == 0)                                                        // @see <stddefine.mqh>
+   if (WM_MT4 == 0)
       WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
    int hWnd = WindowHandle(Symbol(), Period());
-   if (hWnd <= 0)
-      return(catch("SendTick(1)   unable to get WindowHandle("+ Symbol() +", "+ PeriodDescription(NULL) +") => "+ hWnd, ERR_RUNTIME_ERROR));
-   PostMessageA(hWnd, WM_MT4, 2, 1);
+   if (hWnd == 0)
+      return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
+   PostMessageA(hWnd, WM_MT4, 2, 1);
    if (sound)
       PlaySound("tick1.wav");
 

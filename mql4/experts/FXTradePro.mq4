@@ -188,15 +188,13 @@ int init() {
    Zuerst wird die Sequenz-ID bestimmt, dann deren Konfiguration geladen und zum Schluß die Sequenz restauriert.
    Es gibt 4 grundsätzliche init()-Szenarien:
 
-   (1.1) Neustart des EA   (keine internen Daten, externe Sequenz-ID evt. vorhanden)
-   (1.2) Recompilation     (keine internen Daten, externe Sequenz-ID immer vorhanden)
-   (1.3) Parameteränderung (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
-   (1.4) Timeframe-Wechsel (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
-   ---------------------------
-   (1.5) TODO: Start im Tester
+   (1.1) Neustart des EA, evt. im Tester (keine internen Daten, externe Sequenz-ID evt. vorhanden)
+   (1.2) Recompilation                   (keine internen Daten, externe Sequenz-ID immer vorhanden)
+   (1.3) Parameteränderung               (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+   (1.4) Timeframe-Wechsel               (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
    */
 
-   // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1 oder 1.2
+   // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1, 1.2 oder 1.5
    if (sequenceId == 0) {
 
       // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
@@ -277,13 +275,13 @@ int init() {
 
    // (3) ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-   if (!IsExpertEnabled()) /*&&*/ if (IntInArray(UninitializeReason(), reasons1))
+   if (IntInArray(UninitializeReason(), reasons1)) /*&&*/ if (!IsExpertEnabled())
       SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
 
 
    // (4) nach Reload nicht auf den nächsten Tick warten (nur bei REASON_CHARTCHANGE oder REASON_ACCOUNT)
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(UninitializeReason(), reasons2))
+   if (IntInArray(UninitializeReason(), reasons2)) /*&&*/ if (!IsTesting())
       SendTick(false);
 
    return(catch("init(4)"));
@@ -1662,9 +1660,11 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), GetStandardSymbol(Symbol()), filename);
-   if (error != NO_ERROR)
-      return(error);
+   if (!IsTesting()) {
+      error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), GetStandardSymbol(Symbol()), filename);
+      if (error != NO_ERROR)
+         return(error);
+   }
    return(catch("SaveConfiguration(4)", GetLastError()));
 }
 
@@ -1680,6 +1680,11 @@ int SaveConfiguration() {
  * @return int - Fehlerstatus
  */
 int UploadConfiguration(string company, int account, string symbol, string presetsFile) {
+   if (IsTesting()) {
+      debug("UploadConfiguration()   skipping in tester");
+      return(NO_ERROR);
+   }
+
    // TODO: Existenz von wget.exe prüfen
 
    string parts[]; int size = Explode(presetsFile, "\\", parts, NULL);
@@ -1909,7 +1914,7 @@ int PersistIdForRecompile() {
 
 
 /**
- * Restauriert die im Chart gespeicherte Sequenz-ID.
+ * Restauriert eine im Chart gespeicherte Sequenz-ID.
  *
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
