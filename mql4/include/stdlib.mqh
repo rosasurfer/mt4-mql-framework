@@ -8,9 +8,17 @@
 
    // Library-Funktionen
    void     stdlib_init(string scriptName);
-   void     stdlib_onTick(int unchangedBars);
+   void     stdlib_start(int unchangedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
+
+
+   // Laufzeit- und Statusfunktionen
+   string   GetTerminalVersion();
+   int      GetTerminalBuild();
+   int      GetTerminalWindow();
+   int      GetUIThreadId();
+   bool     IsIndicator();
 
 
    // Arrays
@@ -329,10 +337,12 @@
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
 
+   int      ForceMessageBox(string message, string caption, int flags);
+   void     ForceSound(string soundfile);
+   double   GetAverageSpread(string symbol);
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SwitchExperts(bool enable);
-   double   GetAverageSpread(string symbol);
 
 
    // toString-Funktionen
@@ -367,12 +377,7 @@
    string   WaitForSingleObjectValueToStr(int value);
 
 
-   // Win32-Laufzeit- und Statusfunktionen
-   string   GetTerminalVersion();
-   int      GetTerminalBuild();
-   int      GetTerminalWindow();
-   int      GetUIThreadId();
-
+   // Win32-Funktionen
    string   GetClassName(int hWnd);
    string   GetComputerName();
    string   GetWin32ShortcutTarget(string lnkFile);

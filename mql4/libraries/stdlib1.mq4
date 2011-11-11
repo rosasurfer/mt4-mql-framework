@@ -52,9 +52,9 @@ void stdlib_init(string scriptName) {
  *
  * @param  int unchangedBars - Anzahl der seit dem letzten Tick unveränderten Bars
  */
-void stdlib_onTick(int unchangedBars) {
+void stdlib_start(int unchangedBars) {
    if (unchangedBars < 0) {
-      catch("stdlib_onTick()  invalid parameter unchangedBars = "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("stdlib_start()  invalid parameter unchangedBars = "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
       return;
    }
 
@@ -83,6 +83,61 @@ int stdlib_GetLastError() {
  */
 int stdlib_PeekLastError() {
    return(last_error);
+}
+
+
+/**
+ * Ob das aktuelle Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   int error = GetLastError();
+   if (error != NO_ERROR)
+      catch("IsIndicator()", error);
+
+   Sleep(0);
+
+   return(GetLastError() == ERR_CUSTOM_INDICATOR_ERROR);
+}
+
+
+/**
+ * Dropin-Ersatz für MessageBox()
+ *
+ * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (z.B. im Tester oder in Indikatoren).
+ *
+ * @param string message
+ * @param string caption
+ * @param int    flags
+ *
+ * @return int - Tastencode
+ */
+int ForceMessageBox(string message, string caption, int flags=MB_OK) {
+   int button;
+
+   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
+   else                                button = MessageBoxA(NULL, message, caption, flags);
+
+   return(button);
+}
+
+
+/**
+ * Dropin-Ersatz für PlaySound()
+ *
+ * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (z.B. im Tester).
+ *
+ * @param string soundfile
+ */
+void ForceSound(string soundfile) {
+   if (!IsTesting()) {
+      PlaySound(soundfile);
+   }
+   else {
+      soundfile = StringConcatenate(TerminalPath(), "\\sounds\\", soundfile);
+      PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
+   }
 }
 
 

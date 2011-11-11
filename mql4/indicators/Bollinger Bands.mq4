@@ -307,7 +307,7 @@ int start() {
    else if (last_error == ERR_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
    else                                               UnchangedBars = IndicatorCounted();
    ChangedBars = Bars - UnchangedBars;
-   stdlib_onTick(UnchangedBars);
+   stdlib_start(UnchangedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)

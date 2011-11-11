@@ -775,8 +775,8 @@ bool ReadSequence() {
             return(false);
          }
 
-         PlaySound("notify.wav");
-         int button = MessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+         ForceSound("notify.wav");
+         int button = ForceMessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             retry = true;
             continue;
@@ -790,8 +790,8 @@ bool ReadSequence() {
       // (5) Tickets auf Vollständigkeit prüfen
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
-            PlaySound("notify.wav");
-            button = MessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+            ForceSound("notify.wav");
+            button = ForceMessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
             if (button == IDRETRY) {
                retry = true;
                break;
@@ -911,8 +911,8 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
  */
 bool StartSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+      ForceSound("notify.wav");
+      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("StartSequence(1)");
@@ -956,8 +956,8 @@ bool StartSequence() {
  */
 bool IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
+      ForceSound("notify.wav");
+      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("IncreaseProgression(1)");
@@ -1006,8 +1006,8 @@ bool IncreaseProgression() {
  */
 bool FinishSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+      ForceSound("notify.wav");
+      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("FinishSequence(1)");

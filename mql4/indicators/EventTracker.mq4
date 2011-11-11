@@ -172,7 +172,7 @@ int start() {
    else if (last_error == ERR_HISTORY_UPDATE)         UnchangedBars = 0;
    else                                               UnchangedBars = IndicatorCounted();
    ChangedBars = Bars - UnchangedBars;
-   stdlib_onTick(UnchangedBars);
+   stdlib_start(UnchangedBars);
 
    // init() ggf. nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
