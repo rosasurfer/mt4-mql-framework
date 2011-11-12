@@ -715,7 +715,7 @@ bool ReadSequence() {
          hist.swaps       [n] = OrderSwap();
          hist.commissions [n] = OrderCommission();
          hist.profits     [n] = OrderProfit();
-         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet die eigenen von fremden Positionen und vom Schlußtrade
+         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet die eigenen von fremden Positionen bzw. vom Schlußtrade
          hist.comments    [n] = OrderComment();
          n++;
       }
@@ -735,15 +735,16 @@ bool ReadSequence() {
          closedTickets = n;
       }
 
-      // (3.2) Hedges analysieren und Daten entsprechend den Leveln zuordnen.
+      // (3.2) Hedges analysieren und Daten den Leveln entsprechend zuordnen.
       for (i=0; i < closedTickets; i++) {
-         if (hist.magicNumbers[i] == 0) continue;                    // fremde Position, die evt. Teil des Schlußtrades ist
+         if (hist.magicNumbers[i] == 0)
+            continue;                                                // fremde Position, die evt. Teil des Schlußtrades ist
 
          if (EQ(hist.lots[i], 0.0)) {                                // 0.0 = Hedge-Position
-
-            // TODO: Es reicht nicht, auf lots = 0.0 zu prüfen. Der fremde Trade kann auf lots=0.0 stehen. In diesem Fall sollte der Comment des Sequenztrades auf "partial close"
-            //       stehen, doch MetaTrader modifiziert den Comment bei manuellem MultipleCloseBy teilweise nicht (z.B. FTP.5347 in GBP/USD am 22.09.2011 in Alpari {account-no}).
-            //       Lösung: Zusätzlich über alle fremden Trades iterieren und sie auf Referenzen auf die Sequenz prüfen.
+            // TODO: Es reicht nicht, auf lots = 0.0 zu prüfen. Der fremde Trade kann auf lots=0.0 stehen. In diesem Fall sollte der Comment des Sequenztrades
+            // auf "partial close" stehen, doch MetaTrader modifiziert den Comment bei manuellem MultipleCloseBy() teilweise nicht (z.B. FTP.5347 in GBP/USD
+            // am 22.09.2011 in Alpari {account-no}).
+            // Lösung: Zusätzlich über alle fremden Trades iterieren und sie auf Referenzen auf die Sequenz prüfen.
 
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
                return(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
@@ -758,27 +759,28 @@ bool ReadSequence() {
 
             if (hist.magicNumbers[n] == 0) {                         // Schlußtrade
                ArrayPushInt(closeTrades, n);                         // Zeiger auf Schlußposition zwischenspeichern
-               debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[n]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   "+ hist.comments[n]);
+               debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   close trade   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   \""+ hist.comments[n] +"\"");
             }
          }
-         //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ hist.comments[i]);
+         debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   \""+ hist.comments[i] +"\"");
 
-         if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i])) {
-
+         if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i], hist.comments[i])) {
+            /*
             if (IsTesting()) {
                debug("ReadSequence()   --------------------------------------------------------------------------------------------------------------------");
                string PriceFormat = ".4'";
                int orders = OrdersTotal();
                for (i=0; i < orders; i++) {
                   OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad("FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
+                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
                }
                orders = OrdersHistoryTotal();
                for (i=0; i < orders; i++) {
                   OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad("FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
+                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
                }
             }
+            */
             return(false);
          }
       }
@@ -833,13 +835,13 @@ bool ReadSequence() {
       sequenceStatus = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
 
 
-      // (8) Schlußtrade analysieren
+      // (8) Schlußtrade(s) analysieren
       /*
       Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
       in welcher Reihenfolge eine Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
       Teilpositionen aufgebrochen worden sein.
 
-      Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position gehedgt war.
+      Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position zum ersten Mal gehedgt war.
       */
       if (sequenceStatus == STATUS_FINISHED) {
          int size = ArraySize(closeTrades);
@@ -894,27 +896,29 @@ bool ReadSequence() {
  *
  * @return bool - Erfolgsstatus
  */
-bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datetime openTime, double openPrice, double swap, double commission, double profit) {
-   int level = magicNumber & 0xF;                              // 4 Bits (Bits 1-4) => progressionLevel
+bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datetime openTime, double openPrice, double swap, double commission, double profit, string comment) {
+   int level = magicNumber & 0xF;                                       // 4 Bits (Bits 1-4) => progressionLevel
    if (level > sequenceLength) return(catch("ReadSequence.AddClosedPosition(1)   illegal sequence state, progression level "+ level +" of ticket #"+ ticket +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)==NO_ERROR);
 
    if (level > progressionLevel)
       progressionLevel = level;
 
    level--;
-   if (levels.ticket[level] == 0) {                            // unbelegter Level
+   if (levels.ticket[level] == 0) {                                     // unbelegter Level
       levels.ticket   [level] = ticket;
       levels.type     [level] = type;
-      levels.openTime [level] = openTime;                      // levels.openLots[] wird für geschlossene Positionen nicht benötigt
+      levels.openTime [level] = openTime;                               // levels.openLots[] wird für geschlossene Positionen nicht benötigt
       levels.openPrice[level] = openPrice;
-      levels.closeTime[level] = 1;                             // closeTime *muß* hier ungleich 0 sein (0=offene Position), wird in der Folge entsprechend korrigiert
+      levels.closeTime[level] = 1;                                      // closeTime *muß* hier ungleich 0 sein (0=offene Position), wird in der Folge entsprechend korrigiert
    }
-   else {                                                      // bereits belegter Level
-      if (   levels.type     [level]!=type      ) return(catch("ReadSequence.AddClosedPosition(2)  illegal sequence state, trade direction \""+ OperationTypeDescription(levels.type[level]) +"\" of level "+ (level+1) +" doesn't match \""+ OperationTypeDescription(type) +"\" of closed position #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
-      if (   levels.openTime [level]!=openTime  ) return(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time \""+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of level "+ (level+1) +" doesn't match open time \""+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of closed position #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
-      if (NE(levels.openPrice[level], openPrice)) return(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed position #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
+   else {                                                               // bereits belegter Level
+      if (   levels.type     [level]!=type      ) return(catch("ReadSequence.AddClosedPosition(2)  illegal sequence state, trade direction \""+ OperationTypeDescription(levels.type[level]) +"\" of occupied level "+ (level+1) +" doesn't match \""+ OperationTypeDescription(type) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (NE(levels.openPrice[level], openPrice)) return(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of occupied level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (   levels.openTime [level]!=openTime  )
+         if (!IsTesting() || !StringStartsWith(comment, "split from #"))// kann im Tester (Bug) und nur hier in diesem Kontext ignoriert werden
+            return(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open time \""+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of occupied level "+ (level+1) +" doesn't match open time \""+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
    }
-   levels.closedSwap      [level] += swap;                     // vorhandene Beträge aufaddieren
+   levels.closedSwap      [level] += swap;                              // vorhandene Beträge aufaddieren
    levels.closedCommission[level] += commission;
    levels.closedProfit    [level] += profit;
 
