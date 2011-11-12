@@ -295,8 +295,8 @@
    int      GetAccountNumber();
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
-   int      ChronologicalSortTickets(int tickets[]);
    string   ShortAccountCompany();
+   int      SortTicketsChronological(int tickets[]);
    string   GetTradeServerDirectory();
 
    string   GetCurrency(int id);

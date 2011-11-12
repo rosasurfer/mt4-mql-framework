@@ -758,11 +758,29 @@ bool ReadSequence() {
 
             if (hist.magicNumbers[n] == 0) {                         // Schluﬂtrade
                ArrayPushInt(closeTrades, n);                         // Zeiger auf Schluﬂposition zwischenspeichern
-               debug("ReadSequence()   "+ hist.tickets[n] +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[n]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   "+ hist.comments[n]);
+               debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[n]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   "+ hist.comments[n]);
             }
          }
-         ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i]);
-         debug("ReadSequence()   "+ hist.tickets[i] +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ hist.comments[i]);
+         //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ hist.comments[i]);
+
+         if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i])) {
+
+            if (IsTesting()) {
+               debug("ReadSequence()   --------------------------------------------------------------------------------------------------------------------");
+               string PriceFormat = ".4'";
+               int orders = OrdersTotal();
+               for (i=0; i < orders; i++) {
+                  OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad("FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
+               }
+               orders = OrdersHistoryTotal();
+               for (i=0; i < orders; i++) {
+                  OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad("FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
+               }
+            }
+            return(false);
+         }
       }
 
 
@@ -1623,7 +1641,7 @@ bool ValidateConfiguration() {
 int SaveConfiguration() {
    if (sequenceId == 0)
       return(catch("SaveConfiguration(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR));
-   debug("SaveConfiguration()   saving configuration for sequence "+ sequenceId);
+   //debug("SaveConfiguration()   saving configuration for sequence "+ sequenceId);
 
 
    // (1) Daten zusammenstellen

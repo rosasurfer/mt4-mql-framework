@@ -641,7 +641,7 @@ string GetCurrency(int id) {
  *
  * @return int - Fehlerstatus
  */
-int ChronologicalSortTickets(int& tickets[]) {
+int SortTicketsChronological(int& tickets[]) {
    int sizeOfTickets = ArraySize(tickets);
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
@@ -681,7 +681,7 @@ int ChronologicalSortTickets(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
-   return(catch("ChronologicalSortTickets(2)"));
+   return(catch("SortTicketsChronological(2)"));
 }
 
 
@@ -8558,6 +8558,9 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
             if (NE(firstLots, hedgeLots)) {
                // Restposition suchen und in remainder speichern
                string comment = StringConcatenate("from #", smaller);
+               if (IsTesting())
+                  comment = StringConcatenate("split ", comment);
+
                for (int i=OrdersTotal()-1; i >= 0; i--) {
                   if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
                      continue;
@@ -8600,8 +8603,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
 
 
 /**
- * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden (wenn möglich) mit einer Hedgeposition
- * flat gestellt, die Berechnung doppelter Spreads wird dadurch verhindert.
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden zuerst flat gestellt (ggf. mit einer Hedgeposition),
+ * die Berechnung doppelter Spreads wird dadurch verhindert.
  *
  * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default:           0)
@@ -8705,6 +8708,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       return(false);
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
+
    if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
       return(false);
 
@@ -8736,6 +8740,9 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       hedgeTicket = 0;
    }
    else {                                                            // Gesamtposition hedgen
+
+      // TODO: Statt OrderSend() nach Möglichkeit OrderClosePartial() verwenden (spart Magin, besser bei TradeserverLimits etc.)
+
       int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
 
       string message = StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for ", sizeOfTickets, " ", OrderSymbol(), " position");
@@ -8777,7 +8784,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    // alle Teilpositionen nacheinander auflösen
    while (sizeOfTickets > 0) {
-      ChronologicalSortTickets(ticketsCopy);
+      SortTicketsChronological(ticketsCopy);
 
       int hedge, first=ticketsCopy[0];
       if (!OrderSelectByTicket(first))
