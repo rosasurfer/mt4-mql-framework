@@ -523,7 +523,7 @@ int catch(string message, int error=NO_ERROR) {
          if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL+NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL+NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          ForceSound("alert.wav");
-         ForceMessageBox(message, caption, MB_OK|MB_ICONERROR|MB_TOPMOST);
+         ForceMessageBox(message, caption, MB_ICONERROR|MB_OK|MB_TOPMOST);
       }
 
       if (init) init_error = error;

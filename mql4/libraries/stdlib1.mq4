@@ -117,7 +117,7 @@ int ForceMessageBox(string message, string caption, int flags=MB_OK) {
    int button;
 
    if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
-   else                                button = MessageBoxA(NULL, message, caption, flags);
+   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
 
    return(button);
 }
@@ -1879,7 +1879,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  */
 int SendTick(bool sound=false) {
    if (IsTesting()) {
-      debug("SendTick()   skipping in tester");    // TODO: IsTesting() funktioniert nicht bei Indikatoren
+      debug("SendTick()   skipping in tester");    // TODO: IsTesting() funktioniert nicht in Indikatoren
       return(-1);
    }
 
@@ -8255,6 +8255,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
+            if (IsTesting()) catch("OrderSendEx(14)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8262,11 +8263,17 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderSendEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
+
+         string message = StringConcatenate("OrderSendEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
+         Alert(message);                                             // nach Fertigstellung durch log() ersetzen
+         if (IsTesting()) {
+            ForceSound("alert.wav");
+            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
+         }
       }
    }
 
-   catch("OrderSendEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(15)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
 }
 
@@ -8416,6 +8423,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
+            if (IsTesting()) catch("OrderCloseEx(12)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8423,11 +8431,17 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
+
+         string message = StringConcatenate("OrderCloseEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
+         Alert(message);                                             // nach Fertigstellung durch log() ersetzen
+         if (IsTesting()) {
+            ForceSound("alert.wav");
+            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
+         }
       }
    }
 
-   catch("OrderCloseEx(12)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderCloseEx(13)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(false);
 }
 
@@ -8568,7 +8582,13 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         Alert("OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");    // Alert() nach Fertigstellung durch log() ersetzen
+
+         string message = StringConcatenate("OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
+         Alert(message);                                                   // nach Fertigstellung durch log() ersetzen
+         if (IsTesting()) {
+            ForceSound("alert.wav");
+            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
+         }
       }
       error = NO_ERROR;
       Sleep(300);                                                          // 0.3 Sekunden warten
