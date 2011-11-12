@@ -8247,7 +8247,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          if (ticket > 0) {
             // Logmessage generieren
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
-            PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
+            if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
             if (catch("OrderSendEx(13)")!=NO_ERROR)
                return(-1);
@@ -8410,7 +8410,8 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          if (orderClosed) {
             // Logmessage generieren
             log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
-            PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
+            if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
+
             return(catch("OrderCloseEx(11)")==NO_ERROR);             // regular exit
          }
          error = GetLastError();
@@ -8557,7 +8558,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
             log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
-            PlaySound("OrderOk.wav");
+            if (!IsTesting()) PlaySound("OrderOk.wav");
+
             return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
          }
          time2     = GetTickCount();
