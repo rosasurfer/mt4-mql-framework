@@ -606,16 +606,16 @@ bool SetRunningSequenceId() {
 
 /**
  * Liest die aktuelle Sequenz komplett neu ein. Die Konfiguration der Sequenz ist beim Aufruf immer gültig,
- * die Variablen sequenceId, sequenceLength und levels.lots[] können also beim Einlesen benutzt werden.
+ * die Variablen sequenceId, sequenceLength und levels.lots[] können also benutzt werden.
  *
  * @return bool - Erfolgsstatus
  */
 bool ReadSequence() {
    /*
-   Nicht alle Werte der Sequenz können beim Einlesen exakt restauriert werden, für einen einwandfreien Ablauf sind auch nicht alle zwingend notwendig.
+   Nicht alle Sequenzdaten können beim Einlesen exakt restauriert werden, für einen einwandfreien Ablauf sind sie auch nicht zwingend notwendig.
 
    Die P/L-Daten von geschlossenen Positionen werden beim Einlesen je nach Hedge-Reihenfolge auf andere Level verteilt. Die Daten in den einzelnen Leveln
-   stimmen also nicht mit den tatsächlichen Werten überein, ihre Summe entspricht jedoch der korrekten Gesamtsumme des letzten Levels und der gesamten Sequenz.
+   stimmen daher nicht mit den tatsächlichen Werten überein, ihre Summe entspricht jedoch der korrekten Gesamtsumme des letzten Levels und der gesamten Sequenz.
 
    int      levels.ticket    [];
    int      levels.type      [];
@@ -759,28 +759,12 @@ bool ReadSequence() {
 
             if (hist.magicNumbers[n] == 0) {                         // Schlußtrade
                ArrayPushInt(closeTrades, n);                         // Zeiger auf Schlußposition zwischenspeichern
-               debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   close trade   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   \""+ hist.comments[n] +"\"");
+               //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   close trade   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   \""+ hist.comments[n] +"\"");
             }
          }
-         debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   \""+ hist.comments[i] +"\"");
+         //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   \""+ hist.comments[i] +"\"");
 
          if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i], hist.comments[i])) {
-            /*
-            if (IsTesting()) {
-               debug("ReadSequence()   --------------------------------------------------------------------------------------------------------------------");
-               string PriceFormat = ".4'";
-               int orders = OrdersTotal();
-               for (i=0; i < orders; i++) {
-                  OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
-               }
-               orders = OrdersHistoryTotal();
-               for (i=0; i < orders; i++) {
-                  OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
-                  debug("ReadSequence()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "           - open -", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   \""+ OrderComment() +"\"");
-               }
-            }
-            */
             return(false);
          }
       }
@@ -849,7 +833,6 @@ bool ReadSequence() {
 
          datetime lastOpenTime, lastCloseTime;
          double   lastOpenPrice, lastClosePrice;
-         bool     openIsRelevant = false;                                        // ob Open oder Close der Schlußtrades für das Sequenzende maßgeblich sind
          int      last = progressionLevel-1;
 
          for (i=0; i < size; i++) {
@@ -861,15 +844,17 @@ bool ReadSequence() {
                lastCloseTime  = hist.closeTimes [closeTrades[i]];
                lastClosePrice = hist.closePrices[closeTrades[i]];
             }
-            if (hist.openTimes[closeTrades[i]] > levels.openTime[last])          // mindestens ein Schlußtrade wurde nach Eröffnung des letzten Levels initiiert
-               openIsRelevant = true;
-
             levels.closedSwap      [last] += hist.swaps      [closeTrades[i]];   // vorhandene Beträge aufaddieren
             levels.closedCommission[last] += hist.commissions[closeTrades[i]];
             levels.closedProfit    [last] += hist.profits    [closeTrades[i]];
          }
-         if (openIsRelevant) { levels.closeTime[last] = lastOpenTime;  levels.closePrice[last] = lastOpenPrice;  }
-         else                { levels.closeTime[last] = lastCloseTime; levels.closePrice[last] = lastClosePrice; }
+
+         if (lastOpenTime > levels.openTime[last]) {                             // wenn mindestens ein Schlußtrade nach Eröffnung des letzten Levels initiiert wurde
+            levels.closeTime[last] = lastOpenTime;  levels.closePrice[last] = lastOpenPrice;
+         }
+         else {
+            levels.closeTime[last] = lastCloseTime; levels.closePrice[last] = lastClosePrice;
+         }
       }
    }
 
@@ -913,10 +898,10 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
    }
    else {                                                               // bereits belegter Level
       if (   levels.type     [level]!=type      ) return(catch("ReadSequence.AddClosedPosition(2)  illegal sequence state, trade direction \""+ OperationTypeDescription(levels.type[level]) +"\" of occupied level "+ (level+1) +" doesn't match \""+ OperationTypeDescription(type) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
-      if (NE(levels.openPrice[level], openPrice)) return(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of occupied level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (NE(levels.openPrice[level], openPrice)) return(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of occupied level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
       if (   levels.openTime [level]!=openTime  )
-         if (!IsTesting() || !StringStartsWith(comment, "split from #"))// kann im Tester (Bug) und nur hier in diesem Kontext ignoriert werden
-            return(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open time \""+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of occupied level "+ (level+1) +" doesn't match open time \""+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (!IsTesting())                                              // Tester-Bug (kann vorerst nur hier ignoriert werden)
+            return(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time \""+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of occupied level "+ (level+1) +" doesn't match open time \""+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)==NO_ERROR);
    }
    levels.closedSwap      [level] += swap;                              // vorhandene Beträge aufaddieren
    levels.closedCommission[level] += commission;
@@ -1305,6 +1290,9 @@ void ResizeArrays(int size) {
  * @return bool - Erfolgsstatus
  */
 bool VisualizeSequence() {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
    string arrow, line;
 
    for (int i=0; i < progressionLevel; i++) {

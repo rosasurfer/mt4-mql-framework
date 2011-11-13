@@ -233,7 +233,7 @@ int onPositionOpen(int tickets[]) {
 
    for (int i=0; i < positions; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(PeekLastError());                                    // catch("onPositionOpen(1)   error selecting opened position #"+ tickets[i], error)
+         return(PeekLastError());
 
       // alle Positionen werden im aktuellen Instrument gehalten
       string type    = OperationTypeDescription(OrderType());
@@ -276,7 +276,7 @@ int onPositionClose(int tickets[]) {
 
    for (int i=0; i < positions; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         continue;                                                   //catch("onPositionClose(1)  error selectiong closed position #"+ tickets[i], error);
+         continue;
 
       // alle Positionen wurden im aktuellen Instrument gehalten
       string type       = OperationTypeDescription(OrderType());

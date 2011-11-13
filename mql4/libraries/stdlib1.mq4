@@ -4316,7 +4316,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       ArrayResize(tickets, 0);
 
    static int accountNumber[1];
-   static int knownPositions[];                                  // bekannte Positionen
+   static int knownPositions[];                                         // bekannte Positionen
           int noOfKnownPositions = ArraySize(knownPositions);
 
    if (accountNumber[0] == 0) {
@@ -4329,19 +4329,17 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       //Print("EventListener.PositionClose()   Account "+ account +" nach Accountwechsel initialisiert");
    }
    else {
-      // alle beim letzten Aufruf offenen Positionen prüfen
+      // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
       for (int i=0; i < noOfKnownPositions; i++) {
-         if (!OrderSelectByTicket(knownPositions[i])) {
-            //catch("EventListener.PositionClose(1)   account "+ account +" ("+ AccountNumber() +"): error selecting position #"+ knownPositions[i] +", check your History tab filter settings", error);
-            return(false);             // TODO: bei offenen Orders in einem Account und dem ersten Login in einen neuen Account crasht alles
-         }
+         if (!OrderSelectByTicket(knownPositions[i]))
+            return(false);
 
-         if (OrderCloseTime() > 0) {   // Position geschlossen, in flags angegebene Orderkriterien prüfen
+         if (OrderCloseTime() > 0) {                                    // Position geschlossen, in flags angegebene Orderkriterien prüfen
             int    event=1, type=OrderType();
             bool   pending;
             string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringStartsWith(comment, "so:" )) pending = true;                      // Margin Stopout, wie pending behandeln
+            if      (StringStartsWith(comment, "so:" )) pending = true; // Margin Stopout, wie pending behandeln
             else if (StringEndsWith  (comment, "[tp]")) pending = true;
             else if (StringEndsWith  (comment, "[sl]")) pending = true;
             else if (OrderTakeProfit() > 0) {
@@ -4349,11 +4347,11 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
                else if (type == OP_SELL)                pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
-            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol())+0;      // MQL kann Booleans für Binärops. nicht casten
-            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )+0;
-            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL)+0;
-            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending)+0;
-            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending)+0;
+            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol()) +0;  // MQL kann Booleans für Binärops. nicht casten
+            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY ) +0;
+            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL) +0;
+            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending) +0;
+            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending) +0;
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1) {
@@ -8297,7 +8295,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    if (!OrderSelectByTicket(ticket))
-      return("");                   // catch("OrderSendEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
+      return("");
 
    string strType = OperationTypeDescription(OrderType());
    if (type != OrderType())
@@ -8356,7 +8354,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket))
-      return(false);          //     catch("OrderCloseEx(1)   invalid parameter ticket = "+ ticket, error)
+      return(false);
    if (OrderCloseTime() != 0) return(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
    if (OrderType() > OP_SELL) return(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    // lots
@@ -8457,7 +8455,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
 
    if (!OrderSelectByTicket(ticket))
-      return("");                   // catch("OrderCloseEx.LogMessage(1)   error selecting ticket #"+ ticket, error);
+      return("");
 
    string strType = OperationTypeDescription(OrderType());
    string strLots = NumberToStr(OrderLots(), ".+");
@@ -8505,7 +8503,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket)) return(false);   // catch("OrderCloseByEx(1)   invalid parameter ticket = "+ ticket, error)
+   if (!OrderSelectByTicket(ticket)) return(false);
    if (OrderCloseTime() != 0)        return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
    if (OrderType() > OP_SELL)        return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    int    ticketType     = OrderType();
@@ -8514,7 +8512,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
    string ticketOpenTime = OrderOpenTime();
 
    // opposite
-   if (!OrderSelectByTicket(opposite)) return(false);    // catch("OrderCloseByEx(4)   invalid parameter opposite ticket = "+ opposite, error)
+   if (!OrderSelectByTicket(opposite)) return(false);
    if (OrderCloseTime() != 0)          return(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
    int    oppositeType     = OrderType();
    double oppositeLots     = OrderLots();
@@ -8539,7 +8537,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
       hedge = ticket;   hedgeType = ticketType;   hedgeLots = ticketLots;
    }
    if (LE(firstLots, hedgeLots)) { smaller = first; larger = hedge; }      // Nur wenn #smaller by #larger geschlossen wird, wird im Kommentar von #remainder auf #smaller
-   else                          { smaller = hedge; larger = first; }      // verwiesen. Anderenfalls fehlt später in #remainder jede Referenz auf die Ausgangstickets.
+   else                          { smaller = hedge; larger = first; }      // verwiesen. Anderenfalls existiert später in #remainder keine Referenz auf das Ausgangsticket.
 
    // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
@@ -8585,13 +8583,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-
-         string message = StringConcatenate("OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
-         Alert(message);                                                   // nach Fertigstellung durch log() ersetzen
-         if (IsTesting()) {
-            ForceSound("alert.wav");
-            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
-         }
+                                                                           // Alert() nach Fertigstellung durch log() ersetzen
+         ForceAlert("OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
       }
       error = NO_ERROR;
       Sleep(300);                                                          // 0.3 Sekunden warten
@@ -8603,7 +8596,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
 
 
 /**
- * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden zuerst flat gestellt (ggf. mit einer Hedgeposition),
+ * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden zuerst flat gestellt (ggf. mit Hedgeposition),
  * die Berechnung doppelter Spreads wird dadurch verhindert.
  *
  * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
@@ -8619,7 +8612,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    if (sizeOfTickets == 0) return(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i])) return(false); // catch("OrderMultiClose(2)   invalid ticket #"+ tickets[i] +" in parameter tickets = "+ IntArrayToStr(tickets), error)
+      if (!OrderSelectByTicket(tickets[i])) return(false);
       if (OrderCloseTime() != 0)            return(catch("OrderMultiClose(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
       if (OrderType() > OP_SELL)            return(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
@@ -8646,7 +8639,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(ticketsCopy[i]))
-         return(false);                                              // catch("OrderMultiClose(7)", error)
+         return(false);
       int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
       if (symbolIndex == -1)
          symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
@@ -8731,7 +8724,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(false);                                              // catch("OrderMultiClose.Flatten(1)", error)
+         return(false);
       if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
       else                       totalLots -= OrderLots();
    }
@@ -8774,11 +8767,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    ArrayCopy(ticketsCopy, tickets);
 
-   if (!OrderSelectByTicket(ticketsCopy[0]))                         // OrderSymbol() für Logmessage auslesen
-      return(false);                                                 // catch("OrderMultiClose.Hedges(1)", error)
-
    int sizeOfTickets = ArraySize(ticketsCopy);
 
+   if (!OrderSelectByTicket(ticketsCopy[0]))                         // um OrderSymbol() auslesen zu können
+      return(false);
    log(StringConcatenate("OrderMultiClose.Hedges()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
 
 
@@ -8788,19 +8780,41 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
       int hedge, first=ticketsCopy[0];
       if (!OrderSelectByTicket(first))
-         return(false);                                              // catch("OrderMultiClose.Hedges(2)", error)
+         return(false);
       int firstType = OrderType();
 
       for (int i=1; i < sizeOfTickets; i++) {
          if (!OrderSelectByTicket(ticketsCopy[i]))
-            return(false);                                           // catch("OrderMultiClose.Hedges(3)", error)
+            return(false);
          if (OrderType() == firstType ^ 1) {
             hedge = ticketsCopy[i];                                  // hedgende Position ermitteln
             break;
          }
       }
-      if (hedge == 0) return(catch("OrderMultiClose.Hedges(4)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
-
+      if (hedge == 0) return(catch("OrderMultiClose.Hedges(1)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+      /*
+      if (IsTesting()) {
+         debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
+         debug("OrderMultiClose.Hedges()   before closing #"+ first +" and #"+ hedge +" of "+ IntArrayToStr(ticketsCopy));
+         debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
+         int entries[], trades=OrdersTotal(), history=OrdersHistoryTotal(), orders=trades + history;
+         ArrayResize(entries, orders);
+         for (int n=0; n < trades; n++) {
+            OrderSelect(n, SELECT_BY_POS, MODE_TRADES);
+            entries[n] = OrderTicket();
+         }
+         for (n=0; n < history; n++) {
+            OrderSelect(n, SELECT_BY_POS, MODE_HISTORY);
+            entries[trades + n] = OrderTicket();
+         }
+         ArraySort(entries);
+         string PriceFormat = ".4'";
+         for (n=0; n < orders; n++) {
+            OrderSelectByTicket(entries[n]);
+            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
+         }
+      }
+      */
       int remainder[];
       if (!OrderCloseByEx(first, hedge, remainder, markerColor))     // erste und hedgende Position schließen
          return(false);
@@ -8815,10 +8829,111 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
       if (ArraySize(remainder) != 0)                                 // Restposition zu verbleibenden Teilpositionen hinzufügen
          sizeOfTickets = ArrayPushInt(ticketsCopy, remainder[0]);
+      /*
+      if (IsTesting() && sizeOfTickets==0) {
+         debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
+         debug("OrderMultiClose.Hedges()   after closing");
+         debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
+         trades  = OrdersTotal();
+         history = OrdersHistoryTotal();
+         orders  = trades + history;
+         ArrayResize(entries, orders);
+         for (n=0; n < trades; n++) {
+            OrderSelect(n, SELECT_BY_POS, MODE_TRADES);
+            entries[n] = OrderTicket();
+         }
+         for (n=0; n < history; n++) {
+            OrderSelect(n, SELECT_BY_POS, MODE_HISTORY);
+            entries[trades + n] = OrderTicket();
+         }
+         ArraySort(entries);
+         for (n=0; n < orders; n++) {
+            OrderSelectByTicket(entries[n]);
+            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
+         }
+         debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
+      }
+      */
    }
 
-   return(catch("OrderMultiClose.Hedges(5)")==NO_ERROR);
+   return(catch("OrderMultiClose.Hedges(2)")==NO_ERROR);
 }
+
+
+/*
+bool IsMyOrder() {
+   return(OrderMagicNumber()>>22 == 101);
+}
+-----------------------------------------------------------------------------------------------------------------------------
+before closing #1 and #2 of {1, 2, 3, 4, 5, 6}
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    - open -              1.4047'2   "FTP.13007.1"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0.3    - open -              1.4042'2   "FTP.13007.2"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    - open -              1.4047'2   "FTP.13007.3"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0.7    - open -              1.4042'2   "FTP.13007.4"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
+-----------------------------------------------------------------------------------------------------------------------------
+before closing #3 and #4 of {3, 4, 5, 6, 7}
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    - open -              1.4047'2   "FTP.13007.3"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0.7    - open -              1.4042'2   "FTP.13007.4"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
+#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
+-----------------------------------------------------------------------------------------------------------------------------
+before closing #5 and #6 of {5, 6, 7, 8}
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
+#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
+#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
+-----------------------------------------------------------------------------------------------------------------------------
+before closing #7 and #9 of {7, 8, 9}
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
+#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
+#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
+#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0.4    - open -              1.4047'2   "split from #6"
+-----------------------------------------------------------------------------------------------------------------------------
+before closing #8 and #10 of {8, 10}
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
+#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "partial close"
+#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
+#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #7"
+#10         FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0.2    - open -              1.4047'2   "split from #7"
+-----------------------------------------------------------------------------------------------------------------------------
+after closing
+-----------------------------------------------------------------------------------------------------------------------------
+#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
+#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
+#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
+#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
+#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
+#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
+#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "partial close"
+#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "split from #3"
+#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #7"
+#10         FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #8"
+-----------------------------------------------------------------------------------------------------------------------------
+*/
 
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //

@@ -244,7 +244,7 @@ int start() {
 
    for (i=0; i < 6; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(PeekLastError());                                    // catch("start(7)")
+         return(PeekLastError());
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }

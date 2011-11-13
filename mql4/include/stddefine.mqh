@@ -523,7 +523,7 @@ int catch(string message, int error=NO_ERROR) {
          if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL+NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL+NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          ForceSound("alert.wav");
-         ForceMessageBox(message, caption, MB_ICONERROR|MB_OK|MB_TOPMOST);
+         ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
       }
 
       if (init) init_error = error;
@@ -532,41 +532,7 @@ int catch(string message, int error=NO_ERROR) {
    return(error);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
-}
-
-
-/**
- * Speichert den angegebenen Fehler in den globalen Variablen init_error oder last_error (je nachdem, ob der Aufruf in init() erfolgt oder nicht).
- *
- * @param  int error - Fehler-Code
- *
- * @return int - derselbe Fehler-Code
- */
-int SetLastError(int error) {
-   if (error != NO_ERROR) {
-      if (init) init_error = error;
-      else      last_error = error;
-   }
-   return(error);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
-}
-
-
-/**
- * Gibt den letzten im aktuellen Script aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
- *
- * @return int - Fehlercode
- */
-int PeekLastError() {
-   if (init)
-      return(init_error);
-   return(last_error);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
+   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -597,7 +563,7 @@ int log(string message="", int error=NO_ERROR) {
    return(error);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
+   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -637,7 +603,56 @@ void debug(string message, int error=NO_ERROR) {
    return;
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
+   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
+}
+
+
+/**
+ * Zeigt eine MessageBox an, wenn Alert() im aktuellen Kontext des Terminals unterdrückt wird (z.B. im Tester).
+ *
+ * @param string s1-s63 - bis zu 63 beliebige Parameter
+ *
+ *
+ * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ */
+void ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
+
+   string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
+
+   Alert(message);
+
+   if (IsTesting()) {
+      ForceSound("alert.wav");
+      ForceMessageBox(message, __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+   }
+}
+
+
+/**
+ * Speichert den angegebenen Fehler in den globalen Variablen init_error oder last_error (je nachdem, ob der Aufruf in init() erfolgt oder nicht).
+ *
+ * @param  int error - Fehler-Code
+ *
+ * @return int - derselbe Fehler-Code
+ */
+int SetLastError(int error) {
+   if (error != NO_ERROR) {
+      if (init) init_error = error;
+      else      last_error = error;
+   }
+   return(error);
+}
+
+
+/**
+ * Gibt den letzten im aktuellen Script aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
+ *
+ * @return int - Fehlercode
+ */
+int PeekLastError() {
+   if (init)
+      return(init_error);
+   return(last_error);
 }
 
 
@@ -667,9 +682,6 @@ bool HandleEvents(int events) {
    if (events & EVENT_HISTORY_CHANGE  != 0) status |= HandleEvent(EVENT_HISTORY_CHANGE );
 
    return(status!=0 && catch("HandleEvents()")==NO_ERROR);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -706,14 +718,11 @@ int HandleEvent(int event, int flags=0) {
    }
 
    return(status && catch("HandleEvent(2)")==NO_ERROR);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
 /**
- * Selektiert eine Order anhand des Tickets (mit Fehlerkontrolle).
+ * Selektiert eine Order anhand des Tickets.
  *
  * @param  int ticket - Ticket
  *
@@ -721,7 +730,7 @@ int HandleEvent(int event, int flags=0) {
  *
  *  NOTE:
  *  -----
- *  Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen im selben Script aufgerufen werden müssen.
+ *  Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im selben Script verwendet werden können.
  */
 bool OrderSelectByTicket(int ticket) {
    if (OrderSelect(ticket, SELECT_BY_TICKET))
@@ -732,7 +741,4 @@ bool OrderSelectByTicket(int ticket) {
       error = ERR_INVALID_TICKET;
    catch("OrderSelectByTicket()", error);
    return(false);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   log(NULL); debug(NULL); catch(NULL); SetLastError(NULL); PeekLastError(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
