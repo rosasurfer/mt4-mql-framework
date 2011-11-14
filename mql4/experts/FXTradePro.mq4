@@ -635,7 +635,6 @@ bool ReadSequence() {
    double   levels.breakeven  [];   // Breakeven in ???
    */
 
-
    // (1) Arrays zurücksetzen
    if (ArraySize(levels.ticket) > 0)
       ResizeArrays(0);
@@ -648,15 +647,15 @@ bool ReadSequence() {
    double effectiveLots;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird woanders eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wird woanders eine offene Order entfernt
          continue;
 
       if (IsMyOrder(sequenceId)) {
-         if (OrderType() > OP_SELL)                                  // Nicht-Positionen überspringen
+         if (OrderType() > OP_SELL)                                     // Nicht-Positionen überspringen
             continue;
          openPositions = true;
 
-         int level = OrderMagicNumber() & 0xF;                       //  4 Bits (Bits 1-4)  => progressionLevel
+         int level = OrderMagicNumber() & 0xF;                          //  4 Bits (Bits 1-4)  => progressionLevel
          if (level > sequenceLength) return(catch("ReadSequence(1)   illegal sequence state, progression level "+ level +" of ticket #"+ OrderTicket() +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)==NO_ERROR);
 
          if (level > progressionLevel)
@@ -672,7 +671,7 @@ bool ReadSequence() {
          levels.openCommission[n] = OrderCommission();
          levels.openProfit    [n] = OrderProfit();
 
-         if (OrderType() == OP_BUY) effectiveLots += OrderLots();    // tatsächliche aktuelle Lotsize ermitteln
+         if (OrderType() == OP_BUY) effectiveLots += OrderLots();       // tatsächliche aktuelle Lotsize ermitteln
          else                       effectiveLots -= OrderLots();
       }
    }
@@ -681,7 +680,7 @@ bool ReadSequence() {
    // (3) Geschlossene Positionen einlesen.
    bool retry = true;
 
-   while (retry) {                                                   // Endlosschleife, bis ausreichend History-Daten verfügbar sind oder manuell abgebrochen wird
+   while (retry) {                                                      // Endlosschleife, bis ausreichend History-Daten verfügbar sind oder manuell abgebrochen wird
       retry = false;
       int closedTickets = OrdersHistoryTotal();
 
@@ -698,12 +697,12 @@ bool ReadSequence() {
       double   hist.profits     []; ArrayResize(hist.profits     , closedTickets);
       int      hist.magicNumbers[]; ArrayResize(hist.magicNumbers, closedTickets);
       string   hist.comments    []; ArrayResize(hist.comments    , closedTickets);
-      int      closeTrades      []; ArrayResize(closeTrades, 0);     // Index-Zwischenspeicher für Teilpositionen des Schlußtrades
+      int      closeTrades      []; ArrayResize(closeTrades, 0);        // Index-Zwischenspeicher für Teilpositionen des Schlußtrades
 
       for (i=0, n=0; i < closedTickets; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))              // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
             break;
-         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())       // Nicht-Trades und Einträge anderer Symbole überspringen
+         if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())          // Nicht-Trades und Einträge anderer Symbole überspringen
             continue;
          hist.tickets     [n] = OrderTicket();
          hist.types       [n] = OrderType();
@@ -715,7 +714,7 @@ bool ReadSequence() {
          hist.swaps       [n] = OrderSwap();
          hist.commissions [n] = OrderCommission();
          hist.profits     [n] = OrderProfit();
-         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet die eigenen von fremden Positionen bzw. vom Schlußtrade
+         hist.magicNumbers[n] = ifInt(IsMyOrder(sequenceId), OrderMagicNumber(), 0);   // MagicNumber unterscheidet die eigenen von fremden Positionen bzw. von Schlußtrade(s)
          hist.comments    [n] = OrderComment();
          n++;
       }
@@ -735,38 +734,44 @@ bool ReadSequence() {
          closedTickets = n;
       }
 
-      // (3.2) Hedges analysieren und Daten den Leveln entsprechend zuordnen.
+
+      // TODO:   Es reicht nicht, auf lots = 0.0 zu prüfen. Der fremde Trade kann auf lots=0.0 stehen. In diesem Fall sollte der Comment des Sequenztrades
+      //         auf "partial close" stehen, doch MetaTrader modifiziert den Comment bei manuellem MultipleCloseBy() teilweise nicht (z.B. FTP.5347 in GBP/USD
+      //         am 22.09.2011 in Alpari {account-no}).
+      // Lösung: Über alle fremden Trades iterieren und auf Referenzen auf die Sequenz prüfen.
+
+
+      // (3.2) Sequenztrades auf Cross-Referenzen auf Schlußtrades durchsuchen und Schlußtrades zwischenspeichern
+      string splitPrefix = ifString(IsTesting(), "split from #", "from #");
+      int splitPrefixLen = StringLen(splitPrefix);                      // OrderComment()-Prefix für Restpositionen
+      int referenceTicket;
+
       for (i=0; i < closedTickets; i++) {
          if (hist.magicNumbers[i] == 0)
-            continue;                                                // fremde Position, die evt. Teil des Schlußtrades ist
+            continue;                                                   // fremde Position, die evt. Teil des Schlußtrades ist, werden in (6) analysiert
+         referenceTicket = 0;
 
-         if (EQ(hist.lots[i], 0.0)) {                                // 0.0 = Hedge-Position
-            // TODO: Es reicht nicht, auf lots = 0.0 zu prüfen. Der fremde Trade kann auf lots=0.0 stehen. In diesem Fall sollte der Comment des Sequenztrades
-            // auf "partial close" stehen, doch MetaTrader modifiziert den Comment bei manuellem MultipleCloseBy() teilweise nicht (z.B. FTP.5347 in GBP/USD
-            // am 22.09.2011 in Alpari {account-no}).
-            // Lösung: Zusätzlich über alle fremden Trades iterieren und sie auf Referenzen auf die Sequenz prüfen.
-
+         if (EQ(hist.lots[i], 0.0)) {                                   // Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
-               return(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +" - unknown comment for assumed hedging position: \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
+               return(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
+            referenceTicket = StrToInteger(StringSubstr(hist.comments[i], 16));
+         }
+         else if (StringIStartsWith(hist.comments[i], splitPrefix)) {   // Restposition
+            referenceTicket = StrToInteger(StringSubstr(hist.comments[i], splitPrefixLen));
+         }
+         if (referenceTicket != 0) {
+            if (hist.tickets[i] == referenceTicket) return(catch("ReadSequence(3)  comment of #"+ hist.tickets[i] +" is pointing to itself (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
 
             // Gegenstück suchen
-            int ticket = StrToInteger(StringSubstr(hist.comments[i], 16));
-            for (n=0; n < closedTickets; n++)
-               if (hist.tickets[n] == ticket)
-                  break;
-            if (n == closedTickets) return(catch("ReadSequence(3)  cannot find ticket #"+ hist.tickets[i] +"'s counterpart (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
-            if (i == n)             return(catch("ReadSequence(4)  both hedged and hedging position have the same ticket #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
-
-            if (hist.magicNumbers[n] == 0) {                         // Schlußtrade
-               ArrayPushInt(closeTrades, n);                         // Zeiger auf Schlußposition zwischenspeichern
-               //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[n], 8, " ") +"   close trade   "+ TimeToStr(hist.openTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[n], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[n]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[n], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[n], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[n], PriceFormat) +"   \""+ hist.comments[n] +"\"");
-            }
+            n = ArraySearchInt(referenceTicket, hist.tickets);
+            if (n == -1) return(catch("ReadSequence(4)  cannot find counterpart for #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+            if (hist.magicNumbers[n] == 0)
+               ArrayPushInt(closeTrades, n);                            // Schlußtrade, Zeiger auf Schlußposition zwischenspeichern
          }
-         //debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   \""+ hist.comments[i] +"\"");
 
-         if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i], hist.comments[i])) {
+         debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
+         if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i], hist.comments[i]))
             return(false);
-         }
       }
 
 
@@ -807,35 +812,61 @@ bool ReadSequence() {
       }
 
 
-      // (6) CloseTime und ClosePrice aktualisieren (nicht zwingend notwendig, vereinfacht jedoch spätere P/L-Berechnungen)
+      // (6) Erst jetzt, nach (5), Nicht-Sequenztrades auf Cross-Referenzen zur Sequenz durchsuchen und weitere Schlußtrades ermitteln
+      for (i=0; i < closedTickets; i++) {
+         if (hist.magicNumbers[i] != 0)
+            continue;                                                   // Sequenztrade, wurde bereits in (3.2) analysiert
+         referenceTicket = 0;
+
+         if (EQ(hist.lots[i], 0.0)) {                                   // Hedge-Position
+            if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
+               return(catch("ReadSequence(8)  ticket #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)==NO_ERROR);
+            referenceTicket = StrToInteger(StringSubstr(hist.comments[i], 16));
+         }
+         else if (StringIStartsWith(hist.comments[i], splitPrefix)) {   // Restposition
+            referenceTicket = StrToInteger(StringSubstr(hist.comments[i], splitPrefixLen));
+         }
+         if (referenceTicket != 0) {
+            if (hist.tickets[i] == referenceTicket) return(catch("ReadSequence(9)  comment of #"+ hist.tickets[i] +" is pointing to itself (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)==NO_ERROR);
+
+            // Gegenstück suchen
+            n = ArraySearchInt(referenceTicket, hist.tickets);
+            if (n == -1)
+               continue;
+
+            if (hist.magicNumbers[n]!=0) /*&&*/ if (!IntInArray(i, closeTrades))
+               ArrayPushInt(closeTrades, i);                            // referenceTicket gehört zur Sequenz, i ist also Schlußtrade
+         }                                                              // Zeiger auf Schlußposition zwischenspeichern
+      }
+
+
+      // (7) CloseTime und ClosePrice aktualisieren (nicht zwingend notwendig, vereinfacht jedoch spätere P/L-Berechnungen)
       for (i=1; i < progressionLevel; i++) {
-         if (levels.closeTime[i-1] != 0)                             // closeTime nur überschreiben, wenn es im Level keine offene Position mehr gibt
+         if (levels.closeTime[i-1] != 0)                                // closeTime nur überschreiben, wenn es im Level keine offene Position mehr gibt
             levels.closeTime [i-1] = levels.openTime [i];
          levels.closePrice[i-1] = levels.openPrice[i];
       }
 
 
-      // (7) Status setzen
+      // (8) Status setzen
       sequenceStatus = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
 
 
-      // (8) Schlußtrade(s) analysieren
-      /*
-      Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
-      in welcher Reihenfolge eine Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
-      Teilpositionen aufgebrochen worden sein.
-
-      Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position zum ersten Mal gehedgt war.
-      */
+      // (9) Schlußtrade(s) analysieren
+      //
+      // Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
+      // in welcher Reihenfolge eine Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
+      // Teilpositionen aufgebrochen worden sein. Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position zum ersten Mal gehedgt war.
       if (sequenceStatus == STATUS_FINISHED) {
          int size = ArraySize(closeTrades);
-         if (size == 0) return(catch("ReadSequence(8)   illegal sequence state, no close trades found for finished sequence", ERR_RUNTIME_ERROR)==NO_ERROR);
+         if (size == 0) return(catch("ReadSequence(10)   illegal sequence state, no close trades found for finished sequence", ERR_RUNTIME_ERROR)==NO_ERROR);
 
          datetime lastOpenTime, lastCloseTime;
          double   lastOpenPrice, lastClosePrice;
          int      last = progressionLevel-1;
 
          for (i=0; i < size; i++) {
+            debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   - close -     "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
             if (hist.openTimes[closeTrades[i]] > lastOpenTime) {
                lastOpenTime  = hist.openTimes [closeTrades[i]];
                lastOpenPrice = hist.openPrices[closeTrades[i]];
@@ -859,21 +890,21 @@ bool ReadSequence() {
    }
 
 
-   // (9) Sequenz mit Konfiguration abgleichen
+   // (10) Sequenz mit Konfiguration abgleichen
    if (sequenceStatus == STATUS_PROGRESSING) {
       last = progressionLevel-1;
       if (NE(MathAbs(effectiveLots), levels.lots[last]))
-         return(catch("ReadSequence(9)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
+         return(catch("ReadSequence(11)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)==NO_ERROR);
    }
 
 
-   // (10) P/L und Breakeven neuberechnen und Sequenz visualisieren
+   // (11) P/L und Breakeven neuberechnen und Sequenz visualisieren
    if (!UpdateProfitLoss()   ) return(false);
    if (!UpdateBreakeven()    ) return(false);
    if (!UpdateMaxProfitLoss()) return(false);
    if (!VisualizeSequence()  ) return(false);
 
-   return(catch("ReadSequence(10)")==NO_ERROR);
+   return(catch("ReadSequence(12)")==NO_ERROR);
 }
 
 
@@ -1754,7 +1785,6 @@ bool RestoreConfiguration() {
    }
 
    // (2) Datei einlesen
-   debug("RestoreConfiguration()   restoring configuration for sequence "+ sequenceId);
    string config[];
    int lines = FileReadLines(fileName, config, true);
    if (lines < 0)
