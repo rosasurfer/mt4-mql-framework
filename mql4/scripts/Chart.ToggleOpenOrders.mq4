@@ -35,10 +35,9 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                       // (int) double
    Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
-
+   PriceFormat = "."+ PipDigits + ifString(Digits|1==PipDigits, "", "'");  // PriceFormat für Subpips
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
@@ -220,8 +219,8 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_RAY  , false);
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
-      ObjectSet(name, OBJPROP_BACK , true);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits), PriceFormat)));
+      ObjectSet(name, OBJPROP_BACK , true);                                                                                            // Subpips verwenden
+      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits|1), PriceFormat)));
    }
    else GetLastError();
 
