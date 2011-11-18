@@ -950,7 +950,7 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
 bool StartSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       ForceSound("notify.wav");
-      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("StartSequence(1)");
@@ -995,7 +995,7 @@ bool StartSequence() {
 bool IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       ForceSound("notify.wav");
-      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("IncreaseProgression(1)");
@@ -1045,7 +1045,7 @@ bool IncreaseProgression() {
 bool FinishSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
       ForceSound("notify.wav");
-      int button = ForceMessageBox(ifString(!IsDemo(), "Live Account\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
          catch("FinishSequence(1)");

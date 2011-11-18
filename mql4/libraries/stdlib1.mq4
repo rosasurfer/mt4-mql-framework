@@ -8466,8 +8466,8 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
       strPrice    = StringConcatenate(strPrice, " (instead of ", NumberToStr(price, priceFormat), ")");
       strSlippage = NumberToStr(MathAbs(OrderClosePrice()-price)/pip, ".+");
       int plus    = GT(OrderClosePrice(), price);
-      if ((OrderType() == plus^1)) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
-      else                         strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
+      if ((OrderType() == plus)) strSlippage = StringConcatenate(" (", strSlippage, " pip slippage)");
+      else                       strSlippage = StringConcatenate(" (", strSlippage, " pip positive slippage)");
    }
 
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", DoubleToStr(time/1000.0, 3), " s");

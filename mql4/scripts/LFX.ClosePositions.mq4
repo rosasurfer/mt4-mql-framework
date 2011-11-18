@@ -98,11 +98,12 @@ int start() {
    int sizeOfPositions = ArraySize(positions);
    if (sizeOfPositions > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox("Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          if (!OrderMultiClose(tickets, 0.1, Orange))
             return(SetLastError(stdlib_PeekLastError()));
 
+         // TODO: erzielten ClosePrice() berechnen und ausgeben
 
          // (3) Positionen aus ...\SIG\external_positions.ini löschen
          string file    = TerminalPath() +"\\experts\\files\\SIG\\external_positions.ini";
