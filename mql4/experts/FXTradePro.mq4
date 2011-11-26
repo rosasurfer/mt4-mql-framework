@@ -1962,12 +1962,12 @@ bool RestoreHiddenSequenceId() {
    string label = __SCRIPT__ +".hidden_storage";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
-      int hWnd = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
-      int id   = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;  // (int) double
+      int storedHWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
+      int storedSequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;  // (int) double
 
-      if (hWnd == WindowHandle(Symbol(), Period())) {
-         sequenceId = id;
-         //debug("RestoreHiddenSequenceId()   restored sequenceId="+ id +" for hWnd="+ hWnd);
+      if (WindowHandle(Symbol(), NULL) == storedHWnd) {
+         sequenceId = storedSequenceId;
+         //debug("RestoreHiddenSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
          return(catch("RestoreHiddenSequenceId(1)")==NO_ERROR);
       }
    }
