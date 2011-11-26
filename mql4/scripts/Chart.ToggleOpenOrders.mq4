@@ -6,23 +6,15 @@
 #include <win32api.mqh>
 
 
-//#property show_inputs
-
-
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
-
-extern string Account.Company = "FxPro";
-extern string Account.Number  = "{account-no}";
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 double Pip;
 int    PipDigits;
 int    PipPoints;
 string PriceFormat;
 
-string currency;              // LFX-Währung
+string accountCompany = "FxPro";
+string accountNumber  = "{account-no}";
+
+string currency;                                                     // LFX-Währung
 
 
 /**
@@ -35,9 +27,9 @@ int init() {
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                       // (int) double
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits + ifString(Digits|1==PipDigits, "", "'");  // PriceFormat für Subpips
+   PriceFormat = "."+ PipDigits +"'";                                // Subpip-PriceFormat
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
@@ -100,7 +92,7 @@ int start() {
 
    // (2) Einträge des aktuellen Instruments auslesen
    string file    = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\external_positions.ini";
-   string section = Account.Company +"."+ Account.Number;
+   string section = accountCompany +"."+ accountNumber;
    string keys[], positions[];
    ArrayResize(positions, 0);
 
@@ -219,7 +211,7 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_RAY  , false);
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
-      ObjectSet(name, OBJPROP_BACK , true);                                                                                            // Subpips verwenden
+      ObjectSet(name, OBJPROP_BACK , true);                                                                                            // immer Subpips verwenden
       ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits|1), PriceFormat)));
    }
    else GetLastError();
