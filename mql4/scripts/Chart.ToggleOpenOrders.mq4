@@ -1,6 +1,5 @@
 /**
- * Blendet Markierungen für die aktuell offenen Positionen ein oder aus.
- * In LiteForex-Charts werden die im konfigurierten externen Account gehaltenen Positionen angezeigt.
+ * Blendet die aktuell offenen Positionen ein oder aus.
  */
 #include <stdlib.mqh>
 #include <win32api.mqh>
@@ -10,9 +9,6 @@ double Pip;
 int    PipDigits;
 int    PipPoints;
 string PriceFormat;
-
-string accountCompany = "FxPro";
-string accountNumber  = "{account-no}";
 
 string currency;                                                     // LFX-Währung
 
@@ -29,7 +25,7 @@ int init() {
    PipDigits   = Digits & (~1);
    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
    Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits +"'";                                // Subpip-PriceFormat
+   PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
@@ -67,51 +63,62 @@ int start() {
    // ------------------------
 
 
-   // (1) Chart nach vorhandenen Markierungen absuchen
-   bool markerFound = false;
+   // 1) aktuellen Status bestimmen: off/on (welcher Account)
+   string account = ReadAccountId();
+   //debug("start()   last account = \""+ account +"\"");
 
-   for (int i=ObjectsTotal()-1; i >= 0; i--) {
-      string name = ObjectName(i);
-      if (StringStartsWith(name, "LFXPosition.")) {
-         ObjectDelete(name);                                      // alle gefundenen Marker löschen...
-         markerFound = true;
+
+   // 2) aktuell angezeigte Marker löschen
+   if (account != "") {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+         if (StringStartsWith(name, "LFXPosition."))
+            ObjectDelete(name);
       }
    }
-   int error = GetLastError();
-   if (error == ERR_OBJECT_DOES_NOT_EXIST)
-      error = NO_ERROR;
-
-   if (markerFound || error!=NO_ERROR) {
-      //debug("start()   chart marker found, positions deleted");
-      return(catch("start(1)", error));                           // ...und Rückkehr
-   }
 
 
-   // keine Markierungen gefunden: Positionen anzeigen
+   // 3) nächsten Abschnitt bestimmen
+   string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\external_positions.ini";
+   string sections[];
+   int sizeOfSections = GetPrivateProfileSectionNames(file, sections);
+   //debug("start()   found "+ sizeOfSections +" sections = "+ StringArrayToStr(sections, NULL));
 
+   int index = ArraySearchString(account, sections);
+   int next  = index + 1;                                            // Zeiger auf nächsten Abschnitt setzen
 
-   // (2) Einträge des aktuellen Instruments auslesen
-   string file    = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\external_positions.ini";
-   string section = accountCompany +"."+ accountNumber;
+   if (account!="") /*&&*/ if (index==-1)                            // Ist Status ON und der aktuelle Abschnitt existiert in der Konfiguration nicht,
+      next = sizeOfSections;                                         // dann Zeiger auf eins hinter den letzten Abschnitt setzen.
+   sizeOfSections = ArrayPushString(sections, "");                   // Leerstring (= Status OFF) als letzten 'Abschnitt' hinzufügen
+   //debug("start()   next section=\""+ sections[next] +"\"   sections="+ StringArrayToStr(sections, NULL));
+
+   // über verbleibende Abschnitte iterieren, nächsten Abschnitt mit mindestens einem Schlüssel des aktuellen Instruments finden und Positionen auslesen
+   string prefix = StringConcatenate(currency, ".");
    string keys[], positions[];
-   ArrayResize(positions, 0);
 
-   int sizeOfKeys = GetPrivateProfileKeys(file, section, keys);      // Anzahl der Einträge des Abschnitts
-   string prefix  = StringConcatenate(currency, ".");
+   for (i=next; i < sizeOfSections; i++) {
+      account = sections[i];
+      if (account == "")
+         break;
+      ArrayResize(positions, 0);
+      int sizeOfKeys = GetPrivateProfileKeys(file, account, keys);   // Anzahl der Einträge des Abschnitts
 
-   for (i=0; i < sizeOfKeys; i++) {
-      if (StringIStartsWith(keys[i], prefix))
-         ArrayPushString(positions, StringConcatenate(keys[i], "|", GetPrivateProfileString(file, section, keys[i], "")));
+      for (int j=0; j < sizeOfKeys; j++) {
+         if (StringIStartsWith(keys[j], prefix))
+            ArrayPushString(positions, StringConcatenate(keys[j], "|", GetPrivateProfileString(file, account, keys[j], "")));
+      }
+      if (ArraySize(positions) > 0)
+         break;
    }
 
 
-   // (3) Daten parsen und validieren
+   // 4) Positionsdaten parsen, validieren und Marker setzen
    int sizeOfPositions = ArraySize(positions);
 
    for (i=0; i < sizeOfPositions; i++) {
       string values[];
       if (Explode(positions[i], "|", values, NULL) != 5) {
-         catch("start(2)   Invalid ["+ section +"] entry in \""+ file +"\": "+ positions[i], ERR_RUNTIME_ERROR);
+         catch("start(1)   invalid ["+ account +"] entry in \""+ file +"\": "+ positions[i], ERR_RUNTIME_ERROR);
          continue;
       }
       // Label
@@ -120,24 +127,24 @@ int start() {
       // OpenTime
       string value = StringTrim(values[1]);
       if (StringLen(value) == 0) {
-         catch("start(3)   Invalid open time value in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(2)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       datetime openTime = StrToTime(value);
       if (openTime <= 0) {
-         catch("start(4)   Invalid open time value in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(3)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       //openTime = GmtToServerTime(openTime);
       if (openTime > TimeCurrent()) {
-         catch("start(5)   Invalid open time value in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(4)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
 
       // OperationType
       value = StringToUpper(StringTrim(values[2]));
       if (StringLen(value) == 0) {
-         catch("start(6)   Invalid direction type in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(5)   invalid direction type in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       int type;
@@ -146,48 +153,91 @@ int start() {
          case 'L': type = OP_BUY;  break;
          case 'S': type = OP_SELL; break;
          default:
-            catch("start(7)   Invalid direction type in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+            catch("start(6)   invalid direction type in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
             continue;
       }
 
       // Lots
       value = StringTrim(values[3]);
       if (StringLen(value) == 0) {
-         catch("start(8)   Invalid lot size in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(7)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       if (!StringIsNumeric(value)) {
-         catch("start(9)   Invalid lot size in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(8)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       double lots = StrToDouble(value);
       if (LE(lots, 0)) {
-         catch("start(10)   Invalid lot size in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(9)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
 
       // OpenPrice
       value = StringTrim(values[4]);
       if (StringLen(value) == 0) {
-         catch("start(11)   Invalid open price in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(10)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       if (!StringIsNumeric(value)) {
-         catch("start(12)   Invalid open price in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(11)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       double openPrice = StrToDouble(value);
       if (LE(openPrice, 0)) {
-         catch("start(13)   Invalid open price in ["+ section +"] "+ keys[i] +": \""+ GetPrivateProfileString(file, section, keys[i], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(12)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
 
-
-      // (4) Positionen anzeigen
+      // Markersetzen
       if (SetPositionMarker(label, openTime, type, lots, openPrice) != NO_ERROR)
          break;
    }
-   return(catch("start(14)"));
+
+
+   // 5) aktuellen Status im Chart speichern
+   SaveAccountId(account);
+
+   return(catch("start(13)"));
+}
+
+
+/**
+ * Speichert den Abschnittsnamen des aktuell angezeigten Accounts im Chart.
+ *
+ * @param  string id - Accountbezeichner (aktueller Abschnittsname der Konfigurationsdatei);
+ *                     wenn Leerstring, wird ein gespeicherter Name gelöscht
+ *
+ * @return int - Fehlerstatus
+ */
+int SaveAccountId(string id) {
+   string label = __SCRIPT__ +".account";
+
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+
+   if (id == "") {                                             // wenn id == "", wird das Label gelöscht
+      ObjectDelete(label) ;
+      return(catch("SaveAccount(1)"));
+   }
+
+   ObjectSet(label, OBJPROP_XDISTANCE, -1000);                 // Label in nicht sichtbaren Bereich setzen
+   ObjectSetText(label, id, 0);
+
+   return(catch("SaveAccount(2)"));
+}
+
+
+/**
+ * Liest den im Chart gespeicherten Abschnittsnamen des aktuell angezeigten Accounts aus.
+ *
+ * @return string - Name
+ */
+string ReadAccountId() {
+   string label = __SCRIPT__ +".account";
+   if (ObjectFind(label) != -1)
+      return(ObjectDescription(label));
+   return("");
 }
 
 
