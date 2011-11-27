@@ -260,8 +260,8 @@ int start() {
    log("start()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position in ...\SIG\external_positions.ini eintragen
-   string file    = TerminalPath() +"\\experts\\files\\SIG\\external_positions.ini";
+   // (9) Position in "experts\files\SIG\remote_positions.ini" eintragen
+   string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = Currency +"."+ counter;
    string value   = TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);

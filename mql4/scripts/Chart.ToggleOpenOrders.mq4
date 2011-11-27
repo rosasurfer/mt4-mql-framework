@@ -79,7 +79,7 @@ int start() {
 
 
    // 3) nächsten Abschnitt bestimmen
-   string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\external_positions.ini";
+   string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\remote_positions.ini";
    string sections[];
    int sizeOfSections = GetPrivateProfileSectionNames(file, sections);
    //debug("start()   found "+ sizeOfSections +" sections = "+ StringArrayToStr(sections, NULL));

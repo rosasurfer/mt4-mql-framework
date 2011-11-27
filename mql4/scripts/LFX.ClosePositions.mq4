@@ -105,8 +105,8 @@ int start() {
 
          // TODO: erzielten ClosePrice() berechnen und ausgeben
 
-         // (3) Positionen aus ...\SIG\external_positions.ini löschen
-         string file    = TerminalPath() +"\\experts\\files\\SIG\\external_positions.ini";
+         // (3) Positionen aus "experts\files\SIG\remote_positions.ini" löschen
+         string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < sizeOfPositions; i++) {
             int error = DeletePrivateProfileKey(file, section, positions[i]);
