@@ -481,13 +481,13 @@
 
 
 // globale Variablen, stehen überall (auch in Libraries) zur Verfügung
-string __SCRIPT__    = "";
-bool   init          = false;
-int    init_error    = NO_ERROR;
-int    last_error    = NO_ERROR;
-int    Tick          =  0;
-int    UnchangedBars = -1;
-int    ChangedBars   = -1;
+string __SCRIPT__   = "";
+bool   init         = false;
+int    init_error   = NO_ERROR;
+int    last_error   = NO_ERROR;
+int    Tick         =  0;
+int    FinishedBars = -1;
+int    ChangedBars  = -1;
 
 
 /**

@@ -63,7 +63,7 @@ int start() {
    // ------------------------
 
 
-   // 1) aktuellen Status bestimmen: off/on (welcher Account)
+   // 1) aktuellen Status bestimmen: off/on und welcher Account
    string account = ReadAccountId();
    //debug("start()   last account = \""+ account +"\"");
 
@@ -78,7 +78,7 @@ int start() {
    }
 
 
-   // 3) nächsten Abschnitt bestimmen
+   // 3) Abschnitt des nächsten anzuzeigenden Accounts bestimmen
    string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\remote_positions.ini";
    string sections[];
    int sizeOfSections = GetPrivateProfileSectionNames(file, sections);
@@ -127,24 +127,24 @@ int start() {
       // OpenTime
       string value = StringTrim(values[1]);
       if (StringLen(value) == 0) {
-         catch("start(2)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(2)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       datetime openTime = StrToTime(value);
       if (openTime <= 0) {
-         catch("start(3)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
-      //openTime = GmtToServerTime(openTime);
+      openTime = GmtToServerTime(openTime);
       if (openTime > TimeCurrent()) {
-         catch("start(4)   invalid open time value in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(4)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
 
       // OperationType
       value = StringToUpper(StringTrim(values[2]));
       if (StringLen(value) == 0) {
-         catch("start(5)   invalid direction type in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+         catch("start(5)   invalid direction in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
       int type;
@@ -153,7 +153,7 @@ int start() {
          case 'L': type = OP_BUY;  break;
          case 'S': type = OP_SELL; break;
          default:
-            catch("start(6)   invalid direction type in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+            catch("start(6)   invalid direction in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
             continue;
       }
 
@@ -189,7 +189,7 @@ int start() {
          continue;
       }
 
-      // Markersetzen
+      // Marker setzen
       if (SetPositionMarker(label, openTime, type, lots, openPrice) != NO_ERROR)
          break;
    }

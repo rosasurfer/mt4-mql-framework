@@ -1,7 +1,6 @@
 /**
  * Öffnet eine Position in einer der LiteForex-Indizes.
  *
- *
  *  Regeln:
  *  -------
  *  - automatisierter StopLoss aller Positionen bei 50% von MaxEquity
@@ -13,13 +12,10 @@
  *  - Positionen möglichst am Bollinger-Band eingehen
  *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
  *
- *
  *  TODO:
  *  -----
  *  - Fehler im Counter, wenn 2 Positionen gleichzeitig eröffnet werden (2 x CHF.3)
  *  - Anzeige des Stoploss-Levels und des Stop-Out-Levels des Brokers
- *  - Berechnung des ClosePrice automatisieren
- *  - Anzeige der Positionen im SIG-Account implementieren
  *  - Buy-/Sell-Limits implementieren
  *  - TakeProfit-Limits implementieren
  *  - Breakeven-Orders implementieren
@@ -264,7 +260,7 @@ int start() {
    string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = Currency +"."+ counter;
-   string value   = TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
+   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("start(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));

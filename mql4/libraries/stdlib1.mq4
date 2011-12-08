@@ -50,17 +50,17 @@ void stdlib_init(string scriptName) {
  * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Library-Funktionen zu erkennen, ob der Aufruf während desselben
  * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
  *
- * @param  int unchangedBars - Anzahl der seit dem letzten Tick unveränderten Bars
+ * @param  int finishedBars - Anzahl der seit dem letzten Tick unveränderten Bars
  */
-void stdlib_start(int unchangedBars) {
-   if (unchangedBars < 0) {
-      catch("stdlib_start()  invalid parameter unchangedBars = "+ unchangedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
+void stdlib_start(int finishedBars) {
+   if (finishedBars < 0) {
+      catch("stdlib_start()  invalid parameter finishedBars = "+ finishedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
       return;
    }
 
    Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
-   UnchangedBars = unchangedBars;
-   ChangedBars   = Bars - UnchangedBars;
+   FinishedBars = finishedBars;
+   ChangedBars  = Bars - FinishedBars;
 }
 
 
@@ -1906,15 +1906,15 @@ int SendTick(bool sound=false) {
  * @return string
  */
 string GetTradeServerDirectory() {
-   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von UnchangedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von FinishedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
    // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst UnchangedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
+   // Erst FinishedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
    static string cache.directory[];
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn UnchangedBars==0 && neuer Tick, Cache verwerfen
-   if (UnchangedBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn FinishedBars==0 && neuer Tick, Cache verwerfen
+   if (FinishedBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.directory, 0);
    lastTick = Tick;
 
@@ -2779,7 +2779,7 @@ string BoolArrayToStr(bool values[], string separator=", ") {
 
 
 /**
- * Gibt die aktuelle Zeit in GMT zurück (entspricht UTC).
+ * Gibt die aktuelle Zeit in GMT zurück.
  *
  * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
  */
@@ -3941,7 +3941,7 @@ string DoubleToStrTrim(double value) {
 
 
 /**
- * Konvertiert die angegebene New Yorker Zeit nach GMT (UTC).
+ * Konvertiert die angegebene New Yorker Zeit nach GMT.
  *
  * @param  datetime easternTime - New Yorker Zeitpunkt
  *
@@ -5201,8 +5201,10 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  *
- * NOTE:    Parameter ist ein GMT-Zeitpunkt, das Ergebnis ist daher der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
+ *
+ * NOTE: Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
  * -----
+ *
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) {
    if (gmtTime < 1) {
@@ -6086,15 +6088,15 @@ string PeriodFlagToStr(int flags) {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetTradeServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von UnchangedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
+   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von FinishedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst UnchangedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
+   // Erst FinishedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
 
    static string cache.timezone[];
    static int    lastTick;                               // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn UnchangedBars==0 && neuer Tick, Cache verwerfen
-   if (UnchangedBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn FinishedBars==0 && neuer Tick, Cache verwerfen
+   if (FinishedBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.timezone, 0);
    lastTick = Tick;
 
@@ -6400,7 +6402,7 @@ string GetClassName(int hWnd) {
 
 
 /**
- * Konvertiert die angegebene GMT-Zeit (UTC) nach Eastern Time (New Yorker Zeit).
+ * Konvertiert die angegebene GMT-Zeit nach Eastern Time (New Yorker Zeit).
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
@@ -6427,7 +6429,7 @@ datetime GmtToEasternTime(datetime gmtTime) {
 
 
 /**
- * Konvertiert die angegebene GMT-Zeit (UTC) nach Tradeserver-Zeit.
+ * Konvertiert die angegebene GMT-Zeit nach Tradeserver-Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
@@ -6443,15 +6445,18 @@ datetime GmtToServerTime(datetime gmtTime) {
    if (GetTradeServerTimezone() == "GMT")
       return(gmtTime);
 
-   int gmtToServerTimeOffset = GetGmtToServerTimeOffset(gmtTime);
-   if (gmtToServerTimeOffset == EMPTY_VALUE)
+   int offset = GetGmtToServerTimeOffset(gmtTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime serverTime = gmtTime - gmtToServerTimeOffset;
+   datetime serverTime = gmtTime - offset;
+   if (serverTime < 0) {
+      catch("GmtToServerTime(2)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   //debug("GmtToServerTime()   GMT="+ TimeToStr(gmtTime) +"   server offset="+ (offset/HOURS) +"   serverTime="+ TimeToStr(serverTime));
 
-   //Print("GmtToServerTime()    GMT: "+ TimeToStr(gmtTime) +"     server offset: "+ (gmtToServerTimeOffset/HOURS) +"     server: "+ TimeToStr(serverTime));
-
-   if (catch("GmtToServerTime(2)") != NO_ERROR)
+   if (catch("GmtToServerTime(3)") != NO_ERROR)
       return(-1);
    return(serverTime);
 }
@@ -7206,7 +7211,7 @@ datetime ServerToEasternTime(datetime serverTime) {
 
 
 /**
- * Konvertiert die angegebene Tradeserver-Zeit nach GMT (UTC).
+ * Konvertiert die angegebene Tradeserver-Zeit nach GMT.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
@@ -7222,17 +7227,16 @@ datetime ServerToGMT(datetime serverTime) {
    if (GetTradeServerTimezone() == "GMT")
       return(serverTime);
 
-   int serverToGmtOffset = GetServerToGmtOffset(serverTime);
-   if (serverToGmtOffset == EMPTY_VALUE)
+   int offset = GetServerToGmtOffset(serverTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime gmtTime = serverTime - serverToGmtOffset;
+   datetime gmtTime = serverTime - offset;
    if (gmtTime < 0) {
       catch("ServerToGMT(2)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-
-   //Print("ServerToGMT()    server: "+ TimeToStr(serverTime) +"     GMT offset: "+ (serverToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
+   //debug("ServerToGMT()   serverTime="+ TimeToStr(serverTime) +"   GMT offset="+ (offset/HOURS) +"   GMT="+ TimeToStr(gmtTime));
 
    if (catch("ServerToGMT(3)") != NO_ERROR)
       return(-1);

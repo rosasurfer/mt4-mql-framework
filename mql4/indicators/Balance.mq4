@@ -56,11 +56,11 @@ int deinit() {
  */
 int start() {
    Tick++;
-   if      (init_error != NO_ERROR) UnchangedBars = 0;
-   else if (last_error != NO_ERROR) UnchangedBars = 0;
-   else                             UnchangedBars = IndicatorCounted();
-   ChangedBars = Bars - UnchangedBars;
-   stdlib_start(UnchangedBars);
+   if      (init_error != NO_ERROR) FinishedBars = 0;
+   else if (last_error != NO_ERROR) FinishedBars = 0;
+   else                             FinishedBars = IndicatorCounted();
+   ChangedBars = Bars - FinishedBars;
+   stdlib_start(FinishedBars);
 
    // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
    if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
@@ -79,7 +79,7 @@ int start() {
 
 
    // Alle Werte komplett ...
-   if (UnchangedBars == 0) {
+   if (FinishedBars == 0) {
       ArrayInitialize(iBalance, EMPTY_VALUE);      // vor Neuberechnung alte Werte zurücksetzen
       last_error = iAccountBalanceSeries(AccountNumber(), iBalance);
    }

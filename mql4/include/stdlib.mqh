@@ -8,7 +8,7 @@
 
    // Library-Funktionen
    void     stdlib_init(string scriptName);
-   void     stdlib_start(int unchangedBars);
+   void     stdlib_start(int finishedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 
