@@ -5227,6 +5227,12 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       else                                          offset = -2 * HOURS;
    }
 
+   else if (timezone == "FXT") {                 // GMT+0200,GMT+0300
+      if      (gmtTime < FXT_transitions[year][2])  offset = -2 * HOURS;
+      else if (gmtTime < FXT_transitions[year][3])  offset = -3 * HOURS;
+      else                                          offset = -2 * HOURS;
+   }
+
    else if (timezone == "Europe/Berlin") {       // GMT+0100,GMT+0200
       if      (gmtTime < CEST_transitions[year][2]) offset = -1 * HOUR;
       else if (gmtTime < CEST_transitions[year][3]) offset = -2 * HOURS;
@@ -6104,9 +6110,9 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
+   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "Europe/Kiev";       // Haben am 30.10.2011 nicht zu Normalzeit zurückgeschaltet.
+   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FXT";
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
@@ -6208,6 +6214,12 @@ int GetServerToGmtOffset(datetime serverTime) {
    else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
+   }
+
+   else if (zone == "FXT") {                        // GMT+0200,GMT+0300
+      if      (serverTime < FXT_transitions[year][0])  offset = 2 * HOURS;
+      else if (serverTime < FXT_transitions[year][1])  offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
 
