@@ -8740,22 +8740,5 @@ value_0=1.680000
 </object>
 </indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=Bollinger Bands
-flags=339
-window_num=0
-<inputs>
-MA.Periods=35
-MA.Timeframe=M15
-MA.Methods=EMA
-Color.Bands=14772545
-</inputs>
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
 </window>
 </chart>
