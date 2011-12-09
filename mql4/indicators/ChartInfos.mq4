@@ -223,16 +223,16 @@ int UpdatePriceLabel() {
       string strPrice = " ";
    }
    else {
-      static double lastBid, lastAsk;
+      static double lastBid, lastAsk, price;
       if (EQ(lastBid, Bid)) /*&&*/ if (EQ(lastAsk, Ask))
          return(NO_ERROR);
       lastBid = Bid;
       lastAsk = Ask;
 
       switch (appliedPrice) {
-         case PRICE_MEDIAN: double price = (Bid + Ask)/2; break;
-         case PRICE_BID:           price =  Bid;          break;
-         case PRICE_ASK:           price =  Ask;          break;
+         case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
+         case PRICE_BID:    price =  Bid;          break;
+         case PRICE_ASK:    price =  Ask;          break;
       }
       strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
    }
