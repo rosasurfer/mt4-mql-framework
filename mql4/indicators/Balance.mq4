@@ -3,7 +3,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_separate_window
 
 #property indicator_buffers 1
@@ -19,7 +18,7 @@ double iBalance[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
@@ -54,32 +53,13 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR) FinishedBars = 0;
-   else if (last_error != NO_ERROR) FinishedBars = 0;
-   else                             FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
+int onTick() {
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iBalance) == 0) {          // tritt u.U. bei Terminal-Start auf
-      last_error = ERR_TERMINAL_NOT_YET_READY;
-      return(last_error);
-   }
-   last_error = NO_ERROR;
-   // -----------------------------------------------------------------------------
-
+   if (ArraySize(iBalance) == 0)                                     // tritt u.U. bei Terminal-Start auf
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
    // Alle Werte komplett ...
-   if (FinishedBars == 0) {
+   if (ValidBars == 0) {
       ArrayInitialize(iBalance, EMPTY_VALUE);      // vor Neuberechnung alte Werte zurücksetzen
       last_error = iAccountBalanceSeries(AccountNumber(), iBalance);
    }
@@ -91,7 +71,7 @@ int start() {
       }
    }
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 

@@ -3,7 +3,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 
@@ -49,7 +48,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -66,42 +65,6 @@ int init() {
 
 
 /**
- * Main-Funktion
- *
- * @return int - Fehlerstatus
- */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
-   // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   last_error = NO_ERROR;
-   // ---------------------------------------------------------------------------------------------------
-
-
-   static int error = NO_ERROR;
-
-   if (error == NO_ERROR)
-      error = UpdateInfos();
-
-   return(catch("start()"));
-}
-
-
-/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
@@ -109,6 +72,21 @@ int start() {
 int deinit() {
    RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
+}
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int onTick() {
+   if (prev_error != NO_ERROR)
+      return(SetLastError(prev_error));
+
+   UpdateInfos();
+
+   return(catch("onTick()"));
 }
 
 

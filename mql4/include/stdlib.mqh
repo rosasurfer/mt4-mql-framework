@@ -6,9 +6,15 @@
 
 #import "stdlib.ex4"
 
+   /*private*/ int init();
+   /*private*/ int deinit();
+   /*private*/ int onStart();
+   /*private*/ int onTick();
+
+
    // Library-Funktionen
    void     stdlib_init(string scriptName);
-   void     stdlib_start(int finishedBars);
+   void     stdlib_start(int tick, int validBars, int changedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 

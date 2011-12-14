@@ -3,7 +3,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 
@@ -46,7 +45,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -165,41 +164,22 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else if (last_error == ERR_HISTORY_UPDATE)         FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() ggf. nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
-   // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   last_error = NO_ERROR;
-   // ---------------------------------------------------------------------------------------------------
-
+int onTick() {
+   if (prev_error == ERR_HISTORY_UPDATE)
+      ValidBars = 0;
 
    // Accountinitialisierung abfangen (bei Start und Accountwechsel)
    if (AccountNumber() == 0) {
-      //debug("start()   ERR_NO_CONNECTION");
-      return(ERR_NO_CONNECTION);
+      //debug("onTick()   ERR_NO_CONNECTION");
+      return(SetLastError(ERR_NO_CONNECTION));
    }
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
    if (TimeCurrent() < loginData[2]) {
-      //debug("start()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
-      return(catch("start(1)"));
+      //debug("onTick()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      return(catch("onTick(1)"));
    }
 
    // Positionen
@@ -214,7 +194,7 @@ int start() {
          return(last_error);
    }
 
-   return(catch("start(2)"));
+   return(catch("onTick(2)"));
 }
 
 
@@ -407,7 +387,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
    // Ausgangspunkt ist die Startbar der aktuellen Session
    datetime startTime = iTime(symbol, period, 0);
    if (GetLastError() == ERR_HISTORY_UPDATE)
-      return(ERR_HISTORY_UPDATE);
+      return(SetLastError(ERR_HISTORY_UPDATE));
 
    startTime = GetServerSessionStartTime(startTime);
    if (startTime == -1)                                                 // Wochenend-Candles
@@ -565,8 +545,7 @@ int iOHLCBarRange(double& results[4], string symbol/*=NULL, int period/*=0, int 
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
       results[MODE_CLOSE] = 0;
-      last_error = ERR_NO_RESULT;
-      return(ERR_NO_RESULT);
+      return(SetLastError(ERR_NO_RESULT));
    }
 
    if (from > bars-1)
@@ -622,8 +601,7 @@ int iOHLCTime(double& results[4], string symbol/*=NULL, int timeframe/*=0, datet
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
       results[MODE_CLOSE] = 0;
-      last_error = ERR_NO_RESULT;
-      return(ERR_NO_RESULT);
+      return(SetLastError(ERR_NO_RESULT));
    }
 
    error = iOHLCBar(results, symbol, timeframe, bar);
@@ -693,8 +671,7 @@ int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, date
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
       results[MODE_CLOSE] = 0;
-      last_error = ERR_NO_RESULT;
-      return(ERR_NO_RESULT);
+      return(SetLastError(ERR_NO_RESULT));
    }
 
    // high- und lowBar ermitteln (identisch zu iOHLCBarRange(), wir sparen hier aber alle zusätzlichen Checks)

@@ -3,7 +3,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 
@@ -22,7 +21,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // Datenanzeige ausschalten
@@ -34,16 +33,6 @@ int init() {
 
 
 /**
- * Main-Funktion
- *
- * @return int - Fehlerstatus
- */
-int start() {
-   return(catch("start()"));
-}
-
-
-/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
@@ -51,6 +40,16 @@ int start() {
 int deinit() {
    RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
+}
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int onTick() {
+   return(catch("onTick()"));
 }
 
 

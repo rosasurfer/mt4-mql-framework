@@ -1,14 +1,11 @@
 /**
  * Zeigt im Chart verschiedene Informationen an:
  *
- * - oben links:     der Name des Instruments
- * - oben rechts:    der aktuelle Kurs
- * - unter dem Kurs: der Spread
- * - unten Mitte:    die Größe einer Handels-Unit
- * - unten Mitte:    die im Moment gehaltene Position
+ * - oben links:  Name des Instruments
+ * - oben rechts: aktueller Kurs und Spread
+ * - unten Mitte: Größe einer Handels-Unit und im Moment gehaltene Position
  */
 #include <stdlib.mqh>
-
 
 #property indicator_chart_window
 
@@ -26,7 +23,7 @@ string PriceFormat;
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string chartObjects[];
 
-int    appliedPrice = PRICE_MEDIAN;                                  // Median(default) | Bid | Ask
+int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
 double leverage;                                                     // Hebel zur UnitSize-Berechnung
 
 bool   noPosition, flatPosition, positionChecked;
@@ -39,7 +36,7 @@ double longPosition, shortPosition, totalPosition;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -53,7 +50,6 @@ int init() {
       error = catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
       return(error);
    }
-
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -105,28 +101,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
-   // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   last_error = NO_ERROR;
-   // ---------------------------------------------------------------------------------------------------
-
-
+int onTick() {
    positionChecked = false;
 
    UpdatePriceLabel();
@@ -135,7 +110,7 @@ int start() {
    UpdatePositionLabel();
    UpdateMarginLevels();
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 
@@ -415,7 +390,7 @@ int UpdateMarginLevels() {
 
       int error = GetLastError();
       if (tickValue < 0.00000001 || error==ERR_UNKNOWN_SYMBOL)                // bei Start oder Accountwechsel
-         return(ERR_UNKNOWN_SYMBOL);
+         return(SetLastError(ERR_UNKNOWN_SYMBOL));
 
       bool showFreezeLevel = true;
 

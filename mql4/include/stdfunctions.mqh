@@ -480,20 +480,22 @@
 #define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user intervention
 
 
-// globale Variablen, stehen überall (auch in Libraries) zur Verfügung
+// globale Variablen, die überall zur Verfügung stehen
 string __SCRIPT__   = "";
-bool   init         = false;
-int    init_error   = NO_ERROR;
-int    last_error   = NO_ERROR;
-int    Tick         =  0;
-int    FinishedBars = -1;
-int    ChangedBars  = -1;
+bool   init         = true;                                 // wird erst nach erfolgreichem init() zurückgesetzt
+int    last_error   = NO_ERROR;                             // letzter aufgetretener Fehler des aktuellen Ticks bzw. start()-Aufrufs
+int    prev_error   = NO_ERROR;                             // letzter aufgetretener Fehler des vorherigen Ticks bzw. start()-Aufrufs
+int    Tick         = 0;
+int    ValidBars    = 0;
+int    ChangedBars  = 0;
+bool   is_indicator = false;
+bool   is_expert    = false;
+bool   is_script    = false;
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Bei Aufruf in einer init()-Funktion wird der Fehler in der globalen
- * Variable init_error gespeichert, außerhalb von init() in der globalen Variable last_error. Der mit der MQL-Funktion GetLastError() auslesbare interne
- * MQL-Fehler-Code ist nach Aufruf dieser Funktion immer zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert.
+ * Der mit der MQL-Funktion GetLastError() auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
  * @param  string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
  * @param  int    error   - manuelles Forcieren eines bestimmten Error-Codes
@@ -516,9 +518,8 @@ int catch(string message, int error=NO_ERROR) {
 
       Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
 
-      // Im Tester werden Alerts() aus Experts übergangen, deshalb Fehler manuell signalisieren
-      if (IsTesting()) {
-         string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+      if (IsTesting()) {                              // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren
+         string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(NULL);
          string strings[];
          if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL+NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL+NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
@@ -526,8 +527,7 @@ int catch(string message, int error=NO_ERROR) {
          ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
       }
 
-      if (init) init_error = error;
-      else      last_error = error;
+      last_error = error;
    }
    return(error);
 
@@ -629,30 +629,25 @@ void ForceAlert(string s1="", string s2="", string s3="", string s4="", string s
 
 
 /**
- * Speichert den angegebenen Fehler in den globalen Variablen init_error oder last_error (je nachdem, ob der Aufruf in init() erfolgt oder nicht).
- *
- * @param  int error - Fehler-Code
- *
- * @return int - derselbe Fehler-Code
- */
-int SetLastError(int error) {
-   if (error != NO_ERROR) {
-      if (init) init_error = error;
-      else      last_error = error;
-   }
-   return(error);
-}
-
-
-/**
- * Gibt den letzten im aktuellen Script aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
+ * Gibt den internen Fehler-Code des aktuellen Scripts zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
  *
  * @return int - Fehlercode
  */
 int PeekLastError() {
-   if (init)
-      return(init_error);
    return(last_error);
+}
+
+
+/**
+ * Setzt den internen Fehler-Code des aktuellen Scripts.
+ *
+ * @param  int error - Fehler-Code
+ *
+ * @return int - derselbe Fehler-Code (Chaining)
+ */
+int SetLastError(int error) {
+   last_error = error;
+   return(error);
 }
 
 
@@ -741,4 +736,59 @@ bool OrderSelectByTicket(int ticket) {
       error = ERR_INVALID_TICKET;
    catch("OrderSelectByTicket()", error);
    return(false);
+}
+
+
+/**
+ * Originale Main-Funktion. Führt diverse Laufzeit-Checks durch, setzt entsprechende Variablen und ruft danach und *nur*
+ * bei Erfolg die neu eingeführten Main-Funktionen des Scripttyps auf (bei Indikatoren und EA's onTick(), bei Scripten onStart()).
+ *
+ * @return int - Fehlerstatus
+ */
+int start() {
+   Tick++;
+   prev_error = last_error;
+   ValidBars  = IndicatorCounted();
+
+
+   // (1) letzten Fehler behandeln
+   if (last_error == NO_ERROR) {
+      init = false;                                         // init() war immer erfolgreich
+   }
+   else if (init) {                                         // init()-error abfangen
+      if (last_error == ERR_TERMINAL_NOT_YET_READY) {
+         if (is_indicator) {
+            if (Tick > 1)
+               init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+         }
+         else if (is_expert) {
+            init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
+         }
+      }
+      if (last_error != NO_ERROR)
+         return(last_error);                                // regular exit for init()-error
+      init = false;                                         // init() war erfolgreich
+   }
+   else if (last_error == ERR_TERMINAL_NOT_YET_READY) {     // start()-error des letzten start()-Aufrufs
+      ValidBars = 0;
+   }
+   last_error = NO_ERROR;
+
+
+   // (2) Runtime-Fehler abfangen
+   if (Bars == 0)                                           // kann bei Terminal-Start auftreten
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+
+
+   // (3) ChangedBars berechnen
+   ChangedBars = Bars - ValidBars;
+
+
+   // (4) stdlib und Main-Funktion aufrufen
+   stdlib_start(Tick, ValidBars, ChangedBars);
+
+   if (is_script) last_error = onStart();
+   else           last_error = onTick();
+
+   return(last_error);
 }

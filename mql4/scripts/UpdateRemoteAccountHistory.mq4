@@ -11,9 +11,9 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
-   return(catch("init()"));
+   return(NO_ERROR);
 }
 
 
@@ -32,19 +32,13 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // ------------------------
-
-
+int onStart() {
    int account = AccountNumber();
    if (account == 0) {
-      log("start()  no trade server connection");
+      log("onTick()  no trade server connection");
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(ERR_NO_CONNECTION);
+      return(SetLastError(ERR_NO_CONNECTION));
    }
 
    // (1) verfügbare Historydaten einlesen
@@ -83,13 +77,13 @@ int start() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {
-               log("start()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
+               log("onTick()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the Market Watch window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-               return(error);
+               return(SetLastError(error));
             }
             if (error != NO_ERROR)
-               return(catch("start(1)", error));
+               return(catch("onTick(1)", error));
             units[n] = OrderLots() * lotSize;
          }
       openTimes   [n] = OrderOpenTime();
@@ -127,21 +121,21 @@ int start() {
    string filename = ShortAccountCompany() +"\\tmp_"+ __SCRIPT__ +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
-      return(catch("start(2)  FileOpen(filename=\""+ filename +"\")"));
+      return(catch("onTick(2)  FileOpen(filename=\""+ filename +"\")"));
 
    // (2.1) Dateikommentar
    string header = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
    if (FileWrite(hFile, header) < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(3)  FileWrite()", error));
+      return(catch("onTick(3)  FileWrite()", error));
    }
 
    // (2.2) Status
    if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountBalance") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(4)  FileWrite()", error));
+      return(catch("onTick(4)  FileWrite()", error));
    }
    string accountCompany = AccountCompany();
    string accountNumber  = AccountNumber();
@@ -150,14 +144,14 @@ int start() {
    if (FileWrite(hFile, accountCompany,accountNumber,accountBalance) < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(5)  FileWrite()", error));
+      return(catch("onTick(5)  FileWrite()", error));
    }
 
    // (2.2) Daten
    if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("start(6)  FileWrite()", error));
+      return(catch("onTick(6)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
       string strType        = OperationTypeDescription(types[i]);
@@ -177,7 +171,7 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(7)  FileWrite()", error));
+         return(catch("onTick(7)  FileWrite()", error));
       }
    }
 
@@ -185,7 +179,7 @@ int start() {
    FileClose(hFile);
    error = GetLastError();
    if (error != NO_ERROR)
-      return(catch("start(8)  FileClose()", error));
+      return(catch("onTick(8)  FileClose()", error));
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
@@ -193,7 +187,7 @@ int start() {
    int result = UploadDataFile(filename, errorMsg);
 
    if (result >= ERR_RUNTIME_ERROR) {        // bei Fehler Rückkehr
-      error = catch("start(9)");
+      error = catch("onTick(9)");
       if (error == NO_ERROR)
          error = ERR_RUNTIME_ERROR;
       return(error);
@@ -210,7 +204,7 @@ int start() {
       MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("start(10)"));
+   return(catch("onTick(10)"));
 }
 
 
@@ -233,12 +227,12 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
 
    // HTTP-Request absetzen
    if (WinExecAndWait(cmdLine, SW_HIDE) != NO_ERROR)                          // SW_SHOWNORMAL|SW_HIDE
-      return(ERR_RUNTIME_ERROR);
+      return(SetLastError(ERR_RUNTIME_ERROR));
 
    // Serverantwort zeilenweise einlesen
    string response[];
    if (FileReadLines(filename +".response", response, false) == -1)           // FileReadLines() erwartet relativen Pfad
-      return(ERR_RUNTIME_ERROR);
+      return(SetLastError(ERR_RUNTIME_ERROR));
 
    // Serverantwort auswerten
    int errorCode, lines = ArraySize(response);

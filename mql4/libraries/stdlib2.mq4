@@ -15,6 +15,23 @@
 
 
 /**
+ * Initialisierung der Library beim Laden in den Speicher
+ */
+int init() {
+   __SCRIPT__ = WindowExpertName();
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialisierung der Library beim Entladen aus dem Speicher
+ */
+int deinit() {
+   return(NO_ERROR);
+}
+
+
+/**
  * Gibt die Namen aller Einträge eines Abschnitts einer ini-Datei zurück.
  *
  * @param  string fileName - Name der ini-Datei

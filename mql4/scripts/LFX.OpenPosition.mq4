@@ -63,7 +63,7 @@ int    positions.counter [];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
 
@@ -118,12 +118,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // ------------------------
-
+int onStart() {
    string symbols   [6];
    double lots      [6];
    int    directions[6];
@@ -153,7 +148,7 @@ int start() {
 
       int error = GetLastError();                     // auf ERR_UNKNOWN_SYMBOL prüfen
       if (error != NO_ERROR)
-         return(catch("start(1)   \""+ symbols[i] +"\"", error));
+         return(catch("onTick(1)   \""+ symbols[i] +"\"", error));
 
       // auf ERR_INVALID_MARKETINFO prüfen
       string errorMsg = "";
@@ -178,7 +173,7 @@ int start() {
             i = -1;
             continue;
          }
-         return(catch("start(2)"));
+         return(catch("onTick(2)"));
       }
 
       double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
@@ -187,9 +182,9 @@ int start() {
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
-         return(catch("start(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("onTick(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
-         return(catch("start(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("onTick(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
    }
 
 
@@ -205,7 +200,7 @@ int start() {
    PlaySound("notify.wav");
    button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
-      return(catch("start(5)"));
+      return(catch("onTick(5)"));
 
 
    // (5) Daten bereits offener Positionen einlesen
@@ -227,7 +222,7 @@ int start() {
       color    markerColor = CLR_NONE;
 
       if (stdlib_PeekLastError() != NO_ERROR) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
-      if (catch("start(6)")      != NO_ERROR) return(last_error);
+      if (catch("onTick(6)")      != NO_ERROR) return(last_error);
 
       tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (tickets[i] == -1)
@@ -253,7 +248,7 @@ int start() {
    int    lfxDigits = ifInt(Currency=="JPY", 3, 5);
    string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   log("start()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   log("onTick()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
    // (9) Position in "experts\files\SIG\remote_positions.ini" eintragen
@@ -263,9 +258,9 @@ int start() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("start(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onTick(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
-   return(catch("start(9)"));
+   return(catch("onTick(9)"));
 }
 
 

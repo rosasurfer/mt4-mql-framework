@@ -35,9 +35,9 @@ int mt4Build;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
-   return(catch("init()"));
+   return(NO_ERROR);
 }
 
 
@@ -56,7 +56,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
+int onStart() {
    mt4Build = GetTerminalBuild();
    if (mt4Build == 0)
       return(SetLastError(stdlib_PeekLastError()));
@@ -72,7 +72,7 @@ int start() {
    if (Remove.2GB.Limit)          Remove2GBLimitPatch();
    if (Use.Variable.Spread.Files) VariableSpreadPatch();
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 

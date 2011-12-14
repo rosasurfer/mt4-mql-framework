@@ -10,9 +10,9 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
-   return(catch("init()"));
+   return(NO_ERROR);
 }
 
 
@@ -31,18 +31,12 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // ------------------------
-
-
+int onStart() {
    int account = AccountNumber();
    if (account == 0) {
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(ERR_NO_CONNECTION);
+      return(SetLastError(ERR_NO_CONNECTION));
    }
 
 
@@ -140,15 +134,15 @@ int start() {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("start(2)  ticket #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+            return(catch("onTick(2)  ticket #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
          for (n=0; n < orders; n++)
             if (tickets[n] == ticket)
                break;
-         if (n == orders) return(catch("start(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
-         if (i == n     ) return(catch("start(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (n == orders) return(catch("onTick(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (i == n     ) return(catch("onTick(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          int first  = MathMin(i, n);
          int second = MathMax(i, n);
@@ -174,7 +168,7 @@ int start() {
 
    int error = GetAccountHistory(account, history);
    if (error!=NO_ERROR && error!=ERR_CANNOT_OPEN_FILE)                     // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
-      return(catch("start(5)", error));
+      return(catch("onTick(5)", error));
 
    int    lastTicket;
    double lastBalance;
@@ -183,17 +177,17 @@ int start() {
    if (histSize > 0) {
       lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
       lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
-      //debug("start()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
+      //debug("onTick()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (orders == 0) {
       if (NE(lastBalance, AccountBalance())) {
          PlaySound("notify.wav");
          MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-         return(catch("start(6)"));
+         return(catch("onTick(6)"));
       }
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(7)"));
+      return(catch("onTick(7)"));
    }
 
 
@@ -209,12 +203,12 @@ int start() {
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
       if (NE(lastBalance, AccountBalance()))
-         return(catch("start(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+         return(catch("onTick(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("start(9)"));
+      return(catch("onTick(9)"));
    }
-   //log("start()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
+   //log("onTick()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
 
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
@@ -226,10 +220,10 @@ int start() {
       lastBalance     = balances[i];
    }
    if (NE(lastBalance, AccountBalance())) {
-      log("start()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
+      log("onTick()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(catch("start(10)"));
+      return(catch("onTick(10)"));
    }
 
 
@@ -240,7 +234,7 @@ int start() {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(11)  FileOpen()"));
+         return(catch("onTick(11)  FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetTradeServerDirectory() +")\n"
@@ -248,23 +242,23 @@ int start() {
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(12)  FileWrite()", error));
+         return(catch("onTick(12)  FileWrite()", error));
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(13)  FileWrite()", error));
+         return(catch("onTick(13)  FileWrite()", error));
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("start(14)  FileOpen()"));
+         return(catch("onTick(14)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(15)  FileSeek()", error));
+         return(catch("onTick(15)  FileSeek()", error));
       }
    }
 
@@ -299,14 +293,14 @@ int start() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("start(16)  FileWrite()", error));
+         return(catch("onTick(16)  FileWrite()", error));
       }
    }
    FileClose(hFile);
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-   return(catch("start(17)"));
+   return(catch("onTick(17)"));
 }
 
 

@@ -168,7 +168,7 @@ bool     firstTick = true;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_expert = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -269,8 +269,8 @@ int init() {
 
    // (2) Status anzeigen
    ShowStatus();
-   if (init_error != NO_ERROR)
-      return(init_error);
+   if (last_error != NO_ERROR)
+      return(last_error);
 
 
    // (3) ggf. EA's aktivieren
@@ -323,13 +323,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   init = false;
-   if (init_error != NO_ERROR) return(init_error);
-   if (last_error != NO_ERROR) return(last_error);
-   // --------------------------------------------
-
+int onTick() {
    if (sequenceStatus==STATUS_FINISHED || sequenceStatus==STATUS_DISABLED)
       return(last_error);
 
@@ -357,7 +351,7 @@ int start() {
    ShowStatus();
 
    firstTick = false;
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 
@@ -1400,9 +1394,8 @@ int ShowStatus() {
       case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing..."); break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");       break;
       case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled");
-                               int error = ifInt(init, init_error, last_error);
-                               if (error != NO_ERROR)
-                                  msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]");
+                               if (last_error != NO_ERROR)
+                                  msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");
                                break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ sequenceStatus, ERR_RUNTIME_ERROR));

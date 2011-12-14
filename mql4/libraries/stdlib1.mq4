@@ -31,36 +31,51 @@
 
 
 /**
- * Initialisierung interner Variablen der Library.
- *
- * @param  string scriptName - Name des Scriptes, das die Library lädt
+ * Initialisierung der Library beim Laden in den Speicher
  */
-void stdlib_init(string scriptName) {
-   __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
-
+int init() {
+   __SCRIPT__ = WindowExpertName();
+   
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt aufgerufen wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
-   // bei Shutdown). Da sich das Handle des Hauptfensters innerhalb der Instanz nicht ändert und GetTerminalWindow() den Wert cacht, wird die Funktion sofort
-   // bei Initialisierung der Library aufgerufen. Analog dazu wird das Handle des UI-Threads sofort ermittelt (ist auf gültiges Hauptfenster-Handle angewiesen).
+   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier bei
+   // Initialisierung der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
    GetTerminalWindow();
    GetUIThreadId();
+
+   return(NO_ERROR);
 }
 
 
 /**
- * Informiert die Library über das Eintreffen eines neuen Ticks. Ermöglicht den Library-Funktionen zu erkennen, ob der Aufruf während desselben
+ * Initialisierung interner Variablen der Library.
+ *
+ * @param  string scriptName - Name des Scriptes, das die Library aufruft
+ */
+void stdlib_init(string scriptName) {
+   __SCRIPT__ = StringConcatenate(scriptName, "::", __SCRIPT__);
+}
+
+
+/**
+ * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Ermöglicht den Library-Funktionen zu erkennen, ob der Aufruf während desselben
  * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
  *
- * @param  int finishedBars - Anzahl der seit dem letzten Tick unveränderten Bars
+ * @param  int tick        - Tickzähler (synchronisiert den Tickzähler des aufrufenden Scripts und den der Library)
+ * @param  int validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
+ * @param  int changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  */
-void stdlib_start(int finishedBars) {
-   if (finishedBars < 0) {
-      catch("stdlib_start()  invalid parameter finishedBars = "+ finishedBars, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return;
-   }
+void stdlib_start(int tick, int validBars, int changedBars) {
+   Tick        = tick;                 // der konkrete Wert hat keine Bedeutung
+   ValidBars   = validBars;
+   ChangedBars = changedBars;
+}
 
-   Tick++;                          // einfacher Zähler, der konkrete Wert hat keine Bedeutung
-   FinishedBars = finishedBars;
-   ChangedBars  = Bars - FinishedBars;
+
+/**
+ * Deinitialisierung der Library beim Entladen aus dem Speicher
+ */
+int deinit() {
+   return(NO_ERROR);
 }
 
 
@@ -87,7 +102,23 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Ob das aktuelle Programm ein Indikator ist.
+ *
+ */
+int onStart() {
+   return(catch("onStart()", ERR_WRONG_JUMP));
+}
+
+
+/**
+ *
+ */
+int onTick() {
+   return(catch("onTick()", ERR_WRONG_JUMP));
+}
+
+
+/**
+ * Ob das aktuelle ausgeführte Programm ein Indikator ist.
  *
  * @return bool
  */
@@ -97,7 +128,6 @@ bool IsIndicator() {
       catch("IsIndicator()", error);
 
    Sleep(0);
-
    return(GetLastError() == ERR_CUSTOM_INDICATOR_ERROR);
 }
 
@@ -1906,15 +1936,15 @@ int SendTick(bool sound=false) {
  * @return string
  */
 string GetTradeServerDirectory() {
-   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von FinishedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
    // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst FinishedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
    static string cache.directory[];
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn FinishedBars==0 && neuer Tick, Cache verwerfen
-   if (FinishedBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.directory, 0);
    lastTick = Tick;
 
@@ -6088,15 +6118,15 @@ string PeriodFlagToStr(int flags) {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetTradeServerTimezone() {
-   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von FinishedBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
+   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst FinishedBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
 
    static string cache.timezone[];
    static int    lastTick;                               // Erkennung von Mehrfachaufrufen während eines Ticks
 
-   // 1) wenn FinishedBars==0 && neuer Tick, Cache verwerfen
-   if (FinishedBars == 0) /*&&*/ if (Tick != lastTick)
+   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
       ArrayResize(cache.timezone, 0);
    lastTick = Tick;
 
@@ -6477,7 +6507,7 @@ int iAccountBalance(int account, double buffer[], int bar) {
 
    if (iAccountBalanceSeries(account, buffer) == ERR_HISTORY_UPDATE) {
       catch("iAccountBalance(1)");
-      return(ERR_HISTORY_UPDATE);
+      return(SetLastError(ERR_HISTORY_UPDATE));
    }
 
    return(catch("iAccountBalance(2)"));

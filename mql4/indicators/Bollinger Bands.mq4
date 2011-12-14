@@ -21,7 +21,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 #property indicator_buffers 7
@@ -69,7 +68,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -301,32 +300,13 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
+int onTick() {
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iUpperBand1) == 0) {                   // tritt u.U. bei Terminal-Start auf
-      last_error = ERR_TERMINAL_NOT_YET_READY;
-      return(last_error);
-   }
-   last_error = NO_ERROR;
-   // -----------------------------------------------------------------------------
-
+   if (ArraySize(iUpperBand1) == 0)                                  // tritt u.U. bei Terminal-Start auf
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
-   if (FinishedBars == 0) {
+   if (ValidBars == 0) {
       ArrayInitialize(iUpperBand1,   EMPTY_VALUE);
       ArrayInitialize(iLowerBand1,   EMPTY_VALUE);
       ArrayInitialize(iUpperBand2,   EMPTY_VALUE);
@@ -383,15 +363,15 @@ int start() {
       ArrayCopy(array1, iMovAvg,     0, 0, startBar+1);
       ArrayCopy(array2, iUpperBand1, 0, 0, startBar+1);
 
-      debug("start()  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
-      debug("start()  iMovAvg = "+ DoubleArrayToStr(array1, ", "));
+      debug("onTick()  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
+      debug("onTick()  iMovAvg = "+ DoubleArrayToStr(array1, ", "));
 
       start()  iMovAvg     = {1.61582234, 1.61550427, 1.61522141, 1.61491031, 1.61461975, 1.61433817, 1.61409116, 1.61388254, 1.61369392, 1.61348614, 1.61329017, 1.61313936}
                iUpperBand1 = {302939849.67705119, 302939849.67673314, 302939849.67645031, 302939849.67613918, 302939849.6758486, 302939849.67556703, 302939849.67532003, 302939849.67511141, 302939849.67492276, 302939849.67471498, 302939849.674519, 302939849.6743682}
       */
    }
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 

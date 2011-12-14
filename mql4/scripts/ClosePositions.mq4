@@ -33,7 +33,7 @@ int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -113,13 +113,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // ------------------------
-
-
+int onStart() {
    int orders = OrdersTotal();
    int tickets[]; ArrayResize(tickets, 0);
 
@@ -163,5 +157,5 @@ int start() {
       MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }

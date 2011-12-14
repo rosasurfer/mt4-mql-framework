@@ -5,7 +5,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 #property indicator_buffers 3
@@ -53,7 +52,7 @@ string chartObjects[], legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    PipDigits   = Digits & (~1);
@@ -164,32 +163,13 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
+int onTick() {
    // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0 || ArraySize(iALMA) == 0) {             // tritt u.U. bei Terminal-Start auf
-      last_error = ERR_TERMINAL_NOT_YET_READY;
-      return(last_error);
-   }
-   last_error = NO_ERROR;
-   // -----------------------------------------------------------------------------
-
+   if (ArraySize(iALMA) == 0)                                        // tritt u.U. bei Terminal-Start auf
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
-   if (FinishedBars == 0) {
+   if (ValidBars == 0) {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
@@ -286,7 +266,7 @@ int start() {
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", fontColor);
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("start(1)", error));
+         return(catch("onTick(1)", error));
    }
    lastTrend = iTrend[0];
 
@@ -299,7 +279,7 @@ int start() {
    }
    lastValue = normalizedValue;
 
-   return(catch("start(2)"));
+   return(catch("onTick(2)"));
 }
 
 

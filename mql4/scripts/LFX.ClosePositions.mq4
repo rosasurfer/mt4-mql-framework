@@ -26,7 +26,7 @@ int    sizeOfLabels;
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_script = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // Parametervalidierung
@@ -59,13 +59,7 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-   // ------------------------
-
-
+int onStart() {
    int    orders = OrdersTotal();
    string positions[]; ArrayResize(positions, 0);
    int    tickets  []; ArrayResize(tickets, 0);
@@ -120,7 +114,7 @@ int start() {
       MessageBox("No matching positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 

@@ -3,7 +3,6 @@
  */
 #include <stdlib.mqh>
 
-
 #property indicator_chart_window
 
 
@@ -12,6 +11,7 @@
 extern color Grid.Color = LightGray;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 string chartObjects[];
 
@@ -22,7 +22,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   init = true; init_error = NO_ERROR; __SCRIPT__ = WindowExpertName();
+   is_indicator = true; __SCRIPT__ = WindowExpertName();
    stdlib_init(__SCRIPT__);
 
    // Datenanzeige ausschalten
@@ -57,37 +57,17 @@ int deinit() {
  *
  * @return int - Fehlerstatus
  */
-int start() {
-   Tick++;
-   if      (init_error != NO_ERROR)                   FinishedBars = 0;
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) FinishedBars = 0;
-   else if (last_error == ERR_HISTORY_UPDATE)         FinishedBars = 0;
-   else                                               FinishedBars = IndicatorCounted();
-   ChangedBars = Bars - FinishedBars;
-   stdlib_start(FinishedBars);
-
-   // init() nach ERR_TERMINAL_NOT_YET_READY nochmal aufrufen oder abbrechen
-   if (init_error == ERR_TERMINAL_NOT_YET_READY) /*&&*/ if (!init)
-      init();
-   init = false;
-   if (init_error != NO_ERROR)
-      return(init_error);
-
-   // Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0)                                                    // tritt u.U. bei Terminal-Start auf
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   last_error = NO_ERROR;
-   // ---------------------------------------------------------------------------------------------------
-
+int onTick() {
+   if (prev_error == ERR_HISTORY_UPDATE)
+      ValidBars = 0;
 
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
-
    // Grid zeichnen
-   if (FinishedBars == 0)
+   if (ValidBars == 0)
       last_error = DrawGrid();
 
-   return(catch("start()"));
+   return(catch("onTick()"));
 }
 
 
