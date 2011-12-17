@@ -2,6 +2,12 @@
  * Globale MQL-Funktionen, Variablen und Konstanten.
  */
 
+// Programmtypen
+#define T_INDICATOR              1
+#define T_EXPERT                 2
+#define T_SCRIPT                 3
+
+
 // Special constants
 #define NULL                     0     //
 #define EMPTY                   -1     //
@@ -481,6 +487,7 @@
 
 
 // globale Variablen, die überall zur Verfügung stehen
+int    __TYPE__     = 0;
 string __SCRIPT__   = "";
 bool   init         = true;                                 // wird erst nach erfolgreichem init() zurückgesetzt
 int    last_error   = NO_ERROR;                             // letzter aufgetretener Fehler des aktuellen Ticks bzw. start()-Aufrufs
@@ -488,9 +495,6 @@ int    prev_error   = NO_ERROR;                             // letzter aufgetret
 int    Tick         = 0;
 int    ValidBars    = 0;
 int    ChangedBars  = 0;
-bool   is_indicator = false;
-bool   is_expert    = false;
-bool   is_script    = false;
 
 
 /**
@@ -757,11 +761,11 @@ int start() {
    }
    else if (init) {                                         // init()-error abfangen
       if (last_error == ERR_TERMINAL_NOT_YET_READY) {
-         if (is_indicator) {
+         if (IsIndicator()) {
             if (Tick > 1)
                init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
          }
-         else if (is_expert) {
+         else if (IsExpert()) {
             init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
          }
       }
@@ -794,8 +798,38 @@ int start() {
    // (4) stdlib und Main-Funktion aufrufen
    stdlib_start(Tick, ValidBars, ChangedBars);
 
-   if (is_script) last_error = onStart();
-   else           last_error = onTick();
+   if (IsScript()) last_error = onStart();
+   else            last_error = onTick();
 
    return(last_error);
+}
+
+
+/**
+ * Ob das aktuelle ausgeführte Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   return(__TYPE__ == T_INDICATOR);
+}
+
+
+/**
+ * Ob das aktuelle ausgeführte Programm ein Expert Adviser ist.
+ *
+ * @return bool
+ */
+bool IsExpert() {
+   return(__TYPE__ == T_EXPERT);
+}
+
+
+/**
+ * Ob das aktuelle ausgeführte Programm ein Script ist.
+ *
+ * @return bool
+ */
+bool IsScript() {
+   return(__TYPE__ == T_SCRIPT);
 }

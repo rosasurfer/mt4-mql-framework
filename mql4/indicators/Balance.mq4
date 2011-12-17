@@ -18,8 +18,8 @@ double iBalance[];
  * @return int - Fehlerstatus
  */
 int init() {
-   is_indicator = true; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__SCRIPT__);
+   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
+   stdlib_init(__TYPE__, __SCRIPT__);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber())

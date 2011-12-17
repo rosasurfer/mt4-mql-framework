@@ -52,8 +52,8 @@ string chartObjects[], legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int init() {
-   is_indicator = true; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__SCRIPT__);
+   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
+   stdlib_init(__TYPE__, __SCRIPT__);
 
    PipDigits   = Digits & (~1);
    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double

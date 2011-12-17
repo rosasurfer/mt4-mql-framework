@@ -13,7 +13,7 @@
 
 
    // Library-Funktionen
-   void     stdlib_init(string scriptName);
+   void     stdlib_init(int scriptType, string scriptName);
    void     stdlib_start(int tick, int validBars, int changedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
@@ -24,7 +24,9 @@
    int      GetTerminalBuild();
    int      GetTerminalWindow();
    int      GetUIThreadId();
+   bool     IsExpert();
    bool     IsIndicator();
+   bool     IsScript();
 
 
    // Arrays

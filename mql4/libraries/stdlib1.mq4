@@ -32,10 +32,12 @@
 
 /**
  * Initialisierung der Library beim Laden in den Speicher
+ *
+ * @return int - Fehlercode
  */
 int init() {
    __SCRIPT__ = WindowExpertName();
-   
+
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt aufgerufen wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
    // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier bei
    // Initialisierung der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
@@ -49,9 +51,11 @@ int init() {
 /**
  * Initialisierung interner Variablen der Library.
  *
- * @param  string scriptName - Name des Scriptes, das die Library aufruft
+ * @param  int    scriptType - Typ des aufrufenden Programms
+ * @param  string scriptName - Name des aufrufenden Programms
  */
-void stdlib_init(string scriptName) {
+void stdlib_init(int scriptType, string scriptName) {
+   __TYPE__   = scriptType;
    __SCRIPT__ = StringConcatenate(scriptName, "::", __SCRIPT__);
 }
 
@@ -73,6 +77,8 @@ void stdlib_start(int tick, int validBars, int changedBars) {
 
 /**
  * Deinitialisierung der Library beim Entladen aus dem Speicher
+ *
+ * @return int - Fehlercode
  */
 int deinit() {
    return(NO_ERROR);
@@ -103,6 +109,7 @@ int stdlib_PeekLastError() {
 
 /**
  *
+ * @return int - Fehlercode
  */
 int onStart() {
    return(catch("onStart()", ERR_WRONG_JUMP));
@@ -111,24 +118,10 @@ int onStart() {
 
 /**
  *
+ * @return int - Fehlercode
  */
 int onTick() {
    return(catch("onTick()", ERR_WRONG_JUMP));
-}
-
-
-/**
- * Ob das aktuelle ausgeführte Programm ein Indikator ist.
- *
- * @return bool
- */
-bool IsIndicator() {
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      catch("IsIndicator()", error);
-
-   Sleep(0);
-   return(GetLastError() == ERR_CUSTOM_INDICATOR_ERROR);
 }
 
 
