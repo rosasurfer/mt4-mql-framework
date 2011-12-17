@@ -164,7 +164,7 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // Abschluß der Chart-Initialisierung überprüfen
+   // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iALMA) == 0)                                        // tritt u.U. bei Terminal-Start auf
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
@@ -175,10 +175,10 @@ int onTick() {
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
       ArrayInitialize(iSMA,       EMPTY_VALUE);
       ArrayInitialize(iTrend,               0);
-      SetIndicatorStyles();                        // Workaround um diverse Terminalbugs (siehe dort)
+      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
    }
 
-   if (MA.Periods < 2)                             // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+   if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
    // Startbar ermitteln

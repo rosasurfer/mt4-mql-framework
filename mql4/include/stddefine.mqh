@@ -775,10 +775,17 @@ int start() {
    last_error = NO_ERROR;
 
 
-   // (2) Runtime-Fehler abfangen
-   if (Bars == 0)                                           // kann bei Terminal-Start auftreten
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-
+   // (2) Abschluß der Chart-Initialisierung überprüfen
+   if (Bars == 0) {
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
+   }
+   /*
+   // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
+   //       überprüft werden (kann nicht hier sondern erst in onTick() erfolgen).
+   if (ArraySize(iBuffer) == 0)  {
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // tritt u.U. bei Terminal-Start auf
+   }
+   */
 
    // (3) ChangedBars berechnen
    ChangedBars = Bars - ValidBars;

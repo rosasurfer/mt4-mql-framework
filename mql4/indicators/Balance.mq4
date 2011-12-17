@@ -54,7 +54,7 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // Abschluß der Chart-Initialisierung überprüfen
+   // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iBalance) == 0)                                     // tritt u.U. bei Terminal-Start auf
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
