@@ -21,8 +21,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_INDICATOR, WindowExpertName());
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);

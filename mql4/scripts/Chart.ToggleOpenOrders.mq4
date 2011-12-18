@@ -5,11 +5,6 @@
 #include <win32api.mqh>
 
 
-double Pip;
-int    PipDigits;
-int    PipPoints;
-string PriceFormat;
-
 string currency;                                                     // LFX-Währung
 
 
@@ -19,12 +14,8 @@ string currency;                                                     // LFX-Währ
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_SCRIPT; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_SCRIPT, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
 
    if (!StringContains(Symbol(), "LFX")) {

@@ -63,8 +63,7 @@ int    positions.counter [];
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_SCRIPT; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_SCRIPT, WindowExpertName());
 
 
    // -- Beginn - Parametervalidierung

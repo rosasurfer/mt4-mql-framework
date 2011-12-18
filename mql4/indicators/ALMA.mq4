@@ -33,11 +33,6 @@ extern color  Color.Reversal    = Yellow;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Pip;
-int    PipDigits;
-int    PipPoints;
-string PriceFormat;
-
 double iALMA[], iUpTrend[], iDownTrend[];                            // sichtbare Indikatorbuffer
 double iSMA[], iTrend[], iBarDiff[];                                 // nicht sichtbare Buffer
 double wALMA[];                                                      // Gewichtungen der einzelnen Bars des MA
@@ -52,12 +47,8 @@ string chartObjects[], legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_INDICATOR, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
 

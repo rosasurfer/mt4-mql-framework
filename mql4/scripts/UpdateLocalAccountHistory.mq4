@@ -10,9 +10,7 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_SCRIPT; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
-   return(NO_ERROR);
+   return(onInit(T_SCRIPT, WindowExpertName()));
 }
 
 

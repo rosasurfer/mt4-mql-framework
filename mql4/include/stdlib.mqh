@@ -13,8 +13,8 @@
 
 
    // Library-Funktionen
-   void     stdlib_init(int scriptType, string scriptName);
-   void     stdlib_start(int tick, int validBars, int changedBars);
+   int      stdlib_onInit(int scriptType, string scriptName);
+   int      stdlib_onStart(int tick, int validBars, int changedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 

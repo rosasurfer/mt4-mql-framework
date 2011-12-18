@@ -43,11 +43,6 @@ extern string Per.Symbol.Configuration;                        // Label für symb
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Pip;
-int    PipDigits;
-int    PipPoints;
-string PriceFormat;
-
 double iUpperBand1  [], iLowerBand1  [];                    // sichtbare Indikatorbuffer: erstes Band
 double iUpperBand2  [], iLowerBand2  [];                    //                            zweites Band als Histogramm
 double iUpperBand2_1[], iLowerBand2_1[];                    //                            zweites Band als Linie
@@ -68,12 +63,8 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_INDICATOR, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
 

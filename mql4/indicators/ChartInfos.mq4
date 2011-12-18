@@ -13,12 +13,7 @@
 #define PRICE_BID    1
 #define PRICE_ASK    2
 
-
-double Pip;
-int    PipDigits;
-int    PipPoints;
 double TickSize;
-string PriceFormat;
 
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 string chartObjects[];
@@ -36,12 +31,8 @@ double longPosition, shortPosition, totalPosition;
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_INDICATOR, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 

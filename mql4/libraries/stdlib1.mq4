@@ -37,13 +37,16 @@
  */
 int init() {
    __SCRIPT__ = WindowExpertName();
+   return(NO_ERROR);
+}
 
-   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
-   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
-   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
-   GetTerminalWindow();
-   GetUIThreadId();
 
+/**
+ * Deinitialisierung der Library beim Entladen aus dem Speicher
+ *
+ * @return int - Fehlercode
+ */
+int deinit() {
    return(NO_ERROR);
 }
 
@@ -53,10 +56,25 @@ int init() {
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
  * @param  string scriptName - Name des aufrufenden Programms
+ *
+ * @return int - Fehlercode
  */
-void stdlib_init(int scriptType, string scriptName) {
+int stdlib_onInit(int scriptType, string scriptName) {
    __TYPE__   = scriptType;
    __SCRIPT__ = StringConcatenate(scriptName, "::", __SCRIPT__);
+
+   PipDigits   = Digits & (~1);
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 //(int) double
+   Pip         = 1/MathPow(10, PipDigits);
+   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+
+   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
+   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
+   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
+   GetTerminalWindow();
+   GetUIThreadId();
+
+   return(last_error);
 }
 
 
@@ -67,20 +85,13 @@ void stdlib_init(int scriptType, string scriptName) {
  * @param  int tick        - Tickzähler (synchronisiert den Tickzähler des aufrufenden Scripts und den der Library)
  * @param  int validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  * @param  int changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
- */
-void stdlib_start(int tick, int validBars, int changedBars) {
-   Tick        = tick;                 // der konkrete Wert hat keine Bedeutung
-   ValidBars   = validBars;
-   ChangedBars = changedBars;
-}
-
-
-/**
- * Deinitialisierung der Library beim Entladen aus dem Speicher
  *
  * @return int - Fehlercode
  */
-int deinit() {
+int stdlib_onStart(int tick, int validBars, int changedBars) {
+   Tick        = tick;                 // der konkrete Wert hat keine Bedeutung
+   ValidBars   = validBars;
+   ChangedBars = changedBars;
    return(NO_ERROR);
 }
 

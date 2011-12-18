@@ -26,8 +26,7 @@ int    sizeOfLabels;
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_SCRIPT; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_SCRIPT, WindowExpertName());
 
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);

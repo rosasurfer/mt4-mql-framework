@@ -29,11 +29,6 @@ bool   PivotLevels.PreviousDayRange = false;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double Pip;
-int    PipDigits;
-int    PipPoints;
-string PriceFormat;
-
 string stdSymbol, symbolName;
 int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
 string chartObjects[];
@@ -45,13 +40,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
-
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+   onInit(T_INDICATOR, WindowExpertName());
 
    // globale Variablen
    stdSymbol  = GetStandardSymbol(Symbol());

@@ -6,11 +6,6 @@
 #property indicator_chart_window
 
 
-double Pip;
-int    PipDigits;
-int    PipPoints;
-string PriceFormat;
-
 color  Background.Color    = C'212,208,200';
 color  Font.Color.Enabled  = Blue;
 color  Font.Color.Disabled = Gray;
@@ -48,12 +43,8 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_INDICATOR; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_INDICATOR, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
    // Datenanzeige ausschalten

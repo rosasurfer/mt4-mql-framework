@@ -487,14 +487,110 @@
 
 
 // globale Variablen, die überall zur Verfügung stehen
-int    __TYPE__     = 0;
-string __SCRIPT__   = "";
-bool   init         = true;                                 // wird erst nach erfolgreichem init() zurückgesetzt
-int    last_error   = NO_ERROR;                             // letzter aufgetretener Fehler des aktuellen Ticks bzw. start()-Aufrufs
-int    prev_error   = NO_ERROR;                             // letzter aufgetretener Fehler des vorherigen Ticks bzw. start()-Aufrufs
-int    Tick         = 0;
-int    ValidBars    = 0;
-int    ChangedBars  = 0;
+int    __TYPE__;                 // Typ des laufenden Programms (T_INDICATOR|T_EXPERT|T_SCRIPT)
+string __SCRIPT__;               // Name des laufenden programms
+
+bool   init       = true;        // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
+int    last_error = NO_ERROR;    // der letzte aufgetretene Fehler des aktuellen Aufrufs
+int    prev_error = NO_ERROR;    // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
+
+double Pip;                      // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
+int    PipDigits;                // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
+int    PipPoints;                // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
+string PriceFormat;              // Preisformat des aktuellen Symbols
+
+int    Tick;
+int    ValidBars;
+int    ChangedBars;
+
+
+/**
+ * Setzt allgemein benötigte interne Variablen und führt allgemein benötigte Laufzeit-Initialisierungen durch.
+ *
+ * @param  int    scriptType - Typ des aufrufenden Programms
+ * @param  string scriptName - Name des aufrufenden Programms
+ *
+ * @return int - Fehlercode
+ */
+int onInit(int scriptType, string scriptName) {
+   __TYPE__   = scriptType;
+   __SCRIPT__ = scriptName;
+
+   /*int*/    PipDigits   = Digits & (~1);
+   /*int*/    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                  //(int) double
+   /*double*/ Pip         = 1/MathPow(10, PipDigits);
+   /*string*/ PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+
+   if (last_error == NO_ERROR)
+      last_error = stdlib_onInit(__TYPE__, __SCRIPT__);
+
+   return(last_error);
+}
+
+
+/**
+ * Originale Main-Funktion. Führt diverse Laufzeit-Checks durch, setzt entsprechende Variablen und ruft danach und *nur*
+ * bei Erfolg die neu eingeführten Main-Funktionen des Scripttyps auf (bei Indikatoren und EA's onTick(), bei Scripten onStart()).
+ *
+ * @return int - Fehlerstatus
+ */
+int start() {
+   Tick++;
+   prev_error = last_error;
+   ValidBars  = IndicatorCounted();
+
+
+   // (1) letzten Fehler behandeln
+   if (last_error == NO_ERROR) {
+      init = false;                                         // init() war immer erfolgreich
+   }
+   else if (init) {                                         // init()-error abfangen
+      if (last_error == ERR_TERMINAL_NOT_YET_READY) {
+         if (IsIndicator()) {
+            if (Tick > 1)
+               init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+         }
+         else if (IsExpert()) {
+            init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
+         }
+      }
+      if (last_error != NO_ERROR)
+         return(last_error);                                // regular exit for init()-error
+      init = false;                                         // init() war erfolgreich
+   }
+   else if (last_error == ERR_TERMINAL_NOT_YET_READY) {     // start()-error des letzten start()-Aufrufs
+      ValidBars = 0;
+   }
+   last_error = NO_ERROR;
+
+
+   // (2) Abschluß der Chart-Initialisierung überprüfen
+   if (Bars == 0) {
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
+   }
+   /*
+   // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
+   //       überprüft werden (kann nicht hier, sondern erst in onTick() erfolgen).
+   if (ArraySize(iBuffer) == 0)  {
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
+   }
+   */
+
+   // (3) ChangedBars berechnen
+   ChangedBars = Bars - ValidBars;
+
+
+   // (4) stdLib benachrichtigen und Main-Funktion aufrufen
+   stdlib_onStart(Tick, ValidBars, ChangedBars);
+
+   if (IsScript()) last_error = onStart();
+   else            last_error = onTick();
+
+   return(last_error);
+
+   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL); IsIndicator(); IsExpert(); IsScript();
+}
 
 
 /**
@@ -534,9 +630,6 @@ int catch(string message, int error=NO_ERROR) {
       last_error = error;
    }
    return(error);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -565,9 +658,6 @@ int log(string message="", int error=NO_ERROR) {
 
    Print(message);
    return(error);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
 }
 
 
@@ -604,31 +694,6 @@ void debug(string message, int error=NO_ERROR) {
          message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
       OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __SCRIPT__, "::", message));
    }
-   return;
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL);
-}
-
-
-/**
- * Zeigt eine MessageBox an, wenn Alert() im aktuellen Kontext des Terminals unterdrückt wird (z.B. im Tester).
- *
- * @param string s1-s63 - bis zu 63 beliebige Parameter
- *
- *
- * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
- */
-void ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
-
-   string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
-
-   Alert(message);
-
-   if (IsTesting()) {
-      ForceSound("alert.wav");
-      ForceMessageBox(message, __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-   }
 }
 
 
@@ -652,6 +717,27 @@ int PeekLastError() {
 int SetLastError(int error) {
    last_error = error;
    return(error);
+}
+
+
+/**
+ * Zeigt eine MessageBox an, wenn Alert() im aktuellen Kontext des Terminals unterdrückt wird (z.B. im Tester).
+ *
+ * @param string s1-s63 - bis zu 63 beliebige Parameter
+ *
+ *
+ * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ */
+void ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
+
+   string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
+
+   Alert(message);
+
+   if (IsTesting()) {
+      ForceSound("alert.wav");
+      ForceMessageBox(message, __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+   }
 }
 
 
@@ -740,68 +826,6 @@ bool OrderSelectByTicket(int ticket) {
       error = ERR_INVALID_TICKET;
    catch("OrderSelectByTicket()", error);
    return(false);
-}
-
-
-/**
- * Originale Main-Funktion. Führt diverse Laufzeit-Checks durch, setzt entsprechende Variablen und ruft danach und *nur*
- * bei Erfolg die neu eingeführten Main-Funktionen des Scripttyps auf (bei Indikatoren und EA's onTick(), bei Scripten onStart()).
- *
- * @return int - Fehlerstatus
- */
-int start() {
-   Tick++;
-   prev_error = last_error;
-   ValidBars  = IndicatorCounted();
-
-
-   // (1) letzten Fehler behandeln
-   if (last_error == NO_ERROR) {
-      init = false;                                         // init() war immer erfolgreich
-   }
-   else if (init) {                                         // init()-error abfangen
-      if (last_error == ERR_TERMINAL_NOT_YET_READY) {
-         if (IsIndicator()) {
-            if (Tick > 1)
-               init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
-         }
-         else if (IsExpert()) {
-            init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
-         }
-      }
-      if (last_error != NO_ERROR)
-         return(last_error);                                // regular exit for init()-error
-      init = false;                                         // init() war erfolgreich
-   }
-   else if (last_error == ERR_TERMINAL_NOT_YET_READY) {     // start()-error des letzten start()-Aufrufs
-      ValidBars = 0;
-   }
-   last_error = NO_ERROR;
-
-
-   // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0) {
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
-   }
-   /*
-   // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
-   //       überprüft werden (kann nicht hier, sondern erst in onTick() erfolgen).
-   if (ArraySize(iBuffer) == 0)  {
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
-   }
-   */
-
-   // (3) ChangedBars berechnen
-   ChangedBars = Bars - ValidBars;
-
-
-   // (4) Main-Funktion aufrufen
-   stdlib_start(Tick, ValidBars, ChangedBars);
-
-   if (IsScript()) last_error = onStart();
-   else            last_error = onTick();
-
-   return(last_error);
 }
 
 

@@ -114,13 +114,6 @@ double   intern.Lotsize.Level.7;
 string   intern.Sequence.ID;
 bool     intern;                                            // Statusflag: TRUE = zwischengespeicherte Werte vorhanden
 
-
-double   Pip;
-int      PipDigits;
-int      PipPoints;
-double   TickSize;
-string   PriceFormat;
-
 int      Entry.type        = ENTRYTYPE_UNDEFINED;
 int      Entry.iDirection  = ENTRYDIRECTION_UNDEFINED;
 int      Entry.MA.periods,   Entry.MA.periods.orig;         // *.orig: Werte vor Umrechnung nach M5
@@ -161,6 +154,8 @@ double   all.profits;
 
 bool     firstTick = true;
 
+double   TickSize;
+
 
 /**
  * Initialisierung
@@ -168,14 +163,9 @@ bool     firstTick = true;
  * @return int - Fehlerstatus
  */
 int init() {
-   __TYPE__ = T_EXPERT; __SCRIPT__ = WindowExpertName();
-   stdlib_init(__TYPE__, __SCRIPT__);
+   onInit(T_EXPERT, WindowExpertName());
 
-   PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   Pip         = 1/MathPow(10, PipDigits);
-   TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+   TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
    int error = GetLastError();
    if (error!=NO_ERROR || TickSize < 0.00000001) {
