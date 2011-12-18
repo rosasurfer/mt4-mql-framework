@@ -229,7 +229,7 @@ datetime BST_transitions[50][4] = {
 };
 
 
-// Amerika/New_York GMT-0500,GMT-0400
+// America/New_York GMT-0500,GMT-0400
 datetime EDT_transitions[50][4] = {
    // Umschaltzeit in der Zeitzone                    // Umschaltzeit in GMT
    D'1970.04.26 02:00:00', D'1970.10.25 02:00:00',    D'1970.04.26 07:00:00', D'1970.10.25 06:00:00',
@@ -285,7 +285,7 @@ datetime EDT_transitions[50][4] = {
 };
 
 
-// FXT GMT+0200,GMT+0300 (entspricht Amerika/New_York +0700)
+// FXT GMT+0200,GMT+0300 (entspricht America/New_York +0700)
 datetime FXT_transitions[50][4] = {
    // Umschaltzeit in der Zeitzone                    // Umschaltzeit in GMT
    D'1970.04.26 09:00:00', D'1970.10.25 09:00:00',    D'1970.04.26 07:00:00', D'1970.10.25 06:00:00',

@@ -785,9 +785,9 @@ int start() {
    }
    /*
    // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
-   //       überprüft werden (kann nicht hier sondern erst in onTick() erfolgen).
+   //       überprüft werden (kann nicht hier, sondern erst in onTick() erfolgen).
    if (ArraySize(iBuffer) == 0)  {
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // tritt u.U. bei Terminal-Start auf
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
    }
    */
 
@@ -795,7 +795,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   // (4) stdlib und Main-Funktion aufrufen
+   // (4) Main-Funktion aufrufen
    stdlib_start(Tick, ValidBars, ChangedBars);
 
    if (IsScript()) last_error = onStart();

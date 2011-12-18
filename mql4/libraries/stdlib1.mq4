@@ -38,9 +38,9 @@
 int init() {
    __SCRIPT__ = WindowExpertName();
 
-   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt aufgerufen wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
-   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier bei
-   // Initialisierung der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
+   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
+   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
+   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
    GetTerminalWindow();
    GetUIThreadId();
 
