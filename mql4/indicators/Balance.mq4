@@ -54,7 +54,7 @@ int deinit() {
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
-   if (ArraySize(iBalance) == 0)                                     // tritt u.U. bei Terminal-Start auf
+   if (ArraySize(iBalance) == 0)                                     // kann bei Terminal-Start auftreten
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
    // Alle Werte komplett ...

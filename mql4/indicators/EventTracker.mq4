@@ -31,7 +31,6 @@ bool   PivotLevels.PreviousDayRange = false;
 
 string stdSymbol, symbolName;
 int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
-string chartObjects[];
 
 
 /**
@@ -143,7 +142,6 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
    return(catch("deinit()"));
 }
 
@@ -369,7 +367,7 @@ int CheckPivotLevels() {
  *
  *
 int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lpEndBar) {
-   if (symbol == "0")                                                   // NULL ist ein Integer (0)
+   if (symbol == "0")                                                   // NULL ist Integer (0)
       symbol = Symbol();
    int period = PERIOD_H1;
 
@@ -422,94 +420,69 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
 
 
 /**
- * Ermittelt die OHLC-Werte eines Instruments für eine einzelne Bar einer Periode und schreibt sie in das angegebene Zielarray.
- * Existiert die angegebene Bar nicht, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
+ * Ermittelt die OHLC-Werte eines Symbols für eine einzelne Bar einer Periode. Im Unterschied zu den eingebauten Funktionen iHigh(), iLow() etc.
+ * ermittelt diese Funktion alle 4 Werte mit einem Funktionsaufruf.
  *
- * @param  double& results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
- * @param  string  symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int     period     - Periode (default: 0 = aktuelle Periode)
- * @param  int     bar        - Bar-Offset
- * @param  bool    exact      - TRUE:  Berechnungsgrundlage für Bars sind tatsächliche Handelszeiten, entspricht der (virtuellen) Tradeserver-Zeitzone
- *                                     "EST+0700,EDT+0700"
- *                            - FALSE: Berechnungsgrundlage für Bars ist die Zeitzoneneinstellung des Tradeservers (default)
+ * @param  string symbol     - Symbol  (default: aktuelles Symbol)
+ * @param  int    period     - Periode (default: aktuelle Periode)
+ * @param  int    bar        - Bar-Offset
+ * @param  double results[4] - Ergebnisarray {Open, Low, High, Close}
  *
- * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Bar nicht existiert,
- *                             ggf. ERR_HISTORY_UPDATE
+ * @return int - Fehlerstatus; ERR_NO_RESULT, wenn die angegebene Bar nicht existiert (ggf. ERR_HISTORY_UPDATE)
  *
-int iOHLCBar(double& results[4], string symbol/*=NULL, int period/*=0, int bar, bool exact=false) {
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
-
-   if (symbol == "0")                                       // NULL ist ein Integer (0)
+int iOHLC(string symbol, int period, int bar, double& results[4]) {
+   if (symbol == "0")            // NULL ist Integer (0)
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLCBar(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLC(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
 
+   // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
-   // schnelle Berechnung für exact=FALSE oder Perioden < H4
-   if (!exact || period < PERIOD_H4) {
-      results[MODE_OPEN ] = iOpen (symbol, period, bar);
-      results[MODE_HIGH ] = iHigh (symbol, period, bar);
-      results[MODE_LOW  ] = iLow  (symbol, period, bar);
-      results[MODE_CLOSE] = iClose(symbol, period, bar);
-      int error = GetLastError();                           // ERR_HISTORY_UPDATE ???
+   results[MODE_OPEN ] = iOpen (symbol, period, bar);
+   results[MODE_HIGH ] = iHigh (symbol, period, bar);
+   results[MODE_LOW  ] = iLow  (symbol, period, bar);
+   results[MODE_CLOSE] = iClose(symbol, period, bar);
+
+   int error = GetLastError();
+
+   if (error == NO_ERROR) {
+      if (EQ(results[MODE_OPEN], 0))
+         error = ERR_NO_RESULT;
    }
-   else {
-      // exakte Berechnung, nur für Perioden > H1
-      switch (period) {
-         case PERIOD_D1:
-            // Timeframe bestimmen und Beginn- und Endbar in diesem Timeframe ermitteln
-            int startBar, endBar;
-            error = GetDailyStartEndBars(symbol, bar, startBar, endBar);
-            if (error == ERR_NO_RESULT) catch("iOHLCBar(2)    GetDailyStartEndBars() => ", error);
-            if (error != NO_ERROR     ) return(error);
-
-            // OHLC dieser Range ermitteln
-            error = iOHLCBarRange(results, symbol, PERIOD_H1, startBar, endBar);
-            if (error == ERR_NO_RESULT) catch("iOHLCBar(3)    iOHLCBarRange() => ", error);
-            if (error != NO_ERROR     ) return(error);
-            break;
-
-         case PERIOD_H4 :
-         case PERIOD_W1 :
-         case PERIOD_MN1:
-         default:
-            return(catch("iOHLCBar(4)   exact calculation for "+ PeriodToStr(period) +" not yet implemented", ERR_RUNTIME_ERROR));
-      }
+   else if (error != ERR_HISTORY_UPDATE) {
+      catch("iOHLCBar(2)", error);
    }
 
-   if (error != NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBar(5)", error);
-   }
-   else if (results[MODE_OPEN] == 0) {
-      error = ERR_NO_RESULT;
-   }
+   // TODO: bei ERR_HISTORY_UPDATE muß bei weiteren Abfragen derselben Periode während desselben Ticks ebenfalls
+   //       ERR_HISTORY_UPDATE zurückgegeben werden
+
    return(error);
 }
-*/
+ */
 
 
 /**
- * Ermittelt die OHLC-Werte eines Instruments für eine Bar-Range einer Periode und schreibt sie in das angegebene Zielarray.
- * Existiert die angegebene Startbar (from) nicht, wird die nächste existierende Bar verwendet.
- * Existiert die angegebene Endbar (to) nicht, wird die letzte existierende Bar verwendet.
- * Existiert die resultierende Bar-Range nicht, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
+ * Ermittelt die OHLC-Werte eines Instruments für eine Bar-Range. Existieren die angegebene Startbar (from) bzw. die angegebene Endbar (to) nicht,
+ * werden stattdessen die nächste bzw. die letzte existierende Bar verwendet.
  *
- * @param  double& results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  double& results[4] - Ergebnisarray {Open, Low, High, Close}
  * @param  string  symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  int     period     - Periode (default: 0 = aktuelle Periode)
  * @param  int     from       - Offset der Startbar
  * @param  int     to         - Offset der Endbar
  *
- * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert,
- *                             ggf. ERR_HISTORY_UPDATE
+ * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert, ggf. ERR_HISTORY_UPDATE
  *
- * NOTE:    Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
- * -----    Siehe: iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
+ * NOTE:
+ * -----
+ * Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  *
-int iOHLCBarRange(double& results[4], string symbol/*=NULL, int period/*=0, int from, int to) {
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+ * @see iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
+ *
+int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double& results[4]) {
+   // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
-   if (symbol == "0")                           // NULL ist ein Integer (0)
+   if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
    if (from < 0) return(catch("iOHLCBarRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -558,10 +531,10 @@ int iOHLCBarRange(double& results[4], string symbol/*=NULL, int period/*=0, int 
 
 
 /**
- * Ermittelt die OHLC-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Zielarray.
+ * Ermittelt die OHLC-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Ergebnisarray.
  * Ergebnis sind die Werte der Bar, die diesen Zeitpunkt abdeckt.
  *
- * @param  double&  results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  double&  results[4] - Ergebnisarray {Open, Low, High, Close}
  * @param  string   symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  int      timeframe  - Periode (default: 0 = aktuelle Periode)
  * @param  datetime time       - Zeitpunkt
@@ -574,7 +547,7 @@ int iOHLCTime(double& results[4], string symbol/*=NULL, int timeframe/*=0, datet
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
-   if (symbol == "0")                           // NULL ist ein Integer (0)
+   if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
    int bar = iBarShift(symbol, timeframe, time, true);
@@ -602,10 +575,10 @@ int iOHLCTime(double& results[4], string symbol/*=NULL, int timeframe/*=0, datet
 
 
 /**
- * Ermittelt die OHLC-Werte eines Instruments für einen Zeitraum und schreibt sie in das angegebene Zielarray.
+ * Ermittelt die OHLC-Werte eines Instruments für einen Zeitraum und schreibt sie in das angegebene Ergebnisarray.
  * Existieren in diesem Zeitraum keine Kurse, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
- * @param  double&  results[4] - Array für die Ergebnisse { MODE_OPEN, MODE_LOW, MODE_HIGH, MODE_CLOSE }
+ * @param  double&  results[4] - Ergebnisarray {Open, Low, High, Close}
  * @param  string   symbol     - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  datetime from       - Beginn des Zeitraumes
  * @param  datetime to         - Ende des Zeitraumes
@@ -618,7 +591,7 @@ int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, date
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
 
-   if (symbol == "0")                           // NULL ist ein Integer (0)
+   if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
    if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));

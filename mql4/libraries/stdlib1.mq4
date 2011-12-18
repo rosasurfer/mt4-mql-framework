@@ -6588,7 +6588,7 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
  * ----
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
-   if (symbol == "0")                                       // NULL ist ein Integer (0)
+   if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
    if (time < 1) {
@@ -6636,7 +6636,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  * ----
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
-   if (symbol == "0")                                       // NULL ist ein Integer (0)
+   if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
    if (time < 1) {
