@@ -1933,19 +1933,18 @@ int SendTick(bool sound=false) {
 
 
 /**
- * Gibt das für den aktuellen Chart verwendete Kurshistory-Verzeichnis zurück (Tradeserver-Verzeichnis).  Der Name dieses Verzeichnisses ist bei bestehender
- * Verbindung identisch mit dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig
- * ermitteln.
+ * Gibt den Namen des aktuellen Kurshistory-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
+ * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig ermitteln.
  *
- * @return string
+ * @return string - Verzeichnisname oder Leerstring, wenn ein Fehler auftrat
  */
 string GetTradeServerDirectory() {
-   // Das Tradeserververzeichnis wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
-   // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
+   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart des alten Verzeichnisses.
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
    static string cache.directory[];
-   static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während eines Ticks
+   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
@@ -1957,10 +1956,10 @@ string GetTradeServerDirectory() {
       return(cache.directory[0]);
 
    // 3.1) Wert ermitteln
-   string serverDirectory = AccountServer();
+   string directory = AccountServer();
 
    // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
-   if (StringLen(serverDirectory) == 0) {
+   if (StringLen(directory) == 0) {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
@@ -1970,22 +1969,24 @@ string GetTradeServerDirectory() {
       }
       FileClose(hFile);
 
-      // Datei suchen und Tradeserver-Pfad auslesen
+      // Datei suchen und Verzeichnisnamen auslesen
       string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+      int hFindDir=FindFirstFileA(pattern, wfd), result=hFindDir;
 
-      int hFindDir = FindFirstFileA(pattern, wfd), result=hFindDir;
       while (result > 0) {
          if (wfd.FileAttribute.Directory(wfd)) {
             string name = wfd.FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
-               if (hFindFile != INVALID_HANDLE_VALUE) {              // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
+               if (hFindFile == INVALID_HANDLE_VALUE) {
+                  // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
+               }
+               else {
                   //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
-
                   FindClose(hFindFile);
-                  serverDirectory = name;
+                  directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
                      return(catch("GetTradeServerDirectory(2) ->kernel32.DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
                   break;
@@ -1999,7 +2000,7 @@ string GetTradeServerDirectory() {
          return("");
       }
       FindClose(hFindDir);
-      //debug("GetTradeServerDirectory()   resolved serverDirectory = \""+ serverDirectory +"\"");
+      //debug("GetTradeServerDirectory()   resolved directory = \""+ directory +"\"");
    }
 
    int error = GetLastError();
@@ -2007,16 +2008,16 @@ string GetTradeServerDirectory() {
       catch("GetTradeServerDirectory(4)", error);
       return("");
    }
-   if (StringLen(serverDirectory) == 0) {
+   if (StringLen(directory) == 0) {
       catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR);
       return("");
    }
 
    // 3.3) Wert cachen
    ArrayResize(cache.directory, 1);
-   cache.directory[0] = serverDirectory;
+   cache.directory[0] = directory;
 
-   return(serverDirectory);
+   return(directory);
 }
 
 
@@ -6115,19 +6116,18 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
- * Gibt die Zeitzone des aktuellen Tradeservers zurück.
+ * Gibt die Zeitzone des aktuellen MT-Servers zurück (nach Olson Timezone Database).
  *
- * @return string - Zeitzonen-Identifier nach "Olson" TZ Database
+ * @return string - Zeitzonen-Identifier oder Leerstring, wenn ein Fehler auftrat
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetTradeServerTimezone() {
    // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit ggf. neuer Zeitzone befinden.
-
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
    static string cache.timezone[];
-   static int    lastTick;                               // Erkennung von Mehrfachaufrufen während eines Ticks
+   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
@@ -6170,6 +6170,7 @@ string GetTradeServerTimezone() {
    else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
    else {
+      // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (StringLen(timezone) == 0) {
          catch("GetTradeServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);

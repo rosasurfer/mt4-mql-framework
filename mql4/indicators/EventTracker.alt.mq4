@@ -420,48 +420,6 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
 
 
 /**
- * Ermittelt die OHLC-Werte eines Symbols für eine einzelne Bar einer Periode. Im Unterschied zu den eingebauten Funktionen iHigh(), iLow() etc.
- * ermittelt diese Funktion alle 4 Werte mit einem Funktionsaufruf.
- *
- * @param  string symbol     - Symbol  (default: aktuelles Symbol)
- * @param  int    period     - Periode (default: aktuelle Periode)
- * @param  int    bar        - Bar-Offset
- * @param  double results[4] - Ergebnisarray {Open, Low, High, Close}
- *
- * @return int - Fehlerstatus; ERR_NO_RESULT, wenn die angegebene Bar nicht existiert (ggf. ERR_HISTORY_UPDATE)
- *
-int iOHLC(string symbol, int period, int bar, double& results[4]) {
-   if (symbol == "0")            // NULL ist Integer (0)
-      symbol = Symbol();
-   if (bar < 0)
-      return(catch("iOHLC(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
-
-   results[MODE_OPEN ] = iOpen (symbol, period, bar);
-   results[MODE_HIGH ] = iHigh (symbol, period, bar);
-   results[MODE_LOW  ] = iLow  (symbol, period, bar);
-   results[MODE_CLOSE] = iClose(symbol, period, bar);
-
-   int error = GetLastError();
-
-   if (error == NO_ERROR) {
-      if (EQ(results[MODE_OPEN], 0))
-         error = ERR_NO_RESULT;
-   }
-   else if (error != ERR_HISTORY_UPDATE) {
-      catch("iOHLCBar(2)", error);
-   }
-
-   // TODO: bei ERR_HISTORY_UPDATE muß bei weiteren Abfragen derselben Periode während desselben Ticks ebenfalls
-   //       ERR_HISTORY_UPDATE zurückgegeben werden
-
-   return(error);
-}
- */
-
-
-/**
  * Ermittelt die OHLC-Werte eines Instruments für eine Bar-Range. Existieren die angegebene Startbar (from) bzw. die angegebene Endbar (to) nicht,
  * werden stattdessen die nächste bzw. die letzte existierende Bar verwendet.
  *
