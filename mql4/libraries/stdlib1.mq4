@@ -6141,7 +6141,9 @@ string GetTradeServerTimezone() {
    // 3) Timezone-ID ermitteln
    string timezone, directory=StringToLower(GetTradeServerDirectory());
 
-   if      (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
+   if (directory == "")
+      return("");
+   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Europe/Berlin";
