@@ -76,7 +76,7 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int DrawGrid() {
-   if (StringLen(GetTradeServerTimezone()) == 0)
+   if (StringLen(GetServerTimezone()) == 0)
       return(SetLastError(stdlib_PeekLastError()));
 
    datetime easternTime, easternFrom, easternTo, separatorTime, labelTime, chartTime, lastChartTime, currentServerTime = TimeCurrent();

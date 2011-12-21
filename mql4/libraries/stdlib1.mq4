@@ -3220,13 +3220,14 @@ datetime GetServerSessionStartTime(datetime serverTime) {
    }
 
    datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1)  return(EMPTY_VALUE);
+   if (easternTime == -1)
+      return(EMPTY_VALUE);
 
    datetime easternStart = GetEasternSessionStartTime(easternTime);
-   if (easternStart == -1) return(-1);
+   if (easternStart == -1)
+      return(-1);
 
    datetime serverStart = EasternToServerTime(easternStart);
-   //Print("GetServerSessionStartTime()  time: "+ TimeToStr(serverTime) +"   serverSessionStart: "+ TimeToStr(serverStart));
 
    int error = GetLastError();
    if (error != NO_ERROR) {
@@ -4018,7 +4019,7 @@ datetime EasternToServerTime(datetime easternTime) {
       return(-1);
    }
 
-   string zone = GetTradeServerTimezone();
+   string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(-1);
 
@@ -5091,7 +5092,7 @@ int GetEasternToServerTimeOffset(datetime easternTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetTradeServerTimezone();
+   string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
 
@@ -5247,7 +5248,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
       return(EMPTY_VALUE);
    }
 
-   string timezone = GetTradeServerTimezone();
+   string timezone = GetServerTimezone();
    if (StringLen(timezone) == 0)
       return(EMPTY_VALUE);
    int offset, year = TimeYear(gmtTime)-1970;
@@ -5744,16 +5745,9 @@ string EventToStr(int event) {
 /**
  * Gibt den Offset der angegebenen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
  *
- * @param  datetime localTime - Zeitpunkt lokaler Zeit (default: aktuelle Zeit)
- *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetLocalToGmtOffset(datetime localTime=-1) {
-   if (localTime != -1) {
-      catch("GetLocalToGmtOffset()   support for parameter 'localTime' not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
-      return(EMPTY_VALUE);
-   }
-
+int GetLocalToGmtOffset() {
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeBuffer(tzi, TIME_ZONE_INFORMATION.size);
    int type = GetTimeZoneInformation(tzi);
 
@@ -5765,8 +5759,6 @@ int GetLocalToGmtOffset(datetime localTime=-1) {
          offset += tzi.DaylightBias(tzi);
       offset *= -60;
    }
-
-   //Print("GetLocalToGmtOffset()   difference between local and GMT is: ", (offset/MINUTES), " minutes");
 
    if (catch("GetLocalToGmtOffset()") != NO_ERROR)
       return(EMPTY_VALUE);
@@ -6122,7 +6114,7 @@ string PeriodFlagToStr(int flags) {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetTradeServerTimezone() {
+string GetServerTimezone() {
    // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
@@ -6175,7 +6167,7 @@ string GetTradeServerTimezone() {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (StringLen(timezone) == 0) {
-         catch("GetTradeServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+         catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);
          return("");
       }
    }
@@ -6184,7 +6176,7 @@ string GetTradeServerTimezone() {
    ArrayResize(cache.timezone, 1);
    cache.timezone[0] = timezone;
 
-   if (catch("GetTradeServerTimezone(2)") != NO_ERROR)
+   if (catch("GetServerTimezone(2)") != NO_ERROR)
       return("");
    return(timezone);
 }
@@ -6203,7 +6195,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetTradeServerTimezone();
+   string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
 
@@ -6227,7 +6219,7 @@ int GetServerToEasternTimeOffset(datetime serverTime) {
 
 
 /**
- * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück.
+ * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück (positive Werte für östlich von Greenwich liegende Zeitzonen).
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
@@ -6239,7 +6231,7 @@ int GetServerToGmtOffset(datetime serverTime) {
       return(EMPTY_VALUE);
    }
 
-   string zone = GetTradeServerTimezone();
+   string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
    int offset, year = TimeYear(serverTime)-1970;
@@ -6249,39 +6241,34 @@ int GetServerToGmtOffset(datetime serverTime) {
       else if (serverTime < EMST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-
    else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-
    else if (zone == "FXT") {                        // GMT+0200,GMT+0300
       if      (serverTime < FXT_transitions[year][0])  offset = 2 * HOURS;
       else if (serverTime < FXT_transitions[year][1])  offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-
    else if (zone == "Europe/Berlin") {              // GMT+0100,GMT+0200
       if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
       else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
       else                                             offset = 1 * HOURS;
    }
-                                                    // GMT+0000
-   else if (zone == "GMT")                             offset = 0;
-
+   else if (zone == "GMT") {                        // GMT+0000
+                                                       offset = 0;
+   }
    else if (zone == "Europe/London") {              // GMT+0000,GMT+0100
       if      (serverTime < BST_transitions[year][0])  offset = 0;
       else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
       else                                             offset = 0;
    }
-
    else if (zone == "America/New_York") {           // GMT-0500,GMT-0400
       if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
       else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
       else                                             offset = -5 * HOURS;
    }
-
    else {
       catch("GetServerToGmtOffset(2)  unknown timezone \""+ zone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
@@ -6479,7 +6466,7 @@ datetime GmtToServerTime(datetime gmtTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetTradeServerTimezone() == "GMT")
+   if (GetServerTimezone() == "GMT")
       return(gmtTime);
 
    int offset = GetGmtToServerTimeOffset(gmtTime);
@@ -6633,10 +6620,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
- *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
- *
- * NOTE:    Kann ERR_HISTORY_UPDATE auslösen.
- * ----
+ *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist (ggf. ERR_HISTORY_UPDATE)
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // NULL ist Integer (0)
@@ -6650,7 +6634,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
 
-   if (error==NO_ERROR) if (bar==-1) {                      // falls die Bar nicht existiert und auch kein Update läuft
+   if (error==NO_ERROR) /*&&*/ if (bar==-1) {               // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
@@ -7228,7 +7212,7 @@ datetime ServerToEasternTime(datetime serverTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetTradeServerTimezone() == "America/New_York")
+   if (GetServerTimezone() == "America/New_York")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
@@ -7261,7 +7245,7 @@ datetime ServerToGMT(datetime serverTime) {
    }
 
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetTradeServerTimezone() == "GMT")
+   if (GetServerTimezone() == "GMT")
       return(serverTime);
 
    int offset = GetServerToGmtOffset(serverTime);
@@ -8039,7 +8023,7 @@ string StringRepeat(string input, int times) {
  */
 string NumberToStr(double number, string mask) {
    if (number == EMPTY_VALUE)
-      number = 0;
+      number = 0.0;
 
    // === Beginn Maske parsen ===
    int maskLen = StringLen(mask);

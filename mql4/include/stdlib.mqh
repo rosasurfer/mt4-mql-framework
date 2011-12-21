@@ -112,30 +112,19 @@
 
    // Date/Time
    datetime EasternToGMT(datetime easternTime);
- //datetime EasternToLocalTime(datetime easternTime);
    datetime EasternToServerTime(datetime easternTime);
    datetime GmtToEasternTime(datetime gmtTime);
- //datetime GmtToLocalTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
- //datetime LocalToEasternTime(datetime localTime);
- //datetime LocalToGMT(datetime localTime);
- //datetime LocalToServerTime(datetime localTime);
    datetime ServerToEasternTime(datetime serverTime);
    datetime ServerToGMT(datetime serverTime);
- //datetime ServerToLocalTime(datetime serverTime);
 
    int      GetEasternToGmtOffset(datetime easternTime);
- //int      GetEasternToLocalTimeOffset(datetime easternTime);
    int      GetEasternToServerTimeOffset(datetime easternTime);
    int      GetGmtToEasternTimeOffset(datetime gmtTime);
- //int      GetGmtToLocalTimeOffset(datetime gmtTime);
    int      GetGmtToServerTimeOffset(datetime gmtTime);
- //int      GetLocalToEasternTimeOffset();
-   int      GetLocalToGmtOffset(datetime localTime);
- //int      GetLocalToServerTimeOffset();
+   int      GetLocalToGmtOffset();
    int      GetServerToEasternTimeOffset(datetime serverTime);
    int      GetServerToGmtOffset(datetime serverTime);
- //int      GetServerToLocalTimeOffset(datetime serverTime);
 
    datetime GetEasternNextSessionEndTime(datetime easternTime);
    datetime GetEasternNextSessionStartTime(datetime easternTime);
@@ -151,13 +140,6 @@
    datetime GetGmtSessionEndTime(datetime gmtTime);
    datetime GetGmtSessionStartTime(datetime gmtTime);
 
- //datetime GetLocalNextSessionEndTime(datetime localTime);
- //datetime GetLocalNextSessionStartTime(datetime localTime);
- //datetime GetLocalPrevSessionEndTime(datetime localTime);
- //datetime GetLocalPrevSessionStartTime(datetime localTime);
- //datetime GetLocalSessionEndTime(datetime localTime);
- //datetime GetLocalSessionStartTime(datetime localTime);
-
    datetime GetServerNextSessionEndTime(datetime serverTime);
    datetime GetServerNextSessionStartTime(datetime serverTime);
    datetime GetServerPrevSessionEndTime(datetime serverTime);
@@ -166,7 +148,7 @@
    datetime GetServerSessionStartTime(datetime serverTime);
 
    string   GetDayOfWeek(datetime time, bool format);
-   string   GetTradeServerTimezone();
+   string   GetServerTimezone();
    datetime TimeGMT();
 
 

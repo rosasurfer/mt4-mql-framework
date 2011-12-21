@@ -509,15 +509,16 @@ int    ChangedBars;
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
  * @param  string scriptName - Name des aufrufenden Programms
- *
+ * @param  int    initFlags  - weitere optionale init-Flags, die zusätzlich durchzuführende Initialisierungsroutinen angeben
+ *                             Werte: INIT_TIMEZONE | INIT_RESET_BARS_ON_HIST_UPDATE
  * @return int - Fehlercode
  */
-int onInit(int scriptType, string scriptName) {
+int onInit(int scriptType, string scriptName, int initFlags=NULL) {
    __TYPE__   = scriptType;
    __SCRIPT__ = scriptName;
 
    /*int*/    PipDigits   = Digits & (~1);
-   /*int*/    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                  //(int) double
+   /*int*/    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                  // (int) double
    /*double*/ Pip         = 1/MathPow(10, PipDigits);
    /*string*/ PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
 
