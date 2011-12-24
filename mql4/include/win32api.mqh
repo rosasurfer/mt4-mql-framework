@@ -618,17 +618,17 @@ int     WM_MT4;                                             // wird bei der erst
                                              // the program that started the application.
 
 // ShellExecute() error codes
-#define SE_ERR_FNF                                    2     // File not found.
-#define SE_ERR_PNF                                    3     // Path not found.
-#define SE_ERR_ACCESSDENIED                           5     // Access denied.
-#define SE_ERR_OOM                                    8     // Out of memory.
-#define SE_ERR_SHARE                                 26     // A sharing violation occurred.
-#define SE_ERR_ASSOCINCOMPLETE                       27     // file association information incomplete or invalid.
-#define SE_ERR_DDETIMEOUT                            28     // DDE operation timed out.
-#define SE_ERR_DDEFAIL                               29     // DDE operation failed.
-#define SE_ERR_DDEBUSY                               30     // DDE operation is busy.
-#define SE_ERR_NOASSOC                               31     // File association not available.
-#define SE_ERR_DLLNOTFOUND                           32     // Dynamic-link library not found.
+#define SE_ERR_FNF                                    2     // file not found
+#define SE_ERR_PNF                                    3     // path not found
+#define SE_ERR_ACCESSDENIED                           5     // access denied
+#define SE_ERR_OOM                                    8     // out of memory
+#define SE_ERR_SHARE                                 26     // a sharing violation occurred
+#define SE_ERR_ASSOCINCOMPLETE                       27     // file association information incomplete or invalid
+#define SE_ERR_DDETIMEOUT                            28     // DDE operation timed out
+#define SE_ERR_DDEFAIL                               29     // DDE operation failed
+#define SE_ERR_DDEBUSY                               30     // DDE operation is busy
+#define SE_ERR_NOASSOC                               31     // file association not available
+#define SE_ERR_DLLNOTFOUND                           32     // dynamic-link library not found
 
 
 // STARTUPINFO {} flags
@@ -674,6 +674,6 @@ int     WM_MT4;                                             // wird bei der erst
 #define INFINITE                             0xFFFFFFFF     // infinite timeout
 
 
-// Windows error codes (nur in MQL tatsächlich verwendete, für alle anderen @use FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
+// Windows error codes (nur in MQL tatsächlich verwendete, für alle anderen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
 #define ERROR_SUCCESS                                 0
 #define ERROR_BAD_FORMAT                             11
