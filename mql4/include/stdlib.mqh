@@ -13,7 +13,7 @@
 
 
    // Library-Funktionen
-   int      stdlib_onInit(int scriptType, string scriptName);
+   int      stdlib_onInit(int scriptType, string scriptName, int initFlags);
    int      stdlib_onStart(int tick, int validBars, int changedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
@@ -70,13 +70,13 @@
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int char);
 
-   string   BufferCharsToStr(int buffer[], int from, int length);    //string BufferGetStringA(int buffer[], int from, int length); // Alias
-   string   BufferWCharsToStr(int buffer[], int from, int length);   //string BufferGetStringW(int buffer[], int from, int length); // Alias
+   string   BufferCharsToStr(int buffer[], int from, int length);    //string BufferGetStringA(int buffer[], int from, int length);    // Alias
+   string   BufferWCharsToStr(int buffer[], int from, int length);   //string BufferGetStringW(int buffer[], int from, int length);    // Alias
 
-   //int    BufferSetStringA(int buffer[], int pos, string value);   //int BufferSetString(int buffer[], int pos, string value);    // Alias
+   //int    BufferSetStringA(int buffer[], int pos, string value);   //int BufferSetString(int buffer[], int pos, string value);       // Alias
    //int    BufferSetStringW(int buffer[], int pos, string value);
 
-   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);   // Alias
+   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);                     // Alias
    int      ExplodeStringsW(int buffer[], string results[]);
 
 
@@ -111,44 +111,49 @@
 
 
    // Date/Time
-   datetime EasternToGMT(datetime easternTime);
-   datetime EasternToServerTime(datetime easternTime);
-   datetime GmtToEasternTime(datetime gmtTime);
-   datetime GmtToServerTime(datetime gmtTime);
-   datetime ServerToEasternTime(datetime serverTime);
-   datetime ServerToGMT(datetime serverTime);
+   datetime FXTToGMT(datetime fxtTime);
+   datetime FXTToServerTime(datetime fxtTime);                    // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetEasternToGmtOffset(datetime easternTime);
-   int      GetEasternToServerTimeOffset(datetime easternTime);
-   int      GetGmtToEasternTimeOffset(datetime gmtTime);
-   int      GetGmtToServerTimeOffset(datetime gmtTime);
-   int      GetLocalToGmtOffset();
-   int      GetServerToEasternTimeOffset(datetime serverTime);
-   int      GetServerToGmtOffset(datetime serverTime);
+   datetime GMTToFXT(datetime gmtTime);
+   datetime GMTToServerTime(datetime gmtTime);                    // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetEasternNextSessionEndTime(datetime easternTime);
-   datetime GetEasternNextSessionStartTime(datetime easternTime);
-   datetime GetEasternPrevSessionEndTime(datetime easternTime);
-   datetime GetEasternPrevSessionStartTime(datetime easternTime);
-   datetime GetEasternSessionEndTime(datetime easternTime);
-   datetime GetEasternSessionStartTime(datetime easternTime);
+   datetime ServerToFXT(datetime serverTime);                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ServerToGMT(datetime serverTime);                     // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetGmtNextSessionEndTime(datetime gtmTime);
-   datetime GetGmtNextSessionStartTime(datetime gtmTime);
-   datetime GetGmtPrevSessionEndTime(datetime gtmTime);
-   datetime GetGmtPrevSessionStartTime(datetime gtmTime);
-   datetime GetGmtSessionEndTime(datetime gmtTime);
-   datetime GetGmtSessionStartTime(datetime gmtTime);
+   int      GetFXTToGMTOffset(datetime fxtTime);
+   int      GetFXTToServerTimeOffset(datetime fxtTime);           // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetServerNextSessionEndTime(datetime serverTime);
-   datetime GetServerNextSessionStartTime(datetime serverTime);
-   datetime GetServerPrevSessionEndTime(datetime serverTime);
-   datetime GetServerPrevSessionStartTime(datetime serverTime);
-   datetime GetServerSessionEndTime(datetime serverTime);
-   datetime GetServerSessionStartTime(datetime serverTime);
+   int      GetGMTToFXTOffset(datetime gmtTime);
+   int      GetGMTToServerTimeOffset(datetime gmtTime);           // throws ERR_INVALID_TIMEZONE_CONFIG
+
+   int      GetServerToFXTOffset(datetime serverTime);            // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToGMTOffset(datetime serverTime);            // throws ERR_INVALID_TIMEZONE_CONFIG
+
+   int      GetLocalToGMTOffset();
+
+   datetime GetFXTPrevSessionStartTime(datetime fxtTime);
+   datetime GetFXTPrevSessionEndTime(datetime fxtTime);
+   datetime GetFXTSessionStartTime(datetime fxtTime);             // throws ERR_MARKET_CLOSED
+   datetime GetFXTSessionEndTime(datetime fxtTime);               // throws ERR_MARKET_CLOSED
+   datetime GetFXTNextSessionStartTime(datetime fxtTime);
+   datetime GetFXTNextSessionEndTime(datetime fxtTime);
+
+   datetime GetGMTPrevSessionStartTime(datetime gmtTime);
+   datetime GetGMTPrevSessionEndTime(datetime gmtTime);
+   datetime GetGMTSessionStartTime(datetime gmtTime);             // throws ERR_MARKET_CLOSED
+   datetime GetGMTSessionEndTime(datetime gmtTime);               // throws ERR_MARKET_CLOSED
+   datetime GetGMTNextSessionStartTime(datetime gmtTime);
+   datetime GetGMTNextSessionEndTime(datetime gmtTime);
+
+   datetime GetServerPrevSessionStartTime(datetime serverTime);   // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerPrevSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerSessionStartTime(datetime serverTime);       // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime GetServerSessionEndTime(datetime serverTime);         // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime GetServerNextSessionStartTime(datetime serverTime);   // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerNextSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
 
    string   GetDayOfWeek(datetime time, bool format);
-   string   GetServerTimezone();
+   string   GetServerTimezone();                                  // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime TimeGMT();
 
 
@@ -324,8 +329,8 @@
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);
-   int      iBarShiftPrevious(string symbol, int period, datetime time);
+   int      iBarShiftNext(string symbol, int period, datetime time);     // throws ERR_HISTORY_UPDATE
+   int      iBarShiftPrevious(string symbol, int period, datetime time); // throws ERR_HISTORY_UPDATE
 
    void     ForceAlert(string s1, string s2, string s3, string s4, string s5, string s6, string s7, string s8, string s9, string s10, string s11, string s12, string s13, string s14, string s15, string s16, string s17, string s18, string s19, string s20, string s21, string s22, string s23, string s24, string s25, string s26, string s27, string s28, string s29, string s30, string s31, string s32, string s33, string s34, string s35, string s36, string s37, string s38, string s39, string s40, string s41, string s42, string s43, string s44, string s45, string s46, string s47, string s48, string s49, string s50, string s51, string s52, string s53, string s54, string s55, string s56, string s57, string s58, string s59, string s60, string s61, string s62, string s63);
    int      ForceMessageBox(string message, string caption, int flags);
@@ -450,7 +455,7 @@
 
 
 // ShowWindow()-Konstanten für WinExecWait()
-#define SW_SHOW                           5        // Details zu den Werten in win32api.mqh
+#define SW_SHOW                           5        // Details zu diesen Werten in win32api.mqh
 #define SW_SHOWNA                         8
 #define SW_HIDE                           0
 #define SW_SHOWMAXIMIZED                  3

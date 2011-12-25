@@ -63,7 +63,8 @@ int    positions.counter [];
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_SCRIPT, WindowExpertName());
+   if (onInit(T_SCRIPT, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
 
    // -- Beginn - Parametervalidierung

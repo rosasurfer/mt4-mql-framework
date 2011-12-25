@@ -18,7 +18,8 @@ double iBalance[];
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_INDICATOR, WindowExpertName());
+   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber())

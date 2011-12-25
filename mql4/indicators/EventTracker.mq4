@@ -39,7 +39,8 @@ int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_INDICATOR, WindowExpertName());
+   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    // globale Variablen
    stdSymbol  = GetStandardSymbol(Symbol());
@@ -341,7 +342,7 @@ int CheckPivotLevels() {
       ranges[bar][MODE_HIGH ] = range[MODE_HIGH ];
       ranges[bar][MODE_LOW  ] = range[MODE_LOW  ];
       ranges[bar][MODE_CLOSE] = range[MODE_CLOSE];
-      Print("CheckPivotLevels()    "+ PeriodDescription(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
+      debug("CheckPivotLevels()    "+ PeriodDescription(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
 
       // InsideBar-Status bestimmen und speichern
       if (bar > 0) {
@@ -376,7 +377,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
    if (GetLastError() == ERR_HISTORY_UPDATE)
       return(SetLastError(ERR_HISTORY_UPDATE));
 
-   startTime = GetServerSessionStartTime(startTime);
+   startTime = GetServerSessionStartTime_old(startTime);
    if (startTime == -1)                                                 // Wochenend-Candles
       startTime = GetServerPrevSessionEndTime(iTime(symbol, period, 0));
 
@@ -392,7 +393,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
          return(ERR_NO_RESULT);
       }
 
-      startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
+      startTime = GetServerSessionStartTime_old(iTime(symbol, period, endBar));
       while (startTime == -1) {                                         // Endbar kann theoretisch wieder eine Wochenend-Candle sein
          startBar = iBarShiftNext(symbol, period, GetServerPrevSessionEndTime(iTime(symbol, period, endBar)));
          if (startBar == -1)
@@ -403,7 +404,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int& lpStartBar, int& lp
             catch("GetDailyStartEndBars(4)");
             return(ERR_NO_RESULT);
          }
-         startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
+         startTime = GetServerSessionStartTime_old(iTime(symbol, period, endBar));
       }
 
       startBar = iBarShiftNext(symbol, period, startTime);
@@ -605,7 +606,7 @@ int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, date
    results[MODE_HIGH ] = iHigh (symbol, period, highBar);
    results[MODE_LOW  ] = iLow  (symbol, period, lowBar );
    results[MODE_CLOSE] = iClose(symbol, period, toBar  );
-   //Print("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodDescription(period));
+   //debug("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodDescription(period));
 
    return(catch("iOHLCTimeRange(3)"));
 }
@@ -627,7 +628,7 @@ int iOHLC(string symbol, int period, int bar, double& results[4]) {
    if (symbol == "0")                     // NULL ist Integer (0)
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLC(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLC(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 

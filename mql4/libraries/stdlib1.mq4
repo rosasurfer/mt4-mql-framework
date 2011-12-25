@@ -20,6 +20,8 @@
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
 #property library
+#property stacksize  32768
+
 
 #include <stddefine.mqh>
 #include <timezones.mqh>
@@ -56,23 +58,30 @@ int deinit() {
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
  * @param  string scriptName - Name des aufrufenden Programms
- *
+ * @param  int    initFlags  - optionale, zusätzlich durchzuführende Initialisierungstasks (default: NULL)
+ *                             Werte: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @return int - Fehlercode
  */
-int stdlib_onInit(int scriptType, string scriptName) {
+int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
    __TYPE__   = scriptType;
-   __SCRIPT__ = StringConcatenate(scriptName, "::", __SCRIPT__);
+   __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
 
    PipDigits   = Digits & (~1);
    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 //(int) double
    Pip         = 1/MathPow(10, PipDigits);
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+   PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
+
+   if (last_error == NO_ERROR) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
+      GetServerTimezone();
 
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
    // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
    // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
-   GetTerminalWindow();
-   GetUIThreadId();
+   if (last_error == NO_ERROR)
+      GetTerminalWindow();
+
+   if (last_error == NO_ERROR)
+      GetUIThreadId();
 
    return(last_error);
 }
@@ -133,6 +142,129 @@ int onStart() {
  */
 int onTick() {
    return(catch("onTick()", ERR_WRONG_JUMP));
+}
+
+
+/**
+ * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Standard Time) zurück (entgegengesetzter Wert des Offsets von FXT zu GMT).
+ *
+ * @param  datetime gmtTime - GMT-Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetGMTToFXTOffset(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GetGMTToFXTOffset()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
+   int offset, year = TimeYear(gmtTime)-1970;
+
+   // FXT                                       GMT+0200,GMT+0300
+   if      (gmtTime < FXT_transitions[year][2]) offset = -2 * HOURS;
+   else if (gmtTime < FXT_transitions[year][3]) offset = -3 * HOURS;
+   else                                         offset = -2 * HOURS;
+
+   return(offset);
+}
+
+
+/**
+ * Gibt den Offset der angegebenen Serverzeit zu FXT (Forex Standard Time) zurück (positive Werte für östlich von FXT liegende Zeitzonen).
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetServerToFXTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerToFXTOffset()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
+   string zone = GetServerTimezone();
+   if (StringLen(zone) == 0)
+      return(EMPTY_VALUE);
+
+   // schnelle Rückkehr, wenn der Tradeserver unter FXT läuft
+   if (zone == "FXT")
+      return(0);
+
+   // Offset Server zu GMT
+   int offset1;
+   if (zone != "GMT") {
+      offset1 = GetServerToGMTOffset(serverTime);
+      if (offset1 == EMPTY_VALUE)
+         return(EMPTY_VALUE);
+   }
+
+   // Offset GMT zu FXT
+   int offset2 = GetGMTToFXTOffset(serverTime - offset1);
+   if (offset2 == EMPTY_VALUE)
+      return(EMPTY_VALUE);
+
+   return(offset1 + offset2);
+}
+
+
+/**
+ * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück (positive Werte für östlich von Greenwich liegende Zeitzonen).
+ *
+ * @param  datetime serverTime - Tradeserver-Zeitpunkt
+ *
+ * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerToGMTOffset(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(EMPTY_VALUE);
+   }
+
+   string zone = GetServerTimezone();
+   if (StringLen(zone) == 0)
+      return(EMPTY_VALUE);
+
+   int offset, year = TimeYear(serverTime)-1970;
+
+   if (zone == "Europe/Minsk") {                    // GMT+0200,GMT+0300
+      if      (serverTime < EMST_transitions[year][0]) offset = 2 * HOURS;
+      else if (serverTime < EMST_transitions[year][1]) offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
+   }
+   else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
+      if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
+      else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
+   }
+   else if (zone == "FXT") {                        // GMT+0200,GMT+0300
+      if      (serverTime < FXT_transitions[year][0])  offset = 2 * HOURS;
+      else if (serverTime < FXT_transitions[year][1])  offset = 3 * HOURS;
+      else                                             offset = 2 * HOURS;
+   }
+   else if (zone == "Europe/Berlin") {              // GMT+0100,GMT+0200
+      if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
+      else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
+      else                                             offset = 1 * HOURS;
+   }
+   else if (zone == "GMT") {                        // GMT+0000
+                                                       offset = 0;
+   }
+   else if (zone == "Europe/London") {              // GMT+0000,GMT+0100
+      if      (serverTime < BST_transitions[year][0])  offset = 0;
+      else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
+      else                                             offset = 0;
+   }
+   else if (zone == "America/New_York") {           // GMT-0500,GMT-0400
+      if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
+      else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
+      else                                             offset = -5 * HOURS;
+   }
+   else {
+      catch("GetServerToGMTOffset(2)  unknown timezone \""+ zone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+      return(EMPTY_VALUE);
+   }
+
+   return(offset);
 }
 
 
@@ -348,9 +480,9 @@ int GetTerminalBuild() {
  */
 int InitializeBuffer(int buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("InitializeBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeBuffer(1)  invalid parameter buffer, too many dimensions: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
-      return(catch("InitializeBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("InitializeBuffer(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 = length % 4
    else                    length = length >> 2 + 1;
@@ -373,9 +505,9 @@ int InitializeBuffer(int buffer[], int length) {
  */
 int InitializeStringBuffer(string& buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("InitializeStringBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeStringBuffer(1)  invalid parameter buffer, too many dimensions: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
-      return(catch("InitializeStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("InitializeStringBuffer(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (ArraySize(buffer) == 0)
       ArrayResize(buffer, 1);
@@ -395,7 +527,7 @@ int InitializeStringBuffer(string& buffer[], int length) {
  */
 string CreateString(int length) {
    if (length < 0) {
-      catch("CreateString()  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("CreateString()  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -1495,8 +1627,8 @@ string BufferToHexStr(int buffer[]) {
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
 
-   if (pos < 0)      { catch("BufferGetChar(1)  invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
-   if (pos >= chars) { catch("BufferGetChar(2)  invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
+   if (pos < 0)      { catch("BufferGetChar(1)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
+   if (pos >= chars) { catch("BufferGetChar(2)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
 
    int i = pos >> 2;                      // Index des relevanten Integers des Arrays     // +---+------------+
    int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
@@ -1520,10 +1652,10 @@ int BufferGetChar(int buffer[], int pos) {
 string BufferCharsToStr(int buffer[], int from, int length) {
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   if (fromChar < 0)            { catch("BufferCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
-   if (fromChar >= bufferChars) { catch("BufferCharsToStr(2)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
-   if (length < 0)              { catch("BufferCharsToStr(3)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
-   if (toChar >= bufferChars)   { catch("BufferCharsToStr(4)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
+   if (fromChar < 0)            { catch("BufferCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
+   if (fromChar >= bufferChars) { catch("BufferCharsToStr(2)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
+   if (length < 0)              { catch("BufferCharsToStr(3)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
+   if (toChar >= bufferChars)   { catch("BufferCharsToStr(4)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
 
    if (length == 0)
       return("");
@@ -1569,10 +1701,10 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
-      return(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+length, size=ArraySize(buffer);
    if (to > size)
-      return(catch("BufferWCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -1721,7 +1853,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk") {
-      catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2229,7 +2361,7 @@ string WaitForSingleObjectValueToStr(int value) {
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetStandardSymbol()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
    return(GetStandardSymbolOrAlt(symbol, symbol));
@@ -2255,7 +2387,7 @@ string GetStandardSymbol(string symbol) {
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbolOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetStandardSymbolOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2281,7 +2413,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  */
 string GetStandardSymbolStrict(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbolStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetStandardSymbolStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2495,7 +2627,7 @@ string GetStandardSymbolStrict(string symbol) {
  */
 string GetSymbolName(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
    return(GetSymbolNameOrAlt(symbol, symbol));
@@ -2515,7 +2647,7 @@ string GetSymbolName(string symbol) {
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2538,7 +2670,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2676,7 +2808,7 @@ string GetSymbolNameStrict(string symbol) {
  */
 string GetLongSymbolName(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
    return(GetLongSymbolNameOrAlt(symbol, symbol));
@@ -2694,7 +2826,7 @@ string GetLongSymbolName(string symbol) {
  */
 string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2717,7 +2849,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetLongSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetLongSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -2816,7 +2948,7 @@ string BoolArrayToStr(bool values[], string separator=", ") {
 /**
  * Gibt die aktuelle Zeit in GMT zurück.
  *
- * @return datetime - Timestamp oder -1, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
    /*SYSTEMTIME*/int st[]; InitializeBuffer(st, SYSTEMTIME.size);
@@ -2831,8 +2963,6 @@ datetime TimeGMT() {
 
    string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
    datetime time  = StrToTime(strTime);
-
-   //Print("TimeGMT()   strTime = "+ strTime +"    StrToTime(strTime) = "+ TimeToStr(time, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
 
    int error = GetLastError();
    if (error != NO_ERROR) {
@@ -3146,571 +3276,441 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
 
 /**
  * Gibt die Startzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionStartTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime fxtTime = ServerToFXT(serverTime);
+   if (fxtTime == -1)
+      return(-1);
 
-   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
-   datetime serverStart   = EasternToServerTime(previousStart);
-   //Print("GetServerPrevSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   previousStart: "+ TimeToStr(serverStart));
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerPrevSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(serverStart);
+   return(FXTToServerTime(startTime));
 }
 
 
 /**
  * Gibt die Endzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionEndTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetServerPrevSessionStartTime(serverTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
-   datetime serverEnd   = EasternToServerTime(previousEnd);
-   //Print("GetServerPrevSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   previousEnd: "+ TimeToStr(serverEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerPrevSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(serverEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
  * Gibt die Startzeit der Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Startzeit oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionStartTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
+   if (serverTime < 0) {
+      catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1)
-      return(EMPTY_VALUE);
-
-   datetime easternStart = GetEasternSessionStartTime(easternTime);
-   if (easternStart == -1)
+   int offset = GetServerToFXTOffset(datetime serverTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime serverStart = EasternToServerTime(easternStart);
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
+   datetime fxtTime = serverTime - offset;
+   if (fxtTime < 0) {
+      catch("GetServerSessionStartTime(2)  illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
+      return(-1);
    }
-   return(serverStart);
+
+   int dayOfWeek = TimeDayOfWeek(fxtTime);
+
+   if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY) {
+      last_error = ERR_MARKET_CLOSED;
+      return(-1);
+   }
+
+   fxtTime   -= TimeHour(fxtTime)*HOURS + TimeMinute(fxtTime)*MINUTES + TimeSeconds(fxtTime)*SECONDS;
+   serverTime = fxtTime + offset;
+
+   if (serverTime < 0) {
+      catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
+   }
+   return(serverTime);
 }
 
 
 /**
  * Gibt die Endzeit der Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionEndTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
+   if (serverTime < 0) {
+      catch("GetServerSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetServerSessionStartTime(serverTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime easternEnd = GetEasternSessionEndTime(easternTime);
-   if (easternEnd == EMPTY_VALUE) return(EMPTY_VALUE);
-   if (easternEnd == -1)          return(-1);
-
-   datetime serverEnd = EasternToServerTime(easternEnd);
-    //Print("GetServerSessionEndTime()  time: "+ TimeToStr(serverTime) +"   serverEnd: "+ TimeToStr(serverEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(serverEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
  * Gibt die Startzeit der nächsten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionStartTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerNextSessionStartTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerNextSessionStartTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime fxtTime = ServerToFXT(serverTime);
+   if (fxtTime == -1)
+      return(-1);
 
-   datetime nextStart   = GetEasternNextSessionStartTime(easternTime);
-   datetime serverStart = EasternToServerTime(nextStart);
-   //Print("GetServerNextSessionStartTime()  serverTime: "+ TimeToStr(serverTime) +"   nextStart: "+ TimeToStr(serverStart));
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerNextSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(serverStart);
+   return(FXTToServerTime(startTime));
 }
 
 
 /**
  * Gibt die Endzeit der nächsten Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Tradeserver-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionEndTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerNextSessionEndTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("GetServerNextSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = ServerToEasternTime(serverTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetServerNextSessionStartTime(datetime serverTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime nextEnd   = GetEasternNextSessionEndTime(easternTime);
-   datetime serverEnd = EasternToServerTime(nextEnd);
-   //Print("GetServerNextSessionEndTime()  serverTime: "+ TimeToStr(serverTime) +"   nextEnd: "+ TimeToStr(serverEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetServerNextSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(serverEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
  * Gibt die Startzeit der vorherigen Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtPrevSessionStartTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtPrevSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GetGMTPrevSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
+      return(-1);
 
-   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
-   datetime gmtStart      = EasternToGMT(previousStart);
-   //Print("GetGmtPrevSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousStart: "+ TimeToStr(gmtStart));
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtPrevSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtStart);
+   return(FXTToGMT(startTime));
 }
 
 
 /**
  * Gibt die Endzeit der vorherigen Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtPrevSessionEndTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtPrevSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GetGMTPrevSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetGMTPrevSessionStartTime(gmtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime previousEnd = GetEasternPrevSessionEndTime(easternTime);
-   datetime gmtEnd      = EasternToGMT(previousEnd);
-   //Print("GetGmtPrevSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   previousEnd: "+ TimeToStr(gmtEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtPrevSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
  * Gibt die Startzeit der Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtSessionStartTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
+   if (gmtTime < 0) {
+      catch("GetGMTSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1)  return(EMPTY_VALUE);
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
+      return(-1);
 
-   datetime easternStart = GetEasternSessionStartTime(easternTime);
-   if (easternStart == -1) return(-1);
+   datetime startTime = GetFXTSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime gmtStart = EasternToGMT(easternStart);
-   //Print("GetGmtSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtStart: "+ TimeToStr(gmtStart));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtStart);
+   return(FXTToGMT(startTime));
 }
 
 
 /**
  * Gibt die Endzeit der Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtSessionEndTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
+   if (gmtTime < 0) {
+      catch("GetGMTSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetGMTSessionStartTime(datetime gmtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime easternEnd = GetEasternSessionEndTime(easternTime);
-   if (easternEnd == -1)  return(-1);
-
-   datetime gmtEnd = EasternToGMT(easternEnd);
-   //Print("GetGmtSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   gmtEnd: "+ TimeToStr(gmtEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
  * Gibt die Startzeit der nächsten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtNextSessionStartTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtNextSessionStartTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTNextSessionStartTime(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GetGMTNextSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
+      return(-1);
 
-   datetime nextStart = GetEasternNextSessionStartTime(easternTime);
-   datetime gmtStart  = EasternToGMT(nextStart);
-   //Print("GetGmtNextSessionStartTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextStart: "+ TimeToStr(gmtStart));
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtNextSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtStart);
+   return(FXTToGMT(startTime));
 }
 
 
 /**
  * Gibt die Endzeit der nächsten Handelssession für den angegebenen GMT-Zeitpunkt zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - GMT-Zeitpunkt oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGmtNextSessionEndTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtNextSessionEndTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetGMTNextSessionEndTime(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GetGMTNextSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1) return(EMPTY_VALUE);
+   datetime startTime = GetGMTNextSessionStartTime(datetime gmtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime nextEnd = GetEasternNextSessionEndTime(easternTime);
-   datetime gmtEnd  = EasternToGMT(nextEnd);
-   //Print("GetGmtNextSessionEndTime()  gmtTime: "+ TimeToStr(gmtTime) +"   nextEnd: "+ TimeToStr(gmtEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetGmtNextSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(gmtEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
- * Gibt die Startzeit der vorherigen Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ * Gibt die Startzeit der vorherigen Handelssession für den FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternPrevSessionStartTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternPrevSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("GetFXTPrevSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   // aktuellen Sessionbeginn ermitteln (17:00)
-   int hour = TimeHour(easternTime);
-   datetime currentStart = easternTime -(hour+7)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);    // Time -hours -7h => 17:00 am vorherigen Tag
-   if (hour >= 17)
-      currentStart += 1*DAY;
-   datetime previousStart = currentStart - 1*DAY;
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
+   if (startTime < 0) {
+      catch("GetFXTPrevSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
+      return(-1);
+   }
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(previousStart);
-   if      (dow == FRIDAY  ) previousStart -= 1*DAY;
-   else if (dow == SATURDAY) previousStart -= 2*DAYS;
-   //Print("GetEasternPrevSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   previousStart: "+ TimeToStr(previousStart));
+   int dow = TimeDayOfWeek(startTime);
+   if      (dow == SATURDAY) startTime -= 1*DAY;
+   else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternPrevSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
+   if (startTime < 0) {
+      catch("GetFXTPrevSessionStartTime(3)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
+      return(-1);
    }
-   return(previousStart);
+   return(startTime);
 }
 
 
 /**
- * Gibt die Endzeit der vorherigen Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ * Gibt die Endzeit der vorherigen Handelssession für den angegebenen FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternPrevSessionEndTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternPrevSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("GetFXTPrevSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime previousStart = GetEasternPrevSessionStartTime(easternTime);
-   if (previousStart == EMPTY_VALUE) return(EMPTY_VALUE);
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime previousEnd = previousStart + 1*DAY;
-   //Print("GetEasternPrevSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   previousEnd: "+ TimeToStr(previousEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternPrevSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(previousEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
- * Gibt die Startzeit der Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ * Gibt die Startzeit der Handelssession für den angegebenen FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternSessionStartTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
+   if (fxtTime < 0) {
+      catch("GetFXTSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   // aktuellen Sessionbeginn ermitteln (17:00)
-   int hour = TimeHour(easternTime);
-   datetime easternStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hour +17h => 17:00
-   if (hour < 17)
-      easternStart -= 1*DAY;
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
+   if (startTime < 0) {
+      catch("GetFXTSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
+      return(-1);
+   }
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(easternStart);
-   if (dow == FRIDAY  ) return(-1);
-   if (dow == SATURDAY) return(-1);
-   //Print("GetEasternSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionStart: "+ TimeToStr(easternStart));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
+   int dow = TimeDayOfWeek(startTime);
+   if (dow == SATURDAY || dow == SUNDAY) {
+      last_error = ERR_MARKET_CLOSED;
+      return(-1);
    }
-   return(easternStart);
+   return(startTime);
 }
 
 
 /**
- * Gibt die Endzeit der Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ * Gibt die Endzeit der Handelssession für den angegebenen FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls der Markt zu diesem Zeitpunkt geschlossen ist (Wochenende);
- *                    EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternSessionEndTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
+   if (fxtTime < 0) {
+      catch("GetFXTSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime easternStart = GetEasternSessionStartTime(easternTime);
-   if (easternStart == EMPTY_VALUE) return(EMPTY_VALUE);
-   if (easternStart == -1)          return(-1);
+   datetime startTime = GetFXTSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime easternEnd = easternStart + 1*DAY;
-   //Print("GetEasternSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   sessionEnd: "+ TimeToStr(easternEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(easternEnd);
+   return(startTime + 1*DAY);
 }
 
 
 /**
- * Gibt die Startzeit der nächsten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions beginnen um 17:00 New Yorker Zeit.
+ * Gibt die Startzeit der nächsten Handelssession für den angegebenen FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternNextSessionStartTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternNextSessionStartTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTNextSessionStartTime(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("GetFXTNextSessionStartTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   // nächsten Sessionbeginn ermitteln (17:00)
-   int hour = TimeHour(easternTime);
-   datetime nextStart = easternTime + (17-hour)*HOURS - TimeMinute(easternTime)*MINUTES - TimeSeconds(easternTime);     // Time -hours +17h => 17:00
-   if (hour >= 17)
-      nextStart += 1*DAY;
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(nextStart);
-   if      (dow == FRIDAY  ) nextStart += 2*DAYS;
-   else if (dow == SATURDAY) nextStart += 1*DAY;
-   //Print("GetEasternNextSessionStartTime()  easternTime: "+ TimeToStr(easternTime) +"   nextStart: "+ TimeToStr(nextStart));
+   int dow = TimeDayOfWeek(startTime);
+   if      (dow == SATURDAY) startTime += 2*DAYS;
+   else if (dow == SUNDAY  ) startTime += 1*DAY;
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternNextSessionStartTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(nextStart);
+   return(startTime);
 }
 
 
 /**
- * Gibt die Endzeit der nächsten Handelssession für den angegebenen New Yorker Zeitpunkt (Eastern Time) zurück.
- * Die Handelssessions enden um 17:00 New Yorker Zeit.
+ * Gibt die Endzeit der nächsten Handelssession für den angegebenen FXT-Zeitpunkt (Forex Standard Time) zurück.
  *
- * @param  datetime easternTime - Zeitpunkt New Yorker Zeit
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetEasternNextSessionEndTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternNextSessionEndTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
+datetime GetFXTNextSessionEndTime(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("GetFXTNextSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(-1);
    }
 
-   datetime nextStart = GetEasternNextSessionStartTime(easternTime);
-   if (nextStart == EMPTY_VALUE) return(EMPTY_VALUE);
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
+   if (startTime == -1)
+      return(-1);
 
-   datetime nextEnd = nextStart + 1*DAY;
-   //Print("GetEasternNextSessionEndTime()  easternTime: "+ TimeToStr(easternTime) +"   nextEnd: "+ TimeToStr(nextEnd));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetEasternNextSessionEndTime(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(nextEnd);
+   return(startTime + 1*DAY);
 }
 
 
@@ -3977,73 +3977,54 @@ string DoubleToStrTrim(double value) {
 
 
 /**
- * Konvertiert die angegebene New Yorker Zeit nach GMT.
+ * Konvertiert die angegebene FXT-Zeit (Forex Standard Time) nach GMT.
  *
- * @param  datetime easternTime - New Yorker Zeitpunkt
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime EasternToGMT(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("EasternToGMT(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime FXTToGMT(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("FXTToGMT(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
-   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
-   if (easternToGmtOffset == EMPTY_VALUE)
+   int offset = GetFXTToGMTOffset(fxtTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime gmtTime = easternTime - easternToGmtOffset;
-
-   //Print("EasternToGMT()    ET: "+ TimeToStr(easternTime) +"     GMT offset: "+ (easternToGmtOffset/HOURS) +"     GMT: "+ TimeToStr(gmtTime));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EasternToGMT(2)", error);
+   datetime result = fxtTime - offset;
+   if (result < 0) {
+      catch("FXTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
       return(-1);
    }
-   return(gmtTime);
+   return(result);
 }
 
 
 /**
- * Konvertiert die angegebene New Yorker Zeit (Eastern Time) nach Tradeserver-Zeit.
+ * Konvertiert die angegebene FXT-Zeit (Forex Standard Time) nach Tradeserver-Zeit.
  *
- * @param  datetime easternTime - New Yorker Zeitpunkt
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime EasternToServerTime(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("EasternToServerTime(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (fxtTime < 0) {
+      catch("FXTToServerTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
-   string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   int offset = GetFXTToServerTimeOffset(fxtTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "America/New_York")
-      return(easternTime);
-
-   // Offset Eastern zu GMT
-   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
-
-   // Offset GMT zu Tradeserver
-   int gmtToServerTimeOffset;
-   if (zone != "GMT")
-      gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
-   datetime serverTime = easternTime - easternToGmtOffset - gmtToServerTimeOffset;
-
-   //Print("EasternToServerTime()    ET: "+ TimeToStr(easternTime) +"     server: "+ TimeToStr(serverTime));
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("EasternToServerTime(2)", error);
+   datetime result = fxtTime - offset;
+   if (result < 0) {
+      catch("FXTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
       return(-1);
    }
-   return(serverTime);
+   return(result);
 }
 
 
@@ -4069,7 +4050,7 @@ bool EventListener(int event, int results[], int flags=0) {
       case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
    }
 
-   catch("EventListener()  invalid parameter event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(false);
 }
 
@@ -4111,17 +4092,17 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
          if (lastTick == 0) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
-            //Print("EventListener.BarOpen(M1)   initialisiert   lastTick: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")");
+            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")");
          }
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
                results[0] |= PERIODFLAG_M1;
-            //Print("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
+            //debug("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
          }
-         //else Print("EventListener.BarOpen(M1)   zwei Ticks in derselben Sekunde");
+         //else debug("EventListener.BarOpen(M1)   zwei Ticks in derselben Sekunde");
       }
    }
 
@@ -4244,14 +4225,14 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    if (accountNumber[0] == 0) {                             // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
-      //Print("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
    else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
       ArrayResize(knownPositions, 0);
-      //Print("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
    int orders = OrdersTotal();
@@ -4274,7 +4255,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
-         //Print("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
+         //debug("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
       }
 
       // offene Positionen überprüfen und ggf. aktualisieren
@@ -4317,12 +4298,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
          ArrayResize(knownPositions, positions+1);
          knownPositions[positions] = ticket;
-         //Print("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeDescription(type));
+         //debug("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeDescription(type));
       }
    }
 
    bool eventStatus = (ArraySize(tickets) > 0);
-   //Print("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
+   //debug("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
    if (error != NO_ERROR)
@@ -4357,12 +4338,12 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    if (accountNumber[0] == 0) {
       accountNumber[0] = account;
-      //Print("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
+      //debug("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
    }
    else if (accountNumber[0] != account) {
       accountNumber[0] = account;
       ArrayResize(knownPositions, 0);
-      //Print("EventListener.PositionClose()   Account "+ account +" nach Accountwechsel initialisiert");
+      //debug("EventListener.PositionClose()   Account "+ account +" nach Accountwechsel initialisiert");
    }
    else {
       // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
@@ -4412,12 +4393,12 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
          noOfKnownPositions++;
          ArrayResize(knownPositions, noOfKnownPositions);
          knownPositions[noOfKnownPositions-1] = OrderTicket();
-         //Print("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeDescription(OrderType()));
+         //debug("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeDescription(OrderType()));
       }
    }
 
    bool eventStatus = (ArraySize(tickets) > 0);
-   //Print("EventListener.PositionClose()   eventStatus: "+ eventStatus);
+   //debug("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
    if (error != NO_ERROR)
@@ -4477,16 +4458,16 @@ bool EventListener.HistoryChange(int results[], int flags=0) {
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- * Während des Terminal-Starts und Accountwechseln gibt AccountNumber() sehr kurzfristig 0 zurück. Diese start()-Aufrufe des noch nicht vollständig
+ * Während des Terminal-Starts und Accountwechseln gibt AccountNumber() kurzfristig 0 zurück. Diese start()-Aufrufe des noch nicht vollständig
  * initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int results[] - eventspezifische Detailinfos: { last_account_number, current_account_number, current_account_init_servertime }
+ * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login_servertime}
  * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
  */
 bool EventListener.AccountChange(int results[], int flags=0) {
-   static int accountData[3];                         // { last_account_number, current_account_number, current_account_init_servertime }
+   static int accountData[3];                         // {last_account, current_account, current_account_login_servertime}
 
    bool eventStatus = false;
    int  account = AccountNumber();
@@ -4495,18 +4476,18 @@ bool EventListener.AccountChange(int results[], int flags=0) {
       if (accountData[1] == 0) {                      // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(TimeGMT());
-         //Print("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+         accountData[2] = GMTToServerTime(TimeGMT());
+         //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(TimeGMT());
-         //Print("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+         accountData[2] = GMTToServerTime(TimeGMT());
+         //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
          eventStatus = true;
       }
    }
-   //Print("EventListener.AccountChange()   eventStatus: "+ eventStatus);
+   //debug("EventListener.AccountChange()   eventStatus: "+ eventStatus);
 
    if (ArraySize(results) != 3)
       ArrayResize(results, 3);
@@ -5054,64 +5035,53 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
- * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu GMT (Greenwich Mean Time) zurück.
+ * Gibt den Offset der angegebenen FXT-Zeit (Forex Standard Time) zu GMT zurück.
  *
- * @param  datetime easternTime - New Yorker Zeitpunkt
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetEasternToGmtOffset(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternToGmtOffset(1)  invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+int GetFXTToGMTOffset(datetime fxtTime) {
+   if (fxtTime < 0) {
+      catch("GetFXTToGMTOffset()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
-   int offset, year = TimeYear(easternTime)-1970;
+   int offset, year = TimeYear(fxtTime)-1970;
 
-   // New York                                      GMT-0500,GMT-0400
-   if      (easternTime < EDT_transitions[year][0]) offset = -5 * HOURS;
-   else if (easternTime < EDT_transitions[year][1]) offset = -4 * HOURS;
-   else                                             offset = -5 * HOURS;
+   // FXT                                           GMT+0200,GMT+0300
+   if      (fxtTime < FXT_transitions[year][0]) offset = 2 * HOURS;
+   else if (fxtTime < FXT_transitions[year][1]) offset = 3 * HOURS;
+   else                                         offset = 2 * HOURS;
 
-   if (catch("GetEasternToGmtOffset(2)") != NO_ERROR)
-      return(EMPTY_VALUE);
    return(offset);
 }
 
 
 /**
- * Gibt den Offset der angegebenen New Yorker Zeit (Eastern Time) zu Tradeserver-Zeit zurück.
+ * Gibt den Offset der angegebenen FXT-Zeit (Forex Standard Time) zu Tradeserver-Zeit zurück.
  *
- * @param  datetime easternTime - New Yorker Zeitpunkt
+ * @param  datetime fxtTime - FXT-Zeitpunkt
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetEasternToServerTimeOffset(datetime easternTime) {
-   if (easternTime < 1) {
-      catch("GetEasternToServerTimeOffset(1)   invalid parameter easternTime: "+ easternTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+int GetFXTToServerTimeOffset(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (fxtTime < 0) {
+      catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
-   string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   // Offset FXT zu GMT
+   int offset1 = GetFXTToGMTOffset(fxtTime);
+   if (offset1 == EMPTY_VALUE)
       return(EMPTY_VALUE);
-
-   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "America/New_York")
-      return(0);
-
-   // Offset Eastern zu GMT
-   int easternToGmtOffset = GetEasternToGmtOffset(easternTime);
 
    // Offset GMT zu Tradeserver
-   int gmtToServerTimeOffset;
-   if (zone != "GMT")
-      gmtToServerTimeOffset = GetGmtToServerTimeOffset(easternTime - easternToGmtOffset);
-
-   if (catch("GetEasternToServerTimeOffset(2)") != NO_ERROR)
+   int offset2 = GetGMTToServerTimeOffset(fxtTime - offset1);
+   if (offset2 == EMPTY_VALUE)
       return(EMPTY_VALUE);
 
-   return(easternToGmtOffset + gmtToServerTimeOffset);
+   return(offset1 + offset2);
 }
 
 
@@ -5201,36 +5171,6 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
 
 /**
- * Gibt den Offset der angegebenen GMT-Zeit zu New Yorker Zeit (Eastern Time) zurück.
- *
- * @param  datetime gmtTime - GMT-Zeitpunkt
- *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- *
- * NOTE:    Parameter ist ein GMT-Zeitpunkt, das Ergebnis ist daher der entgegengesetzte Wert des Offsets von Eastern Time zu GMT.
- * -----
- */
-int GetGmtToEasternTimeOffset(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtToEasternTimeOffset(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
-   }
-
-   int offset, year = TimeYear(gmtTime)-1970;
-
-   // New York                                  GMT-0500[,GMT-0400]
-   if      (gmtTime < EDT_transitions[year][2]) offset = 5 * HOURS;
-   else if (gmtTime < EDT_transitions[year][3]) offset = 4 * HOURS;
-   else                                         offset = 5 * HOURS;
-
-   if (catch("GetGmtToEasternTimeOffset(2)") != NO_ERROR)
-      return(EMPTY_VALUE);
-
-   return(offset);
-}
-
-
-/**
  * Gibt den Offset der angegebenen GMT-Zeit zur Tradeserver-Zeit zurück.
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
@@ -5242,9 +5182,9 @@ int GetGmtToEasternTimeOffset(datetime gmtTime) {
  * -----
  *
  */
-int GetGmtToServerTimeOffset(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GetGmtToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (gmtTime < 0) {
+      catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -5292,11 +5232,11 @@ int GetGmtToServerTimeOffset(datetime gmtTime) {
    }
 
    else {
-      catch("GetGmtToServerTimeOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+      catch("GetGMTToServerTimeOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
-   if (catch("GetGmtToServerTimeOffset(3)") != NO_ERROR)
+   if (catch("GetGMTToServerTimeOffset(3)") != NO_ERROR)
       return(EMPTY_VALUE);
 
    return(offset);
@@ -5428,8 +5368,8 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
  * @return string - Wochentag
  */
 string GetDayOfWeek(datetime time, bool long=true) {
-   if (time < 1) {
-      catch("GetDayOfWeek(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (time < 0) {
+      catch("GetDayOfWeek(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -5736,7 +5676,6 @@ string EventToStr(int event) {
       case EVENT_ACCOUNT_PAYMENT: return("AccountPayment");
       case EVENT_HISTORY_CHANGE : return("HistoryChange" );
    }
-
    catch("EventToStr()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
@@ -5747,7 +5686,7 @@ string EventToStr(int event) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetLocalToGmtOffset() {
+int GetLocalToGMTOffset() {
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeBuffer(tzi, TIME_ZONE_INFORMATION.size);
    int type = GetTimeZoneInformation(tzi);
 
@@ -5760,8 +5699,9 @@ int GetLocalToGmtOffset() {
       offset *= -60;
    }
 
-   if (catch("GetLocalToGmtOffset()") != NO_ERROR)
+   if (catch("GetLocalToGMTOffset()") != NO_ERROR)
       return(EMPTY_VALUE);
+
    return(offset);
 }
 
@@ -5825,7 +5765,7 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   log("MovingAverageMethodToId()  invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -5941,7 +5881,7 @@ string AppliedPriceToStr(int appliedPrice) {
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
    }
 
-   catch("AppliedPriceToStr()  invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("AppliedPriceToStr()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5964,7 +5904,7 @@ string AppliedPriceDescription(int appliedPrice) {
       case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
    }
 
-   catch("AppliedPriceDescription()  invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("AppliedPriceDescription()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5992,7 +5932,7 @@ int PeriodToId(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   log("PeriodToId()  invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -6020,7 +5960,7 @@ string PeriodToStr(int period=NULL) {
       case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
    }
 
-   catch("PeriodToStr()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -6048,7 +5988,7 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
 
-   catch("PeriodDescription()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("PeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -6076,7 +6016,7 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_MN1: return(PERIODFLAG_MN1);
    }
 
-   catch("PeriodFlag()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("PeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
    return(0);
 }
 
@@ -6114,7 +6054,8 @@ string PeriodFlagToStr(int flags) {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetServerTimezone() {
+string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+
    // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
@@ -6179,105 +6120,6 @@ string GetServerTimezone() {
    if (catch("GetServerTimezone(2)") != NO_ERROR)
       return("");
    return(timezone);
-}
-
-
-/**
- * Gibt den Offset der angegebenen Serverzeit zu New Yorker Zeit (Eastern Time) zurück.
- *
- * @param  datetime serverTime - Tradeserver-Zeitpunkt
- *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- */
-int GetServerToEasternTimeOffset(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerToEasternTimeOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
-   }
-
-   string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
-      return(EMPTY_VALUE);
-
-   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (zone == "America/New_York")
-      return(0);
-
-   // Offset Server zu GMT
-   int serverToGmtOffset;
-   if (zone != "GMT")
-      serverToGmtOffset = GetServerToGmtOffset(serverTime);
-
-   // Offset GMT zu Eastern Time
-   int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(serverTime - serverToGmtOffset);
-
-   if (catch("GetServerToEasternTimeOffset(2)") != NO_ERROR)
-      return(EMPTY_VALUE);
-
-   return(serverToGmtOffset + gmtToEasternTimeOffset);
-}
-
-
-/**
- * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück (positive Werte für östlich von Greenwich liegende Zeitzonen).
- *
- * @param  datetime serverTime - Tradeserver-Zeitpunkt
- *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- */
-int GetServerToGmtOffset(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("GetServerToGmtOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
-   }
-
-   string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
-      return(EMPTY_VALUE);
-   int offset, year = TimeYear(serverTime)-1970;
-
-   if (zone == "Europe/Minsk") {                    // GMT+0200,GMT+0300
-      if      (serverTime < EMST_transitions[year][0]) offset = 2 * HOURS;
-      else if (serverTime < EMST_transitions[year][1]) offset = 3 * HOURS;
-      else                                             offset = 2 * HOURS;
-   }
-   else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
-      if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
-      else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
-      else                                             offset = 2 * HOURS;
-   }
-   else if (zone == "FXT") {                        // GMT+0200,GMT+0300
-      if      (serverTime < FXT_transitions[year][0])  offset = 2 * HOURS;
-      else if (serverTime < FXT_transitions[year][1])  offset = 3 * HOURS;
-      else                                             offset = 2 * HOURS;
-   }
-   else if (zone == "Europe/Berlin") {              // GMT+0100,GMT+0200
-      if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
-      else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
-      else                                             offset = 1 * HOURS;
-   }
-   else if (zone == "GMT") {                        // GMT+0000
-                                                       offset = 0;
-   }
-   else if (zone == "Europe/London") {              // GMT+0000,GMT+0100
-      if      (serverTime < BST_transitions[year][0])  offset = 0;
-      else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
-      else                                             offset = 0;
-   }
-   else if (zone == "America/New_York") {           // GMT-0500,GMT-0400
-      if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
-      else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
-      else                                             offset = -5 * HOURS;
-   }
-   else {
-      catch("GetServerToGmtOffset(2)  unknown timezone \""+ zone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
-      return(EMPTY_VALUE);
-   }
-
-   if (catch("GetServerToGmtOffset(3)") != NO_ERROR)
-      return(EMPTY_VALUE);
-
-   return(offset);
 }
 
 
@@ -6426,29 +6268,28 @@ string GetClassName(int hWnd) {
 
 
 /**
- * Konvertiert die angegebene GMT-Zeit nach Eastern Time (New Yorker Zeit).
+ * Konvertiert die angegebene GMT-Zeit nach FXT-Zeit (Forex Standard Time).
  *
  * @param  datetime gmtTime - GMT-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GmtToEasternTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GmtToEasternTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime GMTToFXT(datetime gmtTime) {
+   if (gmtTime < 0) {
+      catch("GMTToFXT(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
-   int gmtToEasternTimeOffset = GetGmtToEasternTimeOffset(gmtTime);  // Offset von GMT zu New Yorker Zeit
-   if (gmtToEasternTimeOffset == EMPTY_VALUE)
+   int offset = GetGMTToFXTOffset(gmtTime);
+   if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime easternTime = gmtTime - gmtToEasternTimeOffset;
-
-   //Print("GmtToEasternTime()    GMT: "+ TimeToStr(gmtTime) +"     ET offset: "+ (gmtToEasternTimeOffset/HOURS) +"     ET: "+ TimeToStr(easternTime));
-
-   if (catch("GmtToEasternTime(2)") != NO_ERROR)
+   datetime result = gmtTime - offset;
+   if (result < 0) {
+      catch("GMTToFXT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
       return(-1);
-   return(easternTime);
+   }
+   return(result);
 }
 
 
@@ -6459,30 +6300,30 @@ datetime GmtToEasternTime(datetime gmtTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GmtToServerTime(datetime gmtTime) {
-   if (gmtTime < 1) {
-      catch("GmtToServerTime(1)  invalid parameter gmtTime: "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime GMTToServerTime(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (gmtTime < 0) {
+      catch("GMTToServerTime(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
+   string zone = GetServerTimezone();
+   if (StringLen(zone) == 0)
+      return(-1);
+
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetServerTimezone() == "GMT")
+   if (zone == "GMT")
       return(gmtTime);
 
-   int offset = GetGmtToServerTimeOffset(gmtTime);
+   int offset = GetGMTToServerTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime serverTime = gmtTime - offset;
-   if (serverTime < 0) {
-      catch("GmtToServerTime(2)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+   datetime result = gmtTime - offset;
+   if (result < 0) {
+      catch("GMTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
       return(-1);
    }
-   //debug("GmtToServerTime()   GMT="+ TimeToStr(gmtTime) +"   server offset="+ (offset/HOURS) +"   serverTime="+ TimeToStr(serverTime));
-
-   if (catch("GmtToServerTime(3)") != NO_ERROR)
-      return(-1);
-   return(serverTime);
+   return(result);
 }
 
 
@@ -6573,16 +6414,13 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
- *
- * NOTE:  Kann ERR_HISTORY_UPDATE auslösen.
- * ----
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (time < 1) {
-      catch("iBarShiftPrevious(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (time < 0) {
+      catch("iBarShiftPrevious(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -6620,14 +6458,14 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
- *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist (ggf. ERR_HISTORY_UPDATE)
+ *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (time < 1) {
-      catch("iBarShiftNext(1)  invalid parameter time: "+ time, ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (time < 0) {
+      catch("iBarShiftNext(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -7167,7 +7005,7 @@ int RemoveChartObjects(string objects[]) {
  */
 int SendTextMessage(string receiver, string message) {
    if (!StringIsDigit(receiver))
-      return(catch("SendTextMessage(1)   invalid parameter receiver: "+ receiver, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("SendTextMessage(1)   invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // TODO: Gateway-Zugangsdaten auslagern
 
@@ -7199,35 +7037,31 @@ int SendTextMessage(string receiver, string message) {
 
 
 /**
- * Konvertiert die angegebene Tradeserver-Zeit nach Eastern Time (New Yorker Zeit).
+ * Konvertiert die angegebene Tradeserver-Zeit nach FXT (Forex Standard Time).
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
  *
- * @return datetime - Zeitpunkt New Yorker Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToEasternTime(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("ServerToEasternTime(1)  invalid parameter serverTime: "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("ServerToFXT()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
-   // schnelle Rückkehr, wenn der Tradeserver unter Eastern Time läuft
-   if (GetServerTimezone() == "America/New_York")
+   string zone = GetServerTimezone();
+   if (StringLen(zone) == 0)
+      return(-1);
+
+   // schnelle Rückkehr, wenn der Tradeserver unter FXT läuft
+   if (zone == "FXT")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
    if (gmtTime == -1)
       return(-1);
 
-   datetime easternTime = GmtToEasternTime(gmtTime);
-   if (easternTime == -1)
-      return(-1);
-
-   //Print("ServerToEasternTime()    server: "+ TimeToStr(serverTime) +"     GMT: "+ TimeToStr(gmtTime) +"     ET: "+ TimeToStr(easternTime));
-
-   if (catch("ServerToEasternTime(2)") != NO_ERROR)
-      return(-1);
-   return(easternTime);
+   return(GMTToFXT(gmtTime));
 }
 
 
@@ -7238,30 +7072,30 @@ datetime ServerToEasternTime(datetime serverTime) {
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToGMT(datetime serverTime) {
-   if (serverTime < 1) {
-      catch("ServerToGMT(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+   if (serverTime < 0) {
+      catch("ServerToGMT(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
+   string zone = GetServerTimezone();
+   if (StringLen(zone) == 0)
+      return(-1);
+
    // schnelle Rückkehr, wenn der Tradeserver unter GMT läuft
-   if (GetServerTimezone() == "GMT")
+   if (zone == "GMT")
       return(serverTime);
 
-   int offset = GetServerToGmtOffset(serverTime);
+   int offset = GetServerToGMTOffset(serverTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime gmtTime = serverTime - offset;
-   if (gmtTime < 0) {
-      catch("ServerToGMT(2)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE);
+   datetime result = serverTime - offset;
+   if (result < 0) {
+      catch("ServerToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
       return(-1);
    }
-   //debug("ServerToGMT()   serverTime="+ TimeToStr(serverTime) +"   GMT offset="+ (offset/HOURS) +"   GMT="+ TimeToStr(gmtTime));
-
-   if (catch("ServerToGMT(3)") != NO_ERROR)
-      return(-1);
-   return(gmtTime);
+   return(result);
 }
 
 
@@ -7601,11 +7435,11 @@ color RGB(int red, int green, int blue) {
          if (0 <= blue && blue <= 255) {
             return(red + green<<8 + blue<<16);
          }
-         else catch("RGB(1)  invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("RGB(1)  invalid parameter blue: "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("RGB(2)  invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("RGB(2)  invalid parameter green: "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("RGB(3)  invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("RGB(3)  invalid parameter red: "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -7723,9 +7557,9 @@ int RGBToHSVColor(color rgb, double& hsv[]) {
  */
 color HSVToRGBColor(double hsv[3]) {
    if (ArrayDimension(hsv) != 1)
-      return(catch("HSVToRGBColor(1)   illegal parameter hsv = "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(1)   illegal parameter hsv: "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(hsv) != 3)
-      return(catch("HSVToRGBColor(2)   illegal parameter hsv = "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(2)   illegal parameter hsv: "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
 
    return(HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]));
 }
@@ -7742,15 +7576,15 @@ color HSVToRGBColor(double hsv[3]) {
  */
 color HSVValuesToRGBColor(double hue, double saturation, double value) {
    if (hue < 0.0 || hue > 360.0) {
-      catch("HSVValuesToRGBColor(1)  invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(1)  invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (saturation < 0.0 || saturation > 1.0) {
-      catch("HSVValuesToRGBColor(2)  invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(2)  invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (value < 0.0 || value > 1.0) {
-      catch("HSVValuesToRGBColor(3)  invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("HSVValuesToRGBColor(3)  invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
@@ -7849,13 +7683,13 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                }
                return(result);
             }
-            else catch("Color.ModifyHSV(2)  invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+            else catch("Color.ModifyHSV(2)  invalid parameter mod_value: "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
          }
-         else catch("Color.ModifyHSV(3)  invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("Color.ModifyHSV(3)  invalid parameter mod_saturation: "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("Color.ModifyHSV(4)  invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("Color.ModifyHSV(4)  invalid parameter mod_hue: "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("Color.ModifyHSV(5)  invalid parameter rgb = "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("Color.ModifyHSV(5)  invalid parameter rgb: "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -7871,7 +7705,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  */
 string DoubleToStrEx(double value, int digits) {
    if (digits < 0 || digits > 16) {
-      catch("DoubleToStrEx()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
    /*
@@ -7983,7 +7817,7 @@ int MathSign(double number) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0) {
-      catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
       return("");
    }
 
@@ -8147,7 +7981,7 @@ string NumberToStr(double number, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   //Print("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
+   //debug("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
    if (catch("NumberToStr()") != NO_ERROR)
       return("");
@@ -8190,31 +8024,31 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // type
    if (!IsTradeOperationType(type)) {
-      catch("OrderSendEx(2)   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // lots
    if (LT(lots, minLot)) {
-      catch("OrderSendEx(3)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (GT(lots, maxLot)) {
-      catch("OrderSendEx(4)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (NE(MathModFix(lots, lotStep), 0)) {
-      catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
    if (LT(price, 0)) {
-      catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // slippage
    if (LT(slippage, 0)) {
-      catch("OrderSendEx(7)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // stopLoss
@@ -8238,12 +8072,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // expires
    if (expires != 0) /*&&*/ if (expires <= TimeCurrent()) {
-      catch("OrderSendEx(11)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') {
-      catch("OrderSendEx(12)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // -- Ende Parametervalidierung --
@@ -8404,17 +8238,17 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                 return(catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
-      if (GT(lots, OrderLots()))            return(catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
-      if (NE(MathModFix(lots, lotStep), 0)) return(catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (LT(lots, minLot))                 return(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (GT(lots, OrderLots()))            return(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (NE(MathModFix(lots, lotStep), 0)) return(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))    return(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(price, 0))    return(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // slippage
-   if (LT(slippage, 0)) return(catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0)) return(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -8559,7 +8393,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
    if (symbol != OrderSymbol())        return(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
 
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseByEx(9)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseByEx(9)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -8654,9 +8488,9 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       if (OrderType() > OP_SELL)            return(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
    }
    // slippage
-   if (LT(slippage, 0))                                         return(catch("OrderMultiClose(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0))                                         return(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderMultiClose(6)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderMultiClose(6)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
    // -- Ende Parametervalidierung --
 
 

@@ -23,8 +23,8 @@
 
 
 // Chars
-#define PLACEHOLDER_ZERO_CHAR  '…'     // 0x85 - Platzhalter für NULL-Byte,         siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR   '•'     // 0x95 - Platzhalter für Control-Character, siehe BufferToStr()
+#define PLACEHOLDER_ZERO_CHAR    '…'     // 0x85 - Platzhalter für NULL-Byte in Strings,         siehe BufferToStr()
+#define PLACEHOLDER_CTL_CHAR     '•'     // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
 
 // Mathematische Konstanten
@@ -320,6 +320,11 @@
 #define C_ZAR                "ZAR"
 
 
+// Flags für zusätzliche Initialisierungstasks, siehe onInit()
+#define IT_CHECK_TIMEZONE_CONFIG             1           // prüft die Timezone-Konfiguration des aktuellen MT-Servers
+#define IT_RESET_BARS_ON_HIST_UPDATE         2           //
+
+
 // MessageBox() flags
 #define MB_OK                                0x00000000  // buttons
 #define MB_OKCANCEL                          0x00000001
@@ -487,17 +492,17 @@
 
 
 // globale Variablen, die überall zur Verfügung stehen
-int    __TYPE__;                 // Typ des laufenden Programms (T_INDICATOR|T_EXPERT|T_SCRIPT)
-string __SCRIPT__;               // Name des laufenden programms
+int    __TYPE__;                       // Typ des laufenden Programms (T_INDICATOR|T_EXPERT|T_SCRIPT)
+string __SCRIPT__;                     // Name des laufenden Programms
 
-bool   init       = true;        // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
-int    last_error = NO_ERROR;    // der letzte aufgetretene Fehler des aktuellen Aufrufs
-int    prev_error = NO_ERROR;    // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
+bool   init       = true;              // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
+int    last_error = NO_ERROR;          // der letzte aufgetretene Fehler des aktuellen Aufrufs
+int    prev_error = NO_ERROR;          // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
 
-double Pip;                      // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
-int    PipDigits;                // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
-int    PipPoints;                // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
-string PriceFormat;              // Preisformat des aktuellen Symbols
+double Pip;                            // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
+int    PipDigits;                      // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
+int    PipPoints;                      // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
+string PriceFormat;                    // Preisformat des aktuellen Symbols
 
 int    Tick;
 int    ValidBars;
@@ -509,21 +514,27 @@ int    ChangedBars;
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
  * @param  string scriptName - Name des aufrufenden Programms
- * @param  int    initFlags  - weitere optionale init-Flags, die zusätzlich durchzuführende Initialisierungsroutinen angeben
- *                             Werte: INIT_TIMEZONE | INIT_RESET_BARS_ON_HIST_UPDATE
+ * @param  int    initFlags  - optionale, zusätzlich durchzuführende Initialisierungstasks (default: NULL)
+ *                             Werte: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @return int - Fehlercode
  */
 int onInit(int scriptType, string scriptName, int initFlags=NULL) {
    __TYPE__   = scriptType;
    __SCRIPT__ = scriptName;
 
-   /*int*/    PipDigits   = Digits & (~1);
-   /*int*/    PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                  // (int) double
-   /*double*/ Pip         = 1/MathPow(10, PipDigits);
-   /*string*/ PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
+   last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags);
 
-   if (last_error == NO_ERROR)
-      last_error = stdlib_onInit(__TYPE__, __SCRIPT__);
+   if (last_error == NO_ERROR) {
+    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // wird in stdlib_onInit() ausgewertet
+      if (initFlags & IT_RESET_BARS_ON_HIST_UPDATE != 0) {}          // noch nicht implementiert
+   }
+
+   if (last_error == NO_ERROR) {
+      PipDigits   = Digits & (~1);
+      PipPoints   = MathPow(10, Digits-PipDigits) +0.1;              // (int) double
+      Pip         = 1/MathPow(10, PipDigits);
+      PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
+   }
 
    return(last_error);
 }
@@ -566,15 +577,14 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0) {
+   if (Bars == 0)
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
-   }
+
    /*
    // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
    //       überprüft werden (kann nicht hier, sondern erst in onTick() erfolgen).
-   if (ArraySize(iBuffer) == 0)  {
+   if (ArraySize(iBuffer) == 0)
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
-   }
    */
 
    // (3) ChangedBars berechnen
@@ -663,9 +673,7 @@ int log(string message="", int error=NO_ERROR) {
 
 
 #import "kernel32.dll"
-
    void OutputDebugStringA(string lpMessage);
-
 #import
 
 

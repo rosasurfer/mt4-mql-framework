@@ -26,7 +26,8 @@ int    sizeOfLabels;
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_SCRIPT, WindowExpertName());
+   if (onInit(T_SCRIPT, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);

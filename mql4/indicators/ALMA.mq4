@@ -47,10 +47,8 @@ string chartObjects[], legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_INDICATOR, WindowExpertName());
-
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
-
+   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    // Konfiguration auswerten
    if (MA.Periods < 2)

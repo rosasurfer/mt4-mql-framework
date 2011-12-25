@@ -163,7 +163,8 @@ double   TickSize;
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_EXPERT, WindowExpertName());
+   if (onInit(T_EXPERT, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -1070,11 +1071,11 @@ bool FinishSequence() {
  */
 int OpenPosition(int type, double lotsize) {
    if (type!=OP_BUY && type!=OP_SELL) {
-      catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OpenPosition(1)   illegal parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (LE(lotsize, 0)) {
-      catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OpenPosition(2)   illegal parameter lotsize: "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
@@ -1872,7 +1873,7 @@ string SequenceStatusToStr(int status) {
       case STATUS_FINISHED   : return("STATUS_FINISHED"   );
       case STATUS_DISABLED   : return("STATUS_DISABLED"   );
    }
-   catch("SequenceStatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("SequenceStatusToStr()  invalid parameter status: "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -1891,7 +1892,7 @@ string EntryTypeToStr(int type) {
       case ENTRYTYPE_BANDS    : return("ENTRYTYPE_BANDS"    );
       case ENTRYTYPE_ENVELOPES: return("ENTRYTYPE_ENVELOPES");
    }
-   catch("EntryTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -1910,7 +1911,7 @@ string EntryTypeDescription(int type) {
       case ENTRYTYPE_BANDS    : return("BollingerBands");
       case ENTRYTYPE_ENVELOPES: return("Envelopes"     );
    }
-   catch("EntryTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 

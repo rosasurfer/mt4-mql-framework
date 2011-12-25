@@ -14,7 +14,8 @@ string currency;                                                     // LFX-Währ
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_SCRIPT, WindowExpertName());
+   if (onInit(T_SCRIPT, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
    PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
 
@@ -119,7 +120,7 @@ int onStart() {
          catch("onTick(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
-      openTime = GmtToServerTime(openTime);
+      openTime = GMTToServerTime(openTime);
       if (openTime > TimeCurrent()) {
          catch("onTick(4)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetPrivateProfileString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;

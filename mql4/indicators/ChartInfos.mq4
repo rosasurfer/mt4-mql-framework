@@ -31,10 +31,10 @@ double longPosition, shortPosition, totalPosition;
  * @return int - Fehlerstatus
  */
 int init() {
-   onInit(T_INDICATOR, WindowExpertName());
+   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+      return(last_error);
 
-   PriceFormat = "."+ PipDigits + ifString(Digits==PipDigits, "", "'");
-   TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
+   TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
    int error = GetLastError();
    if (error!=NO_ERROR || TickSize < 0.00000001) {
@@ -403,10 +403,9 @@ int UpdateMarginLevels() {
          quoteStopoutLevel = NormalizeDouble(Ask + quoteStopoutDiff, Digits);
       }
       /*
-      Print("UpdateMarginLevels()"
-                                  +"    equity="+ NumberToStr(equity, ", .2")
-                            +"    equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, PriceFormat) +")"
-                            +"    equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, PriceFormat) +")"
+      debug("UpdateMarginLevels()   equity="+ NumberToStr(equity, ", .2")
+                               +"   equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, PriceFormat) +")"
+                               +"   equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, PriceFormat) +")"
       );
       */
 
