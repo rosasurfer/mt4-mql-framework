@@ -16,7 +16,7 @@
 double TickSize;
 
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
-string chartObjects[];
+string objects[];
 
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
 double leverage;                                                     // Hebel zur UnitSize-Berechnung
@@ -82,7 +82,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(objects);
    return(catch("deinit()"));
 }
 
@@ -118,7 +118,7 @@ int CreateLabels() {
       ObjectSet(instrumentLabel, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(instrumentLabel, OBJPROP_XDISTANCE, 4);
       ObjectSet(instrumentLabel, OBJPROP_YDISTANCE, 1);
-      ArrayPushString(chartObjects, instrumentLabel);
+      ArrayPushString(objects, instrumentLabel);
    }
    else GetLastError();
 
@@ -135,7 +135,7 @@ int CreateLabels() {
       ObjectSet(priceLabel, OBJPROP_XDISTANCE, 14);
       ObjectSet(priceLabel, OBJPROP_YDISTANCE, 15);
       ObjectSetText(priceLabel, " ", 1);
-      ArrayPushString(chartObjects, priceLabel);
+      ArrayPushString(objects, priceLabel);
    }
    else GetLastError();
 
@@ -147,7 +147,7 @@ int CreateLabels() {
       ObjectSet(spreadLabel, OBJPROP_XDISTANCE, 33);
       ObjectSet(spreadLabel, OBJPROP_YDISTANCE, 38);
       ObjectSetText(spreadLabel, " ", 1);
-      ArrayPushString(chartObjects, spreadLabel);
+      ArrayPushString(objects, spreadLabel);
    }
    else GetLastError();
 
@@ -159,7 +159,7 @@ int CreateLabels() {
       ObjectSet(unitSizeLabel, OBJPROP_XDISTANCE, 290);
       ObjectSet(unitSizeLabel, OBJPROP_YDISTANCE, 9);
       ObjectSetText(unitSizeLabel, " ", 1);
-      ArrayPushString(chartObjects, unitSizeLabel);
+      ArrayPushString(objects, unitSizeLabel);
    }
    else GetLastError();
 
@@ -171,7 +171,7 @@ int CreateLabels() {
       ObjectSet(positionLabel, OBJPROP_XDISTANCE, 530);
       ObjectSet(positionLabel, OBJPROP_YDISTANCE, 9);
       ObjectSetText(positionLabel, " ", 1);
-      ArrayPushString(chartObjects, positionLabel);
+      ArrayPushString(objects, positionLabel);
    }
    else GetLastError();
 
@@ -417,7 +417,7 @@ int UpdateMarginLevels() {
             ObjectSet(freezeLevelLabel, OBJPROP_COLOR, C'0,201,206');
             ObjectSet(freezeLevelLabel, OBJPROP_BACK , true);
             ObjectSetText(freezeLevelLabel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
-            ArrayPushString(chartObjects, freezeLevelLabel);
+            ArrayPushString(objects, freezeLevelLabel);
          }
          ObjectSet(freezeLevelLabel, OBJPROP_PRICE1, quoteFreezeLevel);
       }
@@ -431,7 +431,7 @@ int UpdateMarginLevels() {
             if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
             else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
          ObjectSetText(stopoutLevelLabel, description);
-         ArrayPushString(chartObjects, stopoutLevelLabel);
+         ArrayPushString(objects, stopoutLevelLabel);
       }
       ObjectSet(stopoutLevelLabel, OBJPROP_PRICE1, quoteStopoutLevel);
    }
