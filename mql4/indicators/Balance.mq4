@@ -18,7 +18,7 @@ double iBalance[];
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+   if (onInit(T_INDICATOR) != NO_ERROR)
       return(last_error);
 
    // ERR_TERMINAL_NOT_YET_READY abfangen

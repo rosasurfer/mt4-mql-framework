@@ -39,7 +39,7 @@ int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+   if (onInit(T_INDICATOR) != NO_ERROR)
       return(last_error);
 
    // globale Variablen

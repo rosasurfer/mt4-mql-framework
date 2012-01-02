@@ -26,7 +26,7 @@ int    sizeOfLabels;
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_SCRIPT, WindowExpertName()) != NO_ERROR)
+   if (onInit(T_SCRIPT) != NO_ERROR)
       return(last_error);
 
    // Parametervalidierung

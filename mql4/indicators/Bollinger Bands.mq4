@@ -63,7 +63,7 @@ string chartObjects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR, WindowExpertName()) != NO_ERROR)
+   if (onInit(T_INDICATOR) != NO_ERROR)
       return(last_error);
 
    // Konfiguration einlesen

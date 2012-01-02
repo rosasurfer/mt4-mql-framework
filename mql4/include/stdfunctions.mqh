@@ -513,15 +513,13 @@ int    ChangedBars;
  * Setzt allgemein benötigte interne Variablen und führt allgemein benötigte Laufzeit-Initialisierungen durch.
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
- * @param  string scriptName - Name des aufrufenden Programms
  * @param  int    initFlags  - optionale, zusätzlich durchzuführende Initialisierungstasks (default: NULL)
  *                             Werte: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @return int - Fehlercode
  */
-int onInit(int scriptType, string scriptName, int initFlags=NULL) {
+int onInit(int scriptType, int initFlags=NULL) {
    __TYPE__   = scriptType;
-   __SCRIPT__ = scriptName;
-
+   __SCRIPT__ = WindowExpertName();
    last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags);
 
    if (last_error == NO_ERROR) {
@@ -598,9 +596,7 @@ int start() {
    else            last_error = onTick();
 
    return(last_error);
-
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
-   catch(NULL); log(NULL); debug(NULL); SetLastError(NULL); PeekLastError(); ForceAlert(); HandleEvent(NULL); HandleEvents(NULL); OrderSelectByTicket(NULL); IsIndicator(); IsExpert(); IsScript();
+   DummyCalls();                                            // unterdrücken Compilerwarnungen über unreferenzierte Funktionen
 }
 
 
@@ -865,4 +861,25 @@ bool IsExpert() {
  */
 bool IsScript() {
    return(__TYPE__ == T_SCRIPT);
+}
+
+
+/**
+ * Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+ */
+void DummyCalls() {
+   onInit(NULL);
+   start();
+   catch(NULL);
+   log();
+   debug(NULL);
+   PeekLastError();
+   SetLastError(NULL);
+   ForceAlert();
+   HandleEvents(NULL);
+   HandleEvent(NULL);
+   OrderSelectByTicket(NULL);
+   IsIndicator();
+   IsExpert();
+   IsScript();
 }
