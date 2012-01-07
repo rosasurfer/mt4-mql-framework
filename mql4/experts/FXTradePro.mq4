@@ -100,9 +100,9 @@ extern string Sequence.ID                    = "";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string   intern.Entry.Condition;                            // Die Input-Parameter werden bei REASON_CHARTCHANGE mit den Originalwerten überschrieben, sie
-string   intern.Entry.Direction;                            // werden in intern.* zwischengespeichert und nach REASON_CHARTCHANGE daraus restauriert.
-int      intern.TakeProfit;
+string   intern.Entry.Condition;                         // Werden die Input-Parameter aus einer Preset-Datei geladen, werden sie bei REASON_CHARTCHANGE
+string   intern.Entry.Direction;                         // mit den obigen Default-Werten überschrieben. Um dies zu verhindern, werden sie in deinit()
+int      intern.TakeProfit;                              // in intern.* zwischengespeichert und in init() wieder daraus restauriert.
 int      intern.StopLoss;
 double   intern.Lotsize.Level.1;
 double   intern.Lotsize.Level.2;
@@ -112,11 +112,10 @@ double   intern.Lotsize.Level.5;
 double   intern.Lotsize.Level.6;
 double   intern.Lotsize.Level.7;
 string   intern.Sequence.ID;
-bool     intern;                                            // Statusflag: TRUE = zwischengespeicherte Werte vorhanden
 
 int      Entry.type        = ENTRYTYPE_UNDEFINED;
 int      Entry.iDirection  = ENTRYDIRECTION_UNDEFINED;
-int      Entry.MA.periods,   Entry.MA.periods.orig;         // *.orig: Werte vor Umrechnung nach M5
+int      Entry.MA.periods,   Entry.MA.periods.orig;      // *.orig: Werte vor Umrechnung nach M5
 int      Entry.MA.timeframe, Entry.MA.timeframe.orig;
 int      Entry.MA.method;
 double   Entry.MA.deviation;
@@ -128,12 +127,12 @@ int      sequenceLength;
 int      sequenceStatus    = STATUS_WAITING;
 int      progressionLevel;
 
-double   levels.lots[];                                     // Lotsizes der Konfiguration
-string   str.levels.lots;                                   // (string) levels.lots, für ShowStatus()
+double   levels.lots[];                                  // Lotsizes der Konfiguration
+string   str.levels.lots;                                // (string) levels.lots, für ShowStatus()
 
 int      levels.ticket    [];
 int      levels.type      [];
-double   levels.openLots  [];                               // offene Orderlotsize des Levels (Erläuterungen bei ReadSequence())
+double   levels.openLots  [];                            // offene Orderlotsize des Levels (Erläuterungen bei ReadSequence())
 datetime levels.openTime  [];
 double   levels.openPrice [];
 datetime levels.closeTime [];
@@ -143,10 +142,10 @@ double   levels.swap      [], levels.openSwap      [], levels.closedSwap      []
 double   levels.commission[], levels.openCommission[], levels.closedCommission[];
 double   levels.profit    [], levels.openProfit    [], levels.closedProfit    [];
 
-double   levels.sumProfit  [];                              // Gesamtprofit aller Level
-double   levels.maxProfit  [];                              // maximal möglicher P/L
-double   levels.maxDrawdown[];                              // maximal möglicher Drawdown
-double   levels.breakeven  [];                              // Breakeven in ???
+double   levels.sumProfit  [];                           // Gesamtprofit aller Level
+double   levels.maxProfit  [];                           // maximal möglicher P/L
+double   levels.maxDrawdown[];                           // maximal möglicher Drawdown
+double   levels.breakeven  [];                           // Breakeven in ???
 
 double   all.swaps;
 double   all.commissions;
@@ -290,7 +289,7 @@ int deinit() {
       PersistIdForRecompile();
    }
    else {
-      // Input-Parameter sind nicht statisch: für's nächste init() intern speichern
+      // Input-Parameter sind nicht statisch: für's nächste init() intern.* speichern
       intern.Entry.Condition = Entry.Condition;
       intern.Entry.Direction = Entry.Direction;
       intern.TakeProfit      = TakeProfit;
@@ -303,7 +302,6 @@ int deinit() {
       intern.Lotsize.Level.6 = Lotsize.Level.6;
       intern.Lotsize.Level.7 = Lotsize.Level.7;
       intern.Sequence.ID     = Sequence.ID;
-      intern                 = true;                                    // Flag zur späteren Erkennung in init() setzen
    }
    return(catch("deinit()"));
 }
