@@ -1,12 +1,12 @@
 /**
  * FXTradePro Martingale EA
  *
- * @see FXTradePro Strategy:     http://www.forexfactory.com/showthread.php?t=43221
- *      FXTradePro Journal:      http://www.forexfactory.com/showthread.php?t=82544
- *      FXTradePro Swing Trades: http://www.forexfactory.com/showthread.php?t=87564
+ * @see FXTradePro strategy:     http://www.forexfactory.com/showthread.php?t=43221
+ *      FXTradePro journal:      http://www.forexfactory.com/showthread.php?t=82544
+ *      FXTradePro swing trades: http://www.forexfactory.com/showthread.php?t=87564
  *
  *      PowerSM EA:              http://www.forexfactory.com/showthread.php?t=75394
- *      PowerSM Journal:         http://www.forexfactory.com/showthread.php?t=159789
+ *      PowerSM journal:         http://www.forexfactory.com/showthread.php?t=159789
  *
  * ---------------------------------------------------------------------------------
  *
@@ -72,7 +72,7 @@
 #define ENTRYDIRECTION_LONGSHORT         2
 
 
-int EA.uniqueId = 101;                                // eindeutige ID der Strategie (10 Bits: Bereich 0-1023)
+int Strategy.Id = 101;                                // eindeutige ID der Strategie (Bereich 101-1023)
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -356,7 +356,7 @@ int onTick() {
  */
 bool IsMyOrder(int sequenceId = NULL) {
    if (OrderSymbol() == Symbol()) {
-      if (OrderMagicNumber() >> 22 == EA.uniqueId) {
+      if (OrderMagicNumber() >> 22 == Strategy.Id) {
          if (sequenceId == NULL)
             return(true);
          return(sequenceId == OrderMagicNumber() >> 8 & 0x3FFF);     // 14 Bits (Bits 9-22) => sequenceId
@@ -393,7 +393,7 @@ int CreateMagicNumber() {
       return(-1);
    }
 
-   int ea       = EA.uniqueId & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
+   int ea       = Strategy.Id & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern) | in MagicNumber: Bits 23-32
    int sequence = sequenceId & 0x3FFF << 8;                          // 14 bit (Bits größer 14 löschen und auf 22 Bit erweitern  | in MagicNumber: Bits  9-22
    int length   = sequenceLength & 0xF << 4;                         //  4 bit (Bits größer 4 löschen und auf 8 bit erweitern)   | in MagicNumber: Bits  5-8
    int level    = progressionLevel & 0xF;                            //  4 bit (Bits größer 4 löschen)                           | in MagicNumber: Bits  1-4
