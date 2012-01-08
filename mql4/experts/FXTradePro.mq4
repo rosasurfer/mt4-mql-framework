@@ -163,7 +163,7 @@ double   TickSize;
  */
 int init() {
    if (onInit(T_EXPERT) != NO_ERROR)
-      return(last_error);
+      return(ShowStatus());
 
    TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -175,8 +175,8 @@ int init() {
    }
 
    /*
-   Zuerst wird die Sequenz-ID bestimmt, dann deren Konfiguration geladen und zum Schluß die Sequenz restauriert.
-   Es gibt 4 grundsätzliche init()-Szenarien:
+   Zuerst wird die aktuelle Sequenz-ID bestimmt. Danach wird deren Konfiguration geladen. Zum Schluß werden die Sequenzdaten restauriert.
+   Es gibt 4 unterschiedliche init()-Szenarien:
 
    (1.1) Neustart des EA, evt. im Tester (keine internen Daten, externe Sequenz-ID evt. vorhanden)
    (1.2) Recompilation                   (keine internen Daten, externe Sequenz-ID immer vorhanden)
@@ -184,7 +184,7 @@ int init() {
    (1.4) Timeframe-Wechsel               (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
    */
 
-   // (1) sind keine internen Daten vorhanden, gelten Szenario 1.1, 1.2 oder 1.5
+   // (1) Sind keine internen Daten vorhanden, befinden wir uns in Szenario 1.1 oder 1.2.
    if (sequenceId == 0) {
 
       // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
@@ -953,7 +953,7 @@ bool StartSequence() {
    // Sequenzdaten aktualisieren
    if (!OrderSelectByTicket(ticket)) {
       progressionLevel--;
-      return(PeekLastError());
+      return(last_error);
    }
 
    levels.ticket   [0] = OrderTicket();
@@ -1370,7 +1370,8 @@ bool VisualizeSequence() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (PeekLastError() != NO_ERROR)
+   int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
+   if (last_error != NO_ERROR)
       sequenceStatus = STATUS_DISABLED;
 
    string msg = "";
@@ -1431,7 +1432,9 @@ int ShowStatus() {
    // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, NL, NL, NL, msg));
 
-   return(catch("ShowStatus(2)"));
+   if (catch("ShowStatus(2)") == NO_ERROR)
+      last_error = error;                                            // bei Funktionseintritt bereits existierenden Fehler ggf. restaurieren
+   return(last_error);
 }
 
 
