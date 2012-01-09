@@ -1390,9 +1390,9 @@ int ShowStatus() {
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ sequenceStatus, ERR_RUNTIME_ERROR));
    }
-   msg = StringConcatenate(__SCRIPT__, msg,                                              NL,
-                                                                                         NL,
-                          "Progression Level:   ", progressionLevel, " / ", sequenceLength);
+   msg = StringConcatenate(__SCRIPT__, msg,                                  NL,
+                                                                             NL,
+                          "Level:           ", progressionLevel, " / ", sequenceLength);
 
    double profitLoss, profitLossPips, lastPrice;
    int i;
@@ -1415,25 +1415,25 @@ int ShowStatus() {
 
    if (sequenceLength > 0) {
       msg = StringConcatenate(msg,                                                                                                                                                                      NL,
-                             "Lot sizes:               ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
-                             "TakeProfit:            ",   TakeProfit, " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                                                   NL,
-                             "StopLoss:              ",   StopLoss,   " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                                                 NL);
+                             "Lot sizes:       ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
+                             "TakeProfit:    ",   TakeProfit, " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                                                   NL,
+                             "StopLoss:      ",   StopLoss,   " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                                                 NL);
    }
    else {
-      msg = StringConcatenate(msg,                                               NL,
-                             "Lot sizes:               ", str.levels.lots,       NL,
-                             "TakeProfit:            ",   TakeProfit, " pip = ", NL,
-                             "StopLoss:              ",   StopLoss,   " pip = ", NL);
+      msg = StringConcatenate(msg,                                          NL,
+                             "Lot sizes:       ", str.levels.lots,       NL,
+                             "TakeProfit:    ",   TakeProfit, " pip = ", NL,
+                             "StopLoss:      ",   StopLoss,   " pip = ", NL);
    }
       msg = StringConcatenate(msg,
-                             "Breakeven:           ",   DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
-                             "Profit/Loss:           ", DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
+                             "Breakeven:   ",   DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
+                             "Profit/Loss:    ", DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
 
    // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(StringConcatenate(NL, NL, NL, NL, NL, NL, msg));
+   Comment(StringConcatenate(NL, NL, NL, NL, msg));
 
    if (catch("ShowStatus(2)") == NO_ERROR)
-      last_error = error;                                            // bei Funktionseintritt bereits existierenden Fehler ggf. restaurieren
+      last_error = error;                                            // bei Funktionseintritt bereits existierenden Fehler restaurieren
    return(last_error);
 }
 
