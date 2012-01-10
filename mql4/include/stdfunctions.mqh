@@ -703,6 +703,16 @@ void debug(string message, int error=NO_ERROR) {
 
 
 /**
+ * Ob der interne Fehler-Code des aktuellen Scripts gesetzt ist.
+ *
+ * @return bool
+ */
+bool IsLastError() {
+   return(last_error != NO_ERROR);
+}
+
+
+/**
  * Gibt den internen Fehler-Code des aktuellen Scripts zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
  *
  * @return int - Fehlercode
@@ -868,18 +878,19 @@ bool IsScript() {
  * Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
  */
 void DummyCalls() {
-   onInit(NULL);
-   start();
    catch(NULL);
-   log();
    debug(NULL);
+   ForceAlert();
+   HandleEvent(NULL);
+   HandleEvents(NULL);
+   IsExpert();
+   IsIndicator();
+   IsLastError();
+   IsScript();
+   log();
+   onInit(NULL);
+   OrderSelectByTicket(NULL);
    PeekLastError();
    SetLastError(NULL);
-   ForceAlert();
-   HandleEvents(NULL);
-   HandleEvent(NULL);
-   OrderSelectByTicket(NULL);
-   IsIndicator();
-   IsExpert();
-   IsScript();
+   start();
 }

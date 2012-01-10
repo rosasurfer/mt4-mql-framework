@@ -71,16 +71,16 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
    Pip         = 1/MathPow(10, PipDigits);
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
 
-   if (last_error == NO_ERROR) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
+   if (!IsLastError()) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
       GetServerTimezone();
 
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
    // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
    // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
-   if (last_error == NO_ERROR)
+   if (!IsLastError())
       GetTerminalWindow();
 
-   if (last_error == NO_ERROR)
+   if (!IsLastError())
       GetUIThreadId();
 
    return(last_error);

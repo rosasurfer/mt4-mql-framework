@@ -259,7 +259,7 @@ int init() {
 
    // (2) Status anzeigen
    ShowStatus();
-   if (last_error != NO_ERROR)
+   if (IsLastError())
       return(last_error);
 
 
@@ -1371,7 +1371,7 @@ bool VisualizeSequence() {
  */
 int ShowStatus() {
    int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
-   if (last_error != NO_ERROR)
+   if (IsLastError())
       sequenceStatus = STATUS_DISABLED;
 
    string msg = "";
@@ -1384,7 +1384,7 @@ int ShowStatus() {
       case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing..."); break;
       case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");       break;
       case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled");
-                               if (last_error != NO_ERROR)
+                               if (IsLastError())
                                   msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");
                                break;
       default:
@@ -1420,13 +1420,13 @@ int ShowStatus() {
                              "StopLoss:      ",   StopLoss,   " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                                                 NL);
    }
    else {
-      msg = StringConcatenate(msg,                                          NL,
+      msg = StringConcatenate(msg,                                       NL,
                              "Lot sizes:       ", str.levels.lots,       NL,
                              "TakeProfit:    ",   TakeProfit, " pip = ", NL,
                              "StopLoss:      ",   StopLoss,   " pip = ", NL);
    }
       msg = StringConcatenate(msg,
-                             "Breakeven:   ",   DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),             NL,
+                             "Breakeven:   ",   DoubleToStr(0, Digits-PipDigits), " pip = ", NumberToStr(0, PriceFormat),              NL,
                              "Profit/Loss:    ", DoubleToStr(profitLossPips, Digits-PipDigits), " pip = ", DoubleToStr(profitLoss, 2), NL);
 
    // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
