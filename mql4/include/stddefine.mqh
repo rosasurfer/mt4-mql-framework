@@ -895,6 +895,7 @@ void DummyCalls() {
    ForceAlert();
    HandleEvent(NULL);
    HandleEvents(NULL);
+   IsError(NULL);
    IsExpert();
    IsIndicator();
    IsLastError();

@@ -190,17 +190,17 @@ int init() {
       // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
       if (UninitializeReason() != REASON_RECOMPILE) {
          if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID restaurieren...
-            if (SetInputSequenceId())
+            if (RestoreInputSequenceId())
                if (RestoreConfiguration())
                   if (ValidateConfiguration())
                      ReadSequence();
          }
-         else if (RestoreSequenceId()) {                             // ...dann ggf. eine im Chart gespeicherte Sequenz-ID restaurieren...
+         else if (RestoreChartSequenceId()) {                        // ...dann ggf. eine im Chart gespeicherte Sequenz-ID restaurieren...
             if (RestoreConfiguration())
                if (ValidateConfiguration())
                   ReadSequence();
          }
-         else if (SetRunningSequenceId()) {                          // ...dann ID aus laufender Sequenz restaurieren.
+         else if (RestoreRunningSequenceId()) {                      // ...dann ID aus laufender Sequenz restaurieren.
             if (RestoreConfiguration())
                if (ValidateConfiguration())
                   ReadSequence();
@@ -216,7 +216,7 @@ int init() {
       }
 
       // (1.2) Recompilation ----------------------------------------------------------------------------------------------------------------------------------
-      else if (RestoreSequenceId()) {                                // externe Referenz immer vorhanden: restaurieren und validieren
+      else if (RestoreChartSequenceId()) {                           // externe Referenz immer vorhanden: restaurieren und validieren
          if (RestoreConfiguration())
             if (ValidateConfiguration())
                ReadSequence();
@@ -565,11 +565,11 @@ bool IsProfitTargetReached() {
 
 
 /**
- * Sucht die erste laufende Sequenz und restauriert die interne Variable sequenceId.
+ * Restauriert die Sequenz-ID einer laufenden Sequenz.
  *
- * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
+ * @return bool - ob eine laufende Sequenz gefunden und die ID restauriert wurde
  */
-bool SetRunningSequenceId() {
+bool RestoreRunningSequenceId() {
    // offene Positionen einlesen
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
@@ -577,12 +577,12 @@ bool SetRunningSequenceId() {
 
       if (IsMyOrder()) {
          sequenceId = OrderMagicNumber() >> 8 & 0x3FFF;              // 14 Bits (Bits 9-22) => sequenceId
-         catch("SetRunningSequenceId(1)");
+         catch("RestoreRunningSequenceId(1)");
          return(true);
       }
    }
 
-   catch("SetRunningSequenceId(2)");
+   catch("RestoreRunningSequenceId(2)");
    return(false);
 }
 
@@ -1439,8 +1439,8 @@ int ShowStatus() {
 
 
 /**
- * Ob in der Konfiguration ausdrücklich eine zu benutzende Sequenz-ID angegeben wurde. Hier wird nur geprüft,
- * ob ein Wert angegeben wurde oder nicht. Die Gültigkeit wird in SetInputSequenceId() überprüft.
+ * Ob in den Input-Parametern ausdrücklich eine zu benutzende Sequenz-ID angegeben wurde. Hier wird nur geprüft,
+ * ob ein Wert angegeben wurde. Die Gültigkeit einer ID wird erst in RestoreInputSequenceId() überprüft.
  *
  * @return bool
  */
@@ -1450,11 +1450,11 @@ bool IsInputSequenceId() {
 
 
 /**
- * Validiert und setzt die in der Konfiguration angegebene Sequnz-ID.
+ * Validiert und setzt die in der Konfiguration angegebene Sequenz-ID.
  *
  * @return bool - ob eine gültige Sequenz-ID gefunden und restauriert wurde
  */
-bool SetInputSequenceId() {
+bool RestoreInputSequenceId() {
    if (IsInputSequenceId()) {
       string strValue = StringTrim(Sequence.ID);
 
@@ -1466,7 +1466,7 @@ bool SetInputSequenceId() {
             return(true);
          }
       }
-      catch("SetInputSequenceId()  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+      catch("RestoreInputSequenceId()  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE);
    }
    return(false);
 }
@@ -1942,7 +1942,7 @@ int StoreSequenceId() {
  *
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
-bool RestoreSequenceId() {
+bool RestoreChartSequenceId() {
    string label = __SCRIPT__ +".stored_sequence_id";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
@@ -1951,12 +1951,13 @@ bool RestoreSequenceId() {
 
       if (WindowHandle(Symbol(), NULL) == storedHWnd) {
          sequenceId = storedSequenceId;
-         //debug("RestoreSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
-         return(!IsError(catch("RestoreSequenceId(1)")));
+         //debug("RestoreChartSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
+         catch("RestoreChartSequenceId(1)");
+         return(true);
       }
    }
 
-   catch("RestoreSequenceId(2)");
+   catch("RestoreChartSequenceId(2)");
    return(false);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
