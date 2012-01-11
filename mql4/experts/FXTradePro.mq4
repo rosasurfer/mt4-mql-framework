@@ -189,23 +189,23 @@ int init() {
 
       // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
       if (UninitializeReason() != REASON_RECOMPILE) {
-         if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID auswerten...
+         if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID restaurieren...
             if (SetInputSequenceId())
                if (RestoreConfiguration())
                   if (ValidateConfiguration())
                      ReadSequence();
          }
-         else if (RestoreHiddenSequenceId()) {                       // ...dann eine versteckt gespeicherte Sequenz-ID restaurieren...
+         else if (RestoreSequenceId()) {                             // ...dann ggf. eine im Chart gespeicherte Sequenz-ID restaurieren...
             if (RestoreConfiguration())
                if (ValidateConfiguration())
                   ReadSequence();
          }
-         else if (SetRunningSequenceId()) {                          // ...dann ID aus laufender Sequenz restaurieren...
+         else if (SetRunningSequenceId()) {                          // ...dann ID aus laufender Sequenz restaurieren.
             if (RestoreConfiguration())
                if (ValidateConfiguration())
                   ReadSequence();
          }
-         else if (ValidateConfiguration()) {                         // ...und zum Schluß eine neue Sequenz anlegen.
+         else if (ValidateConfiguration()) {                         // Zum Schluß neue Sequenz anlegen.
             sequenceId = CreateSequenceId();
             if (Entry.type!=ENTRYTYPE_LIMIT || NE(Entry.limit, 0))   // Bei ENTRYTYPE_LIMIT und Entry.Limit=0 erfolgt sofortiger Einstieg, in diesem Fall
                SaveConfiguration();                                  // wird die Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert.
@@ -216,12 +216,12 @@ int init() {
       }
 
       // (1.2) Recompilation ----------------------------------------------------------------------------------------------------------------------------------
-      else if (RestoreHiddenSequenceId()) {                          // externe Referenz immer vorhanden: restaurieren und validieren
+      else if (RestoreSequenceId()) {                                // externe Referenz immer vorhanden: restaurieren und validieren
          if (RestoreConfiguration())
             if (ValidateConfiguration())
                ReadSequence();
       }
-      else catch("init(2)   no hidden sequence id found after REASON_RECOMPILE", ERR_RUNTIME_ERROR);
+      else catch("init(2)   REASON_RECOMPILE, no stored sequence id found in chart", ERR_RUNTIME_ERROR);
    }
 
    // (1.3) Parameteränderung ---------------------------------------------------------------------------------------------------------------------------------
@@ -284,9 +284,9 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   // vor Recompile aktuellen Status extern speichern
+   // vor Recompile aktuelle Sequenze-ID im Chart speichern
    if (UninitializeReason() == REASON_RECOMPILE) {
-      PersistIdForRecompile();
+      StoreSequenceId();
    }
    else {
       // Input-Parameter sind nicht statisch: für's nächste init() intern.* speichern
@@ -1922,19 +1922,18 @@ string EntryTypeDescription(int type) {
  *
  * @return int - Fehlerstatus
  */
-int PersistIdForRecompile() {
-   int hChWnd = WindowHandle(Symbol(), Period());
-
-   string label = __SCRIPT__ +".hidden_storage";
+int StoreSequenceId() {
+   int    hWnd  = WindowHandle(Symbol(), Period());
+   string label = __SCRIPT__ +".stored_sequence_id";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
-   ObjectSet(label, OBJPROP_YDISTANCE, -hChWnd);
+   ObjectSet(label, OBJPROP_YDISTANCE, -hWnd);
 
-   //debug("PersistIdForRecompile()     sequenceId="+ sequenceId +"   hWnd="+ WindowHandle(Symbol(), Period()));
-   return(catch("PersistIdForRecompile()"));
+   //debug("StoreSequenceId()     sequenceId="+ sequenceId +"   hWnd="+ hWnd);
+   return(catch("StoreSequenceId()"));
 }
 
 
@@ -1943,8 +1942,8 @@ int PersistIdForRecompile() {
  *
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
-bool RestoreHiddenSequenceId() {
-   string label = __SCRIPT__ +".hidden_storage";
+bool RestoreSequenceId() {
+   string label = __SCRIPT__ +".stored_sequence_id";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
       int storedHWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
@@ -1952,12 +1951,12 @@ bool RestoreHiddenSequenceId() {
 
       if (WindowHandle(Symbol(), NULL) == storedHWnd) {
          sequenceId = storedSequenceId;
-         //debug("RestoreHiddenSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
-         return(catch("RestoreHiddenSequenceId(1)")==NO_ERROR);
+         //debug("RestoreSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
+         return(!IsError(catch("RestoreSequenceId(1)")));
       }
    }
 
-   catch("RestoreHiddenSequenceId(2)");
+   catch("RestoreSequenceId(2)");
    return(false);
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen

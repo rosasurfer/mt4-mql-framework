@@ -713,6 +713,18 @@ bool IsLastError() {
 
 
 /**
+ * Ob der angegebene Wert einen Fehler darstellt.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsError(int value) {
+   return(value != NO_ERROR);
+}
+
+
+/**
  * Gibt den internen Fehler-Code des aktuellen Scripts zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
  *
  * @return int - Fehlercode
