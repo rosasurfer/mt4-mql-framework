@@ -2209,7 +2209,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    int    iNull[];
 
    /*STARTUPINFO*/int si[]; InitializeBuffer(si, STARTUPINFO.size);
-      si.setCb        (si, 68);
+      si.setCb        (si, STARTUPINFO.size);
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
 
