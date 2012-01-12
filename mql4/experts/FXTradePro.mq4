@@ -175,7 +175,7 @@ int init() {
    }
 
    /*
-   Zuerst wird die aktuelle Sequenz-ID bestimmt. Danach wird deren Konfiguration geladen. Zum Schluﬂ werden die Sequenzdaten restauriert.
+   Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluﬂ werden die Daten der ggf. laufenden Sequenz restauriert.
    Es gibt 4 unterschiedliche init()-Szenarien:
 
    (1.1) Neustart des EA, evt. im Tester (keine internen Daten, externe Sequenz-ID evt. vorhanden)
@@ -205,8 +205,8 @@ int init() {
                if (ValidateConfiguration())
                   ReadSequence();
          }
-         else if (ValidateConfiguration()) {                         // Zum Schluﬂ neue Sequenz anlegen.
-            sequenceId = CreateSequenceId();
+         else if (ValidateConfiguration()) {
+            sequenceId = CreateSequenceId();                         // Zum Schluﬂ neue Sequenz anlegen.
             if (Entry.type!=ENTRYTYPE_LIMIT || NE(Entry.limit, 0))   // Bei ENTRYTYPE_LIMIT und Entry.Limit=0 erfolgt sofortiger Einstieg, in diesem Fall
                SaveConfiguration();                                  // wird die Konfiguration erst nach Sicherheitsabfrage in StartSequence() gespeichert.
             ResizeArrays(sequenceLength);
@@ -371,7 +371,6 @@ bool IsMyOrder(int sequenceId = NULL) {
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-
    int id;
    while (id < 2000) {                                               // Das abschlieﬂende Shiften halbiert den Wert und wir wollen mindestens eine 4-stellige ID haben.
       id = MathRand();
@@ -1627,7 +1626,7 @@ bool ValidateConfiguration() {
    }
    sequenceLength = ArraySize(levels.lots);
 
-   // Sequence.ID: wurde schon in ValidateExplicitSequenceId() validiert
+   // Sequence.ID: falls gesetzt, wurde sie schon in RestoreInputSequenceId() validiert
 
    // Nach Parameter‰nderung die neue Konfiguration mit der aktuellen Sequenz vergleichen
    if (progressionLevel > 0) {
@@ -1688,10 +1687,10 @@ int SaveConfiguration() {
    // (3) Datei auf Server laden
    if (!IsTesting()) {
       error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), GetStandardSymbol(Symbol()), filename);
-      if (error != NO_ERROR)
+      if (IsError(error))
          return(error);
    }
-   return(catch("SaveConfiguration(4)", GetLastError()));
+   return(catch("SaveConfiguration(4)"));
 }
 
 
@@ -1924,7 +1923,7 @@ string EntryTypeDescription(int type) {
  */
 int StoreSequenceId() {
    int    hWnd  = WindowHandle(Symbol(), Period());
-   string label = __SCRIPT__ +".stored_sequence_id";
+   string label = __SCRIPT__ +".sequence_id";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
@@ -1932,7 +1931,6 @@ int StoreSequenceId() {
    ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
    ObjectSet(label, OBJPROP_YDISTANCE, -hWnd);
 
-   //debug("StoreSequenceId()     sequenceId="+ sequenceId +"   hWnd="+ hWnd);
    return(catch("StoreSequenceId()"));
 }
 
@@ -1943,7 +1941,7 @@ int StoreSequenceId() {
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
 bool RestoreChartSequenceId() {
-   string label = __SCRIPT__ +".stored_sequence_id";
+   string label = __SCRIPT__ +".sequence_id";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
       int storedHWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
