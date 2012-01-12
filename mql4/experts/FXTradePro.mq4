@@ -334,12 +334,14 @@ int onTick() {
       }
       else if (IsProfitTargetReached())         FinishSequence();
    }
+   firstTick = false;
 
 
    // Status anzeigen
    ShowStatus();
 
-   firstTick = false;
+   if (IsLastError())
+      return(last_error);
    return(catch("onTick()"));
 }
 
