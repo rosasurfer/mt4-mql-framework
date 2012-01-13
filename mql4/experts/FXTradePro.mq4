@@ -283,11 +283,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   // vor Recompile aktuelle Sequenze-ID im Chart speichern
-   if (UninitializeReason() == REASON_RECOMPILE) {
-      StoreSequenceId();
-   }
-   else {
+   if (UninitializeReason() == REASON_CHARTCHANGE) {
       // Input-Parameter sind nicht statisch: für's nächste init() intern.* speichern
       intern.Entry.Condition = Entry.Condition;
       intern.Entry.Direction = Entry.Direction;
@@ -301,6 +297,10 @@ int deinit() {
       intern.Lotsize.Level.6 = Lotsize.Level.6;
       intern.Lotsize.Level.7 = Lotsize.Level.7;
       intern.Sequence.ID     = Sequence.ID;
+   }
+   else {
+      // aktuelle Sequenze-ID im Chart speichern
+      StoreChartSequenceId();
    }
    return(catch("deinit()"));
 }
@@ -1918,21 +1918,19 @@ string EntryTypeDescription(int type) {
 
 
 /**
- * Speichert die ID der aktuellen Sequenz im Chart, sodaß sie nach einem Recompile-Event restauriert werden kann.
+ * Speichert die aktuelle Sequenz-ID im Chart, sodaß sie nach einem deinit() restauriert werden kann.
  *
  * @return int - Fehlerstatus
  */
-int StoreSequenceId() {
-   int    hWnd  = WindowHandle(Symbol(), Period());
+int StoreChartSequenceId() {
    string label = __SCRIPT__ +".sequence_id";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
    ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negative Werte (im nicht sichtbaren Bereich)
-   ObjectSet(label, OBJPROP_YDISTANCE, -hWnd);
+   ObjectSet(label, OBJPROP_XDISTANCE, -sequenceId);                 // negativer Wert (nicht sichtbarer Bereich)
 
-   return(catch("StoreSequenceId()"));
+   return(catch("StoreChartSequenceId()"));
 }
 
 
@@ -1945,20 +1943,13 @@ bool RestoreChartSequenceId() {
    string label = __SCRIPT__ +".sequence_id";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
-      int storedHWnd       = MathAbs(ObjectGet(label, OBJPROP_YDISTANCE)) +0.1;
-      int storedSequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;  // (int) double
-
-      if (WindowHandle(Symbol(), NULL) == storedHWnd) {
-         sequenceId = storedSequenceId;
-         //debug("RestoreChartSequenceId()   restored sequenceId="+ storedSequenceId +" for hWnd="+ storedHWnd);
-         catch("RestoreChartSequenceId(1)");
-         return(true);
-      }
+      sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;   // (int) double
+      return(_true(catch("RestoreChartSequenceId(1)")));
    }
-
-   catch("RestoreChartSequenceId(2)");
-   return(false);
+   return(_false(catch("RestoreChartSequenceId(2)")));
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
-   SequenceStatusToStr(NULL); EntryTypeToStr(NULL); EntryTypeDescription(NULL);
+   EntryTypeDescription(NULL);
+   EntryTypeToStr(NULL);
+   SequenceStatusToStr(NULL);
 }
