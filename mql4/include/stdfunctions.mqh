@@ -596,7 +596,7 @@ int start() {
    else            last_error = onTick();
 
    return(last_error);
-   DummyCalls();                                            // unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   DummyCalls();                                            // unterdrückt Compilerwarnungen über unreferenzierte Funktionen
 }
 
 
@@ -609,8 +609,9 @@ int start() {
  *
  * @return int - der aufgetretene Error-Code
  *
- * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                              (b) in der Ausgabe das laufende Script als Auslöser angezeigt werden kann.
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message, int error=NO_ERROR) {
    if (StringLen(__SCRIPT__) == 0)
@@ -648,8 +649,9 @@ int catch(string message, int error=NO_ERROR) {
  *
  * @return int - der angegebene Error-Code
  *
- * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
 int log(string message="", int error=NO_ERROR) {
    if (StringLen(__SCRIPT__) == 0)
@@ -679,10 +681,13 @@ int log(string message="", int error=NO_ERROR) {
  * @param  string message - Message
  * @param  int    error   - Error-Code
  *
- * NOTE:   Ist in der Headerdatei implementiert, weil (a) Libraries keine Default-Parameter unterstützen und damit
- * -----                                              (b) im Log das laufende Script als Auslöser angezeigt wird.
+ * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
-void debug(string message, int error=NO_ERROR) {
+int debug(string message, int error=NO_ERROR) {
    if (StringLen(__SCRIPT__) == 0)
       __SCRIPT__ = WindowExpertName();
 
@@ -725,6 +730,18 @@ bool IsError(int value) {
 
 
 /**
+ * Ob der angegebene Wert keinen Fehler darstellt.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsNoError(int value) {
+   return(value == NO_ERROR);
+}
+
+
+/**
  * Gibt den internen Fehler-Code des aktuellen Scripts zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
  *
  * @return int - Fehlercode
@@ -752,13 +769,14 @@ int SetLastError(int error) {
  *
  * @param string s1-s63 - bis zu 63 beliebige Parameter
  *
+ * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
  *
- * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
-void ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
-
+int ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
    string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
-
    Alert(message);
 
    if (IsTesting()) {
@@ -887,9 +905,65 @@ bool IsScript() {
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int value - beliebiger Parameter (default: NULL)
+ *
+ * @return bool - TRUE
+ */
+bool _true(int value = NULL) {
+   return(true);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int value - beliebiger Parameter (default: NULL)
+ *
+ * @return bool - FALSE
+ */
+bool _false(int value = NULL) {
+   return(false);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int value - beliebiger Parameter (default: NULL)
+ *
+ * @return int - NULL
+ */
+int _NULL(int value = NULL) {
+   return(NULL);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als den Fehler-Code NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ *
+ * @param  int value - beliebiger Parameter (default: NULL)
+ *
+ * @return int - NO_ERROR
+ */
+int _NO_ERROR(int value = NULL) {
+   return(NO_ERROR);
+}
+
+
+/**
  * Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
  */
 void DummyCalls() {
+   _NO_ERROR();
+   _NULL();
+   _false();
+   _true();
    catch(NULL);
    debug(NULL);
    ForceAlert();
@@ -899,6 +973,7 @@ void DummyCalls() {
    IsExpert();
    IsIndicator();
    IsLastError();
+   IsNoError(NULL);
    IsScript();
    log();
    onInit(NULL);
