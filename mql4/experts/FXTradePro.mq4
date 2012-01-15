@@ -1372,6 +1372,9 @@ bool VisualizeSequence() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
+   if (IsTesting() && !IsVisualMode())
+      return(last_error);
+
    int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
    if (IsLastError())
       sequenceStatus = STATUS_DISABLED;
@@ -1798,8 +1801,6 @@ bool RestoreConfiguration() {
       if (Explode(config[i], "=", parts, 2) != 2) return(_false(catch("RestoreConfiguration(3)   invalid configuration file \""+ fileName +"\" (line \""+ config[i] +"\")", ERR_RUNTIME_ERROR)));
       string key=parts[0], value=parts[1];
 
-      Sequence.ID = sequenceId;
-
       if (key == "Entry.Condition") {
          Entry.Condition = value;
          keys[I_ENTRY_CONDITION] = 1;
@@ -1855,6 +1856,7 @@ bool RestoreConfiguration() {
       }
    }
    if (IntInArray(0, keys))                       return(_false(catch("RestoreConfiguration(13)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   Sequence.ID = sequenceId;
 
    return(IsNoError(catch("RestoreConfiguration(14)")));
 }
