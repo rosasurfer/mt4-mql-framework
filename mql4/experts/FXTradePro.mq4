@@ -284,7 +284,7 @@ int init() {
  */
 int deinit() {
    if (UninitializeReason() == REASON_CHARTCHANGE) {
-      // Input-Parameter sind nicht statisch: für's nächste init() intern.* speichern
+      // Input-Parameter sind nicht statisch: für's nächste init() in intern.* zwischenspeichern
       intern.Entry.Condition = Entry.Condition;
       intern.Entry.Direction = Entry.Direction;
       intern.TakeProfit      = TakeProfit;
@@ -299,7 +299,6 @@ int deinit() {
       intern.Sequence.ID     = Sequence.ID;
    }
    else {
-      // aktuelle Sequenze-ID im Chart speichern
       StoreChartSequenceId();
    }
    return(catch("deinit()"));
@@ -1372,7 +1371,7 @@ bool VisualizeSequence() {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (IsTesting() && !IsVisualMode())
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(last_error);
 
    int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
