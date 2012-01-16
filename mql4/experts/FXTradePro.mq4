@@ -576,13 +576,10 @@ bool RestoreRunningSequenceId() {
 
       if (IsMyOrder()) {
          sequenceId = OrderMagicNumber() >> 8 & 0x3FFF;              // 14 Bits (Bits 9-22) => sequenceId
-         catch("RestoreRunningSequenceId(1)");
-         return(true);
+         return(_true(catch("RestoreRunningSequenceId(1)")));
       }
    }
-
-   catch("RestoreRunningSequenceId(2)");
-   return(false);
+   return(_false(catch("RestoreRunningSequenceId(2)")));
 }
 
 
@@ -774,8 +771,7 @@ bool ReadSequence() {
             continue;
          }
          SetLastError(ERR_CANCELLED_BY_USER);
-         catch("ReadSequence(6)");
-         return(false);
+         return(_false(catch("ReadSequence(6)")));
       }
 
 
@@ -789,8 +785,7 @@ bool ReadSequence() {
                break;
             }
             SetLastError(ERR_CANCELLED_BY_USER);
-            catch("ReadSequence(7)");
-            return(false);
+            return(_false(catch("ReadSequence(7)")));
          }
       }
 
@@ -937,8 +932,7 @@ bool StartSequence() {
       int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
-         catch("StartSequence(1)");
-         return(false);
+         return(_false(catch("StartSequence(1)")));
       }
       SaveConfiguration();                                           // bei firstTick=TRUE Konfiguration nach Bestätigung speichern
    }
@@ -948,7 +942,7 @@ bool StartSequence() {
    int ticket = OpenPosition(Entry.iDirection, levels.lots[0]);      // Position in Entry.Direction öffnen
    if (ticket == -1) {
       progressionLevel--;
-      return(IsNoError(catch("StartSequence(2)")));
+      return(_false(catch("StartSequence(2)")));
    }
 
    // Sequenzdaten aktualisieren
@@ -982,8 +976,7 @@ bool IncreaseProgression() {
       int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
-         catch("IncreaseProgression(1)");
-         return(false);
+         return(_false(catch("IncreaseProgression(1)")));
       }
    }
 
@@ -996,8 +989,7 @@ bool IncreaseProgression() {
    int ticket = OpenPosition(new.type, last.lots + levels.lots[last+1]);   // nächste Position öffnen und alte dabei hedgen
    if (ticket == -1) {
       progressionLevel--;
-      catch("IncreaseProgression(2)");
-      return(false);
+      return(_false(catch("IncreaseProgression(2)")));
    }
 
    // Sequenzdaten aktualisieren
@@ -1032,8 +1024,7 @@ bool FinishSequence() {
       int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
-         catch("FinishSequence(1)");
-         return(false);
+         return(_false(catch("FinishSequence(1)")));
       }
    }
 
@@ -1048,8 +1039,7 @@ bool FinishSequence() {
    // Tickets schließen
    if (!OrderMultiClose(tickets, 0.5, CLR_NONE)) {
       SetLastError(stdlib_PeekLastError());
-      catch("FinishSequence(2)");
-      return(false);
+      return(_false(catch("FinishSequence(2)")));
    }
 
    // Sequenz neu einlesen
@@ -1079,7 +1069,7 @@ int OpenPosition(int type, double lotsize) {
    }
 
    int    magicNumber = CreateMagicNumber();
-   string comment     = "FTP."+ sequenceId +"."+ progressionLevel;
+   string comment     = StringConcatenate("FTP.", sequenceId, ".", progressionLevel);
    double slippage    = 0.5;
 
    int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, CLR_NONE);

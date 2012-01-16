@@ -91,14 +91,15 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
  * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Ermöglicht den Library-Funktionen zu erkennen, ob der Aufruf während desselben
  * oder eines neuen Ticks erfolgt (z.B. in EventListenern).
  *
- * @param  int tick        - Tickzähler (synchronisiert den Tickzähler des aufrufenden Scripts und den der Library)
+ * @param  int ticks       - Tickzähler (synchronisiert den Tickzähler des aufrufenden Scripts und den der Library)
  * @param  int validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  * @param  int changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  *
  * @return int - Fehlercode
  */
-int stdlib_onStart(int tick, int validBars, int changedBars) {
-   Tick        = tick;                 // der konkrete Wert hat keine Bedeutung
+int stdlib_onStart(int ticks, int validBars, int changedBars) {
+   Tick        = ticks;                 // der konkrete Wert hat keine Bedeutung
+   Ticks       = Tick;
    ValidBars   = validBars;
    ChangedBars = changedBars;
    return(NO_ERROR);
@@ -5835,7 +5836,7 @@ string OperationTypeToStr(int type) {
       case OP_BALANCE  : return("OP_BALANCE"  );
       case OP_CREDIT   : return("OP_CREDIT"   );
    }
-   catch("OperationTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("OperationTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -5858,7 +5859,7 @@ string OperationTypeDescription(int type) {
       case OP_BALANCE  : return("Balance"   );
       case OP_CREDIT   : return("Credit"    );
    }
-   catch("OperationTypeDescription()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
+   catch("OperationTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
    return("");
 }
 
@@ -8018,7 +8019,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    double maxLot  = MarketInfo(symbol, MODE_MAXLOT);
    double lotStep = MarketInfo(symbol, MODE_LOTSTEP);
    int error  = GetLastError();
-   if (error != NO_ERROR) {
+   if (IsError(error)) {
       catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error);
       return(-1);
    }
@@ -8118,17 +8119,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (catch("OrderSendEx(13)")!=NO_ERROR)
+            if (IsError(catch("OrderSendEx(13)")))
                return(-1);
             return(ticket);                                          // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
-            if (IsTesting()) catch("OrderSendEx(14)", error);
+            if (IsTesting())
+               catch("OrderSendEx(14)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
-         if (error == NO_ERROR)
+         if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
@@ -8202,7 +8204,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    message = StringConcatenate(message, strSlippage);
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
+   if (IsError(error)) {
       catch("OrderSendEx.LogMessage(2)", error);
       return("");
    }

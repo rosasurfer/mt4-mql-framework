@@ -499,12 +499,12 @@ bool   init       = true;              // Flag, wird nach erfolgreichem Verlasse
 int    last_error = NO_ERROR;          // der letzte aufgetretene Fehler des aktuellen Aufrufs
 int    prev_error = NO_ERROR;          // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
 
-double Pip;                            // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
+double Pip, Pips;                      // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
 int    PipDigits;                      // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
-int    PipPoints;                      // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
+int    PipPoint, PipPoints;            // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
 string PriceFormat;                    // Preisformat des aktuellen Symbols
 
-int    Tick;
+int    Tick, Ticks;
 int    ValidBars;
 int    ChangedBars;
 
@@ -529,8 +529,10 @@ int onInit(int scriptType, int initFlags=NULL) {
 
    if (last_error == NO_ERROR) {
       PipDigits   = Digits & (~1);
-      PipPoints   = MathPow(10, Digits-PipDigits) +0.1;              // (int) double
+      PipPoint    = MathPow(10, Digits-PipDigits) +0.1;              // (int) double
+      PipPoints   = PipPoint;
       Pip         = 1/MathPow(10, PipDigits);
+      Pips        = Pip;
       PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    }
 
@@ -545,7 +547,7 @@ int onInit(int scriptType, int initFlags=NULL) {
  * @return int - Fehlerstatus
  */
 int start() {
-   Tick++;
+   Tick++; Ticks = Tick;
    prev_error = last_error;
    ValidBars  = IndicatorCounted();
 
@@ -557,7 +559,7 @@ int start() {
    else if (init) {                                         // init()-error abfangen
       if (last_error == ERR_TERMINAL_NOT_YET_READY) {
          if (IsIndicator()) {
-            if (Tick > 1)
+            if (Ticks > 1)
                init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
          }
          else if (IsExpert()) {
@@ -590,7 +592,7 @@ int start() {
 
 
    // (4) stdLib benachrichtigen und Main-Funktion aufrufen
-   stdlib_onStart(Tick, ValidBars, ChangedBars);
+   stdlib_onStart(Ticks, ValidBars, ChangedBars);
 
    if (IsScript()) last_error = onStart();
    else            last_error = onTick();
