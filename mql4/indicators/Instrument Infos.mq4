@@ -157,16 +157,16 @@ int UpdateInfos() {
                                                                           ObjectSetText(names[POINT         ], StringConcatenate("Point size:  ", NumberToStr(Point, PriceFormat)), Font.Size, Font.Name, Font.Color);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);               ObjectSetText(names[TICKSIZE      ], StringConcatenate("Tick size:   ", NumberToStr(tickSize, PriceFormat)), Font.Size, Font.Name, Font.Color);
 
-   double spread       = MarketInfo(symbol, MODE_SPREAD     ) / MathPow(10, Digits-PipDigits);
-   double stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL  ) / MathPow(10, Digits-PipDigits);
-   double freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL) / MathPow(10, Digits-PipDigits);
+   double spread       = MarketInfo(symbol, MODE_SPREAD     )/PipPoints;
+   double stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints;
+   double freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
       string strSpread      = DoubleToStr(spread,      Digits-PipDigits); ObjectSetText(names[SPREAD        ], StringConcatenate("Spread:        "      , strSpread     , " pip"), Font.Size, Font.Name, Font.Color);
       string strStopLevel   = DoubleToStr(stopLevel,   Digits-PipDigits); ObjectSetText(names[STOPLEVEL     ], StringConcatenate("Stop level:   "  , strStopLevel  , " pip"), Font.Size, Font.Name, Font.Color);
       string strFreezeLevel = DoubleToStr(freezeLevel, Digits-PipDigits); ObjectSetText(names[FREEZELEVEL   ], StringConcatenate("Freeze level: ", strFreezeLevel, " pip"), Font.Size, Font.Name, Font.Color);
 
    double tickValue         = MarketInfo(symbol, MODE_TICKVALUE        );
    double pointValue        = tickValue / (tickSize/Point);
-   double pipValue          = pointValue * MathPow(10, Digits-PipDigits); ObjectSetText(names[TICKVALUE     ], StringConcatenate("Pip value:  ", NumberToStr(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
+   double pipValue          = PipPoints * pointValue;                     ObjectSetText(names[TICKVALUE     ], StringConcatenate("Pip value:  ", NumberToStr(pipValue, ", .2+"), " ", accountCurrency), Font.Size, Font.Name, Font.Color);
 
    double lotSize           = MarketInfo(symbol, MODE_LOTSIZE          ); ObjectSetText(names[LOTSIZE       ], StringConcatenate("Lot size:  ", NumberToStr(lotSize, ", .+"), " units"), Font.Size, Font.Name, Font.Color);
    double minLot            = MarketInfo(symbol, MODE_MINLOT           ); ObjectSetText(names[MINLOT        ], StringConcatenate("Min lot:    ", NumberToStr(minLot, ", .+")), Font.Size, Font.Name, Font.Color);

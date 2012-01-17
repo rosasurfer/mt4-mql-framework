@@ -122,9 +122,9 @@ double   Entry.MA.deviation;
 double   Entry.limit;
 double   Entry.lastBid;
 
+int      status = STATUS_WAITING;
 int      sequenceId;
 int      sequenceLength;
-int      sequenceStatus    = STATUS_WAITING;
 int      progressionLevel;
 
 double   levels.lots[];                                  // Lotsizes der Konfiguration
@@ -311,7 +311,7 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (sequenceStatus==STATUS_FINISHED || sequenceStatus==STATUS_DISABLED)
+   if (status==STATUS_FINISHED || status==STATUS_DISABLED)
       return(last_error);
 
 
@@ -758,7 +758,7 @@ bool ReadSequence() {
       // (4) falls kein Ticket existiert, anhand der Konfigurationsdatei prüfen, ob der EA im STATUS_WAITING läuft
       if (progressionLevel == 0) {
          if (IsFile(TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set")) {
-            sequenceStatus = STATUS_WAITING;
+            status = STATUS_WAITING;
             if (UpdateMaxProfitLoss() && VisualizeSequence())        // im STATUS_WAITING sind Profit/Loss und Breakeven 0.00 und brauchen nicht berechnet werden
                return(IsNoError(catch("ReadSequence(5)")));          // regular exit for progressionLevel = 0
             return(false);
@@ -828,7 +828,7 @@ bool ReadSequence() {
 
 
       // (8) Status setzen
-      sequenceStatus = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
+      status = ifInt(openPositions, STATUS_PROGRESSING, STATUS_FINISHED);
 
 
       // (9) Schlußtrade(s) analysieren
@@ -836,7 +836,7 @@ bool ReadSequence() {
       // Der Schlußtrade bestimmt CloseTime und ClosePrice des letzten Levels und der Sequenz. Der Trade kann aus einer oder mehreren Positionen bestehen. Je nachdem,
       // in welcher Reihenfolge eine Schlußposition gegen die Positionen der Sequenz geschlossen wurde, kann in der History auch ein einzelner Schlußtrade in mehrere
       // Teilpositionen aufgebrochen worden sein. Der Schlußzeitpunkt der Sequenz ist der Moment, an dem die gesamte offene Position zum ersten Mal gehedgt war.
-      if (sequenceStatus == STATUS_FINISHED) {
+      if (status == STATUS_FINISHED) {
          int size = ArraySize(closeTrades);
          if (size == 0) return(_false(catch("ReadSequence(10)   illegal sequence state, no close trades found for finished sequence", ERR_RUNTIME_ERROR)));
 
@@ -870,7 +870,7 @@ bool ReadSequence() {
 
 
    // (10) Sequenz mit Konfiguration abgleichen
-   if (sequenceStatus == STATUS_PROGRESSING) {
+   if (status == STATUS_PROGRESSING) {
       last = progressionLevel-1;
       if (NE(MathAbs(effectiveLots), levels.lots[last]))
          return(_false(catch("ReadSequence(11)   illegal sequence state, current effective lot size ("+ NumberToStr(effectiveLots, ".+") +" lots) doesn't match the configured level "+ progressionLevel +" lot size ("+ NumberToStr(levels.lots[last], ".+") +" lots)", ERR_RUNTIME_ERROR)));
@@ -1328,7 +1328,7 @@ bool VisualizeSequence() {
    }
 
    // Sequenzende
-   if (sequenceStatus == STATUS_FINISHED) {
+   if (status == STATUS_FINISHED) {
       // Verbinder zum Sequenzende
       line = "FTP."+ sequenceId +"."+ progressionLevel;
       if (ObjectFind(line) > -1)
@@ -1366,10 +1366,10 @@ int ShowStatus() {
 
    int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
    if (IsLastError())
-      sequenceStatus = STATUS_DISABLED;
+      status = STATUS_DISABLED;
 
    string msg = "";
-   switch (sequenceStatus) {
+   switch (status) {
       case STATUS_WAITING:     if (Entry.type == ENTRYTYPE_LIMIT) {                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting to ", OperationTypeDescription(Entry.iDirection));
                                   if (NE(Entry.limit, 0))                             msg = StringConcatenate(msg, " at ", NumberToStr(Entry.limit, PriceFormat)); }
                                else if (Entry.iDirection == ENTRYDIRECTION_UNDEFINED) msg = StringConcatenate(":  sequence ", sequenceId, " waiting for next ", Entry.Condition, " crossing");
@@ -1382,7 +1382,7 @@ int ShowStatus() {
                                   msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");
                                break;
       default:
-         return(catch("ShowStatus(1)   illegal sequence status = "+ sequenceStatus, ERR_RUNTIME_ERROR));
+         return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
    msg = StringConcatenate(__SCRIPT__, msg,                                  NL,
                                                                              NL,
@@ -1393,7 +1393,7 @@ int ShowStatus() {
 
    if (progressionLevel > 0) {
       i = progressionLevel-1;
-      if (sequenceStatus == STATUS_FINISHED) {
+      if (status == STATUS_FINISHED) {
          lastPrice = levels.closePrice[i];
       }
       else {                                                         // TODO: NumberToStr(x, "+- ") implementieren

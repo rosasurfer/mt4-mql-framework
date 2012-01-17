@@ -67,8 +67,10 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
    __SCRIPT__ = StringConcatenate(scriptName, "::", WindowExpertName());
 
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1;                 //(int) double
+   PipPoint    = MathPow(10, Digits-PipDigits) +0.1;                 //(int) double
+   PipPoints   = PipPoint;
    Pip         = 1/MathPow(10, PipDigits);
+   Pips        = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
 
    if (!IsLastError()) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
@@ -967,7 +969,7 @@ int RepositionLegend() {
 
 
 /**
- * Ob ein Tradeserver-Error vorübergehend (temporär) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
+ * Ob ein Tradeserver-Error temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
  * die Order auszuführen, erfolgreich sein.
  *
  * @param  int error - Fehlercode
@@ -983,7 +985,6 @@ bool IsTemporaryTradeError(int error) {
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
-      case ERR_INVALID_STOPS:                //      130   invalid stop
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
       case ERR_BROKER_BUSY:                  //      137   broker is busy (never returned error)
@@ -1001,6 +1002,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation (never returned error)
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
+      case ERR_INVALID_STOPS:                //      130   invalid stop
       case ERR_INVALID_TRADE_VOLUME:         //      131   invalid trade volume
       case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
@@ -1020,7 +1022,7 @@ bool IsTemporaryTradeError(int error) {
 
 
 /**
- * Ob ein Tradeserver-Error permanent ist oder nicht. Bei einem permanenten Fehler wird auch der erneute Versuch,
+ * Ob ein Tradeserver-Error permanent (also nicht nur vorübergehend) ist oder nicht. Bei einem permanenten Fehler wird auch der erneute Versuch,
  * die Order auszuführen, fehlschlagen.
  *
  * @param  int error - Fehlercode
@@ -7991,7 +7993,7 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * TODO: Zur Zeit werden nur Market-Orders unterstützt.
+ * TODO: Es werden noch keine S/L- oder T/P-Orders unterstützt.
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
@@ -8014,10 +8016,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    // symbol
    if (symbol == "0")      // = NULL
       symbol = Symbol();
-   int    digits  = MarketInfo(symbol, MODE_DIGITS);
-   double minLot  = MarketInfo(symbol, MODE_MINLOT);
-   double maxLot  = MarketInfo(symbol, MODE_MAXLOT);
-   double lotStep = MarketInfo(symbol, MODE_LOTSTEP);
+   int    digits         = MarketInfo(symbol, MODE_DIGITS);
+   double minLot         = MarketInfo(symbol, MODE_MINLOT);
+   double maxLot         = MarketInfo(symbol, MODE_MAXLOT);
+   double lotStep        = MarketInfo(symbol, MODE_LOTSTEP);
+
+   int    pipDigits      = digits & (~1);
+   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
+   double pip            = 1/MathPow(10, pipDigits), pips=pip;
+   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
+   double stopLevel      = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
+   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
    int error  = GetLastError();
    if (IsError(error)) {
       catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error);
@@ -8030,21 +8040,21 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // lots
    if (LT(lots, minLot)) {
-      catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME);
       return(-1);
    }
    if (GT(lots, maxLot)) {
-      catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME);
       return(-1);
    }
    if (NE(MathModFix(lots, lotStep), 0)) {
-      catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME);
       return(-1);
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
    if (LT(price, 0)) {
-      catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // slippage
@@ -8054,13 +8064,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // stopLoss
    if (NE(stopLoss, 0)) {
-      catch("OrderSendEx(8)   submission of stoploss orders is not implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
+      catch("OrderSendEx(8)   submission of stop-loss orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
       return(-1);
    }
    stopLoss = NormalizeDouble(stopLoss, digits);
    // takeProfit
    if (NE(takeProfit, 0)) {
-      catch("OrderSendEx(9)   submission of take-profit orders is not implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
+      catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
       return(-1);
    }
    takeProfit = NormalizeDouble(takeProfit, digits);
@@ -8068,7 +8078,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (comment == "0")     // = NULL
       comment = "";
    else if (StringLen(comment) > 27) {
-      catch("OrderSendEx(10)   too long parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    // expires
@@ -8083,11 +8093,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    }
    // -- Ende Parametervalidierung --
 
-   int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
-   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
-
    int    ticket, time1, time2, firstTime1, requotes;
    double firstPrice;                                                // erster OrderPrice (falls ERR_REQUOTE auftritt)
 
@@ -8101,8 +8106,22 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
-         if      (type == OP_BUY ) price = MarketInfo(symbol, MODE_ASK);
-         else if (type == OP_SELL) price = MarketInfo(symbol, MODE_BID);
+         double bid = MarketInfo(symbol, MODE_BID);
+         double ask = MarketInfo(symbol, MODE_ASK);
+         if      (type == OP_BUY    ) price = ask;
+         else if (type == OP_SELL   ) price = bid;
+         else if (type == OP_BUYSTOP) {
+            if (LT(price - stopLevel*pips, ask)) {
+               catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Ask="+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS);
+               return(-1);
+            }
+         }
+         else if (type == OP_SELLSTOP) {
+            if (GT(price + stopLevel*pips, bid)) {
+               catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Bid="+ NumberToStr(bid, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS);
+               return(-1);
+            }
+         }
          price = NormalizeDouble(price, digits);
 
          //debug(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
@@ -8119,14 +8138,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (IsError(catch("OrderSendEx(13)")))
+            if (IsError(catch("OrderSendEx(15)")))
                return(-1);
             return(ticket);                                          // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(14)", error);
+               catch("OrderSendEx(16)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8144,7 +8163,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   catch("OrderSendEx(15)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(17)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
 }
 

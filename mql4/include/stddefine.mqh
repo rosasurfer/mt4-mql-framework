@@ -501,7 +501,7 @@ int    prev_error = NO_ERROR;          // der letzte aufgetretene Fehler des vor
 
 double Pip, Pips;                      // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
 int    PipDigits;                      // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
-int    PipPoint, PipPoints;            // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala des Symbols je Pip)
+int    PipPoint, PipPoints;            // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
 string PriceFormat;                    // Preisformat des aktuellen Symbols
 
 int    Tick, Ticks;
