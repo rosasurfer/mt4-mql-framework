@@ -7909,7 +7909,7 @@ string NumberToStr(double number, string mask) {
             nRight = 10*nRight + char-'0';
             nDigit = true;
          }
-         else if (nDigit && char == 39) {    // 39 => '
+         else if (nDigit && char==39) {      // 39 => '
             nSubpip = nRight;
             continue;
          }
@@ -7984,7 +7984,7 @@ string NumberToStr(double number, string mask) {
 
    //debug("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
-   if (catch("NumberToStr()") != NO_ERROR)
+   if (IsError(catch("NumberToStr()")))
       return("");
    return(outStr);
 }
