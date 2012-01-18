@@ -177,17 +177,26 @@ int init() {
    Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluß werden die Daten der ggf. laufenden Sequenz restauriert.
    Es gibt 4 unterschiedliche init()-Szenarien:
 
-   (1.1) Neustart des EA, evt. im Tester (keine internen Daten, externe Sequenz-ID evt. vorhanden)
-   (1.2) Recompilation                   (keine internen Daten, externe Sequenz-ID immer vorhanden)
-   (1.3) Parameteränderung               (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
-   (1.4) Timeframe-Wechsel               (alle internen Daten vorhanden, externe Sequenz-ID unnötig)
+   (1.1) Recompilation:                    keine internen Daten vorhanden, evt. externe Referenz vorhanden (im Chart)
+   (1.2) Neustart des EA, evt. im Tester:  keine internen Daten vorhanden, evt. externe Referenz vorhanden (im Chart)
+   (1.3) Parameteränderung:                alle internen Daten vorhanden, externe Referenz unnötig
+   (1.4) Timeframe-Wechsel:                alle internen Daten vorhanden, externe Referenz unnötig
    */
 
    // (1) Sind keine internen Daten vorhanden, befinden wir uns in Szenario 1.1 oder 1.2.
    if (sequenceId == 0) {
 
-      // (1.1) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
-      if (UninitializeReason() != REASON_RECOMPILE) {
+      // (1.1) Recompilation ----------------------------------------------------------------------------------------------------------------------------------
+      if (UninitializeReason() == REASON_RECOMPILE) {
+         if (RestoreChartSequenceId()) {                             // falls externe Referenz vorhanden: restaurieren und validieren
+            if (RestoreConfiguration())                              // ohne externe Referenz weiter in (1.2)
+               if (ValidateConfiguration())
+                  ReadSequence();
+         }
+      }
+
+      // (1.2) Neustart ---------------------------------------------------------------------------------------------------------------------------------------
+      if (sequenceId == 0) {
          if (IsInputSequenceId()) {                                  // Zuerst eine ausdrücklich angegebene Sequenz-ID restaurieren...
             if (RestoreInputSequenceId())
                if (RestoreConfiguration())
@@ -213,14 +222,6 @@ int init() {
             VisualizeSequence();
          }
       }
-
-      // (1.2) Recompilation ----------------------------------------------------------------------------------------------------------------------------------
-      else if (RestoreChartSequenceId()) {                           // externe Referenz immer vorhanden: restaurieren und validieren
-         if (RestoreConfiguration())
-            if (ValidateConfiguration())
-               ReadSequence();
-      }
-      else catch("init(2)   REASON_RECOMPILE, no stored sequence id found in chart", ERR_RUNTIME_ERROR);
       ClearChartSequenceId();
    }
 
@@ -254,7 +255,7 @@ int init() {
    }
 
    // ---------------------------------------------------------------------------------------------------------------------------------------------------------
-   else catch("init(3)   unknown init() scenario", ERR_RUNTIME_ERROR);
+   else catch("init(2)   unknown init() scenario", ERR_RUNTIME_ERROR);
 
 
    // (2) Status anzeigen
@@ -274,7 +275,7 @@ int init() {
    if (IntInArray(UninitializeReason(), reasons2)) /*&&*/ if (!IsTesting())
       SendTick(false);
 
-   return(catch("init(4)"));
+   return(catch("init(3)"));
 }
 
 
@@ -299,8 +300,8 @@ int deinit() {
       intern.Lotsize.Level.7 = Lotsize.Level.7;
       intern.Sequence.ID     = Sequence.ID;
    }
-   else if (UninitializeReason() != REASON_PARAMETERS) {
-      string configFile = TerminalPath() +"\\experts\\presets\\SR."+ sequenceId +".set";
+   else if (UninitializeReason()==REASON_CHARTCLOSE || UninitializeReason()==REASON_RECOMPILE) {
+      string configFile = TerminalPath() +"\\experts\\presets\\FTP."+ sequenceId +".set";
       if (IsFile(configFile))                                        // Ohne Config-Datei wurde Sequenz abgebrochen und braucht/kann
          StoreChartSequenceId();                                     // beim nächsten init() nicht restauriert werden.
    }
@@ -1917,7 +1918,7 @@ string EntryTypeDescription(int type) {
  * @return int - Fehlerstatus
  */
 int StoreChartSequenceId() {
-   string label = __SCRIPT__ +".sequence_id";
+   string label = __SCRIPT__ +".sequenceId";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
@@ -1934,7 +1935,7 @@ int StoreChartSequenceId() {
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
 bool RestoreChartSequenceId() {
-   string label = __SCRIPT__ +".sequence_id";
+   string label = __SCRIPT__ +".sequenceId";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
       sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;   // (int) double
@@ -1950,7 +1951,7 @@ bool RestoreChartSequenceId() {
  * @return int - Fehlerstatus
  */
 int ClearChartSequenceId() {
-   string label = __SCRIPT__ +".sequence_id";
+   string label = __SCRIPT__ +".sequenceId";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
