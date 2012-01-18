@@ -60,6 +60,11 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(1)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
+
    int    orders = OrdersTotal();
    string positions[]; ArrayResize(positions, 0);
    int    tickets  []; ArrayResize(tickets, 0);
@@ -104,7 +109,7 @@ int onStart() {
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < sizeOfPositions; i++) {
             int error = DeletePrivateProfileKey(file, section, positions[i]);
-            if (error != NO_ERROR)
+            if (IsError(error))
                return(SetLastError(error));
          }
       }
@@ -114,7 +119,9 @@ int onStart() {
       MessageBox("No matching positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("onTick()"));
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   return(catch("onStart(2)"));
 }
 
 

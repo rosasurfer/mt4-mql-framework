@@ -384,21 +384,17 @@ string GetTerminalVersion() {
    int    bufferSize = MAX_PATH;
    string filename[]; InitializeStringBuffer(filename, bufferSize);
    int chars = GetModuleFileNameA(NULL, filename[0], bufferSize);
-   if (chars == 0) {
-      catch("GetTerminalVersion(1) ->kernel32.GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (chars == 0)
+      return(_empty(catch("GetTerminalVersion(1) ->kernel32.GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+
    int iNull[];
    int infoSize = GetFileVersionInfoSizeA(filename[0], iNull);
-   if (infoSize == 0) {
-      catch("GetTerminalVersion(2) ->version.GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (infoSize == 0)
+      return(_empty(catch("GetTerminalVersion(2) ->version.GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
-   if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer)) {
-      catch("GetTerminalVersion(3) ->version.GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer))
+      return(_empty(catch("GetTerminalVersion(3) ->version.GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
@@ -415,9 +411,8 @@ string GetTerminalVersion() {
       debug("GetTerminalVersion()   FileVersionInfo->ProductVersion not found");
       pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
       if (pos == -1) {
-         debug("GetTerminalVersion()   FileVersionInfo->FileVersion not found");
-         catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR);
-         return("");
+         //debug("GetTerminalVersion()   FileVersionInfo->FileVersion not found");
+         return(_empty(catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR)));
       }
       pos += StringLen(key.FileVersion);
    }
@@ -428,15 +423,14 @@ string GetTerminalVersion() {
          break;
    }
    if (pos == infoSize) {
-      debug("GetTerminalVersion()   no non-NULL byte after version key found");
-      catch("GetTerminalVersion(5)   terminal version info value not found", ERR_RUNTIME_ERROR);
-      return("");
+      //debug("GetTerminalVersion()   no non-NULL byte after version key found");
+      return(_empty(catch("GetTerminalVersion(5)   terminal version info value not found", ERR_RUNTIME_ERROR)));
    }
 
    // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
-   if (catch("GetTerminalVersion(6)") != NO_ERROR)
+   if (IsError(catch("GetTerminalVersion(6)")))
       return("");
    return(version);
 }
@@ -529,10 +523,8 @@ int InitializeStringBuffer(string& buffer[], int length) {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0) {
-      catch("CreateString()  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (length < 0)
+      return(_empty(catch("CreateString()  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string newStr = StringConcatenate(MAX_STRING_LITERAL, "");        // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
    int strLen = StringLen(newStr);                                   // Daher wird auch beim Initialisieren StringConcatenate() verwendet (siehe MQL.doc).
@@ -652,17 +644,15 @@ string GetLocalConfigPath() {
 
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR) {
-            catch("GetLocalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-            return("");
-         }
+         if (hFile == HFILE_ERROR)
+            return(_empty(catch("GetLocalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
 
    cache.localConfigPath[0] = iniFile;                // Ergebnis cachen
 
-   if (catch("GetLocalConfigPath(2)") != NO_ERROR)
+   if (IsError(catch("GetLocalConfigPath(2)")))
       return("");
    return(iniFile);
 }
@@ -700,17 +690,15 @@ string GetGlobalConfigPath() {
 
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
-         if (hFile == HFILE_ERROR) {
-            catch("GetGlobalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-            return("");
-         }
+         if (hFile == HFILE_ERROR)
+            return(_empty(catch("GetGlobalConfigPath(1) ->kernel32._lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
 
    cache.globalConfigPath[0] = iniFile;               // Ergebnis cachen
 
-   if (catch("GetGlobalConfigPath(2)") != NO_ERROR)
+   if (IsError(catch("GetGlobalConfigPath(2)")))
       return("");
    return(iniFile);
 }
@@ -798,8 +786,7 @@ string GetCurrency(int id) {
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
-   catch("GetCurrency()   unknown currency id = "+ id, ERR_RUNTIME_ERROR);
-   return("");
+   return(_empty(catch("GetCurrency()   unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -811,13 +798,17 @@ string GetCurrency(int id) {
  * @return int - Fehlerstatus
  */
 int SortTicketsChronological(int& tickets[]) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("SortTicketsChronological(1)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    int sizeOfTickets = ArraySize(tickets);
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(PeekLastError());
+         return(last_error);
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
    }
@@ -850,6 +841,8 @@ int SortTicketsChronological(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
    return(catch("SortTicketsChronological(2)"));
 }
 
@@ -923,7 +916,7 @@ string CreateLegendLabel(string name) {
    else GetLastError();
    ObjectSetText(label, " ");
 
-   if (catch("CreateLegendLabel()") != NO_ERROR)
+   if (IsError(catch("CreateLegendLabel()")))
       return("");
    return(label);
 }
@@ -1582,7 +1575,7 @@ string BufferToStr(int buffer[]) {
       }
    }
 
-   if (catch("BufferToStr()") != NO_ERROR)
+   if (IsError(catch("BufferToStr()")))
       return("");
    return(result);
 }
@@ -1613,7 +1606,7 @@ string BufferToHexStr(int buffer[]) {
    if (size > 0)
       result = StringSubstr(result, 1);
 
-   if (catch("BufferToHexStr()") != NO_ERROR)
+   if (IsError(catch("BufferToHexStr()")))
       return("");
    return(result);
 }
@@ -1655,10 +1648,10 @@ int BufferGetChar(int buffer[], int pos) {
 string BufferCharsToStr(int buffer[], int from, int length) {
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   if (fromChar < 0)            { catch("BufferCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
-   if (fromChar >= bufferChars) { catch("BufferCharsToStr(2)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE);     return(""); }
-   if (length < 0)              { catch("BufferCharsToStr(3)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
-   if (toChar >= bufferChars)   { catch("BufferCharsToStr(4)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE); return(""); }
+   if (fromChar < 0)            return(_empty(catch("BufferCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (fromChar >= bufferChars) return(_empty(catch("BufferCharsToStr(2)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)              return(_empty(catch("BufferCharsToStr(3)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (toChar >= bufferChars)   return(_empty(catch("BufferCharsToStr(4)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (length == 0)
       return("");
@@ -1683,7 +1676,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
       n = 0;
    }
 
-   if (catch("BufferCharsToStr(5)") != NO_ERROR)
+   if (IsError(catch("BufferCharsToStr(5)")))
       return("");
    return(result);
 }
@@ -1731,7 +1724,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          break;
    }
 
-   if (catch("BufferWCharsToStr(3)") != NO_ERROR)
+   if (IsError(catch("BufferWCharsToStr(3)")))
       return("");
    return(result);
 }
@@ -1855,19 +1848,16 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
 
-   if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk") {
-      catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
+      return(_empty(catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
-   if (hFile == HFILE_ERROR) {
-      catch("GetWin32ShortcutTarget(2) ->kernel32._lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (hFile == HFILE_ERROR)
+      return(_empty(catch("GetWin32ShortcutTarget(2) ->kernel32._lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+
    int iNull[];
    int fileSize = GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
@@ -1885,10 +1875,8 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    }
    _lclose(hFile);
 
-   if (bytes < 24) {
-      catch("GetWin32ShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (bytes < 24)
+      return(_empty(catch("GetWin32ShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int integers  = ArraySize(buffer);
    int charsSize = bytes;
@@ -1906,10 +1894,9 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // The GUID is telling the version of the .lnk-file format. We expect the
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
-   if (chars[0] != 'L') {                          // test the magic value
-      catch("GetWin32ShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (chars[0] != 'L')                            // test the magic value
+      return(_empty(catch("GetWin32ShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+
    if (chars[ 4] != 0x01 ||                        // test the GUID
        chars[ 5] != 0x14 ||
        chars[ 6] != 0x02 ||
@@ -1926,8 +1913,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      catch("GetWin32ShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
+      return(_empty(catch("GetWin32ShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
    }
 
    // --------------------------------------------------------------------------
@@ -1952,10 +1938,8 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    bool hasShellItemIdList = (dwFlags & 0x00000001 == 0x00000001);
    bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
 
-   if (!pointsToFileOrDir) {
-      log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
-      return("");
-   }
+   if (!pointsToFileOrDir)
+      return(_empty(log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"")));
 
    // --------------------------------------------------------------------------
    // Shell item id list (starts at offset 76 with 2 byte length):
@@ -1963,10 +1947,8 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    int A = -6;
    if (hasShellItemIdList) {
       i = 76;
-      if (charsSize < i+2) {
-         catch("GetWin32ShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-         return("");
-      }
+      if (charsSize < i+2)
+         return(_empty(catch("GetWin32ShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
       A  = chars[76];               // little endian format
       A |= chars[77] << 8;
    }
@@ -1978,10 +1960,9 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // followed by 4 byte offset.
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
-   if (charsSize < i+4) {
-      catch("GetWin32ShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (charsSize < i+4)
+      return(_empty(catch("GetWin32ShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+
    int B  = chars[i];       i++;    // little endian format
        B |= chars[i] <<  8; i++;
        B |= chars[i] << 16; i++;
@@ -1994,10 +1975,9 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // skipping the actual table and moving to the local path string.
    // --------------------------------------------------------------------------
    i = 78 + A + B;
-   if (charsSize < i+4) {
-      catch("GetWin32ShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (charsSize < i+4)
+      return(_empty(catch("GetWin32ShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+
    int C  = chars[i];       i++;    // little endian format
        C |= chars[i] <<  8; i++;
        C |= chars[i] << 16; i++;
@@ -2007,20 +1987,17 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // Local path string (ending with 0x00):
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
-   if (charsSize < i+1) {
-      catch("GetWin32ShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (charsSize < i+1)
+      return(_empty(catch("GetWin32ShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+
    string target = "";
    for (; i < charsSize; i++) {
       if (chars[i] == 0x00)
          break;
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
-   if (StringLen(target) == 0) {
-      catch("GetWin32ShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (StringLen(target) == 0)
+      return(_empty(catch("GetWin32ShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
@@ -2033,7 +2010,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    //debug("GetWin32ShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-   if (catch("GetWin32ShortcutTarget(13)") != NO_ERROR)
+   if (IsError(catch("GetWin32ShortcutTarget(13)")))
       return("");
    return(target);
 }
@@ -2098,10 +2075,8 @@ string GetTradeServerDirectory() {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-      if (hFile < 0) {                                               // u.a. wenn das Serververzeichnis noch nicht existiert
-         catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")");
-         return("");
-      }
+      if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
+         return(_empty(catch("GetTradeServerDirectory(1)  FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -2130,23 +2105,18 @@ string GetTradeServerDirectory() {
          }
          result = FindNextFileA(hFindDir, wfd);
       }
-      if (result == INVALID_HANDLE_VALUE) {
-         catch("GetTradeServerDirectory(3) ->kernel32.FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-         return("");
-      }
+      if (result == INVALID_HANDLE_VALUE)
+         return(_empty(catch("GetTradeServerDirectory(3) ->kernel32.FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
       FindClose(hFindDir);
       //debug("GetTradeServerDirectory()   resolved directory = \""+ directory +"\"");
    }
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("GetTradeServerDirectory(4)", error);
-      return("");
-   }
-   if (StringLen(directory) == 0) {
-      catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR);
-      return("");
-   }
+   if (IsError(error))
+      return(_empty(catch("GetTradeServerDirectory(4)", error)));
+
+   if (StringLen(directory) == 0)
+      return(_empty(catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    // 3.3) Wert cachen
    ArrayResize(cache.directory, 1);
@@ -2363,10 +2333,8 @@ string WaitForSingleObjectValueToStr(int value) {
  * @see GetStandardSymbolOrAlt()
  */
 string GetStandardSymbol(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbol()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetStandardSymbol()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetStandardSymbolOrAlt(symbol, symbol));
 }
 
@@ -2389,10 +2357,8 @@ string GetStandardSymbol(string symbol) {
  * @see GetStandardSymbolStrict()
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbolOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetStandardSymbolOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetStandardSymbolStrict(symbol);
 
@@ -2415,10 +2381,8 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  * @see GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
  */
 string GetStandardSymbolStrict(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetStandardSymbolStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetStandardSymbolStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = StringToUpper(symbol);
 
@@ -2629,10 +2593,8 @@ string GetStandardSymbolStrict(string symbol) {
  * @see GetSymbolNameOrAlt()
  */
 string GetSymbolName(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -2649,10 +2611,8 @@ string GetSymbolName(string symbol) {
  * @see GetSymbolNameStrict()
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0) {
-      catch("GetSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetSymbolNameStrict(symbol);
 
@@ -2672,10 +2632,8 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  * @return string - Kurzname oder Leerstring, wenn das Symbol unbekannt ist
  */
 string GetSymbolNameStrict(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
    if (StringLen(symbol) == 0)
@@ -2810,10 +2768,8 @@ string GetSymbolNameStrict(string symbol) {
  * @see GetLongSymbolNameOrAlt()
  */
 string GetLongSymbolName(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetLongSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetLongSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -2828,10 +2784,8 @@ string GetLongSymbolName(string symbol) {
  * @return string - Ergebnis
  */
 string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetLongSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetLongSymbolNameStrict(symbol);
 
@@ -2851,10 +2805,8 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  * @return string - Langname oder Leerstring, wenn das Symnol unbekannt ist oder keinen Langnamen hat
  */
 string GetLongSymbolNameStrict(string symbol) {
-   if (StringLen(symbol) == 0) {
-      catch("GetLongSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (StringLen(symbol) == 0)
+      return(_empty(catch("GetLongSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
 
@@ -3223,10 +3175,8 @@ string StringReplace(string object, string search, string replace) {
    result = StringConcatenate(result, StringSubstr(object, startPos));
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("StringReplace()", error);
-      return("");
-   }
+   if (IsError(error))
+      return(_empty(catch("StringReplace()", error)));
    return(result);
 }
 
@@ -4238,6 +4188,10 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("EventListener.PositionOpen(1)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    int orders = OrdersTotal();
 
    // pending Orders und offene Positionen überprüfen
@@ -4253,7 +4207,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          for (n=0; n < pendings; n++)
             if (knownPendings[n][0] == ticket)              // bekannte pending Order
                break;
-         if (n < pendings) continue;
+         if (n < pendings)
+            continue;
 
          ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
@@ -4267,7 +4222,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
          for (n=0; n < positions; n++)
             if (knownPositions[n] == ticket)                // bekannte Position
                break;
-         if (n < positions) continue;
+         if (n < positions)
+            continue;
 
          // Die offenen Positionen stehen u.U. (z.B. nach Accountwechsel) erst nach einigen Ticks zur Verfügung. Daher müssen
          // neue Positionen zusätzlich anhand ihres OrderOpen-Timestamps auf ihren jeweiligen Status überprüft werden.
@@ -4309,9 +4265,11 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    //debug("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.PositionOpen()", error)==NO_ERROR);
+   if (IsError(error))
+      return(_false(catch("EventListener.PositionOpen(2)", error)));
 
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
    return(eventStatus);
 }
 
@@ -4330,6 +4288,10 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    int account = AccountNumber();
    if (account == 0)
       return(false);
+
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("EventListener.PositionClose(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
 
    // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
@@ -4404,9 +4366,11 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    //debug("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.PositionClose(2)", error)==NO_ERROR);
+   if (IsError(error))
+      return(_false(catch("EventListener.PositionClose(2)", error)));
 
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
    return(eventStatus);
 }
 
@@ -4864,10 +4828,9 @@ string GetComputerName() {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
    int    lpBufferSize[1]; lpBufferSize[0] = bufferSize;
 
-   if (!GetComputerNameA(buffer[0], lpBufferSize)) {
-      catch("GetComputerName() ->kernel32.GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (!GetComputerNameA(buffer[0], lpBufferSize))
+      return(_empty(catch("GetComputerName() ->kernel32.GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+
    return(buffer[0]);
 }
 
@@ -5269,7 +5232,7 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   if (catch("GetPrivateProfileString()") != NO_ERROR)
+   if (IsError(catch("GetPrivateProfileString()")))
       return("");
    return(buffer[0]);
 }
@@ -5371,10 +5334,8 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
  * @return string - Wochentag
  */
 string GetDayOfWeek(datetime time, bool long=true) {
-   if (time < 0) {
-      catch("GetDayOfWeek(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (time < 0)
+      return(_empty(catch("GetDayOfWeek(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
@@ -5679,8 +5640,7 @@ string EventToStr(int event) {
       case EVENT_ACCOUNT_PAYMENT: return("AccountPayment");
       case EVENT_HISTORY_CHANGE : return("HistoryChange" );
    }
-   catch("EventToStr()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("EventToStr()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5724,8 +5684,7 @@ string MovingAverageMethodToStr(int method) {
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   catch("MovingAverageMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("MovingAverageMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5744,8 +5703,7 @@ string MovingAverageMethodDescription(int method) {
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   catch("MovingAverageMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("MovingAverageMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5794,8 +5752,7 @@ string MessageBoxCmdToStr(int cmd) {
       case IDTRYAGAIN: return("IDTRYAGAIN");
       case IDCONTINUE: return("IDCONTINUE");
    }
-   catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR);
-   return("");
+   return(_empty(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -5838,8 +5795,7 @@ string OperationTypeToStr(int type) {
       case OP_BALANCE  : return("OP_BALANCE"  );
       case OP_CREDIT   : return("OP_CREDIT"   );
    }
-   catch("OperationTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("OperationTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5861,8 +5817,7 @@ string OperationTypeDescription(int type) {
       case OP_BALANCE  : return("Balance"   );
       case OP_CREDIT   : return("Credit"    );
    }
-   catch("OperationTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("OperationTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5883,9 +5838,7 @@ string AppliedPriceToStr(int appliedPrice) {
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
    }
-
-   catch("AppliedPriceToStr()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("AppliedPriceToStr()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5906,9 +5859,7 @@ string AppliedPriceDescription(int appliedPrice) {
       case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
    }
-
-   catch("AppliedPriceDescription()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("AppliedPriceDescription()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5962,9 +5913,7 @@ string PeriodToStr(int period=NULL) {
       case PERIOD_W1 : return("PERIOD_W1" );     // 10080  weekly
       case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
    }
-
-   catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5990,9 +5939,7 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_W1 : return("W1" );     // 10080  weekly
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
-
-   catch("PeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("PeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6110,17 +6057,15 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    else {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
-      if (StringLen(timezone) == 0) {
-         catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG);
-         return("");
-      }
+      if (StringLen(timezone) == 0)
+         return(_empty(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
    // 4) Timezone-ID cachen
    ArrayResize(cache.timezone, 1);
    cache.timezone[0] = timezone;
 
-   if (catch("GetServerTimezone(2)") != NO_ERROR)
+   if (IsError(catch("GetServerTimezone(2)")))
       return("");
    return(timezone);
 }
@@ -6203,9 +6148,7 @@ string UninitializeReasonDescription(int reason) {
       case REASON_PARAMETERS : return("input parameters changed"              );
       case REASON_ACCOUNT    : return("account changed"                       );
    }
-
-   catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6226,9 +6169,7 @@ string UninitializeReasonToStr(int reason) {
       case REASON_PARAMETERS : return("REASON_PARAMETERS" );
       case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
    }
-
-   catch("UninitializeReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("UninitializeReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6262,10 +6203,9 @@ string GetClassName(int hWnd) {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-   if (chars == 0) {
-      catch("GetClassName() ->user32.GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      return("");
-   }
+   if (chars == 0)
+      return(_empty(catch("GetClassName() ->user32.GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+
    return(buffer[0]);
 }
 
@@ -6765,7 +6705,7 @@ string JoinStrings(string values[], string separator) {
    if (size > 0)
       result = StringConcatenate(values[0], result);
 
-   if (catch("JoinStrings()") != NO_ERROR)
+   if (IsError(catch("JoinStrings()")))
       return("");
    return(result);
 }
@@ -7289,7 +7229,7 @@ string StringToLower(string value) {
       else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
    }
 
-   if (catch("StringToLower()") != NO_ERROR)
+   if (IsError(catch("StringToLower()")))
       return("");
    return(result);
 }
@@ -7323,7 +7263,7 @@ string StringToUpper(string value) {
       else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
    }
 
-   if (catch("StringToUpper()") != NO_ERROR)
+   if (IsError(catch("StringToUpper()")))
       return("");
    return(result);
 }
@@ -7363,7 +7303,7 @@ string UrlEncode(string value) {
       else                              result = StringConcatenate(result, "%", CharToHexStr(char));
    }
 
-   if (catch("UrlEncode()") != NO_ERROR)
+   if (IsError(catch("UrlEncode()")))
       return("");
    return(result);
 }
@@ -7707,10 +7647,9 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  * @return string
  */
 string DoubleToStrEx(double value, int digits) {
-   if (digits < 0 || digits > 16) {
-      catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (digits < 0 || digits > 16)
+      return(_empty(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    /*
    double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
                           10.0,     // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
@@ -7819,10 +7758,8 @@ int MathSign(double number) {
  * @return string - the repeated string
  */
 string StringRepeat(string input, int times) {
-   if (times < 0) {
-      catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return("");
-   }
+   if (times < 0)
+      return(_empty(catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (times ==  0)           return("");
    if (StringLen(input) == 0) return("");
@@ -8009,7 +7946,7 @@ string NumberToStr(double number, string mask) {
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
  * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
  *
- * @return int - Ticket-Nummer oder -1, wenn ein Fehler auftrat
+ * @return int - Ticket oder -1, falls ein Fehler auftrat
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, double slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
@@ -8138,14 +8075,26 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (IsError(catch("OrderSendEx(15)")))
+            // letztes selektiertes Ticket speichern
+            int _error_      = GetLastError(); if (IsError(_error_)) return(catch("OrderSendEx(15)", _error_));
+            int _lastTicket_ = OrderTicket(); GetLastError();
+
+            // warten, bis Ticket im Trade- bzw. History-Pool erscheint und Zugriff möglich ist
+            while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+               ForceAlert("OrderSendEx()   newly opened ticket #", ticket, " not yet accessible");
+               Sleep(100);                                           // 0.1 Sekunden warten
+            }
+            // letztes selektiertes Ticket restaurieren
+            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+            if (IsError(catch("OrderSendEx(16)")))
                return(-1);
             return(ticket);                                          // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(16)", error);
+               catch("OrderSendEx(17)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8163,7 +8112,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   catch("OrderSendEx(17)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(18)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
 }
 
@@ -8185,6 +8134,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_empty(catch("OrderSendEx.Logmessage(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
 
    if (!OrderSelectByTicket(ticket))
       return("");
@@ -8222,11 +8175,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
    message = StringConcatenate(message, strSlippage);
 
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
    int error = GetLastError();
-   if (IsError(error)) {
-      catch("OrderSendEx.LogMessage(2)", error);
-      return("");
-   }
+   if (IsError(error))
+      return(_empty(catch("OrderSendEx.LogMessage(2)", error)));
    return(message);
 }
 
@@ -8243,33 +8197,37 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, color markerColor=CLR_NONE) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderCloseEx(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket))
       return(false);
-   if (OrderCloseTime() != 0) return(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-   if (OrderType() > OP_SELL) return(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderCloseTime() != 0) return(_false(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)));
+   if (OrderType() > OP_SELL) return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)));
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (error != NO_ERROR) return(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)==NO_ERROR);
+   if (IsError(error)) return(_false(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error)));
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                 return(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
-      if (GT(lots, OrderLots()))            return(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
-      if (NE(MathModFix(lots, lotStep), 0)) return(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+      if (LT(lots, minLot))                 return(_false(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (GT(lots, OrderLots()))            return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (NE(MathModFix(lots, lotStep), 0)) return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))    return(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(price, 0))    return(_false(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // slippage
-   if (LT(slippage, 0)) return(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0)) return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -8309,7 +8267,10 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            return(catch("OrderCloseEx(11)")==NO_ERROR);             // regular exit
+            // letztes selektiertes Ticket restaurieren
+            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+            return(IsNoError(catch("OrderCloseEx(11)")));            // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
@@ -8331,8 +8292,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
       }
    }
 
-   catch("OrderCloseEx(13)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
-   return(false);
+   return(_false(catch("OrderCloseEx(13)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
 
@@ -8343,6 +8303,10 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    int    pipDigits   = digits & (~1);
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_empty(catch("OrderCloseEx.LogMessage(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
 
    // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
 
@@ -8372,11 +8336,12 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
    message = StringConcatenate(message, strSlippage);
 
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("OrderCloseEx.LogMessage(2)", error);
-      return("");
-   }
+   if (IsError(error))
+      return(_empty(catch("OrderCloseEx.LogMessage(2)", error)));
    return(message);
 }
 
@@ -8393,11 +8358,15 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderCloseByEx(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket)) return(false);
-   if (OrderCloseTime() != 0)        return(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-   if (OrderType() > OP_SELL)        return(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderCloseTime() != 0)        return(_false(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)));
+   if (OrderType() > OP_SELL)        return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)));
    int    ticketType     = OrderType();
    double ticketLots     = OrderLots();
    string symbol         = OrderSymbol();
@@ -8405,16 +8374,16 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
 
    // opposite
    if (!OrderSelectByTicket(opposite)) return(false);
-   if (OrderCloseTime() != 0)          return(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
+   if (OrderCloseTime() != 0)          return(_false(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)));
    int    oppositeType     = OrderType();
    double oppositeLots     = OrderLots();
    string oppositeOpenTime = OrderOpenTime();
-   if (ticket == opposite)             return(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
-   if (ticketType != oppositeType ^ 1) return(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
-   if (symbol != OrderSymbol())        return(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)==NO_ERROR);
+   if (ticket == opposite)             return(_false(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
+   if (ticketType != oppositeType ^ 1) return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
+   if (symbol != OrderSymbol())        return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
 
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(catch("OrderCloseByEx(9)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(9)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -8461,17 +8430,20 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   }
                }
                if (ArraySize(remainder) == 0)
-                  return(catch("OrderCloseByEx(10)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)==NO_ERROR);
+                  return(_false(catch("OrderCloseByEx(10)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)));
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
             log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             if (!IsTesting()) PlaySound("OrderOk.wav");
 
-            return(catch("OrderCloseByEx(11)")==NO_ERROR);                 // regular exit
+            // letztes selektiertes Ticket restaurieren
+            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+            return(IsNoError(catch("OrderCloseByEx(11)")));                // regular exit
          }
          time2     = GetTickCount();
          int error = GetLastError();
-         if (error == NO_ERROR)
+         if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
@@ -8482,8 +8454,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
       Sleep(300);                                                          // 0.3 Sekunden warten
    }
 
-   catch("OrderCloseByEx(12)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error);
-   return(false);
+   return(_false(catch("OrderCloseByEx(12)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error)));
 }
 
 
@@ -8498,26 +8469,34 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
 bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0) return(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (sizeOfTickets == 0) return(_false(catch("OrderMultiClose(2)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i])) return(false);
-      if (OrderCloseTime() != 0)            return(catch("OrderMultiClose(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)==NO_ERROR);
-      if (OrderType() > OP_SELL)            return(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)==NO_ERROR);
+      if (OrderCloseTime() != 0)            return(_false(catch("OrderMultiClose(3)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)));
+      if (OrderType() > OP_SELL)            return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)));
    }
    // slippage
-   if (LT(slippage, 0))                                         return(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (LT(slippage, 0))                                         return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(catch("OrderMultiClose(6)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)==NO_ERROR);
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
-   if (sizeOfTickets == 1)
+   if (sizeOfTickets == 1) {
+      // letztes selektiertes Ticket restaurieren
+      if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
       return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor));
+   }
 
 
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, arbeiten wir auf einer Kopie.
@@ -8584,7 +8563,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          if (!OrderMultiClose.Hedges(perSymbolTickets, markerColor))
             return(false);
       }
-      return(catch("OrderMultiClose(8)")==NO_ERROR);
+      // letztes selektiertes Ticket restaurieren
+      if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+      return(IsNoError(catch("OrderMultiClose(8)")));
    }
 
 
@@ -8597,7 +8579,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
       return(false);
 
-   return(catch("OrderMultiClose(9)")==NO_ERROR);
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+   return(IsNoError(catch("OrderMultiClose(9)")));
 }
 
 
@@ -8611,6 +8596,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @return bool - Erfolgsstatus
  */
 /*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage=0) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose.Flatten(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    int    sizeOfTickets = ArraySize(tickets);
    double totalLots;
 
@@ -8626,7 +8615,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    }
    else {                                                            // Gesamtposition hedgen
 
-      // TODO: Statt OrderSend() nach Möglichkeit OrderClosePartial() verwenden (spart Magin, besser bei TradeserverLimits etc.)
+      // TODO: Statt OrderSend() nach Möglichkeit OrderClosePartial() verwenden (spart Margin, besser bei TradeserverLimits etc.)
 
       int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
 
@@ -8642,7 +8631,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       hedgeTicket = hedge;
    }
 
-   return(catch("OrderMultiClose.Flatten(2)")==NO_ERROR);
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+   return(IsNoError(catch("OrderMultiClose.Flatten(2)")));
 }
 
 
@@ -8655,6 +8647,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @return bool - Erfolgsstatus
  */
 /*private*/ bool OrderMultiClose.Hedges(int tickets[], color markerColor=CLR_NONE) {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose.Hedges(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    ArrayCopy(ticketsCopy, tickets);
@@ -8683,7 +8679,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
             break;
          }
       }
-      if (hedge == 0) return(catch("OrderMultiClose.Hedges(1)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)==NO_ERROR);
+      if (hedge == 0) return(_false(catch("OrderMultiClose.Hedges(2)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)));
       /*
       if (IsTesting()) {
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
@@ -8748,7 +8744,10 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       */
    }
 
-   return(catch("OrderMultiClose.Hedges(2)")==NO_ERROR);
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+   return(IsNoError(catch("OrderMultiClose.Hedges(3)")));
 }
 
 

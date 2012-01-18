@@ -33,7 +33,7 @@ int deinit() {
 int onStart() {
    int account = AccountNumber();
    if (account == 0) {
-      log("onTick()  no trade server connection");
+      log("onStart()  no trade server connection");
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
@@ -56,6 +56,12 @@ int onStart() {
    int      magicNumbers[]; ArrayResize(magicNumbers, orders);
    string   comments    []; ArrayResize(comments,     orders);
 
+
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(1)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
+
    int n;
 
    for (int i=0; i < orders; i++) {
@@ -75,13 +81,13 @@ int onStart() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {
-               log("onTick()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
+               log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the Market Watch window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
             }
-            if (error != NO_ERROR)
-               return(catch("onTick(1)", error));
+            if (IsError(error))
+               return(catch("onStart(1)", error));
             units[n] = OrderLots() * lotSize;
          }
       openTimes   [n] = OrderOpenTime();
@@ -119,21 +125,21 @@ int onStart() {
    string filename = ShortAccountCompany() +"\\tmp_"+ __SCRIPT__ +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
-      return(catch("onTick(2)  FileOpen(filename=\""+ filename +"\")"));
+      return(catch("onStart(2)  FileOpen(filename=\""+ filename +"\")"));
 
    // (2.1) Dateikommentar
    string header = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
    if (FileWrite(hFile, header) < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("onTick(3)  FileWrite()", error));
+      return(catch("onStart(3)  FileWrite()", error));
    }
 
    // (2.2) Status
    if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountBalance") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("onTick(4)  FileWrite()", error));
+      return(catch("onStart(4)  FileWrite()", error));
    }
    string accountCompany = AccountCompany();
    string accountNumber  = AccountNumber();
@@ -142,14 +148,14 @@ int onStart() {
    if (FileWrite(hFile, accountCompany,accountNumber,accountBalance) < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("onTick(5)  FileWrite()", error));
+      return(catch("onStart(5)  FileWrite()", error));
    }
 
    // (2.2) Daten
    if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
       error = GetLastError();
       FileClose(hFile);
-      return(catch("onTick(6)  FileWrite()", error));
+      return(catch("onStart(6)  FileWrite()", error));
    }
    for (i=0; i < orders; i++) {
       string strType        = OperationTypeDescription(types[i]);
@@ -169,15 +175,15 @@ int onStart() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("onTick(7)  FileWrite()", error));
+         return(catch("onStart(7)  FileWrite()", error));
       }
    }
 
    // (2.3) Datei schließen
    FileClose(hFile);
    error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("onTick(8)  FileClose()", error));
+   if (IsError(error))
+      return(catch("onStart(8)  FileClose()", error));
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
@@ -185,10 +191,10 @@ int onStart() {
    int result = UploadDataFile(filename, errorMsg);
 
    if (result >= ERR_RUNTIME_ERROR) {        // bei Fehler Rückkehr
-      error = catch("onTick(9)");
-      if (error == NO_ERROR)
+      error = catch("onStart(9)");
+      if (IsNoError(error))
          error = ERR_RUNTIME_ERROR;
-      return(error);
+      return(SetLastError(error));
    }
 
 
@@ -202,7 +208,9 @@ int onStart() {
       MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("onTick(10)"));
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   return(catch("onStart(10)"));
 }
 
 

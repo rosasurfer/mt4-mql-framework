@@ -307,6 +307,10 @@ int CheckPosition() {
    if (positionChecked)
       return(NO_ERROR);
 
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("CheckPosition(1)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    longPosition  = 0;
    shortPosition = 0;
    totalPosition = 0;
@@ -327,7 +331,9 @@ int CheckPosition() {
    noPosition      = EQ(longPosition, 0) && EQ(shortPosition, 0);
    positionChecked = true;
 
-   return(catch("CheckPosition()"));
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   return(catch("CheckPosition(2)"));
 }
 
 

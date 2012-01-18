@@ -869,10 +869,9 @@ bool OrderSelectByTicket(int ticket) {
       return(true);
 
    int error = GetLastError();
-   if (error == NO_ERROR)
+   if (IsNoError(error))
       error = ERR_INVALID_TICKET;
-   catch("OrderSelectByTicket()", error);
-   return(false);
+   return(_false(catch("OrderSelectByTicket()", error)));
 }
 
 
@@ -959,11 +958,25 @@ int _NO_ERROR(int value = NULL) {
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int value - beliebiger Parameter (default: NULL)
+ *
+ * @return string - Leerstring
+ */
+string _empty(int value = NULL) {
+   return("");
+}
+
+
+/**
  * Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
  */
 void DummyCalls() {
    _NO_ERROR();
    _NULL();
+   _empty();
    _false();
    _true();
    catch(NULL);

@@ -1869,8 +1869,7 @@ string SequenceStatusToStr(int status) {
       case STATUS_FINISHED   : return("STATUS_FINISHED"   );
       case STATUS_DISABLED   : return("STATUS_DISABLED"   );
    }
-   catch("SequenceStatusToStr()  invalid parameter status: "+ status, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("SequenceStatusToStr()  invalid parameter status: "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -1888,8 +1887,7 @@ string EntryTypeToStr(int type) {
       case ENTRYTYPE_BANDS    : return("ENTRYTYPE_BANDS"    );
       case ENTRYTYPE_ENVELOPES: return("ENTRYTYPE_ENVELOPES");
    }
-   catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -1907,8 +1905,7 @@ string EntryTypeDescription(int type) {
       case ENTRYTYPE_BANDS    : return("BollingerBands");
       case ENTRYTYPE_ENVELOPES: return("Envelopes"     );
    }
-   catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return("");
+   return(_empty(catch("EntryTypeToStr()  invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 

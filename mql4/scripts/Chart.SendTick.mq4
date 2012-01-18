@@ -32,7 +32,7 @@ int deinit() {
  */
 int onStart() {
    SendTick(true);
-   return(catch("onTick()"));
+   return(catch("onStart()"));
 }
 
 

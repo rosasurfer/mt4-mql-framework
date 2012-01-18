@@ -148,7 +148,7 @@ int onStart() {
 
       int error = GetLastError();                     // auf ERR_UNKNOWN_SYMBOL prüfen
       if (error != NO_ERROR)
-         return(catch("onTick(1)   \""+ symbols[i] +"\"", error));
+         return(catch("onStart(1)   \""+ symbols[i] +"\"", error));
 
       // auf ERR_INVALID_MARKETINFO prüfen
       string errorMsg = "";
@@ -173,7 +173,7 @@ int onStart() {
             i = -1;
             continue;
          }
-         return(catch("onTick(2)"));
+         return(catch("onStart(2)"));
       }
 
       double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
@@ -182,9 +182,9 @@ int onStart() {
       lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
 
       if (LT(lots[i], minLot))
-         return(catch("onTick(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("onStart(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
       if (GT(lots[i], maxLot))
-         return(catch("onTick(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+         return(catch("onStart(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
    }
 
 
@@ -200,7 +200,7 @@ int onStart() {
    PlaySound("notify.wav");
    button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
-      return(catch("onTick(5)"));
+      return(catch("onStart(5)"));
 
 
    // (5) Daten bereits offener Positionen einlesen
@@ -221,8 +221,8 @@ int onStart() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
 
-      if (stdlib_PeekLastError() != NO_ERROR) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
-      if (catch("onTick(6)")      != NO_ERROR) return(last_error);
+      if (IsError(stdlib_PeekLastError())) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
+      if (IsError(catch("onStart(6)")))    return(last_error);
 
       tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
       if (tickets[i] == -1)
@@ -230,12 +230,17 @@ int onStart() {
    }
 
 
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(7)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
+
    // (7) OpenPrice der neuen Position berechnen
    double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
       if (!OrderSelectByTicket(tickets[i]))
-         return(PeekLastError());
+         return(last_error);
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }
@@ -248,7 +253,7 @@ int onStart() {
    int    lfxDigits = ifInt(Currency=="JPY", 3, 5);
    string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   log("onTick()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   log("onStart()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
    // (9) Position in "experts\files\SIG\remote_positions.ini" eintragen
@@ -258,9 +263,11 @@ int onStart() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("onTick(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
-   return(catch("onTick(9)"));
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   return(catch("onStart(9)"));
 }
 
 
@@ -270,6 +277,10 @@ int onStart() {
  * @return bool - Erfolgsstatus
  */
 bool ReadOpenPositions() {
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("ReadPositions(1)", _error_)));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
    ArrayResize(positions.magic   , 0);
    ArrayResize(positions.currency, 0);
    ArrayResize(positions.units   , 0);
@@ -294,7 +305,9 @@ bool ReadOpenPositions() {
       }
    }
 
-   return(catch("ReadOpenPositions()")==NO_ERROR);
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   return(IsNoError(catch("ReadOpenPositions(2)")));
 }
 
 
