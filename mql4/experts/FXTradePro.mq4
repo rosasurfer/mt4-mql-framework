@@ -221,6 +221,7 @@ int init() {
                ReadSequence();
       }
       else catch("init(2)   REASON_RECOMPILE, no stored sequence id found in chart", ERR_RUNTIME_ERROR);
+      ClearChartSequenceId();
    }
 
    // (1.3) Parameteränderung ---------------------------------------------------------------------------------------------------------------------------------
@@ -298,8 +299,10 @@ int deinit() {
       intern.Lotsize.Level.7 = Lotsize.Level.7;
       intern.Sequence.ID     = Sequence.ID;
    }
-   else {
-      StoreChartSequenceId();
+   else if (UninitializeReason() != REASON_PARAMETERS) {
+      string configFile = TerminalPath() +"\\experts\\presets\\SR."+ sequenceId +".set";
+      if (IsFile(configFile))                                        // Ohne Config-Datei wurde Sequenz abgebrochen und braucht/kann
+         StoreChartSequenceId();                                     // beim nächsten init() nicht restauriert werden.
    }
    return(catch("deinit()"));
 }
@@ -1938,6 +1941,21 @@ bool RestoreChartSequenceId() {
       return(_true(catch("RestoreChartSequenceId(1)")));
    }
    return(_false(catch("RestoreChartSequenceId(2)")));
+}
+
+
+/**
+ * Löscht im Chart gespeicherte Sequenzdaten.
+ *
+ * @return int - Fehlerstatus
+ */
+int ClearChartSequenceId() {
+   string label = __SCRIPT__ +".sequence_id";
+
+   if (ObjectFind(label) != -1)
+      ObjectDelete(label);
+
+   return(catch("ClearChartSequenceId()"));
 
    // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
    EntryTypeDescription(NULL);
