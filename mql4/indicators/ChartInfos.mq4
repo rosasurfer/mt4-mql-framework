@@ -16,13 +16,14 @@
 double TickSize;
 
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
-string objects[];
 
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
 double leverage;                                                     // Hebel zur UnitSize-Berechnung
 
 bool   noPosition, flatPosition, positionChecked;
 double longPosition, shortPosition, totalPosition;
+
+string objects[];
 
 
 /**
@@ -37,10 +38,8 @@ int init() {
    TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
    int error = GetLastError();
-   if (error!=NO_ERROR || TickSize < 0.00000001) {
-      error = catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(error==NO_ERROR, ERR_INVALID_MARKETINFO, error));
-      return(error);
-   }
+   if (IsError(error) || TickSize < 0.00000001)
+      return(catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO)));
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -206,7 +205,7 @@ int UpdatePriceLabel() {
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdatePriceLabel()", error));
 }
@@ -232,7 +231,7 @@ int UpdateSpreadLabel() {
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
 }
@@ -292,7 +291,7 @@ int UpdateUnitSizeLabel() {
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateUnitSizeLabel(2)", error));
 }
@@ -355,7 +354,7 @@ int UpdatePositionLabel() {
    ObjectSetText(positionLabel, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)          // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdatePositionLabel()", error));
 }
@@ -444,7 +443,7 @@ int UpdateMarginLevels() {
 
 
    error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateMarginLevels()", error));
 }
