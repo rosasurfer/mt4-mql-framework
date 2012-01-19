@@ -230,11 +230,6 @@ int onStart() {
    }
 
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(7)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
-
    // (7) OpenPrice der neuen Position berechnen
    double openPrice = 1.0;
 
@@ -263,11 +258,9 @@ int onStart() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("onStart(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(7) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-   return(catch("onStart(9)"));
+   return(catch("onStart(8)"));
 }
 
 
@@ -277,10 +270,6 @@ int onStart() {
  * @return bool - Erfolgsstatus
  */
 bool ReadOpenPositions() {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("ReadPositions(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    ArrayResize(positions.magic   , 0);
    ArrayResize(positions.currency, 0);
    ArrayResize(positions.units   , 0);
@@ -304,10 +293,7 @@ bool ReadOpenPositions() {
          ArrayPushInt   (positions.counter , LFX.Counter (OrderMagicNumber()));
       }
    }
-
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-   return(IsNoError(catch("ReadOpenPositions(2)")));
+   return(IsNoError(catch("ReadOpenPositions()")));
 }
 
 

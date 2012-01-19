@@ -56,12 +56,6 @@ int onStart() {
    int      magicNumbers[]; ArrayResize(magicNumbers, orders);
    string   comments    []; ArrayResize(comments,     orders);
 
-
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
-
    int n;
 
    for (int i=0; i < orders; i++) {
@@ -207,9 +201,6 @@ int onStart() {
       PlaySound("notify.wav");
       MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
-
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
    return(catch("onStart(10)"));
 }
 

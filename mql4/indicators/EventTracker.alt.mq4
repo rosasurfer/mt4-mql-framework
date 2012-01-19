@@ -197,10 +197,6 @@ int onPositionOpen(int tickets[]) {
    if (!Track.Positions)
       return(NO_ERROR);
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onPositionOpen(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
@@ -228,10 +224,7 @@ int onPositionOpen(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Sound.PositionOpen);
-
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-   return(catch("onPositionOpen(2)"));
+   return(catch("onPositionOpen()"));
 }
 
 
@@ -245,10 +238,6 @@ int onPositionOpen(int tickets[]) {
 int onPositionClose(int tickets[]) {
    if (!Track.Positions)
       return(NO_ERROR);
-
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onPositionClose(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
 
    int positions = ArraySize(tickets);
 
@@ -278,10 +267,7 @@ int onPositionClose(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Sound.PositionClose);
-
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-   return(catch("onPositionClose(2)"));
+   return(catch("onPositionClose()"));
 }
 
 

@@ -8071,13 +8071,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          time2  = GetTickCount();
 
          if (ticket > 0) {
-            // Logmessage generieren
-            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
-            if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-
             // letztes selektiertes Ticket speichern
             int _error_      = GetLastError(); if (IsError(_error_)) return(catch("OrderSendEx(15)", _error_));
             int _lastTicket_ = OrderTicket(); GetLastError();
+
+            // Logmessage generieren
+            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
+            if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
             // warten, bis Ticket im Trade- bzw. History-Pool erscheint und Zugriff möglich ist
             while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -8135,10 +8135,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_empty(catch("OrderSendEx.Logmessage(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    if (!OrderSelectByTicket(ticket))
       return("");
 
@@ -8175,12 +8171,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
    message = StringConcatenate(message, strSlippage);
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
    int error = GetLastError();
    if (IsError(error))
-      return(_empty(catch("OrderSendEx.LogMessage(2)", error)));
+      return(_empty(catch("OrderSendEx.LogMessage()", error)));
    return(message);
 }
 
@@ -8304,10 +8297,6 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_empty(catch("OrderCloseEx.LogMessage(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
 
    if (!OrderSelectByTicket(ticket))
@@ -8336,12 +8325,9 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
    message = StringConcatenate(message, strSlippage);
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
    int error = GetLastError();
    if (IsError(error))
-      return(_empty(catch("OrderCloseEx.LogMessage(2)", error)));
+      return(_empty(catch("OrderCloseEx.LogMessage()", error)));
    return(message);
 }
 
@@ -8596,10 +8582,6 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @return bool - Erfolgsstatus
  */
 /*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage=0) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose.Flatten(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    int    sizeOfTickets = ArraySize(tickets);
    double totalLots;
 
@@ -8631,10 +8613,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       hedgeTicket = hedge;
    }
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
-   return(IsNoError(catch("OrderMultiClose.Flatten(2)")));
+   return(IsNoError(catch("OrderMultiClose.Flatten()")));
 }
 
 
@@ -8647,10 +8626,6 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @return bool - Erfolgsstatus
  */
 /*private*/ bool OrderMultiClose.Hedges(int tickets[], color markerColor=CLR_NONE) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose.Hedges(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, müssen wir auf einer Kopie arbeiten.
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
    ArrayCopy(ticketsCopy, tickets);
@@ -8679,7 +8654,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
             break;
          }
       }
-      if (hedge == 0) return(_false(catch("OrderMultiClose.Hedges(2)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)));
+      if (hedge == 0)
+         return(_false(catch("OrderMultiClose.Hedges(1)   cannot find hedging position for "+ OperationTypeDescription(firstType) +" ticket #"+ first, ERR_RUNTIME_ERROR)));
       /*
       if (IsTesting()) {
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
@@ -8744,10 +8720,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       */
    }
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
-   return(IsNoError(catch("OrderMultiClose.Hedges(3)")));
+   return(IsNoError(catch("OrderMultiClose.Hedges(2)")));
 }
 
 

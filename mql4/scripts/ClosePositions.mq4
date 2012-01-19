@@ -105,10 +105,6 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("onStart(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
    int orders = OrdersTotal();
    int tickets[]; ArrayResize(tickets, 0);
 
@@ -152,7 +148,5 @@ int onStart() {
       MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-   return(catch("onStart(2)"));
+   return(catch("onStart()"));
 }
