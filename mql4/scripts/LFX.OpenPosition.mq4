@@ -234,7 +234,7 @@ int onStart() {
    double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
-      if (!OrderSelectByTicket(tickets[i]))
+      if (!OrderSelectByTicket(tickets[i], "onStart(7)"))
          return(last_error);
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
@@ -258,9 +258,9 @@ int onStart() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("onStart(7) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(8) ->kernel32.WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
-   return(catch("onStart(8)"));
+   return(catch("onStart(9)"));
 }
 
 

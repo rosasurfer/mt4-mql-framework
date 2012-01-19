@@ -200,8 +200,8 @@ int onPositionOpen(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i]))
-         return(PeekLastError());
+      if (!OrderSelectByTicket(tickets[i], "onPositionOpen(1)"))
+         return(last_error);
 
       // alle Positionen werden im aktuellen Instrument gehalten
       string type    = OperationTypeDescription(OrderType());
@@ -224,7 +224,7 @@ int onPositionOpen(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Sound.PositionOpen);
-   return(catch("onPositionOpen()"));
+   return(catch("onPositionOpen(2)"));
 }
 
 
@@ -242,7 +242,7 @@ int onPositionClose(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i]))
+      if (!OrderSelectByTicket(tickets[i], "onPositionClose(1)"))
          continue;
 
       // alle Positionen wurden im aktuellen Instrument gehalten
@@ -267,7 +267,7 @@ int onPositionClose(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Sound.PositionClose);
-   return(catch("onPositionClose()"));
+   return(catch("onPositionClose(2)"));
 }
 
 

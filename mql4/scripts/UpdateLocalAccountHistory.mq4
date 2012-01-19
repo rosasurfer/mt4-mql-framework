@@ -79,7 +79,7 @@ int onStart() {
 
    for (i=0, n=0; i < orders; i++) {
       int ticket = sortData[i][2];
-      if (!OrderSelectByTicket(ticket))
+      if (!OrderSelectByTicket(ticket, "onStart(1)"))
          return(last_error);
 
       int type = OrderType();                                        // gecancelte Orders und Margin Credits überspringen
@@ -132,15 +132,15 @@ int onStart() {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("onStart(1)  ticket #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+            return(catch("onStart(2)  ticket #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
          for (n=0; n < orders; n++)
             if (tickets[n] == ticket)
                break;
-         if (n == orders) return(catch("onStart(2)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
-         if (i == n     ) return(catch("onStart(3)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (n == orders) return(catch("onStart(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (i == n     ) return(catch("onStart(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          int first  = MathMin(i, n);
          int second = MathMax(i, n);
@@ -166,7 +166,7 @@ int onStart() {
 
    int error = GetAccountHistory(account, history);
    if (IsError(error)) /*&&*/ if (error!=ERR_CANNOT_OPEN_FILE)                // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
-      return(catch("onStart(4)", error));
+      return(catch("onStart(5)", error));
 
    int    lastTicket;
    double lastBalance;
@@ -181,11 +181,11 @@ int onStart() {
       if (NE(lastBalance, AccountBalance())) {
          PlaySound("notify.wav");
          MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-         return(catch("onStart(5)"));
+         return(catch("onStart(6)"));
       }
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("onStart(6)"));
+      return(catch("onStart(7)"));
    }
 
 
@@ -201,10 +201,10 @@ int onStart() {
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
       if (NE(lastBalance, AccountBalance()))
-         return(catch("onStart(7)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+         return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-      return(catch("onStart(8)"));
+      return(catch("onStart(9)"));
    }
    //log("onStart()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
@@ -221,7 +221,7 @@ int onStart() {
       log("onStart()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
-      return(catch("onStart(9)"));
+      return(catch("onStart(10)"));
    }
 
 
@@ -232,7 +232,7 @@ int onStart() {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("onStart(10)  FileOpen()"));
+         return(catch("onStart(11)  FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetTradeServerDirectory() +")\n"
@@ -240,23 +240,23 @@ int onStart() {
       if (FileWrite(hFile, header) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("onStart(11)  FileWrite()", error));
+         return(catch("onStart(12)  FileWrite()", error));
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("onStart(12)  FileWrite()", error));
+         return(catch("onStart(13)  FileWrite()", error));
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("onStart(13)  FileOpen()"));
+         return(catch("onStart(14)  FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("onStart(14)  FileSeek()", error));
+         return(catch("onStart(15)  FileSeek()", error));
       }
    }
 
@@ -291,14 +291,14 @@ int onStart() {
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          error = GetLastError();
          FileClose(hFile);
-         return(catch("onStart(15)  FileWrite()", error));
+         return(catch("onStart(16)  FileWrite()", error));
       }
    }
    FileClose(hFile);
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
-   return(catch("onStart(16)"));
+   return(catch("onStart(17)"));
 }
 
 

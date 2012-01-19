@@ -856,7 +856,8 @@ int HandleEvent(int event, int flags=0) {
 /**
  * Selektiert eine Order anhand des Tickets.
  *
- * @param  int ticket - Ticket
+ * @param  int    ticket   - Ticket
+ * @param  string location - Location des Aufrufs (für evt. Fehlermeldung)
  *
  * @return bool - Erfolgsstatus
  *
@@ -864,14 +865,14 @@ int HandleEvent(int event, int flags=0) {
  *  -----
  *  Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im selben Script verwendet werden können.
  */
-bool OrderSelectByTicket(int ticket) {
+bool OrderSelectByTicket(int ticket, string location="") {
    if (OrderSelect(ticket, SELECT_BY_TICKET))
       return(true);
 
    int error = GetLastError();
    if (IsNoError(error))
       error = ERR_INVALID_TICKET;
-   return(_false(catch("OrderSelectByTicket()", error)));
+   return(_false(catch(location + ".OrderSelectByTicket()", error)));
 }
 
 
@@ -909,11 +910,11 @@ bool IsScript() {
  * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  int value - beliebiger Parameter (default: NULL)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
  * @return bool - TRUE
  */
-bool _true(int value = NULL) {
+bool _true(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(true);
 }
 
@@ -922,11 +923,11 @@ bool _true(int value = NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  int value - beliebiger Parameter (default: NULL)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
  * @return bool - FALSE
  */
-bool _false(int value = NULL) {
+bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(false);
 }
 
@@ -935,11 +936,11 @@ bool _false(int value = NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  int value - beliebiger Parameter (default: NULL)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
  * @return int - NULL
  */
-int _NULL(int value = NULL) {
+int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(NULL);
 }
 
@@ -948,11 +949,11 @@ int _NULL(int value = NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als den Fehler-Code NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
  *
- * @param  int value - beliebiger Parameter (default: NULL)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
  * @return int - NO_ERROR
  */
-int _NO_ERROR(int value = NULL) {
+int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(NO_ERROR);
 }
 
@@ -961,11 +962,11 @@ int _NO_ERROR(int value = NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  int value - beliebiger Parameter (default: NULL)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
  * @return string - Leerstring
  */
-string _empty(int value = NULL) {
+string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
    return("");
 }
 
