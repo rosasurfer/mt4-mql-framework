@@ -8039,6 +8039,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          }
          ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          time2  = GetTickCount();
+         //debug(StringConcatenate("OrderSendEx()   opened ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
 
          if (ticket > 0) {
             // Logmessage generieren
