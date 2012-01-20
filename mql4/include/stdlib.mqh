@@ -285,6 +285,9 @@
    bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
 
+   bool     OrderSelectByTicket(int ticket);
+   int      GetSelectedOrder();
+   int      RestoreSelectedOrder(int ticket);
    int      WaitForTicket(int ticket);
 
 

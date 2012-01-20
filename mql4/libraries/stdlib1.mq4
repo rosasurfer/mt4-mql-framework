@@ -793,17 +793,15 @@ string GetCurrency(int id) {
  * @return int - Fehlerstatus
  */
 int SortTicketsChronological(int& tickets[]) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("SortTicketsChronological(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    int sizeOfTickets = ArraySize(tickets);
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "SortTicketsChronological(2)"))
-         return(last_error);
+      if (!OrderSelectByTicket(tickets[i]))
+         return(_int(last_error, RestoreSelectedOrder(_lastTicket_)));
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
    }
@@ -836,8 +834,7 @@ int SortTicketsChronological(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   RestoreSelectedOrder(_lastTicket_);
    return(catch("SortTicketsChronological(3)"));
 }
 
@@ -868,7 +865,6 @@ int SwitchExperts(bool enable) {
          SendMessageA(GetTerminalWindow(), WM_COMMAND, 33020, 0);
       }
    }
-
    return(catch("SwitchExperts()"));
 }
 
@@ -4164,16 +4160,16 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       ArrayResize(tickets, 0);
 
    static int      accountNumber[1];
-   static datetime accountInitTime[1];                      // GMT-Zeit
-   static int      knownPendings[][2];                      // die bekannten pending Orders und ihr Typ
-   static int      knownPositions[];                        // die bekannten Positionen
+   static datetime accountInitTime[1];                               // GMT-Zeit
+   static int      knownPendings[][2];                               // die bekannten pending Orders und ihr Typ
+   static int      knownPositions[];                                 // die bekannten Positionen
 
-   if (accountNumber[0] == 0) {                             // 1. Aufruf
+   if (accountNumber[0] == 0) {                                      // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
-   else if (accountNumber[0] != account) {                  // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
+   else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
@@ -4181,15 +4177,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("EventListener.PositionOpen(1)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
-
-   int orders = OrdersTotal();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   int orders       = OrdersTotal();
 
    // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
@@ -4198,12 +4191,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP) {
          pendings = ArrayRange(knownPendings, 0);
          for (n=0; n < pendings; n++)
-            if (knownPendings[n][0] == ticket)              // bekannte pending Order
+            if (knownPendings[n][0] == ticket)                       // bekannte pending Order
                break;
          if (n < pendings)
             continue;
 
-         ArrayResize(knownPendings, pendings+1);            // neue (unbekannte) pending Order
+         ArrayResize(knownPendings, pendings+1);                     // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
          //debug("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
@@ -4213,7 +4206,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       else if (type==OP_BUY || type==OP_SELL) {
          positions = ArraySize(knownPositions);
          for (n=0; n < positions; n++)
-            if (knownPositions[n] == ticket)                // bekannte Position
+            if (knownPositions[n] == ticket)                         // bekannte Position
                break;
          if (n < positions)
             continue;
@@ -4259,10 +4252,9 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    int error = GetLastError();
    if (IsError(error))
-      return(_false(catch("EventListener.PositionOpen(2)", error)));
+      return(_false(catch("EventListener.PositionOpen(2)", error), RestoreSelectedOrder(_lastTicket_)));
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   RestoreSelectedOrder(_lastTicket_);
    return(eventStatus);
 }
 
@@ -4282,9 +4274,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    if (account == 0)
       return(false);
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("EventListener.PositionClose(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                               // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
@@ -4306,8 +4296,8 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    else {
       // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
       for (int i=0; i < noOfKnownPositions; i++) {
-         if (!OrderSelectByTicket(knownPositions[i], "EventListener.PositionClose(2)"))
-            return(false);
+         if (!OrderSelectByTicket(knownPositions[i]))
+            return(_false(RestoreSelectedOrder(_lastTicket_)));
 
          if (OrderCloseTime() > 0) {                                    // Position geschlossen, in flags angegebene Orderkriterien prüfen
             int    event=1, type=OrderType();
@@ -4360,10 +4350,9 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    int error = GetLastError();
    if (IsError(error))
-      return(_false(catch("EventListener.PositionClose(3)", error)));
+      return(_false(catch("EventListener.PositionClose(3)", error), RestoreSelectedOrder(_lastTicket_)));
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+   RestoreSelectedOrder(_lastTicket_);
    return(eventStatus);
 }
 
@@ -8097,18 +8086,14 @@ int WaitForTicket(int ticket) {
    if (ticket <= 0)
       return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("WaitForTicket(2)", _error_));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
       Sleep(100);                                                    // 0.1 Sekunden warten
    }
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+   RestoreSelectedOrder(_lastTicket_);
    return(ticket);
 }
 
@@ -8131,7 +8116,7 @@ int WaitForTicket(int ticket) {
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   if (!OrderSelectByTicket(ticket, "OrderSendEx.LogMessage(1)"))
+   if (!OrderSelectByTicket(ticket))
       return("");
 
    string strType = OperationTypeDescription(OrderType());
@@ -8186,37 +8171,34 @@ int WaitForTicket(int ticket) {
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, color markerColor=CLR_NONE) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderCloseEx(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseEx(2)"))
-      return(false);
-   if (OrderCloseTime() != 0) return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)));
-   if (OrderType() > OP_SELL) return(_false(catch("OrderCloseEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)));
+   if (!OrderSelectByTicket(ticket)) return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)        return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (OrderType() > OP_SELL)        return(_false(catch("OrderCloseEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error)) return(_false(catch("OrderCloseEx(5)   symbol=\""+ OrderSymbol() +"\"", error)));
+   if (IsError(error)) return(_false(catch("OrderCloseEx(5)   symbol=\""+ OrderSymbol() +"\"", error), RestoreSelectedOrder(_lastTicket_)));
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                 return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-      if (GT(lots, OrderLots()))            return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-      if (NE(MathModFix(lots, lotStep), 0)) return(_false(catch("OrderCloseEx(8)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (LT(lots, minLot))                 return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+      if (GT(lots, OrderLots()))            return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+      if (NE(MathModFix(lots, lotStep), 0)) return(_false(catch("OrderCloseEx(8)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))    return(_false(catch("OrderCloseEx(9)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (LT(price, 0))    return(_false(catch("OrderCloseEx(9)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // slippage
-   if (LT(slippage, 0)) return(_false(catch("OrderCloseEx(10)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (LT(slippage, 0)) return(_false(catch("OrderCloseEx(10)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(11)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(11)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -8256,9 +8238,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             log("OrderCloseEx()   closed "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            // letztes selektiertes Ticket restaurieren
-            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+            RestoreSelectedOrder(_lastTicket_);
             return(IsNoError(catch("OrderCloseEx(12)")));            // regular exit
          }
          error = GetLastError();
@@ -8281,6 +8261,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
       }
    }
 
+   RestoreSelectedOrder(_lastTicket_);
    return(_false(catch("OrderCloseEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
@@ -8295,7 +8276,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
    // TODO: Logmessage bei partiellem Close anpassen (geschlossenes Volumen, verbleibendes Ticket#)
 
-   if (!OrderSelectByTicket(ticket, "OrderCloseEx.LogMessage(1)"))
+   if (!OrderSelectByTicket(ticket))
       return("");
 
    string strType = OperationTypeDescription(OrderType());
@@ -8340,34 +8321,30 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderCloseByEx(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(2)"))
-      return(false);
-   if (OrderCloseTime() != 0)          return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET)));
-   if (OrderType() > OP_SELL)          return(_false(catch("OrderCloseByEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET)));
+   if (!OrderSelectByTicket(ticket))   return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)          return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (OrderType() > OP_SELL)          return(_false(catch("OrderCloseByEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    int    ticketType     = OrderType();
    double ticketLots     = OrderLots();
    string symbol         = OrderSymbol();
    string ticketOpenTime = OrderOpenTime();
 
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(5)"))
-      return(false);
-   if (OrderCloseTime() != 0)          return(_false(catch("OrderCloseByEx(6)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET)));
+   if (!OrderSelectByTicket(opposite)) return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)          return(_false(catch("OrderCloseByEx(6)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    int    oppositeType     = OrderType();
    double oppositeLots     = OrderLots();
    string oppositeOpenTime = OrderOpenTime();
-   if (ticket == opposite)             return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
-   if (ticketType != oppositeType ^ 1) return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
-   if (symbol != OrderSymbol())        return(_false(catch("OrderCloseByEx(9)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET)));
+   if (ticket == opposite)             return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (ticketType != oppositeType ^ 1) return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (symbol != OrderSymbol())        return(_false(catch("OrderCloseByEx(9)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
 
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -8414,15 +8391,13 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   }
                }
                if (ArraySize(remainder) == 0)
-                  return(_false(catch("OrderCloseByEx(11)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR)));
+                  return(_false(catch("OrderCloseByEx(11)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR), RestoreSelectedOrder(_lastTicket_)));
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
             log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             if (!IsTesting()) PlaySound("OrderOk.wav");
 
-            // letztes selektiertes Ticket restaurieren
-            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+            RestoreSelectedOrder(_lastTicket_);
             return(IsNoError(catch("OrderCloseByEx(12)")));                // regular exit
          }
          time2     = GetTickCount();
@@ -8438,6 +8413,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
       Sleep(300);                                                          // 0.3 Sekunden warten
    }
 
+   RestoreSelectedOrder(_lastTicket_);
    return(_false(catch("OrderCloseByEx(13)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error)));
 }
 
@@ -8453,33 +8429,28 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
 bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
-   // letztes selektiertes Ticket speichern
-   int _error_      = GetLastError(); if (IsError(_error_)) return(_false(catch("OrderMultiClose(1)", _error_)));
-   int _lastTicket_ = OrderTicket(); GetLastError();
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0) return(_false(catch("OrderMultiClose(2)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sizeOfTickets == 0) return(_false(catch("OrderMultiClose(2)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)"))
-         return(false);
-      if (OrderCloseTime() != 0) return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)));
-      if (OrderType() > OP_SELL) return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)));
+      if (!OrderSelectByTicket(tickets[i])) return(_false(RestoreSelectedOrder(_lastTicket_)));
+      if (OrderCloseTime() != 0)            return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+      if (OrderType() > OP_SELL)            return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    }
    // slippage
-   if (LT(slippage, 0))                                         return(_false(catch("OrderMultiClose(6)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (LT(slippage, 0))                                         return(_false(catch("OrderMultiClose(6)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderMultiClose(7)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderMultiClose(7)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // -- Ende Parametervalidierung --
 
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1) {
-      // letztes selektiertes Ticket restaurieren
-      if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+      RestoreSelectedOrder(_lastTicket_);
       return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor));
    }
 
@@ -8494,8 +8465,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    int    ticketSymbols[]; ArrayResize(ticketSymbols, sizeOfTickets);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(ticketsCopy[i], "OrderMultiClose(8)"))
-         return(false);
+      if (!OrderSelectByTicket(ticketsCopy[i]))
+         return(_false(RestoreSelectedOrder(_lastTicket_)));
       int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
       if (symbolIndex == -1)
          symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
@@ -8519,7 +8490,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          if (sizeOfPerSymbolTickets == 1) {
             // nur eine Position je Symbol kann sofort geschlossen werden
             if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor))
-               return(false);
+               return(_false(RestoreSelectedOrder(_lastTicket_)));
          }
          else {
             // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, wird zuerst nur die Gesamtposition
@@ -8527,7 +8498,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
             // der Gesamtpositionen aller Symbole geschlossen (dies dauert ggf. etliche Sekunden).
             int hedge;
             if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage))
-               return(false);
+               return(_false(RestoreSelectedOrder(_lastTicket_)));
             if (hedge != 0) {
                sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
                                ArrayPushInt(ticketSymbols, symbolIndex);
@@ -8546,27 +8517,23 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
                ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
          if (!OrderMultiClose.Hedges(perSymbolTickets, markerColor))
-            return(false);
+            return(_false(RestoreSelectedOrder(_lastTicket_)));
       }
-      // letztes selektiertes Ticket restaurieren
-      if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+      RestoreSelectedOrder(_lastTicket_);
       return(IsNoError(catch("OrderMultiClose(9)")));
    }
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehören
    if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage))          // Gesamtposition ggf. hedgen...
-      return(false);
+      return(_false(RestoreSelectedOrder(_lastTicket_)));
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
 
    if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
-      return(false);
+      return(_false(RestoreSelectedOrder(_lastTicket_)));
 
-   // letztes selektiertes Ticket restaurieren
-   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
+   RestoreSelectedOrder(_lastTicket_);
    return(IsNoError(catch("OrderMultiClose(10)")));
 }
 
@@ -8585,7 +8552,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    double totalLots;
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(1)"))
+      if (!OrderSelectByTicket(tickets[i]))
          return(false);
       if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
       else                       totalLots -= OrderLots();
@@ -8630,7 +8597,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    int sizeOfTickets = ArraySize(ticketsCopy);
 
-   if (!OrderSelectByTicket(ticketsCopy[0], "OrderMultiClose.Hedges(1)"))  // um OrderSymbol() auslesen zu können
+   if (!OrderSelectByTicket(ticketsCopy[0]))                         // um OrderSymbol() auslesen zu können
       return(false);
    log(StringConcatenate("OrderMultiClose.Hedges()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
 
@@ -8640,12 +8607,12 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       SortTicketsChronological(ticketsCopy);
 
       int hedge, first=ticketsCopy[0];
-      if (!OrderSelectByTicket(first, "OrderMultiClose.Hedges(2)"))
+      if (!OrderSelectByTicket(first))
          return(false);
       int firstType = OrderType();
 
       for (int i=1; i < sizeOfTickets; i++) {
-         if (!OrderSelectByTicket(ticketsCopy[i], "OrderMultiClose.Hedges(3)"))
+         if (!OrderSelectByTicket(ticketsCopy[i]))
             return(false);
          if (OrderType() == firstType ^ 1) {
             hedge = ticketsCopy[i];                                  // hedgende Position ermitteln
@@ -8672,7 +8639,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          ArraySort(entries);
          string PriceFormat = ".4'";
          for (n=0; n < orders; n++) {
-            OrderSelectByTicket(entries[n], "OrderMultiClose.Hedges(3.1)");
+            OrderSelectByTicket(entries[n]);
             debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
          }
       }
@@ -8710,7 +8677,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          }
          ArraySort(entries);
          for (n=0; n < orders; n++) {
-            OrderSelectByTicket(entries[n], "OrderMultiClose.Hedges(3.2)");
+            OrderSelectByTicket(entries[n]);
             debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
          }
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");

@@ -234,7 +234,7 @@ int onStart() {
    double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
-      if (!OrderSelectByTicket(tickets[i], "onStart(7)"))
+      if (!OrderSelectByTicket(tickets[i]))
          return(last_error);
       if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();

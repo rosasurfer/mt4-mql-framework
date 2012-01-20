@@ -606,8 +606,8 @@ int start() {
  * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert.
  * Der mit der MQL-Funktion GetLastError() auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
- * @param  string message - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
- * @param  int    error   - manuelles Forcieren eines bestimmten Error-Codes
+ * @param  string message        - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
+ * @param  int    error          - manuelles Forcieren eines bestimmten Error-Codes
  *
  * @return int - der aufgetretene Error-Code
  *
@@ -616,11 +616,8 @@ int start() {
  * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message, int error=NO_ERROR) {
-   if (StringLen(__SCRIPT__) == 0)
-      __SCRIPT__ = WindowExpertName();
-
-   if (error == NO_ERROR) error = GetLastError();
-   else                           GetLastError();     // forcierter Error angegeben, den letzten tatsächlichen Fehler zurücksetzen
+   if (error == NO_ERROR)   error = GetLastError();
+   else                             GetLastError();                  // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
       if (StringLen(message) == 0)
@@ -628,7 +625,7 @@ int catch(string message, int error=NO_ERROR) {
 
       Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
 
-      if (IsTesting()) {                              // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren
+      if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(NULL);
          string strings[];
          if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL + NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
@@ -656,9 +653,6 @@ int catch(string message, int error=NO_ERROR) {
  * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
 int log(string message="", int error=NO_ERROR) {
-   if (StringLen(__SCRIPT__) == 0)
-      __SCRIPT__ = WindowExpertName();
-
    if (StringLen(message) == 0)
       message = "???";
 
@@ -690,9 +684,6 @@ int log(string message="", int error=NO_ERROR) {
  * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
  */
 int debug(string message, int error=NO_ERROR) {
-   if (StringLen(__SCRIPT__) == 0)
-      __SCRIPT__ = WindowExpertName();
-
    static int debugToLog = -1;
 
    if (debugToLog == -1)
@@ -846,23 +837,58 @@ int HandleEvent(int event, int flags=0) {
 /**
  * Selektiert eine Order anhand des Tickets.
  *
- * @param  int    ticket   - Ticket
- * @param  string location - Location des Aufrufs (für evt. Fehlermeldung)
+ * @param  int ticket - Ticket
  *
  * @return bool - Erfolgsstatus
  *
  *  NOTE:
  *  -----
- *  Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im selben Script verwendet werden können.
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-bool OrderSelectByTicket(int ticket, string location="") {
+bool OrderSelectByTicket(int ticket) {
    if (OrderSelect(ticket, SELECT_BY_TICKET))
       return(true);
 
    int error = GetLastError();
-   if (IsNoError(error))
-      error = ERR_INVALID_TICKET;
-   return(_false(catch(location + ".OrderSelectByTicket()", error)));
+   return(_false(catch("OrderSelectByTicket()   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+}
+
+
+/**
+ * Gibt das Ticket der aktuell selektierten Order zurück.
+ *
+ * @return int - Ticket oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
+ */
+int GetSelectedOrder() {
+   int error = GetLastError();
+   if (IsError(error))
+      return(_ZERO(catch("GetSelectedOrder()", error)));
+
+   int ticket = OrderTicket();
+   GetLastError();
+   return(ticket);
+}
+
+
+/**
+ * Selektiert die angegebene Order.
+ *
+ * @param  int ticket - Ticket-Nr. (es wird kein Fehler gemeldet, wenn statt eines Tickets 0 übergeben wird)
+ *
+ * @return int - dieselbe Ticket-Nr. (um Funktion als Ersatz für die ticket-Variable benutzen zu können)
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
+ */
+int RestoreSelectedOrder(int ticket) {
+   if (ticket > 0)
+      OrderSelectByTicket(ticket);
+   return(ticket);
 }
 
 
@@ -923,6 +949,20 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int param1 - Integer
+ * @param  ...        - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return int - der erste Parameter
+ */
+int _int(int param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
@@ -962,6 +1002,48 @@ int _ZERO(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  double param1 - Double
+ * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return double - der erste Parameter
+ */
+double _double(double param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  bool param1 - Boolean
+ * @param  ...         - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return bool - der erste Parameter
+ */
+bool _bool(bool param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  string param1 - String
+ * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return string - der erste Parameter
+ */
+string _string(string param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -984,9 +1066,14 @@ void DummyCalls() {
    _empty();
    _false();
    _true();
+   _bool(NULL);
+   _double(NULL);
+   _int(NULL);
+   _string(NULL);
    catch(NULL);
    debug(NULL);
    ForceAlert();
+   GetSelectedOrder();
    HandleEvent(NULL);
    HandleEvents(NULL);
    IsError(NULL);
@@ -998,6 +1085,7 @@ void DummyCalls() {
    log();
    onInit(NULL);
    OrderSelectByTicket(NULL);
+   RestoreSelectedOrder(NULL);
    SetLastError(NULL);
    start();
 }
