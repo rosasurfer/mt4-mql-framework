@@ -934,7 +934,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 /**
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
  * @param  ... - beliebige Parameter (werden ignoriert)
  *
@@ -947,7 +947,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 /**
  * Pseudo-Funktion, die nichts weiter tut, als den Fehler-Code NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
+ * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
  * @param  ... - beliebige Parameter (werden ignoriert)
  *
@@ -955,6 +955,19 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
  */
 int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(NO_ERROR);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als (int) 0 zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  ... - beliebige Parameter (werden ignoriert)
+ *
+ * @return int - 0
+ */
+int _ZERO(int param1=NULL, int param2=NULL, int param3=NULL) {
+   return(0);
 }
 
 
@@ -977,6 +990,7 @@ string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
 void DummyCalls() {
    _NO_ERROR();
    _NULL();
+   _ZERO();
    _empty();
    _false();
    _true();

@@ -275,7 +275,7 @@
    string   UrlEncode(string value);
 
 
-   // Orderhandling-/Tradefunktionen
+   // Trade-/Orderhandling-Funktionen
    bool     IsTradeOperationType(int value);
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
@@ -284,6 +284,8 @@
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
    bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
+
+   int      WaitForTicket(int ticket);
 
 
    // sonstiges

@@ -626,14 +626,16 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
 
    for (int i=from; i <= to; i++) {
       buffer[0] = 0;
-      if (!ReadProcessMemory(hProcess, i, buffer, 1, iNull)) { catch("FindMemoryAddress(1) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR); return(0); }
+      if (!ReadProcessMemory(hProcess, i, buffer, 1, iNull))
+         return(_ZERO(catch("FindMemoryAddress(1) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
       if (buffer[0] == pattern[0]) {
          bool found = true;
 
          for (int n=1; n < patternLength; n++) {
             buffer[0] = 0;
-            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNull)) { catch("FindMemoryAddress(2) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR); return(0); }
+            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNull))
+               return(_ZERO(catch("FindMemoryAddress(2) ->kernel32.ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
             if (buffer[0] != pattern[n]) {
                found = false;
@@ -644,8 +646,7 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
             return(i);
       }
    }
-   catch("FindMemoryAddress(3)");
-   return(0);
+   return(_ZERO(catch("FindMemoryAddress(3)")));
 }
 
 

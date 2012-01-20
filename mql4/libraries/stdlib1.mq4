@@ -449,19 +449,15 @@ int GetTerminalBuild() {
    string strings[];
 
    int size = Explode(version, ".", strings);
-   if (size != 4) {
-      catch("GetTerminalBuild(1)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR);
-      return(0);
-   }
+   if (size != 4)
+      return(_ZERO(catch("GetTerminalBuild(1)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
-   if (!StringIsDigit(strings[size-1])) {
-      catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR);
-      return(0);
-   }
+   if (!StringIsDigit(strings[size-1]))
+      return(_ZERO(catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
    int build = StrToInteger(strings[size-1]);
 
-   if (catch("GetTerminalBuild(3)") != NO_ERROR)
+   if (IsError(catch("GetTerminalBuild(3)")))
       return(0);
    return(build);
 }
@@ -743,8 +739,7 @@ int GetCurrencyId(string currency) {
    if (curr == C_USD) return(CID_USD);
    if (curr == C_ZAR) return(CID_ZAR);
 
-   catch("GetCurrencyId()   unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR);
-   return(0);
+   return(_ZERO(catch("GetCurrencyId()   unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -1772,7 +1767,7 @@ int ExplodeStrings(int buffer[], string& results[]) {
       }
    }
 
-   if (catch("ExplodeStrings()") != NO_ERROR)
+   if (IsError(catch("ExplodeStrings()")))
       return(0);
    return(ArraySize(results));
 }
@@ -3904,9 +3899,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_D1 );
       case PERIOD_MN1: return(PERIOD_W1 );
    }
-
-   catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(0);
+   return(_ZERO(catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -4686,27 +4679,21 @@ int GetAccountNumber() {
 
    if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalWindow());
-      if (StringLen(title) == 0) {
-         last_error = ERR_TERMINAL_NOT_YET_READY;
-         return(0);
-      }
+      if (StringLen(title) == 0)
+         return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
-      if (pos < 1) {
-         catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR);
-         return(0);
-      }
+      if (pos < 1)
+         return(_ZERO(catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       string strAccount = StringLeft(title, pos);
-      if (!StringIsDigit(strAccount)) {
-         catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR);
-         return(0);
-      }
+      if (!StringIsDigit(strAccount))
+         return(_ZERO(catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strAccount);
    }
 
-   if (catch("GetAccountNumber(3)") != NO_ERROR)
+   if (IsError(catch("GetAccountNumber(3)")))
       return(0);
    return(account);
 }
@@ -4728,8 +4715,7 @@ double GetAverageSpread(string symbol) {
    else if (symbol == "USDCHF") return(0.0001 );
 
    //spread = MarketInfo(symbol, MODE_POINT) * MarketInfo(symbol, MODE_SPREAD); // aktueller Spread in Points
-   catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL);
-   return(0);
+   return(_ZERO(catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL)));
 }
 
 
@@ -4888,7 +4874,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetConfigDouble()") != NO_ERROR)
+   if (IsError(catch("GetConfigDouble()")))
       return(0);
    return(result);
 }
@@ -4909,7 +4895,7 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
        result = GetPrivateProfileIntA(section, key, result      , GetLocalConfigPath());
 
-   if (catch("GetConfigInt()") != NO_ERROR)
+   if (IsError(catch("GetConfigInt()")))
       return(0);
    return(result);
 }
@@ -5098,7 +5084,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetGlobalConfigDouble()") != NO_ERROR)
+   if (IsError(catch("GetGlobalConfigDouble()")))
       return(0);
    return(result);
 }
@@ -5116,7 +5102,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
 
-   if (catch("GetGlobalConfigInt()") != NO_ERROR)
+   if (IsError(catch("GetGlobalConfigInt()")))
       return(0);
    return(result);
 }
@@ -5285,7 +5271,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (catch("GetLocalConfigDouble()") != NO_ERROR)
+   if (IsError(catch("GetLocalConfigDouble()")))
       return(0);
    return(result);
 }
@@ -5303,9 +5289,8 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetLocalConfigPath());     // gibt auch negative Werte richtig zurück
 
-   if (catch("GetLocalConfigInt()") != NO_ERROR)
+   if (IsError(catch("GetLocalConfigInt()")))
       return(0);
-
    return(result);
 }
 
@@ -5965,9 +5950,7 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_W1 : return(PERIODFLAG_W1 );
       case PERIOD_MN1: return(PERIODFLAG_MN1);
    }
-
-   catch("PeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(0);
+   return(_ZERO(catch("PeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6466,9 +6449,7 @@ int IncreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_MN1);
       case PERIOD_MN1: return(PERIOD_MN1);
    }
-
-   catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(0);
+   return(_ZERO(catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7930,7 +7911,7 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * TODO: Es werden noch keine S/L- oder T/P-Orders unterstützt.
+ * TODO: Zur Zeit werden keine S/L- oder T/P-Orders unterstützt.
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
@@ -8071,30 +8052,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          time2  = GetTickCount();
 
          if (ticket > 0) {
-            // letztes selektiertes Ticket speichern
-            int _error_      = GetLastError(); if (IsError(_error_)) return(catch("OrderSendEx(15)", _error_));
-            int _lastTicket_ = OrderTicket(); GetLastError();
-
             // Logmessage generieren
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            // warten, bis Ticket im Trade- bzw. History-Pool erscheint und Zugriff möglich ist
-            while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-               ForceAlert("OrderSendEx()   newly opened ticket #", ticket, " not yet accessible");
-               Sleep(100);                                           // 0.1 Sekunden warten
-            }
-            // letztes selektiertes Ticket restaurieren
-            if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
-
-            if (IsError(catch("OrderSendEx(16)")))
+            if (IsError(catch("OrderSendEx(15)")))
                return(-1);
-            return(ticket);                                          // regular exit
+            return(WaitForTicket(ticket));                           // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(17)", error);
+               catch("OrderSendEx(16)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8112,8 +8081,35 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   catch("OrderSendEx(18)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(17)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
+}
+
+
+/**
+ * Wartet darauf, daß das angegebene Ticket im Account erscheint und der Zugriff möglich ist.
+ *
+ * @param  int ticket - Orderticket
+ *
+ * @return int - dasselbe Ticket (um Funktion als Ersatz für Variable ticket benutzen zu können) oder 0, wenn ein Fehler auftrat
+ */
+int WaitForTicket(int ticket) {
+   if (ticket <= 0)
+      return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // letztes selektiertes Ticket speichern
+   int _error_      = GetLastError(); if (IsError(_error_)) return(catch("WaitForTicket(2)", _error_));
+   int _lastTicket_ = OrderTicket(); GetLastError();
+
+   while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
+      Sleep(100);                                                    // 0.1 Sekunden warten
+   }
+
+   // letztes selektiertes Ticket restaurieren
+   if (_lastTicket_ != 0) OrderSelect(_lastTicket_, SELECT_BY_TICKET);
+
+   return(ticket);
 }
 
 
@@ -8469,8 +8465,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)"))
          return(false);
-      if (OrderCloseTime() != 0)            return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)));
-      if (OrderType() > OP_SELL)            return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)));
+      if (OrderCloseTime() != 0) return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET)));
+      if (OrderType() > OP_SELL) return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET)));
    }
    // slippage
    if (LT(slippage, 0))                                         return(_false(catch("OrderMultiClose(6)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -8612,7 +8608,6 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
       if (hedge == -1)
          return(false);
-
       hedgeTicket = hedge;
    }
 
