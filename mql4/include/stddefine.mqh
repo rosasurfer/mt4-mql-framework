@@ -492,17 +492,17 @@
 
 
 // globale Variablen, die überall zur Verfügung stehen
-int    __TYPE__;                       // Typ des laufenden Programms (T_INDICATOR|T_EXPERT|T_SCRIPT)
-string __SCRIPT__;                     // Name des laufenden Programms
+int    __TYPE__;                                            // Typ des laufenden Programms (T_INDICATOR | T_EXPERT | T_SCRIPT)
+string __SCRIPT__;                                          // Name des laufenden Programms
 
-bool   init       = true;              // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
-int    last_error = NO_ERROR;          // der letzte aufgetretene Fehler des aktuellen Aufrufs
-int    prev_error = NO_ERROR;          // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
+bool   init       = true;                                   // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
+int    last_error = NO_ERROR;                               // der letzte aufgetretene Fehler des aktuellen Aufrufs
+int    prev_error = NO_ERROR;                               // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
 
-double Pip, Pips;                      // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001) => PipSize
-int    PipDigits;                      // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind immer gradzahlig)
-int    PipPoint, PipPoints;            // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
-string PriceFormat;                    // Preisformat des aktuellen Symbols
+double Pip, Pips;                                           // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
+int    PipDigits;                                           // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
+int    PipPoint, PipPoints;                                 // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
+string PriceFormat;                                         // Preisformat des aktuellen Symbols
 
 int    Tick, Ticks;
 int    ValidBars;
@@ -631,8 +631,8 @@ int catch(string message, int error=NO_ERROR) {
       if (IsTesting()) {                              // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(NULL);
          string strings[];
-         if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL+NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
-         else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL+NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
+         if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL + NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
+         else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL + NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          ForceSound("alert.wav");
          ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
       }
@@ -740,16 +740,6 @@ bool IsError(int value) {
  */
 bool IsNoError(int value) {
    return(value == NO_ERROR);
-}
-
-
-/**
- * Gibt den internen Fehler-Code des aktuellen Scripts zurück. Der Aufruf dieser Funktion setzt den Fehlercode *nicht* zurück.
- *
- * @return int - Fehlercode
- */
-int PeekLastError() {
-   return(last_error);
 }
 
 
@@ -1008,7 +998,6 @@ void DummyCalls() {
    log();
    onInit(NULL);
    OrderSelectByTicket(NULL);
-   PeekLastError();
    SetLastError(NULL);
    start();
 }
