@@ -210,7 +210,7 @@ int onStart() {
 
    // (6) neue Position öffnen
    int    counter     = GetPositionCounter() + 1;
-   string comment     = Currency +"."+ counter +"/"+ DoubleToStr(Units, 1);
+   string comment     = StringConcatenate(Currency, ".", counter, "/", DoubleToStr(Units, 1));
    int    magicNumber = CreateMagicNumber(counter);
 
    for (i=0; i < 6; i++) {
@@ -316,7 +316,7 @@ bool IsMyOrder() {
  */
 int CreateMagicNumber(int counter) {
    if (counter < 1) {
-      catch("CreateMagicNumber(1)   Invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("CreateMagicNumber(1)   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    int strategy  = Strategy.Id & 0x3FF << 22;                        // 10 bit (Bits 23-32)
@@ -368,7 +368,7 @@ int GetInstance() {
          while (id > 511) {
             id >>= 1;
          }
-         if (IntInArray(id, positions.instance))      // sicherstellen, daß die Instanz-ID's der im Moment offenen Positionen eindeutig sind
+         if (IntInArray(id, positions.instance))                     // sicherstellen, daß die Instanz-ID's aller im Moment offenen Positionen eindeutig sind
             id = 0;
       }
    }
