@@ -73,7 +73,7 @@ int onTick() {
 
 
 /**
- * Zeichnet das Grid.
+ * Zeichnet das Grid (ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen).
  *
  * @return int - Fehlerstatus
  */
@@ -83,7 +83,7 @@ int DrawGrid() {
    string   label, lastLabel;
 
 
-   // (1) Zeitpunkte des ältesten und jüngsten Separators berechen   // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+   // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
    datetime fromFXT = GetFXTNextSessionStartTime(ServerToFXT(Time[Bars-1]) - 1*SECOND);
    datetime toFXT   = GetFXTNextSessionStartTime(ServerToFXT(TimeCurrent()));
 
@@ -193,7 +193,7 @@ int DrawGrid() {
       lastLabel     = label;                                         // Daten des letzten Separators für Lückenerkennung merken
 
 
-      // (2.1) je nach Periode einen Tag *VOR* den nächsten Separator springen
+      // (2.1) je nach Periode einen Tag *vor* den nächsten Separator springen
       // Tagesseparatoren
       if (Period() < PERIOD_H4) {
          if (dow == FRIDAY)                                          // Wochenenden überspringen

@@ -573,19 +573,18 @@ int start() {
    }
    else if (init) {                                         // init()-error abfangen
       if (last_error == ERR_TERMINAL_NOT_YET_READY) {
-         if (IsIndicator()) {                               // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
-            if (Ticks > 1) {
-               debug("start()   last_error = ERR_TERMINAL_NOT_YET_READY, calling init() again...");
-               init();                                      // TODO: nach erneutem Aufruf von init() muß ValidBars entsprechend zurückgesetzt werden
-            }
+         if (IsIndicator()) {
+            if (Ticks > 1)                                  // in Indikatoren wird init() erst nach dem 2. Tick erneut aufgerufen
+               init();
          }
          else if (IsExpert()) {
-            init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
+            init();                                         // in EA's wird init() sofort erneut aufgerufen (in Scripten gar nicht)
          }
       }
       if (IsError(last_error))
          return(last_error);                                // regular exit for init()-error
-      init = false;                                         // init() war erfolgreich
+      init = false;
+      ValidBars = 0;                                        // init() war nach erneutem Aufruf erfolgreich
    }
    else if (last_error == ERR_TERMINAL_NOT_YET_READY) {     // start()-error des letzten start()-Aufrufs
       ValidBars = 0;
@@ -597,8 +596,6 @@ int start() {
    if (Bars == 0)
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
 
-
-   debug("start()   last_error = NO_ERROR,    ValidBars = "+ ValidBars);
 
    /*
    // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
