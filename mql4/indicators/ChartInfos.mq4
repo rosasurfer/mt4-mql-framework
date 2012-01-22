@@ -228,54 +228,41 @@ int UpdateUnitSizeLabel() {
    bool   tradeAllowed = NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);
    double tickValue    =    MarketInfo(Symbol(), MODE_TICKVALUE);
 
-   int error = GetLastError();
    string strUnitSize;
 
    if (!tradeAllowed || tickValue < 0.00000001) {                    // bei Start oder Accountwechsel
       strUnitSize = " ";
    }
    else {
-      double equity = AccountEquity()-AccountCredit();
-      double unitSize;
+      double equity   = AccountEquity()-AccountCredit();             // Accountequity wird mit 'leverage' gehebelt
+      double lotValue = Bid / TickSize * tickValue;                  // Lotvalue in Account-Currency
+      double unitSize = equity / lotValue * leverage;                // unitSize = equity/lotValue entspricht Hebel von 1
 
-      static double lastEquity, lastBid, lastTickValue;
-      if (EQ(Bid, lastBid)) /*&&*/ if (EQ(equity, lastEquity)) /*&&*/ if (EQ(tickValue, lastTickValue))
-         return(catch("UpdateUnitSizeLabel(1)"));
+      if      (unitSize <    0.02000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfaches von   0.001
+      else if (unitSize <    0.04000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfaches von   0.002
+      else if (unitSize <    0.07000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.005) *   0.005, 3);   //  0.04-0.07: Vielfaches von   0.005
+      else if (unitSize <    0.20000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.01 ) *   0.01 , 2);   //   0.07-0.2: Vielfaches von   0.01
+      else if (unitSize <    0.40000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.02 ) *   0.02 , 2);   //    0.2-0.4: Vielfaches von   0.02
+      else if (unitSize <    0.70000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.05 ) *   0.05 , 2);   //    0.4-0.7: Vielfaches von   0.05
+      else if (unitSize <    2.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfaches von   0.1
+      else if (unitSize <    4.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfaches von   0.2
+      else if (unitSize <    7.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfaches von   0.5
+      else if (unitSize <   20.00000001) unitSize = MathRound      (MathRound(unitSize/  1    ) *   1);          //       7-20: Vielfaches von   1
+      else if (unitSize <   40.00000001) unitSize = MathRound      (MathRound(unitSize/  2    ) *   2);          //      20-40: Vielfaches von   2
+      else if (unitSize <   70.00000001) unitSize = MathRound      (MathRound(unitSize/  5    ) *   5);          //      40-70: Vielfaches von   5
+      else if (unitSize <  200.00000001) unitSize = MathRound      (MathRound(unitSize/ 10    ) *  10);          //     70-200: Vielfaches von  10
+      else if (unitSize <  400.00000001) unitSize = MathRound      (MathRound(unitSize/ 20    ) *  20);          //    200-400: Vielfaches von  20
+      else if (unitSize <  700.00000001) unitSize = MathRound      (MathRound(unitSize/ 50    ) *  50);          //    400-700: Vielfaches von  50
+      else if (unitSize < 2000.00000001) unitSize = MathRound      (MathRound(unitSize/100    ) * 100);          //   700-2000: Vielfaches von 100
 
-      lastEquity    = equity;
-      lastBid       = Bid;
-      lastTickValue = tickValue;
-
-      if (equity > 0.00000001) {                                     // Accountequity wird mit 'leverage' gehebelt
-         double lotValue = Bid / TickSize * tickValue;               // Lotvalue in Account-Currency
-         unitSize = equity / lotValue * leverage;                    // unitSize = equity/lotValue entspricht Hebel von 1
-
-         if      (unitSize <    0.02000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfaches von   0.001
-         else if (unitSize <    0.04000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfaches von   0.002
-         else if (unitSize <    0.07000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.005) *   0.005, 3);   //  0.04-0.07: Vielfaches von   0.005
-         else if (unitSize <    0.20000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.01 ) *   0.01 , 2);   //   0.07-0.2: Vielfaches von   0.01
-         else if (unitSize <    0.40000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.02 ) *   0.02 , 2);   //    0.2-0.4: Vielfaches von   0.02
-         else if (unitSize <    0.70000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.05 ) *   0.05 , 2);   //    0.4-0.7: Vielfaches von   0.05
-         else if (unitSize <    2.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.1  ) *   0.1  , 1);   //      0.7-2: Vielfaches von   0.1
-         else if (unitSize <    4.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.2  ) *   0.2  , 1);   //        2-4: Vielfaches von   0.2
-         else if (unitSize <    7.00000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.5  ) *   0.5  , 1);   //        4-7: Vielfaches von   0.5
-         else if (unitSize <   20.00000001) unitSize = MathRound      (MathRound(unitSize/  1    ) *   1);          //       7-20: Vielfaches von   1
-         else if (unitSize <   40.00000001) unitSize = MathRound      (MathRound(unitSize/  2    ) *   2);          //      20-40: Vielfaches von   2
-         else if (unitSize <   70.00000001) unitSize = MathRound      (MathRound(unitSize/  5    ) *   5);          //      40-70: Vielfaches von   5
-         else if (unitSize <  200.00000001) unitSize = MathRound      (MathRound(unitSize/ 10    ) *  10);          //     70-200: Vielfaches von  10
-         else if (unitSize <  400.00000001) unitSize = MathRound      (MathRound(unitSize/ 20    ) *  20);          //    200-400: Vielfaches von  20
-         else if (unitSize <  700.00000001) unitSize = MathRound      (MathRound(unitSize/ 50    ) *  50);          //    400-700: Vielfaches von  50
-         else if (unitSize < 2000.00000001) unitSize = MathRound      (MathRound(unitSize/100    ) * 100);          //   700-2000: Vielfaches von 100
-      }
       strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
    }
-
    ObjectSetText(unitSizeLabel, strUnitSize, 9, "Tahoma", SlateGray);
 
-   error = GetLastError();
+   int error = GetLastError();
    if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
-   return(catch("UpdateUnitSizeLabel(2)", error));
+   return(catch("UpdateUnitSizeLabel()", error));
 }
 
 
