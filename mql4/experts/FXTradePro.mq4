@@ -153,8 +153,6 @@ double   all.profits;
 
 bool     firstTick = true;
 
-double   TickSize;
-
 
 /**
  * Initialisierung
@@ -164,14 +162,6 @@ double   TickSize;
 int init() {
    if (IsError(onInit(T_EXPERT)))
       return(ShowStatus());
-
-   TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-
-   int error = GetLastError();
-   if (IsError(error) || TickSize < 0.00000001) {
-      catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO));
-      return(ShowStatus());
-   }
 
    /*
    Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluß werden die Daten der ggf. laufenden Sequenz restauriert.
@@ -255,7 +245,7 @@ int init() {
    }
 
    // ---------------------------------------------------------------------------------------------------------------------------------------------------------
-   else catch("init(2)   unknown init() scenario", ERR_RUNTIME_ERROR);
+   else catch("init(1)   unknown init() scenario", ERR_RUNTIME_ERROR);
 
 
    // (2) Status anzeigen
@@ -275,7 +265,7 @@ int init() {
    if (IntInArray(UninitializeReason(), reasons2)) /*&&*/ if (!IsTesting())
       SendTick(false);
 
-   return(catch("init(3)"));
+   return(catch("init(2)"));
 }
 
 

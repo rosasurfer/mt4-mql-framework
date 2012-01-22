@@ -8740,5 +8740,16 @@ value_0=1.680000
 </object>
 </indicator>
 
+<indicator>
+name=Custom Indicator
+<expert>
+name=ChartInfos
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
 </window>
 </chart>

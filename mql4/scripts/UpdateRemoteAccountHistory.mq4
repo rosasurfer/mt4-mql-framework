@@ -77,7 +77,7 @@ int onStart() {
             if (error == ERR_UNKNOWN_SYMBOL) {
                log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
-               MessageBox("Add \""+ OrderSymbol() +"\" to the Market Watch window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+               MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
             }
             if (IsError(error))

@@ -72,6 +72,18 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
    Pip         = 1/MathPow(10, PipDigits);
    Pips        = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
+   TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
+
+   int error = GetLastError();
+   if (error == ERR_UNKNOWN_SYMBOL) {                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
+      last_error = ERR_TERMINAL_NOT_YET_READY;                       // (das Symbol kann später evt. noch "auftauchen")
+   }
+   else if (IsError(error)) {
+      catch("stdlib_onInit(1)", error);
+   }
+   else if (TickSize < 0.00000001) {
+      catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO);
+   }
 
    if (!IsLastError()) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
       GetServerTimezone();
@@ -145,6 +157,18 @@ int onStart() {
  */
 int onTick() {
    return(catch("onTick()", ERR_WRONG_JUMP));
+}
+
+
+/**
+ * Ob der Indikator im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool iIsTesting() {
+   if (IsIndicator())
+      return(GetCurrentThreadId() != GetUIThreadId());
+   return(false);
 }
 
 
@@ -4685,26 +4709,6 @@ int GetAccountNumber() {
    if (IsError(catch("GetAccountNumber(3)")))
       return(0);
    return(account);
-}
-
-
-/**
- * Gibt den durchschnittlichen Spread des angegebenen Instruments zurück.
- *
- * @param  string symbol - Instrument
- *
- * @return double - Spread
- */
-double GetAverageSpread(string symbol) {
-   if      (symbol == "EURUSD") return(0.0001 );
-   else if (symbol == "GBPJPY") return(0.05   );
-   else if (symbol == "GBPCHF") return(0.0004 );
-   else if (symbol == "GBPUSD") return(0.00012);
-   else if (symbol == "USDCAD") return(0.0002 );
-   else if (symbol == "USDCHF") return(0.0001 );
-
-   //spread = MarketInfo(symbol, MODE_POINT) * MarketInfo(symbol, MODE_SPREAD); // aktueller Spread in Points
-   return(_ZERO(catch("GetAverageSpread()  average spread for "+ symbol +" not found", ERR_UNKNOWN_SYMBOL)));
 }
 
 

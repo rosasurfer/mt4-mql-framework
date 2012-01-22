@@ -502,8 +502,8 @@ int    prev_error = NO_ERROR;                               // der letzte aufget
 double Pip, Pips;                                           // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
 int    PipDigits;                                           // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
 int    PipPoint, PipPoints;                                 // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
-string PriceFormat;                                         // Preisformat des aktuellen Symbols
-
+double TickSize;                                            // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von MODE_POINT)
+string PriceFormat;                                         // Preisformat des aktuellen Symbols für NumberToStr()
 int    Tick, Ticks;
 int    ValidBars;
 int    ChangedBars;
@@ -534,15 +534,26 @@ int onInit(int scriptType, int initFlags=NULL) {
       Pip         = 1/MathPow(10, PipDigits);
       Pips        = Pip;
       PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-   }
+      TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
+      int error = GetLastError();
+      if (error == ERR_UNKNOWN_SYMBOL) {                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
+         last_error = ERR_TERMINAL_NOT_YET_READY;                    // (das Symbol kann später evt. noch "auftauchen")
+      }
+      else if (IsError(error)) {
+         catch("onInit(1)", error);
+      }
+      else if (TickSize < 0.00000001) {
+         catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO);
+      }
+   }
    return(last_error);
 }
 
 
 /**
- * Originale Main-Funktion. Führt diverse Laufzeit-Checks durch, setzt entsprechende Variablen und ruft danach und *nur*
- * bei Erfolg die neu eingeführten Main-Funktionen des Scripttyps auf (bei Indikatoren und EA's onTick(), bei Scripten onStart()).
+ * Originale Main-Funktion. Führt diverse Laufzeit-Checks durch, setzt entsprechende Variablen und ruft danach und *nur* bei Erfolg
+ * die neu eingeführten Main-Funktionen des jeweiligen Programmtyps auf (bei Indikatoren und EA's onTick(), bei Scripten onStart()).
  *
  * @return int - Fehlerstatus
  */
@@ -559,14 +570,14 @@ int start() {
    else if (init) {                                         // init()-error abfangen
       if (last_error == ERR_TERMINAL_NOT_YET_READY) {
          if (IsIndicator()) {
-            if (Ticks > 1)
-               init();                                      // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+            if (Ticks > 1)                                  // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+               init();                                      // TODO: nach erneutem Aufruf von init() muß ValidBars entsprechend zurückgesetzt werden
          }
          else if (IsExpert()) {
             init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
          }
       }
-      if (last_error != NO_ERROR)
+      if (IsError(last_error))
          return(last_error);                                // regular exit for init()-error
       init = false;                                         // init() war erfolgreich
    }
@@ -606,7 +617,7 @@ int start() {
  * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert.
  * Der mit der MQL-Funktion GetLastError() auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
- * @param  string message        - zusätzlich anzuzeigende Nachricht (z.B. Ort des Aufrufs)
+ * @param  string message        - anzuzeigende Nachricht
  * @param  int    error          - manuelles Forcieren eines bestimmten Error-Codes
  *
  * @return int - der aufgetretene Error-Code

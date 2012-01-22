@@ -13,8 +13,6 @@
 #define PRICE_BID    1
 #define PRICE_ASK    2
 
-double TickSize;
-
 string instrumentLabel, priceLabel, spreadLabel, unitSizeLabel, positionLabel, freezeLevelLabel, stopoutLevelLabel;
 
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
@@ -35,12 +33,6 @@ int init() {
    if (onInit(T_INDICATOR) != NO_ERROR)
       return(last_error);
 
-   TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-
-   int error = GetLastError();
-   if (IsError(error) || TickSize < 0.00000001)
-      return(catch("init(1)   TickSize = "+ NumberToStr(TickSize, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO)));
-
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -51,11 +43,11 @@ int init() {
    else if (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
    else
-      catch("init(2)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+      catch("init(1)  Invalid configuration value [AppliedPrice], "+ symbol +" = \""+ price +"\"", ERR_INVALID_INPUT_PARAMVALUE);
 
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
    if (LT(leverage, 1))
-      return(catch("init(3)  Invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("init(2)  Invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    // Label definieren und erzeugen
    instrumentLabel   = StringConcatenate(__SCRIPT__, ".Instrument"        );
@@ -71,7 +63,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(4)"));
+   return(catch("init(3)"));
 }
 
 
@@ -92,6 +84,9 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   if (Bid < 0.00000001)                                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
+      return(catch("onTick(1)"));
+
    positionChecked = false;
 
    UpdatePriceLabel();
@@ -100,7 +95,7 @@ int onTick() {
    UpdatePositionLabel();
    UpdateMarginLevels();
 
-   return(catch("onTick()"));
+   return(catch("onTick(2)"));
 }
 
 
@@ -184,23 +179,19 @@ int CreateLabels() {
  * @return int - Fehlerstatus
  */
 int UpdatePriceLabel() {
-   if (Bid < 0.00000001) {                                           // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
-      string strPrice = " ";
-   }
-   else {
-      static double lastBid, lastAsk, price;
-      if (EQ(lastBid, Bid)) /*&&*/ if (EQ(lastAsk, Ask))
-         return(NO_ERROR);
-      lastBid = Bid;
-      lastAsk = Ask;
+   double price;
 
+   if (!iIsTesting()) {
       switch (appliedPrice) {
          case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
          case PRICE_BID:    price =  Bid;          break;
          case PRICE_ASK:    price =  Ask;          break;
       }
-      strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
    }
+   else {
+      price = Close[0];
+   }
+   string strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
 
    ObjectSetText(priceLabel, strPrice, 13, "Microsoft Sans Serif", Black);
 
@@ -217,20 +208,11 @@ int UpdatePriceLabel() {
  * @return int - Fehlerstatus
  */
 int UpdateSpreadLabel() {
-   string strSpread;
-   double spread = MarketInfo(Symbol(), MODE_SPREAD);
-
-   int error = GetLastError();
-   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001) {              // Symbol nicht subscribed (Market Watch bzw. "symbols.sel") => Start oder Accountwechsel
-      strSpread = " ";
-   }
-   else {
-      strSpread = DoubleToStr(spread/PipPoints, Digits-PipDigits);
-   }
+   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits-PipDigits);
 
    ObjectSetText(spreadLabel, strSpread, 9, "Tahoma", SlateGray);
 
-   error = GetLastError();
+   int error = GetLastError();
    if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("UpdateSpreadLabel()", error));
@@ -249,7 +231,7 @@ int UpdateUnitSizeLabel() {
    int error = GetLastError();
    string strUnitSize;
 
-   if (error==ERR_UNKNOWN_SYMBOL || Bid < 0.00000001 || tickValue < 0.00000001 || !tradeAllowed) {   // bei Start oder Accountwechsel
+   if (!tradeAllowed || tickValue < 0.00000001) {                    // bei Start oder Accountwechsel
       strUnitSize = " ";
    }
    else {
@@ -379,7 +361,7 @@ int UpdateMarginLevels() {
              tickValue      = tickValue * MathAbs(totalPosition);             // TickValue der gesamten Position
 
       int error = GetLastError();
-      if (tickValue < 0.00000001 || error==ERR_UNKNOWN_SYMBOL)                // bei Start oder Accountwechsel
+      if (tickValue < 0.00000001)                                             // bei Start oder Accountwechsel
          return(SetLastError(ERR_UNKNOWN_SYMBOL));
 
       bool showFreezeLevel = true;
