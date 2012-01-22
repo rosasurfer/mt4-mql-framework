@@ -324,7 +324,7 @@ int UpdatePositionLabel() {
 
 
 /**
- * Aktualisiert die angezeigten Marginlevel.
+ * Aktualisiert die Anzeige der aktuellen Freeze- und Stopoutlevel.
  *
  * @return int - Fehlerstatus
  */
