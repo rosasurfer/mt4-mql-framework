@@ -63,7 +63,7 @@ int    positions.counter [];
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_SCRIPT) != NO_ERROR)
+   if (IsError(onInit(T_SCRIPT)))
       return(last_error);
 
 

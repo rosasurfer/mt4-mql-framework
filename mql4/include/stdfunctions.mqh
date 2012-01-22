@@ -523,11 +523,6 @@ int onInit(int scriptType, int initFlags=NULL) {
    last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags);
 
    if (last_error == NO_ERROR) {
-    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // wird in stdlib_onInit() ausgewertet
-      if (initFlags & IT_RESET_BARS_ON_HIST_UPDATE != 0) {}          // noch nicht implementiert
-   }
-
-   if (last_error == NO_ERROR) {
       PipDigits   = Digits & (~1);
       PipPoint    = MathPow(10, Digits-PipDigits) +0.1;              // (int) double
       PipPoints   = PipPoint;
@@ -547,6 +542,15 @@ int onInit(int scriptType, int initFlags=NULL) {
          catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO);
       }
    }
+
+   if (last_error == NO_ERROR) {
+    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // Wird in stdlib_onInit() geprüft, da dort das Errorhandling der Funktion einfacher ist.
+   }
+
+   if (last_error == NO_ERROR) {
+      if (initFlags & IT_RESET_BARS_ON_HIST_UPDATE != 0) {}          // noch nicht implementiert
+   }
+
    return(last_error);
 }
 
@@ -569,9 +573,11 @@ int start() {
    }
    else if (init) {                                         // init()-error abfangen
       if (last_error == ERR_TERMINAL_NOT_YET_READY) {
-         if (IsIndicator()) {
-            if (Ticks > 1)                                  // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+         if (IsIndicator()) {                               // in Indikatoren wird init() erst nach dem 2. Tick nochmal aufgerufen
+            if (Ticks > 1) {
+               debug("start()   last_error = ERR_TERMINAL_NOT_YET_READY, calling init() again...");
                init();                                      // TODO: nach erneutem Aufruf von init() muß ValidBars entsprechend zurückgesetzt werden
+            }
          }
          else if (IsExpert()) {
             init();                                         // in EA's wird init() sofort nochmal aufgerufen, in Scripten gar nicht
@@ -591,6 +597,9 @@ int start() {
    if (Bars == 0)
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));     // kann bei Terminal-Start auftreten
 
+
+   debug("start()   last_error = NO_ERROR,    ValidBars = "+ ValidBars);
+
    /*
    // (2.1) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung
    //       überprüft werden (kann nicht hier, sondern erst in onTick() erfolgen).
@@ -602,9 +611,11 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   // (4) stdLib benachrichtigen und Main-Funktion aufrufen
+   // (4) stdLib benachrichtigen
    stdlib_onStart(Ticks, ValidBars, ChangedBars);
 
+
+   // (5) neue Main-Funktion aufrufen
    if (IsScript()) last_error = onStart();
    else            last_error = onTick();
 

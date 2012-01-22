@@ -39,7 +39,7 @@ int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR) != NO_ERROR)
+   if (IsError(onInit(T_INDICATOR)))
       return(last_error);
 
    // globale Variablen
@@ -156,7 +156,7 @@ int onTick() {
    if (prev_error == ERR_HISTORY_UPDATE)
       ValidBars = 0;
 
-   // Accountinitialisierung abfangen (bei Start und Accountwechsel)
+   // unvollständige Accountinitialisierung abfangen (bei Start und Accountwechseln mit schnellen Prozessoren)
    if (AccountNumber() == 0) {
       //debug("onTick()   ERR_NO_CONNECTION");
       return(SetLastError(ERR_NO_CONNECTION));
@@ -164,9 +164,9 @@ int onTick() {
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
-   EventListener.AccountChange(loginData, 0);                  // der Eventlistener gibt unabhängig vom Event immer die aktuellen Accountdaten zurück
+   EventListener.AccountChange(loginData, 0);                  // Der Eventlistener schreibt unabhängig vom Egebnis immer die aktuellen Accountdaten ins Array.
    if (TimeCurrent() < loginData[2]) {
-      //debug("onTick()   old tick, loginTime = "+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   serverTime="+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("onTick()   old tick=\""+ TimeToStr(TimeCurrent(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\"   login=\""+ TimeToStr(loginData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\"");
       return(catch("onTick(1)"));
    }
 

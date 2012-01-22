@@ -85,16 +85,18 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags=NULL) {
       catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO);
    }
 
-   if (!IsLastError()) /*&&*/ if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
-      GetServerTimezone();
+   if (last_error == NO_ERROR) {
+      if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
+         GetServerTimezone();
+   }
 
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
    // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
-   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads (Ermittlung ist auf gültiges Hauptfenster-Handle angewiesen).
-   if (!IsLastError())
+   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads, dessen Ermittlung auf ein gültiges Hauptfenster-Handle angewiesen ist.
+   if (last_error == NO_ERROR)
       GetTerminalWindow();
 
-   if (!IsLastError())
+   if (last_error == NO_ERROR)
       GetUIThreadId();
 
    return(last_error);
@@ -4431,16 +4433,19 @@ bool EventListener.HistoryChange(int results[], int flags=0) {
 
 /**
  * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
- * Während des Terminal-Starts und Accountwechseln gibt AccountNumber() kurzfristig 0 zurück. Diese start()-Aufrufe des noch nicht vollständig
- * initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  *
- * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login_servertime}
+ * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login}
  * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
  *
  * @return bool - Ergebnis
+ *
+ * NOTE:
+ * -----
+ * Während des Terminal-Starts und bei Accountwechseln mit schnellen Prozesoren kann AccountNumber() kurzfristig 0 zurückgeben.
+ * Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  */
 bool EventListener.AccountChange(int results[], int flags=0) {
-   static int accountData[3];                         // {last_account, current_account, current_account_login_servertime}
+   static int accountData[3];                         // {last_account, current_account, current_account_login}
 
    bool eventStatus = false;
    int  account = AccountNumber();
@@ -4468,7 +4473,7 @@ bool EventListener.AccountChange(int results[], int flags=0) {
 
    int error = GetLastError();
    if (error != NO_ERROR)
-      return(catch("EventListener.AccountChange()", error)==NO_ERROR);
+      return(_false(catch("EventListener.AccountChange()", error)));
 
    return(eventStatus);
 }
@@ -4681,7 +4686,6 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
  *
  * @return int - Account-Nummer (positiver Wert) oder 0, falls ein Fehler aufgetreten ist.
- *
  *
  * NOTE:
  * ----
@@ -5986,7 +5990,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
    static string cache.timezone[];
-   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+   static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)

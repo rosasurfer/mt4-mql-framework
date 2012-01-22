@@ -22,7 +22,7 @@ string objects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR, IT_CHECK_TIMEZONE_CONFIG) != NO_ERROR)
+   if (IsError(onInit(T_INDICATOR, IT_CHECK_TIMEZONE_CONFIG)))
       return(last_error);
 
    // Datenanzeige ausschalten

@@ -30,7 +30,7 @@ string objects[];
  * @return int - Fehlerstatus
  */
 int init() {
-   if (onInit(T_INDICATOR) != NO_ERROR)
+   if (IsError(onInit(T_INDICATOR, IT_CHECK_TIMEZONE_CONFIG)))
       return(last_error);
 
    // Datenanzeige ausschalten
@@ -181,15 +181,10 @@ int CreateLabels() {
 int UpdatePriceLabel() {
    double price;
 
-   if (!iIsTesting()) {
-      switch (appliedPrice) {
-         case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
-         case PRICE_BID:    price =  Bid;          break;
-         case PRICE_ASK:    price =  Ask;          break;
-      }
-   }
-   else {
-      price = Close[0];
+   switch (appliedPrice) {
+      case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
+      case PRICE_BID:    price =  Bid;          break;
+      case PRICE_ASK:    price =  Ask;          break;
    }
    string strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
 
