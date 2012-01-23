@@ -2347,14 +2347,13 @@ string WaitForSingleObjectValueToStr(int value) {
  * @see GetStandardSymbol()
  */
 string StdSymbol() {
-   string stdSymbol;
-
-   static bool done;
+   static string stdSymbol[1];                                       // Um Strings timeframeübergreifend statisch zu speichern, müssen sie in einem Array abgelegt werden.
+   static bool   done;
    if (!done) {
-      stdSymbol = GetStandardSymbol(Symbol());
+      stdSymbol[0] = GetStandardSymbol(Symbol());
       done = true;
    }
-   return(stdSymbol);
+   return(stdSymbol[0]);
 }
 
 
