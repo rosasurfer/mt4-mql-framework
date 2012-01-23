@@ -12,7 +12,6 @@ string text            = "jagt im komplett verwahrl. Taxi 1234,567,890.50 | ";
 color  backgroundColor = C'212,208,200';
 color  fontColor       = Blue;
 string fontNames[]     = { "", "System", "Arial", "Arial Kursiv", "Arial Fett", "Arial Black", "Arial Narrow", "Arial Narrow Fett", "Century Gothic", "Century Gothic Fett", "Comic Sans MS", "Comic Sans MS Fett", "Eurostile", "Franklin Gothic Medium", "Lucida Console", "Lucida Sans", "Microsoft Sans Serif", "MS Sans Serif", "Tahoma", "Tahoma Fett", "Trebuchet MS", "Verdana", "Verdana Fett", "Vrinda", "Courier", "Courier New", "Courier New Fett", "FOREXTools", "MS Serif" };
-string chartObjects[];
 
 
 /**
@@ -38,7 +37,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(objects);
    return(catch("deinit()"));
 }
 
@@ -74,7 +73,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 14);
          ObjectSet(label, OBJPROP_YDISTANCE, 90);
          ObjectSetText(label, "g", 390, "Webdings", backgroundColor);
-         ArrayPushString(chartObjects, label);
+         ArrayPushString(objects, label);
       }
       else GetLastError();
 
@@ -90,7 +89,7 @@ int CreateLabels() {
             ObjectSet(label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 20);
             ObjectSet(label, OBJPROP_YDISTANCE, i*17 + yCoord);
             ObjectSetText(label, StringConcatenate(text, ifString(fontNames[i]=="", fontSize, fontNames[i])), fontSize, fontNames[i], fontColor);
-            ArrayPushString(chartObjects, label);
+            ArrayPushString(objects, label);
          }
          else GetLastError();
       }

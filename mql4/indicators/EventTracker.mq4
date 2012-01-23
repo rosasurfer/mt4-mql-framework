@@ -29,7 +29,7 @@ bool   PivotLevels.PreviousDayRange = false;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string stdSymbol, symbolName;
+string symbolName;
 int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
 
 
@@ -43,8 +43,7 @@ int init() {
       return(last_error);
 
    // globale Variablen
-   stdSymbol  = GetStandardSymbol(Symbol());
-   symbolName = GetSymbolName(stdSymbol);
+   symbolName = GetSymbolName(StdSymbol());
 
 
    // -- Beginn - Parametervalidierung
@@ -72,22 +71,22 @@ int init() {
    */
 
    // Track.BollingerBands
-   Track.BollingerBands = GetConfigBool("EventTracker."+ stdSymbol, "BollingerBands", Track.BollingerBands);
+   Track.BollingerBands = GetConfigBool("EventTracker."+ StdSymbol(), "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
       // BollingerBands.MA.Periods
-      BollingerBands.MA.Periods = GetConfigInt("EventTracker."+ stdSymbol, "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
+      BollingerBands.MA.Periods = GetConfigInt("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
       if (BollingerBands.MA.Periods < 2) {
-         catch("init(2)   Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         catch("init(2)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
-      string strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
+      string strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
       BollingerBands.MA.Timeframe = PeriodToId(strValue);
       if (BollingerBands.MA.Timeframe == -1) {
-         if (IsConfigKey("EventTracker."+ stdSymbol, "BollingerBands.MA.Timeframe")) {
-            catch("init(3)   Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         if (IsConfigKey("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe")) {
+            catch("init(3)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
             Track.BollingerBands = false;
          }
          else {
@@ -97,18 +96,18 @@ int init() {
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
-      strValue = GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
+      strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
       BollingerBands.MA.Method = MovingAverageMethodToId(strValue);
       if (BollingerBands.MA.Method == -1) {
-         catch("init(4)   Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         catch("init(4)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }
    if (Track.BollingerBands) {
       // BollingerBands.Deviation
-      BollingerBands.Deviation = GetConfigDouble("EventTracker."+ stdSymbol, "BollingerBands.Deviation", BollingerBands.Deviation);
+      BollingerBands.Deviation = GetConfigDouble("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", BollingerBands.Deviation);
       if (LE(BollingerBands.Deviation, 0)) {
-         catch("init(5)   Invalid config value [EventTracker."+ stdSymbol +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ stdSymbol, "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
+         catch("init(5)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
          Track.BollingerBands = false;
       }
    }

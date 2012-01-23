@@ -54,8 +54,6 @@ double deviation1, deviation2;
 bool   ALMA = false;
 double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: Gewichtungen der einzelnen Bars etc.
 
-string chartObjects[];
-
 
 /**
  * Initialisierung
@@ -76,7 +74,7 @@ int init() {
       if (!StringContains(configLabel, "{symbol}"))
          return(catch("init(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       configSection  = WindowExpertName();
-      configLabel    = StringReplace(configLabel, "{symbol}", GetStandardSymbol(Symbol()));
+      configLabel    = StringReplace(configLabel, "{symbol}", StdSymbol());
       externalConfig = true;
    }
 
@@ -220,7 +218,7 @@ int init() {
 
    // Legende
    string legendLabel = CreateLegendLabel(indicatorLongName);
-   ArrayPushString(chartObjects, legendLabel);
+   ArrayPushString(objects, legendLabel);
    ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
@@ -278,7 +276,7 @@ int deinit() {
 
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
 
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(objects);
    RepositionLegend();
    return(catch("deinit()"));
 }

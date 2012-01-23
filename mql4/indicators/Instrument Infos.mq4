@@ -34,8 +34,6 @@ string names[] = { "TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPL
 #define ACCOUNT_LEVERAGE  17
 #define STOPOUT_LEVEL     18
 
-string chartObjects[];
-
 
 /**
  * Initialisierung
@@ -60,7 +58,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(objects);
    return(catch("deinit()"));
 }
 
@@ -96,7 +94,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
       ObjectSet(label, OBJPROP_YDISTANCE, 134);
       ObjectSetText(label, "g", 174, "Webdings", Background.Color);
-      ArrayPushString(chartObjects, label);
+      ArrayPushString(objects, label);
    }
    else GetLastError();
 
@@ -109,7 +107,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
       ObjectSet(label, OBJPROP_YDISTANCE, 269);
       ObjectSetText(label, "g", 174, "Webdings", Background.Color);
-      ArrayPushString(chartObjects, label);
+      ArrayPushString(objects, label);
    }
    else GetLastError();
 
@@ -127,7 +125,7 @@ int CreateLabels() {
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", Font.Size, Font.Name);
-         ArrayPushString(chartObjects, label);
+         ArrayPushString(objects, label);
          names[i] = label;
       }
       else GetLastError();

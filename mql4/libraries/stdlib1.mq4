@@ -2334,6 +2334,31 @@ string WaitForSingleObjectValueToStr(int value) {
 
 
 /**
+ * Gibt das Standardsymbol des aktuellen Symbols zurück.
+ * (z.B. StdSymbol() => "EURUSD")
+ *
+ * @return string - Standardsymbol oder das aktuelle Symbol, wenn das Standardsymbol unbekannt ist
+ *
+ *
+ * NOTE:
+ * -----
+ * Alias für GetStandardSymbol(Symbol())
+ *
+ * @see GetStandardSymbol()
+ */
+string StdSymbol() {
+   string stdSymbol;
+
+   static bool done;
+   if (!done) {
+      stdSymbol = GetStandardSymbol(Symbol());
+      done = true;
+   }
+   return(stdSymbol);
+}
+
+
+/**
  * Gibt für ein broker-spezifisches Symbol das Standardsymbol zurück.
  * (z.B. GetStandardSymbol("EURUSDm") => "EURUSD")
  *

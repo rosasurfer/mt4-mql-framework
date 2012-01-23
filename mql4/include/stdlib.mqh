@@ -303,6 +303,7 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
 
+   string   StdSymbol();                                                   // Alias für GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);

@@ -12,7 +12,6 @@ color  fontColor = Blue;
 color  bgColor   = C'212,208,200';
 
 string symbols[] = { "USDLFX","AUDLFX","CADLFX","CHFLFX","EURLFX","GBPLFX","JPYLFX" };
-string chartObjects[];
 
 
 #define USDLFX  0
@@ -47,7 +46,7 @@ int init() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   RemoveChartObjects(chartObjects);
+   RemoveChartObjects(objects);
    return(catch("deinit()"));
 }
 
@@ -83,7 +82,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 33);
       ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      ArrayPushString(chartObjects, label);
+      ArrayPushString(objects, label);
    }
    else GetLastError();
 
@@ -96,7 +95,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 13);
       ObjectSet(label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      ArrayPushString(chartObjects, label);
+      ArrayPushString(objects, label);
    }
    else GetLastError();
 
@@ -113,7 +112,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE,  119);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, StringLeft(symbols[i], 3) +":", fontSize, fontName, fontColor);
-         ArrayPushString(chartObjects, label);
+         ArrayPushString(objects, label);
          symbols[i] = label;
       }
       else GetLastError();
@@ -127,7 +126,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE, 59);
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         ArrayPushString(chartObjects, label);
+         ArrayPushString(objects, label);
       }
       else GetLastError();
 
@@ -140,7 +139,7 @@ int CreateLabels() {
          ObjectSet(label, OBJPROP_XDISTANCE, 19); // 19 oder 2
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         ArrayPushString(chartObjects, label);
+         ArrayPushString(objects, label);
       }
       else GetLastError();
    }
