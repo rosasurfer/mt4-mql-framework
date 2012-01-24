@@ -469,7 +469,7 @@ string GetTerminalVersion() {
  */
 int GetTerminalBuild() {
    string version = GetTerminalVersion();
-   if (version == "")
+   if (StringLen(version) == 0)
       return(0);
 
    string strings[];
@@ -641,12 +641,12 @@ int LFX.Instance(int magicNumber) {
  * @return string - Dateiname
  */
 string GetLocalConfigPath() {
-   static string cache.localConfigPath[];             // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
+   static string cache.localConfigPath[];                            // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
    if (ArraySize(cache.localConfigPath) == 0) {
       ArrayResize(cache.localConfigPath, 1);
       cache.localConfigPath[0] = "";
    }
-   else if (cache.localConfigPath[0] != "")           // ... und möglichst gecachten Wert zurückgeben
+   else if (StringLen(cache.localConfigPath[0]) > 0)                 // ... und möglichst gecachten Wert zurückgeben
       return(cache.localConfigPath[0]);
 
    // Cache-miss, aktuellen Wert ermitteln
@@ -672,7 +672,7 @@ string GetLocalConfigPath() {
       }
    }
 
-   cache.localConfigPath[0] = iniFile;                // Ergebnis cachen
+   cache.localConfigPath[0] = iniFile;                               // Ergebnis cachen
 
    if (IsError(catch("GetLocalConfigPath(2)")))
       return("");
@@ -687,12 +687,12 @@ string GetLocalConfigPath() {
  * @return string - Dateiname
  */
 string GetGlobalConfigPath() {
-   static string cache.globalConfigPath[];            // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
+   static string cache.globalConfigPath[];                           // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
    if (ArraySize(cache.globalConfigPath) == 0) {
       ArrayResize(cache.globalConfigPath, 1);
       cache.globalConfigPath[0] = "";
    }
-   else if (cache.globalConfigPath[0] != "")          // ... und möglichst gecachten Wert zurückgeben
+   else if (StringLen(cache.globalConfigPath[0]) > 0)                // ... und möglichst gecachten Wert zurückgeben
       return(cache.globalConfigPath[0]);
 
    // Cache-miss, aktuellen Wert ermitteln
@@ -718,7 +718,7 @@ string GetGlobalConfigPath() {
       }
    }
 
-   cache.globalConfigPath[0] = iniFile;               // Ergebnis cachen
+   cache.globalConfigPath[0] = iniFile;                              // Ergebnis cachen
 
    if (IsError(catch("GetGlobalConfigPath(2)")))
       return("");
@@ -6028,7 +6028,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    // 3) Timezone-ID ermitteln
    string timezone, directory=StringToLower(GetTradeServerDirectory());
 
-   if (directory == "")
+   if (StringLen(directory) == 0)
       return("");
    else if (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Europe/Berlin";
@@ -7932,7 +7932,30 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * TODO: Zur Zeit werden keine S/L- oder T/P-Orders unterstützt.
+ * Wartet darauf, daß das angegebene Ticket im Account erscheint und der Zugriff möglich ist.
+ *
+ * @param  int ticket - Orderticket
+ *
+ * @return int - dasselbe Ticket (um Funktion als Ersatz für Variable ticket benutzen zu können) oder 0, wenn ein Fehler auftrat
+ */
+int WaitForTicket(int ticket) {
+   if (ticket <= 0)
+      return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+
+   while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
+      Sleep(100);                                                    // 0.1 Sekunden warten
+   }
+
+   RestoreSelectedOrder(_lastTicket_);
+   return(ticket);
+}
+
+
+/**
+ * TODO: Es werden noch keine Limit- und TakeProfit-Orders unterstützt.
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
@@ -8002,8 +8025,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       return(-1);
    }
    // stopLoss
-   if (NE(stopLoss, 0)) {
-      catch("OrderSendEx(8)   submission of stop-loss orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
+   if (LT(stopLoss, 0)) {
+      catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    stopLoss = NormalizeDouble(stopLoss, digits);
@@ -8045,6 +8068,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
+         // zu verwendenden OpenPrice bestimmen und ggf. Stoplevel validieren
          double bid = MarketInfo(symbol, MODE_BID);
          double ask = MarketInfo(symbol, MODE_ASK);
          if      (type == OP_BUY    ) price = ask;
@@ -8063,6 +8087,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          }
          price = NormalizeDouble(price, digits);
 
+         if (NE(stopLoss, 0)) {
+            if (type==OP_BUY || type==OP_BUYSTOP || type==OP_BUYLIMIT) {
+               if (GE(stopLoss, price)) {
+                  catch("OrderSendEx(15)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS);
+                  return(-1);
+               }
+            }
+            else if (LE(stopLoss, price)) {
+               catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS);
+               return(-1);
+            }
+         }
+
          //debug(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
          time1 = GetTickCount();
          if (firstTime1 == 0) {
@@ -8078,14 +8115,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (IsError(catch("OrderSendEx(15)")))
+            if (IsError(catch("OrderSendEx(17)")))
                return(-1);
             return(WaitForTicket(ticket));                           // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(16)", error);
+               catch("OrderSendEx(18)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8103,31 +8140,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   catch("OrderSendEx(17)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
+   catch("OrderSendEx(19)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
    return(-1);
-}
-
-
-/**
- * Wartet darauf, daß das angegebene Ticket im Account erscheint und der Zugriff möglich ist.
- *
- * @param  int ticket - Orderticket
- *
- * @return int - dasselbe Ticket (um Funktion als Ersatz für Variable ticket benutzen zu können) oder 0, wenn ein Fehler auftrat
- */
-int WaitForTicket(int ticket) {
-   if (ticket <= 0)
-      return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
-
-   while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
-      Sleep(100);                                                    // 0.1 Sekunden warten
-   }
-
-   RestoreSelectedOrder(_lastTicket_);
-   return(ticket);
 }
 
 
@@ -8175,8 +8189,9 @@ int WaitForTicket(int ticket) {
    }
 
    string message = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice);
-   if (OrderComment() != "") message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
-                             message = StringConcatenate(message, " after ", DoubleToStr(time/1000.0, 3), " s");
+   if (NE(OrderStopLoss(), 0))        message = StringConcatenate(message, ", SL=", NumberToStr(OrderStopLoss(), priceFormat));
+   if (StringLen(OrderComment()) > 0) message = StringConcatenate(message, ", comment=\"", OrderComment(), "\"");
+                                      message = StringConcatenate(message, " after ", DoubleToStr(time/1000.0, 3), " s");
    if (requotes > 0) {
       message = StringConcatenate(message, " and ", requotes, " requote");
       if (requotes > 1)

@@ -575,7 +575,7 @@ int onInit(int scriptType, int initFlags=NULL) {
 
    if (last_error == NO_ERROR) {
       if (IsVisualMode()) {
-         // Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen, die hier initialisiert werden (@see ChartInfo-Indikator).
+         // Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen, die hier initialisiert wird (@see ChartInfo-Indikator).
          // Konfiguration auswerten
          string price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
          if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
