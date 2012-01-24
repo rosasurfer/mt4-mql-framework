@@ -574,9 +574,8 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
-      // Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen, die hier initialisiert werden (@see ChartInfo-Indikator).
-
       if (IsVisualMode()) {
+         // Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen, die hier initialisiert werden (@see ChartInfo-Indikator).
          // Konfiguration auswerten
          string price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
          if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
@@ -696,10 +695,11 @@ int ChartInfo.CreateLabels() {
    }
    else GetLastError();
 
+   // Die Instrumentanzeige wird sofort und *nur hier* gesetzt.
    string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
    if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
    else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(ChartInfo.instrument, name, 9, "Tahoma Fett", Black);    // Anzeige wird sofort und *nur hier* gesetzt
+   ObjectSetText(ChartInfo.instrument, name, 9, "Tahoma Fett", Black);
 
 
    // Kurs-Label erzeugen
@@ -804,10 +804,9 @@ int ChartInfo.UpdateSpread() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateUnitSize() {
-   bool   tradeAllowed = NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);
+   bool   tradeAllowed = IsTesting() || NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);   // MODE_TRADEALLOWED ist im Tester idiotischerweise false
    double tickValue    =    MarketInfo(Symbol(), MODE_TICKVALUE);
-
-   string strUnitSize = " ";
+   string strUnitSize  = " ";
 
    if (tradeAllowed) /*&&*/ if (tickValue > 0.00000001) {            // bei Start oder Accountwechsel
       double equity = AccountEquity()-AccountCredit();
