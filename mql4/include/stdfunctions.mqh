@@ -520,6 +520,7 @@ string ChartInfo.instrument,
        ChartInfo.spread,
        ChartInfo.unitSize,
        ChartInfo.position,
+       ChartInfo.time,
        ChartInfo.freezeLevel,
        ChartInfo.stopoutLevel;
 
@@ -655,6 +656,7 @@ int start() {
       ChartInfo.UpdateSpread();
       ChartInfo.UpdateUnitSize();
       ChartInfo.UpdatePosition();
+      ChartInfo.UpdateTime();
       ChartInfo.UpdateMarginLevels();
    }
 
@@ -680,6 +682,7 @@ int ChartInfo.CreateLabels() {
    ChartInfo.spread       = "ChartInfo.Spread";
    ChartInfo.unitSize     = "ChartInfo.UnitSize";
    ChartInfo.position     = "ChartInfo.Position";
+   ChartInfo.time         = "ChartInfo.Time";
    ChartInfo.freezeLevel  = "ChartInfo.MarginFreezeLevel";
    ChartInfo.stopoutLevel = "ChartInfo.MarginStopoutLevel";
 
@@ -741,7 +744,7 @@ int ChartInfo.CreateLabels() {
    else GetLastError();
 
 
-   // Label der aktuellen Position erzeugen
+   // Position-Label erzeugen
    if (ObjectFind(ChartInfo.position) >= 0)
       ObjectDelete(ChartInfo.position);
    if (ObjectCreate(ChartInfo.position, OBJ_LABEL, 0, 0, 0)) {
@@ -752,6 +755,21 @@ int ChartInfo.CreateLabels() {
       ArrayPushString(objects, ChartInfo.position);
    }
    else GetLastError();
+
+
+   // Time-Label erzeugen (nur im Tester)
+   if (IsVisualMode()) {
+      if (ObjectFind(ChartInfo.time) >= 0)
+         ObjectDelete(ChartInfo.time);
+      if (ObjectCreate(ChartInfo.time, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(ChartInfo.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(ChartInfo.time, OBJPROP_XDISTANCE, 14);
+         ObjectSet(ChartInfo.time, OBJPROP_YDISTANCE, 14);
+         ObjectSetText(ChartInfo.time, " ", 1);
+         ArrayPushString(objects, ChartInfo.time);
+      }
+      else GetLastError();
+   }
 
    return(catch("ChartInfo.CreateLabels()"));
 }
@@ -898,6 +916,35 @@ int ChartInfo.UpdatePosition() {
    if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
       return(NO_ERROR);
    return(catch("ChartInfo.UpdatePosition()", error));
+}
+
+
+/**
+ * Aktualisiert die Zeitanzeige.
+ *
+ * @return int - Fehlerstatus
+ */
+int ChartInfo.UpdateTime() {
+   static datetime last;
+
+   datetime now = TimeCurrent();
+   if (now == last)
+      return(NO_ERROR);
+
+   string date = TimeToStr(now, TIME_DATE),
+          yyyy = StringSubstr(date, 0, 4),
+          mm   = StringSubstr(date, 5, 2),
+          dd   = StringSubstr(date, 8, 2),
+          time = TimeToStr(now, TIME_MINUTES|TIME_SECONDS);
+
+   ObjectSetText(ChartInfo.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
+
+   last = now;
+
+   int error = GetLastError();
+   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
+      return(NO_ERROR);
+   return(catch("ChartInfo.UpdateTime()", error));
 }
 
 
@@ -1336,20 +1383,6 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
- *
- * @param  int param1 - Integer
- * @param  ...        - beliebige weitere Parameter (werden ignoriert)
- *
- * @return int - der erste Parameter
- */
-int _int(int param1, int param2=NULL, int param3=NULL) {
-   return(param1);
-}
-
-
-/**
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
@@ -1389,16 +1422,15 @@ int _ZERO(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  double param1 - Double
- * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ * @param  ... - beliebige Parameter (werden ignoriert)
  *
- * @return double - der erste Parameter
+ * @return string - Leerstring
  */
-double _double(double param1, int param2=NULL, int param3=NULL) {
-   return(param1);
+string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
+   return("");
 }
 
 
@@ -1420,6 +1452,34 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
+ * @param  int param1 - Integer
+ * @param  ...        - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return int - der erste Parameter
+ */
+int _int(int param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  double param1 - Double
+ * @param  ...           - beliebige weitere Parameter (werden ignoriert)
+ *
+ * @return double - der erste Parameter
+ */
+double _double(double param1, int param2=NULL, int param3=NULL) {
+   return(param1);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
  * @param  string param1 - String
  * @param  ...           - beliebige weitere Parameter (werden ignoriert)
  *
@@ -1431,33 +1491,27 @@ string _string(string param1, int param2=NULL, int param3=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
- *
- * @param  ... - beliebige Parameter (werden ignoriert)
- *
- * @return string - Leerstring
- */
-string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
-   return("");
-}
-
-
-/**
  * Dummy-Calls, unterdrücken Compilerwarnungen über unreferenzierte Funktionen
  */
 void DummyCalls() {
-   _NO_ERROR();
-   _NULL();
-   _ZERO();
-   _empty();
-   _false();
-   _true();
    _bool(NULL);
    _double(NULL);
+   _empty();
+   _false();
    _int(NULL);
+   _NO_ERROR();
+   _NULL();
    _string(NULL);
+   _true();
+   _ZERO();
    catch(NULL);
+   ChartInfo.CreateLabels();
+   ChartInfo.UpdateMarginLevels();
+   ChartInfo.UpdatePosition();
+   ChartInfo.UpdatePrice();
+   ChartInfo.UpdateSpread();
+   ChartInfo.UpdateTime();
+   ChartInfo.UpdateUnitSize();
    debug(NULL);
    ForceAlert();
    GetSelectedOrder();
