@@ -7738,11 +7738,11 @@ double MathRoundFix(double number, int decimals) {
 
 
 /**
- * Returns the sign of a number.
+ * Gibt das Vorzeichen einer Zahl zurück.
  *
- * @param  double number
+ * @param  double number - Zahl
  *
- * @return int - sign (-1, 0, +1)
+ * @return int - Vorzeichen (-1, 0, +1)
  */
 int MathSign(double number) {
    if (GT(number, 0)) return( 1);
