@@ -1196,9 +1196,9 @@ bool UpdateBreakeven() {
 
 
 /**
- * Gibt den PipValue der angegebenen Lotsize im aktuellen Instrument zurück (mit Fehlerkontrolle).
+ * Gibt den PipValue des aktuellen Instrument für die angegebenen Lotsize zurück.
  *
- * @param  double lots - Lotsize
+ * @param  double lots - Lotsize (default: 1)
  *
  * @return double - PipValue oder 0, wenn ein Fehler auftrat
  */
@@ -1207,7 +1207,7 @@ double GetPipValue(double lots = 1.0) {
 
    int error = GetLastError();
    if (IsError(error) || tickValue < 0.1)                            // ERR_INVALID_MARKETINFO abfangen
-      return(_false(catch("GetPipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
+      return(_ZERO(catch("GetPipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
 
    return(Pip / TickSize * tickValue * lots);
 }
