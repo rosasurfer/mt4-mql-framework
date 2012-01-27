@@ -567,7 +567,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
-    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // Wird in stdlib_onInit() geprüft, da dort das Errorhandling der Funktion einfacher ist.
+    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
    }
 
    if (last_error == NO_ERROR) {
@@ -576,7 +576,7 @@ int onInit(int scriptType, int initFlags=NULL) {
 
    if (last_error == NO_ERROR) {
       if (IsVisualMode()) {
-         // Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen, die hier initialisiert wird (@see ChartInfo-Indikator).
+         // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier initialisiert wird (@see ChartInfo-Indikator).
          // Konfiguration auswerten
          string price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
          if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
@@ -588,7 +588,6 @@ int onInit(int scriptType, int initFlags=NULL) {
          if (LT(ChartInfo.leverage, 1))
             return(catch("onInit(4)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
-         // Label erzeugen
          ChartInfo.CreateLabels();
       }
    }
@@ -1323,6 +1322,28 @@ int RestoreSelectedOrder(int ticket) {
    if (ticket > 0)
       OrderSelectByTicket(ticket);
    return(ticket);
+}
+
+
+/**
+ * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
+ *
+ * @param  double lots - Lotsize (default: 1)
+ *
+ * @return double - PipValue oder 0, wenn ein Fehler auftrat
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ */
+double PipValue(double lots = 1.0) {
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+
+   int error = GetLastError();
+   if (IsError(error) || tickValue < 0.00000001)
+      return(_ZERO(catch("PipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
+
+   return(Pip/TickSize * tickValue * lots);                          // TODO: prüfen, TickSize immer definiert ist
 }
 
 

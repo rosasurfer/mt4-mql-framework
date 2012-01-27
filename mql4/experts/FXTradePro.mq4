@@ -1180,36 +1180,12 @@ bool UpdateBreakeven() {
    double breakeven;
 
    if (progressionLevel > 0) {
-      int last = progressionLevel-1;
-      double pipValue = GetPipValue();
-      if (EQ(pipValue, 0))
-         return(false);
-
       double profitLoss     = all.swaps + all.commissions + all.profits;
-      double profitLossPips = profitLoss / pipValue;
-
+      double profitLossPips = profitLoss / PipValue();
       //debug("UpdateBreakeven()   profitLoss="+ DoubleToStr(profitLoss, 2) +"   profitLossPips="+ NumberToStr(profitLossPips, ".1+"));
    }
 
    return(IsNoError(catch("UpdateBreakeven()")));
-}
-
-
-/**
- * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
- *
- * @param  double lots - Lotsize (default: 1)
- *
- * @return double - PipValue oder 0, wenn ein Fehler auftrat
- */
-double GetPipValue(double lots = 1.0) {
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
-
-   int error = GetLastError();
-   if (IsError(error) || tickValue < 0.1)                            // ERR_INVALID_MARKETINFO abfangen
-      return(_ZERO(catch("GetPipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
-
-   return(Pip / TickSize * tickValue * lots);
 }
 
 
@@ -1220,15 +1196,9 @@ double GetPipValue(double lots = 1.0) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateMaxProfitLoss() {
-   // aktuellen PipValue bestimmen                                   !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   int error = GetLastError();
-   if (IsError(error) || tickValue < 0.1)                            // ERR_INVALID_MARKETINFO abfangen
-      return(_false(catch("UpdateMaxProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
-   double pipValue = Pip / TickSize * tickValue;
-
    // maximale P/L-Werte neu berechnen
    double drawdown, prevDrawdown;                                    // Drawdown in Pips
+   double pipValue = PipValue();
 
    for (int i=0; i < sequenceLength; i++) {
       if (i >= progressionLevel-1)       drawdown = StopLoss;                                               // aktueller und folgende Level: konfigurierten StopLoss verwenden
@@ -1352,9 +1322,11 @@ bool VisualizeSequence() {
 /**
  * Zeigt den aktuellen Status der Sequenz an.
  *
+ * @param  bool init - ob der Aufruf innerhalb der init()-Funktion erfolgt (default: FALSE)
+ *
  * @return int - Fehlerstatus
  */
-int ShowStatus() {
+int ShowStatus(bool init=false) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(last_error);
 
@@ -1419,6 +1391,8 @@ int ShowStatus() {
 
    // einige Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, NL, msg));
+   if (init)
+      WindowRedraw();
 
    if (IsNoError(catch("ShowStatus(2)")))
       last_error = error;                                            // bei Funktionseintritt bereits existierenden Fehler restaurieren
