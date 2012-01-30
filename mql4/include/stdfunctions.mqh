@@ -1270,7 +1270,8 @@ int HandleEvent(int event, int flags=0) {
 /**
  * Selektiert eine Order anhand des Tickets.
  *
- * @param  int ticket - Ticket
+ * @param  int    ticket   - Ticket
+ * @param  string location - optionaler Bezeichner für eine evt. Fehlermeldung
  *
  * @return bool - Erfolgsstatus
  *
@@ -1278,12 +1279,13 @@ int HandleEvent(int event, int flags=0) {
  *  -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-bool OrderSelectByTicket(int ticket) {
+bool OrderSelectByTicket(int ticket, string location="") {
    if (OrderSelect(ticket, SELECT_BY_TICKET))
       return(true);
 
    int error = GetLastError();
-   return(_false(catch("OrderSelectByTicket()   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+   location = StringConcatenate(location, ifString(StringLen(location)==0, "", "::"), "OrderSelectByTicket()");
+   return(_false(catch(location +"   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 
 

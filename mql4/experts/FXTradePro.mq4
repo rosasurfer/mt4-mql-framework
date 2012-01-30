@@ -161,7 +161,7 @@ bool     firstTick = true;
  */
 int init() {
    if (IsError(onInit(T_EXPERT)))
-      return(ShowStatus());
+      return(ShowStatus(true));
 
    /*
    Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluﬂ werden die Daten der ggf. laufenden Sequenz restauriert.
@@ -249,7 +249,7 @@ int init() {
 
 
    // (2) Status anzeigen
-   ShowStatus();
+   ShowStatus(true);
    if (IsLastError())
       return(last_error);
 
