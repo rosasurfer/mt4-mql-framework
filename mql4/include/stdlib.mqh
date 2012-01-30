@@ -277,14 +277,16 @@
 
 
    // Trade-/Orderhandling-Funktionen
-   bool     IsTradeOperationType(int value);
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
+   bool     IsTradeOperation(int value);
+   bool     IsPendingTradeOperation(int value);
 
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
    bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
+   bool     OrderDeleteEx(int ticket, color markerColor);
 
    bool     OrderSelectByTicket(int ticket);
    int      GetSelectedOrder();

@@ -5763,16 +5763,35 @@ string MessageBoxCmdToStr(int cmd) {
 
 
 /**
- * Ob der übergebene Parameter ein gültiger Tradeserver-Operationtype ist.
+ * Ob der übergebene Parameter eine Tradeoperation bezeichnet.
  *
  * @param  int value - zu prüfender Wert
  *
  * @return bool
  */
-bool IsTradeOperationType(int value) {
+bool IsTradeOperation(int value) {
    switch (value) {
       case OP_BUY:
       case OP_SELL:
+      case OP_BUYLIMIT:
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP:
+      case OP_SELLSTOP:
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine "pending" Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsPendingTradeOperation(int value) {
+   switch (value) {
       case OP_BUYLIMIT:
       case OP_SELLLIMIT:
       case OP_BUYSTOP:
@@ -7996,7 +8015,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       return(-1);
    }
    // type
-   if (!IsTradeOperationType(type)) {
+   if (!IsTradeOperation(type)) {
       catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
@@ -8737,10 +8756,100 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 }
 
 
-/*
-bool IsMyOrder() {
-   return(OrderMagicNumber()>>22 == 101);
+/**
+ * Drop-in-Ersatz für und erweiterte Version von OrderDelete(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ *
+ * @param  int   ticket      - Ticket-Nr. der zu schließenden Order
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
+   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+
+   // -- Beginn Parametervalidierung --
+   // ticket
+   if (!OrderSelectByTicket(ticket))          return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (!IsPendingTradeOperation(OrderType())) return(_false(catch("OrderDeleteEx(1)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)                 return(_false(catch("OrderDeleteEx(2)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderDeleteEx(3)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+   // -- Ende Parametervalidierung --
+
+   int  time1, time2;
+   bool success;
+
+   // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      int error = NO_ERROR;
+
+      if (IsTradeContextBusy()) {
+         log("OrderDeleteEx()   trade context busy, retrying...");
+         Sleep(300);                                                 // 0.3 Sekunden warten
+      }
+      else {
+         //debug(StringConcatenate("OrderDeleteEx()   deleting #", ticket, "..."));
+         if (time1 == 0)
+            time1 = GetTickCount();                                  // Zeit der ersten Ausführung
+         success = OrderDelete(ticket, markerColor);
+         time2   = GetTickCount();
+
+         if (success) {
+            // Logmessage generieren
+            log("OrderDeleteEx()   deleted "+ OrderDeleteEx.LogMessage(ticket, time2-time1));
+            if (!IsTesting()) PlaySound("OrderOk.wav");
+
+            RestoreSelectedOrder(_lastTicket_);
+            return(IsNoError(catch("OrderDeleteEx(4)")));            // regular exit
+         }
+         error = GetLastError();
+         if (error == NO_ERROR)
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+
+         string message = StringConcatenate("OrderDeleteEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
+         Alert(message);                                             // nach Fertigstellung durch log() ersetzen
+         if (IsTesting()) {
+            ForceSound("alert.wav");
+            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
+         }
+      }
+   }
+
+   RestoreSelectedOrder(_lastTicket_);
+   return(_false(catch("OrderDeleteEx(5)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error)));
 }
+
+
+/**
+ *
+ */
+/*private*/ string OrderDeleteEx.LogMessage(int ticket, int time) {
+   if (!OrderSelectByTicket(ticket, "OrderDeleteEx.LogMessage(1)"))
+      return("");
+
+   int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   int error = GetLastError();
+   if (IsError(error))
+      return(_empty(catch("OrderDeleteEx.LogMessage(2)   symbol=\""+ OrderSymbol() +"\"", error)));
+
+   string strType  = OperationTypeDescription(OrderType());
+   string strLots  = NumberToStr(OrderLots(), ".+");
+   string strPrice = NumberToStr(OrderOpenPrice(), priceFormat);
+   string message  = StringConcatenate("#", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", DoubleToStr(time/1000.0, 3), " s");
+
+   error = GetLastError();
+   if (IsError(error))
+      return(_empty(catch("OrderDeleteEx.LogMessage(3)", error)));
+   return(message);
+}
+
+
+/*
 -----------------------------------------------------------------------------------------------------------------------------
 before close #1 and #2 of {1, 2, 3, 4, 5, 6}
 -----------------------------------------------------------------------------------------------------------------------------
