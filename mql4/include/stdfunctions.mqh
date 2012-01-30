@@ -1284,7 +1284,7 @@ bool OrderSelectByTicket(int ticket, string location="") {
       return(true);
 
    int error = GetLastError();
-   location = StringConcatenate(location, ifString(StringLen(location)==0, "", "::"), "OrderSelectByTicket()");
+   location = StringConcatenate(location, ifString(StringLen(location)==0, "", "->"), "OrderSelectByTicket()");
    return(_false(catch(location +"   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 

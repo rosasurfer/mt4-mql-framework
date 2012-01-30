@@ -28,7 +28,7 @@
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                        // @see  stdlib.GetPrivateProfileSectionNames()
+   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                        // @see  stdlib::GetPrivateProfileSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    int  GetProcAddress(int hModule, string lpProcedureName);
    void GetStartupInfoA(int lpStartupInfo[]);
@@ -39,9 +39,9 @@
    bool ReadProcessMemory(int hProcess, int lpBaseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
-   int  WinExec(string lpCmdLine, int cmdShow);                                                                   //         +-- stdlib.DeletePrivateProfileSection()
-   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);            // @see  --+-- stdlib.DeletePrivateProfileKey()
-   bool WriteProcessMemory(int hProcess, int lpAddress, int lpBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib.FlushPrivateProfileCache()
+   int  WinExec(string lpCmdLine, int cmdShow);                                                                   //         +-- stdlib::DeletePrivateProfileSection()
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);            // @see  --+-- stdlib::DeletePrivateProfileKey()
+   bool WriteProcessMemory(int hProcess, int lpAddress, int lpBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushPrivateProfileCache()
 
 #import "ntdll.dll"
 
@@ -55,12 +55,12 @@
 
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
-   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib.GetClassName()
+   int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
    int  GetDesktopWindow();
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
-   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib.GetWindowText()
+   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);

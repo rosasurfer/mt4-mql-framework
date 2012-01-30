@@ -41,7 +41,7 @@ int onStart() {
    for (int i=0; i < 2; i++) {
       int hInstance = ShellExecuteA(NULL, "open", files[i], sNull, sNull, SW_SHOWNORMAL);
       if (hInstance < 33)
-         return(catch("onStart(1) ->shell32.ShellExecuteA()   can't open \""+ files[i] +"\", error="+ hInstance +" ("+ ShellExecuteErrorToStr(hInstance) +")", ERR_WIN32_ERROR));
+         return(catch("onStart(1) ->shell32::ShellExecuteA()   can't open \""+ files[i] +"\", error="+ hInstance +" ("+ ShellExecuteErrorToStr(hInstance) +")", ERR_WIN32_ERROR));
    }
 
    return(catch("onStart(2)"));
