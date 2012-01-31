@@ -7949,7 +7949,7 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * Wartet darauf, daß das angegebene Ticket im Account erscheint und der Zugriff möglich ist.
+ * Wartet darauf, daß das angegebene Ticket im OpenOrders- oder History-Pool des Accounts erscheint.
  *
  * @param  int ticket - Orderticket
  *
@@ -7964,7 +7964,7 @@ int WaitForTicket(int ticket) {
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
       Sleep(100);                                                    // 0.1 Sekunden warten
-   }                                                                 // TODO: Aufruf im Tester abfangen
+   }
 
    if (!RestoreSelectedOrder(_lastTicket_))
       return(0);
@@ -8009,68 +8009,42 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    int error  = GetLastError();
-   if (IsError(error)) {
-      catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error);
-      return(-1);
-   }
+   if (IsError(error))                   return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
+
    // type
-   if (!IsTradeOperation(type)) {
-      catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (!IsTradeOperation(type))          return(_int(-1, catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    // lots
-   if (LT(lots, minLot)) {
-      catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME);
-      return(-1);
-   }
-   if (GT(lots, maxLot)) {
-      catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME);
-      return(-1);
-   }
-   if (NE(MathModFix(lots, lotStep), 0)) {
-      catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME);
-      return(-1);
-   }
+   if (LT(lots, minLot))                 return(_int(-1, catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (GT(lots, maxLot))                 return(_int(-1, catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (NE(MathModFix(lots, lotStep), 0)) return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
+
    // price
-   if (LT(price, 0)) {
-      catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (LT(price, 0))                     return(_int(-1, catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    // slippage
-   if (LT(slippage, 0)) {
-      catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (LT(slippage, 0))                  return(_int(-1, catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    // stopLoss
-   if (LT(stopLoss, 0)) {
-      catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (LT(stopLoss, 0))                  return(_int(-1, catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
    stopLoss = NormalizeDouble(stopLoss, digits);
+
    // takeProfit
-   if (NE(takeProfit, 0)) {
-      catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED);
-      return(-1);
-   }
+   if (NE(takeProfit, 0))                return(_int(-1, catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
    takeProfit = NormalizeDouble(takeProfit, digits);
+
    // comment
    if (comment == "0")     // = NULL
       comment = "";
-   else if (StringLen(comment) > 27) {
-      catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   else if (StringLen(comment) > 27)     return(_int(-1, catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent()) {
-      catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())
+                                         return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') {
-      catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')
+                                         return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
    int    ticket, time1, time2, firstTime1, requotes;
@@ -8092,33 +8066,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LT(price - stopLevel*pips, ask)) {
-               catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Ask="+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS);
-               return(-1);
-            }
+            if (LT(price - stopLevel*pips, ask)) return(_int(-1, catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Ask="+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          else if (type == OP_SELLSTOP) {
-            if (GT(price + stopLevel*pips, bid)) {
-               catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Bid="+ NumberToStr(bid, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS);
-               return(-1);
-            }
+            if (GT(price + stopLevel*pips, bid)) return(_int(-1, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Bid="+ NumberToStr(bid, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          price = NormalizeDouble(price, digits);
 
          if (NE(stopLoss, 0)) {
             if (type==OP_BUY || type==OP_BUYSTOP || type==OP_BUYLIMIT) {
-               if (GE(stopLoss, price)) {
-                  catch("OrderSendEx(15)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS);
-                  return(-1);
-               }
+               if (GE(stopLoss, price))   return(_int(-1, catch("OrderSendEx(15)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
             }
-            else if (LE(stopLoss, price)) {
-               catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS);
-               return(-1);
-            }
+            else if (LE(stopLoss, price)) return(_int(-1, catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
          }
 
-         //debug(StringConcatenate("OrderSendEx()   opening ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
          time1 = GetTickCount();
          if (firstTime1 == 0) {
             firstTime1 = time1;
@@ -8126,16 +8087,17 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          }
          ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          time2  = GetTickCount();
-         //debug(StringConcatenate("OrderSendEx()   opened ", OperationTypeDescription(type), " ", NumberToStr(lots, ".+"), " ", symbol, " order at ", NumberToStr(price, priceFormat), "..."));
 
          if (ticket > 0) {
+            WaitForTicket(ticket);
+
             // Logmessage generieren
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
-            if (!IsTesting()) PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
+            if (!IsTesting())
+               PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (IsError(catch("OrderSendEx(17)")))
-               return(-1);
-            return(WaitForTicket(ticket));                           // regular exit
+            catch("OrderSendEx(17)");
+            return(ifInt(IsLastError(), -1, ticket));                // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
@@ -8158,8 +8120,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   catch("OrderSendEx(19)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error);
-   return(-1);
+   return(_int(-1, catch("OrderSendEx(19)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
 
@@ -8789,6 +8750,8 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
          time2   = GetTickCount();
 
          if (success) {
+            WaitForTicket(ticket);
+
             // Logmessage generieren
             log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, time2-time1));
             if (!IsTesting())
