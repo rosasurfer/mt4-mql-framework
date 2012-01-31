@@ -288,9 +288,9 @@
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
    bool     OrderDeleteEx(int ticket, color markerColor);
 
-   bool     OrderSelectByTicket(int ticket);
+   bool     OrderSelectByTicket(int ticket, string location);
    int      GetSelectedOrder();
-   int      RestoreSelectedOrder(int ticket);
+   bool     RestoreSelectedOrder(int ticket);
    int      WaitForTicket(int ticket);
 
 

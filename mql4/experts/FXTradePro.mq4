@@ -940,7 +940,7 @@ bool StartSequence() {
    }
 
    // Sequenzdaten aktualisieren
-   if (!OrderSelectByTicket(ticket)) {
+   if (!OrderSelectByTicket(ticket, "StartSequence(3)")) {
       progressionLevel--;
       return(last_error);
    }
@@ -987,7 +987,7 @@ bool IncreaseProgression() {
    }
 
    // Sequenzdaten aktualisieren
-   if (!OrderSelectByTicket(ticket)) {
+   if (!OrderSelectByTicket(ticket, "IncreaseProgression(3)")) {
       progressionLevel--;
       return(false);
    }
@@ -1085,7 +1085,7 @@ int OpenPosition(int type, double lotsize) {
 bool CheckOpenPositions() {
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {                                // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
-         if (!OrderSelectByTicket(levels.ticket[i]))
+         if (!OrderSelectByTicket(levels.ticket[i], "CheckOpenPositions()"))
             return(false);
 
          if (OrderCloseTime() != 0)                                  // Ticket wurde geschlossen
@@ -1126,7 +1126,7 @@ bool UpdateProfitLoss() {
 
    for (int i=0; i < progressionLevel; i++) {
       if (levels.closeTime[i] == 0) {
-         if (!OrderSelectByTicket(levels.ticket[i]))
+         if (!OrderSelectByTicket(levels.ticket[i], "UpdateProfitLoss(2)"))
             return(false);
          levels.openProfit[i] = 0;
 

@@ -199,7 +199,7 @@ int onPositionOpen(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i]))
+      if (!OrderSelectByTicket(tickets[i], "onPositionOpen(1)"))
          return(last_error);
 
       // alle Positionen werden im aktuellen Instrument gehalten
@@ -241,7 +241,7 @@ int onPositionClose(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i]))
+      if (!OrderSelectByTicket(tickets[i], "onPositionClose(1)"))
          continue;
 
       // alle Positionen wurden im aktuellen Instrument gehalten

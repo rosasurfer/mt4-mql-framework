@@ -1036,8 +1036,9 @@ int ChartInfo.UpdateMarginLevels() {
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert.
- * Der mit der MQL-Funktion GetLastError() auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert,
+ * wenn diese noch keinen Fehler enthält.  Bereits vorher aufgetretene Fehler werden also nicht überschrieben. Der mit der MQL-Funktion GetLastError()
+ * auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
  * @param  string message        - anzuzeigende Nachricht
  * @param  int    error          - manuelles Forcieren eines bestimmten Error-Codes
@@ -1046,7 +1047,7 @@ int ChartInfo.UpdateMarginLevels() {
  *
  * NOTE:
  * -----
- * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
+ * Ist in der Headerdatei implementiert, um Default-Parameter zu unterstützen und damit das laufende Script als Auslöser angezeigt wird.
  */
 int catch(string message, int error=NO_ERROR) {
    if (error == NO_ERROR)   error = GetLastError();
@@ -1067,7 +1068,8 @@ int catch(string message, int error=NO_ERROR) {
          ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
       }
 
-      last_error = error;
+      if (last_error == NO_ERROR)                                    // bereits existierenden Fehler nicht überschreiben
+         last_error = error;
    }
    return(error);
 }
@@ -1271,7 +1273,7 @@ int HandleEvent(int event, int flags=0) {
  * Selektiert eine Order anhand des Tickets.
  *
  * @param  int    ticket   - Ticket
- * @param  string location - optionaler Bezeichner für eine evt. Fehlermeldung
+ * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return bool - Erfolgsstatus
  *
@@ -1279,13 +1281,12 @@ int HandleEvent(int event, int flags=0) {
  *  -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-bool OrderSelectByTicket(int ticket, string location="") {
+bool OrderSelectByTicket(int ticket, string location) {
    if (OrderSelect(ticket, SELECT_BY_TICKET))
       return(true);
 
    int error = GetLastError();
-   location = StringConcatenate(location, ifString(StringLen(location)==0, "", "->"), "OrderSelectByTicket()");
-   return(_false(catch(location +"   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+   return(_false(catch(location +"->OrderSelectByTicket()   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 
 
@@ -1310,20 +1311,20 @@ int GetSelectedOrder() {
 
 
 /**
- * Selektiert die angegebene Order.
+ * Selektiert die angegebene Order. Es ist *kein* Fehler, wenn statt eines Tickets 0 übergeben wird, in diesem Fall war vorher keine Order selektiert.
  *
- * @param  int ticket - Ticket-Nr. (es wird kein Fehler gemeldet, wenn statt eines Tickets 0 übergeben wird)
+ * @param  int ticket - Ticket-Nr.
  *
- * @return int - dieselbe Ticket-Nr. (um Funktion als Ersatz für die ticket-Variable benutzen zu können)
+ * @return bool - Erfolgsstatus
  *
  * NOTE:
  * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-int RestoreSelectedOrder(int ticket) {
+bool RestoreSelectedOrder(int ticket) {
    if (ticket > 0)
-      OrderSelectByTicket(ticket);
-   return(ticket);
+      return(OrderSelectByTicket(ticket, "RestoreSelectedOrder()"));
+   return(true);
 }
 
 
@@ -1548,7 +1549,8 @@ void DummyCalls() {
    IsScript();
    log();
    onInit(NULL);
-   OrderSelectByTicket(NULL);
+   OrderSelectByTicket(NULL, NULL);
+   PipValue();
    RestoreSelectedOrder(NULL);
    SetLastError(NULL);
    start();
