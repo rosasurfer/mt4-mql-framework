@@ -7951,18 +7951,20 @@ string NumberToStr(double number, string mask) {
 /**
  * Wartet darauf, daß das angegebene Ticket im OpenOrders- oder History-Pool des Accounts erscheint.
  *
- * @param  int ticket - Orderticket
+ * @param  int  ticket - Orderticket
+ * @param  bool silent - ob die Funktion still und ohne Benachrichtigung warten soll (default: FALSE)
  *
  * @return int - dasselbe Ticket (um Funktion als Ersatz für Variable ticket benutzen zu können) oder 0, wenn ein Fehler auftrat
  */
-int WaitForTicket(int ticket) {
+int WaitForTicket(int ticket, bool silent=false) {
    if (ticket <= 0)
       return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
+      if (!silent)
+         ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
       Sleep(100);                                                    // 0.1 Sekunden warten
    }
 
@@ -8750,7 +8752,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
          time2   = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket);
+            WaitForTicket(ticket, true);
 
             // Logmessage generieren
             log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, time2-time1));
