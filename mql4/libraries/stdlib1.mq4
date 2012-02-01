@@ -7949,23 +7949,25 @@ string NumberToStr(double number, string mask) {
 
 
 /**
- * Wartet darauf, daß das angegebene Ticket im OpenOrders- oder History-Pool des Accounts erscheint.
+ * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
  *
  * @param  int  ticket - Orderticket
- * @param  bool silent - ob die Funktion still und ohne Benachrichtigung warten soll (default: FALSE)
  *
  * @return int - dasselbe Ticket (um Funktion als Ersatz für Variable ticket benutzen zu können) oder 0, wenn ein Fehler auftrat
  */
-int WaitForTicket(int ticket, bool silent=false) {
+int WaitForTicket(int ticket) {
    if (ticket <= 0)
-      return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_ZERO(catch("WaitForTicket()   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int _lastTicket_ = GetSelectedOrder();                            // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   int _lastTicket_ = GetSelectedOrder();
+
+   int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (!silent)
-         ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
-      Sleep(100);                                                    // 0.1 Sekunden warten
+      if (IsTesting())           ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
+      else if (i > 0 && i%10==0)      Alert("WaitForTicket()   ticket #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000.0, 1), " s");
+      Sleep(delay);
+      i++;
    }
 
    if (!RestoreSelectedOrder(_lastTicket_))
@@ -8009,44 +8011,33 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
    double stopLevel      = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-
    int error  = GetLastError();
-   if (IsError(error))                   return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
-
+   if (IsError(error))                                         return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
    // type
-   if (!IsTradeOperation(type))          return(_int(-1, catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
+   if (!IsTradeOperation(type))                                return(_int(-1, catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // lots
-   if (LT(lots, minLot))                 return(_int(-1, catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (GT(lots, maxLot))                 return(_int(-1, catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (NE(MathModFix(lots, lotStep), 0)) return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (LT(lots, minLot))                                       return(_int(-1, catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (GT(lots, maxLot))                                       return(_int(-1, catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (NE(MathModFix(lots, lotStep), 0))                       return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
-
    // price
-   if (LT(price, 0))                     return(_int(-1, catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
-
+   if (LT(price, 0))                                           return(_int(-1, catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // slippage
-   if (LT(slippage, 0))                  return(_int(-1, catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-
+   if (LT(slippage, 0))                                        return(_int(-1, catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // stopLoss
-   if (LT(stopLoss, 0))                  return(_int(-1, catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (LT(stopLoss, 0))                                        return(_int(-1, catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
    stopLoss = NormalizeDouble(stopLoss, digits);
-
    // takeProfit
-   if (NE(takeProfit, 0))                return(_int(-1, catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   if (NE(takeProfit, 0))                                      return(_int(-1, catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
    takeProfit = NormalizeDouble(takeProfit, digits);
-
    // comment
    if (comment == "0")     // = NULL
       comment = "";
-   else if (StringLen(comment) > 27)     return(_int(-1, catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-
+   else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())
-                                         return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')
-                                         return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
    int    ticket, time1, time2, firstTime1, requotes;
@@ -8192,10 +8183,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
  * @param  int    ticket      - Ticket-Nr. der zu schließenden Position
- * @param  double lots        - zu schließendes Volumen in Lots         (default: 0 = komplette Position)
- * @param  double price       - Preis                                   (wird ignoriert                 )
- * @param  double slippage    - akzeptable Slippage in Pips             (default: 0                     )
- * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker           )
+ * @param  double lots        - zu schließendes Volumen in Lots         (default: komplette Position)
+ * @param  double price       - Preis                                   (wird ignoriert             )
+ * @param  double slippage    - akzeptable Slippage in Pips             (default: 0                 )
+ * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker       )
  *
  * @return bool - Erfolgsstatus
  */
@@ -8212,22 +8203,23 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                      return(_false(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error), RestoreSelectedOrder(_lastTicket_)));
+   if (IsError(error))                                  return(_false(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error), RestoreSelectedOrder(_lastTicket_)));
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                 return(_false(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
-      if (GT(lots, OrderLots()))            return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
-      if (NE(MathModFix(lots, lotStep), 0)) return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+      if (LT(lots, minLot))                             return(_false(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+      if (GT(lots, OrderLots()))                        return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+      if (NE(MathModFix(lots, lotStep), 0))             return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))    return(_false(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+   if (LT(price, 0))                                    return(_false(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // slippage
-   if (LT(slippage, 0)) return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+   if (LT(slippage, 0))                                 return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')
+                                                        return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -8237,7 +8229,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
    int    time1, time2, firstTime1, requotes;
    double firstPrice;                                                // erster OrderPrice (falls ERR_REQUOTE auftritt)
-   bool   orderClosed;
+   bool   success;
 
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
@@ -8253,16 +8245,17 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          else if (OrderType() == OP_SELL) price = MarketInfo(OrderSymbol(), MODE_ASK);
          price = NormalizeDouble(price, digits);
 
-         //debug(StringConcatenate("OrderCloseEx()   closing #", ticket, " at ", NumberToStr(price, priceFormat), "..."));
          time1 = GetTickCount();
          if (firstTime1 == 0) {
             firstTime1 = time1;
             firstPrice = price;                                      // OrderPrice und Zeit der ersten Ausführung merken
          }
-         orderClosed = OrderClose(ticket, lots, price, slippagePoints, markerColor);
-         time2       = GetTickCount();
+         success = OrderClose(ticket, lots, price, slippagePoints, markerColor);
+         time2   = GetTickCount();
 
-         if (orderClosed) {
+         if (success) {
+            WaitForTicket(ticket);                                   // TODO: bei partiellem Close auf das resultierende Ticket warten
+
             // Logmessage generieren
             log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
@@ -8353,23 +8346,23 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)")) return(_false(RestoreSelectedOrder(_lastTicket_)));
-   if (OrderCloseTime() != 0)                             return(_false(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
-   if (OrderType() > OP_SELL)                             return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)"))      return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (OrderType() > OP_SELL)                                  return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    int    ticketType     = OrderType();
    double ticketLots     = OrderLots();
    string symbol         = OrderSymbol();
    string ticketOpenTime = OrderOpenTime();
 
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)")) return(_false(RestoreSelectedOrder(_lastTicket_)));
-   if (OrderCloseTime() != 0)                               return(_false(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)"))    return(_false(RestoreSelectedOrder(_lastTicket_)));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(5)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
    int    oppositeType     = OrderType();
    double oppositeLots     = OrderLots();
    string oppositeOpenTime = OrderOpenTime();
-   if (ticket == opposite)             return(_false(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
-   if (ticketType != oppositeType ^ 1) return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
-   if (symbol != OrderSymbol())        return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (ticket == opposite)                                     return(_false(catch("OrderCloseByEx(6)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (ticketType != oppositeType ^ 1)                         return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
+   if (symbol != OrderSymbol())                                return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_)));
 
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(9)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_)));
@@ -8399,6 +8392,9 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
          int time2, time1=GetTickCount();
 
          if (OrderCloseBy(smaller, larger, markerColor)) {
+            WaitForTicket(smaller);
+            WaitForTicket(larger);
+
             time2 = GetTickCount();
             ArrayResize(remainder, 0);
             string strRemainder = ": none";
@@ -8735,7 +8731,6 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
    // -- Ende Parametervalidierung --
 
    int  time1, time2;
-   bool success;
 
    // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
@@ -8748,11 +8743,11 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
       else {
          if (time1 == 0)
             time1 = GetTickCount();                                  // Zeit der ersten Ausführung
-         success = OrderDelete(ticket, markerColor);
-         time2   = GetTickCount();
+         bool success = OrderDelete(ticket, markerColor);
+         time2 = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket, true);
+            WaitForTicket(ticket);
 
             // Logmessage generieren
             log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, time2-time1));

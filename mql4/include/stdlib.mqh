@@ -291,7 +291,7 @@
    bool     OrderSelectByTicket(int ticket, string location);
    int      GetSelectedOrder();
    bool     RestoreSelectedOrder(int ticket);
-   int      WaitForTicket(int ticket, bool silent);
+   int      WaitForTicket(int ticket);
 
 
    // sonstiges
