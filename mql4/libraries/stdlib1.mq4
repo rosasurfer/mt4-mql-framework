@@ -1640,8 +1640,8 @@ string BufferToHexStr(int buffer[]) {
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
 
-   if (pos < 0)      { catch("BufferGetChar(1)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
-   if (pos >= chars) { catch("BufferGetChar(2)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE); return(-1); }
+   if (pos < 0)      return(_int(-1, catch("BufferGetChar(1)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (pos >= chars) return(_int(-1, catch("BufferGetChar(2)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int i = pos >> 2;                      // Index des relevanten Integers des Arrays     // +---+------------+
    int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
@@ -2056,7 +2056,6 @@ int SendTick(bool sound=false) {
    PostMessageA(hWnd, WM_MT4, 2, 1);
    if (sound)
       PlaySound("tick1.wav");
-
    return(catch("SendTick(2)"));
 }
 
@@ -2236,17 +2235,15 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
 
    // Datei öffnen
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);  // FileOpen() erwartet Pfadangabe relativ zu .\experts\files
-   if (hFile < 0) {
-      catch("FileReadLines(1)   FileOpen(filenname=\""+ filename +"\")", GetLastError());
-      return(-1);
-   }
+   if (hFile < 0)
+      return(_int(-1, catch("FileReadLines(1)   FileOpen(filenname=\""+ filename +"\")", GetLastError())));
 
 
    // Schnelle Rückkehr bei leerer Datei
    if (FileSize(hFile) == 0) {
       FileClose(hFile);
       ArrayResize(result, 0);
-      return(ifInt(catch("FileReadLines(2)")==NO_ERROR, 0, -1));
+      return(ifInt(IsError(catch("FileReadLines(2)")), -1, 0));
    }
 
 
@@ -2297,10 +2294,9 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
 
    // Dateiende hat ERR_END_OF_FILE ausgelöst
    int error = GetLastError();
-   if (error!=ERR_END_OF_FILE) /*&&*/ if (error!=NO_ERROR) {
+   if (error!=ERR_END_OF_FILE) /*&&*/ if (IsError(error)) {
       FileClose(hFile);
-      catch("FileReadLines(2)", error);
-      return(-1);
+      return(_int(-1, catch("FileReadLines(2)", error)));
    }
 
    // Datei schließen
@@ -2961,10 +2957,9 @@ datetime TimeGMT() {
    datetime time  = StrToTime(strTime);
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("TimeGMT()", error);
-      return(-1);
-   }
+   if (IsError(error))
+      return(_int(-1, catch("TimeGMT()", error)));
+
    return(time);
 }
 
@@ -3276,10 +3271,8 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -3301,10 +3294,8 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerPrevSessionStartTime(serverTime);
    if (startTime == -1)
@@ -3322,35 +3313,27 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_T
  * @return datetime - Startzeit oder -1, falls ein Fehler auftrat
  */
 datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
-   if (serverTime < 0) {
-      catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetServerToFXTOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
    datetime fxtTime = serverTime - offset;
-   if (fxtTime < 0) {
-      catch("GetServerSessionStartTime(2)  illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetServerSessionStartTime(2)  illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
-   if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY) {
-      last_error = ERR_MARKET_CLOSED;
-      return(-1);
-   }
+   if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
+      return(_int(-1, SetLastError(ERR_MARKET_CLOSED)));
 
    fxtTime   -= TimeHour(fxtTime)*HOURS + TimeMinute(fxtTime)*MINUTES + TimeSeconds(fxtTime)*SECONDS;
    serverTime = fxtTime + offset;
 
-   if (serverTime < 0) {
-      catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(serverTime);
 }
 
@@ -3363,10 +3346,8 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
-   if (serverTime < 0) {
-      catch("GetServerSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerSessionStartTime(serverTime);
    if (startTime == -1)
@@ -3384,10 +3365,8 @@ datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZ
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("GetServerNextSessionStartTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerNextSessionStartTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -3409,10 +3388,8 @@ datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("GetServerNextSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("GetServerNextSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerNextSessionStartTime(datetime serverTime);
    if (startTime == -1)
@@ -3430,10 +3407,8 @@ datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_T
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
-   if (gmtTime < 0) {
-      catch("GetGMTPrevSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTPrevSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -3455,10 +3430,8 @@ datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
-   if (gmtTime < 0) {
-      catch("GetGMTPrevSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTPrevSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTPrevSessionStartTime(gmtTime);
    if (startTime == -1)
@@ -3476,10 +3449,8 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
-   if (gmtTime < 0) {
-      catch("GetGMTSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -3501,10 +3472,8 @@ datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
-   if (gmtTime < 0) {
-      catch("GetGMTSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -3522,10 +3491,8 @@ datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTNextSessionStartTime(datetime gmtTime) {
-   if (gmtTime < 0) {
-      catch("GetGMTNextSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTNextSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -3547,10 +3514,8 @@ datetime GetGMTNextSessionStartTime(datetime gmtTime) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetGMTNextSessionEndTime(datetime gmtTime) {
-   if (gmtTime < 0) {
-      catch("GetGMTNextSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GetGMTNextSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTNextSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -3568,26 +3533,21 @@ datetime GetGMTNextSessionEndTime(datetime gmtTime) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
-   if (fxtTime < 0) {
-      catch("GetFXTPrevSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
-   if (startTime < 0) {
-      catch("GetFXTPrevSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (startTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
    if      (dow == SATURDAY) startTime -= 1*DAY;
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
-   if (startTime < 0) {
-      catch("GetFXTPrevSessionStartTime(3)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (startTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+
    return(startTime);
 }
 
@@ -3600,10 +3560,8 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
-   if (fxtTime < 0) {
-      catch("GetFXTPrevSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -3621,23 +3579,18 @@ datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
-   if (fxtTime < 0) {
-      catch("GetFXTSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
-   if (startTime < 0) {
-      catch("GetFXTSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (startTime < 0)
+      return(_int(-1, catch("GetFXTSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
-   if (dow == SATURDAY || dow == SUNDAY) {
-      last_error = ERR_MARKET_CLOSED;
-      return(-1);
-   }
+   if (dow == SATURDAY || dow == SUNDAY)
+      return(_int(-1, SetLastError(ERR_MARKET_CLOSED)));
+
    return(startTime);
 }
 
@@ -3650,10 +3603,8 @@ datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
-   if (fxtTime < 0) {
-      catch("GetFXTSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -3671,10 +3622,8 @@ datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTNextSessionStartTime(datetime fxtTime) {
-   if (fxtTime < 0) {
-      catch("GetFXTNextSessionStartTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTNextSessionStartTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
@@ -3695,10 +3644,8 @@ datetime GetFXTNextSessionStartTime(datetime fxtTime) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GetFXTNextSessionEndTime(datetime fxtTime) {
-   if (fxtTime < 0) {
-      catch("GetFXTNextSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTNextSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -3976,20 +3923,17 @@ string DoubleToStrTrim(double value) {
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime FXTToGMT(datetime fxtTime) {
-   if (fxtTime < 0) {
-      catch("FXTToGMT(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("FXTToGMT(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToGMTOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
    datetime result = fxtTime - offset;
-   if (result < 0) {
-      catch("FXTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (result < 0)
+      return(_int(-1, catch("FXTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+
    return(result);
 }
 
@@ -4002,20 +3946,17 @@ datetime FXTToGMT(datetime fxtTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (fxtTime < 0) {
-      catch("FXTToServerTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (fxtTime < 0)
+      return(_int(-1, catch("FXTToServerTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
    datetime result = fxtTime - offset;
-   if (result < 0) {
-      catch("FXTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (result < 0)
+      return(_int(-1, catch("FXTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+
    return(result);
 }
 
@@ -4563,10 +4504,9 @@ int Explode(string object, string separator, string& results[], int limit=NULL) 
    }
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("Explode()", error);
-      return(-1);
-   }
+   if (IsError(error))
+      return(_int(-1, catch("Explode()", error)));
+
    return(ArraySize(results));
 }
 
@@ -5730,8 +5670,7 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(-1);
+   return(_int(-1, log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5909,8 +5848,7 @@ int PeriodToId(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(-1);
+   return(_int(-1, log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6239,20 +6177,17 @@ string GetClassName(int hWnd) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GMTToFXT(datetime gmtTime) {
-   if (gmtTime < 0) {
-      catch("GMTToFXT(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GMTToFXT(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetGMTToFXTOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
    datetime result = gmtTime - offset;
-   if (result < 0) {
-      catch("GMTToFXT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (result < 0)
+      return(_int(-1, catch("GMTToFXT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+
    return(result);
 }
 
@@ -6265,10 +6200,8 @@ datetime GMTToFXT(datetime gmtTime) {
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime GMTToServerTime(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (gmtTime < 0) {
-      catch("GMTToServerTime(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (gmtTime < 0)
+      return(_int(-1, catch("GMTToServerTime(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -6283,10 +6216,9 @@ datetime GMTToServerTime(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*
       return(-1);
 
    datetime result = gmtTime - offset;
-   if (result < 0) {
-      catch("GMTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (result < 0)
+      return(_int(-1, catch("GMTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+
    return(result);
 }
 
@@ -6758,10 +6690,9 @@ string StringArrayToStr(string values[], string separator=", ") {
  * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchInt(int needle, int &haystack[]) {
-   if (ArrayDimension(haystack) > 1) {
-      catch("ArraySearchInt()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
-      return(-1);
-   }
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("ArraySearchInt()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
@@ -6794,10 +6725,9 @@ bool IntInArray(int needle, int &haystack[]) {
  * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchDouble(double needle, double &haystack[]) {
-   if (ArrayDimension(haystack) > 1) {
-      catch("ArraySearchDouble()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
-      return(-1);
-   }
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("ArraySearchDouble()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
@@ -6830,10 +6760,9 @@ bool DoubleInArray(double needle, double &haystack[]) {
  * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int ArraySearchString(string needle, string &haystack[]) {
-   if (ArrayDimension(haystack) > 1) {
-      catch("ArraySearchString()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS);
-      return(-1);
-   }
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("ArraySearchString()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(haystack);
 
    for (int i=0; i < size; i++) {
@@ -7006,10 +6935,8 @@ int SendTextMessage(string receiver, string message) {
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("ServerToFXT()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("ServerToFXT()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -7035,10 +6962,8 @@ datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-   if (serverTime < 0) {
-      catch("ServerToGMT(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (serverTime < 0)
+      return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -7053,10 +6978,9 @@ datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
       return(-1);
 
    datetime result = serverTime - offset;
-   if (result < 0) {
-      catch("ServerToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR);
-      return(-1);
-   }
+   if (result < 0)
+      return(_int(-1, catch("ServerToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+
    return(result);
 }
 
@@ -7214,7 +7138,7 @@ int StringFindR(string object, string search) {
       lastFound = result;
    }
 
-   if (catch("StringFindR()") != NO_ERROR)
+   if (IsError(catch("StringFindR()")))
       return(-1);
    return(lastFound);
 }
@@ -7537,18 +7461,9 @@ color HSVToRGBColor(double hsv[3]) {
  * @return color - Farbe oder -1, wenn ein Fehler auftrat
  */
 color HSVValuesToRGBColor(double hue, double saturation, double value) {
-   if (hue < 0.0 || hue > 360.0) {
-      catch("HSVValuesToRGBColor(1)  invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
-   if (saturation < 0.0 || saturation > 1.0) {
-      catch("HSVValuesToRGBColor(2)  invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
-   if (value < 0.0 || value > 1.0) {
-      catch("HSVValuesToRGBColor(3)  invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)  invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (saturation < 0.0 || saturation > 1.0) return(_int(-1, catch("HSVValuesToRGBColor(2)  invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (value < 0.0 || value > 1.0)           return(_int(-1, catch("HSVValuesToRGBColor(3)  invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double red, green, blue;
 
@@ -7580,10 +7495,9 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
    color rgb = r + g<<8 + b<<16;
 
    int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("HSVValuesToRGBColor(4)", error);
-      return(-1);
-   }
+   if (IsError(error))
+      return(_int(-1, catch("HSVValuesToRGBColor(4)", error)));
+
    return(rgb);
 }
 
@@ -7639,10 +7553,9 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                color result = HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]);
 
                int error = GetLastError();
-               if (error != NO_ERROR) {
-                  catch("Color.ModifyHSV(1)", error);
-                  return(-1);
-               }
+               if (IsError(error))
+                  return(_int(-1, catch("Color.ModifyHSV(1)", error)));
+
                return(result);
             }
             else catch("Color.ModifyHSV(2)  invalid parameter mod_value: "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
