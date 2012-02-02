@@ -1296,6 +1296,9 @@ bool OrderSelectByTicket(int ticket, string location) {
 }
 
 
+int stack.selectedOrders[];                                          // @see OrderSelectPush() / OrderSelectPop()
+
+
 /**
  * Gibt das Ticket der aktuell selektierten Order zurück.
  *
@@ -1307,25 +1310,25 @@ bool OrderSelectByTicket(int ticket, string location) {
  * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-int GetSelectedOrder(string location) {
+int OrderSelectPush(string location) {
    int error = GetLastError();
    if (IsError(error))
-      return(_ZERO(catch(location +"->GetSelectedOrder(1)", error)));
+      return(_ZERO(catch(location +"->OrderSelectPush(1)", error)));
 
    int ticket = OrderTicket();
-   
-   error = GetLastError();
 
+   error = GetLastError();
    if (IsError(error)) /*&&*/ if (error != ERR_NO_ORDER_SELECTED)
-      return(_ZERO(catch(location +"->GetSelectedOrder(2)", error)));
+      return(_ZERO(catch(location +"->OrderSelectPush(2)", error)));
+
+   ArrayPushInt(stack.selectedOrders, ticket);
    return(ticket);
 }
 
 
 /**
- * Selektiert die angegebene Order. Es ist *kein* Fehler, wenn statt eines Tickets 0 übergeben wird, in diesem Fall war vorher keine Order selektiert.
+ * Entfernt die letzte auf dem Selection-Stack befindliche Order und selektiert sie.
  *
- * @param  int    ticket   - Ticket-Nr.
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return bool - Erfolgsstatus
@@ -1334,9 +1337,12 @@ int GetSelectedOrder(string location) {
  * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-bool RestoreSelectedOrder(int ticket, string location) {
+bool OrderSelectPop(string location) {
+   int ticket = ArrayPopInt(stack.selectedOrders);
    if (ticket > 0)
-      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->RestoreSelectedOrder()")));
+      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->OrderSelectPop()")));
+
+   OrderSelect(0, SELECT_BY_TICKET);
    return(true);
 }
 
@@ -1551,7 +1557,6 @@ void DummyCalls() {
    ChartInfo.UpdateUnitSize();
    debug(NULL);
    ForceAlert();
-   GetSelectedOrder(NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
    IsError(NULL);
@@ -1563,8 +1568,9 @@ void DummyCalls() {
    log();
    onInit(NULL);
    OrderSelectByTicket(NULL, NULL);
+   OrderSelectPop(NULL);
+   OrderSelectPush(NULL);
    PipValue();
-   RestoreSelectedOrder(NULL, NULL);
    SetLastError(NULL);
    start();
 }

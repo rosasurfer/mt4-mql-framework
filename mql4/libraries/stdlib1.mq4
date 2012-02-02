@@ -829,7 +829,7 @@ string GetCurrency(int id) {
  * @return int - Fehlerstatus
  */
 int SortTicketsChronological(int& tickets[]) {
-   int _lastTicket_ = GetSelectedOrder("SortTicketsChronological(1)");     // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("SortTicketsChronological(1)");
 
    int sizeOfTickets = ArraySize(tickets);
    int data[][2]; ArrayResize(data, sizeOfTickets);
@@ -837,7 +837,7 @@ int SortTicketsChronological(int& tickets[]) {
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "SortTicketsChronological(2)"))
-         return(_int(last_error, RestoreSelectedOrder(_lastTicket_, "SortTicketsChronological(3)")));
+         return(_int(last_error, OrderSelectPop("SortTicketsChronological(3)")));
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
    }
@@ -870,7 +870,7 @@ int SortTicketsChronological(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
-   catch("SortTicketsChronological(4)"); RestoreSelectedOrder(_lastTicket_, "SortTicketsChronological(4)");
+   catch("SortTicketsChronological(4)"); OrderSelectPop("SortTicketsChronological(4)");
    return(last_error);
 }
 
@@ -1057,7 +1057,7 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
- * Vergrößert ein Double-Array und fügt ein weiteres Element an.
+ * Fügt ein Element am Ende eines Double-Arrays an.
  *
  * @param  double array[] - Double-Array
  * @param  double value   - hinzuzufügendes Element
@@ -1075,20 +1075,43 @@ int ArrayPushDouble(double& array[], double value) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Double-Arrays.
+ * Entfernt ein Element vom Ende eines Double-Array und gibt es zurück.
+ *
+ * @param  int double[] - Double-Array
+ *
+ * @return double - das entfernte Element
+ *
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+double ArrayPopDouble(double array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopDouble()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   double popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurück.
  *
  * @param  double array[] - Double-Array
  *
  * @return double - das entfernte Element
  *
- * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
  */
 double ArrayShiftDouble(double array[]) {
    int size = ArraySize(array);
-   if (size == 0) {
-      catch("ArrayShiftDouble()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
-      return(NULL);
-   }
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftDouble()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    double shifted = array[0];
 
@@ -1101,7 +1124,7 @@ double ArrayShiftDouble(double array[]) {
 
 
 /**
- * Vergrößert ein Integer-Array und fügt ein weiteres Element an.
+ * Fügt ein Element am Ende eines Integer-Arrays an.
  *
  * @param  int array[] - Integer-Array
  * @param  int value   - hinzuzufügendes Element
@@ -1119,20 +1142,43 @@ int ArrayPushInt(int& array[], int value) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines Integer-Arrays.
+ * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
  *
  * @param  int array[] - Integer-Array
  *
  * @return int - das entfernte Element
  *
- * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+int ArrayPopInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopInt()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   int popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element
+ *
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
  */
 int ArrayShiftInt(int array[]) {
    int size = ArraySize(array);
-   if (size == 0) {
-      catch("ArrayShiftInt()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
-      return(NULL);
-   }
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftInt()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    int shifted = array[0];
 
@@ -1145,7 +1191,7 @@ int ArrayShiftInt(int array[]) {
 
 
 /**
- * Vergrößert ein String-Array und fügt ein weiteres Element an.
+ * Fügt ein Element am Ende eines String-Arrays an.
  *
  * @param  string array[] - String-Array
  * @param  string value   - hinzuzufügendes Element
@@ -1163,20 +1209,43 @@ int ArrayPushString(string& array[], string value) {
 
 
 /**
- * Entfernt ein Element vom Beginn eines String-Arrays.
+ * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
  *
  * @param  string array[] - String-Array
  *
  * @return string - das entfernte Element
  *
- * NOTE: Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ */
+string ArrayPopString(string array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopString()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   string popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurück.
+ *
+ * @param  string array[] - String-Array
+ *
+ * @return string - das entfernte Element
+ *
+ * NOTE:
+ * -----
+ * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
  */
 string ArrayShiftString(string array[]) {
    int size = ArraySize(array);
-   if (size == 0) {
-      catch("ArrayShiftString()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR);
-      return(NULL);
-   }
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftString()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    string shifted = array[0];
 
@@ -4178,8 +4247,8 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
    }
 
-   int _lastTicket_ = GetSelectedOrder("EventListener.PositionOpen(1)");   // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
-   int orders       = OrdersTotal();
+   OrderSelectPush("EventListener.PositionOpen(1)");
+   int orders = OrdersTotal();
 
    // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
@@ -4253,9 +4322,9 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    int error = GetLastError();
    if (IsError(error))
-      return(_false(catch("EventListener.PositionOpen(2)", error), RestoreSelectedOrder(_lastTicket_, "EventListener.PositionOpen(2)")));
+      return(_false(catch("EventListener.PositionOpen(2)", error), OrderSelectPop("EventListener.PositionOpen(2)")));
 
-   return(eventStatus && RestoreSelectedOrder(_lastTicket_, "EventListener.PositionOpen(3)"));
+   return(eventStatus && OrderSelectPop("EventListener.PositionOpen(3)"));
 }
 
 
@@ -4274,7 +4343,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    if (account == 0)
       return(false);
 
-   int _lastTicket_ = GetSelectedOrder("EventListener.PositionClose(1)");  // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("EventListener.PositionClose(1)");
 
    // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
@@ -4297,7 +4366,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
       // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
       for (int i=0; i < noOfKnownPositions; i++) {
          if (!OrderSelectByTicket(knownPositions[i], "EventListener.PositionClose(2)"))
-            return(_false(RestoreSelectedOrder(_lastTicket_, "EventListener.PositionClose(3)")));
+            return(_false(OrderSelectPop("EventListener.PositionClose(3)")));
 
          if (OrderCloseTime() > 0) {                                    // Position geschlossen, in flags angegebene Orderkriterien prüfen
             int    event=1, type=OrderType();
@@ -4350,9 +4419,9 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
    int error = GetLastError();
    if (IsError(error))
-      return(_false(catch("EventListener.PositionClose(4)", error), RestoreSelectedOrder(_lastTicket_, "EventListener.PositionClose(4)")));
+      return(_false(catch("EventListener.PositionClose(4)", error), OrderSelectPop("EventListener.PositionClose(4)")));
 
-   return(eventStatus && RestoreSelectedOrder(_lastTicket_, "EventListener.PositionClose(5)"));
+   return(eventStatus && OrderSelectPop("EventListener.PositionClose(5)"));
 }
 
 
@@ -7882,8 +7951,7 @@ int WaitForTicket(int ticket) {
    if (ticket <= 0)
       return(_ZERO(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int _lastTicket_ = GetSelectedOrder("WaitForTicket(2)");
-
+   OrderSelectPush("WaitForTicket(2)");
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
@@ -7893,7 +7961,7 @@ int WaitForTicket(int ticket) {
       i++;
    }
 
-   if (!RestoreSelectedOrder(_lastTicket_, "WaitForTicket(3)"))
+   if (!OrderSelectPop("WaitForTicket(3)"))
       return(0);
    return(ticket);
 }
@@ -8114,34 +8182,34 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, color markerColor=CLR_NONE) {
-   int _lastTicket_ = GetSelectedOrder("OrderCloseEx(1)");           // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("OrderCloseEx(1)");
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseEx(2)"))        return(_false(RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(2)")));
-   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(3)")));
-   if (OrderType() > OP_SELL)                                  return(_false(catch("OrderCloseEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(4)")));
+   if (!OrderSelectByTicket(ticket, "OrderCloseEx(2)"))        return(_false(OrderSelectPop("OrderCloseEx(2)")));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), OrderSelectPop("OrderCloseEx(3)")));
+   if (OrderType() > OP_SELL)                                  return(_false(catch("OrderCloseEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), OrderSelectPop("OrderCloseEx(4)")));
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                                         return(_false(catch("OrderCloseEx(5)   symbol=\""+ OrderSymbol() +"\"", error), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(5)")));
+   if (IsError(error))                                         return(_false(catch("OrderCloseEx(5)   symbol=\""+ OrderSymbol() +"\"", error), OrderSelectPop("OrderCloseEx(5)")));
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                                    return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(6)")));
-      if (GT(lots, OrderLots()))                               return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(7)")));
-      if (NE(MathModFix(lots, lotStep), 0))                    return(_false(catch("OrderCloseEx(8)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(8)")));
+      if (LT(lots, minLot))                                    return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(6)")));
+      if (GT(lots, OrderLots()))                               return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(7)")));
+      if (NE(MathModFix(lots, lotStep), 0))                    return(_false(catch("OrderCloseEx(8)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(8)")));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                           return(_false(catch("OrderCloseEx(9)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(9)")));
+   if (LT(price, 0))                                           return(_false(catch("OrderCloseEx(9)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(9)")));
    // slippage
-   if (LT(slippage, 0))                                        return(_false(catch("OrderCloseEx(10)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(10)")));
+   if (LT(slippage, 0))                                        return(_false(catch("OrderCloseEx(10)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(10)")));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(11)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(11)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseEx(11)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseEx(11)")));
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -8183,7 +8251,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            catch("OrderCloseEx(12)"); RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(12)");
+            catch("OrderCloseEx(12)"); OrderSelectPop("OrderCloseEx(12)");
             return(!IsLastError());                                  // regular exit
          }
          error = GetLastError();
@@ -8205,7 +8273,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          }
       }
    }
-   return(_false(catch("OrderCloseEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error), RestoreSelectedOrder(_lastTicket_, "OrderCloseEx(14)")));
+   return(_false(catch("OrderCloseEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error), OrderSelectPop("OrderCloseEx(14)")));
 }
 
 
@@ -8264,30 +8332,30 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
  * @return bool - Erfolgsstatus
  */
 bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColor=CLR_NONE) {
-   int _lastTicket_ = GetSelectedOrder("OrderCloseByEx(1)");         // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("OrderCloseByEx(1)");
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(2)"))      return(_false(RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(2)")));
-   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(3)")));
-   if (OrderType() > OP_SELL)                                  return(_false(catch("OrderCloseByEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(4)")));
+   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(2)"))      return(_false(OrderSelectPop("OrderCloseByEx(2)")));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(3)")));
+   if (OrderType() > OP_SELL)                                  return(_false(catch("OrderCloseByEx(4)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(4)")));
    int    ticketType     = OrderType();
    double ticketLots     = OrderLots();
    string symbol         = OrderSymbol();
    string ticketOpenTime = OrderOpenTime();
 
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(5)"))    return(_false(RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(5)")));
-   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(6)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(6)")));
+   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(5)"))    return(_false(OrderSelectPop("OrderCloseByEx(5)")));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderCloseByEx(6)   opposite ticket #"+ opposite +" is already closed", ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(6)")));
    int    oppositeType     = OrderType();
    double oppositeLots     = OrderLots();
    string oppositeOpenTime = OrderOpenTime();
-   if (ticket == opposite)                                     return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(7)")));
-   if (ticketType != oppositeType ^ 1)                         return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(8)")));
-   if (symbol != OrderSymbol())                                return(_false(catch("OrderCloseByEx(9)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(9)")));
+   if (ticket == opposite)                                     return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(7)")));
+   if (ticketType != oppositeType ^ 1)                         return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(8)")));
+   if (symbol != OrderSymbol())                                return(_false(catch("OrderCloseByEx(9)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET), OrderSelectPop("OrderCloseByEx(9)")));
 
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(10)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderCloseByEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderCloseByEx(10)")));
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -8337,13 +8405,13 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   }
                }
                if (ArraySize(remainder) == 0)
-                  return(_false(catch("OrderCloseByEx(11)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(11)")));
+                  return(_false(catch("OrderCloseByEx(11)   remainding position of close #"+ first +" ("+ NumberToStr(firstLots, ".+") +" lots) by #"+ hedge +" ("+ NumberToStr(hedgeLots, ".+") +" lots) not found", ERR_RUNTIME_ERROR), OrderSelectPop("OrderCloseByEx(11)")));
                strRemainder = StringConcatenate(" #", remainder[0]);
             }
             log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", hedge, ", remainder", strRemainder, " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             if (!IsTesting()) PlaySound("OrderOk.wav");
 
-            catch("OrderCloseByEx(12)"); RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(12)");
+            catch("OrderCloseByEx(12)"); OrderSelectPop("OrderCloseByEx(12)");
             return(!IsLastError());                                        // regular exit
          }
          time2     = GetTickCount();
@@ -8359,7 +8427,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
       Sleep(300);                                                          // 0.3 Sekunden warten
    }
 
-   return(_false(catch("OrderCloseByEx(13)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error), RestoreSelectedOrder(_lastTicket_, "OrderCloseByEx(13)")));
+   return(_false(catch("OrderCloseByEx(13)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error), OrderSelectPop("OrderCloseByEx(13)")));
 }
 
 
@@ -8374,28 +8442,28 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
 bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
-   int _lastTicket_ = GetSelectedOrder("OrderMultiClose(1)");        // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("OrderMultiClose(1)");
 
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                        return(_false(catch("OrderMultiClose(2)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(2)")));
+   if (sizeOfTickets == 0)                                        return(_false(catch("OrderMultiClose(2)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderMultiClose(2)")));
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)")) return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(3)")));
-      if (OrderCloseTime() != 0)                                  return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(4)")));
-      if (OrderType() > OP_SELL)                                  return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(5)")));
+      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)")) return(_false(OrderSelectPop("OrderMultiClose(3)")));
+      if (OrderCloseTime() != 0)                                  return(_false(catch("OrderMultiClose(4)   ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET), OrderSelectPop("OrderMultiClose(4)")));
+      if (OrderType() > OP_SELL)                                  return(_false(catch("OrderMultiClose(5)   ticket #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET), OrderSelectPop("OrderMultiClose(5)")));
    }
    // slippage
-   if (LT(slippage, 0))                                           return(_false(catch("OrderMultiClose(6)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(6)")));
+   if (LT(slippage, 0))                                           return(_false(catch("OrderMultiClose(6)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderMultiClose(6)")));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(catch("OrderMultiClose(7)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(7)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(catch("OrderMultiClose(7)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderMultiClose(7)")));
    // -- Ende Parametervalidierung --
 
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1)
-      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor) && RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(8)"));
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor) && OrderSelectPop("OrderMultiClose(8)"));
 
 
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, arbeiten wir auf einer Kopie.
@@ -8409,7 +8477,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(ticketsCopy[i], "OrderMultiClose(9)"))
-         return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(10)")));
+         return(_false(OrderSelectPop("OrderMultiClose(10)")));
       int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
       if (symbolIndex == -1)
          symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
@@ -8433,7 +8501,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          if (sizeOfPerSymbolTickets == 1) {
             // nur eine Position je Symbol kann sofort geschlossen werden
             if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor))
-               return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(11)")));
+               return(_false(OrderSelectPop("OrderMultiClose(11)")));
          }
          else {
             // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, wird zuerst nur die Gesamtposition
@@ -8441,7 +8509,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
             // der Gesamtpositionen aller Symbole geschlossen (dies dauert ggf. etliche Sekunden).
             int hedge;
             if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage))
-               return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(12)")));
+               return(_false(OrderSelectPop("OrderMultiClose(12)")));
             if (hedge != 0) {
                sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
                                ArrayPushInt(ticketSymbols, symbolIndex);
@@ -8460,23 +8528,23 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
                ArrayPushInt(perSymbolTickets, ticketsCopy[n]);
          }
          if (!OrderMultiClose.Hedges(perSymbolTickets, markerColor))
-            return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(13)")));
+            return(_false(OrderSelectPop("OrderMultiClose(13)")));
       }
-      catch("OrderMultiClose(14)"); RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(14)");
+      catch("OrderMultiClose(14)"); OrderSelectPop("OrderMultiClose(14)");
       return(!IsLastError());
    }
 
 
    // (5) mehrere Tickets, die alle zu einem Symbol gehören
    if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage))          // Gesamtposition ggf. hedgen...
-      return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(15)")));
+      return(_false(OrderSelectPop("OrderMultiClose(15)")));
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
 
    if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
-      return(_false(RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(16)")));
+      return(_false(OrderSelectPop("OrderMultiClose(16)")));
 
-   catch("OrderMultiClose(17)"); RestoreSelectedOrder(_lastTicket_, "OrderMultiClose(17)");
+   catch("OrderMultiClose(17)"); OrderSelectPop("OrderMultiClose(17)");
    return(!IsLastError());
 }
 
@@ -8641,15 +8709,15 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @return bool - Erfolgsstatus
  */
 bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
-   int _lastTicket_ = GetSelectedOrder("OrderDeleteEx(1)");          // letztes selektiertes Ticket speichern (wird bei Rückkehr restauriert)
+   OrderSelectPush("OrderDeleteEx(1)");
 
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderDeleteEx(2)"))       return(_false(RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(2)")));
-   if (!IsPendingTradeOperation(OrderType()))                  return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(3)")));
-   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderDeleteEx(4)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET), RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(4)")));
+   if (!OrderSelectByTicket(ticket, "OrderDeleteEx(2)"))       return(_false(OrderSelectPop("OrderDeleteEx(2)")));
+   if (!IsPendingTradeOperation(OrderType()))                  return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET), OrderSelectPop("OrderDeleteEx(3)")));
+   if (OrderCloseTime() != 0)                                  return(_false(catch("OrderDeleteEx(4)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET), OrderSelectPop("OrderDeleteEx(4)")));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderDeleteEx(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(5)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderDeleteEx(5)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE), OrderSelectPop("OrderDeleteEx(5)")));
    // -- Ende Parametervalidierung --
 
    int  time1, time2;
@@ -8676,7 +8744,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
-            catch("OrderDeleteEx(6)"); RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(6)");
+            catch("OrderDeleteEx(6)"); OrderSelectPop("OrderDeleteEx(6)");
             return(!IsLastError());                                  // regular exit
          }
          error = GetLastError();
@@ -8694,7 +8762,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
       }
    }
 
-   return(_false(catch("OrderDeleteEx(7)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error), RestoreSelectedOrder(_lastTicket_, "OrderDeleteEx(7)")));
+   return(_false(catch("OrderDeleteEx(7)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error), OrderSelectPop("OrderDeleteEx(7)")));
 }
 
 

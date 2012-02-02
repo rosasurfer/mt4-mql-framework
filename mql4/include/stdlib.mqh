@@ -35,6 +35,10 @@
    int      ArrayPushDouble(double array[], double value);
    int      ArrayPushString(string array[], string value);
 
+   int      ArrayPopInt(int array[]);
+   double   ArrayPopDouble(double array[]);
+   string   ArrayPopString(string array[]);
+
    int      ArrayShiftInt(int array[]);
    double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
@@ -289,8 +293,8 @@
    bool     OrderDeleteEx(int ticket, color markerColor);
 
    bool     OrderSelectByTicket(int ticket, string location);
-   int      GetSelectedOrder(string location);
-   bool     RestoreSelectedOrder(int ticket, string location);
+   int      OrderSelectPush(string location);
+   bool     OrderSelectPop(string location);
    int      WaitForTicket(int ticket);
 
 
