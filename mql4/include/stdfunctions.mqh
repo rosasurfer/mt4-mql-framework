@@ -547,7 +547,7 @@ bool   ChartInfo.positionChecked,
 int onInit(int scriptType, int initFlags=NULL) {
    __TYPE__   = scriptType;
    __SCRIPT__ = WindowExpertName();
-   last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags);
+   last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags, UninitializeReason());
 
    if (last_error == NO_ERROR) {
       PipDigits   = Digits & (~1);
@@ -575,6 +575,14 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
+      if (IsExpert()) {                                              // nach Neuladen eines EA's seinen Orderkontext ausdrücklich zurücksetzen
+         int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
+         if (IntInArray(UninitializeReason(), reasons))
+            OrderSelect(0, SELECT_BY_TICKET);
+      }
+   }
+
+   if (last_error == NO_ERROR) {
       if (IsVisualMode()) {
          // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier initialisiert wird (@see ChartInfo-Indikator).
          // Konfiguration auswerten
@@ -585,9 +593,7 @@ int onInit(int scriptType, int initFlags=NULL) {
          else return(catch("onInit(3)  invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
          ChartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-         if (LT(ChartInfo.leverage, 1))
-            return(catch("onInit(4)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-
+         if (LT(ChartInfo.leverage, 1)) return(catch("onInit(4)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          ChartInfo.CreateLabels();
       }
    }
@@ -1293,19 +1299,25 @@ bool OrderSelectByTicket(int ticket, string location) {
 /**
  * Gibt das Ticket der aktuell selektierten Order zurück.
  *
+ * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ *
  * @return int - Ticket oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
  *
  * NOTE:
  * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-int GetSelectedOrder() {
+int GetSelectedOrder(string location) {
    int error = GetLastError();
    if (IsError(error))
-      return(_ZERO(catch("GetSelectedOrder()", error)));
+      return(_ZERO(catch(location +"->GetSelectedOrder(1)", error)));
 
    int ticket = OrderTicket();
-   GetLastError();
+   
+   error = GetLastError();
+
+   if (IsError(error)) /*&&*/ if (error != ERR_NO_ORDER_SELECTED)
+      return(_ZERO(catch(location +"->GetSelectedOrder(2)", error)));
    return(ticket);
 }
 
@@ -1313,7 +1325,8 @@ int GetSelectedOrder() {
 /**
  * Selektiert die angegebene Order. Es ist *kein* Fehler, wenn statt eines Tickets 0 übergeben wird, in diesem Fall war vorher keine Order selektiert.
  *
- * @param  int ticket - Ticket-Nr.
+ * @param  int    ticket   - Ticket-Nr.
+ * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
  * @return bool - Erfolgsstatus
  *
@@ -1321,9 +1334,9 @@ int GetSelectedOrder() {
  * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
  */
-bool RestoreSelectedOrder(int ticket) {
+bool RestoreSelectedOrder(int ticket, string location) {
    if (ticket > 0)
-      return(OrderSelectByTicket(ticket, "RestoreSelectedOrder()"));
+      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->RestoreSelectedOrder()")));
    return(true);
 }
 
@@ -1538,7 +1551,7 @@ void DummyCalls() {
    ChartInfo.UpdateUnitSize();
    debug(NULL);
    ForceAlert();
-   GetSelectedOrder();
+   GetSelectedOrder(NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
    IsError(NULL);
@@ -1551,7 +1564,7 @@ void DummyCalls() {
    onInit(NULL);
    OrderSelectByTicket(NULL, NULL);
    PipValue();
-   RestoreSelectedOrder(NULL);
+   RestoreSelectedOrder(NULL, NULL);
    SetLastError(NULL);
    start();
 }

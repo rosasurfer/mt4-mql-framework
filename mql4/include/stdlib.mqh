@@ -13,7 +13,7 @@
 
 
    // Library-Funktionen
-   int      stdlib_onInit(int scriptType, string scriptName, int initFlags);
+   int      stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitializeReason);
    int      stdlib_onStart(int tick, int validBars, int changedBars);
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
@@ -289,8 +289,8 @@
    bool     OrderDeleteEx(int ticket, color markerColor);
 
    bool     OrderSelectByTicket(int ticket, string location);
-   int      GetSelectedOrder();
-   bool     RestoreSelectedOrder(int ticket);
+   int      GetSelectedOrder(string location);
+   bool     RestoreSelectedOrder(int ticket, string location);
    int      WaitForTicket(int ticket);
 
 
