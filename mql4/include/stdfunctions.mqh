@@ -106,6 +106,11 @@
 #define OFLAG_PENDINGORDER      16     // pending order (Limit- oder Stop-Order)
 
 
+// OrderSelect-ID's zur Steuerung des Stacks der OrderSelect-Kontexte, siehe OrderSelectPush(), OrderSelectPop(), catch()
+#define OS_PUSH                  1
+#define OS_POP                   2
+
+
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
 #define MODE_OPEN                0     // open price
 #define MODE_LOW                 1     // low price
@@ -1046,8 +1051,9 @@ int ChartInfo.UpdateMarginLevels() {
  * wenn diese noch keinen Fehler enthält.  Bereits vorher aufgetretene Fehler werden also nicht überschrieben. Der mit der MQL-Funktion GetLastError()
  * auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
- * @param  string message        - anzuzeigende Nachricht
+ * @param  string location       - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
  * @param  int    error          - manuelles Forcieren eines bestimmten Error-Codes
+ * @param  bool   orderSelectPop - ob ein zuvor gespeicherter OrderSelect-Kontext wiederhergestellt werden soll (default: FALSE)
  *
  * @return int - der aufgetretene Error-Code
  *
@@ -1055,21 +1061,23 @@ int ChartInfo.UpdateMarginLevels() {
  * -----
  * Ist in der Headerdatei implementiert, um Default-Parameter zu unterstützen und damit das laufende Script als Auslöser angezeigt wird.
  */
-int catch(string message, int error=NO_ERROR) {
+int catch(string location, int error=NO_ERROR, bool orderSelectPop=false) {
    if (error == NO_ERROR)   error = GetLastError();
    else                             GetLastError();                  // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      if (StringLen(message) == 0)
-         message = "???";
+      string message = ifString(StringLen(message) > 0, location, "???");
 
-      Alert(StringConcatenate("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::", message, "  [", error, " - ", ErrorDescription(error), "]"));
+      Alert("ERROR:   "+ Symbol() +","+ PeriodDescription(NULL) +"  "+ __SCRIPT__ +"::"+ message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
 
       if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription(NULL);
          string strings[];
          if (Explode(message, ")", strings, 2)==1) message = "ERROR in "+ __SCRIPT__ + NL + NL + StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
          else                                      message = "ERROR in "+ __SCRIPT__ +"::"+ StringTrim(strings[0]) +")"+ NL + NL + StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]");
+
+         // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
+
          ForceSound("alert.wav");
          ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
       }
@@ -1077,6 +1085,10 @@ int catch(string message, int error=NO_ERROR) {
       if (last_error == NO_ERROR)                                    // bereits existierenden Fehler nicht überschreiben
          last_error = error;
    }
+
+   if (orderSelectPop)
+      OrderSelectPop(location);
+
    return(error);
 }
 
