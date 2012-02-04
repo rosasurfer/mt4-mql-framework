@@ -232,31 +232,31 @@ int onStart() {
       // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("onStart(11)  FileOpen()"));
+         return(catch("onStart(11)->FileOpen()"));
 
       // Header schreiben
       string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetTradeServerDirectory() +")\n"
                     + "#";
       if (FileWrite(hFile, header) < 0) {
-         error = GetLastError();
+         catch("onStart(12)->FileWrite()");
          FileClose(hFile);
-         return(catch("onStart(12)  FileWrite()", error));
+         return(last_error);
       }
       if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
-         error = GetLastError();
+         catch("onStart(13)->FileWrite()");
          FileClose(hFile);
-         return(catch("onStart(13)  FileWrite()", error));
+         return(last_error);
       }
    }
    // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
    else {
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
-         return(catch("onStart(14)  FileOpen()"));
+         return(catch("onStart(14)->FileOpen()"));
       if (!FileSeek(hFile, 0, SEEK_END)) {
-         error = GetLastError();
+         catch("onStart(15)->FileSeek()");
          FileClose(hFile);
-         return(catch("onStart(15)  FileSeek()", error));
+         return(last_error);
       }
    }
 
@@ -289,9 +289,9 @@ int onStart() {
       string strMagicNumber  = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
 
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
-         error = GetLastError();
+         catch("onStart(16)->FileWrite()");
          FileClose(hFile);
-         return(catch("onStart(16)  FileWrite()", error));
+         return(last_error);
       }
    }
    FileClose(hFile);

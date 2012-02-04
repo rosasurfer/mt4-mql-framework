@@ -119,37 +119,37 @@ int onStart() {
    string filename = ShortAccountCompany() +"\\tmp_"+ __SCRIPT__ +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
-      return(catch("onStart(2)  FileOpen(filename=\""+ filename +"\")"));
+      return(catch("onStart(2)->FileOpen(\""+ filename +"\")"));
 
    // (2.1) Dateikommentar
    string header = "# Account history update for account #"+ account +" ("+ AccountCompany() +") - "+ AccountName() +"\n#";
    if (FileWrite(hFile, header) < 0) {
-      error = GetLastError();
+      catch("onStart(3)->FileWrite()");
       FileClose(hFile);
-      return(catch("onStart(3)  FileWrite()", error));
+      return(last_error);
    }
 
    // (2.2) Status
    if (FileWrite(hFile, "\n[Account]\n#AccountCompany","AccountNumber","AccountBalance") < 0) {
-      error = GetLastError();
+      catch("onStart(4)->FileWrite()");
       FileClose(hFile);
-      return(catch("onStart(4)  FileWrite()", error));
+      return(last_error);
    }
    string accountCompany = AccountCompany();
    string accountNumber  = AccountNumber();
    string accountBalance = NumberToStr(AccountBalance(), ".2+");
 
    if (FileWrite(hFile, accountCompany,accountNumber,accountBalance) < 0) {
-      error = GetLastError();
+      catch("onStart(5)->FileWrite()");
       FileClose(hFile);
-      return(catch("onStart(5)  FileWrite()", error));
+      return(last_error);
    }
 
    // (2.2) Daten
    if (FileWrite(hFile, "\n[Data]\n#Ticket","OpenTime","OpenTimestamp","Description","Type","Units","Symbol","OpenPrice","CloseTime","CloseTimestamp","ClosePrice","Commission","Swap","Profit","MagicNumber","Comment") < 0) {
-      error = GetLastError();
+      catch("onStart(6)->FileWrite()");
       FileClose(hFile);
-      return(catch("onStart(6)  FileWrite()", error));
+      return(last_error);
    }
    for (i=0; i < orders; i++) {
       string strType        = OperationTypeDescription(types[i]);
@@ -167,9 +167,9 @@ int onStart() {
       string strMagicNumber = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
 
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
-         error = GetLastError();
+         catch("onStart(7)->FileWrite()");
          FileClose(hFile);
-         return(catch("onStart(7)  FileWrite()", error));
+         return(last_error);
       }
    }
 
@@ -177,7 +177,7 @@ int onStart() {
    FileClose(hFile);
    error = GetLastError();
    if (IsError(error))
-      return(catch("onStart(8)  FileClose()", error));
+      return(catch("onStart(8)->FileClose()", error));
 
 
    // (3) Datei zum Server schicken und Antwort entgegennehmen
