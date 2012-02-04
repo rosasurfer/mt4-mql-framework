@@ -1381,7 +1381,7 @@ bool OrderPop(string location) {
  *
  * NOTE:
  * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 bool WaitForTicket(int ticket, bool keepCurrentTicket=true) {
    if (ticket <= 0)

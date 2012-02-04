@@ -292,10 +292,10 @@
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
    bool     OrderDeleteEx(int ticket, color markerColor);
 
-   bool     OrderSelectByTicket(int ticket, string location);
-   int      OrderSelectPush(string location);
-   bool     OrderSelectPop(string location);
-   int      WaitForTicket(int ticket);
+   int      OrderPush(string location);
+   bool     OrderPop(string location);
+   bool     OrderSelectByTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
+   bool     WaitForTicket(int ticket, bool keepCurrentTicket);
 
 
    // sonstiges
