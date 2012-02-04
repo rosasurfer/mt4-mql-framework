@@ -106,9 +106,9 @@
 #define OFLAG_PENDINGORDER      16     // pending order (Limit- oder Stop-Order)
 
 
-// OrderSelect-ID's zur Steuerung des Stacks der OrderSelect-Kontexte, siehe OrderSelectPush(), OrderSelectPop(), catch()
-#define OS_PUSH                  1
-#define OS_POP                   2
+// OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
+#define O_PUSH                   1
+#define O_POP                    2
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
@@ -1051,9 +1051,9 @@ int ChartInfo.UpdateMarginLevels() {
  * wenn diese noch keinen Fehler enthält.  Bereits vorher aufgetretene Fehler werden also nicht überschrieben. Der mit der MQL-Funktion GetLastError()
  * auslesbare letzte MQL-Fehler ist nach Aufruf dieser Funktion zurückgesetzt.
  *
- * @param  string location       - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
- * @param  int    error          - manuelles Forcieren eines bestimmten Error-Codes
- * @param  bool   orderSelectPop - ob ein zuvor gespeicherter OrderSelect-Kontext wiederhergestellt werden soll (default: FALSE)
+ * @param  string location - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
+ * @param  int    error    - manuelles Forcieren eines bestimmten Error-Codes
+ * @param  bool   orderPop - ob ein zuvor gespeicherter Orderkontext wiederhergestellt werden soll (default: nein)
  *
  * @return int - der aufgetretene Error-Code
  *
@@ -1061,7 +1061,7 @@ int ChartInfo.UpdateMarginLevels() {
  * -----
  * Ist in der Headerdatei implementiert, um Default-Parameter zu unterstützen und damit das laufende Script als Auslöser angezeigt wird.
  */
-int catch(string location, int error=NO_ERROR, bool orderSelectPop=false) {
+int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error == NO_ERROR)   error = GetLastError();
    else                             GetLastError();                  // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
@@ -1086,8 +1086,8 @@ int catch(string location, int error=NO_ERROR, bool orderSelectPop=false) {
          last_error = error;
    }
 
-   if (orderSelectPop)
-      OrderSelectPop(location);
+   if (orderPop)
+      OrderPop(location);
 
    return(error);
 }
@@ -1287,51 +1287,62 @@ int HandleEvent(int event, int flags=0) {
 }
 
 
+int stack.selectedOrders[];                                          // @see OrderPush(), OrderPop()
+
+
 /**
  * Selektiert eine Order anhand des Tickets.
  *
- * @param  int    ticket   - Ticket
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  int    ticket          - Ticket
+ * @param  string location        - Bezeichner für eine evt. Fehlermeldung
+ * @param  bool   orderPush       - Ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein).
+ * @param  bool   onErrorOrderPop - Ob *im Fehlerfall* der letzte Orderkontext wiederhergestellt werden soll (default: nein).
+ *                                  Ist orderPush TRUE, ist dieser Parameter automatisch auch TRUE.
  *
  * @return bool - Erfolgsstatus
  *
  *  NOTE:
  *  -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
-bool OrderSelectByTicket(int ticket, string location) {
+bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool onErrorOrderPop=false) {
+   if (orderPush) {
+      OrderPush(location);
+      onErrorOrderPop = true;
+   }
+
    if (OrderSelect(ticket, SELECT_BY_TICKET))
       return(true);
+
+   if (onErrorOrderPop)                                              // im Fehlerfall alten Kontext restaurieren und Order-Stack bereinigen
+      OrderPop(location);
 
    int error = GetLastError();
    return(_false(catch(location +"->OrderSelectByTicket()   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 
 
-int stack.selectedOrders[];                                          // @see OrderSelectPush() / OrderSelectPop()
-
-
 /**
- * Gibt das Ticket der aktuell selektierten Order zurück.
+ * Schiebt den aktuellen Orderkontext auf den Order-Stack (fügt ihn ans Ende an).
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
- * @return int - Ticket oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
+ * @return int - Ticket des aktuellen Kontexts oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
  *
  * NOTE:
  * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
-int OrderSelectPush(string location) {
+int OrderPush(string location) {
    int error = GetLastError();
    if (IsError(error))
-      return(_ZERO(catch(location +"->OrderSelectPush(1)", error)));
+      return(_ZERO(catch(location +"->OrderPush(1)", error)));
 
    int ticket = OrderTicket();
 
    error = GetLastError();
    if (IsError(error)) /*&&*/ if (error != ERR_NO_ORDER_SELECTED)
-      return(_ZERO(catch(location +"->OrderSelectPush(2)", error)));
+      return(_ZERO(catch(location +"->OrderPush(2)", error)));
 
    ArrayPushInt(stack.selectedOrders, ticket);
    return(ticket);
@@ -1339,7 +1350,7 @@ int OrderSelectPush(string location) {
 
 
 /**
- * Entfernt die letzte auf dem Selection-Stack befindliche Order und selektiert sie.
+ * Entfernt den letzten auf dem Order-Stack befindlichen Kontext und restauriert ihn.
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
@@ -1347,14 +1358,54 @@ int OrderSelectPush(string location) {
  *
  * NOTE:
  * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur jeweils im selben Programm benutzt werden können.
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
-bool OrderSelectPop(string location) {
+bool OrderPop(string location) {
    int ticket = ArrayPopInt(stack.selectedOrders);
+
    if (ticket > 0)
-      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->OrderSelectPop()")));
+      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->OrderPop()")));
 
    OrderSelect(0, SELECT_BY_TICKET);
+   return(true);
+}
+
+
+/**
+ * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
+ *
+ * @param  int  ticket            - Orderticket
+ * @param  bool keepCurrentTicket - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * NOTE:
+ * -----
+ * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ */
+bool WaitForTicket(int ticket, bool keepCurrentTicket=true) {
+   if (ticket <= 0)
+      return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (keepCurrentTicket) {
+      if (OrderPush("WaitForTicket(2)") == 0)
+         return(!IsLastError());
+   }
+
+   int i, delay=100;                                                 // je 0.1 Sekunden warten
+
+   while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
+      if (IsTesting())           ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
+      else if (i > 0 && i%10==0)      Alert("WaitForTicket()   ticket #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000.0, 1), " s");
+      Sleep(delay);
+      i++;
+   }
+
+   if (keepCurrentTicket) {
+      if (!OrderPop("WaitForTicket(3)"))
+         return(false);
+   }
+
    return(true);
 }
 
@@ -1579,10 +1630,11 @@ void DummyCalls() {
    IsScript();
    log();
    onInit(NULL);
+   OrderPop(NULL);
+   OrderPush(NULL);
    OrderSelectByTicket(NULL, NULL);
-   OrderSelectPop(NULL);
-   OrderSelectPush(NULL);
    PipValue();
    SetLastError(NULL);
    start();
+   WaitForTicket(NULL);
 }
