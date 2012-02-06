@@ -924,7 +924,7 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
  */
 bool StartSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      if (!IsTesting() || IsVisualMode()) {                          // im Tester nur im VisualMode
+      if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
@@ -968,7 +968,7 @@ bool StartSequence() {
  */
 bool IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      if (!IsTesting() || IsVisualMode()) {                                // im Tester nur im VisualMode
+      if (!IsTesting()) {                                                  // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
@@ -1016,7 +1016,7 @@ bool IncreaseProgression() {
  */
 bool FinishSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
-      if (!IsTesting() || IsVisualMode()) {                          // im Tester nur im VisualMode
+      if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
@@ -1648,11 +1648,10 @@ int SaveConfiguration() {
 
 
    // (3) Datei auf Server laden
-   if (!IsTesting()) {                                               // jedoch nicht im Tester
-      int error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), StdSymbol(), filename);
-      if (IsError(error))
-         return(error);
-   }
+   int error = UploadConfiguration(ShortAccountCompany(), AccountNumber(), StdSymbol(), filename);
+   if (IsError(error))
+      return(error);
+
    return(catch("SaveConfiguration(4)"));
 }
 
@@ -1669,7 +1668,7 @@ int SaveConfiguration() {
  */
 int UploadConfiguration(string company, int account, string symbol, string presetsFile) {
    if (IsTesting())
-      return(_NO_ERROR(debug("UploadConfiguration()   skipping in tester")));
+      return(_NO_ERROR(debug("UploadConfiguration()   skipping in Strategy Tester")));
 
    // TODO: Existenz von wget.exe prüfen
 
