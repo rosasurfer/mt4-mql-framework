@@ -206,7 +206,7 @@ int onPositionOpen(int tickets[]) {
       string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
       string price   = NumberToStr(OrderOpenPrice(), PriceFormat);
-      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " @ ", price);
+      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " at ", price);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -249,7 +249,7 @@ int onPositionClose(int tickets[]) {
       string lots       = NumberToStr(OrderLots(), ".+");
       string openPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string closePrice = NumberToStr(OrderClosePrice(), PriceFormat);
-      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", symbolName, " @ ", openPrice, " -> ", closePrice);
+      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", symbolName, " at ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {

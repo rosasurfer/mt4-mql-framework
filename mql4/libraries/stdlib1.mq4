@@ -7972,7 +7972,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
    double pip            = 1/MathPow(10, pipDigits), pips=pip;
    int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
-   double stopLevel      = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
+   double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error  = GetLastError();
    if (IsError(error))                                         return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
@@ -8016,16 +8016,16 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          Sleep(300);                                                 // 0.3 Sekunden warten
       }
       else {
-         // zu verwendenden OpenPrice bestimmen und ggf. Stoplevel validieren
+         // zu verwendenden OpenPrice bestimmen und ggf. StopDistance validieren
          double bid = MarketInfo(symbol, MODE_BID);
          double ask = MarketInfo(symbol, MODE_ASK);
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LT(price - stopLevel*pips, ask)) return(_int(-1, catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Ask="+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS)));
+            if (LT(price - stopDistance*pips, ask)) return(_int(-1, catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          else if (type == OP_SELLSTOP) {
-            if (GT(price + stopLevel*pips, bid)) return(_int(-1, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" @ "+ NumberToStr(price, priceFormat) +" too close to market (Bid="+ NumberToStr(bid, priceFormat) +", stop distance="+ NumberToStr(stopLevel, ".+") +" pip)", ERR_INVALID_STOPS)));
+            if (GT(price + stopDistance*pips, bid)) return(_int(-1, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          price = NormalizeDouble(price, digits);
 
@@ -8041,6 +8041,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             firstTime1 = time1;
             firstPrice = price;                                      // OrderPrice und Zeit der ersten Ausführung merken
          }
+
          ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
          time2  = GetTickCount();
 
@@ -8056,6 +8057,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             return(ifInt(IsLastError(), -1, ticket));                // regular exit
          }
          error = GetLastError();
+
          if (error == ERR_REQUOTE) {
             if (IsTesting())
                catch("OrderSendEx(18)", error);

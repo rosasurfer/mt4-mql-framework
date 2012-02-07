@@ -1066,7 +1066,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                             GetLastError();                  // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      string message = ifString(StringLen(message) > 0, location, "???");
+      string message = ifString(StringLen(location) > 0, location, "???");
 
       Alert("ERROR:   "+ Symbol() +","+ PeriodDescription(NULL) +"  "+ __SCRIPT__ +"::"+ message +"  ["+ error +" - "+ ErrorDescription(error) +"]");
 
