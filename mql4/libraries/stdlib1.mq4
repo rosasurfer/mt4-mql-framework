@@ -4380,17 +4380,15 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
                else if (type == OP_SELL)                pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
-            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol()) +0;  // MQL kann Booleans für Binärops. nicht casten
-            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY ) +0;
-            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL) +0;
-            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending) +0;
-            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending) +0;
+            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol()) +0;  // MQL kann Booleans für Binäroperationen nicht casten
+            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )           +0;
+            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL)           +0;
+            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending)                +0;
+            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending)                +0;
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
-            if (event == 1) {
-               ArrayResize(tickets, ArraySize(tickets)+1);
-               tickets[ArraySize(tickets)-1] = knownPositions[i];
-            }
+            if (event == 1)
+               ArrayPushInt(tickets, knownPositions[i]);
          }
       }
    }

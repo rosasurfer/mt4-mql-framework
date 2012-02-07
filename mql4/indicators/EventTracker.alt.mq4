@@ -156,10 +156,8 @@ int onTick() {
       ValidBars = 0;
 
    // unvollständige Accountinitialisierung abfangen (bei Start und Accountwechseln mit schnellen Prozessoren)
-   if (AccountNumber() == 0) {
-      //debug("onTick()   ERR_NO_CONNECTION");
+   if (AccountNumber() == 0)
       return(SetLastError(ERR_NO_CONNECTION));
-   }
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
    static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
