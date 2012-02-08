@@ -391,7 +391,7 @@
 
 // trade server errors
 #define ERR_NO_RESULT                                   1
-#define ERR_COMMON_ERROR                                2   // trade confirmation denied | broker rejects order
+#define ERR_COMMON_ERROR                                2   // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                    3
 #define ERR_SERVER_BUSY                                 4
 #define ERR_OLD_VERSION                                 5

@@ -1000,13 +1000,13 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   trade confirmation denied | broker rejects order
+      case ERR_COMMON_ERROR:                 //        2   trade denied
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
-      case ERR_BROKER_BUSY:                  //      137   broker is busy (never returned error)
+      case ERR_BROKER_BUSY:                  //      137   broker is busy
       case ERR_REQUOTE:                      //      138   requote
       case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context is busy
          return(true);
@@ -1018,7 +1018,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_NO_CONNECTION:                //        6   no connection to trade server
       case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
       case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests
-      case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation (never returned error)
+      case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
       case ERR_INVALID_STOPS:                //      130   invalid stop
@@ -5381,14 +5381,14 @@ string ErrorDescription(int error) {
 
       // trade server errors
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
-      case ERR_COMMON_ERROR               : return("trade denied"                                                  ); //    2 trade confirmation denied | broker rejects order
+      case ERR_COMMON_ERROR               : return("trade denied"                                                  ); //    2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
       case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
       case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
       case ERR_NO_CONNECTION              : return("no connection to trade server"                                 ); //    6
       case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                             ); //    7
       case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                         ); //    8
-      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                                 ); //    9 never returned error
+      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                                 ); //    9
       case ERR_ACCOUNT_DISABLED           : return("account disabled"                                              ); //   64
       case ERR_INVALID_ACCOUNT            : return("invalid account"                                               ); //   65
       case ERR_TRADE_TIMEOUT              : return("trade timeout"                                                 ); //  128
@@ -5400,7 +5400,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                              ); //  134
       case ERR_PRICE_CHANGED              : return("price changed"                                                 ); //  135
       case ERR_OFF_QUOTES                 : return("off quotes"                                                    ); //  136
-      case ERR_BROKER_BUSY                : return("broker is busy (never returned error)"                         ); //  137
+      case ERR_BROKER_BUSY                : return("broker is busy"                                                ); //  137
       case ERR_REQUOTE                    : return("requote"                                                       ); //  138
       case ERR_ORDER_LOCKED               : return("order is locked"                                               ); //  139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                                   ); //  140
@@ -5428,14 +5428,14 @@ string ErrorDescription(int error) {
       case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("remainder from division by zero"                               ); // 4012
       case ERR_ZERO_DIVIDE                : return("division by zero"                                              ); // 4013
       case ERR_UNKNOWN_COMMAND            : return("unknown command"                                               ); // 4014
-      case ERR_WRONG_JUMP                 : return("wrong jump (never generated error)"                            ); // 4015
+      case ERR_WRONG_JUMP                 : return("wrong jump"                                                    ); // 4015
       case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                         ); // 4016
       case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls are not allowed"                                     ); // 4017
       case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                           ); // 4018
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
-      case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022 never generated error
+      case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050 invalid parameters count
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
