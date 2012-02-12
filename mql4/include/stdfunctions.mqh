@@ -888,7 +888,7 @@ int ChartInfo.CheckPosition() {
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird woanders eine aktive Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde woanders eine aktive Order entfernt
          break;
 
       if (OrderSymbol() == Symbol()) {

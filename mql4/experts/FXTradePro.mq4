@@ -567,7 +567,7 @@ bool IsProfitTargetReached() {
 bool RestoreRunningSequenceId() {
    // offene Positionen einlesen
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
          continue;
 
       if (IsMyOrder()) {
@@ -622,7 +622,7 @@ bool ReadSequence() {
    double effectiveLots;
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wird woanders eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wurde woanders eine offene Order entfernt
          continue;
 
       if (IsMyOrder(sequenceId)) {
@@ -675,7 +675,7 @@ bool ReadSequence() {
       int      closeTrades      []; ArrayResize(closeTrades, 0);        // Index-Zwischenspeicher für Teilpositionen des Schlußtrades
 
       for (i=0, n=0; i < closedTickets; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))              // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))              // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verändert
             break;
          if (OrderType() > OP_SELL || OrderSymbol()!=Symbol())          // Nicht-Trades und Einträge anderer Symbole überspringen
             continue;

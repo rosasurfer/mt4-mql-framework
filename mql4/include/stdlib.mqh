@@ -284,6 +284,8 @@
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
    bool     IsTradeOperation(int value);
+   bool     IsLongTradeOperation(int value);
+   bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);

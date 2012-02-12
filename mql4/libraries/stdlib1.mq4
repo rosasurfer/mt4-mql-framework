@@ -4251,7 +4251,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
@@ -4401,7 +4401,7 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
    }
    int orders = OrdersTotal();
    for (i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
       if (OrderType()==OP_BUY || OrderType()==OP_SELL) {
          noOfKnownPositions++;
@@ -5789,6 +5789,42 @@ bool IsTradeOperation(int value) {
       case OP_BUYLIMIT:
       case OP_SELLLIMIT:
       case OP_BUYSTOP:
+      case OP_SELLSTOP:
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine Long-Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsLongTradeOperation(int value) {
+   switch (value) {
+      case OP_BUY:
+      case OP_BUYLIMIT:
+      case OP_BUYSTOP:
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine Short-Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsShortTradeOperation(int value) {
+   switch (value) {
+      case OP_SELL:
+      case OP_SELLLIMIT:
       case OP_SELLSTOP:
          return(true);
    }
@@ -8361,7 +8397,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
                   comment = StringConcatenate("split ", comment);
 
                for (int i=OrdersTotal()-1; i >= 0; i--) {
-                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
                      continue;
                   if (OrderComment() == comment) {
                      ArrayResize(remainder, 1);

@@ -44,7 +44,7 @@ int onStart() {
    ArrayResize(sortData, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wird der Anzeigezeitraum der History verändert
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verändert
          ArrayResize(sortData, i);
          orders = i;
          break;

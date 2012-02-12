@@ -277,7 +277,7 @@ bool ReadOpenPositions() {
    ArrayResize(positions.counter , 0);
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wird in einem anderen Thread eine offene Order entfernt
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
          continue;
 
       // alle offenen Positionen dieser Strategie finden und Daten einlesen
