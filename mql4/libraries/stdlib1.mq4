@@ -80,6 +80,7 @@ int onTick() {
  * @param  string scriptName         - Name des aufrufenden Programms
  * @param  int    initFlags          - optionale, zusätzlich durchzuführende Initialisierungstasks: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
+ *
  * @return int - Fehlercode
  */
 int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitializeReason) {
@@ -8086,6 +8087,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
+            else if (!OrderSendEx.CleanChartMarkers(ticket, stopLoss, takeProfit, markerColor))
+               return(-1);
 
             catch("OrderSendEx(17)");
             return(ifInt(IsLastError(), -1, ticket));                // regular exit
@@ -8175,6 +8178,50 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (IsError(error))
       return(_empty(catch("OrderSendEx.LogMessage(2)", error)));
    return(message);
+}
+
+
+/**
+ * Der Tester überschreibt eigenmächtig die Angabe markerColor = CLR_NONE. Dies wird hier korrigiert.
+ *
+ * @param  int    ticket      - Ticket
+ * @param  double stopLoss    - StopLoss
+ * @param  double takeProfit  - TakeProfit
+ * @param  color  markerColor - Farbe des Chartmarkers
+ *
+ * @return bool - Erfolgsstatus
+ */
+/*private*/ bool OrderSendEx.CleanChartMarkers(int ticket, double stopLoss, double takeProfit, color markerColor) {
+   if (!IsTesting())            return(true);
+   if (!IsVisualMode())         return(true);
+   if (markerColor != CLR_NONE) return(true);
+
+   string label, strTicket=StringConcatenate("#", ticket, " ");
+   int symbol, labels=1;
+
+   if (NE(stopLoss,   0)) labels++;
+   if (NE(takeProfit, 0)) labels++;
+
+   for (int i=ObjectsTotal()-1; i>=0 && labels>0; i--) {
+      label = ObjectName(i);
+      if (ObjectType(label) == OBJ_ARROW) {
+         if (StringStartsWith(label, strTicket)) {
+            symbol = ObjectGet(label, OBJPROP_ARROWCODE);
+            if (symbol == SYMBOL_TICKETOPEN) {
+               ObjectDelete(label);
+               labels--;
+               continue;
+            }
+            if (symbol == SYMBOL_DASH) {
+               ObjectDelete(label);
+               labels--;
+               continue;
+            }
+         }
+      }
+   }
+
+   return(IsNoError(catch("OrderSendEx.CleanChartMarkers()")));
 }
 
 

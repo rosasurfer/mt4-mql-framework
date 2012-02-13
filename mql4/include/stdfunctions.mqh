@@ -2,6 +2,7 @@
  * Globale MQL-Funktionen, Variablen und Konstanten.
  */
 
+
 // Programmtypen
 #define T_INDICATOR              1
 #define T_EXPERT                 2
@@ -329,46 +330,46 @@
 
 
 // Flags für zusätzliche Initialisierungstasks, siehe onInit()
-#define IT_CHECK_TIMEZONE_CONFIG             1           // prüft die Timezone-Konfiguration des aktuellen MT-Servers
-#define IT_RESET_BARS_ON_HIST_UPDATE         2           //
+#define IT_CHECK_TIMEZONE_CONFIG                        1  // prüft die Timezone-Konfiguration des aktuellen MT-Servers
+#define IT_RESET_BARS_ON_HIST_UPDATE                    2  //
 
 
 // MessageBox() flags
-#define MB_OK                                0x00000000  // buttons
-#define MB_OKCANCEL                          0x00000001
-#define MB_ABORTRETRYIGNORE                  0x00000002
-#define MB_CANCELTRYCONTINUE                 0x00000006
-#define MB_RETRYCANCEL                       0x00000005
-#define MB_YESNO                             0x00000004
-#define MB_YESNOCANCEL                       0x00000003
-#define MB_HELP                              0x00004000  // additional help button
+#define MB_OK                                  0x00000000  // buttons
+#define MB_OKCANCEL                            0x00000001
+#define MB_ABORTRETRYIGNORE                    0x00000002
+#define MB_CANCELTRYCONTINUE                   0x00000006
+#define MB_RETRYCANCEL                         0x00000005
+#define MB_YESNO                               0x00000004
+#define MB_YESNOCANCEL                         0x00000003
+#define MB_HELP                                0x00004000  // additional help button
 
-#define MB_DEFBUTTON1                        0x00000000  // default button
-#define MB_DEFBUTTON2                        0x00000100
-#define MB_DEFBUTTON3                        0x00000200
-#define MB_DEFBUTTON4                        0x00000300
+#define MB_DEFBUTTON1                          0x00000000  // default button
+#define MB_DEFBUTTON2                          0x00000100
+#define MB_DEFBUTTON3                          0x00000200
+#define MB_DEFBUTTON4                          0x00000300
 
-#define MB_ICONEXCLAMATION                   0x00000030  // icons
-#define MB_ICONWARNING               MB_ICONEXCLAMATION
-#define MB_ICONINFORMATION                   0x00000040
-#define MB_ICONASTERISK              MB_ICONINFORMATION
-#define MB_ICONQUESTION                      0x00000020
-#define MB_ICONSTOP                          0x00000010
-#define MB_ICONERROR                        MB_ICONSTOP
-#define MB_ICONHAND                         MB_ICONSTOP
-#define MB_USERICON                          0x00000080
+#define MB_ICONEXCLAMATION                     0x00000030  // icons
+#define MB_ICONWARNING                 MB_ICONEXCLAMATION
+#define MB_ICONINFORMATION                     0x00000040
+#define MB_ICONASTERISK                MB_ICONINFORMATION
+#define MB_ICONQUESTION                        0x00000020
+#define MB_ICONSTOP                            0x00000010
+#define MB_ICONERROR                          MB_ICONSTOP
+#define MB_ICONHAND                           MB_ICONSTOP
+#define MB_USERICON                            0x00000080
 
-#define MB_APPLMODAL                         0x00000000  // modality
-#define MB_SYSTEMMODAL                       0x00001000
-#define MB_TASKMODAL                         0x00002000
+#define MB_APPLMODAL                           0x00000000  // modality
+#define MB_SYSTEMMODAL                         0x00001000
+#define MB_TASKMODAL                           0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY              0x00020000  // other
-#define MB_RIGHT                             0x00080000
-#define MB_RTLREADING                        0x00100000
-#define MB_SETFOREGROUND                     0x00010000
-#define MB_TOPMOST                           0x00040000
-#define MB_NOFOCUS                           0x00008000
-#define MB_SERVICE_NOTIFICATION              0x00200000
+#define MB_DEFAULT_DESKTOP_ONLY                0x00020000  // other
+#define MB_RIGHT                               0x00080000
+#define MB_RTLREADING                          0x00100000
+#define MB_SETFOREGROUND                       0x00010000
+#define MB_TOPMOST                             0x00040000
+#define MB_NOFOCUS                             0x00008000
+#define MB_SERVICE_NOTIFICATION                0x00200000
 
 
 // MessageBox() return codes
@@ -383,6 +384,22 @@
 #define IDHELP                                          9
 #define IDTRYAGAIN                                     10
 #define IDCONTINUE                                     11
+
+
+// Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
+#define SYMBOL_TICKETOPEN                               1   // right pointing arrow (default open ticket marker)
+#define SYMBOL_TICKETOPEN_UP            SYMBOL_TICKETOPEN   // right pointing up arrow                               // ??? wird nicht korrekt angezeigt
+#define SYMBOL_TICKETOPEN_DOWN                          2   // right pointing down arrow                             // ??? wird nicht korrekt angezeigt
+#define SYMBOL_TICKETCLOSE                              3   // left pointing arrow (default closed ticket marker)
+#define SYMBOL_DASH                                     4   // dash symbol (default stoploss and takeprofit marker)
+#define SYMBOL_LEFTPRICE                                5   // left sided price label
+#define SYMBOL_RIGHTPRICE                               6   // right sided price label
+#define SYMBOL_THUMBSUP                                67   // thumb up symbol
+#define SYMBOL_THUMBSDOWN                              68   // thumb down symbol
+#define SYMBOL_ARROWUP                                241   // arrow up symbol
+#define SYMBOL_ARROWDOWN                              242   // arrow down symbol
+#define SYMBOL_STOPSIGN                               251   // stop sign symbol
+#define SYMBOL_CHECKSIGN                              252   // check sign symbol
 
 
 // MQL-Fehlercodes (Win32-Fehlercodes siehe win32api.mqh)
