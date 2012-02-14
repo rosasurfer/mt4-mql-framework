@@ -300,6 +300,7 @@
    bool     WaitForTicket(int ticket, bool keepCurrentTicket);
 
    bool     ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
+   bool     ChartMarkers.PositionClosed(int ticket, int digits, color markerColor);
 
 
    // sonstiges
