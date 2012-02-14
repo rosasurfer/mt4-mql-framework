@@ -1317,8 +1317,7 @@ int stack.selectedOrders[];                                          // @see Ord
  * @param  string location        - Bezeichner für eine evt. Fehlermeldung
  * @param  bool   orderPush       - Ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein).
  * @param  bool   onErrorOrderPop - Ob *im Fehlerfall* der letzte Orderkontext wiederhergestellt werden soll (default: nein).
- *                                  Ist orderPush TRUE, ist dieser Parameter automatisch auch TRUE.
- *
+ *                                  Ist orderPush TRUE, wird dieser Parameter, wenn nicht anders angegeben, automatisch auf TRUE gesetzt.
  * @return bool - Erfolgsstatus
  *
  *  NOTE:

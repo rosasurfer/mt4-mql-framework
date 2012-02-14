@@ -280,7 +280,7 @@
    string   UrlEncode(string value);
 
 
-   // Trade-/Orderhandling-Funktionen
+   // Trade- und Orderhandling-Funktionen
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
    bool     IsTradeOperation(int value);
@@ -298,6 +298,8 @@
    bool     OrderPop(string location);
    bool     OrderSelectByTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
    bool     WaitForTicket(int ticket, bool keepCurrentTicket);
+
+   bool     ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
 
 
    // sonstiges

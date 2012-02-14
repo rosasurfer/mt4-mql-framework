@@ -8087,7 +8087,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-            else if (!OrderSendEx.ChartMarkers(ticket, digits, markerColor))
+            else if (!ChartMarkers.OrderCreated(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(18)")));
 
             if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
@@ -8183,7 +8183,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 
 /**
- * Korrigiert die vom Terminal erzeugten Chart-Marker.
+ * Korrigiert die vom Terminal beim Abschicken einer Order erzeugten Chart-Marker.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8191,36 +8191,121 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool OrderSendEx.ChartMarkers(int ticket, int digits, color markerColor) {
-   if (!IsTesting())            return(true);
-   if (!IsVisualMode())         return(true);
-   if (markerColor != CLR_NONE) return(true);
+/*private*/ bool ChartMarkers.OrderCreated(int ticket, int digits, color markerColor) {
+   if (!IsTesting())    return(true);
+   if (!IsVisualMode()) return(true);
 
-   static string opLabels[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
-
-   if (!OrderSelectByTicket(ticket, "OrderSendEx.ChartMarkers(1)"))
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderCreated(1)"))
       return(false);
 
-   // OrderOpen-Marker löschen
-   string label1 = StringConcatenate("#", ticket, " ", opLabels[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
-   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
-      ObjectDelete(label1);
+   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // StopLoss-Marker löschen
+   // OrderOpen-Marker nur ggf. löschen                              // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   if (markerColor == CLR_NONE) {
+      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+         ObjectDelete(label1);
+   }
+
+   // StopLoss-Marker immer löschen                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(OrderStopLoss(), 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(OrderStopLoss(), digits));
       if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
          ObjectDelete(label2);
    }
 
-   // TakeProfit-Marker löschen
+   // TakeProfit-Marker immer löschen                                // "#1 buy stop 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(OrderTakeProfit(), 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(OrderTakeProfit(), digits));
       if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
          ObjectDelete(label3);
    }
 
-   return(IsNoError(catch("OrderSendEx.ChartMarkers(2)")));
+   return(IsNoError(catch("ChartMarkers.OrderCreated(2)")));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Ausführen einer "pending" Order erzeugten Chart-Marker.
+ *
+ * @param  int    ticket       - Ticket
+ * @param  int    pendingType  - Ordertyp der "pending" Order
+ * @param  double pendingPrice - Preis der "pending" Order
+ * @param  int    digits       - Nachkommastellen des Ordersymbols
+ * @param  color  markerColor  - Farbe des Chartmarkers
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
+   if (!IsTesting())            return(true);
+   if (!IsVisualMode())         return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderFilled(1)", O_PUSH))
+      return(false);
+
+   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+
+   // OrderOpen-Marker immer löschen                                 // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[pendingType], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(pendingPrice, digits));
+   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+      ObjectDelete(label1);
+
+   // Trendline immer löschen                                        // "#1 1.52904 -> 1.52904"
+   string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(pendingPrice, digits), " -> ", DoubleToStr(OrderOpenPrice(), digits));
+   if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+      ObjectDelete(label2);
+
+   // OrderFill-Marker löschen oder korrigieren                      // "#1 buy stop 0.10 GBPUSD at 1.52904 buy by tester at 1.52904"
+   string label3 = StringConcatenate(label1, " ", types[OrderType()], " by tester at ", DoubleToStr(OrderOpenPrice(), digits));
+   if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW) {
+      if (markerColor == CLR_NONE) ObjectDelete(label3);
+      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);
+   }
+
+   return(IsNoError(catch("ChartMarkers.OrderFilled(2)", NULL, O_POP)));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Löschen einer Order erzeugten Chart-Marker.
+ *
+ * @param  int   ticket      - Ticket
+ * @param  int   digits      - Nachkommastellen des Ordersymbols
+ * @param  color markerColor - Farbe des Chartmarkers
+ *
+ * @return bool - Erfolgsstatus
+ */
+/*private*/ bool ChartMarkers.OrderDeleted(int ticket, int digits, color markerColor) {
+   if (!IsTesting())            return(true);
+   if (!IsVisualMode())         return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderDeleted(1)"))
+      return(false);
+
+   static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+
+   // OrderOpen-Marker ggf. löschen                                  // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   if (markerColor == CLR_NONE) {
+      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+         ObjectDelete(label1);
+   }
+
+   // Trendline ggf. löschen                                         // "#1 delete"
+   string label2 = StringConcatenate("#", ticket, " delete");
+   if (markerColor == CLR_NONE) {
+      if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+         ObjectDelete(label2);
+   }
+
+   // OrderClose-Marker löschen oder korrigieren                     // "#1 buy stop 0.10 GBPUSD at 1.52904 deleted"
+   string label3 = StringConcatenate(label1, " deleted");
+   if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW) {
+      if (markerColor == CLR_NONE) ObjectDelete(label3);
+      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);
+   }
+
+   return(IsNoError(catch("ChartMarkers.OrderDeleted(2)")));
 }
 
 
@@ -8789,7 +8874,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
 
             if (!IsTesting())
                PlaySound("OrderOk.wav");
-            else if (!OrderDeleteEx.ChartMarkers(ticket, digits, markerColor))
+            else if (!ChartMarkers.OrderDeleted(ticket, digits, markerColor))
                return(_false(OrderPop("OrderDeleteEx(6)")));
 
             return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit
@@ -8840,113 +8925,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
 }
 
 
-/**
- * Korrigiert die vom Terminal erzeugten Chart-Marker.
- *
- * @param  int   ticket      - Ticket
- * @param  int   digits      - Nachkommastellen des Ordersymbols
- * @param  color markerColor - Farbe des Chartmarkers
- *
- * @return bool - Erfolgsstatus
- */
-/*private*/ bool OrderDeleteEx.ChartMarkers(int ticket, int digits, color markerColor) {
-   if (!IsTesting())            return(true);
-   if (!IsVisualMode())         return(true);
-   if (markerColor != CLR_NONE) return(true);
-
-   static string opLabels[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
-
-   if (!OrderSelectByTicket(ticket, "OrderDeleteEx.ChartMarkers(1)"))
-      return(false);
-
-   // OrderClose-Marker löschen
-   string label1 = StringConcatenate("#", ticket, " ", opLabels[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " deleted");
-   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
-      ObjectDelete(label1);
-
-   // Trendline löschen
-   string label2 = StringConcatenate("#", ticket, " delete");
-   if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
-      ObjectDelete(label2);
-
-   return(IsNoError(catch("OrderDeleteEx.ChartMarkers(2)")));
-}
-
-
-/*
------------------------------------------------------------------------------------------------------------------------------
-before close #1 and #2 of {1, 2, 3, 4, 5, 6}
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    - open -              1.4047'2   "FTP.13007.1"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0.3    - open -              1.4042'2   "FTP.13007.2"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    - open -              1.4047'2   "FTP.13007.3"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0.7    - open -              1.4042'2   "FTP.13007.4"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
------------------------------------------------------------------------------------------------------------------------------
-before close #3 and #4 of {3, 4, 5, 6, 7}
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    - open -              1.4047'2   "FTP.13007.3"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0.7    - open -              1.4042'2   "FTP.13007.4"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
-#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
------------------------------------------------------------------------------------------------------------------------------
-before close #5 and #6 of {5, 6, 7, 8}
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0.9    - open -              1.4047'2   "FTP.13007.5"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    - open -              1.4042'2
-#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
-#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
------------------------------------------------------------------------------------------------------------------------------
-before close #7 and #9 of {7, 8, 9}
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
-#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    - open -              1.4042'2   "split from #1"
-#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
-#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0.4    - open -              1.4047'2   "split from #6"
------------------------------------------------------------------------------------------------------------------------------
-before close #8 and #10 of {8, 10}
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
-#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "partial close"
-#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    - open -              1.4042'2   "split from #3"
-#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #7"
-#10         FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0.2    - open -              1.4047'2   "split from #7"
------------------------------------------------------------------------------------------------------------------------------
-after close
------------------------------------------------------------------------------------------------------------------------------
-#1          FTP.13007.1   2011.07.18 00:00:00   1.4110'0   Sell   0.1    2011.07.18 09:35:00   1.4125'6   "partial close"
-#2          FTP.13007.2   2011.07.18 00:10:00   1.4125'6   Buy    0      2011.07.18 09:35:00   1.4125'6   "close hedge by #1"
-#3          FTP.13007.3   2011.07.18 00:45:00   1.4112'6   Sell   0.5    2011.07.18 09:35:00   1.4124'8   "partial close"
-#4          FTP.13007.4   2011.07.18 01:00:00   1.4124'8   Buy    0      2011.07.18 09:35:00   1.4124'8   "close hedge by #3"
-#5          FTP.13007.5   2011.07.18 03:10:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #6"
-#6          0             2011.07.18 09:35:00   1.4047'2   Buy    0.5    2011.07.18 09:35:00   1.4106'5   "partial close"
-#7          FTP.13007.2   2011.07.18 09:35:00   1.4125'6   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "partial close"
-#8          FTP.13007.4   2011.07.18 09:35:00   1.4124'8   Buy    0.2    2011.07.18 09:35:00   1.4106'5   "split from #3"
-#9          FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #7"
-#10         FTP.13007.5   2011.07.18 09:35:00   1.4106'5   Sell   0      2011.07.18 09:35:00   1.4106'5   "close hedge by #8"
------------------------------------------------------------------------------------------------------------------------------
-*/
-
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
 
 
 /**
@@ -8973,7 +8952,7 @@ after close
  *    - Including a "T" or "t" anywhere in the mask will cause the output to be left aligned in the output field, and trailing spaces trimmed e.g. NumberToStr(123.456,"T5.2") will return "123.45"
  *    - Including a ";" anywhere in the mask will cause decimal point and comma to be juxtaposed, e.g. NumberToStr(123456.789,";,6.3") will return "123.456,789"
  *
- * ==================================================================================================================================================================
+ * ================================================================================================================================================================================================================================
  *
  * Formats a number using a mask, and returns the resulting string
  *
