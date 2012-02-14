@@ -387,10 +387,11 @@
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_TICKETOPEN                               1   // right pointing arrow (default open ticket marker)
-#define SYMBOL_TICKETOPEN_UP            SYMBOL_TICKETOPEN   // right pointing up arrow                               // ??? wird nicht korrekt angezeigt
-#define SYMBOL_TICKETOPEN_DOWN                          2   // right pointing down arrow                             // ??? wird nicht korrekt angezeigt
-#define SYMBOL_TICKETCLOSE                              3   // left pointing arrow (default closed ticket marker)
+#define SYMBOL_ORDEROPEN                                1   // right pointing arrow (default open ticket marker)
+#define SYMBOL_ORDEROPEN_UP              SYMBOL_ORDEROPEN   // right pointing up arrow                               // ??? wird so nicht angezeigt
+#define SYMBOL_ORDEROPEN_DOWN                           2   // right pointing down arrow                             // ??? wird so nicht angezeigt
+#define SYMBOL_ORDERCLOSE                               3   // left pointing arrow (default closed ticket marker)
+
 #define SYMBOL_DASH                                     4   // dash symbol (default stoploss and takeprofit marker)
 #define SYMBOL_LEFTPRICE                                5   // left sided price label
 #define SYMBOL_RIGHTPRICE                               6   // right sided price label
@@ -1103,9 +1104,11 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          last_error = error;
    }
 
-   if (orderPop)
-      OrderPop(location);
-
+   if (orderPop) {
+      if (!OrderPop(location))
+         if (error == NO_ERROR)
+            error = ERR_INVALID_TICKET;
+   }
    return(error);
 }
 

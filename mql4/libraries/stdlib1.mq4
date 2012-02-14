@@ -8009,7 +8009,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   int error  = GetLastError();
+   int error = GetLastError();
    if (IsError(error))                                         return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
    // type
    if (!IsTradeOperation(type))                                return(_int(-1, catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -8081,23 +8081,24 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
          time2  = GetTickCount();
 
          if (ticket > 0) {
-            WaitForTicket(ticket);
-
-            // Logmessage generieren
+            OrderPush("OrderSendEx(17)");
+            WaitForTicket(ticket, false);
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
+
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-            else if (!OrderSendEx.CleanChartMarkers(ticket, stopLoss, takeProfit, markerColor))
-               return(-1);
+            else if (!OrderSendEx.ChartMarkers(ticket, digits, markerColor))
+               return(_int(-1, OrderPop("OrderSendEx(18)")));
 
-            catch("OrderSendEx(17)");
-            return(ifInt(IsLastError(), -1, ticket));                // regular exit
+            if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
+               return(-1);
+            return(ticket);                                          // regular exit
          }
          error = GetLastError();
 
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(18)", error);
+               catch("OrderSendEx(20)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8115,7 +8116,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
 
-   return(_int(-1, catch("OrderSendEx(19)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
+   return(_int(-1, catch("OrderSendEx(21)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
 
@@ -8182,46 +8183,44 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 
 /**
- * Der Tester überschreibt eigenmächtig die Angabe markerColor = CLR_NONE. Dies wird hier korrigiert.
+ * Korrigiert die vom Terminal erzeugten Chart-Marker.
  *
- * @param  int    ticket      - Ticket
- * @param  double stopLoss    - StopLoss
- * @param  double takeProfit  - TakeProfit
- * @param  color  markerColor - Farbe des Chartmarkers
+ * @param  int   ticket      - Ticket
+ * @param  int   digits      - Nachkommastellen des Ordersymbols
+ * @param  color markerColor - Farbe des Chartmarkers
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool OrderSendEx.CleanChartMarkers(int ticket, double stopLoss, double takeProfit, color markerColor) {
+/*private*/ bool OrderSendEx.ChartMarkers(int ticket, int digits, color markerColor) {
    if (!IsTesting())            return(true);
    if (!IsVisualMode())         return(true);
    if (markerColor != CLR_NONE) return(true);
 
-   string label, strTicket=StringConcatenate("#", ticket, " ");
-   int symbol, labels=1;
+   static string opLabels[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   if (NE(stopLoss,   0)) labels++;
-   if (NE(takeProfit, 0)) labels++;
+   if (!OrderSelectByTicket(ticket, "OrderSendEx.ChartMarkers(1)"))
+      return(false);
 
-   for (int i=ObjectsTotal()-1; i>=0 && labels>0; i--) {
-      label = ObjectName(i);
-      if (ObjectType(label) == OBJ_ARROW) {
-         if (StringStartsWith(label, strTicket)) {
-            symbol = ObjectGet(label, OBJPROP_ARROWCODE);
-            if (symbol == SYMBOL_TICKETOPEN) {
-               ObjectDelete(label);
-               labels--;
-               continue;
-            }
-            if (symbol == SYMBOL_DASH) {
-               ObjectDelete(label);
-               labels--;
-               continue;
-            }
-         }
-      }
+   // OrderOpen-Marker löschen
+   string label1 = StringConcatenate("#", ticket, " ", opLabels[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+      ObjectDelete(label1);
+
+   // StopLoss-Marker löschen
+   if (NE(OrderStopLoss(), 0)) {
+      string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(OrderStopLoss(), digits));
+      if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
+         ObjectDelete(label2);
    }
 
-   return(IsNoError(catch("OrderSendEx.CleanChartMarkers()")));
+   // TakeProfit-Marker löschen
+   if (NE(OrderTakeProfit(), 0)) {
+      string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(OrderTakeProfit(), digits));
+      if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
+         ObjectDelete(label3);
+   }
+
+   return(IsNoError(catch("OrderSendEx.ChartMarkers(2)")));
 }
 
 
@@ -8757,17 +8756,21 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderDeleteEx(1)", O_PUSH)) return(false);
-   if (!IsPendingTradeOperation(OrderType()))                     return(_false(catch("OrderDeleteEx(2)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP)));
-   if (OrderCloseTime() != 0)                                     return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
+   if (!IsPendingTradeOperation(OrderType()))                    return(_false(catch("OrderDeleteEx(2)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP)));
+   if (OrderCloseTime() != 0)                                    return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
-   int  time1, time2;
+   int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);                 // für OrderDeleteEx.LogMessage() und OrderDeleteEx.ChartMarker()
+   int error = GetLastError();
+   if (IsError(error)) return(_false(catch("OrderDeleteEx(5)   symbol=\""+ OrderSymbol() +"\"", error, O_POP)));
+
+   int time1, time2;
 
    // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
-      int error = NO_ERROR;
+      error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
          log("OrderDeleteEx()   trade context busy, retrying...");
@@ -8776,18 +8779,20 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
       else {
          if (time1 == 0)
             time1 = GetTickCount();                                     // Zeit der ersten Ausführung
+
          bool success = OrderDelete(ticket, markerColor);
          time2 = GetTickCount();
 
          if (success) {
             WaitForTicket(ticket, false);
+            log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
 
-            // Logmessage generieren
-            log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, time2-time1));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
+            else if (!OrderDeleteEx.ChartMarkers(ticket, digits, markerColor))
+               return(_false(OrderPop("OrderDeleteEx(6)")));
 
-            return(IsNoError(catch("OrderDeleteEx(5)", NULL, O_POP))); // regular exit
+            return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit
          }
          error = GetLastError();
          if (IsNoError(error))
@@ -8804,34 +8809,67 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
       }
    }
 
-   return(_false(catch("OrderDeleteEx(6)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
+   return(_false(catch("OrderDeleteEx(8)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
 }
 
 
 /**
+ * Generiert eine ausführliche Logmessage für eine erfolgreich gelöschte Order.
  *
+ * @param  int ticket - Ticket der Order
+ * @param  int digits - Nachkommastellen des Ordersymbols
+ * @param  int time   - zur Ausführung benötigte Zeit
+ *
+ * @return string - Logmessage
  */
-/*private*/ string OrderDeleteEx.LogMessage(int ticket, int time) {
+/*private*/ string OrderDeleteEx.LogMessage(int ticket, int digits, int time) {
    if (!OrderSelectByTicket(ticket, "OrderDeleteEx.LogMessage(1)"))
       return("");
 
-   int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string strType     = OperationTypeDescription(OrderType());
+   string strLots     = NumberToStr(OrderLots(), ".+");
+   string strPrice    = NumberToStr(OrderOpenPrice(), priceFormat);
+   string message     = StringConcatenate("deleted #", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", DoubleToStr(time/1000.0, 3), " s");
 
    int error = GetLastError();
    if (IsError(error))
-      return(_empty(catch("OrderDeleteEx.LogMessage(2)   symbol=\""+ OrderSymbol() +"\"", error)));
-
-   string strType  = OperationTypeDescription(OrderType());
-   string strLots  = NumberToStr(OrderLots(), ".+");
-   string strPrice = NumberToStr(OrderOpenPrice(), priceFormat);
-   string message  = StringConcatenate("deleted #", ticket, " ", strType, " ", strLots, " ", OrderSymbol(), " at ", strPrice, " after ", DoubleToStr(time/1000.0, 3), " s");
-
-   error = GetLastError();
-   if (IsError(error))
-      return(_empty(catch("OrderDeleteEx.LogMessage(3)", error)));
+      return(_empty(catch("OrderDeleteEx.LogMessage(2)", error)));
    return(message);
+}
+
+
+/**
+ * Korrigiert die vom Terminal erzeugten Chart-Marker.
+ *
+ * @param  int   ticket      - Ticket
+ * @param  int   digits      - Nachkommastellen des Ordersymbols
+ * @param  color markerColor - Farbe des Chartmarkers
+ *
+ * @return bool - Erfolgsstatus
+ */
+/*private*/ bool OrderDeleteEx.ChartMarkers(int ticket, int digits, color markerColor) {
+   if (!IsTesting())            return(true);
+   if (!IsVisualMode())         return(true);
+   if (markerColor != CLR_NONE) return(true);
+
+   static string opLabels[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+
+   if (!OrderSelectByTicket(ticket, "OrderDeleteEx.ChartMarkers(1)"))
+      return(false);
+
+   // OrderClose-Marker löschen
+   string label1 = StringConcatenate("#", ticket, " ", opLabels[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " deleted");
+   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+      ObjectDelete(label1);
+
+   // Trendline löschen
+   string label2 = StringConcatenate("#", ticket, " delete");
+   if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+      ObjectDelete(label2);
+
+   return(IsNoError(catch("OrderDeleteEx.ChartMarkers(2)")));
 }
 
 
