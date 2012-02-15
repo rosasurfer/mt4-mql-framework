@@ -8087,7 +8087,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-            else if (!ChartMarkers.OrderCreated(ticket, digits, markerColor))
+
+            if (!ChartMarkers.OrderCreated(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(18)")));
 
             if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
@@ -8910,7 +8911,8 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
 
             if (!IsTesting())
                PlaySound("OrderOk.wav");
-            else if (!ChartMarkers.OrderDeleted(ticket, digits, markerColor))
+
+            if (!ChartMarkers.OrderDeleted(ticket, digits, markerColor))
                return(_false(OrderPop("OrderDeleteEx(6)")));
 
             return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit
