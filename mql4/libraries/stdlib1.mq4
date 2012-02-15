@@ -8291,7 +8291,7 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
       if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_TREND)
          ObjectDelete(label1);
    }
-
+                                                                     // "#12345678 #12345678 #12345678 #12345678 #12345678 #12345678 #1"
    // Close-Marker löschen oder korrigieren                          // "#12345678 buy 0.10 GBPUSD at 1.53024 close by tester at 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " close by tester at ", DoubleToStr(OrderClosePrice(), digits));
    if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW) {
