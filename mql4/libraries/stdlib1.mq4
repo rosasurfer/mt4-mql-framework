@@ -8318,7 +8318,7 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#12345678 buy 0.10 GBPUSD at 1.53024 close [by tester ]at 1.52904"
-   string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), ifString(IsTesting(), " close by tester", ""), " at ", DoubleToStr(OrderClosePrice(), digits));
+   string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(OrderClosePrice(), digits));
    if (ObjectFind(label2) == 0) {
       if (ObjectType(label2) == OBJ_ARROW) {
          if (markerColor == CLR_NONE) ObjectDelete(label2);                            // löschen
