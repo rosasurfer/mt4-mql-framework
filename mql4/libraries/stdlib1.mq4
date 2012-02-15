@@ -936,7 +936,7 @@ string CreateLegendLabel(string name) {
    if (ObjectFind(label) >= 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER,    CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_CORNER   , CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE,               5);
       ObjectSet(label, OBJPROP_YDISTANCE, maxYDistance+19);
    }
@@ -8184,7 +8184,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 
 /**
- * Korrigiert die vom Terminal beim Abschicken einer Order erzeugten Chart-Marker.
+ * Korrigiert die vom Terminal beim Abschicken einer Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8201,21 +8201,30 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderCreated(1)"))
       return(false);
 
-   // OrderOpen-Marker ggf. löschen                                  // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
-   if (IsTesting()) /*&&*/ if (markerColor==CLR_NONE) {
-      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
-         ObjectDelete(label1);
+   if (ObjectFind(label1) == 0) {
+      if (ObjectType(label1) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label1);                            // löschen
+         else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);   // korrigieren
+      }
+   }
+   else if (markerColor != CLR_NONE) {
+      if (ObjectCreate(label1, OBJ_ARROW, 0, OrderOpenTime(), OrderOpenPrice())) {     // setzen
+         ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label1, OBJPROP_COLOR    , markerColor     );
+         ObjectSetText(label1, StringConcatenate(OrderComment(), ifString(OrderMagicNumber()==0, "", StringConcatenate(" (", OrderMagicNumber(), ")"))));
+      }
    }
 
-   // StopLoss-Marker immer löschen                                  // "#12345678 buy stop 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   // StopLoss-Marker: immer löschen                                                   // "#12345678 buy stop 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(OrderStopLoss(), 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(OrderStopLoss(), digits));
       if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
          ObjectDelete(label2);
    }
 
-   // TakeProfit-Marker immer löschen                                // "#12345678 buy stop 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   // TakeProfit-Marker: immer löschen                                                 // "#12345678 buy stop 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(OrderTakeProfit(), 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(OrderTakeProfit(), digits));
       if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
@@ -8227,7 +8236,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 
 /**
- * Korrigiert die vom Terminal beim Ausführen einer "pending" Order erzeugten Chart-Marker.
+ * Korrigiert die vom Terminal beim Ausführen einer "pending" Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int    ticket       - Ticket
  * @param  int    pendingType  - Ordertyp der "pending" Order
@@ -8238,29 +8247,38 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  * @return bool - Erfolgsstatus
  */
 bool ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
-   if (!IsTesting())    return(true);
-   if (!IsVisualMode()) return(true);
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
    if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderFilled(1)", O_PUSH))
       return(false);
 
-   // OrderOpen-Marker immer löschen                                 // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: immer löschen                                                  // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[pendingType], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(pendingPrice, digits));
    if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
       ObjectDelete(label1);
 
-   // Trendline immer löschen                                        // "#12345678 1.52904 -> 1.52904"
+   // Trendlinie: immer löschen                                                        // "#12345678 1.52904 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(pendingPrice, digits), " -> ", DoubleToStr(OrderOpenPrice(), digits));
    if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
       ObjectDelete(label2);
 
-   // OrderFill-Marker löschen oder korrigieren                      // "#12345678 buy stop 0.10 GBPUSD at 1.52904 buy by tester at 1.52904"
-   string label3 = StringConcatenate(label1, " ", types[OrderType()], " by tester at ", DoubleToStr(OrderOpenPrice(), digits));
-   if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW) {
-      if (markerColor == CLR_NONE) ObjectDelete(label3);
-      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);
+   // OrderFill-Marker: setzen, korrigieren oder löschen                               // "#12345678 buy stop 0.10 GBPUSD at 1.52904 buy [by tester ]at 1.52904"
+   string label3 = StringConcatenate(label1, " ", types[OrderType()], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   if (ObjectFind(label3) == 0) {
+      if (ObjectType(label3) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
+         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
+      }
+   }
+   else if (markerColor != CLR_NONE) {
+      if (ObjectCreate(label3, OBJ_ARROW, 0, OrderOpenTime(), OrderOpenPrice())) {     // setzen
+         ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label3, OBJPROP_COLOR    , markerColor     );
+         ObjectSetText(label3, StringConcatenate(OrderComment(), ifString(OrderMagicNumber()==0, "", StringConcatenate(" (", OrderMagicNumber(), ")"))));
+      }
    }
 
    return(IsNoError(catch("ChartMarkers.OrderFilled(2)", NULL, O_POP)));
@@ -8268,7 +8286,7 @@ bool ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, 
 
 
 /**
- * Korrigiert die vom Terminal beim Schließen einer Stoploss- oder Takeprofit-Order Order erzeugten Chart-Marker.
+ * Korrigiert die vom Terminal beim Schließen einer Stoploss- oder Takeprofit-Order Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8277,26 +8295,41 @@ bool ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, 
  * @return bool - Erfolgsstatus
  */
 bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
-   if (!IsTesting())    return(true);
-   if (!IsVisualMode()) return(true);
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
    if (!OrderSelectByTicket(ticket, "ChartMarkers.PositionClosed(1)", O_PUSH))
       return(false);
 
-   // Trendline ggf. löschen                                         // "#12345678 1.53024 -> 1.52904"
+   // Trendlinie: setzen oder löschen                                                  // "#12345678 1.53024 -> 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", DoubleToStr(OrderOpenPrice(), digits), " -> ", DoubleToStr(OrderClosePrice(), digits));
-   if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_TREND)
-         ObjectDelete(label1);
+   if (ObjectFind(label1) == 0) {
+      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label1)==OBJ_TREND)
+         ObjectDelete(label1);                                                         // löschen
    }
-                                                                     // "#12345678 #12345678 #12345678 #12345678 #12345678 #12345678 #1"
-   // Close-Marker löschen oder korrigieren                          // "#12345678 buy 0.10 GBPUSD at 1.53024 close by tester at 1.52904"
-   string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " close by tester at ", DoubleToStr(OrderClosePrice(), digits));
-   if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW) {
-      if (markerColor == CLR_NONE) ObjectDelete(label2);
-      else                         ObjectSet(label2, OBJPROP_COLOR, markerColor);
+   else if (markerColor != CLR_NONE) {                                                 // setzen
+      if (ObjectCreate(label1, OBJ_TREND, 0, OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice())) {
+         ObjectSet(label1, OBJPROP_RAY  , false    );
+         ObjectSet(label1, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(label1, OBJPROP_COLOR, ifInt(OrderType()==OP_BUY, Blue, Red));
+      }
+   }
+
+   // Close-Marker: setzen, korrigieren oder löschen                                   // "#12345678 buy 0.10 GBPUSD at 1.53024 close [by tester ]at 1.52904"
+   string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), ifString(IsTesting(), " close by tester", ""), " at ", DoubleToStr(OrderClosePrice(), digits));
+   if (ObjectFind(label2) == 0) {
+      if (ObjectType(label2) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label2);                            // löschen
+         else                         ObjectSet(label2, OBJPROP_COLOR, markerColor);   // korrigieren
+      }
+   }
+   else if (markerColor != CLR_NONE) {
+      if (ObjectCreate(label2, OBJ_ARROW, 0, OrderCloseTime(), OrderClosePrice())) {   // setzen
+         ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet(label2, OBJPROP_COLOR    , markerColor      );
+      }
    }
 
    return(IsNoError(catch("ChartMarkers.PositionClosed(2)", NULL, O_POP)));
@@ -8304,7 +8337,7 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
 
 
 /**
- * Korrigiert die vom Terminal beim Löschen einer Order erzeugten Chart-Marker.
+ * Korrigiert die vom Terminal beim Löschen einer Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8313,33 +8346,48 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
  * @return bool - Erfolgsstatus
  */
 /*private*/ bool ChartMarkers.OrderDeleted(int ticket, int digits, color markerColor) {
-   if (!IsTesting())    return(true);
-   if (!IsVisualMode()) return(true);
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
    if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderDeleted(1)"))
       return(false);
 
-   // OrderOpen-Marker ggf. löschen                                  // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: ggf. löschen                                                   // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
    if (markerColor == CLR_NONE) {
       if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
          ObjectDelete(label1);
    }
 
-   // Trendline ggf. löschen                                         // "#12345678 delete"
+   // Trendlinie: setzen oder löschen                                                  // "#12345678 delete"
    string label2 = StringConcatenate("#", ticket, " delete");
-   if (markerColor == CLR_NONE) {
-      if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
-         ObjectDelete(label2);
+   if (ObjectFind(label2) == 0) {
+      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+         ObjectDelete(label2);                                                         // löschen
+   }
+   else if (markerColor != CLR_NONE) {                                                 // setzen
+      if (ObjectCreate(label2, OBJ_TREND, 0, OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice())) {
+         ObjectSet(label2, OBJPROP_RAY  , false    );
+         ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongTradeOperation(OrderType()), Blue, Red));
+      }
    }
 
-   // OrderClose-Marker löschen oder korrigieren                     // "#12345678 buy stop 0.10 GBPUSD at 1.52904 deleted"
+   // OrderClose-Marker: setzen, korrigieren oder löschen                              // "#12345678 buy stop 0.10 GBPUSD at 1.52904 deleted"
    string label3 = StringConcatenate(label1, " deleted");
-   if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW) {
-      if (markerColor == CLR_NONE) ObjectDelete(label3);
-      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);
+   if (ObjectFind(label3) == 0) {
+      if (ObjectType(label3) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
+         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
+      }
+   }
+   else if (markerColor != CLR_NONE) {
+      if (ObjectCreate(label3, OBJ_ARROW, 0, OrderCloseTime(), OrderClosePrice())) {   // setzen
+         ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet(label3, OBJPROP_COLOR    , markerColor      );
+      }
    }
 
    return(IsNoError(catch("ChartMarkers.OrderDeleted(2)")));
