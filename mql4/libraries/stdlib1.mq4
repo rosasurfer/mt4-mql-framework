@@ -3044,15 +3044,15 @@ datetime TimeGMT() {
 
 
 /**
- * Inlined conditional String-Statement.
+ * Inlined conditional Boolean-Statement.
  *
- * @param  bool   condition
- * @param  string thenValue
- * @param  string elseValue
+ * @param  bool condition
+ * @param  bool thenValue
+ * @param  bool elseValue
  *
- * @return string
+ * @return bool
  */
-string ifString(bool condition, string thenValue, string elseValue) {
+bool ifBool(bool condition, bool thenValue, bool elseValue) {
    if (condition)
       return(thenValue);
    return(elseValue);
@@ -3085,6 +3085,22 @@ int ifInt(bool condition, int thenValue, int elseValue) {
  * @return double
  */
 double ifDouble(bool condition, double thenValue, double elseValue) {
+   if (condition)
+      return(thenValue);
+   return(elseValue);
+}
+
+
+/**
+ * Inlined conditional String-Statement.
+ *
+ * @param  bool   condition
+ * @param  string thenValue
+ * @param  string elseValue
+ *
+ * @return string
+ */
+string ifString(bool condition, string thenValue, string elseValue) {
    if (condition)
       return(thenValue);
    return(elseValue);
@@ -6389,7 +6405,7 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
       // Barindex des Zeitpunkts berechnen
       bar = iBarShiftNext(NULL, 0, times[i]);
       if (bar == EMPTY_VALUE)                               // ERR_HISTORY_UPDATE ?
-         return(stdlib_GetLastError());
+         return(last_error);
       if (bar == -1)                                        // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
@@ -8088,7 +8104,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (!ChartMarkers.OrderCreated(ticket, digits, markerColor))
+            if (!ChartMarkers.OrderCreated_A(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(18)")));
 
             if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
@@ -8185,24 +8201,57 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 /**
  * Korrigiert die vom Terminal beim Abschicken einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muß während der Ausführung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
  * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarkers.OrderCreated_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
-/*private*/ bool ChartMarkers.OrderCreated(int ticket, int digits, color markerColor) {
+bool ChartMarkers.OrderCreated_A(int ticket, int digits, color markerColor) {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderCreated_A(1)", O_PUSH))
+      return(false);
+
+   bool result = ChartMarkers.OrderCreated_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
+
+   return(ifBool(OrderPop("ChartMarkers.OrderCreated_A(2)"), result, false));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Abschicken einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ *
+ * @param  int      ticket      - Ticket
+ * @param  int      digits      - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor - Farbe des Chartmarkers
+ * @param  int      type        - Ordertyp
+ * @param  double   lots        - Lotsize
+ * @param  string   symbol      - OrderSymbol
+ * @param  datetime openTime    - OrderOpenTime
+ * @param  double   openPrice   - OrderOpenPrice
+ * @param  double   stopLoss    - StopLoss
+ * @param  double   takeProfit  - TakeProfit
+ * @param  string   comment     - OrderComment
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarkers.OrderCreated_A(), wenn das Ticket während der Ausführung selektierbar ist
+ */
+bool ChartMarkers.OrderCreated_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderCreated(1)"))
-      return(false);
-
    // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#12345678 buy stop 0.10 GBPUSD at 1.52904"
-   string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label1) == 0) {
       if (ObjectType(label1) == OBJ_ARROW) {
          if (markerColor == CLR_NONE) ObjectDelete(label1);                            // löschen
@@ -8210,37 +8259,36 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
       }
    }
    else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label1, OBJ_ARROW, 0, OrderOpenTime(), OrderOpenPrice())) {     // setzen
+      if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label1, OBJPROP_COLOR    , markerColor     );
-         ObjectSetText(label1, StringConcatenate(OrderComment(), ifString(OrderMagicNumber()==0, "", StringConcatenate(" (", OrderMagicNumber(), ")"))));
+         ObjectSetText(label1, comment);
       }
    }
 
    // StopLoss-Marker: immer löschen                                                   // "#12345678 buy stop 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
-   if (NE(OrderStopLoss(), 0)) {
-      string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(OrderStopLoss(), digits));
+   if (NE(stopLoss, 0)) {
+      string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
       if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
          ObjectDelete(label2);
    }
 
    // TakeProfit-Marker: immer löschen                                                 // "#12345678 buy stop 0.10 GBPUSD at 1.52904 take profit at 1.58000"
-   if (NE(OrderTakeProfit(), 0)) {
-      string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(OrderTakeProfit(), digits));
+   if (NE(takeProfit, 0)) {
+      string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
       if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
          ObjectDelete(label3);
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderCreated(2)")));
+   return(IsNoError(catch("ChartMarkers.OrderCreated_B()")));
 }
-
 
 /**
  * Korrigiert die vom Terminal beim Ausführen einer "pending" Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int    ticket       - Ticket
- * @param  int    pendingType  - Ordertyp der "pending" Order
- * @param  double pendingPrice - Preis der "pending" Order
+ * @param  int    pendingType  - OrderType der "pending" Order
+ * @param  double pendingPrice - OpenPrice der "pending" Order
  * @param  int    digits       - Nachkommastellen des Ordersymbols
  * @param  color  markerColor  - Farbe des Chartmarkers
  *
@@ -8277,7 +8325,7 @@ bool ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, 
       if (ObjectCreate(label3, OBJ_ARROW, 0, OrderOpenTime(), OrderOpenPrice())) {     // setzen
          ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label3, OBJPROP_COLOR    , markerColor     );
-         ObjectSetText(label3, StringConcatenate(OrderComment(), ifString(OrderMagicNumber()==0, "", StringConcatenate(" (", OrderMagicNumber(), ")"))));
+         ObjectSetText(label3, OrderComment());
       }
    }
 

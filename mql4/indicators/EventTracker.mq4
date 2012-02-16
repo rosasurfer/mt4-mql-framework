@@ -578,7 +578,7 @@ int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, date
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
    if (fromBar == EMPTY_VALUE)                  // ERR_HISTORY_UPDATE ???
-      return(stdlib_GetLastError());
+      return(stdlib_PeekLastError());
 
    int toBar = iBarShiftPrevious(symbol, period, to-1);
 

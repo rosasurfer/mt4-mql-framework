@@ -86,6 +86,7 @@
 
 
    // Conditional Statements
+   bool     ifBool(bool condition, bool bThen, bool bElse);
    int      ifInt(bool condition, int iThen, int iElse);
    double   ifDouble(bool condition, double dThen, double dElse);
    string   ifString(bool condition, string strThen, string strElse);
@@ -229,7 +230,7 @@
 
 
    // Math, Numbers
-   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);  // MetaQuotes-Alias
+   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);        // MetaQuotes-Alias
    bool     NE(double a, double b);
 
    bool     LT(double a, double b);
@@ -299,6 +300,8 @@
    bool     OrderSelectByTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
    bool     WaitForTicket(int ticket, bool keepCurrentTicket);
 
+   bool     ChartMarkers.OrderCreated_A(int ticket, int digits, color markerColor);
+   bool     ChartMarkers.OrderCreated_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);
    bool     ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
    bool     ChartMarkers.PositionClosed(int ticket, int digits, color markerColor);
 
@@ -314,16 +317,16 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
 
-   string   StdSymbol();                                                   // Alias für GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                              // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                               // Alias für GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                                          // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                  // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                              // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                              // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                                          // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
