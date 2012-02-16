@@ -302,7 +302,8 @@
 
    bool     ChartMarkers.OrderCreated_A(int ticket, int digits, color markerColor);
    bool     ChartMarkers.OrderCreated_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);
-   bool     ChartMarkers.OrderFilled(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
+   bool     ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
+   bool     ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, string comment);
    bool     ChartMarkers.PositionClosed(int ticket, int digits, color markerColor);
 
 
