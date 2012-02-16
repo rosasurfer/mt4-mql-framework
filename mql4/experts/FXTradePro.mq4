@@ -1331,22 +1331,23 @@ int ShowStatus(bool init=false) {
       return(last_error);
 
    int error = last_error;                                           // bei Funktionseintritt bereits existierenden Fehler zwischenspeichern
-   if (IsLastError())
-      status = STATUS_DISABLED;
 
-   string msg = "";
+   static string msg, str.error;
+
+   if (IsLastError()) {
+      status    = STATUS_DISABLED;
+      str.error = StringConcatenate("  [", ErrorDescription(last_error), "]");
+   }
+
    switch (status) {
       case STATUS_WAITING:     if (Entry.type == ENTRYTYPE_LIMIT) {                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting to ", OperationTypeDescription(Entry.iDirection));
                                   if (NE(Entry.limit, 0))                             msg = StringConcatenate(msg, " at ", NumberToStr(Entry.limit, PriceFormat)); }
                                else if (Entry.iDirection == ENTRYDIRECTION_UNDEFINED) msg = StringConcatenate(":  sequence ", sequenceId, " waiting for next ", Entry.Condition, " crossing");
                                else                                                   msg = StringConcatenate(":  sequence ", sequenceId, " waiting for ", Entry.Condition, ifString(Entry.iDirection==OP_BUY, " high", " low"), " crossing to ", OperationTypeDescription(Entry.iDirection), ":  ", NumberToStr(Entry.limit, PriceFormat));
                                break;
-      case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing..."); break;
-      case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");       break;
-      case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled");
-                               if (IsLastError())
-                                  msg = StringConcatenate(msg, "  [", ErrorDescription(last_error), "]");
-                               break;
+      case STATUS_PROGRESSING: msg = StringConcatenate(":  sequence ", sequenceId, " progressing...");      break;
+      case STATUS_FINISHED:    msg = StringConcatenate(":  sequence ", sequenceId, " finished");            break;
+      case STATUS_DISABLED:    msg = StringConcatenate(":  sequence ", sequenceId, " disabled", str.error); break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
@@ -1374,7 +1375,7 @@ int ShowStatus(bool init=false) {
    }
 
    if (sequenceLength > 0) {
-      msg = StringConcatenate(msg,                                                                                                                                                                      NL,
+      msg = StringConcatenate(msg,                                                                                                                                                              NL,
                              "Lot sizes:       ", str.levels.lots, "  (", DoubleToStr(levels.maxProfit[sequenceLength-1], 2), " / ", DoubleToStr(levels.maxDrawdown[sequenceLength-1], 2), ")", NL,
                              "TakeProfit:    ",   TakeProfit, " pip = ", DoubleToStr(levels.maxProfit[i], 2),                                                                                   NL,
                              "StopLoss:      ",   StopLoss,   " pip = ", DoubleToStr(levels.maxDrawdown[i], 2),                                                                                 NL);

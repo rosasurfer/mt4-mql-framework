@@ -92,7 +92,7 @@ int onStart() {
       swaps       [n] = OrderSwap();
       profits     [n] = OrderProfit();
       magicNumbers[n] = OrderMagicNumber();
-      comments    [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
+      comments    [n] = OrderComment();
       n++;
    }
 

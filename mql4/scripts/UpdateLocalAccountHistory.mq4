@@ -100,7 +100,7 @@ int onStart() {
       swaps          [n] = OrderSwap();
       netProfits     [n] = OrderProfit();
       magicNumbers   [n] = OrderMagicNumber();
-      comments       [n] = StringTrim(StringReplace(StringReplace(OrderComment(), "\n", " "), "\t", " "));
+      comments       [n] = OrderComment();
       n++;
    }
    if (n < orders) {
