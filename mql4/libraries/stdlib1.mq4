@@ -8343,7 +8343,16 @@ bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice
 
 
 /**
- * Korrigiert die vom Terminal beim Schließen einer Stoploss- oder Takeprofit-Order Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Alias
+ */
+bool ChartMarkers.OrderClosed(int ticket, int digits, color markerColor) {
+   return(ChartMarkers.PositionClosed_A(ticket, digits, markerColor));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muß während der Ausführung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8351,31 +8360,58 @@ bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice
  *
  * @return bool - Erfolgsstatus
  */
-bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
+bool ChartMarkers.PositionClosed_A(int ticket, int digits, color markerColor) {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.PositionClosed_A(1)", O_PUSH))
+      return(false);
+
+   bool result = ChartMarkers.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
+
+   return(ifBool(OrderPop("ChartMarkers.PositionClosed_A(2)"), result, false));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ *
+ * @param  int      ticket      - Ticket
+ * @param  int      digits      - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor - Farbe des Chartmarkers
+ * @param  int      type        - OrderType
+ * @param  double   lots        - Lotsize
+ * @param  string   symbol      - OrderSymbol
+ * @param  datetime openTime    - OrderOpenTime
+ * @param  double   openPrice   - OrderOpenPrice
+ * @param  datetime closeTime   - OrderOpenTime
+ * @param  double   closePrice  - OrderOpenPrice
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartMarkers.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.PositionClosed(1)", O_PUSH))
-      return(false);
-
    // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
-   string label1 = StringConcatenate("#", ticket, " ", DoubleToStr(OrderOpenPrice(), digits), " -> ", DoubleToStr(OrderClosePrice(), digits));
+   string label1 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label1) == 0) {
       if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label1)==OBJ_TREND)
          ObjectDelete(label1);                                                         // löschen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
-      if (ObjectCreate(label1, OBJ_TREND, 0, OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice())) {
+      if (ObjectCreate(label1, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
          ObjectSet(label1, OBJPROP_RAY  , false    );
          ObjectSet(label1, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(label1, OBJPROP_COLOR, ifInt(OrderType()==OP_BUY, Blue, Red));
+         ObjectSet(label1, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
       }
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
-   string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(OrderClosePrice(), digits));
+   string label2 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits), " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label2) == 0) {
       if (ObjectType(label2) == OBJ_ARROW) {
          if (markerColor == CLR_NONE) ObjectDelete(label2);                            // löschen
@@ -8383,13 +8419,13 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
       }
    }
    else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label2, OBJ_ARROW, 0, OrderCloseTime(), OrderClosePrice())) {   // setzen
+      if (ObjectCreate(label2, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
          ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet(label2, OBJPROP_COLOR    , markerColor      );
       }
    }
 
-   return(IsNoError(catch("ChartMarkers.PositionClosed(2)", NULL, O_POP)));
+   return(IsNoError(catch("ChartMarkers.PositionClosed_B()")));
 }
 
 
@@ -8524,17 +8560,19 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
          if (success) {
             WaitForTicket(ticket, false);                            // TODO: bei partiellem Close auf das resultierende Ticket warten
-
-            // Logmessage generieren
             log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
+
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            return(IsNoError(catch("OrderCloseEx(11)", NULL, O_POP)));                                  // regular exit
+            if (!ChartMarkers.OrderClosed(ticket, digits, markerColor))
+               return(_false(OrderPop("OrderCloseEx(11)")));
+
+            return(IsNoError(catch("OrderCloseEx(12)", NULL, O_POP)));                                  // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
-            if (IsTesting()) catch("OrderCloseEx(12)", error);
+            if (IsTesting()) catch("OrderCloseEx(13)", error);
             requotes++;
             continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8551,7 +8589,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          }
       }
    }
-   return(_false(catch("OrderCloseEx(13)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error, O_POP)));
+   return(_false(catch("OrderCloseEx(14)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error, O_POP)));
 }
 
 
