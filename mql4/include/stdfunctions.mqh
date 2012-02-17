@@ -1386,6 +1386,9 @@ bool OrderPop(string location) {
    if (ticket > 0)
       return(OrderSelectByTicket(ticket, StringConcatenate(location, "->OrderPop()")));
 
+   if (ticket==0) /*&&*/ if (IsLastError())
+      return(false);
+
    OrderSelect(0, SELECT_BY_TICKET);
    return(true);
 }

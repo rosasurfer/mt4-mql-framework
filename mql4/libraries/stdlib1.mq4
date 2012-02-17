@@ -1079,11 +1079,7 @@ int ArrayPushDouble(double& array[], double value) {
  *
  * @param  int double[] - Double-Array
  *
- * @return double - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 double ArrayPopDouble(double array[]) {
    int size = ArraySize(array);
@@ -1102,16 +1098,12 @@ double ArrayPopDouble(double array[]) {
  *
  * @param  double array[] - Double-Array
  *
- * @return double - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 double ArrayShiftDouble(double array[]) {
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayShiftDouble()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_NULL(catch("ArrayShiftDouble()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    double shifted = array[0];
 
@@ -1146,11 +1138,7 @@ int ArrayPushInt(int& array[], int value) {
  *
  * @param  int array[] - Integer-Array
  *
- * @return int - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 int ArrayPopInt(int array[]) {
    int size = ArraySize(array);
@@ -1169,11 +1157,7 @@ int ArrayPopInt(int array[]) {
  *
  * @param  int array[] - Integer-Array
  *
- * @return int - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 int ArrayShiftInt(int array[]) {
    int size = ArraySize(array);
@@ -1213,16 +1197,12 @@ int ArrayPushString(string& array[], string value) {
  *
  * @param  string array[] - String-Array
  *
- * @return string - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
  */
 string ArrayPopString(string array[]) {
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayPopString()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_empty(catch("ArrayPopString()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    string popped = array[size-1];
    ArrayResize(array, size-1);
@@ -1236,16 +1216,12 @@ string ArrayPopString(string array[]) {
  *
  * @param  string array[] - String-Array
  *
- * @return string - das entfernte Element
- *
- * NOTE:
- * -----
- * Ist das übergebene Array leer, wird ein Laufzeitfehler ausgelöst.
+ * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
  */
 string ArrayShiftString(string array[]) {
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayShiftString()   cannot shift from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_empty(catch("ArrayShiftString()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
 
    string shifted = array[0];
 
@@ -8104,7 +8080,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (!ChartMarkers.OrderCreated_A(ticket, digits, markerColor))
+            if (!ChartMarkers.OrderSent_A(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(18)")));
 
             if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
@@ -8200,7 +8176,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
 
 
 /**
- * Korrigiert die vom Terminal beim Abschicken einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
  * Das Ticket muß während der Ausführung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
@@ -8209,23 +8185,23 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderCreated_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see ChartMarkers.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
-bool ChartMarkers.OrderCreated_A(int ticket, int digits, color markerColor) {
+bool ChartMarkers.OrderSent_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderCreated_A(1)", O_PUSH))
+   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderSent_A(1)", O_PUSH))
       return(false);
 
-   bool result = ChartMarkers.OrderCreated_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
+   bool result = ChartMarkers.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarkers.OrderCreated_A(2)"), result, false));
+   return(ifBool(OrderPop("ChartMarkers.OrderSent_A(2)"), result, false));
 }
 
 
 /**
- * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Korrigiert die vom Terminal beim Ausführen von OrderSend() gesetzten oder nicht gesetzten Chart-Marker.
  * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
  *
  * @param  int      ticket      - Ticket
@@ -8242,15 +8218,15 @@ bool ChartMarkers.OrderCreated_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderCreated_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see ChartMarkers.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
-bool ChartMarkers.OrderCreated_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
+bool ChartMarkers.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy stop 0.10 GBPUSD at 1.52904"
+   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label1) == 0) {
       if (ObjectType(label1) == OBJ_ARROW) {
@@ -8266,21 +8242,21 @@ bool ChartMarkers.OrderCreated_B(int ticket, int digits, color markerColor, int 
       }
    }
 
-   // StopLoss-Marker: immer löschen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(stopLoss, 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
       if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
          ObjectDelete(label2);
    }
 
-   // TakeProfit-Marker: immer löschen                                                 // "#1 buy stop 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(takeProfit, 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
       if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
          ObjectDelete(label3);
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderCreated_B()")));
+   return(IsNoError(catch("ChartMarkers.OrderSent_B()")));
 }
 
 
@@ -8305,7 +8281,7 @@ bool ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice
    if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderFilled_A(1)", O_PUSH))
       return(false);
 
-   bool result = ChartMarkers.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
+   bool result = ChartMarkers.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
 
    return(ifBool(OrderPop("ChartMarkers.OrderFilled_A(2)"), result, false));
 }
@@ -8316,11 +8292,10 @@ bool ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice
  * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
  *
  * @param  int      ticket       - Ticket
- * @param  int      pendingType  - OrderType der Pending-Order
- * @param  double   pendingPrice - OpenPrice der Pending-Order
+ * @param  int      pendingType  - Pending-OrderType
+ * @param  double   pendingPrice - Pending-OrderOpenPrice
  * @param  int      digits       - Nachkommastellen des Ordersymbols
  * @param  color    markerColor  - Farbe des Chartmarkers
- * @param  int      type         - Ordertyp
  * @param  double   lots         - Lotsize
  * @param  string   symbol       - OrderSymbol
  * @param  datetime openTime     - OrderOpenTime
@@ -8331,7 +8306,7 @@ bool ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice
  *
  * @see ChartMarkers.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
-bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, string comment) {
+bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
@@ -8347,8 +8322,8 @@ bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice
    if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
       ObjectDelete(label2);
 
-   // OrderFill-Marker: setzen, korrigieren oder löschen                               // "#1 buy stop 0.10 GBPUSD at 1.52904 buy [by tester ]at 1.52904"
-   string label3 = StringConcatenate(label1, " ", types[type], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
+   // OrderFill-Marker: setzen, korrigieren oder löschen                               // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
+   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label3) == 0) {
       if (ObjectType(label3) == OBJ_ARROW) {
          if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
@@ -8399,7 +8374,7 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
       }
    }
 
-   // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close [by tester ]at 1.52904"
+   // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits), " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(OrderClosePrice(), digits));
    if (ObjectFind(label2) == 0) {
       if (ObjectType(label2) == OBJ_ARROW) {
@@ -8419,7 +8394,7 @@ bool ChartMarkers.PositionClosed(int ticket, int digits, color markerColor) {
 
 
 /**
- * Korrigiert die vom Terminal beim Löschen einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Korrigiert die vom Terminal beim Löschen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
@@ -8960,7 +8935,9 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       sizeOfTickets--;
       ArrayResize(ticketsCopy, sizeOfTickets);
 
-      ArrayShiftInt(ticketsCopy);                                    // erstes[0] Ticket löschen
+      int el = ArrayShiftInt(ticketsCopy);                           // erstes[0] Ticket löschen
+      if (el==0) /*&&*/ if (IsLastError())
+         return(false);
       sizeOfTickets--;
 
       if (ArraySize(remainder) != 0)                                 // Restposition zu verbleibenden Teilpositionen hinzufügen
