@@ -8363,7 +8363,7 @@ bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice
       }
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderFilled_B()", NULL, O_POP)));
+   return(IsNoError(catch("ChartMarkers.OrderFilled_B()")));
 }
 
 
