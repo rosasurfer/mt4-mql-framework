@@ -1450,7 +1450,7 @@ double PipValue(double lots = 1.0) {
    if (IsError(error) || tickValue < 0.00000001)
       return(_ZERO(catch("PipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
 
-   return(Pip/TickSize * tickValue * lots);                          // TODO: prüfen, TickSize immer definiert ist
+   return(Pip/TickSize * tickValue * lots);                          // TODO: prüfen, ob TickSize immer definiert ist
 }
 
 

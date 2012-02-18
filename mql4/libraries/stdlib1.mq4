@@ -8092,7 +8092,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (!ChartMarkers.OrderSent_A(ticket, digits, markerColor))
+            if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(18)")));
 
             if (IsError(catch("OrderSendEx(19)", NULL, O_POP)))
@@ -8197,18 +8197,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
-bool ChartMarkers.OrderSent_A(int ticket, int digits, color markerColor) {
+bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderSent_A(1)", O_PUSH))
+   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
       return(false);
 
-   bool result = ChartMarkers.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
+   bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarkers.OrderSent_A(2)"), result, false));
+   return(ifBool(OrderPop("ChartMarker.OrderSent_A(2)"), result, false));
 }
 
 
@@ -8230,9 +8230,9 @@ bool ChartMarkers.OrderSent_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
-bool ChartMarkers.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
+bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
@@ -8268,7 +8268,7 @@ bool ChartMarkers.OrderSent_B(int ticket, int digits, color markerColor, int typ
          ObjectDelete(label3);
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderSent_B()")));
+   return(IsNoError(catch("ChartMarker.OrderSent_B()")));
 }
 
 
@@ -8284,18 +8284,18 @@ bool ChartMarkers.OrderSent_B(int ticket, int digits, color markerColor, int typ
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ * @see ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
-bool ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
+bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderFilled_A(1)", O_PUSH))
+   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
       return(false);
 
-   bool result = ChartMarkers.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
+   bool result = ChartMarker.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
 
-   return(ifBool(OrderPop("ChartMarkers.OrderFilled_A(2)"), result, false));
+   return(ifBool(OrderPop("ChartMarker.OrderFilled_A(2)"), result, false));
 }
 
 
@@ -8316,9 +8316,9 @@ bool ChartMarkers.OrderFilled_A(int ticket, int pendingType, double pendingPrice
  *
  * @return bool - Erfolgsstatus
  *
- * @see ChartMarkers.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
+ * @see ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
-bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
+bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
@@ -8350,15 +8350,15 @@ bool ChartMarkers.OrderFilled_B(int ticket, int pendingType, double pendingPrice
       }
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderFilled_B()")));
+   return(IsNoError(catch("ChartMarker.OrderFilled_B()")));
 }
 
 
 /**
  * Alias
  */
-bool ChartMarkers.OrderClosed(int ticket, int digits, color markerColor) {
-   return(ChartMarkers.PositionClosed_A(ticket, digits, markerColor));
+bool ChartMarker.OrderClosed(int ticket, int digits, color markerColor) {
+   return(ChartMarker.PositionClosed_A(ticket, digits, markerColor));
 }
 
 
@@ -8372,16 +8372,16 @@ bool ChartMarkers.OrderClosed(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  */
-bool ChartMarkers.PositionClosed_A(int ticket, int digits, color markerColor) {
+bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.PositionClosed_A(1)", O_PUSH))
+   if (!OrderSelectByTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
       return(false);
 
-   bool result = ChartMarkers.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
+   bool result = ChartMarker.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
 
-   return(ifBool(OrderPop("ChartMarkers.PositionClosed_A(2)"), result, false));
+   return(ifBool(OrderPop("ChartMarker.PositionClosed_A(2)"), result, false));
 }
 
 
@@ -8402,7 +8402,7 @@ bool ChartMarkers.PositionClosed_A(int ticket, int digits, color markerColor) {
  *
  * @return bool - Erfolgsstatus
  */
-bool ChartMarkers.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
+bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
@@ -8437,7 +8437,7 @@ bool ChartMarkers.PositionClosed_B(int ticket, int digits, color markerColor, in
       }
    }
 
-   return(IsNoError(catch("ChartMarkers.PositionClosed_B()")));
+   return(IsNoError(catch("ChartMarker.PositionClosed_B()")));
 }
 
 
@@ -8450,13 +8450,13 @@ bool ChartMarkers.PositionClosed_B(int ticket, int digits, color markerColor, in
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool ChartMarkers.OrderDeleted(int ticket, int digits, color markerColor) {
+/*private*/ bool ChartMarker.OrderDeleted(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   if (!OrderSelectByTicket(ticket, "ChartMarkers.OrderDeleted(1)"))
+   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderDeleted(1)"))
       return(false);
 
    // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904"
@@ -8495,7 +8495,7 @@ bool ChartMarkers.PositionClosed_B(int ticket, int digits, color markerColor, in
       }
    }
 
-   return(IsNoError(catch("ChartMarkers.OrderDeleted(2)")));
+   return(IsNoError(catch("ChartMarker.OrderDeleted(2)")));
 }
 
 
@@ -8577,7 +8577,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (!ChartMarkers.OrderClosed(ticket, digits, markerColor))
+            if (!ChartMarker.OrderClosed(ticket, digits, markerColor))
                return(_false(OrderPop("OrderCloseEx(11)")));
 
             return(IsNoError(catch("OrderCloseEx(12)", NULL, O_POP)));                                  // regular exit
@@ -9069,7 +9069,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
-            if (!ChartMarkers.OrderDeleted(ticket, digits, markerColor))
+            if (!ChartMarker.OrderDeleted(ticket, digits, markerColor))
                return(_false(OrderPop("OrderDeleteEx(6)")));
 
             return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit
