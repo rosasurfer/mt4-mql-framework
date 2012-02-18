@@ -1281,13 +1281,12 @@ bool HandleEvents(int events) {
  *
  * @return bool - ob das Event aufgetreten ist oder nicht
  *
- *
- * NOTE:   Ist in der Headerdatei implementiert, damit lokale Implementierungen der Eventhandler zuerst gefunden werden.
+ * NOTE:  Ist in der Headerdatei implementiert, damit die lokalen Eventhandler gefunden werden.
  * -----
  */
 int HandleEvent(int event, int flags=0) {
-   bool status = false;
-   int  results[];      // zurücksetzen hier nicht nötig, da alle EventListener.*() den Array-Parameter selbst zurücksetzen
+   bool status;
+   int  results[];                        // zurücksetzen hier nicht nötig, da die EventListener den Array-Parameter immer zurücksetzen
 
    switch (event) {
       case EVENT_BAR_OPEN       : if (EventListener.BarOpen       (results, flags)) { status = true; onBarOpen       (results); } break;

@@ -4060,33 +4060,49 @@ bool EventListener(int event, int results[], int flags=0) {
 
 
 /**
- * Prüft unabhängig von der aktuell gewählten Chartperiode, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event auslöst.
+ * Prüft, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event darstellt.
  *
- * @param  int results[] - Zielarray für die Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int flags     - ein oder mehrere Timeframe-Flags (default: Flag der aktuellen Chartperiode)
+ * @param  int results[] - Ergebnisarray: Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int flags     - ein oder mehrere zu prüfende Timeframes (default: aktuelle Chartperiode)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.BarOpen(int& results[], int flags=0) {
-   ArrayResize(results, 1);
+bool EventListener.BarOpen(int& results[], int flags=NULL) {
+   if (ArraySize(results) != 1)
+      ArrayResize(results, 1);
    results[0] = 0;
 
    int currentPeriodFlag = PeriodFlag(Period());
-   if (flags == 0)
+   if (flags == NULL)
       flags = currentPeriodFlag;
 
-   // Die aktuelle Periode wird mit einem einfachen und schnelleren Algorythmus geprüft.
+   static int lastTick;
+
+   // Die aktuelle Periode kann einfach und schnell geprüft werden.
    if (flags & currentPeriodFlag != 0) {
-      static datetime lastOpenTime = 0;
-      if (lastOpenTime != 0) if (lastOpenTime != Time[0])
-         results[0] |= currentPeriodFlag;
+      static int  lastOpenTime;
+      static bool lastResult;
+
+      if (lastOpenTime != 0) {
+         if (Tick == lastTick) {
+            if (lastResult)                                          // wiederholter Aufruf während desselben Ticks
+               results[0] |= currentPeriodFlag;
+         }
+         else if (Time[0] != lastOpenTime) {                         // neuer Tick
+            results[0] |= currentPeriodFlag;
+            lastResult = true;
+         }
+         else {
+            lastResult = false;
+         }
+      }
       lastOpenTime = Time[0];
+      lastTick     = Tick;
    }
 
    // Prüfungen für andere als die aktuelle Chartperiode
    else {
-      static datetime lastTick   = 0;
-      static int      lastMinute = 0;
+      static int lastMinute = 0;
 
       datetime tick = MarketInfo(Symbol(), MODE_TIME);      // nur Sekundenauflösung
       int minute;
@@ -4124,7 +4140,7 @@ bool EventListener.BarOpen(int& results[], int flags=0) {
 
    int error = GetLastError();
    if (error != NO_ERROR)
-      return(catch("EventListener.BarOpen()", error)==NO_ERROR);
+      return(_false(catch("EventListener.BarOpen()", error)));
 
    return(results[0] != 0);
 }
@@ -6894,76 +6910,72 @@ bool StringInArray(string needle, string &haystack[]) {
 /**
  *
  *
-abstract*/ int onBarOpen(int details[]) {
-   return(catch("onBarOpen()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onBarOpen(int array[]) {
+   return(catch("onBarOpen()   local event handler onBarOpen() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onOrderPlace(int details[]) {
-   return(catch("onOrderPlace()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onOrderPlace(int array[]) {
+   return(catch("onOrderPlace()   local event handler onOrderPlace() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onOrderChange(int details[]) {
-   return(catch("onOrderChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onOrderChange(int array[]) {
+   return(catch("onOrderChange()   local event handler onOrderChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onOrderCancel(int details[]) {
-   return(catch("onOrderCancel()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- * Handler für PositionOpen-Events.
- *
- * @param  int tickets[] - Tickets der neuen Positionen
- *
- * @return int - Fehlerstatus
- *
-abstract*/ int onPositionOpen(int tickets[]) {
-   return(catch("onPositionOpen()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onOrderCancel(int array[]) {
+   return(catch("onOrderCancel()   local event handler onOrderCancel() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onPositionClose(int details[]) {
-   return(catch("onPositionClose()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onPositionOpen(int array[]) {
+   return(catch("onPositionOpen()   local event handler onPositionOpen() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onAccountChange(int details[]) {
-   return(catch("onAccountChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onPositionClose(int array[]) {
+   return(catch("onPositionClose()   local event handler onPositionClose() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onAccountPayment(int details[]) {
-   return(catch("onAccountPayment()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onAccountChange(int array[]) {
+   return(catch("onAccountChange()   local event handler onAccountChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
 /**
  *
  *
-abstract*/ int onHistoryChange(int details[]) {
-   return(catch("onHistoryChange()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+abstract*/ int onAccountPayment(int array[]) {
+   return(catch("onAccountPayment()   local event handler onAccountPayment() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ *
+ *
+abstract*/ int onHistoryChange(int array[]) {
+   return(catch("onHistoryChange()   local event handler of onHistoryChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
