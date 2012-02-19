@@ -8355,14 +8355,6 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
 
 
 /**
- * Alias
- */
-bool ChartMarker.OrderClosed(int ticket, int digits, color markerColor) {
-   return(ChartMarker.PositionClosed_A(ticket, digits, markerColor));
-}
-
-
-/**
  * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
  * Das Ticket muß während der Ausführung selektierbar sein.
  *
@@ -8577,7 +8569,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
-            if (!ChartMarker.OrderClosed(ticket, digits, markerColor))
+            if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
                return(_false(OrderPop("OrderCloseEx(11)")));
 
             return(IsNoError(catch("OrderCloseEx(12)", NULL, O_POP)));                                  // regular exit
