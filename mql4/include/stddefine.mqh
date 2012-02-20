@@ -608,16 +608,10 @@ int onInit(int scriptType, int initFlags=NULL) {
 
    if (last_error == NO_ERROR) {
       if (IsVisualMode()) {
-         // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier initialisiert wird (@see ChartInfo-Indikator).
-         // Konfiguration auswerten
-         string price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
-         if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
-         else if (price == "ask"   ) ChartInfo.appliedPrice = PRICE_ASK;
-         else if (price == "median") ChartInfo.appliedPrice = PRICE_MEDIAN;
-         else return(catch("onInit(3)  invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-         ChartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-         if (LT(ChartInfo.leverage, 1)) return(catch("onInit(4)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+         // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier konfiguriert wird (@see ChartInfo-Indikator).
+         ChartInfo.appliedPrice = PRICE_BID;                         // im Tester immer PRICE_BID (bessere Performance)
+         ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+         if (LT(ChartInfo.leverage, 1)) return(catch("onInit(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          ChartInfo.CreateLabels();
       }
    }
@@ -810,21 +804,23 @@ int ChartInfo.CreateLabels() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdatePrice() {
-   double price;
+   static string priceFormat;
+   if (StringLen(priceFormat) == 0)
+      priceFormat = StringConcatenate(",,", PriceFormat);
 
+   double price;
    switch (ChartInfo.appliedPrice) {
       case PRICE_BID:    price =  Bid;          break;
       case PRICE_ASK:    price =  Ask;          break;
       case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
    }
-   string strPrice = NumberToStr(price, StringConcatenate(",,", PriceFormat));
 
-   ObjectSetText(ChartInfo.price, strPrice, 13, "Microsoft Sans Serif", Black);
+   ObjectSetText(ChartInfo.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdatePrice()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdatePrice()", error));
+   return(NO_ERROR);
 }
 
 
@@ -839,9 +835,9 @@ int ChartInfo.UpdateSpread() {
    ObjectSetText(ChartInfo.spread, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdateSpread()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdateSpread()", error));
+   return(NO_ERROR);
 }
 
 
@@ -885,9 +881,9 @@ int ChartInfo.UpdateUnitSize() {
    ObjectSetText(ChartInfo.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdateUnitSize()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdateUnitSize()", error));
+   return(NO_ERROR);
 }
 
 
@@ -942,9 +938,9 @@ int ChartInfo.UpdatePosition() {
    ObjectSetText(ChartInfo.position, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdatePosition()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdatePosition()", error));
+   return(NO_ERROR);
 }
 
 
@@ -954,10 +950,10 @@ int ChartInfo.UpdatePosition() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateTime() {
-   static datetime last;
+   static datetime lastTime;
 
    datetime now = TimeCurrent();
-   if (now == last)
+   if (now == lastTime)
       return(NO_ERROR);
 
    string date = TimeToStr(now, TIME_DATE),
@@ -968,12 +964,12 @@ int ChartInfo.UpdateTime() {
 
    ObjectSetText(ChartInfo.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
 
-   last = now;
+   lastTime = now;
 
    int error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdateTime()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdateTime()", error));
+   return(NO_ERROR);
 }
 
 
@@ -1059,9 +1055,9 @@ int ChartInfo.UpdateMarginLevels() {
    }
 
    error = GetLastError();
-   if (IsNoError(error) || error==ERR_OBJECT_DOES_NOT_EXIST)         // bei offenem Properties-Dialog oder Object::onDrag()
-      return(NO_ERROR);
-   return(catch("ChartInfo.UpdateMarginLevels()", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
+      return(catch("ChartInfo.UpdateMarginLevels()", error));
+   return(NO_ERROR);
 }
 
 
