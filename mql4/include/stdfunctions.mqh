@@ -10,11 +10,13 @@
 
 
 // Special constants
-#define NULL                     0     //
-#define EMPTY                   -1     //
-#define EMPTY_VALUE     0x7FFFFFFF     // empty custom indicator value (= 2147483647)
-#define CLR_NONE                -1     // no color
-#define WHOLE_ARRAY              0     //
+#define NULL                     0
+#define EMPTY                   -1
+#define EMPTY_VALUE     0x7FFFFFFF        // empty custom indicator value (= 2147483647)
+#define CLR_NONE                -1        // no color
+#define WHOLE_ARRAY              0
+#define INT_MAX         0x7FFFFFFF        // größter Integer:    2147483647
+#define INT_MIN         0x80000000        // kleinster Integer: -2147483648
 
 
 // Strings
@@ -25,8 +27,8 @@
 
 
 // Chars
-#define PLACEHOLDER_ZERO_CHAR    '…'     // 0x85 - Platzhalter für NULL-Byte in Strings,         siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR     '•'     // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
+#define PLACEHOLDER_ZERO_CHAR    '…'      // 0x85 - Platzhalter für NULL-Byte in Strings,         siehe BufferToStr()
+#define PLACEHOLDER_CTL_CHAR     '•'      // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
 
 // Mathematische Konstanten
@@ -58,28 +60,40 @@
 
 
 // Timeframe-Identifier, siehe Period()
-#define PERIOD_M1                1     // 1 minute
-#define PERIOD_M5                5     // 5 minutes
-#define PERIOD_M15              15     // 15 minutes
-#define PERIOD_M30              30     // 30 minutes
-#define PERIOD_H1               60     // 1 hour
-#define PERIOD_H4              240     // 4 hours
-#define PERIOD_D1             1440     // daily
-#define PERIOD_W1            10080     // weekly
-#define PERIOD_MN1           43200     // monthly
+#define PERIOD_M1                1        // 1 minute
+#define PERIOD_M5                5        // 5 minutes
+#define PERIOD_M15              15        // 15 minutes
+#define PERIOD_M30              30        // 30 minutes
+#define PERIOD_H1               60        // 1 hour
+#define PERIOD_H4              240        // 4 hours
+#define PERIOD_D1             1440        // daily
+#define PERIOD_W1            10080        // weekly
+#define PERIOD_MN1           43200        // monthly
 
 
 // Timeframe-Flags, können logisch kombiniert werden, siehe EventListener.Baropen()
-#define PERIODFLAG_M1            1     // 1 minute
-#define PERIODFLAG_M5            2     // 5 minutes
-#define PERIODFLAG_M15           4     // 15 minutes
-#define PERIODFLAG_M30           8     // 30 minutes
-#define PERIODFLAG_H1           16     // 1 hour
-#define PERIODFLAG_H4           32     // 4 hours
-#define PERIODFLAG_D1           64     // daily
-#define PERIODFLAG_W1          128     // weekly
-#define PERIODFLAG_MN1         256     // monthly
+#define PERIODFLAG_M1            1        // 1 minute
+#define PERIODFLAG_M5            2        // 5 minutes
+#define PERIODFLAG_M15           4        // 15 minutes
+#define PERIODFLAG_M30           8        // 30 minutes
+#define PERIODFLAG_H1           16        // 1 hour
+#define PERIODFLAG_H4           32        // 4 hours
+#define PERIODFLAG_D1           64        // daily
+#define PERIODFLAG_W1          128        // weekly
+#define PERIODFLAG_MN1         256        // monthly
 
+/*
+OBJ_PERIOD_M1  0x0001   Object shown is only on 1-minute charts.
+OBJ_PERIOD_M5  0x0002   Object shown is only on 5-minute charts.
+OBJ_PERIOD_M15 0x0004   Object shown is only on 15-minute charts.
+OBJ_PERIOD_M30 0x0008   Object shown is only on 30-minute charts.
+OBJ_PERIOD_H1  0x0010   Object shown is only on 1-hour charts.
+OBJ_PERIOD_H4  0x0020   Object shown is only on 4-hour charts.
+OBJ_PERIOD_D1  0x0040   Object shown is only on daily charts.
+OBJ_PERIOD_W1  0x0080   Object shown is only on weekly charts.
+OBJ_PERIOD_MN1 0x0100   Object shown is only on monthly charts.
+OBJ_ALL_PERIODS   0x01FF   Object shown is on all timeframes.
+*/
 
 // Operation-Types, siehe OrderSend() u. OrderType()
 #define OP_BUY                   0     // long position
@@ -626,18 +640,7 @@ int onInit(int scriptType, int initFlags=NULL) {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   int error;
-
-   if (IsExpert()) {
-      if (IsTesting()) {                                             // Der Tester schließt beim Beenden nur offene Positionen,
-         if (!DeletePendingOrders(CLR_NONE))                         // offene Pending-Orders werden jedoch nicht gelöscht.
-            error = stdlib_PeekLastError();
-      }
-   }
-
-   if (IsError(error)) /*&&*/ if (!IsLastError())
-      last_error = error;
-   return(error);
+   return(NO_ERROR);
 }
 
 
@@ -1672,6 +1675,7 @@ void DummyCalls() {
    IsNoError(NULL);
    IsScript();
    log();
+   onDeinit();
    onInit(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
