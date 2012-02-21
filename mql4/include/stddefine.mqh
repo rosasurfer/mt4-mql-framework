@@ -566,7 +566,7 @@ bool   ChartInfo.positionChecked,
  * @param  int    scriptType - Typ des aufrufenden Programms
  * @param  int    initFlags  - optionale, zusätzlich durchzuführende Initialisierungstasks (default: NULL)
  *                             Werte: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int onInit(int scriptType, int initFlags=NULL) {
    __TYPE__   = scriptType;
@@ -617,6 +617,27 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    return(last_error);
+}
+
+
+/**
+ * Führt allgemein benötigte Aufräumarbeiten durch.
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   int error;
+
+   if (IsExpert()) {
+      if (IsTesting()) {                                             // Der Tester schließt beim Beenden nur offene Positionen,
+         if (!DeletePendingOrders(CLR_NONE))                         // offene Pending-Orders werden jedoch nicht gelöscht.
+            error = stdlib_PeekLastError();
+      }
+   }
+
+   if (IsError(error)) /*&&*/ if (!IsLastError())
+      last_error = error;
+   return(error);
 }
 
 
@@ -1205,11 +1226,11 @@ bool IsNoError(int value) {
 
 
 /**
- * Setzt den internen Fehler-Code des aktuellen Scripts.
+ * Setzt den internen Fehlercode des aktuellen Scripts.
  *
- * @param  int error - Fehler-Code
+ * @param  int error - Fehlercode
  *
- * @return int - derselbe Fehler-Code (Chaining)
+ * @return int - derselbe Fehlercode (for chaining)
  */
 int SetLastError(int error) {
    last_error = error;
@@ -1440,13 +1461,17 @@ bool WaitForTicket(int ticket, bool keepCurrentTicket=true) {
  * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots = 1.0) {
+   if (lots     < 0.00000001)  return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (TickSize < 0.00000001)  return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
+
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
 
    int error = GetLastError();
-   if (IsError(error) || tickValue < 0.00000001)
-      return(_ZERO(catch("PipValue()   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
 
-   return(Pip/TickSize * tickValue * lots);                          // TODO: prüfen, ob TickSize immer definiert ist
+   if (IsError(error))         return(_ZERO(catch("PipValue(3)", error)));
+   if (tickValue < 0.00000001) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKETINFO)));
+
+   return(Pip/TickSize * tickValue * lots);
 }
 
 
@@ -1520,7 +1545,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als den Fehler-Code NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
  * @param  ... - beliebige Parameter (werden ignoriert)

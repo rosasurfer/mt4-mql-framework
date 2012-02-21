@@ -294,6 +294,7 @@
    bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
    bool     OrderDeleteEx(int ticket, color markerColor);
+   bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);
    bool     OrderPop(string location);

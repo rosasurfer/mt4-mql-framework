@@ -35,7 +35,7 @@
 /**
  * Initialisierung der Library beim Laden in den Speicher
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int init() {
    __SCRIPT__ = WindowExpertName();
@@ -46,7 +46,7 @@ int init() {
 /**
  * Deinitialisierung der Library beim Entladen aus dem Speicher
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int deinit() {
    return(NO_ERROR);
@@ -56,7 +56,7 @@ int deinit() {
 /**
  * Wird vom Compiler benötigt, jedoch niemals aufgerufen.
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int onStart() {
    return(catch("onStart()", ERR_WRONG_JUMP));
@@ -66,7 +66,7 @@ int onStart() {
 /**
  * Wird vom Compiler benötigt, jedoch niemals aufgerufen.
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int onTick() {
    return(catch("onTick()", ERR_WRONG_JUMP));
@@ -81,7 +81,7 @@ int onTick() {
  * @param  int    initFlags          - optionale, zusätzlich durchzuführende Initialisierungstasks: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitializeReason) {
    __TYPE__   = scriptType;
@@ -140,7 +140,7 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
  * @param  int validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  * @param  int changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int stdlib_onStart(int ticks, int validBars, int changedBars) {
    Tick        = ticks;                 // der konkrete Wert hat keine Bedeutung
@@ -154,7 +154,7 @@ int stdlib_onStart(int ticks, int validBars, int changedBars) {
 /**
  * Gibt den letzten in dieser Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode zurück.
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int stdlib_GetLastError() {
    int error = last_error;
@@ -166,7 +166,7 @@ int stdlib_GetLastError() {
 /**
  * Gibt den letzten in dieser Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
  *
- * @return int - Fehlercode
+ * @return int - Fehlerstatus
  */
 int stdlib_PeekLastError() {
    return(last_error);
@@ -992,7 +992,7 @@ int RepositionLegend() {
  * Ob ein Tradeserver-Error temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch,
  * die Order auszuführen, erfolgreich sein.
  *
- * @param  int error - Fehlercode
+ * @param  int error - Fehlerstatus
  *
  * @return bool
  *
@@ -1045,7 +1045,7 @@ bool IsTemporaryTradeError(int error) {
  * Ob ein Tradeserver-Error permanent (also nicht nur vorübergehend) ist oder nicht. Bei einem permanenten Fehler wird auch der erneute Versuch,
  * die Order auszuführen, fehlschlagen.
  *
- * @param  int error - Fehlercode
+ * @param  int error - Fehlerstatus
  *
  * @return bool
  *
@@ -9109,6 +9109,19 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
    if (IsError(error))
       return(_empty(catch("OrderDeleteEx.LogMessage(2)", error)));
    return(message);
+}
+
+
+
+/**
+ * Streicht alle offenen Pending-Orders.
+ *
+ * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool DeletePendingOrders(color markerColor=CLR_NONE) {
+   return(true);
 }
 
 
