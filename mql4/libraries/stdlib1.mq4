@@ -415,7 +415,7 @@ int DeletePrivateProfileKey(string fileName, string section, string key) {
 /**
  * Gibt den Versionsstring des Terminals zurück.
  *
- * @return string - Version oder Leerstring, wenn ein Fehler auftrat
+ * @return string - Version oder Leerstring, falls ein Fehler auftrat
  */
 string GetTerminalVersion() {
    int    bufferSize = MAX_PATH;
@@ -2119,7 +2119,7 @@ int SendTick(bool sound=false) {
  * Gibt den Namen des aktuellen Kurshistory-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
  * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig ermitteln.
  *
- * @return string - Verzeichnisname oder Leerstring, wenn ein Fehler auftrat
+ * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
 string GetTradeServerDirectory() {
    // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
@@ -2467,7 +2467,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  *
  * @param  string symbol - Broker-spezifisches Symbol
  *
- * @return string - Standardsymbol oder Leerstring, wenn kein Standardsymbol gefunden wurde.
+ * @return string - Standardsymbol oder Leerstring, falls kein Standardsymbol gefunden wurde.
  *
  *
  * @see GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
@@ -2721,7 +2721,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  *
  * @param  string symbol - Symbol
  *
- * @return string - Kurzname oder Leerstring, wenn das Symbol unbekannt ist
+ * @return string - Kurzname oder Leerstring, falls das Symbol unbekannt ist
  */
 string GetSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0)
@@ -2894,7 +2894,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  *
  * @param  string symbol - Symbol
  *
- * @return string - Langname oder Leerstring, wenn das Symnol unbekannt ist oder keinen Langnamen hat
+ * @return string - Langname oder Leerstring, falls das Symnol unbekannt ist oder keinen Langnamen hat
  */
 string GetLongSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0)
@@ -2981,14 +2981,22 @@ string BoolToStr(bool value) {
  * @param  bool   values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string BoolArrayToStr(bool values[], string separator=", ") {
+string BoolsToStr(bool values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("BoolsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    if (ArraySize(values) == 0)
       return("{}");
+
    if (separator == "0")   // NULL
       separator = ", ";
-   return(StringConcatenate("{", JoinBools(values, separator), "}"));
+
+   string joined = JoinBools(values, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -4108,7 +4116,7 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
       int minute;
 
       // PERIODFLAG_M1
-      if (flags & PERIODFLAG_M1 != 0) {
+      if (flags & F_PERIOD_M1 != 0) {
          if (lastTick == 0) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
@@ -4117,7 +4125,7 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
-               results[0] |= PERIODFLAG_M1;
+               results[0] |= F_PERIOD_M1;
             //debug("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
@@ -4128,14 +4136,14 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
 
    // TODO: verbleibende Timeframe-Flags verarbeiten
    if (false) {
-      if (flags & PERIODFLAG_M5  != 0) results[0] |= PERIODFLAG_M5 ;
-      if (flags & PERIODFLAG_M15 != 0) results[0] |= PERIODFLAG_M15;
-      if (flags & PERIODFLAG_M30 != 0) results[0] |= PERIODFLAG_M30;
-      if (flags & PERIODFLAG_H1  != 0) results[0] |= PERIODFLAG_H1 ;
-      if (flags & PERIODFLAG_H4  != 0) results[0] |= PERIODFLAG_H4 ;
-      if (flags & PERIODFLAG_D1  != 0) results[0] |= PERIODFLAG_D1 ;
-      if (flags & PERIODFLAG_W1  != 0) results[0] |= PERIODFLAG_W1 ;
-      if (flags & PERIODFLAG_MN1 != 0) results[0] |= PERIODFLAG_MN1;
+      if (flags & F_PERIOD_M5  != 0) results[0] |= F_PERIOD_M5 ;
+      if (flags & F_PERIOD_M15 != 0) results[0] |= F_PERIOD_M15;
+      if (flags & F_PERIOD_M30 != 0) results[0] |= F_PERIOD_M30;
+      if (flags & F_PERIOD_H1  != 0) results[0] |= F_PERIOD_H1 ;
+      if (flags & F_PERIOD_H4  != 0) results[0] |= F_PERIOD_H4 ;
+      if (flags & F_PERIOD_D1  != 0) results[0] |= F_PERIOD_D1 ;
+      if (flags & F_PERIOD_W1  != 0) results[0] |= F_PERIOD_W1 ;
+      if (flags & F_PERIOD_MN1 != 0) results[0] |= F_PERIOD_MN1;
    }
 
    int error = GetLastError();
@@ -6037,17 +6045,17 @@ int PeriodFlag(int period=NULL) {
       period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return(PERIODFLAG_M1 );
-      case PERIOD_M5 : return(PERIODFLAG_M5 );
-      case PERIOD_M15: return(PERIODFLAG_M15);
-      case PERIOD_M30: return(PERIODFLAG_M30);
-      case PERIOD_H1 : return(PERIODFLAG_H1 );
-      case PERIOD_H4 : return(PERIODFLAG_H4 );
-      case PERIOD_D1 : return(PERIODFLAG_D1 );
-      case PERIOD_W1 : return(PERIODFLAG_W1 );
-      case PERIOD_MN1: return(PERIODFLAG_MN1);
+      case PERIOD_M1 : return(F_PERIOD_M1 );
+      case PERIOD_M5 : return(F_PERIOD_M5 );
+      case PERIOD_M15: return(F_PERIOD_M15);
+      case PERIOD_M30: return(F_PERIOD_M30);
+      case PERIOD_H1 : return(F_PERIOD_H1 );
+      case PERIOD_H4 : return(F_PERIOD_H4 );
+      case PERIOD_D1 : return(F_PERIOD_D1 );
+      case PERIOD_W1 : return(F_PERIOD_W1 );
+      case PERIOD_MN1: return(F_PERIOD_MN1);
    }
-   return(_ZERO(catch("PeriodFlag()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("PeriodFlag()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -6061,18 +6069,18 @@ int PeriodFlag(int period=NULL) {
 string PeriodFlagToStr(int flags) {
    string result = "";
 
-   if (flags & PERIODFLAG_M1  != 0) result = StringConcatenate(result, " | M1" );
-   if (flags & PERIODFLAG_M5  != 0) result = StringConcatenate(result, " | M5" );
-   if (flags & PERIODFLAG_M15 != 0) result = StringConcatenate(result, " | M15");
-   if (flags & PERIODFLAG_M30 != 0) result = StringConcatenate(result, " | M30");
-   if (flags & PERIODFLAG_H1  != 0) result = StringConcatenate(result, " | H1" );
-   if (flags & PERIODFLAG_H4  != 0) result = StringConcatenate(result, " | H4" );
-   if (flags & PERIODFLAG_D1  != 0) result = StringConcatenate(result, " | D1" );
-   if (flags & PERIODFLAG_W1  != 0) result = StringConcatenate(result, " | W1" );
-   if (flags & PERIODFLAG_MN1 != 0) result = StringConcatenate(result, " | MN1");
+   if (flags & F_PERIOD_M1  != 0) result = StringConcatenate(result, "|M1" );
+   if (flags & F_PERIOD_M5  != 0) result = StringConcatenate(result, "|M5" );
+   if (flags & F_PERIOD_M15 != 0) result = StringConcatenate(result, "|M15");
+   if (flags & F_PERIOD_M30 != 0) result = StringConcatenate(result, "|M30");
+   if (flags & F_PERIOD_H1  != 0) result = StringConcatenate(result, "|H1" );
+   if (flags & F_PERIOD_H4  != 0) result = StringConcatenate(result, "|H4" );
+   if (flags & F_PERIOD_D1  != 0) result = StringConcatenate(result, "|D1" );
+   if (flags & F_PERIOD_W1  != 0) result = StringConcatenate(result, "|W1" );
+   if (flags & F_PERIOD_MN1 != 0) result = StringConcatenate(result, "|MN1");
 
    if (StringLen(result) > 0)
-      result = StringSubstr(result, 3);
+      result = StringSubstr(result, 1);
    return(result);
 }
 
@@ -6080,7 +6088,7 @@ string PeriodFlagToStr(int flags) {
 /**
  * Gibt die Zeitzone des aktuellen MT-Servers zurück (nach Olson Timezone Database).
  *
- * @return string - Zeitzonen-Identifier oder Leerstring, wenn ein Fehler auftrat
+ * @return string - Zeitzonen-Identifier oder Leerstring, falls ein Fehler auftrat
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
@@ -6550,9 +6558,12 @@ int IncreasePeriod(int period = 0) {
  * @param  bool   values[]  - Array mit Ausgangswerten
  * @param  string separator - zu verwendender Separator
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinBools(bool values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinBools()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    string strings[];
 
    int size = ArraySize(values);
@@ -6573,9 +6584,12 @@ string JoinBools(bool values[], string separator) {
  * @param  double values[]  - Array mit Ausgangswerten
  * @param  string separator - zu verwendender Separator
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoubles(double values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinDoubles()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    string strings[];
 
    int size = ArraySize(values);
@@ -6583,6 +6597,8 @@ string JoinDoubles(double values[], string separator) {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], ".1+");
+      if (StringLen(strings[i]) == 0)
+         return("");
    }
 
    return(JoinStrings(strings, separator));
@@ -6595,14 +6611,22 @@ string JoinDoubles(double values[], string separator) {
  * @param  double values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string DoubleArrayToStr(double values[], string separator=", ") {
+string DoublesToStr(double values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("DoublesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    if (ArraySize(values) == 0)
       return("{}");
+
    if (separator == "0")   // NULL
       separator = ", ";
-   return(StringConcatenate("{", JoinDoubles(values, separator), "}"));
+
+   string joined = JoinDoubles(values, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -6610,26 +6634,34 @@ string DoubleArrayToStr(double values[], string separator=", ") {
  * Konvertiert ein Array mit Kursen in einen lesbaren String.
  *
  * @param  double values[]
- * @param  string format    - Zahlenformat entsprechend NumberToStr()
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string PriceArrayToStr(double values[], string format, string separator=", ") {
+string RatesToStr(double values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("RatesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
       return("{}");
 
-   string strings[];
-   ArrayResize(strings, size);
-
    if (separator == "0")   // NULL
       separator = ", ";
 
+   string strings[];
+   ArrayResize(strings, size);
+
    for (int i=0; i < size; i++) {
-      strings[i] = NumberToStr(values[i], format);
+      strings[i] = NumberToStr(values[i], PriceFormat);
+      if (StringLen(strings[i]) == 0)
+         return("");
    }
-   return(StringConcatenate("{", JoinStrings(strings, separator), "}"));
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -6639,10 +6671,32 @@ string PriceArrayToStr(double values[], string format, string separator=", ") {
  * @param  double values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string - String bestehend aus Geldbeträgen mit je 2 Nachkommastellen
+ * @return string - resultierender String mit 2 Nachkommastellen je Wert oder Leerstring, falls ein Fehler auftrat
  */
-string MoneyArrayToStr(double values[], string separator=", ") {
-   return(PriceArrayToStr(values, ".2", separator));
+string MoneysToStr(double values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("MoneysToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")   // NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = NumberToStr(values[i], ".2");
+      if (StringLen(strings[i]) == 0)
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -6652,9 +6706,12 @@ string MoneyArrayToStr(double values[], string separator=", ") {
  * @param  int    values[]  - Array mit Ausgangswerten
  * @param  string separator - zu verwendender Separator
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinInts(int values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinInts()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    string strings[];
 
    int size = ArraySize(values);
@@ -6674,19 +6731,23 @@ string JoinInts(int values[], string separator) {
  * @param  int    values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string IntArrayToStr(int values[][], string separator=", ") {
+string IntsToStr(int values[][], string separator=", ") {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   int dimensions = ArrayDimension(values);
+   string joined;
+   int    dimensions = ArrayDimension(values);
 
    // ein-dimensionales Array
    if (dimensions == 1) {
       if (ArraySize(values) == 0)
          return("{}");
-      return(StringConcatenate("{", JoinInts(values, separator), "}"));
+      joined = JoinInts(values, separator);
+      if (StringLen(joined) == 0)
+         return("");
+      return(StringConcatenate("{", joined, "}"));
    }
 
    // zwei-dimensionales Array
@@ -6702,13 +6763,16 @@ string IntArrayToStr(int values[][], string separator=", ") {
          for (int z=0; z < size2; z++) {
             iTmp[z] = values[i][z];
          }
-         strTmp[i] = IntArrayToStr(iTmp);
+         strTmp[i] = IntsToStr(iTmp);
       }
-      return(StringConcatenate("{", JoinStrings(strTmp, separator), "}"));
+
+      joined = JoinStrings(strTmp, separator);
+      if (StringLen(joined) == 0)
+         return("");
+      return(StringConcatenate("{", joined, "}"));
    }
 
-   // multi-dimensional
-   return("{too many dimensions}");
+   return(_empty(catch("IntsToStr()  illegal parameter values, too many dimensions: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -6718,20 +6782,65 @@ string IntArrayToStr(int values[][], string separator=", ") {
  * @param  datetime values[]
  * @param  string   separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string DateTimeArrayToStr(int values[], string separator=", ") {
+string TimesToStr(datetime values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("TimesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
       return("{}");
+
+   if (separator == "0")   // NULL
+      separator = ", ";
 
    string strings[];
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = TimeToStr(values[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      if      (values[i] <  0) strings[i] = "-1";
+      else if (values[i] == 0) strings[i] =  "0";
+      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS), "'");
    }
-   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Konvertiert ein Char-Array in einen lesbaren String.
+ *
+ * @param  int    values[]
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string CharsToStr(int values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("CharsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")   // NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = StringConcatenate("'", CharToStr(values[i]), "'");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -6741,20 +6850,31 @@ string DateTimeArrayToStr(int values[], string separator=", ") {
  * @param  int    values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string OperationTypeArrayToStr(int values[], string separator=", ") {
+string OperationTypesToStr(int values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("OperationTypesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
       return("{}");
 
-   string strings[];
-   ArrayResize(strings, size);
+   if (separator == "0")   // NULL
+      separator = ", ";
+
+   string strings[]; ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
       strings[i] = OperationTypeToStr(values[i]);
+      if (StringLen(strings[i]) == 0)
+         return("");
    }
-   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
 }
 
 
@@ -6764,9 +6884,12 @@ string OperationTypeArrayToStr(int values[], string separator=", ") {
  * @param  string values[]  - Array mit Ausgangswerten
  * @param  string separator - zu verwendender Separator
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinStrings(string values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinStrings()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    string result = "";
 
    int size = ArraySize(values);
@@ -6774,6 +6897,7 @@ string JoinStrings(string values[], string separator) {
    for (int i=1; i < size; i++) {
       result = StringConcatenate(result, separator, values[i]);
    }
+
    if (size > 0)
       result = StringConcatenate(values[0], result);
 
@@ -6789,16 +6913,22 @@ string JoinStrings(string values[], string separator) {
  * @param  string values[]
  * @param  string separator - Separator (default: ", ")
  *
- * @return string
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string StringArrayToStr(string values[], string separator=", ") {
+string StringsToStr(string values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("StringsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
    if (ArraySize(values) == 0)
       return("{}");
 
    if (separator == "0")   // NULL
       separator = ", ";
 
-   return(StringConcatenate("{\"", JoinStrings(values, StringConcatenate("\"", separator, "\"")), "\"}"));
+   string joined = JoinStrings(values, StringConcatenate("\"", separator, "\""));
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{\"", joined, "\"}"));
 }
 
 
@@ -7560,9 +7690,9 @@ int RGBToHSVColor(color rgb, double& hsv[]) {
  */
 color HSVToRGBColor(double hsv[3]) {
    if (ArrayDimension(hsv) != 1)
-      return(catch("HSVToRGBColor(1)   illegal parameter hsv: "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(1)   illegal parameter hsv: "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(hsv) != 3)
-      return(catch("HSVToRGBColor(2)   illegal parameter hsv: "+ DoubleArrayToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(2)   illegal parameter hsv: "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
 
    return(HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]));
 }
@@ -7842,11 +7972,11 @@ string StringRepeat(string input, int times) {
  * @param  double number
  * @param  string mask
  *
- * @return string - formatierter String
+ * @return string - formatierter Wert oder Leerstring, falls ein Fehler auftrat
  */
 string NumberToStr(double number, string mask) {
    if (number == EMPTY_VALUE)
-      number = 0.0;
+      number = 0;
 
    // === Beginn Maske parsen ===
    int maskLen = StringLen(mask);
@@ -8760,7 +8890,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                     return(_false(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntArrayToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (sizeOfTickets == 0)                                     return(_false(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
 
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
@@ -8923,7 +9053,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 
    if (!OrderSelectByTicket(ticketsCopy[0], "OrderMultiClose.Hedges(1)"))  // um OrderSymbol() auslesen zu können
       return(false);
-   log(StringConcatenate("OrderMultiClose.Hedges()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntArrayToStr(ticketsCopy)));
+   log(StringConcatenate("OrderMultiClose.Hedges()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntsToStr(ticketsCopy)));
 
 
    // alle Teilpositionen nacheinander auflösen
@@ -8948,7 +9078,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
       /*
       if (IsTesting()) {
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
-         debug("OrderMultiClose.Hedges()   before close #"+ first +" and #"+ hedge +" of "+ IntArrayToStr(ticketsCopy));
+         debug("OrderMultiClose.Hedges()   before close #"+ first +" and #"+ hedge +" of "+ IntsToStr(ticketsCopy));
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
          int entries[], trades=OrdersTotal(), history=OrdersHistoryTotal(), orders=trades + history;
          ArrayResize(entries, orders);

@@ -12,7 +12,7 @@
 // Special constants
 #define NULL                     0
 #define EMPTY                   -1
-#define EMPTY_VALUE     0x7FFFFFFF        // empty custom indicator value (= 2147483647)
+#define EMPTY_VALUE     0x7FFFFFFF        // empty custom indicator value (= INT_MAX)
 #define CLR_NONE                -1        // no color
 #define WHOLE_ARRAY              0
 #define INT_MAX         0x7FFFFFFF        // größter Integer:    2147483647
@@ -71,29 +71,30 @@
 #define PERIOD_MN1           43200        // monthly
 
 
-// Timeframe-Flags, können logisch kombiniert werden, siehe EventListener.Baropen()
-#define PERIODFLAG_M1            1        // 1 minute
-#define PERIODFLAG_M5            2        // 5 minutes
-#define PERIODFLAG_M15           4        // 15 minutes
-#define PERIODFLAG_M30           8        // 30 minutes
-#define PERIODFLAG_H1           16        // 1 hour
-#define PERIODFLAG_H4           32        // 4 hours
-#define PERIODFLAG_D1           64        // daily
-#define PERIODFLAG_W1          128        // weekly
-#define PERIODFLAG_MN1         256        // monthly
+// Object visibility flags, siehe ObjectSet()
+#define OBJ_PERIOD_M1       0x0001        // object is shown on 1-minute charts
+#define OBJ_PERIOD_M5       0x0002        // object is shown on 5-minute charts
+#define OBJ_PERIOD_M15      0x0004        // object is shown on 15-minute charts
+#define OBJ_PERIOD_M30      0x0008        // object is shown on 30-minute charts
+#define OBJ_PERIOD_H1       0x0010        // object is shown on 1-hour charts
+#define OBJ_PERIOD_H4       0x0020        // object is shown on 4-hour charts
+#define OBJ_PERIOD_D1       0x0040        // object is shown on daily charts
+#define OBJ_PERIOD_W1       0x0080        // object is shown on weekly charts
+#define OBJ_PERIOD_MN1      0x0100        // object is shown on monthly charts
+#define OBJ_ALL_PERIODS     0x01FF        // object is shown on all timeframes
 
-/*
-OBJ_PERIOD_M1  0x0001   Object shown is only on 1-minute charts.
-OBJ_PERIOD_M5  0x0002   Object shown is only on 5-minute charts.
-OBJ_PERIOD_M15 0x0004   Object shown is only on 15-minute charts.
-OBJ_PERIOD_M30 0x0008   Object shown is only on 30-minute charts.
-OBJ_PERIOD_H1  0x0010   Object shown is only on 1-hour charts.
-OBJ_PERIOD_H4  0x0020   Object shown is only on 4-hour charts.
-OBJ_PERIOD_D1  0x0040   Object shown is only on daily charts.
-OBJ_PERIOD_W1  0x0080   Object shown is only on weekly charts.
-OBJ_PERIOD_MN1 0x0100   Object shown is only on monthly charts.
-OBJ_ALL_PERIODS   0x01FF   Object shown is on all timeframes.
-*/
+
+// Timeframe-Flags, siehe EventListener.Baropen()
+#define F_PERIOD_M1         OBJ_PERIOD_M1
+#define F_PERIOD_M5         OBJ_PERIOD_M5
+#define F_PERIOD_M15        OBJ_PERIOD_M15
+#define F_PERIOD_M30        OBJ_PERIOD_M30
+#define F_PERIOD_H1         OBJ_PERIOD_H1
+#define F_PERIOD_H4         OBJ_PERIOD_H4
+#define F_PERIOD_D1         OBJ_PERIOD_D1
+#define F_PERIOD_W1         OBJ_PERIOD_W1
+#define F_PERIOD_MN1        OBJ_PERIOD_MN1
+
 
 // Operation-Types, siehe OrderSend() u. OrderType()
 #define OP_BUY                   0     // long position
@@ -552,7 +553,7 @@ int    ChangedBars;
 string objects[];
 
 
-// Variablen für ChartInfo-Funktionen, diese werden sowohl im Indikator ChartInfos als auch in jedem EA verwendet.
+// Variablen für ChartInfo-Funktionen, diese werden sowohl im ChartInfos-Indikator als auch in jedem EA verwendet.
 string ChartInfo.instrument,
        ChartInfo.price,
        ChartInfo.spread,
@@ -605,7 +606,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
-    //if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
+     if (initFlags & IT_CHECK_TIMEZONE_CONFIG      != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
    }
 
    if (last_error == NO_ERROR) {
@@ -613,7 +614,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
-      if (IsExpert()) {                                              // nach Neuladen eines EA's seinen Orderkontext ausdrücklich zurücksetzen
+      if (IsExpert()) {                                              // nach Neuladen eines EA's Orderkontext ausdrücklich zurücksetzen
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
          if (IntInArray(UninitializeReason(), reasons))
             OrderSelect(0, SELECT_BY_TICKET);

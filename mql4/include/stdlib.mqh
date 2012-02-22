@@ -59,10 +59,10 @@
    bool     IsReverseIndexedDoubleArray(double array[]);
    bool     IsReverseIndexedSringArray(string array[]);
 
-   string   JoinBools(bool values[], string separator);
-   string   JoinInts(int values[], string separator);
-   string   JoinDoubles(double values[], string separator);
-   string   JoinStrings(string values[], string separator);
+   string   JoinBools(bool array[], string separator);
+   string   JoinInts(int array[], string separator);
+   string   JoinDoubles(double array[], string separator);
+   string   JoinStrings(string array[], string separator);
 
 
    // Buffer-Funktionen
@@ -373,14 +373,18 @@
    string   WordToHexStr(int word);
    string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
 
-   string   BoolArrayToStr(bool values[], string separator);
-   string   IntArrayToStr(int values[], string separator);
-   string   DateTimeArrayToStr(int values[], string separator);
-   string   OperationTypeArrayToStr(int values[], string separator);
-   string   DoubleArrayToStr(double values[], string separator);
-   string   MoneyArrayToStr(double values[], string separator);
-   string   PriceArrayToStr(double values[], string format, string separator);
-   string   StringArrayToStr(string values[], string separator);
+   string   BoolsToStr(bool array[], string separator);
+
+   string   IntsToStr          (int array[], string separator);
+   string   CharsToStr         (int array[], string separator);
+   string   OperationTypesToStr(int array[], string separator);
+   string   TimesToStr    (datetime array[], string separator);
+
+   string   DoublesToStr(double array[], string separator);
+   string   MoneysToStr (double array[], string separator);
+   string   RatesToStr  (double array[], string separator);
+
+   string   StringsToStr(string array[], string separator);
 
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);

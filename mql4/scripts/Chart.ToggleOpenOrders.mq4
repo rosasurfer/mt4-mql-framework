@@ -67,7 +67,7 @@ int onStart() {
    string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\remote_positions.ini";
    string sections[];
    int sizeOfSections = GetPrivateProfileSectionNames(file, sections);
-   //debug("onStart()   found "+ sizeOfSections +" sections = "+ StringArrayToStr(sections, NULL));
+   //debug("onStart()   found "+ sizeOfSections +" sections = "+ StringsToStr(sections, NULL));
 
    int index = ArraySearchString(account, sections);
    int next  = index + 1;                                            // Zeiger auf nächsten Abschnitt setzen
@@ -75,7 +75,7 @@ int onStart() {
    if (account!="") /*&&*/ if (index==-1)                            // Ist Status ON und der aktuelle Abschnitt existiert in der Konfiguration nicht,
       next = sizeOfSections;                                         // dann Zeiger auf eins hinter den letzten Abschnitt setzen.
    sizeOfSections = ArrayPushString(sections, "");                   // Leerstring (= Status OFF) als letzten 'Abschnitt' hinzufügen
-   //debug("onStart()   next section=\""+ sections[next] +"\"   sections="+ StringArrayToStr(sections, NULL));
+   //debug("onStart()   next section=\""+ sections[next] +"\"   sections="+ StringsToStr(sections, NULL));
 
    // über verbleibende Abschnitte iterieren, nächsten Abschnitt mit mindestens einem Schlüssel des aktuellen Instruments finden und Positionen auslesen
    string prefix = StringConcatenate(currency, ".");
