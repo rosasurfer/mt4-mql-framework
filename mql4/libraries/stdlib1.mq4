@@ -2984,14 +2984,14 @@ string BoolToStr(bool value) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string BoolsToStr(bool values[][], string separator=", ") {
-   return(BoolsToStr.Core(values, values, separator));
+   return(BoolsToStr_intern(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string BoolsToStr.Core(bool values2[][], bool values3[][][], string separator) {
+private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -6659,14 +6659,14 @@ string JoinDoubles(double values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string DoublesToStr(double values[][], string separator=", ") {
-   return(DoublesToStr.Core(values, values, separator));
+   return(DoublesToStr_intern(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string DoublesToStr.Core(double values2[][], double values3[][][], string separator) {
+private*/string DoublesToStr_intern(double values2[][], double values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -6824,14 +6824,14 @@ string JoinInts(int values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string IntsToStr(int values[][], string separator=", ") {
-   return(IntsToStr.Core(values, values, separator));
+   return(IntsToStr_intern(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string IntsToStr.Core(int values2[][], int values3[][][], string separator) {
+private*/string IntsToStr_intern(int values2[][], int values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
