@@ -913,7 +913,7 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
       if (NE(levels.openPrice[level], openPrice)) return(_false(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of occupied level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed #"+ ticket, ERR_RUNTIME_ERROR)));
       if (   levels.openTime [level]!=openTime  )
          if (!IsTesting())                                              // Tester-Bug (kann vorerst nur hier ignoriert werden)
-            return(_false(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time \""+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of occupied level "+ (level+1) +" doesn't match open time \""+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"\" of closed #"+ ticket, ERR_RUNTIME_ERROR)));
+            return(_false(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time '"+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"' of occupied level "+ (level+1) +" doesn't match open time '"+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"' of closed #"+ ticket, ERR_RUNTIME_ERROR)));
    }
    levels.closedSwap      [level] += swap;                              // vorhandene Beträge aufaddieren
    levels.closedCommission[level] += commission;

@@ -510,7 +510,7 @@ int GetTerminalBuild() {
  */
 int InitializeBuffer(int buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("InitializeBuffer(1)  invalid parameter buffer, too many dimensions: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
       return(catch("InitializeBuffer(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -535,7 +535,7 @@ int InitializeBuffer(int buffer[], int length) {
  */
 int InitializeStringBuffer(string& buffer[], int length) {
    if (ArrayDimension(buffer) > 1)
-      return(catch("InitializeStringBuffer(1)  invalid parameter buffer, too many dimensions: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeStringBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
    if (length < 0)
       return(catch("InitializeStringBuffer(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -2976,27 +2976,72 @@ string BoolToStr(bool value) {
 
 
 /**
- * Konvertiert ein Boolean-Array in einen lesbaren String.
+ * Konvertiert ein Boolean-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  bool   values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string BoolsToStr(bool values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("BoolsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+string BoolsToStr(bool values[][], string separator=", ") {
+   return(BoolsToStr.Core(values, values, separator));
+}
 
-   if (ArraySize(values) == 0)
-      return("{}");
 
+/**
+ * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
+ *
+private*/string BoolsToStr.Core(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   string joined = JoinBools(values, separator);
-   if (StringLen(joined) == 0)
-      return("");
-   return(StringConcatenate("{", joined, "}"));
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+
+
+   // 1-dimensionales Array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinBools(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+
+   // 2-dimensionales Array
+   if (dimensions == 2) {
+      string strValuesX[]; ArrayResize(strValuesX, dim1);
+      bool      valuesY[]; ArrayResize(   valuesY, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            valuesY[y] = values2[x][y];
+         }
+         strValuesX[x] = BoolsToStr(valuesY, separator);
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+
+   // 3-dimensionales Array
+   if (dimensions == 3) {
+                           ArrayResize(strValuesX, dim1);
+      string strValuesY[]; ArrayResize(strValuesY, dim2);
+      bool      valuesZ[]; ArrayResize(   valuesZ, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               valuesZ[z] = values3[x][y][z];
+            }
+            strValuesY[y] = BoolsToStr(valuesZ, separator);
+         }
+         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+
+   return(_empty(catch("BoolsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -4120,13 +4165,13 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
          if (lastTick == 0) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
-            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")");
+            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: '", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", lastMinute, ")");
          }
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
                results[0] |= F_PERIOD_M1;
-            //debug("EventListener.BarOpen(M1)   prüfe   alt: ", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", lastMinute, ")   neu: ", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), " (", minute, ")");
+            //debug("EventListener.BarOpen(M1)   prüfe   alt: '", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", lastMinute, ")   neu: '", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
          }
@@ -4253,14 +4298,14 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    if (accountNumber[0] == 0) {                                      // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
       ArrayResize(knownPositions, 0);
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: "+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"'");
    }
 
    OrderPush("EventListener.PositionOpen(1)");
@@ -6562,7 +6607,7 @@ int IncreasePeriod(int period = 0) {
  */
 string JoinBools(bool values[], string separator) {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinBools()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("JoinBools()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -6588,7 +6633,7 @@ string JoinBools(bool values[], string separator) {
  */
 string JoinDoubles(double values[], string separator) {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinDoubles()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("JoinDoubles()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -6606,27 +6651,72 @@ string JoinDoubles(double values[], string separator) {
 
 
 /**
- * Konvertiert ein Double-Array in einen lesbaren String.
+ * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  double values[]
  * @param  string separator - Separator (default: ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string DoublesToStr(double values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("DoublesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+string DoublesToStr(double values[][], string separator=", ") {
+   return(DoublesToStr.Core(values, values, separator));
+}
 
-   if (ArraySize(values) == 0)
-      return("{}");
 
+/**
+ * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
+ *
+private*/string DoublesToStr.Core(double values2[][], double values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   string joined = JoinDoubles(values, separator);
-   if (StringLen(joined) == 0)
-      return("");
-   return(StringConcatenate("{", joined, "}"));
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+
+
+   // 1-dimensionales Array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoubles(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+
+   // 2-dimensionales Array
+   if (dimensions == 2) {
+      string strValuesX[]; ArrayResize(strValuesX, dim1);
+      double    valuesY[]; ArrayResize(   valuesY, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            valuesY[y] = values2[x][y];
+         }
+         strValuesX[x] = DoublesToStr(valuesY, separator);
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+
+   // 3-dimensionales Array
+   if (dimensions == 3) {
+                           ArrayResize(strValuesX, dim1);
+      string strValuesY[]; ArrayResize(strValuesY, dim2);
+      double    valuesZ[]; ArrayResize(   valuesZ, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               valuesZ[z] = values3[x][y][z];
+            }
+            strValuesY[y] = DoublesToStr(valuesZ, separator);
+         }
+         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+
+   return(_empty(catch("DoublesToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -6640,7 +6730,7 @@ string DoublesToStr(double values[], string separator=", ") {
  */
 string RatesToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("RatesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("RatesToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -6675,7 +6765,7 @@ string RatesToStr(double values[], string separator=", ") {
  */
 string MoneysToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("MoneysToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("MoneysToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -6710,7 +6800,7 @@ string MoneysToStr(double values[], string separator=", ") {
  */
 string JoinInts(int values[], string separator) {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinInts()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("JoinInts()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -6726,7 +6816,7 @@ string JoinInts(int values[], string separator) {
 
 
 /**
- * Konvertiert ein Integer-Array in einen lesbaren String.
+ * Konvertiert ein Integer-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  int    values[]
  * @param  string separator - Separator (default: ", ")
@@ -6734,45 +6824,64 @@ string JoinInts(int values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string IntsToStr(int values[][], string separator=", ") {
+   return(IntsToStr.Core(values, values, separator));
+}
+
+
+/**
+ * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
+ *
+private*/string IntsToStr.Core(int values2[][], int values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   string joined;
-   int    dimensions = ArrayDimension(values);
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
 
-   // ein-dimensionales Array
+
+   // 1-dimensionales Array
    if (dimensions == 1) {
-      if (ArraySize(values) == 0)
+      if (dim1 == 0)
          return("{}");
-      joined = JoinInts(values, separator);
-      if (StringLen(joined) == 0)
-         return("");
-      return(StringConcatenate("{", joined, "}"));
+      return(StringConcatenate("{", JoinInts(values2, separator), "}"));
    }
+   else dim2 = ArrayRange(values2, 1);
 
-   // zwei-dimensionales Array
+
+   // 2-dimensionales Array
    if (dimensions == 2) {
-      int size1=ArrayRange(values, 0), size2=ArrayRange(values, 1);
-      if (size2 == 0)
-         return("{}");
+      string strValuesX[]; ArrayResize(strValuesX, dim1);
+      int       valuesY[]; ArrayResize(   valuesY, dim2);
 
-      string strTmp[]; ArrayResize(strTmp, size1);
-      int    iTmp[];   ArrayResize(iTmp,   size2);
-
-      for (int i=0; i < size1; i++) {
-         for (int z=0; z < size2; z++) {
-            iTmp[z] = values[i][z];
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            valuesY[y] = values2[x][y];
          }
-         strTmp[i] = IntsToStr(iTmp);
+         strValuesX[x] = IntsToStr(valuesY, separator);
       }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+   else dim3 = ArrayRange(values3, 2);
 
-      joined = JoinStrings(strTmp, separator);
-      if (StringLen(joined) == 0)
-         return("");
-      return(StringConcatenate("{", joined, "}"));
+
+   // 3-dimensionales Array
+   if (dimensions == 3) {
+                           ArrayResize(strValuesX, dim1);
+      string strValuesY[]; ArrayResize(strValuesY, dim2);
+      int       valuesZ[]; ArrayResize(   valuesZ, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               valuesZ[z] = values3[x][y][z];
+            }
+            strValuesY[y] = IntsToStr(valuesZ, separator);
+         }
+         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
-   return(_empty(catch("IntsToStr()  illegal parameter values, too many dimensions: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_empty(catch("IntsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -6786,7 +6895,7 @@ string IntsToStr(int values[][], string separator=", ") {
  */
 string TimesToStr(datetime values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("TimesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("TimesToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -6821,7 +6930,7 @@ string TimesToStr(datetime values[], string separator=", ") {
  */
 string CharsToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("CharsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("CharsToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -6854,7 +6963,7 @@ string CharsToStr(int values[], string separator=", ") {
  */
 string OperationTypesToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("OperationTypesToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("OperationTypesToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -6888,7 +6997,7 @@ string OperationTypesToStr(int values[], string separator=", ") {
  */
 string JoinStrings(string values[], string separator) {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinStrings()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("JoinStrings()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string result = "";
 
@@ -6917,7 +7026,7 @@ string JoinStrings(string values[], string separator) {
  */
 string StringsToStr(string values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("StringsToStr()  invalid parameter values, too many dimensions: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("StringsToStr()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    if (ArraySize(values) == 0)
       return("{}");

@@ -373,18 +373,15 @@
    string   WordToHexStr(int word);
    string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
 
-   string   BoolsToStr(bool array[], string separator);
-
+   string   BoolsToStr        (bool array[], string separator);
    string   IntsToStr          (int array[], string separator);
    string   CharsToStr         (int array[], string separator);
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
-
-   string   DoublesToStr(double array[], string separator);
-   string   MoneysToStr (double array[], string separator);
-   string   RatesToStr  (double array[], string separator);
-
-   string   StringsToStr(string array[], string separator);
+   string   DoublesToStr    (double array[], string separator);
+   string   MoneysToStr     (double array[], string separator);
+   string   RatesToStr      (double array[], string separator);
+   string   StringsToStr    (string array[], string separator);
 
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
