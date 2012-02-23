@@ -8650,6 +8650,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
          ObjectSet(label1, OBJPROP_RAY  , false    );
          ObjectSet(label1, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(label1, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
+         ObjectSet(label1, OBJPROP_BACK , true);
       }
    }
 
@@ -8708,6 +8709,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
          ObjectSet(label2, OBJPROP_RAY  , false    );
          ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongTradeOperation(OrderType()), Blue, Red));
+         ObjectSet(label2, OBJPROP_BACK , true);
       }
    }
 
