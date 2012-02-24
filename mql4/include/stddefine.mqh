@@ -576,10 +576,10 @@ bool   ChartInfo.positionChecked,
 
 
 /**
- * Setzt allgemein benötigte interne Variablen und führt allgemein benötigte Laufzeit-Initialisierungen durch.
+ * Setzt allgemein benötigte interne Variablen und führt notwendige Laufzeit-Initialisierungen durch.
  *
  * @param  int    scriptType - Typ des aufrufenden Programms
- * @param  int    initFlags  - optionale, zusätzlich durchzuführende Initialisierungstasks (default: NULL)
+ * @param  int    initFlags  - optional zusätzlich durchzuführende Initialisierungstasks (default: keine)
  *                             Werte: [IT_CHECK_TIMEZONE_CONFIG | IT_RESET_BARS_ON_HIST_UPDATE]
  * @return int - Fehlerstatus
  */
@@ -606,7 +606,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    }
 
    if (last_error == NO_ERROR) {
-     if (initFlags & IT_CHECK_TIMEZONE_CONFIG      != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
+      if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
    }
 
    if (last_error == NO_ERROR) {
@@ -636,12 +636,17 @@ int onInit(int scriptType, int initFlags=NULL) {
 
 
 /**
- * Führt allgemein benötigte Aufräumarbeiten durch.
+ * Führt ggf. notwendige Aufräumarbeiten durch.
  *
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   return(NO_ERROR);
+   if (last_error == NO_ERROR) {
+      if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE)) {  // Der Tester löscht beim Beenden offene Pending-Orders nicht.
+         last_error = stdlib_PeekLastError();
+      }
+   }
+   return(last_error);
 }
 
 

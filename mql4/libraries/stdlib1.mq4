@@ -7341,7 +7341,7 @@ datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
 
 
 /**
- * Setzt den Text der Titelbar des angegebenen Fensters (wenn es eine hat). Ist das agegebene Fenster ein Control, wird dessen Text geändert.
+ * Setzt den Text der Titelbar des angegebenen Fensters (wenn es eine hat). Ist das angegebene Fenster ein Control, wird dessen Text geändert.
  *
  * @param  int    hWnd - Handle des Fensters
  * @param  string text - Text
@@ -7351,8 +7351,7 @@ datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
 int SetWindowText(int hWnd, string text) {
    if (!SetWindowTextA(hWnd, text))
       return(catch("SetWindowText() ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-
-   return(0);
+   return(NO_ERROR);
 }
 
 
@@ -9352,7 +9351,6 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
 }
 
 
-
 /**
  * Streicht alle offenen Pending-Orders.
  *
@@ -9361,6 +9359,22 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
  * @return bool - Erfolgsstatus
  */
 bool DeletePendingOrders(color markerColor=CLR_NONE) {
+   int size = OrdersTotal();
+
+   if (size > 0) {
+      OrderPush("DeletePendingOrders(1)");
+
+      for (int i=size-1; i >= 0; i--) {                                 // offene Tickets
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
+            continue;
+         if (IsPendingTradeOperation(OrderType())) {
+            if (!OrderDeleteEx(OrderTicket(), CLR_NONE))
+               return(_false(OrderPop("DeletePendingOrders(2)")));
+         }
+      }
+
+      OrderPop("DeletePendingOrders(3)");
+   }
    return(true);
 }
 

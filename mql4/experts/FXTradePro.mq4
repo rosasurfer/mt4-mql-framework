@@ -22,15 +22,15 @@
  *  - Testbarkeit
  *  - parallele Verwaltung mehrerer Instanzen ermöglichen (ständige sich überschneidende Instanzen)
  *  - Breakeven berechnen und anzeigen
- *  - Sequenzlänge veränderbar machen und 7/7-Sequenz implementieren
+ *  - Sequenzlänge veränderbar machen und 7+7-Sequenz implementieren
  *  - für alle Signalberechnungen MedianPrice vom ursprünglichen Signal verwenden (die tatsächlich erzielten Entry-Preise und Slippage sind sekundär)
  *  - Hedges müssen sofort aufgelöst werden (MT4-Equity- und -Marginberechnung mit offenen Hedges ist fehlerhaft)
  *  - ggf. muß statt nach STATUS_DISABLED nach STATUS_MONITORING gewechselt werden
  *  - Sicherheitsabfrage, wenn nach Änderung von TakeProfit sofort FinishSequence() getriggert wird
  *  - Sicherheitsabfrage, wenn nach Änderung der Konfiguration sofort Trade getriggert wird
  *  - bei STATUS_DISABLED muß ein REASON_RECOMPILE sich den alten Status merken
- *  - Heartbeat-Order einrichten
- *  - Heartbeat-Order muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
+ *  - Heartbeat einrichten
+ *  - Heartbeat muß signalisieren, wenn die Konfiguration sich geändert hat => erneuter Download vom Server
  *  - OrderMultiClose.Flatten() muß prüfen, ob das Hedge-Volumen mit MarketInfo(MODE_MINLOT) kollidiert
  *  - Visualisierung des Entry.Limits implementieren
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
