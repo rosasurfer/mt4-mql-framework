@@ -4192,9 +4192,8 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
    }
 
    int error = GetLastError();
-   if (error != NO_ERROR)
+   if (IsError(error))
       return(_false(catch("EventListener.BarOpen()", error)));
-
    return(results[0] != 0);
 }
 
