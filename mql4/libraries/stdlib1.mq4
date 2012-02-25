@@ -6226,7 +6226,7 @@ int GetTerminalWindow() {
       }
    }
 
-   // alle Top-level-Windows durchlaufen
+   // alle Top-Level-Windows durchlaufen
    int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
 
    while (hWndNext != 0) {
@@ -6317,7 +6317,13 @@ string GetWindowText(int hWnd) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
+   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize) +1;       // GetWindowTextA() gibt beim Abschneiden zu langer Tielzeilen mal {bufferSize},
+                                                                     // mal {bufferSize-1} zurück.
+   while (chars >= bufferSize) {
+      bufferSize <<= 1;
+      InitializeStringBuffer(buffer, bufferSize);
+      chars = GetWindowTextA(hWnd, buffer[0], bufferSize) +1;
+   }
 
    return(buffer[0]);
 }
