@@ -575,13 +575,6 @@ bool   ChartInfo.positionChecked,
        ChartInfo.flatPosition;
 
 
-#import "user32.dll"
-   bool SetWindowTextA(int hWnd, string lpString);
-#import "ntdll.dll"
-   int  RtlGetLastWin32Error();
-#import
-
-
 /**
  * Setzt allgemein benötigte interne Variablen und führt notwendige Laufzeit-Initialisierungen durch.
  *
@@ -625,16 +618,6 @@ int onInit(int scriptType, int initFlags=NULL) {
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
          if (IntInArray(UninitializeReason(), reasons))
             OrderSelect(0, SELECT_BY_TICKET);
-      }
-   }
-
-   if (last_error == NO_ERROR) {
-      if (IsTesting()) {
-         // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert).
-         int    hWnd = GetTesterWindow();
-         string text = StringConcatenate("", "Tester");
-         if (!SetWindowTextA(hWnd, text))
-            catch("onInit(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       }
    }
 

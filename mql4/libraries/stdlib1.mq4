@@ -122,11 +122,22 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
    // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
    // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
    // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads, dessen Ermittlung auf ein gültiges Hauptfenster-Handle angewiesen ist.
-   if (last_error == NO_ERROR)
+   if (last_error == NO_ERROR) {
       GetTerminalWindow();
+   }
 
-   if (last_error == NO_ERROR)
+   if (last_error == NO_ERROR) {
       GetUIThreadId();
+   }
+
+   if (last_error == NO_ERROR) {
+      if (IsTesting()) {                                             // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert)
+         int    hWnd = GetTesterWindow();
+         string text = StringConcatenate("", "Tester");
+         if (hWnd!=0) /*&&*/ if (!SetWindowTextA(hWnd, text))
+            catch("stdlib_onInit(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      }
+   }
 
    return(last_error);
 }
@@ -6256,24 +6267,28 @@ int GetTesterWindow() {
    Fensters ändert sich mit jedem Docking-Vorgang, das Handle des gedockten Fensters bleibt konstant.
 
    Da das gedockte Fenster im floatenden Fenster wiederverwendet wird (es wird dort ebenfalls "angedockt"), genügt zur Ansprache des Testerfensters
-   das konstante Handle des gedockten Fensters (class "Afx:400000:b:10013:0:0").
+   das konstante Handle des gedockten Fensters. Die Afx-Klassennamen sind MFC-versionsabhängig.
+
+   @see http://en.wikipedia.org/wiki/Microsoft_Foundation_Class_Library#Versions
+   @see http://msdn.microsoft.com/en-us/library/hw85e4bb.aspx
    */
    static int hTester;                                               // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
    if (hTester != 0)
       return(hTester);
 
+   string class;
 
    // (1) Zunächst alle Child-Windows des Terminalfensters der Klasse "AfxControlBar42" durchlaufen und prüfen, ob Tester dort angedockt ist.
    int hChild = GetTopWindow(GetTerminalWindow());
    while (hChild != 0) {
       if (GetClassName(hChild) == "AfxControlBar42") {
-
          int hSubChild = GetTopWindow(hChild);
          while (hSubChild != 0) {
-            string class = GetClassName(hSubChild);
+            class = GetClassName(hSubChild);
             if (class == "ToolbarWindow32")                          // Haupttoolbar => weiter mit dem nächsten AfxControlBar42-ChildWindow
                break;
-            if (class=="Afx:400000:b:10013:0:0") /*&&*/ if (StringStartsWith(GetWindowText(hSubChild), "Tester")) {
+                                                                     // "Afx:400000:b:10011:0:0"|"Afx:400000:b:10013:0:0"
+            if (StringStartsWith(class, "Afx:400000:b:")) /*&&*/ if (StringStartsWith(GetWindowText(hSubChild), "Tester")) {
                hTester = hSubChild;                                  // angedockt
                //debug("GetTesterWindow()    hTester=0x"+ IntToHexStr(hTester) +"   class=\""+ GetClassName(hTester) +"\"   title=\""+ GetWindowText(hTester) +"\" docked");
                break;
@@ -6292,19 +6307,23 @@ int GetTesterWindow() {
    // (2) Dann Toplevel-Windows durchlaufen und Testerfenster des eigenen Prozesses finden.
    int processId[1], hNext=GetTopWindow(NULL), me=GetCurrentProcessId();
    while (hNext != 0) {
+      //debug("GetTesterWindow()    top-level hNext=0x"+ IntToHexStr(hNext) +"   class=\""+ GetClassName(hNext) +"\"   title=\""+ GetWindowText(hNext) +"\"");
+
       GetWindowThreadProcessId(hNext, processId);
       if (processId[0] == me) {
-         if (GetClassName(hNext) == "Afx:400000:8:10013:0:0") {
+         //debug("GetTesterWindow()    top-level(me) hNext=0x"+ IntToHexStr(hNext) +"   class=\""+ GetClassName(hNext) +"\"   title=\""+ GetWindowText(hNext) +"\"");
+         if (StringStartsWith(GetClassName(hNext), "Afx:400000:8:")) {           // "Afx:400000:8:10011:0:0"|"Afx:400000:8:10013:0:0"
             if (StringStartsWith(GetWindowText(hNext), "Tester")) {
                hChild = GetTopWindow(hNext);
-               if (hChild == 0)                                         return(_ZERO(catch("GetTesterWindow(1)   cannot find any children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
-               if (GetClassName(hChild) != "AfxControlBar42")           return(_ZERO(catch("GetTesterWindow(2)   class of 1st child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"AfxControlBar42\":  found \""+ GetClassName(hChild) +"\"", ERR_RUNTIME_ERROR)));
+               if (hChild == 0)                               return(_ZERO(catch("GetTesterWindow(1)   cannot find any children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
+               if (GetClassName(hChild) != "AfxControlBar42") return(_ZERO(catch("GetTesterWindow(2)   class of 1st child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"AfxControlBar42\":  found \""+ GetClassName(hChild) +"\"", ERR_RUNTIME_ERROR)));
 
                hSubChild = GetTopWindow(hChild);
-               if (hSubChild == 0)                                      return(_ZERO(catch("GetTesterWindow(3)   cannot find any sub-children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
-               if (GetClassName(hSubChild) != "Afx:400000:b:10013:0:0") return(_ZERO(catch("GetTesterWindow(4)   class of 1st sub-child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"Afx:400000:b:10013:0:0\":  found \""+ GetClassName(hSubChild) +"\"", ERR_RUNTIME_ERROR)));
+               if (hSubChild == 0)                            return(_ZERO(catch("GetTesterWindow(3)   cannot find any sub-children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
+               if (!StringStartsWith(GetClassName(hSubChild), "Afx:400000:b:"))  // "Afx:400000:b:10011:0:0"|"Afx:400000:b:10013:0:0"
+                                                              return(_ZERO(catch("GetTesterWindow(4)   class of 1st sub-child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"Afx:400000:b:10013:0:0\":  found \""+ GetClassName(hSubChild) +"\"", ERR_RUNTIME_ERROR)));
 
-               hTester = hSubChild;                                  // im floatenden Toplevel-Fenster angedockt
+               hTester = hSubChild;                                              // im floatenden Toplevel-Fenster angedockt
                //debug("GetTesterWindow()    hTester=0x"+ IntToHexStr(hTester) +"   class=\""+ GetClassName(hTester) +"\"   title=\""+ GetWindowText(hTester) +"\" floating");
                break;
             }
