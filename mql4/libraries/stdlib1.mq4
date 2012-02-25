@@ -6246,6 +6246,80 @@ int GetTerminalWindow() {
 
 
 /**
+ * Gibt das aktuelle Fensterhandle des Strategy Testers zurück.
+ *
+ * @return int - Handle oder 0, falls ein Fehler auftrat
+ */
+int GetTesterWindow() {
+   /*
+   Das Fenster kann innerhalb des Terminalfensters angedockt sein (Child-Window) oder frei floaten (Toplevel-Window). Das Handle des floatenden
+   Fensters ändert sich mit jedem Docking-Vorgang, das Handle des gedockten Fensters bleibt konstant.
+
+   Da das gedockte Fenster im floatenden Fenster wiederverwendet wird (es wird dort ebenfalls "angedockt"), genügt zur Ansprache des Testerfensters
+   das konstante Handle des gedockten Fensters (class "Afx:400000:b:10013:0:0").
+   */
+   static int hTester;                                               // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   if (hTester != 0)
+      return(hTester);
+
+
+   // (1) Zunächst alle Child-Windows des Terminalfensters der Klasse "AfxControlBar42" durchlaufen und prüfen, ob Tester dort angedockt ist.
+   int hChild = GetTopWindow(GetTerminalWindow());
+   while (hChild != 0) {
+      if (GetClassName(hChild) == "AfxControlBar42") {
+
+         int hSubChild = GetTopWindow(hChild);
+         while (hSubChild != 0) {
+            string class = GetClassName(hSubChild);
+            if (class == "ToolbarWindow32")                          // Haupttoolbar => weiter mit dem nächsten AfxControlBar42-ChildWindow
+               break;
+            if (class=="Afx:400000:b:10013:0:0") /*&&*/ if (StringStartsWith(GetWindowText(hSubChild), "Tester")) {
+               hTester = hSubChild;                                  // angedockt
+               //debug("GetTesterWindow()    hTester=0x"+ IntToHexStr(hTester) +"   class=\""+ GetClassName(hTester) +"\"   title=\""+ GetWindowText(hTester) +"\" docked");
+               break;
+            }
+            hSubChild = GetWindow(hSubChild, GW_HWNDNEXT);
+         }
+         if (hTester != 0)
+            break;
+      }
+      hChild = GetWindow(hChild, GW_HWNDNEXT);
+   }
+   if (hTester != 0)
+      return(hTester);
+
+
+   // (2) Dann Toplevel-Windows durchlaufen und Testerfenster des eigenen Prozesses finden.
+   int processId[1], hNext=GetTopWindow(NULL), me=GetCurrentProcessId();
+   while (hNext != 0) {
+      GetWindowThreadProcessId(hNext, processId);
+      if (processId[0] == me) {
+         if (GetClassName(hNext) == "Afx:400000:8:10013:0:0") {
+            if (StringStartsWith(GetWindowText(hNext), "Tester")) {
+               hChild = GetTopWindow(hNext);
+               if (hChild == 0)                                         return(_ZERO(catch("GetTesterWindow(1)   cannot find any children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
+               if (GetClassName(hChild) != "AfxControlBar42")           return(_ZERO(catch("GetTesterWindow(2)   class of 1st child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"AfxControlBar42\":  found \""+ GetClassName(hChild) +"\"", ERR_RUNTIME_ERROR)));
+
+               hSubChild = GetTopWindow(hChild);
+               if (hSubChild == 0)                                      return(_ZERO(catch("GetTesterWindow(3)   cannot find any sub-children of floating top-level window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
+               if (GetClassName(hSubChild) != "Afx:400000:b:10013:0:0") return(_ZERO(catch("GetTesterWindow(4)   class of 1st sub-child of floating top-level window 0x"+ IntToHexStr(hNext) +" is not \"Afx:400000:b:10013:0:0\":  found \""+ GetClassName(hSubChild) +"\"", ERR_RUNTIME_ERROR)));
+
+               hTester = hSubChild;                                  // im floatenden Toplevel-Fenster angedockt
+               //debug("GetTesterWindow()    hTester=0x"+ IntToHexStr(hTester) +"   class=\""+ GetClassName(hTester) +"\"   title=\""+ GetWindowText(hTester) +"\" floating");
+               break;
+            }
+         }
+      }
+      hNext = GetWindow(hNext, GW_HWNDNEXT);
+   }
+
+   if (hTester == 0)
+      catch("GetTesterWindow(5)   could not find tester window", ERR_RUNTIME_ERROR);
+   return(hTester);
+}
+
+
+/**
  * Gibt die ID des Userinterface-Threads zurück.
  *
  * @return int - tatsächliche Thread-ID (nicht das Pseudo-Handle)
@@ -6311,18 +6385,22 @@ string UninitializeReasonToStr(int reason) {
  *
  * @param  int hWnd - Handle des Fensters oder Controls
  *
- * @return string - Text
+ * @return string - Text oder Leerstring, falls ein Fehler auftrat
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize) +1;       // GetWindowTextA() gibt beim Abschneiden zu langer Tielzeilen mal {bufferSize},
-                                                                     // mal {bufferSize-1} zurück.
-   while (chars >= bufferSize) {
-      bufferSize <<= 1;
+   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
+
+   while (chars >= bufferSize-1) {                                   // GetWindowTextA() gibt beim Abschneiden zu langer Tielzeilen mal {bufferSize},
+      bufferSize <<= 1;                                              // mal {bufferSize-1} zurück.
       InitializeStringBuffer(buffer, bufferSize);
-      chars = GetWindowTextA(hWnd, buffer[0], bufferSize) +1;
+      chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
+   }
+
+   if (chars == 0) {
+      // GetLastWin32Error() prüfen, hWnd könnte ungültig sein
    }
 
    return(buffer[0]);
@@ -6334,13 +6412,20 @@ string GetWindowText(int hWnd) {
  *
  * @param  int hWnd - Handle des Fensters
  *
- * @return string - Klassenname
+ * @return string - Klassenname oder Leerstring, falls ein Fehler auftrat
  */
 string GetClassName(int hWnd) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
    int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
+
+   while (chars >= bufferSize-1) {                                   // GetClassNameA() gibt beim Abschneiden zu langer Klassennamen {bufferSize-1} zurück.
+      bufferSize <<= 1;
+      InitializeStringBuffer(buffer, bufferSize);
+      chars = GetClassNameA(hWnd, buffer[0], bufferSize);
+   }
+
    if (chars == 0)
       return(_empty(catch("GetClassName() ->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
@@ -7343,21 +7428,6 @@ datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
       return(_int(-1, catch("ServerToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
-}
-
-
-/**
- * Setzt den Text der Titelbar des angegebenen Fensters (wenn es eine hat). Ist das angegebene Fenster ein Control, wird dessen Text geändert.
- *
- * @param  int    hWnd - Handle des Fensters
- * @param  string text - Text
- *
- * @return int - Fehlerstatus
- */
-int SetWindowText(int hWnd, string text) {
-   if (!SetWindowTextA(hWnd, text))
-      return(catch("SetWindowText() ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-   return(NO_ERROR);
 }
 
 

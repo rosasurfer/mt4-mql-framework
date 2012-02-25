@@ -23,6 +23,7 @@
    string   GetTerminalVersion();
    int      GetTerminalBuild();
    int      GetTerminalWindow();
+   int      GetTesterWindow();
    int      GetUIThreadId();
    bool     IsExpert();
    bool     IsIndicator();
@@ -402,7 +403,6 @@
    string   GetComputerName();
    string   GetWin32ShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
-   int      SetWindowText(int hWnd, string text);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
 
