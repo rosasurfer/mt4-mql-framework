@@ -6263,14 +6263,14 @@ int GetTerminalWindow() {
  */
 int GetTesterWindow() {
    /*
-   Das Fenster kann innerhalb des Terminalfensters angedockt sein (Child-Window) oder frei floaten (Toplevel-Window). Das Handle des floatenden
-   Fensters ändert sich mit jedem Docking-Vorgang, das Handle des gedockten Fensters bleibt konstant.
+   Das Fenster kann innerhalb des Terminalfensters angedockt sein (Child-Window) oder frei floaten (Toplevel-Window). Das Handle des floatenden Fensters
+   ändert sich mit jedem Docking-Vorgang, das Handle des gedockten Fensters bleibt konstant. Zur Ansprache genügt in beiden Fällen das konstante Handle
+   des gedockten Fensters.
 
-   Da das gedockte Fenster im floatenden Fenster wiederverwendet wird (es wird dort ebenfalls "angedockt"), genügt zur Ansprache des Testerfensters
-   das konstante Handle des gedockten Fensters. Die Afx-Klassennamen sind MFC-versionsabhängig.
+   Die dynamischen Afx-Klassennamen müssen zur Laufzeit entsprechend dem Afx-Namensschema ermittelt werden. Da das Terminal internationalisiert ist, dürfen
+   zur Fenstersuche keine Fenstertitel verwendet werden.
 
-   @see http://en.wikipedia.org/wiki/Microsoft_Foundation_Class_Library#Versions
-   @see http://msdn.microsoft.com/en-us/library/hw85e4bb.aspx
+   @see Afx-Namensschema:  http://msdn.microsoft.com/en-us/library/btbxa0ad%28v=vs.90%29.aspx
    */
    static int hTester;                                               // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
    if (hTester != 0)

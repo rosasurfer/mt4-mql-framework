@@ -206,14 +206,14 @@
 #define FILE_ATTRIBUTE_ENCRYPTED                  16384
 #define FILE_ATTRIBUTE_VIRTUAL                    65536
 
-#define OF_READ                              0x00000000
-#define OF_WRITE                             0x00000001
-#define OF_READWRITE                         0x00000002
-#define OF_SHARE_COMPAT                      0x00000000
-#define OF_SHARE_EXCLUSIVE                   0x00000010
-#define OF_SHARE_DENY_WRITE                  0x00000020
-#define OF_SHARE_DENY_READ                   0x00000030
-#define OF_SHARE_DENY_NONE                   0x00000040
+#define OF_READ                                    0x00
+#define OF_WRITE                                   0x01
+#define OF_READWRITE                               0x02
+#define OF_SHARE_COMPAT                            0x00
+#define OF_SHARE_EXCLUSIVE                         0x10
+#define OF_SHARE_DENY_WRITE                        0x20
+#define OF_SHARE_DENY_READ                         0x30
+#define OF_SHARE_DENY_NONE                         0x40
 
 #define HFILE_ERROR                          0xFFFFFFFF     // -1
 
@@ -547,12 +547,12 @@ int     WM_MT4;                                             // wird bei der erst
 
 
 // PlaySound() flags
-#define SND_SYNC                                 0x0000     // play synchronously (default)
-#define SND_ASYNC                                0x0001     // play asynchronously
-#define SND_NODEFAULT                            0x0002     // silence (!default) if sound not found
-#define SND_MEMORY                               0x0004     // lpSound points to a memory file
-#define SND_LOOP                                 0x0008     // loop the sound until next sndPlaySound
-#define SND_NOSTOP                               0x0010     // don't stop any currently playing sound
+#define SND_SYNC                                   0x00     // play synchronously (default)
+#define SND_ASYNC                                  0x01     // play asynchronously
+#define SND_NODEFAULT                              0x02     // silence (!default) if sound not found
+#define SND_MEMORY                                 0x04     // lpSound points to a memory file
+#define SND_LOOP                                   0x08     // loop the sound until next sndPlaySound
+#define SND_NOSTOP                                 0x10     // don't stop any currently playing sound
 
 #define SND_NOWAIT                           0x00002000     // don't wait if the driver is busy
 #define SND_ALIAS                            0x00010000     // name is a registry alias
@@ -586,15 +586,15 @@ int     WM_MT4;                                             // wird bei der erst
 
 
 // Process priority flags, see CreateProcess()
-#define IDLE_PRIORITY_CLASS                  0x00000040
-#define BELOW_NORMAL_PRIORITY_CLASS          0x00004000
-#define NORMAL_PRIORITY_CLASS                0x00000020
-#define ABOVE_NORMAL_PRIORITY_CLASS          0x00008000
-#define HIGH_PRIORITY_CLASS                  0x00000080
-#define REALTIME_PRIORITY_CLASS              0x00000100
+#define IDLE_PRIORITY_CLASS                      0x0040
+#define BELOW_NORMAL_PRIORITY_CLASS              0x4000
+#define NORMAL_PRIORITY_CLASS                    0x0020
+#define ABOVE_NORMAL_PRIORITY_CLASS              0x8000
+#define HIGH_PRIORITY_CLASS                      0x0080
+#define REALTIME_PRIORITY_CLASS                  0x0100
 
 
-// ShowWindow() commands (keine Flags)
+// ShowWindow() command ids
 #define SW_SHOW                           5  // Activates the window and displays it in its current size and position.
 #define SW_SHOWNA                         8  // Displays the window in its current size and position. Similar to SW_SHOW, except that the window is not activated.
 #define SW_HIDE                           0  // Hides the window and activates another window.
@@ -631,20 +631,20 @@ int     WM_MT4;                                             // wird bei der erst
 #define SE_ERR_DLLNOTFOUND                           32     // dynamic-link library not found
 
 
-// STARTUPINFO {} flags
-#define STARTF_FORCEONFEEDBACK               0x00000040
-#define STARTF_FORCEOFFFEEDBACK              0x00000080
-#define STARTF_PREVENTPINNING                0x00002000
-#define STARTF_RUNFULLSCREEN                 0x00000020
-#define STARTF_TITLEISAPPID                  0x00001000
-#define STARTF_TITLEISLINKNAME               0x00000800
-#define STARTF_USECOUNTCHARS                 0x00000008
-#define STARTF_USEFILLATTRIBUTE              0x00000010
-#define STARTF_USEHOTKEY                     0x00000200
-#define STARTF_USEPOSITION                   0x00000004
-#define STARTF_USESHOWWINDOW                 0x00000001
-#define STARTF_USESIZE                       0x00000002
-#define STARTF_USESTDHANDLES                 0x00000100
+// STARTUPINFO structure flags
+#define STARTF_FORCEONFEEDBACK                   0x0040
+#define STARTF_FORCEOFFFEEDBACK                  0x0080
+#define STARTF_PREVENTPINNING                    0x2000
+#define STARTF_RUNFULLSCREEN                     0x0020
+#define STARTF_TITLEISAPPID                      0x1000
+#define STARTF_TITLEISLINKNAME                   0x0800
+#define STARTF_USECOUNTCHARS                     0x0008
+#define STARTF_USEFILLATTRIBUTE                  0x0010
+#define STARTF_USEHOTKEY                         0x0200
+#define STARTF_USEPOSITION                       0x0004
+#define STARTF_USESHOWWINDOW                     0x0001
+#define STARTF_USESIZE                           0x0002
+#define STARTF_USESTDHANDLES                     0x0100
 
 
 // Struct sizes
@@ -672,6 +672,20 @@ int     WM_MT4;                                             // wird bei der erst
 #define WAIT_TIMEOUT                         0x00000102
 #define WAIT_FAILED                          0xFFFFFFFF
 #define INFINITE                             0xFFFFFFFF     // infinite timeout
+
+
+// Window class styles, see WNDCLASS structure
+#define CS_VREDRAW                               0x0001
+#define CS_HREDRAW                               0x0002
+#define CS_DBLCLKS                               0x0008
+#define CS_OWNDC                                 0x0020
+#define CS_CLASSDC                               0x0040
+#define CS_PARENTDC                              0x0080
+#define CS_NOCLOSE                               0x0200
+#define CS_SAVEBITS                              0x0800
+#define CS_BYTEALIGNCLIENT                       0x1000
+#define CS_BYTEALIGNWINDOW                       0x2000
+#define CS_GLOBALCLASS                           0x4000
 
 
 // Windows error codes (nur in MQL tatsächlich verwendete, für alle anderen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
