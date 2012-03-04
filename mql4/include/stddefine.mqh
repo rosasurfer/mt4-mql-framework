@@ -531,6 +531,8 @@
 #define ERR_INVALID_MARKETINFO                       5006   // invalid MarketInfo() data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
 #define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user intervention
+#define ERR_ILLEGAL_INPUT_PARAMVALUE                 5009
+#define ERR_LOCKED_INPUT_PARAMVALUE                  5010
 
 
 // globale Variablen, die überall zur Verfügung stehen

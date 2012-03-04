@@ -220,7 +220,7 @@ int init() {
       if (ValidateConfiguration()) {
          SaveConfiguration();
 
-         // TODO: die manuelle Sequence.ID kann geändert worden sein
+         // TODO: Sequence.ID kann geändert worden sein
 
          UpdateBreakeven();                                          // nur zwingend nötig, wenn die Lotsizes geändert wurden
          UpdateMaxProfitLoss();                                      // nur zwingend nötig, wenn die Limits oder die Lotsizes geändert wurden

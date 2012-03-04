@@ -5558,6 +5558,8 @@ string ErrorDescription(int error) {
       case ERR_INVALID_MARKETINFO         : return("invalid MarketInfo() data"                                     ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
       case ERR_CANCELLED_BY_USER          : return("cancelled by user intervention"                                ); // 5008
+      case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("illegal input parameter value"                                 ); // 5009
+      case ERR_LOCKED_INPUT_PARAMVALUE    : return("input parameter is locked"                                     ); // 5010
    }
    return("unknown error");
 }
@@ -5681,6 +5683,8 @@ string ErrorToStr(int error) {
       case ERR_INVALID_MARKETINFO         : return("ERR_INVALID_MARKETINFO"         ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
+      case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("ERR_ILLEGAL_INPUT_PARAMVALUE"   ); // 5009
+      case ERR_LOCKED_INPUT_PARAMVALUE    : return("ERR_LOCKED_INPUT_PARAMVALUE"    ); // 5010
    }
    return(error);
 }
