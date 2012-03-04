@@ -8670,19 +8670,26 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
    if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
       ObjectDelete(label2);
 
-   // OrderFill-Marker: setzen, korrigieren oder löschen                               // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
+   // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label3) == 0) {
-      if (ObjectType(label3) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
-         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
+      if (ObjectType(label3) == OBJ_ARROW)
+         ObjectDelete(label3);                                                         // löschen
+   }
+
+   // neuen OrderFill-Marker: setzen, korrigieren oder löschen                         // "#1 buy 0.10 GBPUSD at 1.52904"
+   string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
+   if (ObjectFind(label4) == 0) {
+      if (ObjectType(label4) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label4);                            // löschen
+         else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);   // korrigieren
       }
    }
    else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label3, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
-         ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet(label3, OBJPROP_COLOR    , markerColor     );
-         ObjectSetText(label3, comment);
+      if (ObjectCreate(label4, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
+         ObjectSet(label4, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label4, OBJPROP_COLOR    , markerColor     );
+         ObjectSetText(label4, comment);
       }
    }
 
@@ -8725,8 +8732,8 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @param  string   symbol      - OrderSymbol
  * @param  datetime openTime    - OrderOpenTime
  * @param  double   openPrice   - OrderOpenPrice
- * @param  datetime closeTime   - OrderOpenTime
- * @param  double   closePrice  - OrderOpenPrice
+ * @param  datetime closeTime   - OrderCloseTime
+ * @param  double   closePrice  - OrderClosePrice
  *
  * @return bool - Erfolgsstatus
  */
@@ -8736,33 +8743,40 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
-   string label1 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
-   if (ObjectFind(label1) == 0) {
-      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label1)==OBJ_TREND)
+   // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
+   if (markerColor == CLR_NONE) {
+      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
          ObjectDelete(label1);                                                         // löschen
    }
+
+   // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
+   string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
+   if (ObjectFind(label2) == 0) {
+      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+         ObjectDelete(label2);                                                         // löschen
+   }
    else if (markerColor != CLR_NONE) {                                                 // setzen
-      if (ObjectCreate(label1, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-         ObjectSet(label1, OBJPROP_RAY  , false    );
-         ObjectSet(label1, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(label1, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
-         ObjectSet(label1, OBJPROP_BACK , true);
+      if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+         ObjectSet(label2, OBJPROP_RAY  , false    );
+         ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(label2, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
+         ObjectSet(label2, OBJPROP_BACK , true);
       }
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
-   string label2 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits), " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
-   if (ObjectFind(label2) == 0) {
-      if (ObjectType(label2) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label2);                            // löschen
-         else                         ObjectSet(label2, OBJPROP_COLOR, markerColor);   // korrigieren
+   string label3 = StringConcatenate(label1, " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
+   if (ObjectFind(label3) == 0) {
+      if (ObjectType(label3) == OBJ_ARROW) {
+         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
+         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
       }
    }
    else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label2, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
-         ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet(label2, OBJPROP_COLOR    , markerColor      );
+      if (ObjectCreate(label3, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
+         ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet(label3, OBJPROP_COLOR    , markerColor      );
       }
    }
 
