@@ -1331,7 +1331,7 @@ int HandleEvent(int event, int flags=0) {
          catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
 
-   return(status && IsNoError(catch("HandleEvent(2)")));              // (int) bool
+   return(status && IsNoError(catch("HandleEvent(2)")));             // (int) bool
 }
 
 
