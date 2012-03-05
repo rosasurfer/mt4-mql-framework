@@ -743,7 +743,7 @@ int ChartInfo.CreateLabels() {
 
 
    // Instrument-Label erzeugen
-   if (ObjectFind(ChartInfo.instrument) >= 0)
+   if (ObjectFind(ChartInfo.instrument) == 0)
       ObjectDelete(ChartInfo.instrument);
    if (ObjectCreate(ChartInfo.instrument, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(ChartInfo.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -761,7 +761,7 @@ int ChartInfo.CreateLabels() {
 
 
    // Kurs-Label erzeugen
-   if (ObjectFind(ChartInfo.price) >= 0)
+   if (ObjectFind(ChartInfo.price) == 0)
       ObjectDelete(ChartInfo.price);
    if (ObjectCreate(ChartInfo.price, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(ChartInfo.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -774,7 +774,7 @@ int ChartInfo.CreateLabels() {
 
 
    // Spread-Label erzeugen
-   if (ObjectFind(ChartInfo.spread) >= 0)
+   if (ObjectFind(ChartInfo.spread) == 0)
       ObjectDelete(ChartInfo.spread);
    if (ObjectCreate(ChartInfo.spread, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(ChartInfo.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -787,7 +787,7 @@ int ChartInfo.CreateLabels() {
 
 
    // UnitSize-Label erzeugen
-   if (ObjectFind(ChartInfo.unitSize) >= 0)
+   if (ObjectFind(ChartInfo.unitSize) == 0)
       ObjectDelete(ChartInfo.unitSize);
    if (ObjectCreate(ChartInfo.unitSize, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(ChartInfo.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
@@ -800,7 +800,7 @@ int ChartInfo.CreateLabels() {
 
 
    // Position-Label erzeugen
-   if (ObjectFind(ChartInfo.position) >= 0)
+   if (ObjectFind(ChartInfo.position) == 0)
       ObjectDelete(ChartInfo.position);
    if (ObjectCreate(ChartInfo.position, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(ChartInfo.position, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
@@ -814,7 +814,7 @@ int ChartInfo.CreateLabels() {
 
    // Time-Label erzeugen (nur im Tester)
    if (IsVisualMode()) {
-      if (ObjectFind(ChartInfo.time) >= 0)
+      if (ObjectFind(ChartInfo.time) == 0)
          ObjectDelete(ChartInfo.time);
       if (ObjectCreate(ChartInfo.time, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(ChartInfo.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
@@ -1307,7 +1307,7 @@ bool HandleEvents(int events) {
  * @param  int event - Eventbezeichner
  * @param  int flags - zusätzliche eventspezifische Flags (default: 0)
  *
- * @return bool - ob das Event aufgetreten ist oder nicht
+ * @return int - ob das Event aufgetreten ist oder nicht (1 oder 0)
  *
  * NOTE:  Ist in der Headerdatei implementiert, damit die lokalen Eventhandler gefunden werden.
  * -----
@@ -1331,7 +1331,7 @@ int HandleEvent(int event, int flags=0) {
          catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
 
-   return(status && catch("HandleEvent(2)")==NO_ERROR);
+   return(status && IsNoError(catch("HandleEvent(2)")));              // (int) bool
 }
 
 
