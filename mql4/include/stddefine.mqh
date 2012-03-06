@@ -266,20 +266,20 @@
 
 
 // Flags zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
-#define CORNER_TOP_LEFT          0
+#define CORNER_TOP_LEFT          0     // default
 #define CORNER_TOP_RIGHT         1
 #define CORNER_BOTTOM_LEFT       2
 #define CORNER_BOTTOM_RIGHT      3
 
 
 // deinit()-Reasons, siehe UninitializeReason()
-#define REASON_APPEXIT           0   // application exit
-#define REASON_REMOVE            1   // program removed from chart
-#define REASON_RECOMPILE         2   // program recompiled
-#define REASON_CHARTCHANGE       3   // chart symbol or timeframe changed
-#define REASON_CHARTCLOSE        4   // chart closed
-#define REASON_PARAMETERS        5   // input parameters changed by user
-#define REASON_ACCOUNT           6   // account changed
+#define REASON_APPEXIT           0     // application exit
+#define REASON_REMOVE            1     // program removed from chart
+#define REASON_RECOMPILE         2     // program recompiled
+#define REASON_CHARTCHANGE       3     // chart symbol or timeframe changed
+#define REASON_CHARTCLOSE        4     // chart closed
+#define REASON_PARAMETERS        5     // input parameters changed by user
+#define REASON_ACCOUNT           6     // account changed
 
 
 // Currency-ID's
@@ -289,7 +289,7 @@
 #define CID_EUR                  4
 #define CID_GBP                  5
 #define CID_JPY                  6
-#define CID_USD                  7  // zuerst die ID's der LFX-Währungen, dadurch "passen" diese in 3 Bits
+#define CID_USD                  7     // zuerst die ID's der LFX-Währungen, dadurch "passen" diese in 3 Bits
 
 #define CID_CNY                  8
 #define CID_CZK                  9
