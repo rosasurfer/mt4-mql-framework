@@ -4124,17 +4124,16 @@ bool EventListener(int event, int results[], int flags=0) {
 
 
 /**
- * Prüft, ob der aktuelle Tick im angegebenen Zeitrahmen ein BarOpen-Event darstellt.
+ * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt.
  *
- * @param  int results[] - Ergebnisarray: Flags der Timeframes, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int flags     - ein oder mehrere zu prüfende Timeframes (default: aktuelle Chartperiode)
+ * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: aktuelle Chartperiode)
  *
- * @return bool - Ergebnis
+ * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
  */
 bool EventListener.BarOpen(int& results[], int flags=NULL) {
-   if (ArraySize(results) != 1)
-      ArrayResize(results, 1);
-   results[0] = 0;
+   if (ArraySize(results) != 0)
+      ArrayResize(results, 0);
 
    int currentPeriodFlag = PeriodFlag(Period());
    if (flags == NULL)
@@ -4150,10 +4149,10 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
       if (lastOpenTime != 0) {
          if (Tick == lastTick) {
             if (lastResult)                                          // wiederholter Aufruf während desselben Ticks
-               results[0] |= currentPeriodFlag;
+               ArrayPushInt(results, Period());
          }
          else if (Time[0] != lastOpenTime) {                         // neuer Tick
-            results[0] |= currentPeriodFlag;
+            ArrayPushInt(results, Period());
             lastResult = true;
          }
          else {
@@ -4181,7 +4180,7 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
-               results[0] |= F_PERIOD_M1;
+               ArrayPushInt(results, F_PERIOD_M1);
             //debug("EventListener.BarOpen(M1)   prüfe   alt: '", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", lastMinute, ")   neu: '", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
@@ -4191,21 +4190,21 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
    }
 
    // TODO: verbleibende Timeframe-Flags verarbeiten
-   if (false) {
-      if (flags & F_PERIOD_M5  != 0) results[0] |= F_PERIOD_M5 ;
-      if (flags & F_PERIOD_M15 != 0) results[0] |= F_PERIOD_M15;
-      if (flags & F_PERIOD_M30 != 0) results[0] |= F_PERIOD_M30;
-      if (flags & F_PERIOD_H1  != 0) results[0] |= F_PERIOD_H1 ;
-      if (flags & F_PERIOD_H4  != 0) results[0] |= F_PERIOD_H4 ;
-      if (flags & F_PERIOD_D1  != 0) results[0] |= F_PERIOD_D1 ;
-      if (flags & F_PERIOD_W1  != 0) results[0] |= F_PERIOD_W1 ;
-      if (flags & F_PERIOD_MN1 != 0) results[0] |= F_PERIOD_MN1;
-   }
+   /*
+   if (flags & F_PERIOD_M5  != 0) ArrayPushInt(results, F_PERIOD_M5 );
+   if (flags & F_PERIOD_M15 != 0) ArrayPushInt(results, F_PERIOD_M15);
+   if (flags & F_PERIOD_M30 != 0) ArrayPushInt(results, F_PERIOD_M30);
+   if (flags & F_PERIOD_H1  != 0) ArrayPushInt(results, F_PERIOD_H1 );
+   if (flags & F_PERIOD_H4  != 0) ArrayPushInt(results, F_PERIOD_H4 );
+   if (flags & F_PERIOD_D1  != 0) ArrayPushInt(results, F_PERIOD_D1 );
+   if (flags & F_PERIOD_W1  != 0) ArrayPushInt(results, F_PERIOD_W1 );
+   if (flags & F_PERIOD_MN1 != 0) ArrayPushInt(results, F_PERIOD_MN1);
+   */
 
    int error = GetLastError();
    if (IsError(error))
       return(_false(catch("EventListener.BarOpen()", error)));
-   return(results[0] != 0);
+   return(ArraySize(results) != 0);
 }
 
 

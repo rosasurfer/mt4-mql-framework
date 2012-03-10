@@ -1305,14 +1305,14 @@ bool HandleEvents(int events) {
  * Im Gegensatz zu HandleEvents() ermöglicht die Verwendung dieser Funktion die Angabe weiterer eventspezifischer Prüfungsflags.
  *
  * @param  int event - Eventbezeichner
- * @param  int flags - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int flags - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return int - ob das Event aufgetreten ist oder nicht (1 oder 0)
  *
  * NOTE:  Ist in der Headerdatei implementiert, damit die lokalen Eventhandler gefunden werden.
  * -----
  */
-int HandleEvent(int event, int flags=0) {
+int HandleEvent(int event, int flags=NULL) {
    bool status;
    int  results[];                        // zurücksetzen hier nicht nötig, da die EventListener den Array-Parameter immer zurücksetzen
 
