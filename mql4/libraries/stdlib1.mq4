@@ -5943,6 +5943,7 @@ string OperationTypeToStr(int type) {
       case OP_SELLSTOP : return("OP_SELLSTOP" );
       case OP_BALANCE  : return("OP_BALANCE"  );
       case OP_CREDIT   : return("OP_CREDIT"   );
+      case OP_UNDEFINED: return("OP_UNDEFINED");
    }
    return(_empty(catch("OperationTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -5965,6 +5966,7 @@ string OperationTypeDescription(int type) {
       case OP_SELLSTOP : return("Stop Sell" );
       case OP_BALANCE  : return("Balance"   );
       case OP_CREDIT   : return("Credit"    );
+      case OP_UNDEFINED: return("undefined" );
    }
    return(_empty(catch("OperationTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
