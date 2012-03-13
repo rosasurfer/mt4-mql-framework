@@ -540,8 +540,8 @@ int    __TYPE__;                                            // Typ des laufenden
 string __SCRIPT__;                                          // Name des laufenden Programms
 
 bool   init       = true;                                   // Flag, wird nach erfolgreichem Verlassen von init() zurückgesetzt
-int    last_error = NO_ERROR;                               // der letzte aufgetretene Fehler des aktuellen Aufrufs
-int    prev_error = NO_ERROR;                               // der letzte aufgetretene Fehler des vorherigen Ticks bzw. Aufrufs
+int    last_error = NO_ERROR;                               // der letzte aufgetretene Fehler des aktuellen Ticks oder Aufrufs
+int    prev_error = NO_ERROR;                               // der letzte aufgetretene Fehler des vorherigen Ticks oder Aufrufs
 
 double Pip, Pips;                                           // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
 int    PipDigits;                                           // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -588,6 +588,11 @@ bool   ChartInfo.positionChecked,
 int onInit(int scriptType, int initFlags=NULL) {
    __TYPE__   = scriptType;
    __SCRIPT__ = WindowExpertName();
+
+   prev_error = last_error;
+   if (prev_error == ERR_CANCELLED_BY_USER)
+      return(prev_error);
+
    last_error = stdlib_onInit(__TYPE__, __SCRIPT__, initFlags, UninitializeReason());
 
    if (last_error == NO_ERROR) {
@@ -640,14 +645,15 @@ int onInit(int scriptType, int initFlags=NULL) {
 /**
  * Führt ggf. notwendige Aufräumarbeiten durch.
  *
- * @return int - Fehlerstatus
+ * @return int - Fehlerstatus nur *dieser* Aufräumarbeiten
  */
 int onDeinit() {
-   if (last_error == NO_ERROR) {
-      if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE)) {  // Der Tester löscht beim Beenden offene Pending-Orders nicht.
-         last_error = stdlib_PeekLastError();
-      }
-   }
+   if (IsLastError())
+      return(NO_ERROR);
+
+   if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE))    // Der Tester löscht beim Beenden offene Pending-Orders nicht.
+      last_error = stdlib_PeekLastError();
+
    return(last_error);
 }
 
@@ -659,8 +665,11 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int start() {
-   Tick++; Ticks = Tick;
    prev_error = last_error;
+   if (prev_error == ERR_CANCELLED_BY_USER)
+      return(prev_error);
+
+   Tick++; Ticks = Tick;
    ValidBars  = IndicatorCounted();
 
 
@@ -719,6 +728,7 @@ int start() {
    // (6) neue Main-Funktion aufrufen
    if (IsScript()) last_error = onStart();
    else            last_error = onTick();
+
 
    return(last_error);
    DummyCalls();                                                     // unterdrücken Compilerwarnungen über unreferenzierte Funktionen

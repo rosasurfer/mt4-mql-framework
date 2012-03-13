@@ -5565,6 +5565,18 @@ string ErrorDescription(int error) {
 
 
 /**
+ * Ob der angegebene Wert ein gültiger Fehler-Code ist.
+ *
+ * @param  int value
+ *
+ * @return bool
+ */
+bool IsErrorCode(int value) {
+   return(ErrorDescription(value) != "unknown error");
+}
+
+
+/**
  * Gibt die lesbare Konstante eines MQL-Fehlercodes zurück.
  *
  * @param  int error - MQL-Fehlercode

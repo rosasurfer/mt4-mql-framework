@@ -343,6 +343,7 @@
 
    string   AppliedPriceDescription(int appliedPrice);
    string   ErrorDescription(int error);
+   bool     IsErrorCode(int value);
    string   MovingAverageMethodDescription(int method);
    string   OperationTypeDescription(int type);
    string   PeriodDescription(int period);
