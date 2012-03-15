@@ -15,8 +15,8 @@
 #define EMPTY_VALUE     0x7FFFFFFF        // empty custom indicator value (= INT_MAX)
 #define CLR_NONE                -1        // no color
 #define WHOLE_ARRAY              0
-#define INT_MAX         0x7FFFFFFF        // größter Integer:    2147483647
-#define INT_MIN         0x80000000        // kleinster Integer: -2147483648
+#define INT_MAX         0x7FFFFFFF        // größter Int-Value:    2147483647
+#define INT_MIN         0x80000000        // kleinster Int-Value: -2147483648
 
 
 // Strings
@@ -97,6 +97,8 @@
 
 
 // Operation-Types, siehe OrderSend() u. OrderType()
+#define OP_UNDEFINED            -1     // custom: Default-Wert für nicht initialisierte Variable
+
 #define OP_BUY                   0     // long position
 #define OP_LONG             OP_BUY
 #define OP_SELL                  1     // short position
@@ -105,14 +107,11 @@
 #define OP_SELLLIMIT             3     // sell limit order
 #define OP_BUYSTOP               4     // stop buy order
 #define OP_SELLSTOP              5     // stop sell order
-#define OP_BALANCE               6     // account credit or withdrawel transaction
-#define OP_CREDIT                7     // credit facility, no transaction
+#define OP_BALANCE               6     // account debit or credit transaction
+#define OP_CREDIT                7     // margin credit facility (no transaction)
 
-
-// Custom Operation-Types
-#define OP_UNDEFINED            -1     // Default-Wert für nicht initialisierte Variable
-#define OP_TRANSFER              8     // Balance-Änderung durch Kunden (Ein-/Auszahlung)
-#define OP_VENDOR                9     // Balance-Änderung durch Criminal (Swap, sonstiges)
+#define OP_TRANSFER              8     // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
+#define OP_VENDOR                9     // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
