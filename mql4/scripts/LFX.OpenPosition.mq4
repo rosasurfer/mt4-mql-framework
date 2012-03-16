@@ -71,7 +71,7 @@ int init() {
    // Currency
    string value = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
-   if (!StringInArray(value, currencies))
+   if (!StringInArray(currencies, value))
       return(catch("init(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    Currency = value;
    // Direction
@@ -284,7 +284,7 @@ bool ReadOpenPositions() {
       if (IsMyOrder()) {
          if (OrderType() > OP_SELL)
             continue;
-         if (IntInArray(OrderMagicNumber(), positions.magic))
+         if (IntInArray(positions.magic, OrderMagicNumber()))
             continue;
          ArrayPushInt   (positions.magic   ,              OrderMagicNumber() );
          ArrayPushString(positions.currency, LFX.Currency(OrderMagicNumber()));
@@ -368,7 +368,7 @@ int GetInstance() {
          while (id > 511) {
             id >>= 1;
          }
-         if (IntInArray(id, positions.instance))                     // sicherstellen, daﬂ die Instanz-ID's aller im Moment offenen Positionen eindeutig sind
+         if (IntInArray(positions.instance, id))                     // sicherstellen, daﬂ die Instanz-ID's aller im Moment offenen Positionen eindeutig sind
             id = 0;
       }
    }

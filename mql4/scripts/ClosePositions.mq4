@@ -117,15 +117,15 @@ int onStart() {
          continue;
 
       bool close = true;
-      if (close) close = (ArraySize(orderSymbols)== 0            || StringInArray(OrderSymbol(), orderSymbols));
+      if (close) close = (ArraySize(orderSymbols)== 0            || StringInArray(orderSymbols, OrderSymbol()));
       if (close) close = (orderType              == OP_UNDEFINED || OrderType() == orderType);
-      if (close) close = (ArraySize(orderTickets)== 0            || IntInArray(OrderTicket(), orderTickets));
-      if (close) close = (ArraySize(orderMagics) == 0            || IntInArray(OrderMagicNumber(), orderMagics));
+      if (close) close = (ArraySize(orderTickets)== 0            || IntInArray(orderTickets, OrderTicket()));
+      if (close) close = (ArraySize(orderMagics) == 0            || IntInArray(orderMagics, OrderMagicNumber()));
 
       if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))
          close = false;
 
-      if (close) /*&&*/ if (!IntInArray(OrderTicket(), tickets))
+      if (close) /*&&*/ if (!IntInArray(tickets, OrderTicket()))
          ArrayPushInt(tickets, OrderTicket());
    }
 

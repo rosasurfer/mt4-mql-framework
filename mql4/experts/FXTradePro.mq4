@@ -256,13 +256,13 @@ int init() {
 
    // (3) ggf. EA's aktivieren
    int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-   if (IntInArray(UninitializeReason(), reasons1)) /*&&*/ if (!IsExpertEnabled())
+   if (IntInArray(reasons1, UninitializeReason())) /*&&*/ if (!IsExpertEnabled())
       SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
 
 
    // (4) nach Reload nicht auf den nächsten Tick warten (nur bei REASON_CHARTCHANGE oder REASON_ACCOUNT)
    int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(UninitializeReason(), reasons2)) /*&&*/ if (!IsTesting())
+   if (IntInArray(reasons2, UninitializeReason())) /*&&*/ if (!IsTesting())
       SendTick(false);
 
    return(catch("init(2)"));
@@ -745,7 +745,7 @@ bool ReadSequence() {
                return(_false(catch("ReadSequence(3)  comment of #"+ hist.tickets[i] +" is pointing to itself (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)));
 
             // Gegenstück suchen
-            n = ArraySearchInt(referenceTicket, hist.tickets);
+            n = SearchIntArray(hist.tickets, referenceTicket);
             if (n == -1) return(_false(catch("ReadSequence(4)  cannot find counterpart for #"+ hist.tickets[i] +" (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)));
             if (hist.magicNumbers[n] == 0)
                ArrayPushInt(closeTrades, n);                            // Schlußtrade, Zeiger auf Schlußposition zwischenspeichern
@@ -811,11 +811,11 @@ bool ReadSequence() {
                return(_false(catch("ReadSequence(9)  comment of #"+ hist.tickets[i] +" is pointing to itself (comment=\""+ hist.comments[i] +"\")", ERR_RUNTIME_ERROR)));
 
             // Gegenstück suchen
-            n = ArraySearchInt(referenceTicket, hist.tickets);
+            n = SearchIntArray(hist.tickets, referenceTicket);
             if (n == -1)
                continue;
 
-            if (hist.magicNumbers[n]!=0) /*&&*/ if (!IntInArray(i, closeTrades))
+            if (hist.magicNumbers[n]!=0) /*&&*/ if (!IntInArray(closeTrades, i))
                ArrayPushInt(closeTrades, i);                            // referenceTicket gehört zur Sequenz, i ist also Schlußtrade
          }                                                              // Zeiger auf Schlußposition zwischenspeichern
       }
@@ -1820,7 +1820,7 @@ bool RestoreConfiguration() {
          keys[I_LOTSIZE_LEVEL_7] = 1;
       }
    }
-   if (IntInArray(0, keys))                       return(_false(catch("RestoreConfiguration(14)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(keys, 0))                       return(_false(catch("RestoreConfiguration(14)   one or more configuration values missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
    Sequence.ID = sequenceId;
 
    return(IsNoError(catch("RestoreConfiguration(15)")));

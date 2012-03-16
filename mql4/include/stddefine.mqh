@@ -622,7 +622,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    if (last_error == NO_ERROR) {
       if (IsExpert()) {                                              // nach Neuladen eines EA's Orderkontext ausdrücklich zurücksetzen
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
-         if (IntInArray(UninitializeReason(), reasons))
+         if (IntInArray(reasons, UninitializeReason()))
             OrderSelect(0, SELECT_BY_TICKET);
       }
    }
@@ -650,8 +650,10 @@ int onDeinit() {
    if (IsLastError())
       return(NO_ERROR);
 
-   if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE))    // Der Tester löscht beim Beenden offene Pending-Orders nicht.
-      last_error = stdlib_PeekLastError();
+   if (IsTesting()) {
+      if (!DeletePendingOrders(CLR_NONE))                            // Der Tester löscht beim Beenden offene Pending-Orders nicht.
+         last_error = stdlib_PeekLastError();
+   }
 
    return(last_error);
 }
@@ -1353,8 +1355,8 @@ int stack.selectedOrders[];                                          // @see Ord
  * @param  int    ticket          - Ticket
  * @param  string location        - Bezeichner für eine evt. Fehlermeldung
  * @param  bool   orderPush       - Ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein).
- * @param  bool   onErrorOrderPop - Ob *im Fehlerfall* der letzte Orderkontext wiederhergestellt werden soll (default: nein).
- *                                  Ist orderPush TRUE, wird dieser Parameter, wenn nicht anders angegeben, automatisch auf TRUE gesetzt.
+ * @param  bool   onErrorOrderPop - Ob *im Fehlerfall* der letzte Orderkontext wiederhergestellt werden soll (default: nein bei orderPush=FALSE, ja bei orderPush=TRUE).
+ *
  * @return bool - Erfolgsstatus
  *
  *  NOTE:

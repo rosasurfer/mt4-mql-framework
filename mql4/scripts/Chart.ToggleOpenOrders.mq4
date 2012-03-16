@@ -69,7 +69,7 @@ int onStart() {
    int sizeOfSections = GetPrivateProfileSectionNames(file, sections);
    //debug("onStart()   found "+ sizeOfSections +" sections = "+ StringsToStr(sections, NULL));
 
-   int index = ArraySearchString(account, sections);
+   int index = SearchStringArray(sections, account);
    int next  = index + 1;                                            // Zeiger auf nächsten Abschnitt setzen
 
    if (account!="") /*&&*/ if (index==-1)                            // Ist Status ON und der aktuelle Abschnitt existiert in der Konfiguration nicht,

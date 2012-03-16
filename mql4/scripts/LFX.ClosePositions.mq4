@@ -77,9 +77,9 @@ int onStart() {
          for (int n=0; n < sizeOfLabels; n++) {
             if (StringIStartsWith(OrderComment(), labels[n])) {
                string label = LFX.Currency(OrderMagicNumber()) +"."+ LFX.Counter(OrderMagicNumber());
-               if (!StringInArray(label, positions))
+               if (!StringInArray(positions, label))
                   ArrayPushString(positions, label);
-               if (!IntInArray(OrderTicket(), tickets))
+               if (!IntInArray(tickets, OrderTicket()))
                   ArrayPushInt(tickets, OrderTicket());
                break;
             }

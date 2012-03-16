@@ -114,7 +114,7 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
    if (last_error == NO_ERROR) {
       if (IsExpert()) {                                              // nach Neuladen eines EA's den Orderkontext der Library ausdrücklich zurücksetzen
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
-         if (IntInArray(uninitializeReason, reasons))
+         if (IntInArray(reasons, uninitializeReason))
             OrderSelect(0, SELECT_BY_TICKET);
       }
    }
@@ -1068,20 +1068,77 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
- * Fügt ein Element am Ende eines Double-Arrays an.
+ * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
  *
- * @param  double array[] - Double-Array
- * @param  double value   - hinzuzufügendes Element
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+int ArrayPopInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopInt()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   int popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+int ArrayShiftInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftInt()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   int shifted = array[0];
+
+   if (size > 1)
+      ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines Integer-Arrays an.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
-int ArrayPushDouble(double& array[], double value) {
+int ArrayPushInt(int& array[], int value) {
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
    array[size] = value;
 
    return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines Integer-Arrays an.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftInt(int array[], int value) {
+   ReverseIntArray(array);
+   int size = ArrayPushInt(array, value);
+   ReverseIntArray(array);
+   return(size);
 }
 
 
@@ -1127,14 +1184,14 @@ double ArrayShiftDouble(double array[]) {
 
 
 /**
- * Fügt ein Element am Ende eines Integer-Arrays an.
+ * Fügt ein Element am Ende eines Double-Arrays an.
  *
- * @param  int array[] - Integer-Array
- * @param  int value   - hinzuzufügendes Element
+ * @param  double array[] - Double-Array
+ * @param  double value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
-int ArrayPushInt(int& array[], int value) {
+int ArrayPushDouble(double& array[], double value) {
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
@@ -1145,61 +1202,18 @@ int ArrayPushInt(int& array[], int value) {
 
 
 /**
- * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
+ * Fügt ein Element am Beginn eines Double-Arrays an.
  *
- * @param  int array[] - Integer-Array
- *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-int ArrayPopInt(int array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayPopInt()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   int popped = array[size-1];
-   ArrayResize(array, size-1);
-
-   return(popped);
-}
-
-
-/**
- * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
- *
- * @param  int array[] - Integer-Array
- *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-int ArrayShiftInt(int array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayShiftInt()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   int shifted = array[0];
-
-   if (size > 1)
-      ArrayCopy(array, array, 0, 1);
-   ArrayResize(array, size-1);
-
-   return(shifted);
-}
-
-
-/**
- * Fügt ein Element am Ende eines String-Arrays an.
- *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  double array[] - Double-Array
+ * @param  double value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays
  */
-int ArrayPushString(string& array[], string value) {
-   int size = ArraySize(array);
-
-   ArrayResize(array, size+1);
-   array[size] = value;
-
-   return(size+1);
+int ArrayUnshiftDouble(double array[], double value) {
+   ReverseDoubleArray(array);
+   int size = ArrayPushDouble(array, value);
+   ReverseDoubleArray(array);
+   return(size);
 }
 
 
@@ -1241,6 +1255,40 @@ string ArrayShiftString(string array[]) {
    ArrayResize(array, size-1);
 
    return(shifted);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines String-Arrays an.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushString(string& array[], string value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines String-Arrays an.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftString(string array[], string value) {
+   ReverseStringArray(array);
+   int size = ArrayPushString(array, value);
+   ReverseStringArray(array);
+   return(size);
 }
 
 
@@ -7170,14 +7218,14 @@ string StringsToStr(string values[], string separator=", ") {
 /**
  * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
  *
- * @param  int needle     - zu suchender Wert
  * @param  int haystack[] - zu durchsuchendes Array
+ * @param  int needle     - zu suchender Wert
  *
- * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
-int ArraySearchInt(int needle, int &haystack[]) {
+int SearchIntArray(int haystack[], int needle) {
    if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("ArraySearchInt()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_int(-1, catch("SearchIntArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(haystack);
 
@@ -7192,27 +7240,27 @@ int ArraySearchInt(int needle, int &haystack[]) {
 /**
  * Prüft, ob ein Integer in einem Array enthalten ist.
  *
- * @param  int needle     - zu suchender Wert
  * @param  int haystack[] - zu durchsuchendes Array
+ * @param  int needle     - zu suchender Wert
  *
  * @return bool
  */
-bool IntInArray(int needle, int &haystack[]) {
-   return(ArraySearchInt(needle, haystack) > -1);
+bool IntInArray(int haystack[], int needle) {
+   return(SearchIntArray(haystack, needle) > -1);
 }
 
 
 /**
  * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
  *
- * @param  double needle     - zu suchender Wert
  * @param  double haystack[] - zu durchsuchendes Array
+ * @param  double needle     - zu suchender Wert
  *
- * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
-int ArraySearchDouble(double needle, double &haystack[]) {
+int SearchDoubleArray(double haystack[], double needle) {
    if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("ArraySearchDouble()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_int(-1, catch("SearchDoubleArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(haystack);
 
@@ -7227,27 +7275,27 @@ int ArraySearchDouble(double needle, double &haystack[]) {
 /**
  * Prüft, ob ein Double in einem Array enthalten ist.
  *
- * @param  double needle     - zu suchender Wert
  * @param  double haystack[] - zu durchsuchendes Array
+ * @param  double needle     - zu suchender Wert
  *
  * @return bool
  */
-bool DoubleInArray(double needle, double &haystack[]) {
-   return(ArraySearchDouble(needle, haystack) > -1);
+bool DoubleInArray(double haystack[], double needle) {
+   return(SearchDoubleArray(haystack, needle) > -1);
 }
 
 
 /**
  * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück.
  *
- * @param  string needle     - zu suchender Wert
  * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
  *
- * @return int - Index des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
  */
-int ArraySearchString(string needle, string &haystack[]) {
+int SearchStringArray(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("ArraySearchString()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_int(-1, catch("SearchStringArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(haystack);
 
@@ -7262,13 +7310,13 @@ int ArraySearchString(string needle, string &haystack[]) {
 /**
  * Prüft, ob ein String in einem Array enthalten ist.
  *
- * @param  string needle     - zu suchender Wert
  * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
  *
  * @return bool
  */
-bool StringInArray(string needle, string &haystack[]) {
-   return(ArraySearchString(needle, haystack) > -1);
+bool StringInArray(string haystack[], string needle) {
+   return(SearchStringArray(haystack, needle) > -1);
 }
 
 
@@ -9158,7 +9206,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    for (i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(ticketsCopy[i], "OrderMultiClose(8)", NULL, O_POP))
          return(false);
-      int symbolIndex = ArraySearchString(OrderSymbol(), symbols);
+      int symbolIndex = SearchStringArray(symbols, OrderSymbol());
       if (symbolIndex == -1)
          symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
       ticketSymbols[i] = symbolIndex;

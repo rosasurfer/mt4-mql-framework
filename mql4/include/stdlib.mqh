@@ -32,10 +32,6 @@
 
 
    // Arrays
-   int      ArrayPushInt(int array[], int value);
-   int      ArrayPushDouble(double array[], double value);
-   int      ArrayPushString(string array[], string value);
-
    int      ArrayPopInt(int array[]);
    double   ArrayPopDouble(double array[]);
    string   ArrayPopString(string array[]);
@@ -44,13 +40,21 @@
    double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
 
-   bool     IntInArray(int needle, int haystack[]);
-   bool     DoubleInArray(double needle, double haystack[]);
-   bool     StringInArray(string needle, string haystack[]);
+   int      ArrayPushInt(int array[], int value);
+   int      ArrayPushDouble(double array[], double value);
+   int      ArrayPushString(string array[], string value);
 
-   int      ArraySearchInt(int needle, int haystack[]);
-   int      ArraySearchDouble(double needle, double haystack[]);
-   int      ArraySearchString(string needle, string haystack[]);
+   int      ArrayUnshiftInt(int array[], int value);
+   int      ArrayUnshiftDouble(double array[], double value);
+   int      ArrayUnshiftString(string array[], string value);
+
+   bool     IntInArray(int haystack[], int needle);
+   bool     DoubleInArray(double haystack[], double needle);
+   bool     StringInArray(string haystack[], string needle);
+
+   int      SearchIntArray(int haystack[], int needle);
+   int      SearchDoubleArray(double haystack[], double needle);
+   int      SearchStringArray(string haystack[], string needle);
 
    bool     ReverseIntArray(int array[]);
    bool     ReverseDoubleArray(double array[]);
