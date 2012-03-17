@@ -8436,7 +8436,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    // expires
    if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // -- Ende Parametervalidierung --
 
    int    ticket, time1, time2, firstTime1, requotes;
@@ -8907,7 +8907,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
 /**
  * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  int    ticket      - Ticket-Nr. der zu schließenden Position
+ * @param  int    ticket      - Ticket der zu schließenden Position
  * @param  double lots        - zu schließendes Volumen in Lots         (default: komplette Position)
  * @param  double price       - Preis                                   (wird ignoriert             )
  * @param  double slippage    - akzeptable Slippage in Pips             (default: 0                 )
@@ -8919,29 +8919,29 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseEx(1)", O_PUSH)) return(false);
-   if (OrderCloseTime() != 0)                                    return(_false(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
-   if (OrderType() > OP_SELL)                                    return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+   if (OrderCloseTime() != 0)                                   return(_false(catch("OrderCloseEx(2)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
+   if (OrderType() > OP_SELL)                                   return(_false(catch("OrderCloseEx(3)   ticket #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    // lots
    int    digits  = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot  = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                                           return(_false(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP)));
+   if (IsError(error))                                          return(_false(catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP)));
    if (EQ(lots, 0)) {
       lots = OrderLots();
    }
    else if (NE(lots, OrderLots())) {
-      if (LT(lots, minLot))                                      return(_false(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
-      if (GT(lots, OrderLots()))                                 return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
-      if (NE(MathModFix(lots, lotStep), 0))                      return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      if (LT(lots, minLot))                                     return(_false(catch("OrderCloseEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      if (GT(lots, OrderLots()))                                return(_false(catch("OrderCloseEx(6)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(OrderLots(), ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      if (NE(MathModFix(lots, lotStep), 0))                     return(_false(catch("OrderCloseEx(7)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                             return(_false(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (LT(price, 0))                                            return(_false(catch("OrderCloseEx(8)   illegal parameter price: "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // slippage
-   if (LT(slippage, 0))                                          return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (LT(slippage, 0))                                         return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
@@ -9055,11 +9055,11 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
 /**
  * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab, behandelt sie entsprechend und
- * gibt ggf. die Ticket-Nr. einer resultierenden Restposition zurück.
+ * gibt ggf. das Ticket einer resultierenden Restposition zurück.
  *
- * @param  int   ticket      - Ticket-Nr. der zu schließenden Position
- * @param  int   opposite    - Ticket-Nr. der entgegengesetzten zu schließenden Position
- * @param  int   remainder[] - Array zur Aufnahme der Ticket-Nr. einer resultierenden Restposition (wenn zutreffend)
+ * @param  int   ticket      - Ticket der zu schließenden Position
+ * @param  int   opposite    - Ticket der entgegengesetzten zu schließenden Position
+ * @param  int   remainder[] - Array zur Aufnahme des Tickets einer resultierenden Restposition (wenn zutreffend)
  * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
  *
  * @return bool - Erfolgsstatus
@@ -9084,7 +9084,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
    if (ticketType != oppositeType ^ 1)                             return(_false(catch("OrderCloseByEx(7)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET, O_POP)));
    if (symbol != OrderSymbol())                                    return(_false(catch("OrderCloseByEx(8)   ticket #"+ opposite +" is not an opposite ticket to ticket #"+ ticket, ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')     return(_false(catch("OrderCloseByEx(9)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')     return(_false(catch("OrderCloseByEx(9)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
    // Tradereihenfolge analysieren und hedgende Order definieren
@@ -9163,7 +9163,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * Schließt mehrere offene Positionen auf die effektivste Art und Weise. Mehrere offene Positionen im selben Instrument werden zuerst flat gestellt (ggf. mit Hedgeposition),
  * die Berechnung doppelter Spreads wird dadurch verhindert.
  *
- * @param  int    tickets[]   - Ticket-Nr. der zu schließenden Positionen
+ * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default:           0)
  * @param  color  markerColor - Farbe des Chart-Markers          (default: kein Marker)
  *
@@ -9185,7 +9185,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    // slippage
    if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
 
@@ -9278,8 +9278,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 /**
  * Gleicht die Gesamtposition der Tickets eines Symbols aus.
  *
- * @param  int    tickets[]   - Ticket-Nr. der zu hedgenden Positionen
- * @param  int&   hedgeTicket - Zeiger auf Variable zur Aufnahme der Ticket-Nr. der resultierenden Hedge-Position
+ * @param  int    tickets[]   - Tickets der zu hedgenden Positionen
+ * @param  int&   hedgeTicket - Zeiger auf Variable zur Aufnahme des Tickets der resultierenden Hedge-Position
  * @param  double slippage    - akzeptable Slippage in Pip (default: 0)
  *
  * @return bool - Erfolgsstatus
@@ -9322,7 +9322,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 /**
  * Schließt die einzelnen, gehedgten Teilpositionen eines Symbols per OrderCloseBy().
  *
- * @param  int   tickets[]   - Ticket-Nr. der gehedgten Positionen
+ * @param  int   tickets[]   - Tickets der gehedgten Positionen
  * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
  *
  * @return bool - Erfolgsstatus
@@ -9431,7 +9431,7 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
 /**
  * Drop-in-Ersatz für und erweiterte Version von OrderDelete(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  int   ticket      - Ticket-Nr. der zu schließenden Order
+ * @param  int   ticket      - Ticket der zu schließenden Order
  * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
  *
  * @return bool - Erfolgsstatus
@@ -9443,7 +9443,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
    if (!IsPendingTradeOperation(OrderType()))                    return(_false(catch("OrderDeleteEx(2)   ticket #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP)));
    if (OrderCloseTime() != 0)                                    return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = "+ markerColor, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);                 // für OrderDeleteEx.LogMessage() und OrderDeleteEx.ChartMarker()
