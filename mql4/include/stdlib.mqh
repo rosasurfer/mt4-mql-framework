@@ -40,6 +40,10 @@
    double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
 
+   int      ArrayDropInt(int array[], int value);
+   int      ArrayDropDouble(double array[], double value);
+   int      ArrayDropString(string array[], string value);
+
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushDouble(double array[], double value);
    int      ArrayPushString(string array[], string value);

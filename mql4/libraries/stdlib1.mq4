@@ -1109,6 +1109,31 @@ int ArrayShiftInt(int array[]) {
 
 
 /**
+ * Entfernt alle Vorkommen eines Elements aus einem Integer-Array.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropInt(int array[], int value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (array[i] == value) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
  * Fügt ein Element am Ende eines Integer-Arrays an.
  *
  * @param  int array[] - Integer-Array
@@ -1184,6 +1209,31 @@ double ArrayShiftDouble(double array[]) {
 
 
 /**
+ * Entfernt alle Vorkommen eines Elements aus einem Double-Array.
+ *
+ * @param  double array[] - Double-Array
+ * @param  double value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropDouble(double array[], double value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (EQ(array[i], value)) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
  * Fügt ein Element am Ende eines Double-Arrays an.
  *
  * @param  double array[] - Double-Array
@@ -1255,6 +1305,33 @@ string ArrayShiftString(string array[]) {
    ArrayResize(array, size-1);
 
    return(shifted);
+}
+
+
+/**
+ * Entfernt alle Vorkommen eines Elements aus einem String-Array.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropString(string array[], string value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   // TODO: nicht initialisierten String verarbeiten (NULL-Pointer)
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (array[i] == value) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
 }
 
 
