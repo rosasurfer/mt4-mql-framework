@@ -8263,7 +8263,7 @@ double MathRoundFix(double number, int decimals) {
  *
  * @param  double number - Zahl
  *
- * @return int - Vorzeichen (-1, 0, +1)
+ * @return int - Vorzeichen (+1, 0, -1)
  */
 int MathSign(double number) {
    if (GT(number, 0)) return( 1);
@@ -8715,10 +8715,8 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
    // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label1) == 0) {
-      if (ObjectType(label1) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label1);                            // löschen
-         else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);   // korrigieren
-      }
+      if (markerColor == CLR_NONE) ObjectDelete(label1);                               // löschen
+      else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
@@ -8731,18 +8729,249 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
    // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(stopLoss, 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
-      if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_ARROW)
+      if (ObjectFind(label2) == 0)
          ObjectDelete(label2);
    }
 
    // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(takeProfit, 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
-      if (ObjectFind(label3)==0) /*&&*/ if (ObjectType(label3)==OBJ_ARROW)
+      if (ObjectFind(label3) == 0)
          ObjectDelete(label3);
    }
 
    return(IsNoError(catch("ChartMarker.OrderSent_B()")));
+}
+
+
+/**
+ * Drop-in-Ersatz für und erweiterte Version von OrderModify(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ *
+ * @param  int      ticket      - zu änderndes Ticket
+ * @param  double   openPrice   - OpenPrice (nur bei Pending-Orders)
+ * @param  double   stopLoss    - StopLoss-Level
+ * @param  double   takeProfit  - TakeProfit-Level
+ * @param  datetime expires     - Gültigkeit (nur bei Pending-Orders)
+ * @param  color    markerColor - Farbe des Chart-Markers (default: kein Marker)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor=CLR_NONE) {
+   // -- Beginn Parametervalidierung --
+   // ticket
+   if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(false);
+   if (!IsTradeOperation(OrderType()))                           return(_false(catch("OrderModifyEx(2)   #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP)));
+   if (OrderCloseTime() != 0)                                    return(_false(catch("OrderModifyEx(3)   ticket #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
+   int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int error = GetLastError();
+   if (IsError(error))                                           return(_false(catch("OrderModifyEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP)));
+   // openPrice
+   openPrice = NormalizeDouble(openPrice, digits);
+   if (LE(openPrice, 0))                                         return(_false(catch("OrderModifyEx(5)   illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (NE(openPrice, OrderOpenPrice())) {
+      if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(6)   cannot modify open price of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      // TODO: Bid/Ask <=> openPrice prüfen
+      // TODO: StopDistance(openPrice) prüfen
+   }
+   // stopLoss
+   stopLoss = NormalizeDouble(stopLoss, digits);
+   if (LT(stopLoss, 0))                                          return(_false(catch("OrderModifyEx(7)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (NE(stopLoss, OrderStopLoss())) {
+      // TODO: Bid/Ask <=> stopLoss prüfen
+      // TODO: StopDistance(stopLoss) prüfen
+   }
+   // takeProfit
+   takeProfit = NormalizeDouble(takeProfit, digits);
+   if (LT(takeProfit, 0))                                        return(_false(catch("OrderModifyEx(8)   illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (NE(takeProfit, OrderTakeProfit())) {
+      // TODO: Bid/Ask <=> takeProfit prüfen
+      // TODO: StopDistance(takeProfit) prüfen
+   }
+   // expires
+   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (expires != OrderExpiration())
+      if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   // markerColor
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   // -- Ende Parametervalidierung --
+
+   double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
+
+   int time1, time2;
+
+   // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
+   while (!IsStopped()) {
+      error = NO_ERROR;
+
+      if (IsTradeContextBusy()) {
+         log("OrderModifyEx()   trade context busy, retrying...");
+         Sleep(300);                                                    // 0.3 Sekunden warten
+      }
+      else {
+         if (time1 == 0)
+            time1 = GetTickCount();                                     // Zeit der ersten Ausführung
+
+         bool success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
+         time2 = GetTickCount();
+
+         if (success) {                                                 // TODO: WaitForChanges() implementieren
+            WaitForTicket(ticket, false);
+                                                                        // TODO: OrderModifyEx.LogMessage() implementieren
+            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));
+
+            if (!IsTesting())
+               PlaySound("RFQ.wav");
+
+            if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
+               return(_false(OrderPop("OrderModifyEx(12)")));
+
+            return(IsNoError(catch("OrderModifyEx(13)", NULL, O_POP))); // regular exit
+         }
+         error = GetLastError();
+         if (IsNoError(error))
+            error = ERR_RUNTIME_ERROR;
+         if (!IsTemporaryTradeError(error))                             // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+            break;
+
+         string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::OrderModifyEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
+         Alert(message);                                                // nach Fertigstellung durch log() ersetzen
+         if (IsTesting()) {
+            ForceSound("alert.wav");
+            ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
+         }
+      }
+   }
+
+   return(_false(catch("OrderModifyEx(14)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Modifizieren einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muß während der Ausführung selektierbar sein.
+ *
+ * @param  int      ticket        - Ticket
+ * @param  int      digits        - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor   - Farbe des Chartmarkers
+ * @param  datetime modifyTime    - OrderModifyTime
+ * @param  double   oldOpenPrice  - ursprünglicher OrderOpenPrice
+ * @param  double   oldStopLoss   - ursprünglicher StopLoss
+ * @param  double   oldTakeProfit - ursprünglicher TakeProfit
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
+ */
+bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
+      return(false);
+
+   bool result = ChartMarker.OrderModified_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), modifyTime, oldOpenPrice, OrderOpenPrice(), oldStopLoss, OrderStopLoss(), oldTakeprofit, OrderTakeProfit(), OrderComment());
+
+   return(ifBool(OrderPop("ChartMarker.OrderModified_A(2)"), result, false));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Modifizieren einer Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ *
+ * @param  int      ticket        - Ticket
+ * @param  int      digits        - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor   - Farbe des Chartmarkers
+ * @param  int      type          - Ordertyp
+ * @param  double   lots          - Lotsize
+ * @param  string   symbol        - OrderSymbol
+ * @param  datetime openTime      - OrderOpenTime
+ * @param  datetime modifyTime    - OrderModifyTime
+ * @param  double   oldOpenPrice  - ursprünglicher OrderOpenPrice
+ * @param  double   openPrice     - aktueller OrderOpenPrice
+ * @param  double   oldStopLoss   - ursprünglicher StopLoss
+ * @param  double   stopLoss      - aktueller StopLoss
+ * @param  double   oldTakeProfit - ursprünglicher TakeProfit
+ * @param  double   takeProfit    - aktueller TakeProfit
+ * @param  string   comment       - OrderComment
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
+ */
+bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
+   bool openModified = NE(openPrice,  oldOpenPrice );
+   bool slModified   = NE(stopLoss,   oldStopLoss  );
+   bool tpModified   = NE(takeProfit, oldTakeProfit);
+
+   static string label, types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
+
+   // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
+   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ");
+   if (openModified) {
+      label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // alten Open-Marker löschen
+      label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime-60*SECONDS));
+      if (ObjectFind(label) == 0)                                                      // #1 buy stop modified 2012.03.12 03:06
+         ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der vorherigen Minute liegt
+      label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der aktuellen Minute liegt
+   }
+   label = StringConcatenate(label1, DoubleToStr(openPrice, digits));
+   if (ObjectFind(label) == 0) {
+      if (markerColor == CLR_NONE) ObjectDelete(label);                                // neuen Open-Marker löschen
+      else {
+         if (openModified)
+            ObjectSet(label, OBJPROP_TIME1, modifyTime);
+         ObjectSet(label, OBJPROP_COLOR, markerColor);                                 // neuen Open-Marker korrigieren
+      }
+   }
+   else if (markerColor != CLR_NONE) {                                                 // neuen Open-Marker setzen
+      if (ObjectCreate(label, OBJ_ARROW, 0, ifInt(openModified, modifyTime, openTime), openPrice)) {
+         ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label, OBJPROP_COLOR    , markerColor     );
+         ObjectSetText(label, comment);
+      }
+   }
+
+   // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
+   if (NE(oldStopLoss, 0)) {
+      label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " stop loss at ", DoubleToStr(oldStopLoss, digits));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // alten löschen
+   }
+   if (slModified) {                                                                   // #1 sl modified 2012.03.12 03:06
+      label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime-60*SECONDS));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
+      label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
+   }
+
+   // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
+   if (NE(oldTakeProfit, 0)) {
+      label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " take profit at ", DoubleToStr(oldTakeProfit, digits));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // alten löschen
+   }
+   if (tpModified) {                                                                   // #1 tp modified 2012.03.12 03:06
+      label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime-60*SECONDS));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
+      label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
+   }
+
+   return(IsNoError(catch("ChartMarker.OrderModified_B()")));
 }
 
 
@@ -8800,28 +9029,24 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
 
    // OrderOpen-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[pendingType], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(pendingPrice, digits));
-   if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+   if (ObjectFind(label1) == 0)
       ObjectDelete(label1);
 
    // Trendlinie: immer löschen                                                        // "#1 1.52904 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(pendingPrice, digits), " -> ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label2)==0) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+   if (ObjectFind(label2) == 0)
       ObjectDelete(label2);
 
    // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label3) == 0) {
-      if (ObjectType(label3) == OBJ_ARROW)
+   if (ObjectFind(label3) == 0)
          ObjectDelete(label3);                                                         // löschen
-   }
 
    // neuen OrderFill-Marker: setzen, korrigieren oder löschen                         // "#1 buy 0.10 GBPUSD at 1.52904"
    string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongTradeOperation(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label4) == 0) {
-      if (ObjectType(label4) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label4);                            // löschen
-         else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);   // korrigieren
-      }
+      if (markerColor == CLR_NONE) ObjectDelete(label4);                               // löschen
+      else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label4, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
@@ -8884,14 +9109,14 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+      if (ObjectFind(label1) == 0)
          ObjectDelete(label1);                                                         // löschen
    }
 
    // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label2) == 0) {
-      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+      if (markerColor == CLR_NONE)
          ObjectDelete(label2);                                                         // löschen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
@@ -8906,10 +9131,8 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label3) == 0) {
-      if (ObjectType(label3) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
-         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
-      }
+      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
+      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label3, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
@@ -8924,40 +9147,72 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
 
 /**
  * Korrigiert die vom Terminal beim Löschen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket muß während der Ausführung selektierbar sein.
  *
  * @param  int   ticket      - Ticket
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
  * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
-/*private*/ bool ChartMarker.OrderDeleted(int ticket, int digits, color markerColor) {
+bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(true);
+
+   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
+      return(false);
+
+   bool result = ChartMarker.OrderDeleted_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
+
+   return(ifBool(OrderPop("ChartMarker.OrderDeleted_A(2)"), result, false));
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Löschen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ * Das Ticket braucht während der Ausführung nicht selektierbar zu sein.
+ *
+ * @param  int      ticket      - Ticket
+ * @param  int      digits      - Nachkommastellen des Ordersymbols
+ * @param  color    markerColor - Farbe des Chartmarkers
+ * @param  int      type        - Ordertyp
+ * @param  double   lots        - Lotsize
+ * @param  string   symbol      - OrderSymbol
+ * @param  datetime openTime    - OrderOpenTime
+ * @param  double   openPrice   - OrderOpenPrice
+ * @param  datetime closeTime   - OrderCloseTime
+ * @param  double   closePrice  - OrderClosePrice
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @see ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
+ */
+bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderDeleted(1)"))
-      return(false);
-
    // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904"
-   string label1 = StringConcatenate("#", ticket, " ", types[OrderType()], " ", DoubleToStr(OrderLots(), 2), " ", OrderSymbol(), " at ", DoubleToStr(OrderOpenPrice(), digits));
+   string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1)==0) /*&&*/ if (ObjectType(label1)==OBJ_ARROW)
+      if (ObjectFind(label1) == 0)
          ObjectDelete(label1);
    }
 
    // Trendlinie: setzen oder löschen                                                  // "#1 delete"
    string label2 = StringConcatenate("#", ticket, " delete");
    if (ObjectFind(label2) == 0) {
-      if (markerColor==CLR_NONE) /*&&*/ if (ObjectType(label2)==OBJ_TREND)
+      if (markerColor == CLR_NONE)
          ObjectDelete(label2);                                                         // löschen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
-      if (ObjectCreate(label2, OBJ_TREND, 0, OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice())) {
+      if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
          ObjectSet(label2, OBJPROP_RAY  , false    );
          ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongTradeOperation(OrderType()), Blue, Red));
+         ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongTradeOperation(type), Blue, Red));
          ObjectSet(label2, OBJPROP_BACK , true);
       }
    }
@@ -8965,19 +9220,17 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    // OrderClose-Marker: setzen, korrigieren oder löschen                              // "#1 buy stop 0.10 GBPUSD at 1.52904 deleted"
    string label3 = StringConcatenate(label1, " deleted");
    if (ObjectFind(label3) == 0) {
-      if (ObjectType(label3) == OBJ_ARROW) {
-         if (markerColor == CLR_NONE) ObjectDelete(label3);                            // löschen
-         else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);   // korrigieren
-      }
+      if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
+      else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
-      if (ObjectCreate(label3, OBJ_ARROW, 0, OrderCloseTime(), OrderClosePrice())) {   // setzen
+      if (ObjectCreate(label3, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
          ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet(label3, OBJPROP_COLOR    , markerColor      );
       }
    }
 
-   return(IsNoError(catch("ChartMarker.OrderDeleted(2)")));
+   return(IsNoError(catch("ChartMarker.OrderDeleted_B()")));
 }
 
 
@@ -9551,7 +9804,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
-            if (!ChartMarker.OrderDeleted(ticket, digits, markerColor))
+            if (!ChartMarker.OrderDeleted_A(ticket, digits, markerColor))
                return(_false(OrderPop("OrderDeleteEx(6)")));
 
             return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit

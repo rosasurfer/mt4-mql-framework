@@ -301,6 +301,7 @@
    int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor);
    bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
+   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor);
    bool     OrderDeleteEx(int ticket, color markerColor);
    bool     DeletePendingOrders(color markerColor);
@@ -312,8 +313,12 @@
 
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);
+   bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);
+   bool     ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
    bool     ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
    bool     ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment);
+   bool     ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit);
+   bool     ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment);
    bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
 
