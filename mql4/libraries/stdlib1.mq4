@@ -4725,7 +4725,7 @@ bool EventListener.AccountChange(int results[], int flags=0) {
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
 int Explode(string object, string separator, string& results[], int limit=NULL) {
-   // Der Parameter object *KANN* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // Der Parameter object *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
    // vor Modifikation von results[] eine Kopie von object und verwenden diese.
    string _object = StringConcatenate(object, "");
 
