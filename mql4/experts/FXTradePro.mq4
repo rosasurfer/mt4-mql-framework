@@ -1117,8 +1117,8 @@ bool UpdateProfitLoss() {
    // (1) aktuellen TickValue für P/L-Berechnung bestimmen           !!! TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein statt jedes Mal notwendig
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
-   if (IsError(error) || tickValue < 0.1)                            // ERR_INVALID_MARKETINFO abfangen
-      return(_false(catch("UpdateProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKETINFO))));
+   if (IsError(error) || tickValue < 0.1)                            // ERR_INVALID_MARKET_DATA abfangen
+      return(_false(catch("UpdateProfitLoss(1)   TickValue = "+ NumberToStr(tickValue, ".+"), ifInt(IsError(error), error, ERR_INVALID_MARKET_DATA))));
 
 
    // (2) Profit/Loss der Level mit offenen Positionen neu berechnen

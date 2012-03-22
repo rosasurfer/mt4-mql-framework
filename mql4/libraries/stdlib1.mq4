@@ -103,7 +103,7 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
       catch("stdlib_onInit(1)", error);
    }
    else if (TickSize < 0.00000001) {
-      catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO);
+      catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA);
    }
 
    if (last_error == NO_ERROR) {
@@ -5679,7 +5679,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                         ); // 5003
       case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                        ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5005
-      case ERR_INVALID_MARKETINFO         : return("invalid MarketInfo() data"                                     ); // 5006
+      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                           ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
       case ERR_CANCELLED_BY_USER          : return("cancelled by user intervention"                                ); // 5008
       case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("illegal input parameter value"                                 ); // 5009
@@ -5816,7 +5816,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
       case ERR_TERMINAL_NOT_YET_READY     : return("ERR_TERMINAL_NOT_YET_READY"     ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
-      case ERR_INVALID_MARKETINFO         : return("ERR_INVALID_MARKETINFO"         ); // 5006
+      case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
       case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("ERR_ILLEGAL_INPUT_PARAMVALUE"   ); // 5009

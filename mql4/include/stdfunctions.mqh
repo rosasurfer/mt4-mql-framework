@@ -527,7 +527,7 @@
 #define ERR_INVALID_CONFIG_PARAMVALUE                5003   // invalid configuration parameter value
 #define ERR_TERMINAL_NOT_YET_READY                   5004   // terminal not yet ready
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
-#define ERR_INVALID_MARKETINFO                       5006   // invalid MarketInfo() data
+#define ERR_INVALID_MARKET_DATA                      5006   // invalid market data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
 #define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user intervention
 #define ERR_ILLEGAL_INPUT_PARAMVALUE                 5009
@@ -608,7 +608,7 @@ int onInit(int scriptType, int initFlags=NULL) {
          last_error = ERR_TERMINAL_NOT_YET_READY;                    // (das Symbol kann später evt. noch "auftauchen")
       }
       else if (IsError(error))        return(catch("onInit(1)", error));
-      else if (TickSize < 0.00000001) return(catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKETINFO));
+      else if (TickSize < 0.00000001) return(catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
    }
 
    if (last_error == NO_ERROR) {
@@ -1491,7 +1491,7 @@ double PipValue(double lots = 1.0) {
    int error = GetLastError();
 
    if (IsError(error))         return(_ZERO(catch("PipValue(3)", error)));
-   if (tickValue < 0.00000001) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKETINFO)));
+   if (tickValue < 0.00000001) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
 
    return(Pip/TickSize * tickValue * lots);
 }

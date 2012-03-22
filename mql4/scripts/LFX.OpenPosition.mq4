@@ -150,7 +150,7 @@ int onStart() {
       if (error != NO_ERROR)
          return(catch("onStart(1)   \""+ symbols[i] +"\"", error));
 
-      // auf ERR_INVALID_MARKETINFO prüfen
+      // auf ERR_INVALID_MARKET_DATA prüfen
       string errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 150)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = StringConcatenate("TickSize(\"" , symbols[i], "\") = ", NumberToStr(tickSize , ".+"));
@@ -159,7 +159,7 @@ int onStart() {
       else if (LT(maxLot, 50)                             ) errorMsg = StringConcatenate("MaxLot(\""   , symbols[i], "\") = ", NumberToStr(maxLot   , ".+"));
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = StringConcatenate("LotStep(\""  , symbols[i], "\") = ", NumberToStr(lotStep  , ".+"));
 
-      // ERR_INVALID_MARKETINFO behandeln
+      // ERR_INVALID_MARKET_DATA behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                                       // 3 stille Versuche, korrekte Werte zu lesen
             Sleep(200);
