@@ -220,11 +220,12 @@ int onStart() {
       double   tp          = NULL;
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
+      int      execution[] = {0,0,0,0};
 
       if (IsError(stdlib_PeekLastError())) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (IsError(catch("onStart(6)")))    return(last_error);
 
-      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor);
+      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, execution);
       if (tickets[i] == -1)
          return(SetLastError(stdlib_PeekLastError()));
    }

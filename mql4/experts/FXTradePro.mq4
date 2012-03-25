@@ -1039,7 +1039,8 @@ bool FinishSequence() {
    }
 
    // Tickets schlieﬂen
-   if (!OrderMultiClose(tickets, 0.5, CLR_NONE))
+   int execution[] = {0,0,0,0};
+   if (!OrderMultiClose(tickets, 0.5, CLR_NONE, execution))
       return(_false(SetLastError(stdlib_PeekLastError()), catch("FinishSequence(2)")));
 
    // Sequenz neu einlesen
@@ -1071,8 +1072,9 @@ int OpenPosition(int type, double lotsize) {
    int    magicNumber = CreateMagicNumber();
    string comment     = StringConcatenate("FTP.", sequenceId, ".", progressionLevel);
    double slippage    = 0.5;
+   int    execution[] = {0,0,0,0};
 
-   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, CLR_NONE);
+   int ticket = OrderSendEx(Symbol(), type, lotsize, NULL, slippage, NULL, NULL, comment, magicNumber, NULL, CLR_NONE, execution);
    if (ticket == -1)
       SetLastError(stdlib_PeekLastError());
 

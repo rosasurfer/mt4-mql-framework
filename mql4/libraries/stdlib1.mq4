@@ -8457,21 +8457,22 @@ string NumberToStr(double number, string mask) {
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  string   symbol      - Symbol des Instruments          (default: aktuelles Instrument)
+ * @param  string   symbol      - Symbol des Instruments              (default: aktuelles Instrument)
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
  * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei pending Orders)
- * @param  double   slippage    - akzeptable Slippage in Pips     (default: 0          )
- * @param  double   stopLoss    - StopLoss-Level                  (default: -kein-     )
- * @param  double   takeProfit  - TakeProfit-Level                (default: -kein-     )
- * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: -kein-     )
- * @param  int      magicNumber - MagicNumber                     (default: 0          )
- * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
- * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
+ * @param  double   slippage    - akzeptable Slippage in Pips         (default: 0          )
+ * @param  double   stopLoss    - StopLoss-Level                      (default: -kein-     )
+ * @param  double   takeProfit  - TakeProfit-Level                    (default: -kein-     )
+ * @param  string   comment     - Orderkommentar, max. 27 Zeichen     (default: -kein-     )
+ * @param  int      magicNumber - MagicNumber                         (default: 0          )
+ * @param  datetime expires     - Gültigkeit der Order                (default: GTC        )
+ * @param  color    markerColor - Farbe des Chartmarkers              (default: kein Marker)
+ * @param  int      execution[] - ausführungspezifische Daten
  *
  * @return int - Ticket oder -1, falls ein Fehler auftrat
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, double slippage=0, double stopLoss=0, double takeProfit=0, string comment="", int magicNumber=0, datetime expires=0, color markerColor=CLR_NONE) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor/*=CLR_NONE*/, int& execution[]) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")      // = NULL
@@ -8514,6 +8515,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
    if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   // execution
+   if (ArraySize(execution) < 4)
+      ArrayResize(execution, 4);
    // -- Ende Parametervalidierung --
 
    int    ticket, time1, time2, firstTime1, requotes;
@@ -8562,6 +8566,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price=0, d
             OrderPush("OrderSendEx(17)");
             WaitForTicket(ticket, false);
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
+
+            execution[EXEC_TIME    ] = time2-firstTime1;                                  // in Millisekunden
+            execution[EXEC_REQUOTES] = requotes;                                          // Anzahl
+               if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - price;
+               else if (OrderType() == OP_SELL) slippage = price - OrderOpenPrice();
+               else                             slippage = 0;
+            execution[EXEC_SLIPPAGE] = NormalizeDouble(slippage/pips*10, pipDigits+1);    // in Subpips
 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
@@ -8753,10 +8764,11 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   takeProfit  - TakeProfit-Level
  * @param  datetime expires     - Gültigkeit (nur bei Pending-Orders)
  * @param  color    markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  int      execution[] - ausführungspezifische Daten
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor=CLR_NONE) {
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor/*=CLR_NONE*/, int& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(false);
@@ -8795,6 +8807,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   // execution
+   if (ArraySize(execution) < 4)
+      ArrayResize(execution, 4);
    // -- Ende Parametervalidierung --
 
    double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
@@ -8816,10 +8831,13 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          bool success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
          time2 = GetTickCount();
 
-         if (success) {                                                 // TODO: WaitForChanges() implementieren
-            WaitForTicket(ticket, false);
-                                                                        // TODO: OrderModifyEx.LogMessage() implementieren
-            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));
+         if (success) {
+            WaitForTicket(ticket, false);                               // TODO: WaitForChanges() implementieren
+            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
+
+            execution[EXEC_TIME    ] = time2-time1;                     // in Millisekunden
+            execution[EXEC_REQUOTES] = 0;
+            execution[EXEC_SLIPPAGE] = 0;
 
             if (!IsTesting())
                PlaySound("RFQ.wav");
@@ -9238,14 +9256,15 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
  * @param  int    ticket      - Ticket der zu schließenden Position
- * @param  double lots        - zu schließendes Volumen in Lots         (default: komplette Position)
- * @param  double price       - Preis                                   (wird ignoriert             )
- * @param  double slippage    - akzeptable Slippage in Pips             (default: 0                 )
- * @param  color  markerColor - Farbe des Chart-Markers                 (default: kein Marker       )
+ * @param  double lots        - zu schließendes Volumen in Lots (default: komplette Position)
+ * @param  double price       - Preis                           (wird ignoriert             )
+ * @param  double slippage    - akzeptable Slippage in Pips     (default: 0                 )
+ * @param  color  markerColor - Farbe des Chart-Markers         (default: kein Marker       )
+ * @param  int    execution[] - ausführungspezifische Daten
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, color markerColor=CLR_NONE) {
+bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slippage/*=0*/, color markerColor/*=CLR_NONE*/, int& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseEx(1)", O_PUSH)) return(false);
@@ -9272,15 +9291,19 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
    if (LT(slippage, 0))                                         return(_false(catch("OrderCloseEx(9)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   // execution
+   if (ArraySize(execution) < 4)
+      ArrayResize(execution, 4);
    // -- Ende Parametervalidierung --
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;       // (int) double
+   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;                         // (int) double
+   double pip            = 1/MathPow(10, pipDigits), pips=pip;
+   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;                       // (int) double
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;     // (int) double
 
    int    time1, time2, firstTime1, requotes;
-   double firstPrice;                                                // erster OrderPrice (falls ERR_REQUOTE auftritt)
+   double firstPrice;                                                                  // erster OrderPrice (falls ERR_REQUOTE auftritt)
    bool   success;
 
 
@@ -9290,7 +9313,7 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
 
       if (IsTradeContextBusy()) {
          log("OrderCloseEx()   trade context busy, retrying...");
-         Sleep(300);                                                 // 0.3 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
       }
       else {
          if      (OrderType() == OP_BUY ) price = MarketInfo(OrderSymbol(), MODE_BID);
@@ -9300,14 +9323,20 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
          time1 = GetTickCount();
          if (firstTime1 == 0) {
             firstTime1 = time1;
-            firstPrice = price;                                      // OrderPrice und Zeit der ersten Ausführung merken
+            firstPrice = price;                                                        // OrderPrice und Zeit der ersten Ausführung merken
          }
          success = OrderClose(ticket, lots, price, slippagePoints, markerColor);
          time2   = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket, false);                            // TODO: bei partiellem Close auf das resultierende Ticket warten
+            WaitForTicket(ticket, false);                                              // TODO: bei partiellem Close auf das resultierende Ticket warten
             log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
+
+            execution[EXEC_TIME    ] = time2-firstTime1;                               // in Millisekunden
+            execution[EXEC_REQUOTES] = requotes;                                       // Anzahl
+               if      (OrderType() == OP_BUY ) slippage = firstPrice - OrderClosePrice();
+               else if (OrderType() == OP_SELL) slippage = OrderClosePrice() - firstPrice;
+            execution[EXEC_SLIPPAGE] = NormalizeDouble(slippage/pips*10, pipDigits+1); // in Subpips
 
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
@@ -9315,21 +9344,21 @@ bool OrderCloseEx(int ticket, double lots=0, double price=0, double slippage=0, 
             if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
                return(_false(OrderPop("OrderCloseEx(11)")));
 
-            return(IsNoError(catch("OrderCloseEx(12)", NULL, O_POP)));                                  // regular exit
+            return(IsNoError(catch("OrderCloseEx(12)", NULL, O_POP)));                 // regular exit
          }
          error = GetLastError();
          if (error == ERR_REQUOTE) {
             if (IsTesting()) catch("OrderCloseEx(13)", error);
             requotes++;
-            continue;                                                // nach ERR_REQUOTE Order schnellstmöglich wiederholen
+            continue;                                                                  // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
          if (error == NO_ERROR)
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                          // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                                            // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
 
          string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::OrderCloseEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
-         Alert(message);                                             // nach Fertigstellung durch log() ersetzen
+         Alert(message);                                                               // nach Fertigstellung durch log() ersetzen
          if (IsTesting()) {
             ForceSound("alert.wav");
             ForceMessageBox(message, __SCRIPT__, MB_ICONERROR|MB_OK);
@@ -9496,10 +9525,11 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default:           0)
  * @param  color  markerColor - Farbe des Chart-Markers          (default: kein Marker)
+ * @param  int    execution[] - ausführungspezifische Daten
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte
  */
-bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NONE) {
+bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=CLR_NONE*/, int& execution[]) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
@@ -9516,12 +9546,15 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   // execution
+   if (ArraySize(execution) < 3*sizeOfTickets+1)
+      ArrayResize(execution, 3*sizeOfTickets+1);
    // -- Ende Parametervalidierung --
 
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1)
-      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor) && OrderPop("OrderMultiClose(7)"));
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execution) && OrderPop("OrderMultiClose(7)"));
 
 
    // Das Array tickets[] wird in der Folge modifiziert. Um Änderungen am übergebenen Ausgangsarray zu verhindern, arbeiten wir auf einer Kopie.
@@ -9543,8 +9576,8 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    }
 
 
-   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets jeweils eines Symbols auslesen und per Symbol schließen.
-   int sizeOfSymbols = ArraySize(symbols);
+   // (4) Gehören die Tickets zu mehreren Symbolen, Tickets symbolweise auslesen und per Symbol schließen.
+   int exec[], sizeOfSymbols=ArraySize(symbols);
 
    if (sizeOfSymbols > 1) {
       int hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
@@ -9556,9 +9589,11 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
                ArrayPushInt(perSymbolTickets, ticketsCopy[i]);
          }
          int sizeOfPerSymbolTickets = ArraySize(perSymbolTickets);
+         ArrayResize(exec, 3*sizeOfPerSymbolTickets+1); ArrayInitialize(exec, 0);
+
          if (sizeOfPerSymbolTickets == 1) {
             // nur eine Position je Symbol kann sofort geschlossen werden
-            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor))
+            if (!OrderCloseEx(perSymbolTickets[0], NULL, NULL, slippage, markerColor, exec))
                return(_false(OrderPop("OrderMultiClose(9)")));
          }
          else {
@@ -9566,13 +9601,21 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
             // je Symbol ausgeglichen (schnellstmögliche Variante: eine Close-Order je Symbol). Die einzelnen Teilpositionen werden erst nach Ausgleich
             // der Gesamtpositionen aller Symbole geschlossen (dies dauert ggf. etliche Sekunden).
             int hedge;
-            if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage))
+            if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage, exec))
                return(_false(OrderPop("OrderMultiClose(10)")));
             if (hedge != 0) {
                sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
                                ArrayPushInt(ticketSymbols, symbolIndex);
             }
             ArrayPushInt(hedgedSymbolIndices, symbolIndex);                // Symbol zum späteren Schließen vormerken
+         }
+
+         // Ausführungsdaten der Tickets an die entsprechende Position des Funktionsparameters kopieren
+         for (i=0; i < sizeOfPerSymbolTickets; i++) {
+            int pos = SearchIntArray(tickets, perSymbolTickets[i]);
+            execution[3*pos+EXEC_TIME    ] = exec[3*i+EXEC_TIME    ];
+            execution[3*pos+EXEC_REQUOTES] = exec[3*i+EXEC_REQUOTES];
+            execution[3*pos+EXEC_SLIPPAGE] = exec[3*i+EXEC_SLIPPAGE];
          }
       }
 
@@ -9592,13 +9635,13 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
    }
 
 
-   // (5) mehrere Tickets, die alle zu einem Symbol gehören
-   if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage))          // Gesamtposition ggf. hedgen...
+   // (5) alle übergebenen Tickets gehören zum selben Symbol
+   if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage, execution))  // Gesamtposition ggf. hedgen...
       return(_false(OrderPop("OrderMultiClose(13)")));
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
 
-   if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))               // ...und Gesamtposition auflösen
+   if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))                  // ...und Gesamtposition auflösen
       return(_false(OrderPop("OrderMultiClose(14)")));
 
    return(IsNoError(catch("OrderMultiClose(15)", NULL, O_POP)));
@@ -9611,27 +9654,32 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
  * @param  int    tickets[]   - Tickets der zu hedgenden Positionen
  * @param  int&   hedgeTicket - Zeiger auf Variable zur Aufnahme des Tickets der resultierenden Hedge-Position
  * @param  double slippage    - akzeptable Slippage in Pip (default: 0)
+ * @param  int    execution[] - ausführungspezifische Daten
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage=0) {
-   int    sizeOfTickets = ArraySize(tickets);
-   double totalLots;
+/*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage/*=0*/, int& execution[]) {
+   int sizeOfTickets = ArraySize(tickets);
 
+   if (ArraySize(execution) < 3*sizeOfTickets+1)
+      ArrayResize(execution, 3*sizeOfTickets+1);
+
+   double totalLots;
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(1)"))
          return(false);
-      if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition berechnen
+      if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition ermitteln
       else                       totalLots -= OrderLots();
    }
 
    if (EQ(totalLots, 0)) {                                           // Gesamtposition ist bereits ausgeglichen
-      hedgeTicket = 0;
+      hedgeTicket              = 0;
+      execution[EXEC_TIME    ] = 0;
+      execution[EXEC_REQUOTES] = 0;
+      execution[EXEC_SLIPPAGE] = 0;
    }
    else {                                                            // Gesamtposition hedgen
-
       // TODO: Statt OrderSend() nach Möglichkeit OrderClosePartial() verwenden (spart Margin, besser bei TradeserverLimits etc.)
-
       int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
 
       string message = StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for ", sizeOfTickets, " ", OrderSymbol(), " position");
@@ -9639,10 +9687,17 @@ bool OrderMultiClose(int tickets[], double slippage=0, color markerColor=CLR_NON
          message = StringConcatenate(message, "s");
       log(message);
 
-      int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage);
+      int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, execution);
       if (hedge == -1)
          return(false);
       hedgeTicket = hedge;
+   }
+
+   // für alle Tickets gelten dieselben Ausführungsdaten
+   for (i=1; i < sizeOfTickets; i++) {
+      execution[3*i+EXEC_TIME    ] = execution[EXEC_TIME    ];
+      execution[3*i+EXEC_REQUOTES] = execution[EXEC_REQUOTES];
+      execution[3*i+EXEC_SLIPPAGE] = execution[EXEC_SLIPPAGE];
    }
 
    return(IsNoError(catch("OrderMultiClose.Flatten(2)")));

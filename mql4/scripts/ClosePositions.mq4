@@ -139,7 +139,8 @@ int onStart() {
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
-         if (!OrderMultiClose(tickets, 0.1, Orange))
+         int execution[] = {0,0,0,0};
+         if (!OrderMultiClose(tickets, 0.1, Orange, execution))
             return(SetLastError(stdlib_PeekLastError()));
       }
    }

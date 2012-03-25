@@ -96,7 +96,7 @@
 #define F_PERIOD_MN1        OBJ_PERIOD_MN1
 
 
-// Operation-Types, siehe OrderSend() u. OrderType()
+// Operation-Types, siehe OrderType()
 #define OP_UNDEFINED            -1     // custom: Default-Wert für nicht initialisierte Variable
 
 #define OP_BUY                   0     // long position
@@ -349,22 +349,29 @@
 #define IT_RESET_BARS_ON_HIST_UPDATE                    2  //
 
 
+// Execution-Data identifier, siehe Parameter execution der Tradefunktionen (OrderSendEx() etc.)
+#define EXEC_FLAGS                                      0
+#define EXEC_TIME                                       1   // in Millisekunden
+#define EXEC_REQUOTES                                   2
+#define EXEC_SLIPPAGE                                   3   // in Subpips
+
+
 // MessageBox() flags
-#define MB_OK                                  0x00000000  // buttons
+#define MB_OK                                  0x00000000   // buttons
 #define MB_OKCANCEL                            0x00000001
 #define MB_ABORTRETRYIGNORE                    0x00000002
 #define MB_CANCELTRYCONTINUE                   0x00000006
 #define MB_RETRYCANCEL                         0x00000005
 #define MB_YESNO                               0x00000004
 #define MB_YESNOCANCEL                         0x00000003
-#define MB_HELP                                0x00004000  // additional help button
+#define MB_HELP                                0x00004000   // additional help button
 
-#define MB_DEFBUTTON1                          0x00000000  // default button
+#define MB_DEFBUTTON1                          0x00000000   // default button
 #define MB_DEFBUTTON2                          0x00000100
 #define MB_DEFBUTTON3                          0x00000200
 #define MB_DEFBUTTON4                          0x00000300
 
-#define MB_ICONEXCLAMATION                     0x00000030  // icons
+#define MB_ICONEXCLAMATION                     0x00000030   // icons
 #define MB_ICONWARNING                 MB_ICONEXCLAMATION
 #define MB_ICONINFORMATION                     0x00000040
 #define MB_ICONASTERISK                MB_ICONINFORMATION
@@ -374,11 +381,11 @@
 #define MB_ICONHAND                           MB_ICONSTOP
 #define MB_USERICON                            0x00000080
 
-#define MB_APPLMODAL                           0x00000000  // modality
+#define MB_APPLMODAL                           0x00000000   // modality
 #define MB_SYSTEMMODAL                         0x00001000
 #define MB_TASKMODAL                           0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY                0x00020000  // other
+#define MB_DEFAULT_DESKTOP_ONLY                0x00020000   // other
 #define MB_RIGHT                               0x00080000
 #define MB_RTLREADING                          0x00100000
 #define MB_SETFOREGROUND                       0x00010000
