@@ -929,7 +929,7 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
  * @return bool - Erfolgsstatus
  */
 bool StartSequence() {
-   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
@@ -973,7 +973,7 @@ bool StartSequence() {
  * @return bool - Erfolgsstatus
  */
 bool IncreaseProgression() {
-   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                                  // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
@@ -1021,7 +1021,7 @@ bool IncreaseProgression() {
  * @return bool - Erfolgsstatus
  */
 bool FinishSequence() {
-   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort einen Trade triggert
+   if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
          int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
