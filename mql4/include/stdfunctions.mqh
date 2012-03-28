@@ -288,7 +288,7 @@
 #define CID_EUR                  4
 #define CID_GBP                  5
 #define CID_JPY                  6
-#define CID_USD                  7     // zuerst die ID's der LFX-Währungen, dadurch "passen" diese in 3 Bits
+#define CID_USD                  7     // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
 
 #define CID_CNY                  8
 #define CID_CZK                  9
@@ -345,15 +345,20 @@
 
 
 // Flags für zusätzliche Initialisierungstasks, siehe onInit()
-#define IT_CHECK_TIMEZONE_CONFIG                        1  // prüft die Timezone-Konfiguration des aktuellen MT-Servers
-#define IT_RESET_BARS_ON_HIST_UPDATE                    2  //
+#define IT_CHECK_TIMEZONE_CONFIG                        1   // prüft die Timezone-Konfiguration des aktuellen MT-Servers
+#define IT_RESET_BARS_ON_HIST_UPDATE                    2   //
 
 
-// Execution-Data identifier, siehe Parameter execution der Tradefunktionen (OrderSendEx() etc.)
-#define EXEC_FLAGS                                      0
-#define EXEC_TIME                                       1   // in Millisekunden
-#define EXEC_REQUOTES                                   2
-#define EXEC_SLIPPAGE                                   3   // in Subpips
+// Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
+#define EXEC_FLAGS                                      0   // Steuerung der Ausführung
+#define EXEC_TIME                                       1   // Ausführungszeit
+#define EXEC_PRICE                                      2   // Ausführungspreis
+#define EXEC_SWAP                                       3   // evt. Swap-Betrag
+#define EXEC_COMMISSION                                 4   // evt. Commission-Betrag
+#define EXEC_PROFIT                                     5   // evt. Profit-Betrag
+#define EXEC_DURATION                                   6   // Dauer der Orderausführung in Sekunden
+#define EXEC_REQUOTES                                   7   // Anzahl der aufgetretenen Requotes
+#define EXEC_SLIPPAGE                                   8   // Slippage der Orderausführung in Pips
 
 
 // MessageBox() flags
@@ -637,7 +642,7 @@ int onInit(int scriptType, int initFlags=NULL) {
    if (last_error == NO_ERROR) {
       if (IsVisualMode()) {
          // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier konfiguriert wird (@see ChartInfo-Indikator).
-         ChartInfo.appliedPrice = PRICE_BID;                         // im Tester immer PRICE_BID (bessere Performance)
+         ChartInfo.appliedPrice = PRICE_BID;                         // im Tester einfacherweise immer PRICE_BID (ist schneller)
          ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
          if (LT(ChartInfo.leverage, 1)) return(catch("onInit(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          ChartInfo.CreateLabels();
@@ -897,8 +902,8 @@ int ChartInfo.UpdateSpread() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateUnitSize() {
-   bool   tradeAllowed = IsTesting() || NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);   // MODE_TRADEALLOWED ist im Tester idiotischerweise false
-   double tickValue    =    MarketInfo(Symbol(), MODE_TICKVALUE);
+   bool   tradeAllowed = IsTesting() || NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);   // MODE_TRADEALLOWED ist im Tester idiotischerweise FALSE
+   double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE);
    string strUnitSize  = " ";
 
    if (tradeAllowed) /*&&*/ if (tickValue > 0.00000001) {            // bei Start oder Accountwechsel
