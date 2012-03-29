@@ -359,6 +359,7 @@
 #define EXEC_DURATION                                   6   // Dauer der Orderausführung in Sekunden
 #define EXEC_REQUOTES                                   7   // Anzahl der aufgetretenen Requotes
 #define EXEC_SLIPPAGE                                   8   // Slippage der Orderausführung in Pips
+#define EXEC_TICKET                                     9   // evt. resultierendes weiteres Ticket
 
 
 // MessageBox() flags
