@@ -208,7 +208,7 @@
    int      RGBToHSVColor(color rgb, double hsv[]);
    int      RGBValuesToHSVColor(int red, int green, int blue, double hsv[]);
 
-   color    HSVToRGBColor(double hsv[3]);
+   color    HSVToRGBColor(double hsv[]);
    color    HSVValuesToRGBColor(double hue, double saturation, double value);
 
    color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
@@ -248,11 +248,10 @@
    bool     GT(double a, double b);
    bool     GE(double a, double b);
 
+   int      CountDecimals(double number);
    double   MathModFix(double a, double b);
    double   MathRoundFix(double number, int decimals);
    int      MathSign(double number);
-
-   int      CountDecimals(double number);
 
 
    // Strings
@@ -298,18 +297,20 @@
    bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
-   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, double execution[]);
-   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
-   bool     OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
-   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
-   bool     OrderDeleteEx(int ticket, color markerColor);
+/*ok*/int   OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, double execution[]);
+/*ok*/bool  OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
+
+   bool/*exec ? */ OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
+   bool/*exec ? */ OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
+   bool/*exec ? */ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
+   bool/*exec ? */ OrderDeleteEx(int ticket, color markerColor);
+
    bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);
    bool     OrderPop(string location);
    bool     OrderSelectByTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
-   bool     WaitForTicket(int ticket, bool keepCurrentTicket);
+   bool     WaitForTicket(int ticket, bool orderKeep);
 
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);
@@ -401,6 +402,7 @@
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
+   string   ExecutionToStr(double execution[]);
    string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string format);

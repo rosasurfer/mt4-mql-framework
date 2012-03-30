@@ -353,13 +353,13 @@
 #define EXEC_FLAGS                                      0   // Steuerung der Ausführung
 #define EXEC_TIME                                       1   // Ausführungszeit
 #define EXEC_PRICE                                      2   // Ausführungspreis
-#define EXEC_SWAP                                       3   // evt. Swap-Betrag
-#define EXEC_COMMISSION                                 4   // evt. Commission-Betrag
-#define EXEC_PROFIT                                     5   // evt. Profit-Betrag
+#define EXEC_SWAP                                       3   // Swap-Betrag
+#define EXEC_COMMISSION                                 4   // Commission-Betrag
+#define EXEC_PROFIT                                     5   // Profit-Betrag
 #define EXEC_DURATION                                   6   // Dauer der Orderausführung in Sekunden
 #define EXEC_REQUOTES                                   7   // Anzahl der aufgetretenen Requotes
 #define EXEC_SLIPPAGE                                   8   // Slippage der Orderausführung in Pips
-#define EXEC_TICKET                                     9   // evt. resultierendes weiteres Ticket
+#define EXEC_TICKET                                     9   // weiteres an der Ausführung beteiligte Ticket
 
 
 // MessageBox() flags
@@ -1448,8 +1448,8 @@ bool OrderPop(string location) {
 /**
  * Wartet darauf, daß das angegebene Ticket im OpenOrders- bzw. History-Pool des Accounts erscheint.
  *
- * @param  int  ticket            - Orderticket
- * @param  bool keepCurrentTicket - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ * @param  int  ticket    - Orderticket
+ * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
  *
  * @return bool - Erfolgsstatus
  *
@@ -1457,11 +1457,11 @@ bool OrderPop(string location) {
  * -----
  * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
-bool WaitForTicket(int ticket, bool keepCurrentTicket=true) {
+bool WaitForTicket(int ticket, bool orderKeep=true) {
    if (ticket <= 0)
       return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_ILLEGAL_INPUT_PARAMVALUE)));
 
-   if (keepCurrentTicket) {
+   if (orderKeep) {
       if (OrderPush("WaitForTicket(2)") == 0)
          return(!IsLastError());
    }
@@ -1475,7 +1475,7 @@ bool WaitForTicket(int ticket, bool keepCurrentTicket=true) {
       i++;
    }
 
-   if (keepCurrentTicket) {
+   if (orderKeep) {
       if (!OrderPop("WaitForTicket(3)"))
          return(false);
    }
@@ -1537,6 +1537,70 @@ bool IsExpert() {
  */
 bool IsScript() {
    return(__TYPE__ == T_SCRIPT);
+}
+
+
+/**
+ * Inlined conditional Boolean-Statement.
+ *
+ * @param  bool condition
+ * @param  bool thenValue
+ * @param  bool elseValue
+ *
+ * @return bool
+ */
+bool ifBool(bool condition, bool thenValue, bool elseValue) {
+   if (condition)
+      return(thenValue);
+   return(elseValue);
+}
+
+
+/**
+ * Inlined conditional Integer-Statement.
+ *
+ * @param  bool condition
+ * @param  int  thenValue
+ * @param  int  elseValue
+ *
+ * @return int
+ */
+int ifInt(bool condition, int thenValue, int elseValue) {
+   if (condition)
+      return(thenValue);
+   return(elseValue);
+}
+
+
+/**
+ * Inlined conditional Double-Statement.
+ *
+ * @param  bool   condition
+ * @param  double thenValue
+ * @param  double elseValue
+ *
+ * @return double
+ */
+double ifDouble(bool condition, double thenValue, double elseValue) {
+   if (condition)
+      return(thenValue);
+   return(elseValue);
+}
+
+
+/**
+ * Inlined conditional String-Statement.
+ *
+ * @param  bool   condition
+ * @param  string thenValue
+ * @param  string elseValue
+ *
+ * @return string
+ */
+string ifString(bool condition, string thenValue, string elseValue) {
+   if (condition)
+      return(thenValue);
+   return(elseValue);
 }
 
 
@@ -1700,6 +1764,10 @@ void DummyCalls() {
    ForceAlert();
    HandleEvent(NULL);
    HandleEvents(NULL);
+   ifBool(NULL, NULL, NULL);
+   ifDouble(NULL, NULL, NULL);
+   ifInt(NULL, NULL, NULL);
+   ifString(NULL, NULL, NULL);
    IsError(NULL);
    IsExpert();
    IsIndicator();
