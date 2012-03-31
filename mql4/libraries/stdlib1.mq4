@@ -9395,10 +9395,12 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
             execution[EXEC_SLIPPAGE  ] = NormalizeDouble(slippage/pips, 1);                  // in Pips
 
                if (NE(lots, openLots)) {
-                  string strValue;
-                  if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fall-Back zum Serververhalten, falls der Fehler in späteren Terminalversionen behoben ist.
+                  string strValue, strValue2;
+                  if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fall-Back zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
+                     // Der Tester überschreibt den OrderComment statt mit "to #2" mit "partial close".
                      if (OrderComment() != "partial close")             return(_false(catch("OrderCloseEx(11)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
-                     strValue = StringConcatenate("split from #", ticket);
+                     strValue  = StringConcatenate("split from #", ticket);
+                     strValue2 = StringConcatenate(      "from #", ticket);
 
                      OrderPush("OrderCloseEx(12)");
                      for (int i=OrdersTotal()-1; i >= 0; i--) {
@@ -9407,7 +9409,8 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
                            break;
                         }
                         if (OrderTicket() == ticket)        continue;
-                        if (OrderComment() != strValue)     continue;
+                        if (OrderComment() != strValue)
+                           if (OrderComment() != strValue2) continue;                        // falls der Unterschied in späteren Terminalversionen behoben ist
                         if (NE(lots+OrderLots(), openLots)) continue;
 
                         remainder = OrderTicket();
