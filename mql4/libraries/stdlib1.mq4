@@ -5,18 +5,18 @@
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |        |                 |              max(hex) |            signed range(dec) |            unsigned range(dec) |       C        |        Win32        |      MQL       |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |  1 bit |                 |                  0x01 |                        0 - 1 |                            0-1 |                |                     |                |
+ * |         |         |        |        |  1 bit |                 |                  0x01 |                      0 ... 1 |                        0 ... 1 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                   -128 - 127 |                          0-255 |                |      BYTE,CHAR      |                |
+ * |         |         |        | 1 byte |  8 bit | 2 nibbles       |                  0xFF |                 -128 ... 127 |                      0 ... 255 |                |      BYTE,CHAR      |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |             -32.768 - 32.767 |                       0-65.535 |     short      |   SHORT,WORD,WCHAR  |                |
+ * |         |         | 1 word | 2 byte | 16 bit | HIBYTE + LOBYTE |                0xFFFF |           -32.768 ... 32.767 |                   0 ... 65.535 |     short      |   SHORT,WORD,WCHAR  |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |             -2.147.483.648 - |              0 - 4.294.967.295 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
- * |         |         |        |        |        |                 |                       |              2.147.483.647   |                                |                |    WPARAM,LPARAM    | color,datetime |
+ * |         | 1 dword | 2 word | 4 byte | 32 bit | HIWORD + LOWORD |            0xFFFFFFFF |               -2.147.483.648 |                              0 | int,long,float | BOOL,INT,LONG,DWORD |  bool,char,int |
+ * |         |         |        |        |        |                 |                       |                2.147.483.647 |                  4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
  * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF | -9.223.372.036.854.775.808 - | 0 - 18.446.744.073.709.551.616 |     double     |  LONGLONG,DWORDLONG |  double,string | MQL-double: 53 bit Mantisse (Integers bis 53 bit ohne Genauigkeitsverlust)
- * |         |         |        |        |        |                 |                       |  9.223.372.036.854.775.807   |                                |                |                     |                |
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |  double,string | MQL-double: 53 bit Mantisse (Integers bis 53 bit ohne Genauigkeitsverlust)
+ * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
 #property library
@@ -228,7 +228,7 @@ string ExecutionToStr(double execution[]) {
    strings[EXEC_DURATION  ] = "EXEC_DURATION=>"  + NumberToStr(value_DURATION,   ".3");
    strings[EXEC_REQUOTES  ] = "EXEC_REQUOTES=>"  +             value_REQUOTES;
    strings[EXEC_SLIPPAGE  ] = "EXEC_SLIPPAGE=>"  + NumberToStr(value_SLIPPAGE,   ".1");
-   strings[EXEC_TICKET    ] = "EXEC_TICKET=>"    +    ifString(value_TICKET==0, "", "#") + value_TICKET;
+   strings[EXEC_TICKET    ] = "EXEC_TICKET=>"    +             value_TICKET;
 
    string result = StringConcatenate("{", JoinStrings(strings, ", "), "}");
 
@@ -8495,30 +8495,31 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    int error = GetLastError();
    if (IsError(error))                                         return(_int(-1, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error)));
    // type
-   if (!IsTradeOperation(type))                                return(_int(-1, catch("OrderSendEx(2)   invalid parameter type: "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsTradeOperation(type))                                return(_int(-1, catch("OrderSendEx(2)   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
    // lots
-   if (LT(lots, minLot))                                       return(_int(-1, catch("OrderSendEx(3)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (GT(lots, maxLot))                                       return(_int(-1, catch("OrderSendEx(4)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
-   if (NE(MathModFix(lots, lotStep), 0))                       return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots: "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (LT(lots, minLot))                                       return(_int(-1, catch("OrderSendEx(3)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (GT(lots, maxLot))                                       return(_int(-1, catch("OrderSendEx(4)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
+   if (NE(MathModFix(lots, lotStep), 0))                       return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                           return(_int(-1, catch("OrderSendEx(6)   illegal parameter price: "+ NumberToStr(price, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(price, 0))                                           return(_int(-1, catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(_int(-1, catch("OrderSendEx(7)   illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // slippage
-   if (LT(slippage, 0))                                        return(_int(-1, catch("OrderSendEx(7)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(slippage, 0))                                        return(_int(-1, catch("OrderSendEx(8)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // stopLoss
-   if (LT(stopLoss, 0))                                        return(_int(-1, catch("OrderSendEx(8)   illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(stopLoss, 0))                                        return(_int(-1, catch("OrderSendEx(9)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    stopLoss = NormalizeDouble(stopLoss, digits);
    // takeProfit
-   if (NE(takeProfit, 0))                                      return(_int(-1, catch("OrderSendEx(9)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   if (NE(takeProfit, 0))                                      return(_int(-1, catch("OrderSendEx(10)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
    if (comment == "0")     // = NULL
       comment = "";
-   else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(10)   illegal parameter comment: \""+ comment +"\" (max. 27 chars)", ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(11)   illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(11)   illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(12)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);
@@ -8543,18 +8544,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LT(price - stopDistance*pips, ask)) return(_int(-1, catch("OrderSendEx(13)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
+            if (LT(price - stopDistance*pips, ask)) return(_int(-1, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          else if (type == OP_SELLSTOP) {
-            if (GT(price + stopDistance*pips, bid)) return(_int(-1, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
+            if (GT(price + stopDistance*pips, bid)) return(_int(-1, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS)));
          }
          price = NormalizeDouble(price, digits);
 
          if (NE(stopLoss, 0)) {
             if (type==OP_BUY || type==OP_BUYSTOP || type==OP_BUYLIMIT) {
-               if (GE(stopLoss, price))   return(_int(-1, catch("OrderSendEx(15)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
+               if (GE(stopLoss, price))   return(_int(-1, catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
             }
-            else if (LE(stopLoss, price)) return(_int(-1, catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
+            else if (LE(stopLoss, price)) return(_int(-1, catch("OrderSendEx(17)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS)));
          }
 
          time1 = GetTickCount();
@@ -8567,10 +8568,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
          time2  = GetTickCount();
 
          if (ticket > 0) {
-            OrderPush("OrderSendEx(17)");
-            WaitForTicket(ticket, false);
-            if (!OrderSelectByTicket(ticket, "OrderSendEx(18)"))
-               return(_int(-1, OrderPop("OrderSendEx(19)")));
+            OrderPush("OrderSendEx(18)");
+            WaitForTicket(ticket, false);                                                 // wartet und selektiert (FALSE)
 
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = OrderOpenTime();
@@ -8591,9 +8590,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
             if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-               return(_int(-1, OrderPop("OrderSendEx(20)")));
+               return(_int(-1, OrderPop("OrderSendEx(19)")));
 
-            if (IsError(catch("OrderSendEx(21)", NULL, O_POP)))
+            if (IsError(catch("OrderSendEx(20)", NULL, O_POP)))
                return(-1);
             return(ticket);                                                               // regular exit
          }
@@ -8601,7 +8600,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
 
          if (error == ERR_REQUOTE) {
             if (IsTesting())
-               catch("OrderSendEx(22)", error);
+               catch("OrderSendEx(21)", error);
             requotes++;
             continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
@@ -8619,7 +8618,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
       }
    }
 
-   return(_int(-1, catch("OrderSendEx(23)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
+   return(_int(-1, catch("OrderSendEx(22)   permanent trade error after "+ DoubleToStr((time2-firstTime1)/1000.0, 3) +" s"+ ifString(requotes==0, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
 
@@ -8641,7 +8640,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    double pip         = 1/MathPow(10, pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   // Das Ticket ist hier immer selektiert
+   // Das Ticket ist bereits selektiert
    string strType = OperationTypeDescription(OrderType());
    if (type != OrderType())
       strType = StringConcatenate(strType, " (instead of ", OperationTypeDescription(type), ")");
@@ -8843,13 +8842,14 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          time2 = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket, false);                               // TODO: WaitForChanges() implementieren
-            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
+            WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
+            // TODO: WaitForChanges() implementieren
 
             execution[EXEC_DURATION] = (time2-time1)/1000.0;            // in Sekunden
             execution[EXEC_REQUOTES] = 0;
             execution[EXEC_SLIPPAGE] = 0;
 
+            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
             if (!IsTesting())
                PlaySound("RFQ.wav");
 
@@ -9327,24 +9327,24 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
    /*
    Vollständiges Close
    ===================
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   |               | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice | Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   | open          |     #1 |  Buy | 1.00 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 |                     |   1.3207'9 | 0.00 |       0.00 |   0.00 |         666 | order comment   | order comment   |
-   | close         |     #1 |  Buy | 1.00 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 | 2012.03.26 12:00:05 |   1.3215'9 | 0.00 |       0.00 |  64.00 |         666 | order comment   | order comment   |
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   |                | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   | open           |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 |                     |   1.3207'9 | -0.80 |      -8.00 |   0.00 |         666 | order comment   | order comment   |
+   | closed         |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 | 2012.03.20 12:00:05 |   1.3215'9 | -0.80 |      -8.00 |  64.00 |         666 | order comment   | order comment   |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
 
    Partielles Close
    ================
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   |               | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice | Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   | open          |     #1 |  Buy | 1.00 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 |                     |   1.3207'9 | 0.00 |       0.00 |   0.00 |         666 | order comment   | order comment   |
-   | partial close |     #1 |  Buy | 0.70 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 | 2012.03.26 12:00:05 |   1.3215'9 | 0.00 |       0.00 |  44.80 |         666 | to #2           | partial close   |
-   | remainder     |     #2 |  Buy | 0.30 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 |                     |   1.3215'9 | 0.00 |       0.00 |  19.20 |         666 | from #1         | split from #1   |
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   | close         |     #2 |  Buy | 0.30 | EURUSD | 2012.03.26 11:00:05 |  1.3209'5 |  2012.03.26 14:00:05|   1.3245'7 | 0.00 |       0.00 | 108.60 |         666 | from #1         | split from #1   |
-   +---------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   |                | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   | open           |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 |                     |   1.3207'9 | -0.80 |      -8.00 |  64.00 |         666 | order comment   | order comment   |
+   | partial closed |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 | 2012.03.20 12:00:05 |   1.3215'9 | -0.56 |      -5.60 |  44.80 |         666 | to #2           | partial close   | Im Tester werden Swap und Commission anteilig
+   | remainder      |     #2 |  Buy | 0.30 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 |                     |   1.3215'9 | -0.24 |      -2.40 |  19.20 |         666 | from #1         | split from #1   | auf PartialClose und Remainder verteilt.
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   | closed         |     #2 |  Buy | 0.30 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 | 2012.03.20 13:00:05 |   1.3245'7 | -0.24 |      -2.40 | 108.60 |         666 | from #1         | split from #1   |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
    */
 
    int    pipDigits      = digits & (~1);
@@ -9380,7 +9380,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
          time2   = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket, false);
+            WaitForTicket(ticket, false);                                                    // wartet und re-selektiert (FALSE)
 
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = OrderCloseTime();
@@ -9561,8 +9561,8 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
          int time2, time1=GetTickCount();
 
          if (OrderCloseBy(smaller, larger, markerColor)) {
-            WaitForTicket(smaller, false);
-            WaitForTicket(larger, false);
+            WaitForTicket(smaller, false);                                 // wartet und selektiert (FALSE)
+            WaitForTicket(larger, false);                                  // wartet und selektiert (FALSE)
 
             time2 = GetTickCount();
             ArrayResize(remainder, 0);
@@ -9959,12 +9959,27 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 /**
  * Drop-in-Ersatz für und erweiterte Version von OrderDelete(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  int   ticket      - Ticket der zu schließenden Order
- * @param  color markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  int    ticket      - Ticket der zu schließenden Order
+ * @param  color  markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
+ *
+ *
+ * Elemente des Parameters execution[]
+ * -----------------------------------
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_TIME      : (out) OrderCloseTime
+ * - EXEC_PRICE     : (out) OrderClosePrice
+ * - EXEC_SWAP      : (out) immer 0
+ * - EXEC_COMMISSION: (out) immer 0
+ * - EXEC_PROFIT    : (out) immer 0
+ * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : (out) immer 0
+ * - EXEC_SLIPPAGE  : (out) immer 0
+ * - EXEC_TICKET    : (out) immer 0
  */
-bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
+bool OrderDeleteEx(int ticket, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderDeleteEx(1)", O_PUSH)) return(false);
@@ -9972,7 +9987,19 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
    if (OrderCloseTime() != 0)                                    return(_false(catch("OrderDeleteEx(3)   ticket #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   // execution
+   if (ArraySize(execution) != 10)
+      ArrayResize(execution, 10);
    // -- Ende Parametervalidierung --
+
+   /*
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   |         | Ticket |     Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice | Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   | open    |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 |                     |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | order comment   | order comment   |
+   | deleted |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 | 2012.03.20 12:00:06 |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | cancelled       | cancelled       |
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   */
 
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);                 // für OrderDeleteEx.LogMessage() und OrderDeleteEx.ChartMarker()
    int error = GetLastError();
@@ -9996,16 +10023,27 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
          time2 = GetTickCount();
 
          if (success) {
-            WaitForTicket(ticket, false);
-            log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
+            WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
 
+            // Execution-Struktur füllen
+            execution[EXEC_TIME      ] = OrderCloseTime();
+            execution[EXEC_PRICE     ] = OrderClosePrice();
+            execution[EXEC_SWAP      ] = 0;
+            execution[EXEC_COMMISSION] = 0;
+            execution[EXEC_PROFIT    ] = 0;
+            execution[EXEC_DURATION  ] = (time2-time1)/1000.0;          // in Sekunden
+            execution[EXEC_REQUOTES  ] = 0;
+            execution[EXEC_SLIPPAGE  ] = 0;
+            execution[EXEC_TICKET    ] = 0;
+
+            log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
             if (!ChartMarker.OrderDeleted_A(ticket, digits, markerColor))
                return(_false(OrderPop("OrderDeleteEx(6)")));
 
-            return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP))); // regular exit
+            return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP)));  // regular exit
          }
          error = GetLastError();
          if (IsNoError(error))
@@ -10036,9 +10074,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
  * @return string - Logmessage
  */
 /*private*/ string OrderDeleteEx.LogMessage(int ticket, int digits, int time) {
-   if (!OrderSelectByTicket(ticket, "OrderDeleteEx.LogMessage(1)"))
-      return("");
-
+   // Ticket ist bereits selektiert
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(OrderType());
@@ -10061,6 +10097,7 @@ bool OrderDeleteEx(int ticket, color markerColor=CLR_NONE) {
  * @return bool - Erfolgsstatus
  */
 bool DeletePendingOrders(color markerColor=CLR_NONE) {
+   double execution[] = {NULL};
    int size = OrdersTotal();
 
    if (size > 0) {
@@ -10070,7 +10107,8 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
          if (IsPendingTradeOperation(OrderType())) {
-            if (!OrderDeleteEx(OrderTicket(), CLR_NONE))
+            execution[EXEC_FLAGS] = NULL;
+            if (!OrderDeleteEx(OrderTicket(), CLR_NONE, execution))
                return(_false(OrderPop("DeletePendingOrders(2)")));
          }
       }

@@ -304,8 +304,7 @@
    bool/*exec ? */ OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool/*exec ? */ OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
    bool/*exec ? */ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
-
-   bool     DeletePendingOrders(color markerColor);
+   bool/*exec ? */ DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);
    bool     OrderPop(string location);
