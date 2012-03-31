@@ -1450,6 +1450,7 @@ bool OrderPop(string location) {
  *
  * @param  int  ticket    - Orderticket
  * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
+ *                          wenn FALSE, ist das Ticket nach Rückkehr selektiert
  *
  * @return bool - Erfolgsstatus
  *
