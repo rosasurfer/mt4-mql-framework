@@ -8447,17 +8447,17 @@ string NumberToStr(double number, string mask) {
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  string   symbol      - Symbol des Instruments              (default: aktuelles Instrument)
+ * @param  string   symbol      - Symbol des Instruments          (default: aktuelles Instrument)
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
  * @param  double   lots        - Transaktionsvolumen in Lots
  * @param  double   price       - Preis (nur bei pending Orders)
- * @param  double   slippage    - akzeptable Slippage in Pips         (default: 0          )
- * @param  double   stopLoss    - StopLoss-Level                      (default: -kein-     )
- * @param  double   takeProfit  - TakeProfit-Level                    (default: -kein-     )
- * @param  string   comment     - Orderkommentar, max. 27 Zeichen     (default: -kein-     )
- * @param  int      magicNumber - MagicNumber                         (default: 0          )
- * @param  datetime expires     - Gültigkeit der Order                (default: GTC        )
- * @param  color    markerColor - Farbe des Chartmarkers              (default: kein Marker)
+ * @param  double   slippage    - akzeptable Slippage in Pips     (default: 0          )
+ * @param  double   stopLoss    - StopLoss-Level                  (default: -kein-     )
+ * @param  double   takeProfit  - TakeProfit-Level                (default: -kein-     )
+ * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: -kein-     )
+ * @param  int      magicNumber - MagicNumber                     (default: 0          )
+ * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
+ * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
  * @param  double   execution[] - ausführungsspezifische Daten
  *
  * @return int - Ticket oder -1, falls ein Fehler auftrat
@@ -8465,7 +8465,7 @@ string NumberToStr(double number, string mask) {
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  * - EXEC_TIME      : (out) OrderOpenTime
  * - EXEC_PRICE     : (out) OrderOpenPrice (bei Pending-Orders der Pending-Price, bei Market-Orders der ausgeführte OpenPrice)
  * - EXEC_SWAP      : (out) immer 0
@@ -8474,7 +8474,7 @@ string NumberToStr(double number, string mask) {
  * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
  * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
  * - EXEC_SLIPPAGE  : (out) Gesamtslippage der Orderausführung in Pips nach Requotes (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) immer 0
+ * - EXEC_TICKET    : (out) das erzeugte Ticket (wie von der Funktion zurückgegeben)
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -8583,7 +8583,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
                else if (OrderType() == OP_SELL) slippage = firstPrice - OrderOpenPrice();
                else                             slippage = 0;
             execution[EXEC_SLIPPAGE  ] = NormalizeDouble(slippage/pips, 1);               // in Pips
-            execution[EXEC_TICKET    ] = 0;
+            execution[EXEC_TICKET    ] = ticket;
 
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
@@ -9278,7 +9278,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  * - EXEC_TIME      : (out) OrderCloseTime
  * - EXEC_PRICE     : (out) OrderClosePrice
  * - EXEC_SWAP      : (out) OrderSwap (1)
@@ -9287,7 +9287,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
  * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
  * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) während der Ausführung erzeugtes weiteres Ticket (bei partiellem Close)
+ * - EXEC_TICKET    : (out) durch die Ausführung erzeugtes Ticket (nur bei partiellem Close)
  *
  * 1) vom MT4-Server berechnet, kann bei partiellem Close vom theoretischen Wert abweichen
  */
@@ -9327,12 +9327,12 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
    /*
    Vollständiges Close
    ===================
-   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
-   |                | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
-   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
-   | open           |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 |                     |   1.3207'9 | -0.80 |      -8.00 |   0.00 |         666 | order comment   | order comment   |
-   | closed         |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 | 2012.03.20 12:00:05 |   1.3215'9 | -0.80 |      -8.00 |  64.00 |         666 | order comment   | order comment   |
-   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+-----------------+
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+
+   |                | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission | Profit | MagicNumber | Comment         |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+
+   | open           |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 |                     |   1.3207'9 | -0.80 |      -8.00 |   0.00 |         666 | order comment   |
+   | closed         |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3209'5 | 2012.03.20 12:00:05 |   1.3215'9 | -0.80 |      -8.00 |  64.00 |         666 | order comment   |
+   +----------------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+--------+-------------+-----------------+
 
    Partielles Close
    ================
@@ -9393,6 +9393,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
                if      (OrderType() == OP_BUY ) slippage = firstPrice - OrderClosePrice();
                else if (OrderType() == OP_SELL) slippage = OrderClosePrice() - firstPrice;
             execution[EXEC_SLIPPAGE  ] = NormalizeDouble(slippage/pips, 1);                  // in Pips
+            execution[EXEC_TICKET    ] = 0;
 
                if (NE(lots, openLots)) {
                   string strValue, strValue2;
@@ -9430,8 +9431,8 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
                      if (remainder == 0)                                return(_false(catch("OrderCloseEx(19)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
                   }
                   WaitForTicket(remainder, true);
+                  execution[EXEC_TICKET] = remainder;
                }
-            execution[EXEC_TICKET] = remainder;
 
             log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
@@ -9626,7 +9627,7 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  *
  * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
  *
@@ -9638,11 +9639,11 @@ bool OrderCloseByEx(int ticket, int opposite, int& remainder[], color markerColo
  * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion in Sekunden
  * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
  * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) während des Schließens dieses Tickets ggf. erzeugtes weiteres Ticket
+ * - EXEC_TICKET    : (out) durch das Schließen dieses Tickets erzeugtes weiteres Ticket (wenn zutreffend)
  *
  * 1) entsprechend der Reihenfolge der Tickets in tickets[]
- * 2) Einzelwerte der Tickets sind vom MT4-Server berechnet und können vom theoretischen Wert abweichen
- * 3) die Summe der Einzelwerte aller Tickets entspricht dem real verbuchten Gesamtwert
+ * 2) vom MT4-Server berechnet, kann vom theoretischen Wert abweichen
+ * 3) die Summe der Werte aller Tickets entspricht dem real verbuchten Gesamtwert
  */
 bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // (1) Beginn Parametervalidierung --
@@ -9784,7 +9785,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  *
  * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1)(2):
  *
@@ -9971,7 +9972,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung, muß vorhanden sein (nicht implementiert => NULL)
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  * - EXEC_TIME      : (out) OrderCloseTime
  * - EXEC_PRICE     : (out) OrderClosePrice
  * - EXEC_SWAP      : (out) immer 0
@@ -9996,12 +9997,12 @@ bool OrderDeleteEx(int ticket, color markerColor/*=CLR_NONE*/, double& execution
    // -- Ende Parametervalidierung --
 
    /*
-   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   |         | Ticket |     Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice | Swap | Commission | Profit | MagicNumber | Comment(Online) | Comment(Tester) |
-   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
-   | open    |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 |                     |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | order comment   | order comment   |
-   | deleted |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 | 2012.03.20 12:00:06 |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | cancelled       | cancelled       |
-   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+-----------------+-----------------+
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
+   |         | Ticket |     Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice | Swap | Commission | Profit | MagicNumber | Comment       |
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
+   | open    |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 |                     |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | order comment |
+   | deleted |     #1 | Stop Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.4165'6 | 2012.03.20 12:00:06 |   1.3204'4 | 0.00 |       0.00 |   0.00 |         666 | cancelled     |
+   +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
    */
 
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);                 // für OrderDeleteEx.LogMessage() und OrderDeleteEx.ChartMarker()
