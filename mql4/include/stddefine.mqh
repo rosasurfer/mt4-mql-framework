@@ -22,7 +22,7 @@
 // Strings
 #define MT4_TERMINAL_CLASSNAME   "MetaQuotes::MetaTrader::4.00"
 #define MAX_STRING_LITERAL       "..............................................................................................................................................................................................................................................................."
-#define NL                       "\n"     // new line (entspricht in MQL CR+LF)
+#define NL                       "\n"     // new line (in MQL 0x0D0A)
 #define TAB                      "\t"
 
 
