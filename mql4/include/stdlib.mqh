@@ -301,8 +301,8 @@
 /*ok*/bool  OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
 /*ok*/bool  OrderDeleteEx(int ticket, color markerColor, double execution[]);
 /*ok*/bool  OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
+/*ok*/bool  OrderCloseByEx(int ticket, int opposite, color markerColor, double execution[]);
 
-   bool/*exec ? */ OrderCloseByEx(int ticket, int opposite, int remainder[], color markerColor);
    bool/*exec ? */ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
    bool/*exec ? */ DeletePendingOrders(color markerColor);
 
