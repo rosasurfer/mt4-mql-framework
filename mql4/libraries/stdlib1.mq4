@@ -8777,6 +8777,20 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
+ *
+ *
+ * Elemente des Parameters execution[]
+ * -----------------------------------
+ * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
+ * - EXEC_TIME      : (out) Zeitpunkt der Orderausführung
+ * - EXEC_PRICE     : (out) immer 0
+ * - EXEC_SWAP      : (out) immer 0
+ * - EXEC_COMMISSION: (out) immer 0
+ * - EXEC_PROFIT    : (out) immer 0
+ * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : (out) immer 0
+ * - EXEC_SLIPPAGE  : (out) immer 0
+ * - EXEC_TICKET    : (out) immer 0
  */
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -8824,7 +8838,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
 
-   int time1, time2;
+   int      time1, time2, firstTime1;
+   datetime modifyTime;
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
@@ -8835,8 +8850,10 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          Sleep(300);                                                    // 0.3 Sekunden warten
       }
       else {
-         if (time1 == 0)
-            time1 = GetTickCount();                                     // Zeit der ersten Ausführung
+         time1      = GetTickCount();
+         modifyTime = TimeCurrent();
+         if (firstTime1 == 0)                                           // Zeit der ersten Ausführung
+            firstTime1 = time1;
 
          bool success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
          time2 = GetTickCount();
@@ -8845,9 +8862,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
             // TODO: WaitForChanges() implementieren
 
-            execution[EXEC_DURATION] = (time2-time1)/1000.0;            // in Sekunden
-            execution[EXEC_REQUOTES] = 0;
-            execution[EXEC_SLIPPAGE] = 0;
+            // Execution-Struktur füllen
+            execution[EXEC_TIME      ] = modifyTime;
+            execution[EXEC_PRICE     ] = 0;
+            execution[EXEC_SWAP      ] = 0;
+            execution[EXEC_COMMISSION] = 0;
+            execution[EXEC_PROFIT    ] = 0;
+            execution[EXEC_DURATION  ] = (time2-firstTime1)/1000.0;       // in Sekunden
+            execution[EXEC_REQUOTES  ] = 0;
+            execution[EXEC_SLIPPAGE  ] = 0;
+            execution[EXEC_TICKET    ] = 0;
 
             //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
             if (!IsTesting())
