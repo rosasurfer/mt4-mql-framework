@@ -269,15 +269,15 @@ int onStart() {
       string strType         = OperationTypeDescription(types[i]);
       string strSize         = ifString(EQ(lotSizes[i], 0), "", NumberToStr(lotSizes[i], ".+"));
 
-      string strOpenTime     = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      string strCloseTime    = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strOpenTime     = TimeToStr(openTimes [i], TIME_FULL);
+      string strCloseTime    = TimeToStr(closeTimes[i], TIME_FULL);
 
       string strOpenPrice    = ifString(EQ(openPrices [i], 0), "", NumberToStr(openPrices [i], ".2+"));
       string strClosePrice   = ifString(EQ(closePrices[i], 0), "", NumberToStr(closePrices[i], ".2+"));
       string strStopLoss     = ifString(EQ(stopLosses [i], 0), "", NumberToStr(stopLosses [i], ".2+"));
       string strTakeProfit   = ifString(EQ(takeProfits[i], 0), "", NumberToStr(takeProfits[i], ".2+"));
 
-      string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+      string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_FULL));
       string strExpTimestamp = ifString(expirationTimes[i]==0, "", expirationTimes[i]);
 
       string strCommission   = DoubleToStr(commissions [i], 2);

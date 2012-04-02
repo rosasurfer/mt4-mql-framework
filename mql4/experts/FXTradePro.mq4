@@ -751,7 +751,7 @@ bool ReadSequence() {
                ArrayPushInt(closeTrades, n);                            // Schluﬂtrade, Zeiger auf Schluﬂposition zwischenspeichern
          }
 
-         debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
+         debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   "+ StringRightPad("FTP."+ sequenceId +"."+ (hist.magicNumbers[i]&0xF), 11, " ") +"   "+ TimeToStr(hist.openTimes[i], TIME_FULL) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_FULL) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
          if (!ReadSequence.AddClosedPosition(hist.magicNumbers[i], hist.tickets[i], hist.types[i], hist.openTimes[i], hist.openPrices[i], hist.swaps[i], hist.commissions[i], hist.profits[i], hist.comments[i]))
             return(false);
       }
@@ -847,7 +847,7 @@ bool ReadSequence() {
          int      last = progressionLevel-1;
 
          for (i=0; i < size; i++) {
-            debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   - close -     "+ TimeToStr(hist.openTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
+            debug("ReadSequence()   #"+ StringRightPad(hist.tickets[i], 8, " ") +"   - close -     "+ TimeToStr(hist.openTimes[i], TIME_FULL) +"   "+ NumberToStr(hist.openPrices[i], PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(hist.types[i]), 4, " ") +"   "+ StringRightPad(NumberToStr(hist.lots[i], ".+"), 4, " ") +"   "+ TimeToStr(hist.closeTimes[i], TIME_FULL) +"   "+ NumberToStr(hist.closePrices[i], PriceFormat) +"   "+ ifString(hist.comments[i]=="", "", StringConcatenate("\"", hist.comments[i], "\"")));
             if (hist.openTimes[closeTrades[i]] > lastOpenTime) {
                lastOpenTime  = hist.openTimes [closeTrades[i]];
                lastOpenPrice = hist.openPrices[closeTrades[i]];
@@ -913,7 +913,7 @@ bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datet
       if (NE(levels.openPrice[level], openPrice)) return(_false(catch("ReadSequence.AddClosedPosition(4)  illegal sequence state, open price "+ NumberToStr(levels.openPrice[level], PriceFormat) +" of occupied level "+ (level+1) +" doesn't match open price "+ NumberToStr(openPrice, PriceFormat) +" of closed #"+ ticket, ERR_RUNTIME_ERROR)));
       if (   levels.openTime [level]!=openTime  )
          if (!IsTesting())                                              // Tester-Bug (kann vorerst nur hier ignoriert werden)
-            return(_false(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time '"+ TimeToStr(levels.openTime[level], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"' of occupied level "+ (level+1) +" doesn't match open time '"+ TimeToStr(openTime, TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"' of closed #"+ ticket, ERR_RUNTIME_ERROR)));
+            return(_false(catch("ReadSequence.AddClosedPosition(3)  illegal sequence state, open time '"+ TimeToStr(levels.openTime[level], TIME_FULL) +"' of occupied level "+ (level+1) +" doesn't match open time '"+ TimeToStr(openTime, TIME_FULL) +"' of closed #"+ ticket, ERR_RUNTIME_ERROR)));
    }
    levels.closedSwap      [level] += swap;                              // vorhandene Betr‰ge aufaddieren
    levels.closedCommission[level] += commission;

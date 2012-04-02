@@ -154,8 +154,8 @@ int onStart() {
    for (i=0; i < orders; i++) {
       string strType        = OperationTypeDescription(types[i]);
 
-      string strOpenTime    = TimeToStr(openTimes [i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
-      string strCloseTime   = TimeToStr(closeTimes[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+      string strOpenTime    = TimeToStr(openTimes [i], TIME_FULL);
+      string strCloseTime   = TimeToStr(closeTimes[i], TIME_FULL);
 
       string strOpenPrice   = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
       string strClosePrice  = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));

@@ -220,7 +220,7 @@ string ExecutionToStr(double execution[]) {
    string strings[10];
 
    strings[EXEC_FLAGS     ] = "EXEC_FLAGS=>"     +             value_FLAGS;
-   strings[EXEC_TIME      ] = "EXEC_TIME=>"      +    ifString(value_TIME==0, 0, TimeToStr(value_TIME, TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+   strings[EXEC_TIME      ] = "EXEC_TIME=>"      +    ifString(value_TIME==0, 0, TimeToStr(value_TIME, TIME_FULL));
    strings[EXEC_PRICE     ] = "EXEC_PRICE=>"     + NumberToStr(value_PRICE,      ".+");
    strings[EXEC_SWAP      ] = "EXEC_SWAP=>"      + NumberToStr(value_SWAP,       ".2");
    strings[EXEC_COMMISSION] = "EXEC_COMMISSION=>"+ NumberToStr(value_COMMISSION, ".2");
@@ -4290,13 +4290,13 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
          if (lastTick == 0) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
-            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: '", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", lastMinute, ")");
+            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: '", TimeToStr(lastTick, TIME_FULL), "' (", lastMinute, ")");
          }
          else if (lastTick != tick) {
             minute = TimeMinute(tick);
             if (lastMinute < minute)
                ArrayPushInt(results, F_PERIOD_M1);
-            //debug("EventListener.BarOpen(M1)   prüfe   alt: '", TimeToStr(lastTick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", lastMinute, ")   neu: '", TimeToStr(tick, TIME_DATE|TIME_MINUTES|TIME_SECONDS), "' (", minute, ")");
+            //debug("EventListener.BarOpen(M1)   prüfe   alt: '", TimeToStr(lastTick, TIME_FULL), "' (", lastMinute, ")   neu: '", TimeToStr(tick, TIME_FULL), "' (", minute, ")");
             lastTick   = tick;
             lastMinute = minute;
          }
@@ -4422,14 +4422,14 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
    if (accountNumber[0] == 0) {                                      // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"'");
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
       ArrayResize(knownPositions, 0);
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"'");
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
 
    OrderPush("EventListener.PositionOpen(1)");
@@ -4680,13 +4680,13 @@ bool EventListener.AccountChange(int results[], int flags=0) {
          accountData[0] = 0;
          accountData[1] = account;
          accountData[2] = GMTToServerTime(TimeGMT());
-         //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+         //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
          accountData[2] = GMTToServerTime(TimeGMT());
-         //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_DATE|TIME_MINUTES|TIME_SECONDS));
+         //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
    }
@@ -7151,7 +7151,7 @@ string TimesToStr(datetime values[], string separator=", ") {
    for (int i=0; i < size; i++) {
       if      (values[i] <  0) strings[i] = "-1";
       else if (values[i] == 0) strings[i] =  "0";
-      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_DATE|TIME_MINUTES|TIME_SECONDS), "'");
+      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
    }
 
    string joined = JoinStrings(strings, separator);
@@ -7500,7 +7500,7 @@ int SendTextMessage(string receiver, string message) {
    // Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ UrlEncode(message);
    string filesDir     = TerminalPath() +"\\experts\\files";
-   string time         = StringReplace(StringReplace(TimeToStr(TimeLocal(), TIME_DATE|TIME_MINUTES|TIME_SECONDS), ".", "-"), ":", ".");
+   string time         = StringReplace(StringReplace(TimeToStr(TimeLocal(), TIME_FULL), ".", "-"), ":", ".");
    string responseFile = filesDir +"\\sms_"+ time +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmdLine      = "wget.exe -b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -8517,7 +8517,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
       comment = "";
    else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(11)   illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE)));
    // execution
@@ -8826,7 +8826,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       // TODO: StopDistance(takeProfit) prüfen
    }
    // expires
-   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_DATE|TIME_MINUTES|TIME_SECONDS)), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
    if (expires != OrderExpiration())
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
@@ -10067,7 +10067,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
          string PriceFormat = ".4'";
          for (n=0; n < orders; n++) {
             OrderSelectByTicket(entries[n], "OrderMultiClose.Hedges(4.1)");
-            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
+            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_FULL) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_FULL)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
          }
       }
       */
@@ -10107,7 +10107,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
          ArraySort(entries);
          for (n=0; n < orders; n++) {
             OrderSelectByTicket(entries[n], "OrderMultiClose.Hedges(4.2)");
-            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_DATE|TIME_MINUTES|TIME_SECONDS)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
+            debug("OrderMultiClose.Hedges()   #"+ StringRightPad(OrderTicket(), 8, " ") +"   "+ StringRightPad(ifString(IsMyOrder(), "FTP."+ (OrderMagicNumber()>>8&0x3FFF) +"."+ (OrderMagicNumber()&0xF), OrderMagicNumber()), 11, " ") +"   "+ TimeToStr(OrderOpenTime(), TIME_FULL) +"   "+ NumberToStr(OrderOpenPrice(), PriceFormat) +"   "+ StringRightPad(OperationTypeDescription(OrderType()), 4, " ") +"   "+ StringRightPad(NumberToStr(OrderLots(), ".+"), 4, " ") +"   "+ ifString(OrderCloseTime()==0, "- open -           ", TimeToStr(OrderCloseTime(), TIME_FULL)) +"   "+ NumberToStr(OrderClosePrice(), PriceFormat) +"   "+ ifString(OrderComment()=="", "", StringConcatenate("\"", OrderComment(), "\"")));
          }
          debug("OrderMultiClose.Hedges()   -----------------------------------------------------------------------------------------------------------------------------");
       }

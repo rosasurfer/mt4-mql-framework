@@ -59,6 +59,13 @@
 #define SATURDAY                 6
 
 
+// Time-Flags, siehe TimeToStr()
+#define TIME_DATE                1
+#define TIME_MINUTES             2
+#define TIME_SECONDS             4
+#define TIME_FULL                7        // TIME_DATE | TIME_MINUTES | TIME_SECONDS
+
+
 // Timeframe-Identifier, siehe Period()
 #define PERIOD_M1                1        // 1 minute
 #define PERIOD_M5                5        // 5 minutes
