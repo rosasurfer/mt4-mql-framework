@@ -6310,10 +6310,10 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
 
    if (StringLen(directory) == 0)
       return("");
-   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";
-   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
-   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
+   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 01.04.2012 "Europe/Berlin"
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //          ab 02.04.2012 "Europe/Kiev"
+   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";               //
+   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";               // (History wurde nicht aktualisiert)
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
