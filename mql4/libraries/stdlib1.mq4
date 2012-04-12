@@ -325,47 +325,52 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
       return(EMPTY_VALUE);
    }
 
-   string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   string timezone = GetServerTimezone();
+   if (StringLen(timezone) == 0)
       return(EMPTY_VALUE);
+
+   if (timezone == "Alpari") {
+      if (serverTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
+      else                                     timezone = "Europe/Kiev";
+   }
 
    int offset, year = TimeYear(serverTime)-1970;
 
-   if (zone == "Europe/Minsk") {                    // GMT+0200,GMT+0300
+   if (timezone == "Europe/Minsk") {                // GMT+0200,GMT+0300
       if      (serverTime < EMST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EMST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-   else if (zone == "Europe/Kiev") {                // GMT+0200,GMT+0300
+   else if (timezone == "Europe/Kiev") {            // GMT+0200,GMT+0300
       if      (serverTime < EEST_transitions[year][0]) offset = 2 * HOURS;
       else if (serverTime < EEST_transitions[year][1]) offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-   else if (zone == "FXT") {                        // GMT+0200,GMT+0300
+   else if (timezone == "FXT") {                    // GMT+0200,GMT+0300
       if      (serverTime < FXT_transitions[year][0])  offset = 2 * HOURS;
       else if (serverTime < FXT_transitions[year][1])  offset = 3 * HOURS;
       else                                             offset = 2 * HOURS;
    }
-   else if (zone == "Europe/Berlin") {              // GMT+0100,GMT+0200
+   else if (timezone == "Europe/Berlin") {          // GMT+0100,GMT+0200
       if      (serverTime < CEST_transitions[year][0]) offset = 1 * HOURS;
       else if (serverTime < CEST_transitions[year][1]) offset = 2 * HOURS;
       else                                             offset = 1 * HOURS;
    }
-   else if (zone == "GMT") {                        // GMT+0000
+   else if (timezone == "GMT") {                    // GMT+0000
                                                        offset = 0;
    }
-   else if (zone == "Europe/London") {              // GMT+0000,GMT+0100
+   else if (timezone == "Europe/London") {          // GMT+0000,GMT+0100
       if      (serverTime < BST_transitions[year][0])  offset = 0;
       else if (serverTime < BST_transitions[year][1])  offset = 1 * HOUR;
       else                                             offset = 0;
    }
-   else if (zone == "America/New_York") {           // GMT-0500,GMT-0400
+   else if (timezone == "America/New_York") {       // GMT-0500,GMT-0400
       if      (serverTime < EDT_transitions[year][0])  offset = -5 * HOURS;
       else if (serverTime < EDT_transitions[year][1])  offset = -4 * HOURS;
       else                                             offset = -5 * HOURS;
    }
    else {
-      catch("GetServerToGMTOffset(2)  unknown timezone \""+ zone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+      catch("GetServerToGMTOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
@@ -5364,6 +5369,12 @@ int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CON
    string timezone = GetServerTimezone();
    if (StringLen(timezone) == 0)
       return(EMPTY_VALUE);
+
+   if (timezone == "Alpari") {
+      if (gmtTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
+      else                                  timezone = "Europe/Kiev";
+   }
+
    int offset, year = TimeYear(gmtTime)-1970;
 
    if (timezone == "Europe/Minsk") {             // GMT+0200,GMT+0300
@@ -5408,9 +5419,6 @@ int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CON
       catch("GetGMTToServerTimeOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
-
-   if (catch("GetGMTToServerTimeOffset(3)") != NO_ERROR)
-      return(EMPTY_VALUE);
 
    return(offset);
 }
@@ -6280,10 +6288,11 @@ string PeriodFlagToStr(int flags) {
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
 string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
-
-   // Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
-   // Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart (mit den alten Bars).
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
+   /*
+   Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
+   Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart mit den alten Bars.
+   Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
+   */
    static string cache.timezone[];
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während desselben Ticks
 
@@ -6301,10 +6310,10 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
 
    if (StringLen(directory) == 0)
       return("");
-   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";
+   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
+   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
