@@ -6399,8 +6399,7 @@ int GetTesterWindow() {
    ändert sich mit jedem Docking-Vorgang, das Handle des gedockten Fensters bleibt konstant. Zur Ansprache genügt in beiden Fällen das konstante Handle
    des gedockten Fensters.
 
-   Die dynamischen Afx-Klassennamen müssen zur Laufzeit entsprechend dem Afx-Namensschema ermittelt werden. Da das Terminal internationalisiert ist, dürfen
-   zur Fenstersuche keine Fenstertitel verwendet werden.
+   Die dynamischen Afx-Klassennamen müssen zur Laufzeit ermittelt werden. Das Terminal ist internationalisiert, die Fenstertexte können nicht verwendet werden.
 
    @see Afx-Namensschema:  http://msdn.microsoft.com/en-us/library/btbxa0ad%28v=vs.90%29.aspx
    */
