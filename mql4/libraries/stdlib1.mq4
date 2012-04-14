@@ -515,10 +515,10 @@ string GetTerminalVersion() {
       pos += StringLen(key.ProductVersion);
    }
    else {
-      debug("GetTerminalVersion()->GetFileVersionInfoA()   ProductVersion not found");
+      debug("GetTerminalVersion() ->GetFileVersionInfoA()   ProductVersion not found");
       pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
       if (pos == -1) {
-         //debug("GetTerminalVersion()->GetFileVersionInfoA()   FileVersion not found");
+         //debug("GetTerminalVersion() ->GetFileVersionInfoA()   FileVersion not found");
          return(_empty(catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR)));
       }
       pos += StringLen(key.FileVersion);
@@ -2342,7 +2342,7 @@ string GetTradeServerDirectory() {
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_empty(catch("GetTradeServerDirectory(1)->FileOpenHistory(\""+ fileName +"\")")));
+         return(_empty(catch("GetTradeServerDirectory(1) ->FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -2486,7 +2486,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    // Datei öffnen
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);  // FileOpen() erwartet Pfadangabe relativ zu .\experts\files
    if (hFile < 0)
-      return(_int(-1, catch("FileReadLines(1)->FileOpen(\""+ filename +"\")", GetLastError())));
+      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\")", GetLastError())));
 
 
    // Schnelle Rückkehr bei leerer Datei
@@ -4811,7 +4811,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
       int error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE)
          return(error);
-      return(catch("GetAccountHistory(3)->FileOpen(\""+ filename +"\")", error));
+      return(catch("GetAccountHistory(3) ->FileOpen(\""+ filename +"\")", error));
    }
 
    string value;
@@ -9440,7 +9440,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
                   OrderPush("OrderCloseEx(12)");
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
                      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                   // FALSE: darf im Tester nicht auftreten
-                        catch("OrderCloseEx(13)->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
+                        catch("OrderCloseEx(13) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
                         break;
                      }
                      if (OrderTicket() == ticket)        continue;
@@ -9711,7 +9711,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
 
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
                      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
-                        if (IsTesting()) return(_false(catch("OrderCloseByEx(9)->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
+                        if (IsTesting()) return(_false(catch("OrderCloseByEx(9) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
                         continue;
                      }
                      if (OrderComment()!=strValue) /*&&*/ if (OrderComment()!=strValue2)
@@ -9737,7 +9737,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
 
                   for (i=OrdersTotal()-1; i >= 0; i--) {
                      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
-                        if (IsTesting()) return(_false(catch("OrderCloseByEx(12)->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
+                        if (IsTesting()) return(_false(catch("OrderCloseByEx(12) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
                         continue;
                      }
                      if (OrderType() == remainderType)

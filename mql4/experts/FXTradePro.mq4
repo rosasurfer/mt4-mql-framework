@@ -1644,11 +1644,11 @@ int SaveConfiguration() {
                                                                      // das Presets-Verzeichnis für die MQL-Dateifunktionen erreichbar.
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(catch("SaveConfiguration(2)->FileOpen(\""+ filename +"\")"));
+      return(catch("SaveConfiguration(2) ->FileOpen(\""+ filename +"\")"));
 
    for (int i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
-         catch("SaveConfiguration(3)->FileWrite(line #"+ (i+1) +")");
+         catch("SaveConfiguration(3) ->FileWrite(line #"+ (i+1) +")");
          FileClose(hFile);
          return(last_error);
       }
