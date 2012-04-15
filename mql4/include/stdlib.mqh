@@ -289,7 +289,7 @@
    string   UrlEncode(string value);
 
 
-   // Trade- und Orderhandling-Funktionen
+   // Tradefunktionen, Orderhandling
    bool     IsTemporaryTradeError(int error);
    bool     IsPermanentTradeError(int error);
    bool     IsTradeOperation(int value);
@@ -297,14 +297,18 @@
    bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
-/*ok*/int   OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, double execution[]);
-/*ok*/bool  OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
-/*ok*/bool  OrderDeleteEx(int ticket, color markerColor, double execution[]);
-/*ok*/bool  OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
-/*ok*/bool  OrderCloseByEx(int ticket, int opposite, color markerColor, double execution[]);
+   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, double execution[]);
+   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
+   bool     OrderDeleteEx(int ticket, color markerColor, double execution[]);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
+   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, double execution[]);
 
-   bool/*exec ? */ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
-   bool/*exec ? */ DeletePendingOrders(color markerColor);
+            bool/*exec*/ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
+/*private*/ int          OrderMultiClose.Flatten(int tickets[], double slippage, double execution[]);
+/*private*/ bool/*exec*/ OrderMultiClose.Hedges(int tickets[], color markerColor);
+
+   bool/*exec*/ DeletePendingOrders(color markerColor);
+
 
    int      OrderPush(string location);
    bool     OrderPop(string location);

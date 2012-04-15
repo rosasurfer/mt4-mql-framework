@@ -9545,7 +9545,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
  * @param  int    ticket      - Ticket der zu schließenden Position
- * @param  int    opposite    - Ticket der zum Schließen zu verwendenden Position
+ * @param  int    opposite    - Ticket der zum Schließen zu verwendenden Gegenposition
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
@@ -9555,17 +9555,17 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  * Elemente des Parameters execution[]
  * -----------------------------------
  * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) effektiver Zeitpunkt, zu dem die (Teil-)Position flat-gestellt wurde
- * - EXEC_PRICE     : (out) effektiver Preis, zu dem die (Teil-)Position flat-gestellt wurde
- * - EXEC_SWAP      : (out) realisierter Swap der geschlossenen (Teil-)Position (1)
- * - EXEC_COMMISSION: (out) realisierte Commission der geschlossenen (Teil-)Position (1)
- * - EXEC_PROFIT    : (out) realisierter Profit der geschlossenen (Teil-)Position  (1)
+ * - EXEC_TIME      : (out) effektiver Zeitpunkt, zu dem die (Teil-)Position geschlossen wurde
+ * - EXEC_PRICE     : (out) effektiver Preis, zu dem die (Teil-)Position geschlossen wurde
+ * - EXEC_SWAP      : (out) realisierter OrderSwap der geschlossenen (Teil-)Position (1)
+ * - EXEC_COMMISSION: (out) realisierte OrderCommission der geschlossenen (Teil-)Position (1)
+ * - EXEC_PROFIT    : (out) realisierter OrderProfit der geschlossenen (Teil-)Position (1)
  * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
  * - EXEC_REQUOTES  : (out) immer 0
  * - EXEC_SLIPPAGE  : (out) immer 0
- * - EXEC_TICKET    : (out) Ticket einer verbleibenden Restposition (nur bei partiellem Close)
+ * - EXEC_TICKET    : (out) Ticket einer verbleibenden Restposition (bei partiellem Close)
  *
- * 1) vom MT4-Server berechnet, bei partiellem Close aufgeteilt, kann vom theoretischen Wert abweichen
+ * (1) vom MT4-Server berechnet, bei partiellem Close aufgeteilt (kann vom tatsächlichen Wert abweichen)
  */
 bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -9647,8 +9647,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
 
    (1) Es ist nicht absehbar, zu welchen Folgefehlern es zukünftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 (#smaller by #larger) kommen kann. Im Tester wird
        daher immer die umständlichere Methode 2 (Schließen von #larger by #smaller) verwendet. Die bei dieser Methode fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung
-       unbrauchbar, denn theoretisch könnten online ausgeführte Stop-Orders mit exakt denselben Daten existieren. Dieser Fall wird im Tester, wo nur eine Strategie läuft, vernachlässigt.
-       Wichtiger ist, daß die Ticketdaten der erzeugten Restposition korrekt sind.
+       unbrauchbar, denn theoretisch könnten online Orders mit exakt denselben Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt.
+       Wichtiger ist, daß die Ticketdaten der verbleibenden Restposition immer korrekt sind.
    */
 
    // Tradereihenfolge analysieren
@@ -9783,7 +9783,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
 
 /**
  * Schließt mehrere offene Positionen mehrerer Instrumente auf möglichst effektive Art und Weise. Mehrere Positionen im selben
- * Instrument werden zuerst flat gestellt und dann aufgelöst. Die Berechnung doppelter Spreads wird dadurch vermieden.
+ * Instrument werden zuerst flat gestellt und dann aufgelöst, die Berechnung doppelter Spreads und Commissionen wird dadurch vermieden.
  *
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default: 0)
@@ -9799,19 +9799,19 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
  *
  * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
  *
- * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion dieses Symbols
- * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion dieses Symbols
+ * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion des Ticketsymbols
+ * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion des Ticketsymbols
  * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (2)(3)
  * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (2)(3)
  * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (2)(3)
  * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion in Sekunden
  * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
  * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) durch das Schließen dieses Tickets erzeugtes weiteres Ticket (wenn zutreffend)
+ * - EXEC_TICKET    : (out) durch das Schließen dieses Tickets erzeugtes weiteres Ticket (falls zutreffend)
  *
- * 1) entsprechend der Reihenfolge der Tickets in tickets[]
- * 2) vom MT4-Server berechnet, kann vom theoretischen Wert abweichen
- * 3) die Summe der Werte aller Tickets entspricht dem real verbuchten Gesamtwert
+ * (1) entsprechend der Ticketreihenfolge in tickets[]
+ * (2) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
+ * (3) die Summe der Werte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
 bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
    // (1) Beginn Parametervalidierung --
@@ -9855,13 +9855,13 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
          return(false);
       int symbolIndex = SearchStringArray(symbols, OrderSymbol());
       if (symbolIndex == -1)
-         symbolIndex = ArrayPushString(symbols, OrderSymbol())-1;
+         symbolIndex = ArrayPushString(symbols, OrderSymbol()) - 1;
       ticketSymbols[i] = symbolIndex;
    }
 
 
    // (4) Gehören die Tickets zu mehreren Symbolen, Tickets symbolweise auslesen und per Symbol schließen.
-   int sizeOfSymbols = ArraySize(symbols);
+   int hedge, sizeOfSymbols=ArraySize(symbols);
 
    if (sizeOfSymbols > 1) {
       int    hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
@@ -9883,10 +9883,10 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
          }
          else {
             // Da wir hier Tickets mehrerer Symbole auf einmal schließen und mehrere Positionen je Symbol haben, wird zuerst nur die Gesamtposition
-            // je Symbol ausgeglichen. Die einzelnen Teilpositionen werden erst danach aufgelöst (dauert ggf. etliche Sekunden).
-            int hedge;
+            // je Symbol ausgeglichen. Die einzelnen Teilpositionen werden erst danach aufgelöst (dauert ggf. einige Sekunden).
             exec[EXEC_FLAGS] = NULL;
-            if (!OrderMultiClose.Flatten(perSymbolTickets, hedge, slippage, exec))
+            hedge = OrderMultiClose.Flatten(perSymbolTickets, slippage, exec);
+            if (IsLastError())
                return(_false(OrderPop("OrderMultiClose(10)")));
             if (hedge != 0) {
                sizeOfTickets = ArrayPushInt(ticketsCopy,   hedge      );
@@ -9927,12 +9927,13 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 
 
    // (5) alle übergebenen Tickets gehören zum selben Symbol
-   if (!OrderMultiClose.Flatten(ticketsCopy, hedge, slippage, execution))  // Gesamtposition ggf. hedgen...
+   hedge = OrderMultiClose.Flatten(ticketsCopy, slippage, execution);      // Gesamtposition hedgen...
+   if (IsLastError())
       return(_false(OrderPop("OrderMultiClose(13)")));
    if (hedge != 0)
       sizeOfTickets = ArrayPushInt(ticketsCopy, hedge);
 
-   if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))                  // ...und Gesamtposition auflösen
+   if (!OrderMultiClose.Hedges(ticketsCopy, markerColor))                  // ...und auflösen
       return(_false(OrderPop("OrderMultiClose(14)")));
 
    return(IsNoError(catch("OrderMultiClose(15)", NULL, O_POP)));
@@ -9940,82 +9941,126 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 
 
 /**
- * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine zusätzliche Tradeoperation aus.  Dies geschieht entweder
- * durch partielles Schließen einer der Positionen (bevorzugt) oder durch Öffnen einer weiteren Position.
+ * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine einzige zusätzliche Tradeoperation aus. Dies geschieht
+ * entweder durch Schließen einer der Positionen (bevorzugt) oder durch Öffnen einer neuen Position.
  *
  * @param  int    tickets[]   - Tickets der auszugleichenden Positionen
- * @param  int&   hedgeTicket - Zeiger auf Variable zur Aufnahme des Tickets der flat-stellenden Position
  * @param  double slippage    - akzeptable Slippage in Pip (default: 0)
  * @param  double execution[] - ausführungsspezifische Daten
  *
- * @return bool - Erfolgsstatus
+ * @return int - ein resultierendes Hedgeticket; 0, falls ein Fehler auftrat (@see IsLastError() for ErrorHandling)
  *
  *
  * Elemente des Parameters execution[]
  * -----------------------------------
  * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1)(2):
+ * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
  *
- * - EXEC_TIME      : (out) effektiver Zeitpunkt der Glattstellung
- * - EXEC_PRICE     : (out) effektiver Ausführungspreis der Glattstellung
- * - EXEC_SWAP      : (out) OrderSwap einer evt. geschlossenen Teilposition (3)
- * - EXEC_COMMISSION: (out) OrderCommission einer evt. geschlossenen Teilposition (3)
- * - EXEC_PROFIT    : (out) OrderProfit einer evt. geschlossenen Teilposition (3)
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten)
+ * - EXEC_TIME      : (out) Zeitpunkt der Glattstellung (2)
+ * - EXEC_PRICE     : (out) Ausführungspreis der Glattstellung (2)
+ * - EXEC_SWAP      : (out) realisierter OrderSwap einer geschlossenen Teilposition dieses Tickets (falls zutreffend) (3)
+ * - EXEC_COMMISSION: (out) realisierte OrderCommission einer geschlossenen Teilposition dieses Tickets (falls zutreffend) (3)
+ * - EXEC_PROFIT    : (out) realisierter OrderProfit einer geschlossenen Teilposition dieses Tickets (falls zutreffend) (3)
+ * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden (2)
+ * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes (2)
+ * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (2)
+ * - EXEC_TICKET    : (out) durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket (falls zutreffend)
  *
- * 1) entsprechend der Reihenfolge in tickets[]
- * 2) durch nur eine Tradeoperation sind die entsprechenden Rückgabewerte aller Tickets jeweils identisch
- * 3) vom MT4-Server berechnet, kann vom theoretischen Wert abweichen
- *
- * TODO: EXEC_TICKET implementieren
+ * (1) entsprechend der Ticketreihenfolge in tickets[]
+ * (2) wegen nur einer auszuführenden Tradeoperation ist dieser Rückgabewert bei allen Tickets gleich
+ * (3) vom MT4-Server berechnet, kann vom tatsächlichen Wert abweichen
  */
-/*private*/ bool OrderMultiClose.Flatten(int tickets[], int& hedgeTicket, double slippage/*=0*/, double& execution[]) {
+/*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage/*=0*/, double& execution[]) {
    int sizeOfTickets = ArraySize(tickets);
+   if (ArraySize(execution) != 9*sizeOfTickets+1)
+      ArrayResize(execution, 9*sizeOfTickets+1);
 
-   double totalLots;
+   // private, wir überprüfen kein zweites mal, ob alle Tickets zum selben Symbol gehören
+
+   double totalLots, lots[];
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(1)"))
-         return(false);
-      if (OrderType() == OP_BUY) totalLots += OrderLots();           // Gesamtposition ermitteln
-      else                       totalLots -= OrderLots();
+         return(0);                                                  // einzelne Lotsizes speichern und Gesamtposition ermitteln
+      if (OrderType() == OP_BUY) { totalLots += OrderLots(); ArrayPushDouble(lots,  OrderLots()); }
+      else                       { totalLots -= OrderLots(); ArrayPushDouble(lots, -OrderLots()); }
    }
 
-   ArrayResize(execution, 10);
+   int hedgeTicket = 0;
 
-   if (EQ(totalLots, 0)) {                                           // Gesamtposition ist bereits ausgeglichen
-      hedgeTicket              = 0;
-      execution[EXEC_DURATION] = 0;
-      execution[EXEC_REQUOTES] = 0;
-      execution[EXEC_SLIPPAGE] = 0;
+   if (EQ(totalLots, 0)) {
+      // Gesamtposition ist bereits ausgeglichen
+      double flags = execution[EXEC_FLAGS];
+      ArrayInitialize(execution, 0);
+      execution[EXEC_FLAGS] = flags;
    }
-   else {                                                            // Gesamtposition hedgen
-      // TODO: Statt OrderSend() nach Möglichkeit OrderClosePartial() verwenden (spart Margin, besser bei TradeserverLimits etc.)
-      int type = ifInt(LT(totalLots, 0), OP_BUY, OP_SELL);
+   else {
+      // Gesamtposition hedgen:
+      int totalPosition = ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT);
 
+      // nach Möglichkeit OrderClose() verwenden (spart Margin, besser bei TradeserverLimits etc.)
+      int closeTicket;
+      for (i=1; i < sizeOfTickets; i++) {
+         // vollständig schließbares Ticket suchen
+         if (EQ(lots[i], totalLots)) {
+            closeTicket = tickets[i];
+            break;
+         }
+      }
+      if (closeTicket == 0) {
+         // partiell schließbares Ticket suchen
+         for (i=1; i < sizeOfTickets; i++) {
+            if (totalPosition == OP_LONG) {
+               if (GT(lots[i], totalLots)) {
+                  closeTicket = tickets[i];
+                  break;
+               }
+            }
+            else {
+               if (LT(lots[i], totalLots)) {
+                  closeTicket = tickets[i];
+                  break;
+               }
+            }
+         }
+      }
+
+      int type = totalPosition^1;
       string message = StringConcatenate("OrderMultiClose.Flatten()   opening ", OperationTypeDescription(type), " hedge for ", sizeOfTickets, " ", OrderSymbol(), " position");
       if (sizeOfTickets > 1)
          message = StringConcatenate(message, "s");
       log(message);
 
-      int hedge = OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, execution);
-      if (hedge == -1)
-         return(false);
-      hedgeTicket = hedge;
+      double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
+
+      if (closeTicket != 0) {
+         // OrderClose eines der Tickets
+         if (!OrderCloseEx(closeTicket, MathAbs(totalLots), NULL, slippage, CLR_NONE, exec))
+            return(0);
+      }
+      else {
+         // OrderSend: neues Ticket öffnen
+         if (OrderSendEx(OrderSymbol(), type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, exec) == -1)
+            return(0);
+      }
+      hedgeTicket = exec[EXEC_TICKET];
+
+      for (i=1; i < sizeOfTickets; i++) {
+         execution[9*i+EXEC_TIME      ] =                                   exec[EXEC_TIME      ];
+         execution[9*i+EXEC_PRICE     ] =                                   exec[EXEC_PRICE     ];
+         execution[9*i+EXEC_SWAP      ] = ifDouble(tickets[i]==closeTicket, exec[EXEC_SWAP      ], 0);
+         execution[9*i+EXEC_COMMISSION] = ifDouble(tickets[i]==closeTicket, exec[EXEC_COMMISSION], 0);
+         execution[9*i+EXEC_PROFIT    ] = ifDouble(tickets[i]==closeTicket, exec[EXEC_PROFIT    ], 0);
+         execution[9*i+EXEC_DURATION  ] =                                   exec[EXEC_DURATION  ];
+         execution[9*i+EXEC_REQUOTES  ] =                                   exec[EXEC_REQUOTES  ];
+         execution[9*i+EXEC_SLIPPAGE  ] =                                   exec[EXEC_SLIPPAGE  ];
+         execution[9*i+EXEC_TICKET    ] = ifDouble(tickets[i]==closeTicket, exec[EXEC_TICKET    ], 0);
+      }
    }
 
-   // für alle Tickets gelten dieselben Ausführungsdaten
-   ArrayResize(execution, 9*sizeOfTickets+1);
-
-   for (i=1; i < sizeOfTickets; i++) {
-      execution[9*i+EXEC_DURATION] = execution[EXEC_DURATION];
-      execution[9*i+EXEC_REQUOTES] = execution[EXEC_REQUOTES];
-      execution[9*i+EXEC_SLIPPAGE] = execution[EXEC_SLIPPAGE];
-   }
-
-   return(IsNoError(catch("OrderMultiClose.Flatten(2)")));
+   if (IsError(catch("OrderMultiClose.Flatten(2)")))
+      return(0);
+   return(hedgeTicket);
 }
 
 
