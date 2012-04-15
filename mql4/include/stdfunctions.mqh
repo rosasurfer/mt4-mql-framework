@@ -549,7 +549,7 @@
 #define ERR_INVALID_TIMEZONE_CONFIG                  5005   // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                      5006   // invalid market data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
-#define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user intervention
+#define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user
 #define ERR_ILLEGAL_INPUT_PARAMVALUE                 5009
 #define ERR_LOCKED_INPUT_PARAMVALUE                  5010
 
@@ -1281,11 +1281,11 @@ int SetLastError(int error) {
 
 
 /**
- * Zeigt eine MessageBox an, wenn Alert() im aktuellen Kontext des Terminals unterdrückt wird (z.B. im Tester).
+ * Zeigt eine MessageBox auch dann an, wenn Alert() im aktuellen Kontext unterdrückt wird (im Tester).
  *
  * @param string s1-s63 - bis zu 63 beliebige Parameter
  *
- * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
+ * @return void - immer 0 (als int deklariert, um Verwendung als Funktionsargument zu ermöglichen)
  *
  * NOTE:
  * -----
@@ -1293,7 +1293,7 @@ int SetLastError(int error) {
  */
 int ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
    string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
-   Alert(message);
+   Alert(message);                                                   // sorgt dafür, daß die Message auf jeden Fall im Log erscheint
 
    if (IsTesting()) {
       ForceSound("alert.wav");
@@ -1477,8 +1477,10 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())           ForceAlert("WaitForTicket()   ticket #", ticket, " not yet accessible");
-      else if (i > 0 && i%10==0)      Alert("WaitForTicket()   ticket #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000.0, 1), " s");
+      string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __SCRIPT__, "::WaitForTicket()   #", ticket, " not yet accessible");
+
+      if (IsTesting())           ForceAlert(message);
+      else if (i > 0 && i%10==0)      Alert(message, " after ", DoubleToStr(i*delay/1000.0, 1), " s");
       Sleep(delay);
       i++;
    }

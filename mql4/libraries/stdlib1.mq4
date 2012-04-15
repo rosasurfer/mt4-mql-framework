@@ -381,7 +381,7 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
 /**
  * Dropin-Ersatz für MessageBox()
  *
- * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (z.B. im Tester oder in Indikatoren).
+ * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (im Tester oder in Indikatoren).
  *
  * @param string message
  * @param string caption
@@ -390,6 +390,9 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
  * @return int - Tastencode
  */
 int ForceMessageBox(string message, string caption, int flags=MB_OK) {
+   if (!StringIStartsWith(caption, Symbol()))
+      caption = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), " - ", caption);
+
    int button;
 
    if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
@@ -402,7 +405,7 @@ int ForceMessageBox(string message, string caption, int flags=MB_OK) {
 /**
  * Dropin-Ersatz für PlaySound()
  *
- * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (z.B. im Tester).
+ * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (im Tester).
  *
  * @param string soundfile
  */
@@ -5679,7 +5682,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                     ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                           ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user intervention"                                ); // 5008
+      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                             ); // 5008
       case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("illegal input parameter value"                                 ); // 5009
       case ERR_LOCKED_INPUT_PARAMVALUE    : return("input parameter is locked"                                     ); // 5010
    }
