@@ -239,19 +239,19 @@
 
 
    // Math, Numbers
-   bool     EQ(double a, double b);    bool CompareDoubles(double a, double b);        // MetaQuotes-Alias
-   bool     NE(double a, double b);
+   bool     EQ(double a, double b, int digits);    bool CompareDoubles(double a, double b);     // MetaQuotes-Alias
+   bool     NE(double a, double b, int digits);
 
-   bool     LT(double a, double b);
-   bool     LE(double a, double b);
+   bool     LT(double a, double b, int digits);
+   bool     LE(double a, double b, int digits);
 
-   bool     GT(double a, double b);
-   bool     GE(double a, double b);
+   bool     GT(double a, double b, int digits);
+   bool     GE(double a, double b, int digits);
 
-   int      CountDecimals(double number);
+   int      CountDecimals(double value);
    double   MathModFix(double a, double b);
-   double   MathRoundFix(double number, int decimals);
-   int      MathSign(double number);
+   double   MathRoundFix(double value, int decimals);
+   int      MathSign(double value);
 
 
    // Strings
@@ -265,10 +265,10 @@
    bool     StringIContains(string object, string substring);
 
    bool     StringStartsWith(string object, string prefix);
-   bool     StringEndsWith(string object, string postfix);
    bool     StringIStartsWith(string object, string prefix);
+   bool     StringEndsWith(string object, string postfix);
    bool     StringIEndsWith(string object, string postfix);
-   bool     StringICompare(string string1, string string2);
+   bool     StringICompare(string a, string b);
 
    string   StringLeft(string value, int n);
    string   StringRight(string value, int n);
@@ -321,7 +321,7 @@
    bool     ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
    bool     ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);
    bool     ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment);
-   bool     ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit);
+   bool     ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeProfit);
    bool     ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment);
    bool     ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);
