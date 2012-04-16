@@ -8106,7 +8106,7 @@ string DoubleToStrEx(double value, int digits) {
    double decimals[17] = { 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0, 1000000000.0, 10000000000.0, 100000000000.0, 1000000000000.0, 10000000000000.0, 100000000000000.0, 1000000000000000.0, 10000000000000000.0 };
 
    bool isNegative = false;
-   if (value < 0.0) {
+   if (value < 0) {
       isNegative = true;
       value = -value;
    }
