@@ -637,7 +637,7 @@ bool ReadSequence() {
          openPositions = true;
 
          int level = OrderMagicNumber() & 0xF;                          //  4 Bits (Bits 1-4)  => progressionLevel
-         if (level > sequenceLength) return(_false(catch("ReadSequence(1)   illegal sequence state, progression level "+ level +" of ticket #"+ OrderTicket() +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)));
+         if (level > sequenceLength) return(_false(catch("ReadSequence(1)   illegal sequence state, progression level "+ level +" of #"+ OrderTicket() +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)));
 
          if (level > progressionLevel)
             progressionLevel = level;
@@ -734,7 +734,7 @@ bool ReadSequence() {
 
          if (EQ(hist.lots[i], 0.0)) {                                   // Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
-               return(_false(catch("ReadSequence(2)  ticket #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)));
+               return(_false(catch("ReadSequence(2)  #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)));
             referenceTicket = StrToInteger(StringSubstr(hist.comments[i], 16));
          }
          else if (StringIStartsWith(hist.comments[i], splitPrefix)) {   // Restposition
@@ -800,7 +800,7 @@ bool ReadSequence() {
 
          if (EQ(hist.lots[i], 0.0)) {                                   // Hedge-Position
             if (!StringIStartsWith(hist.comments[i], "close hedge by #"))
-               return(_false(catch("ReadSequence(8)  ticket #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)));
+               return(_false(catch("ReadSequence(8)  #"+ hist.tickets[i] +": unknown comment for assumed hedging position = \""+ hist.comments[i] +"\"", ERR_RUNTIME_ERROR)));
             referenceTicket = StrToInteger(StringSubstr(hist.comments[i], 16));
          }
          else if (StringIStartsWith(hist.comments[i], splitPrefix)) {   // Restposition
@@ -895,7 +895,7 @@ bool ReadSequence() {
  */
 bool ReadSequence.AddClosedPosition(int magicNumber, int ticket, int type, datetime openTime, double openPrice, double swap, double commission, double profit, string comment) {
    int level = magicNumber & 0xF;                                       // 4 Bits (Bits 1-4) => progressionLevel
-   if (level > sequenceLength) return(_false(catch("ReadSequence.AddClosedPosition(1)   illegal sequence state, progression level "+ level +" of ticket #"+ ticket +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)));
+   if (level > sequenceLength) return(_false(catch("ReadSequence.AddClosedPosition(1)   illegal sequence state, progression level "+ level +" of #"+ ticket +" exceeds the value of sequenceLength = "+ sequenceLength, ERR_RUNTIME_ERROR)));
 
    if (level > progressionLevel)
       progressionLevel = level;

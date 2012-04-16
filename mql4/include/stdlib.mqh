@@ -303,12 +303,8 @@
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, double execution[]);
 
-            bool/*exec*/ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
-/*private*/ int          OrderMultiClose.Flatten(int tickets[], double slippage, double execution[]);
-/*private*/ bool/*exec*/ OrderMultiClose.Hedges(int tickets[], color markerColor, double execution[]);
-
+   bool/*exec*/ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
    bool/*exec*/ DeletePendingOrders(color markerColor);
-
 
    int      OrderPush(string location);
    bool     OrderPop(string location);
