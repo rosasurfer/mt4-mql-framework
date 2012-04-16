@@ -305,7 +305,7 @@
 
             bool/*exec*/ OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
 /*private*/ int          OrderMultiClose.Flatten(int tickets[], double slippage, double execution[]);
-/*private*/ bool/*exec*/ OrderMultiClose.Hedges(int tickets[], color markerColor);
+/*private*/ bool/*exec*/ OrderMultiClose.Hedges(int tickets[], color markerColor, double execution[]);
 
    bool/*exec*/ DeletePendingOrders(color markerColor);
 
