@@ -1467,7 +1467,7 @@ bool OrderPop(string location) {
  */
 bool WaitForTicket(int ticket, bool orderKeep=true) {
    if (ticket <= 0)
-      return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_ILLEGAL_INPUT_PARAMVALUE)));
+      return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (orderKeep) {
       if (OrderPush("WaitForTicket(2)") == 0)
@@ -1506,7 +1506,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots = 1.0) {
-   if (lots     < 0.00000001)  return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (lots     < 0.00000001)  return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (TickSize < 0.00000001)  return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
 
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
@@ -1615,10 +1615,131 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
+ * Korrekter Vergleich zweier Doubles auf "Lower-Then".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool LT(double double1, double double2, int digits=8) {
+   if (EQ(double1, double2, digits))
+      return(false);
+   return(double1 < double2);
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Lower-Or-Equal".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool LE(double double1, double double2, int digits=8) {
+   if (double1 < double2)
+      return(true);
+   return(EQ(double1, double2, digits));
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf Gleichheit "Equal".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool EQ(double double1, double double2, int digits=8) {
+   if (digits < 0 || digits > 8)
+      return(_false(catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
+   if (diff < 0)
+      diff = -diff;
+   return(diff < 0.000000000000001);
+
+   /*
+   switch (digits) {
+      case  0: return(diff <= 0                 );
+      case  1: return(diff <= 0.1               );
+      case  2: return(diff <= 0.01              );
+      case  3: return(diff <= 0.001             );
+      case  4: return(diff <= 0.0001            );
+      case  5: return(diff <= 0.00001           );
+      case  6: return(diff <= 0.000001          );
+      case  7: return(diff <= 0.0000001         );
+      case  8: return(diff <= 0.00000001        );
+      case  9: return(diff <= 0.000000001       );
+      case 10: return(diff <= 0.0000000001      );
+      case 11: return(diff <= 0.00000000001     );
+      case 12: return(diff <= 0.000000000001    );
+      case 13: return(diff <= 0.0000000000001   );
+      case 14: return(diff <= 0.00000000000001  );
+      case 15: return(diff <= 0.000000000000001 );
+      case 16: return(diff <= 0.0000000000000001);
+   }
+   return(_false(catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   */
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf Ungleichheit "Not-Equal".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool NE(double double1, double double2, int digits=8) {
+   return(!EQ(double1, double2, digits));
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Greater-Or-Equal".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool GE(double double1, double double2, int digits=8) {
+   if (double1 > double2)
+      return(true);
+   return(EQ(double1, double2, digits));
+}
+
+
+/**
+ * Korrekter Vergleich zweier Doubles auf "Greater-Then".
+ *
+ * @param  double double1 - erster Wert
+ * @param  double double2 - zweiter Wert
+ * @param  int    digits  - Anzahl der zu berücksichtigenden Nachkommastellen (default: 8)
+ *
+ * @return bool
+ */
+bool GT(double double1, double double2, int digits=8) {
+   if (EQ(double1, double2, digits))
+      return(false);
+   return(double1 > double2);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return bool - TRUE
  */
@@ -1631,7 +1752,7 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als boolean FALSE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return bool - FALSE
  */
@@ -1644,7 +1765,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return int - NULL
  */
@@ -1657,7 +1778,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return int - NO_ERROR
  */
@@ -1670,7 +1791,7 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als (int) 0 zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return int - 0
  */
@@ -1683,7 +1804,7 @@ int _ZERO(int param1=NULL, int param2=NULL, int param3=NULL) {
  * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
- * @param  ... - beliebige Parameter (werden ignoriert)
+ * @param  beliebige Parameter (werden ignoriert)
  *
  * @return string - Leerstring
  */
@@ -1771,7 +1892,10 @@ void DummyCalls() {
    ChartInfo.UpdateTime();
    ChartInfo.UpdateUnitSize();
    debug(NULL);
+   EQ(NULL, NULL);
    ForceAlert();
+   GE(NULL, NULL);
+   GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
    ifBool(NULL, NULL, NULL);
@@ -1784,7 +1908,10 @@ void DummyCalls() {
    IsLastError();
    IsNoError(NULL);
    IsScript();
+   LE(NULL, NULL);
    log();
+   LT(NULL, NULL);
+   NE(NULL, NULL);
    onDeinit();
    onInit(NULL);
    OrderPop(NULL);

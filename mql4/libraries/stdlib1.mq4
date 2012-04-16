@@ -3914,102 +3914,12 @@ datetime GetFXTNextSessionEndTime(datetime fxtTime) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles auf "Lower-Then": (double1 < double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool LT(double double1, double double2) {
-   if (EQ(double1, double2))
-      return(false);
-   return(double1 < double2);
-}
-
-
-/**
- * Korrekter Vergleich zweier Doubles auf "Lower-Or-Equal": (double1 <= double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool LE(double double1, double double2) {
-   if (double1 < double2)
-      return(true);
-   return(EQ(double1, double2));
-
-}
-
-
-/**
- * Korrekter Vergleich zweier Doubles auf Gleichheit "Equal": (double1 == double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool EQ(double double1, double double2) {
-   double diff = double1 - double2;
-   if (diff < 0)                             // Wir prüfen die Differenz anhand der 14. Nachkommastelle und nicht wie
-      diff = -diff;                          // die Original-MetaQuotes-Funktion anhand der 8. (benutzt NormalizeDouble()).
-   return(diff <= 0.00000000000001);         // siehe auch: NormalizeDouble() in MQL.doc
-}
-
-
-/**
- * Korrekter Vergleich zweier Doubles auf Ungleichheit "Not-Equal": (double1 != double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool NE(double double1, double double2) {
-   return(!EQ(double1, double2));
-}
-
-
-/**
- * Korrekter Vergleich zweier Doubles auf "Greater-Or-Equal": (double1 >= double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool GE(double double1, double double2) {
-   if (double1 > double2)
-      return(true);
-   return(EQ(double1, double2));
-}
-
-
-/**
- * Korrekter Vergleich zweier Doubles auf "Greater-Then": (double1 > double2)
- *
- * @param  double1 - erster Wert
- * @param  double2 - zweiter Wert
- *
- * @return bool
- */
-bool GT(double double1, double double2) {
-   if (EQ(double1, double2))
-      return(false);
-   return(double1 > double2);
-}
-
-
-/**
  * Korrekter Vergleich zweier Doubles.
  *
  * MetaQuotes-Alias für EQ()
  */
 bool CompareDoubles(double double1, double double2) {
-   return(EQ(double1, double2));
+   return(EQ(double1, double2));                                     // Die MetaQuotes-Funktion ist fehlerhaft.
 }
 
 
@@ -8172,7 +8082,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  */
 string DoubleToStrEx(double value, int digits) {
    if (digits < 0 || digits > 16)
-      return(_empty(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_ILLEGAL_INPUT_PARAMVALUE)));
+      return(_empty(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    /*
    double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
