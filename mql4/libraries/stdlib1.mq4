@@ -9758,7 +9758,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
    int copy[]; ArrayResize(copy, 0);
-   ArrayCopy(copy, tickets);
+   int sizeOfCopy = ArrayCopy(copy, tickets);
 
 
    // (3) Zuordnung der Tickets zu Symbolen ermitteln
@@ -9776,10 +9776,48 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 
 
    // (4) Gehören die Tickets zu mehreren Symbolen, Tickets symbolweise auslesen und per Symbol schließen.
-   int    newTicket, sizeOfSymbols=ArraySize(symbols);
+   int    newTicket, pos, sizeOfSymbols=ArraySize(symbols);
    double exec[] = {NULL};
 
    if (sizeOfSymbols > 1) {
+      /*
+       * Soll
+       * ----
+       * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion des Ticketsymbols
+       * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion des Ticketsymbols
+       * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (2)(3)
+       * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (2)(3)
+       * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (2)(3)
+       * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion des Ticketsymbols in Sekunden
+       * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
+       * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion des Ticketsymbols in Pips (positiv: zu ungunsten; negativ: zu gunsten)
+       * - EXEC_TICKET    : (out) immer 0
+       *
+       *
+       * OrderMultiClose.Flatten
+       * -----------------------
+       * - EXEC_TIME      : (out) Zeitpunkt der Glattstellung (2)(3)
+       * - EXEC_PRICE     : (out) Ausführungspreis der Glattstellung (2)(3)
+       * - EXEC_SWAP      : (out) realisierter OrderSwap beim Schließen dieses Tickets (falls zutreffend) (4)
+       * - EXEC_COMMISSION: (out) realisierte OrderCommission beim Schließen dieses Tickets (falls zutreffend) (4)
+       * - EXEC_PROFIT    : (out) realisierter OrderProfit beim Schließen dieses Tickets (falls zutreffend) (4)
+       * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden (2)
+       * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes (2)
+       * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (2)
+       * - EXEC_TICKET    : (out) durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket; -1, wenn dieses Ticket vollständig
+       *                          geschlossen wurde (falls zutreffend)
+       * OrderMultiClose.Hedges
+       * ----------------------
+       * - EXEC_TIME      : (out) OrderOpenTime des zuletzt geöffneten Tickets (2)
+       * - EXEC_PRICE     : (out) OrderOpenPrice des zuletzt geöffneten Tickets (2)
+       * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (3)(4)
+       * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (3)(4)
+       * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (3)(4)
+       * - EXEC_DURATION  : (out) immer 0
+       * - EXEC_REQUOTES  : (out) immer 0
+       * - EXEC_SLIPPAGE  : (out) immer 0
+       * - EXEC_TICKET    : (out) immer 0
+       */
       int hedgedSymbolIndices[]; ArrayResize(hedgedSymbolIndices, 0);
 
       for (symbolIndex=0; symbolIndex < sizeOfSymbols; symbolIndex++) {
@@ -9807,12 +9845,12 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
                sizeOfTickets = ArrayPushInt(copy, newTicket);
                ArrayPushInt(tickets.symbol, symbolIndex);
             }
-            ArrayPushInt(hedgedSymbolIndices, symbolIndex);          // Symbol zum späteren Schließen vormerken
+            ArrayPushInt(hedgedSymbolIndices, symbolIndex);             // Symbol zum späteren Schließen vormerken
          }
 
          // Ausführungsdaten der Tickets an die entsprechende Position des Funktionsparameters kopieren
          for (i=0; i < sizeOfPerSymbolTickets; i++) {
-            int pos = SearchIntArray(tickets, perSymbolTickets[i]);
+            pos = SearchIntArray(tickets, perSymbolTickets[i]);
             execution[9*pos+EXEC_TIME      ] = exec[9*pos+EXEC_TIME      ];
             execution[9*pos+EXEC_PRICE     ] = exec[9*pos+EXEC_PRICE     ];
             execution[9*pos+EXEC_SWAP      ] = exec[9*pos+EXEC_SWAP      ];
@@ -9841,45 +9879,6 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
       return(IsNoError(catch("OrderMultiClose(12)", NULL, O_POP)));
    }
 
-   /*
-    * Soll
-    * ----
-    * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion des Ticketsymbols
-    * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion des Ticketsymbols
-    * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (2)(3)
-    * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (2)(3)
-    * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (2)(3)
-    * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion des Ticketsymbols in Sekunden
-    * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
-    * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion des Ticketsymbols in Pips (positiv: zu ungunsten; negativ: zu gunsten)
-    * - EXEC_TICKET    : (out) immer 0
-    *
-    *
-    * OrderMultiClose.Flatten
-    * -----------------------
-    * - EXEC_TIME      : (out) Zeitpunkt der Glattstellung (2)(3)
-    * - EXEC_PRICE     : (out) Ausführungspreis der Glattstellung (2)(3)
-    * - EXEC_SWAP      : (out) realisierter OrderSwap beim Schließen dieses Tickets (falls zutreffend) (4)
-    * - EXEC_COMMISSION: (out) realisierte OrderCommission beim Schließen dieses Tickets (falls zutreffend) (4)
-    * - EXEC_PROFIT    : (out) realisierter OrderProfit beim Schließen dieses Tickets (falls zutreffend) (4)
-    * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden (2)
-    * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes (2)
-    * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (2)
-    * - EXEC_TICKET    : (out) durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket; -1, wenn dieses Ticket vollständig
-    *                          geschlossen wurde (falls zutreffend)
-    * OrderMultiClose.Hedges
-    * ----------------------
-    * - EXEC_TIME      : (out) OrderOpenTime des zuletzt geöffneten Tickets (2)
-    * - EXEC_PRICE     : (out) OrderOpenPrice des zuletzt geöffneten Tickets (2)
-    * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (3)(4)
-    * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (3)(4)
-    * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (3)(4)
-    * - EXEC_DURATION  : (out) immer 0
-    * - EXEC_REQUOTES  : (out) immer 0
-    * - EXEC_SLIPPAGE  : (out) immer 0
-    * - EXEC_TICKET    : (out) immer 0
-    */
-
 
    // (5.1) alle übergebenen Tickets gehören zum selben Symbol, Gesamtposition glatt stellen
    exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
@@ -9891,7 +9890,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
    ArrayInitialize(execution, 0);
    execution[EXEC_FLAGS] = flags;
    for (i=0; i < sizeOfTickets; i++) {
-      execution[9*i+EXEC_TIME    ] = exec[EXEC_TIME    ];            // Werte sind bei allen exec[]-Tickets gleich
+      execution[9*i+EXEC_TIME    ] = exec[EXEC_TIME    ];               // Werte sind bei allen exec[]-Tickets gleich
       execution[9*i+EXEC_PRICE   ] = exec[EXEC_PRICE   ];
       execution[9*i+EXEC_DURATION] = exec[EXEC_DURATION];
       execution[9*i+EXEC_REQUOTES] = exec[EXEC_REQUOTES];
@@ -9899,26 +9898,35 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
       execution[9*i+EXEC_TICKET  ] = exec[EXEC_TICKET  ];
    }
    for (i=0; i < sizeOfTickets; i++) {
-      if (newTicket == 0) {                                          // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
+      if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
          if (EQ(exec[9*i+EXEC_TICKET], -1))
             break;
       }
-      else if (EQ(exec[9*i+EXEC_TICKET], newTicket))                 // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+      else if (EQ(exec[9*i+EXEC_TICKET], newTicket))                    // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
          break;
    }
-   if (i < sizeOfTickets) {                                          // break getriggert => geschlossenes Ticket gefunden
+   if (i < sizeOfTickets) {                                             // break getriggert => geschlossenes Ticket gefunden
       execution[9*i+EXEC_SWAP      ] = exec[9*i+EXEC_SWAP      ];
       execution[9*i+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
       execution[9*i+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
-      ArrayDropInt(copy, copy[i]);                                   // geschlossenes Ticket löschen
+      sizeOfCopy -= ArrayDropInt(copy, copy[i]);                        // geschlossenes Ticket löschen
    }
    if (newTicket != 0)
-      ArrayPushInt(copy, newTicket);                                 // neues Ticket hinzufügen
+      sizeOfCopy = ArrayPushInt(copy, newTicket);                       // neues Ticket hinzufügen
 
    // (5.2) Teilpositionen auflösen
    exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
    if (!OrderMultiClose.Hedges(copy, markerColor, exec))
       return(_false(OrderPop("OrderMultiClose(14)")));
+
+   for (i=0; i < sizeOfCopy; i++) {
+      pos = SearchIntArray(tickets, copy[i]);
+      if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
+         pos = sizeOfTickets-1;
+      execution[9*pos+EXEC_SWAP      ] += exec[9*i+EXEC_SWAP      ];
+      execution[9*pos+EXEC_COMMISSION] += exec[9*i+EXEC_COMMISSION];    // Beträge jeweils addieren
+      execution[9*pos+EXEC_PROFIT    ] += exec[9*i+EXEC_PROFIT    ];
+   }
 
    return(IsNoError(catch("OrderMultiClose(15)", NULL, O_POP)));
 }
