@@ -44,6 +44,10 @@
    int      ArrayDropDouble(double array[], double value);
    int      ArrayDropString(string array[], string value);
 
+   int      ArraySpliceInt(int array[], int offset, int length);
+   int      ArraySpliceDouble(double array[], int offset, int length);
+   int      ArraySpliceString(string array[], int offset, int length);
+
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushDouble(double array[], double value);
    int      ArrayPushString(string array[], string value);
