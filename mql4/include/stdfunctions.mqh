@@ -1401,7 +1401,7 @@ bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool
 
 
 /**
- * Schiebt den aktuellen Orderkontext auf den Order-Stack (fügt ihn ans Ende an).
+ * Schiebt den aktuellen Orderkontext auf den Kontextstack (fügt ihn ans Ende an).
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
@@ -1428,7 +1428,7 @@ int OrderPush(string location) {
 
 
 /**
- * Entfernt den letzten auf dem Order-Stack befindlichen Kontext und restauriert ihn.
+ * Entfernt den letzten Orderkontext vom Ende des Kontextstacks und restauriert ihn.
  *
  * @param  string location - Bezeichner für eine evt. Fehlermeldung
  *
