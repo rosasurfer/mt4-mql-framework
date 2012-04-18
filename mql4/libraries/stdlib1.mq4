@@ -9914,10 +9914,14 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
    if (newTicket != 0)
       sizeOfCopy = ArrayPushInt(copy, newTicket);                       // neues Ticket hinzufügen
 
+   if (sizeOfCopy == 0)
+      return(IsNoError(catch("OrderMultiClose(14)", NULL, O_POP)));
+
+
    // (5.2) Teilpositionen auflösen
    exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
    if (!OrderMultiClose.Hedges(copy, markerColor, exec))
-      return(_false(OrderPop("OrderMultiClose(14)")));
+      return(_false(OrderPop("OrderMultiClose(15)")));
 
    for (i=0; i < sizeOfCopy; i++) {
       pos = SearchIntArray(tickets, copy[i]);
@@ -9928,7 +9932,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
       execution[9*pos+EXEC_PROFIT    ] += exec[9*i+EXEC_PROFIT    ];
    }
 
-   return(IsNoError(catch("OrderMultiClose(15)", NULL, O_POP)));
+   return(IsNoError(catch("OrderMultiClose(16)", NULL, O_POP)));
 }
 
 
@@ -10119,7 +10123,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
    ArrayInitialize(execution, 0);
    execution[EXEC_FLAGS] = flags;
 
-   // execution[EXEC_TIME && EXEC_PRICE] setzen
+   // execution[TIME & PRICE] setzen
    SortTicketsChronological(copy);
    if (!OrderSelectByTicket(copy[sizeOfCopy-1], "OrderMultiClose.Hedges(2)")) // zuletzt geöffnetes Ticket
       return(false);
