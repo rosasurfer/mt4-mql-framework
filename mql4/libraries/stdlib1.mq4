@@ -185,50 +185,42 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Gibt die lesbare Repräsentation einer execution-Struktur zurück (wie sie die Orderfunktionen verwenden).
+ * Gibt die lesbare Repräsentation einer execution-Struktur zurück.
  *
  * @param  double execution[]
  *
  * @return string
  */
 string ExecutionToStr(double execution[]) {
-   // Soll-Size des Arrays berechnen
-   int size      = ArraySize(execution);
-   int tickets   = (size-1) / 9;
-   int remainder = (size-1) % 9;
-   if (tickets==0 || remainder!=0)
-      tickets++;
-   size = 1 + tickets*9;
+   string strings[];
 
-   // um das übergebene Array nicht zu verändern, arbeiten wir auf einer Kopie
-   double executionCopy[];
-   ArrayResize    (executionCopy, size     );
-   ArrayInitialize(executionCopy, 0        );
-   ArrayCopy      (executionCopy, execution);
+   int flags = execution[EXEC_FLAGS] + ifDouble(LT(execution[EXEC_FLAGS], 0), -0.1, +0.1);
+   ArrayPushString(strings, "EXEC_FLAGS=>"+ flags);
 
-   int      value_FLAGS      = executionCopy[EXEC_FLAGS     ] + ifDouble(LT(executionCopy[EXEC_FLAGS], 0), -0.1, +0.1);
-   datetime value_TIME       = executionCopy[EXEC_TIME      ] +0.1;
-   double   value_PRICE      = executionCopy[EXEC_PRICE     ];
-   double   value_SWAP       = executionCopy[EXEC_SWAP      ];
-   double   value_COMMISSION = executionCopy[EXEC_COMMISSION];
-   double   value_PROFIT     = executionCopy[EXEC_PROFIT    ];
-   double   value_DURATION   = executionCopy[EXEC_DURATION  ];
-   int      value_REQUOTES   = executionCopy[EXEC_REQUOTES  ] +0.1;
-   double   value_SLIPPAGE   = executionCopy[EXEC_SLIPPAGE  ];
-   int      value_TICKET     = executionCopy[EXEC_TICKET    ] +0.1;
+   // Anzahl der Datensätze im Array ermitteln
+   int tickets = (ArraySize(execution)-1) / 9;
 
-   string strings[10];
+   for (int i=0; i < tickets; i++) {
+      datetime time       = execution[9*i+EXEC_TIME      ] +0.1;
+      double   price      = execution[9*i+EXEC_PRICE     ];
+      double   swap       = execution[9*i+EXEC_SWAP      ];
+      double   commission = execution[9*i+EXEC_COMMISSION];
+      double   profit     = execution[9*i+EXEC_PROFIT    ];
+      double   duration   = execution[9*i+EXEC_DURATION  ];
+      int      requotes   = execution[9*i+EXEC_REQUOTES  ] +0.1;
+      double   slippage   = execution[9*i+EXEC_SLIPPAGE  ];
+      int      ticket     = execution[9*i+EXEC_TICKET    ] +0.1;
 
-   strings[EXEC_FLAGS     ] = "EXEC_FLAGS=>"     +             value_FLAGS;
-   strings[EXEC_TIME      ] = "EXEC_TIME=>"      +    ifString(value_TIME==0, 0, TimeToStr(value_TIME, TIME_FULL));
-   strings[EXEC_PRICE     ] = "EXEC_PRICE=>"     + NumberToStr(value_PRICE,      ".+");
-   strings[EXEC_SWAP      ] = "EXEC_SWAP=>"      + NumberToStr(value_SWAP,       ".2");
-   strings[EXEC_COMMISSION] = "EXEC_COMMISSION=>"+ NumberToStr(value_COMMISSION, ".2");
-   strings[EXEC_PROFIT    ] = "EXEC_PROFIT=>"    + NumberToStr(value_PROFIT,     ".2");
-   strings[EXEC_DURATION  ] = "EXEC_DURATION=>"  + NumberToStr(value_DURATION,   ".3");
-   strings[EXEC_REQUOTES  ] = "EXEC_REQUOTES=>"  +             value_REQUOTES;
-   strings[EXEC_SLIPPAGE  ] = "EXEC_SLIPPAGE=>"  + NumberToStr(value_SLIPPAGE,   ".1");
-   strings[EXEC_TICKET    ] = "EXEC_TICKET=>"    +             value_TICKET;
+      ArrayPushString(strings, (i+1) +"=EXEC_TIME=>"      +    ifString(time==0, 0, TimeToStr(time, TIME_FULL)));
+      ArrayPushString(strings,         "EXEC_PRICE=>"     + NumberToStr(price,      ".+")                      );
+      ArrayPushString(strings,         "EXEC_SWAP=>"      + NumberToStr(swap,       ".2")                      );
+      ArrayPushString(strings,         "EXEC_COMMISSION=>"+ NumberToStr(commission, ".2")                      );
+      ArrayPushString(strings,         "EXEC_PROFIT=>"    + NumberToStr(profit,     ".2")                      );
+      ArrayPushString(strings,         "EXEC_DURATION=>"  + NumberToStr(duration,   ".3")                      );
+      ArrayPushString(strings,         "EXEC_REQUOTES=>"  +             requotes                               );
+      ArrayPushString(strings,         "EXEC_SLIPPAGE=>"  + NumberToStr(slippage,   ".1")                      );
+      ArrayPushString(strings,         "EXEC_TICKET=>"    +             ticket                                 );
+   }
 
    string result = StringConcatenate("{", JoinStrings(strings, ", "), "}");
 
@@ -10009,7 +10001,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
 
 
    // (3) Gesamtposition glatt stellen
-   double exec[0]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
+   double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
    int newTicket = OrderMultiClose.Flatten(copy, slippage, exec);
    if (IsLastError())
       return(false);
