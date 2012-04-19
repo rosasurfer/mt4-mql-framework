@@ -6397,7 +6397,7 @@ int GetTerminalWindow() {
 
 
 /**
- * Gibt das aktuelle Fensterhandle des Strategy Testers zurück.
+ * Gibt das Fensterhandle des Strategy Testers zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
