@@ -62,6 +62,8 @@
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   int  LoadCursorA(int hInstance, string lpCursorName);
+   int  LoadCursorW(int hInstance, int resourceId);
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
@@ -127,6 +129,25 @@
 #define AW_ACTIVATE                          0x00020000
 #define AW_SLIDE                             0x00040000
 #define AW_BLEND                             0x00080000
+
+
+// Standard Cursor IDs
+#define IDC_APPSTARTING                           32650  // standard arrow and small hourglass (not in win3.1)
+#define IDC_ARROW                                 32512  // standard arrow
+#define IDC_CROSS                                 32515  // crosshair
+#define IDC_IBEAM                                 32513  // text I-beam
+#define IDC_ICON                                  32641  // Windows NT only: empty icon
+#define IDC_NO                                    32648  // slashed circle (not in win3.1)
+#define IDC_SIZE                                  32640  // Windows NT only: four-pointed arrow
+#define IDC_SIZEALL                               32646  // same as IDC_SIZE
+#define IDC_SIZENESW                              32643  // double-pointed arrow pointing northeast and southwest
+#define IDC_SIZENS                                32645  // double-pointed arrow pointing north and south
+#define IDC_SIZENWSE                              32642  // double-pointed arrow pointing northwest and southeast
+#define IDC_SIZEWE                                32644  // double-pointed arrow pointing west and east
+#define IDC_UPARROW                               32516  // vertical arrow
+#define IDC_WAIT                                  32514  // hourglass
+#define IDC_HAND                                  32649  // WINVER >= 0x0500
+#define IDC_HELP                                  32651  // WINVER >= 0x0400
 
 
 // Dialog flags

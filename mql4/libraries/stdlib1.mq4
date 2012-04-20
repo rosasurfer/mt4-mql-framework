@@ -185,6 +185,50 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
+ *
+ * Alias für LoadCursorById()
+ */
+int LoadCursor(int hInstance, int resourceId) {
+   return(LoadCursorById(hInstance, resourceId));
+}
+
+
+/**
+ * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
+ *
+ * @param  int hInstance  - Application instance handle
+ * @param  int resourceId - cursor ID
+ *
+ * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
+ */
+int LoadCursorById(int hInstance, int resourceId) {
+   int hCursor = LoadCursorW(hInstance, resourceId & 0xFFFF);        // High-Word sicherheitshalber auf 0 setzen
+
+   if (hCursor == 0)
+      catch("LoadCursorById() ->user32::LoadCursorW()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+   return(hCursor);
+}
+
+
+/**
+ * Lädt einen Cursor anhand seines Namens und gibt sein Handle zurück.
+ *
+ * @param  int    hInstance  - Application instance handle
+ * @param  string cursorName - Name
+ *
+ * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
+ */
+int LoadCursorByName(int hInstance, string cursorName) {
+   int hCursor = LoadCursorA(hInstance, cursorName);
+
+   if (hCursor == 0)
+      catch("LoadCursorByName() ->user32::LoadCursorA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+   return(hCursor);
+}
+
+
+/**
  * Gibt die lesbare Repräsentation einer execution-Struktur zurück.
  *
  * @param  double execution[]
