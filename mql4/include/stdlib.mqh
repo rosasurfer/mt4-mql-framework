@@ -281,8 +281,8 @@
    string   StringLeftPad(string input, int length, string pad_string);
    string   StringRightPad(string input, int length, string pad_string);
 
-   string   StringToLower(string value);
-   string   StringToUpper(string value);
+   string   StringToLower(string value);  string StrToLower(string value);    // Alias
+   string   StringToUpper(string value);  string StrToUpper(string value);    // Alias
 
    int      StringFindR(string object, string search);
    string   StringRepeat(string input, int times);
