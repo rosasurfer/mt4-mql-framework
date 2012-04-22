@@ -9901,60 +9901,60 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
    /*
    Vollständiges Close
    ===================
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   |           | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | open      |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 |                     |   1.3237'4 | -0.80 |      -8.00 |  714.00 |         111 | order comment     |
-   | open      |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 | -1.50 |      -8.00 | -837.00 |         222 | order comment     |
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   |           | Ticket | Type | Lots | Symbol |                OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | open      |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 |                     |   1.3237'4 | -0.80 |      -8.00 |  714.00 |         111 | order comment     |
+   | open      |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 | -1.50 |      -8.00 | -837.00 |         222 | order comment     |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     #1 by #2:
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 1.00 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 | -2.30 |      -8.00 | -103.00 |         111 | order comment     |
-   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "close hedge for #1" lauten
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | closed    |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 | -2.30 |      -8.00 | -103.00 |         111 | order comment     |
+   | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "close hedge for #1" lauten
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     #2 by #1:
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
-   | closed    |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.30 |      -8.00 | -103.00 |         222 | order comment     |
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
+   | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.30 |      -8.00 | -103.00 |         222 | order comment     |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     - Der ClosePrice des schließenden Tickets (by) wird auf seinen OpenPrice gesetzt (byOpenPrice == byClosePrice), der ClosePrice des zu schließenden Tickets auf byOpenPrice.
     - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, Commission nicht (wird erstattet). Das schließende Ticket (by) wird auf NULL gesetzt.
 
 
    Partielles Close
    ================
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   |           | Ticket | Type | Lots | Symbol |            OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | open      |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 |                     |   1.3237'4 | -0.56 |       0.00 |  499.80 |         111 | order comment     |
-   | open      |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 | -1.50 |       0.00 | -837.00 |         222 | order comment     |
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   |           | Ticket | Type | Lots | Symbol |            OpenTime     | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | open      |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 |                     |   1.3237'4 | -0.56 |       0.00 |  499.80 |         111 | order comment     |
+   | open      |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 |                     |   1.3239'4 | -1.50 |       0.00 | -837.00 |         222 | order comment     |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
 
     #smaller(1) by #larger(2):
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 | -2.06 |       0.00 |  -72.10 |         111 | partial close     | müßte unverändert sein
-   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "partial close/close hedge for #1" lauten
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.00 |         222 | split from #1     | müßte "split from #2" lauten
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-    - FEHLER: Die OpenTime der Restposition wird im Tester falsch gesetzt, siehe (1).
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 | -2.06 |       0.00 |  -72.10 |         111 | partial close     | müßte unverändert sein
+   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "partial close/close hedge for #1" lauten
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.00 |         222 | split from #1     | müßte "split from #2" lauten
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, Commission wird aufgeteilt und erstattet. Das schließende Ticket (by) wird auf NULL gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
 
     #larger(2) by #smaller(1):
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
-   | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.06 |       0.00 |  -72.10 |         222 | partial close     |
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.10 |         222 | partial close     | müßte "split from #2" lauten
-   +-----------+--------+------+------+--------+---------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
+   | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.06 |       0.00 |  -72.10 |         222 | partial close     |
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.10 |         222 | partial close     | müßte "split from #2" lauten
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, Commission wird erstattet bzw. aufgeteilt. Das schließende Ticket (by) wird auf NULL gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
-    - Zwischen den ursprünglichen Positionen und der Restposition existiert keine auswertbare Beziehung mehr.
+    - Zwischen den ursprünglichen Positionen und der Restposition besteht keine auswertbare Beziehung mehr.
 
-
-   (1) Es ist nicht absehbar, zu welchen Folgefehlern es zukünftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 (#smaller by #larger) kommen kann. Im Tester wird
-       daher immer die umständlichere Methode 2 (Schließen von #larger by #smaller) verwendet. Die bei dieser Methode fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung
-       unbrauchbar, denn theoretisch könnten online Orders mit exakt denselben Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt.
-       Wichtiger ist, daß die Ticketdaten der verbleibenden Restposition immer korrekt sind.
+   (1) Die OpenTime der Restposition wird *nur* im Tester falsch gesetzt (3).
+   (2) Die OpenTime der Restposition wird auch im Tester korrekt gesetzt (3).
+   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode (#smaller by #larger) kommen kann. Im Tester wird daher
+       immer die umständlichere Methode (#larger by #smaller) verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar, denn theoretisch
+       könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt. Wichtiger ist, daß die Daten
+       der verbleibenden Restposition korrekt sind.
    */
 
    // Tradereihenfolge analysieren
