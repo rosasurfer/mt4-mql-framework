@@ -32,42 +32,52 @@
 
 
    // Arrays
+   bool     ArrayPopBool(bool array[]);
    int      ArrayPopInt(int array[]);
    double   ArrayPopDouble(double array[]);
    string   ArrayPopString(string array[]);
 
+   bool     ArrayShiftBool(bool array[]);
    int      ArrayShiftInt(int array[]);
    double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
 
+   int      ArrayDropBool(bool array[], bool value);
    int      ArrayDropInt(int array[], int value);
    int      ArrayDropDouble(double array[], double value);
    int      ArrayDropString(string array[], string value);
 
+   int      ArraySpliceBool(bool array[], int offset, int length);
    int      ArraySpliceInt(int array[], int offset, int length);
    int      ArraySpliceDouble(double array[], int offset, int length);
    int      ArraySpliceString(string array[], int offset, int length);
 
+   int      ArrayPushBool(bool& array[], bool value);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushDouble(double array[], double value);
    int      ArrayPushString(string array[], string value);
 
+   int      ArrayUnshiftBool(bool array[], bool value);
    int      ArrayUnshiftInt(int array[], int value);
    int      ArrayUnshiftDouble(double array[], double value);
    int      ArrayUnshiftString(string array[], string value);
 
+   bool     BoolInArray(bool haystack[], bool needle);
    bool     IntInArray(int haystack[], int needle);
    bool     DoubleInArray(double haystack[], double needle);
    bool     StringInArray(string haystack[], string needle);
 
+   int      SearchBoolArray(bool haystack[], bool needle);
    int      SearchIntArray(int haystack[], int needle);
    int      SearchDoubleArray(double haystack[], double needle);
    int      SearchStringArray(string haystack[], string needle);
 
+   bool     ReverseBoolArray(bool array[]);
    bool     ReverseIntArray(int array[]);
    bool     ReverseDoubleArray(double array[]);
    bool     ReverseStringArray(string array[]);
 
+   bool     IsReverseIndexedBoolArray(bool array[]);
    bool     IsReverseIndexedIntArray(int array[]);
    bool     IsReverseIndexedDoubleArray(double array[]);
    bool     IsReverseIndexedSringArray(string array[]);

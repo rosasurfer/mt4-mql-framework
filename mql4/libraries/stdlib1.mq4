@@ -1174,6 +1174,136 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
+ * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zurück.
+ *
+ * @param  bool array[] - Boolean-Array
+ *
+ * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
+ */
+bool ArrayPopBool(bool array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_false(catch("ArrayPopBool()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   bool popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zurück.
+ *
+ * @param  bool array[] - Boolean-Array
+ *
+ * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
+ */
+bool ArrayShiftBool(bool array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_false(catch("ArrayShiftBool()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   bool shifted = array[0];
+
+   if (size > 1)
+      ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
+ * Entfernt alle Vorkommen eines Elements aus einem Boolean-Array.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  bool value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropBool(bool array[], bool value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (array[i] == value) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
+ * Entfernt einen Teil aus einem Boolean-Array.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  int  offset  - Startposition zu entfernender Elemente
+ * @param  int  length  - Anzahl der zu entfernenden Elemente
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArraySpliceBool(bool array[], int offset, int length) {
+   int size = ArraySize(array);
+   if (offset < 0)      return(_ZERO(catch("ArraySpliceBool(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset > size-1) return(_ZERO(catch("ArraySpliceBool(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)      return(_ZERO(catch("ArraySpliceBool(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (size   == 0) return(0);
+   if (length == 0) return(0);
+
+   if (offset+length < size) {
+      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+   }
+   else {
+      length = size - offset;
+   }
+   ArrayResize(array, size-length);
+
+   return(length);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines Boolean-Arrays an.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  bool value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushBool(bool& array[], bool value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines Boolean-Arrays an.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  bool value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftBool(bool array[], bool value) {
+   ReverseBoolArray(array);
+   int size = ArrayPushBool(array, value);
+   ReverseBoolArray(array);
+   return(size);
+}
+
+
+/**
  * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
  *
  * @param  int array[] - Integer-Array
@@ -1566,13 +1696,13 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
+ * Ob die Indizierung der internen Implementierung des angegebenen Boolean-Arrays umgekehrt ist oder nicht.
  *
- * @param  double array[] - Double-Array
+ * @param bool array[] - Boolean-Array
  *
  * @return bool
  */
-bool IsReverseIndexedDoubleArray(double array[]) {
+bool IsReverseIndexedBoolArray(bool array[]) {
    if (ArraySetAsSeries(array, false))
       return(!ArraySetAsSeries(array, true));
    return(false);
@@ -1594,6 +1724,20 @@ bool IsReverseIndexedIntArray(int array[]) {
 
 
 /**
+ * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  double array[] - Double-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedDoubleArray(double array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
  * Ob die Indizierung der internen Implementierung des angegebenen String-Arrays umgekehrt ist oder nicht.
  *
  * @param  string array[] - String-Array
@@ -1608,16 +1752,16 @@ bool IsReverseIndexedStringArray(string array[]) {
 
 
 /**
- * Kehrt die Reihenfolge der Elemente eines Double-Arrays um.
+ * Kehrt die Reihenfolge der Elemente eines Boolean-Arrays um.
  *
- * @param  double array[] - Double-Array
+ * @param  bool array[] - Boolean-Array
  *
  * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
  *                FALSE, wenn die interne Indizierung normal ist
  *
- * @see IsReverseIndexedDoubleArray()
+ * @see IsReverseIndexedBoolArray()
  */
-bool ReverseDoubleArray(double array[]) {
+bool ReverseBoolArray(bool array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
@@ -1635,6 +1779,23 @@ bool ReverseDoubleArray(double array[]) {
  * @see IsReverseIndexedIntArray()
  */
 bool ReverseIntArray(int array[]) {
+   if (ArraySetAsSeries(array, true))
+      return(!ArraySetAsSeries(array, false));
+   return(true);
+}
+
+
+/**
+ * Kehrt die Reihenfolge der Elemente eines Double-Arrays um.
+ *
+ * @param  double array[] - Double-Array
+ *
+ * @return bool - TRUE, wenn die Indizierung der internen Arrayimplementierung nach der Verarbeitung ebenfalls umgekehrt ist
+ *                FALSE, wenn die interne Indizierung normal ist
+ *
+ * @see IsReverseIndexedDoubleArray()
+ */
+bool ReverseDoubleArray(double array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
@@ -7380,6 +7541,41 @@ string StringsToStr(string values[], string separator=", ") {
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{\"", joined, "\"}"));
+}
+
+
+/**
+ * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  bool haystack[] - zu durchsuchendes Array
+ * @param  bool needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchBoolArray(bool haystack[], bool needle) {
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("SearchBoolArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Prüft, ob ein Boolean in einem Array enthalten ist.
+ *
+ * @param  bool haystack[] - zu durchsuchendes Array
+ * @param  bool needle     - zu suchender Wert
+ *
+ * @return bool
+ */
+bool BoolInArray(bool haystack[], bool needle) {
+   return(SearchBoolArray(haystack, needle) > -1);
 }
 
 
