@@ -8774,7 +8774,7 @@ string NumberToStr(double number, string mask) {
  * @param  string   comment     - Orderkommentar, max. 27 Zeichen (default: -kein-     )
  * @param  int      magicNumber - MagicNumber                     (default: 0          )
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
- * @param  color    markerColor - Farbe des Chartmarkers          (default: kein Marker)
+ * @param  color    markerColor - Farbe des Chartmarkers
  * @param  double   execution[] - ausführungsspezifische Daten
  *
  * @return int - Ticket oder -1, falls ein Fehler auftrat
@@ -8793,7 +8793,7 @@ string NumberToStr(double number, string mask) {
  * - EXEC_SLIPPAGE  : (out) Gesamtslippage der Orderausführung in Pips nach Requotes (positiv: zu ungunsten; negativ: zu gunsten)
  * - EXEC_TICKET    : (out) das erzeugte Ticket (wie von der Funktion zurückgegeben)
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")      // = NULL
@@ -9611,7 +9611,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * @param  double lots        - zu schließendes Volumen in Lots (default: komplette Position)
  * @param  double price       - Preis                           (wird zur Zeit ignoriert    )
  * @param  double slippage    - akzeptable Slippage in Pips     (default: 0                 )
- * @param  color  markerColor - Farbe des Chart-Markers         (default: kein Marker       )
+ * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
@@ -9632,7 +9632,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  *
  * 1) vom MT4-Server berechnet, kann bei partiellem Close vom theoretischen Wert abweichen
  */
-bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slippage/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
+bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slippage/*=0*/, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseEx(1)", O_PUSH)) return(false);
@@ -9873,7 +9873,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  *
  * (1) vom MT4-Server berechnet, bei partiellem Close aufgeteilt (kann vom tatsächlichen Wert abweichen)
  */
-bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, double& execution[]) {
+bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH)) return(false);
@@ -9904,57 +9904,58 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
    |           | Ticket | Type | Lots | Symbol |                OpenTime | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | open      |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 |                     |   1.3237'4 | -0.80 |      -8.00 |  714.00 |         111 | order comment     |
-   | open      |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 | -1.50 |      -8.00 | -837.00 |         222 | order comment     |
+   | open      |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 |                     |   1.3237'4 | -0.80 |      -8.00 |  714.00 |         111 |                   |
+   | open      |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 |                     |   1.3239'4 | -1.50 |      -8.00 | -837.00 |         222 |                   |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     #1 by #2:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 | -2.30 |      -8.00 | -103.00 |         111 | order comment     |
+   | closed    |     #1 |  Buy | 1.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.20 20:00:01 |   1.3155'7 | -2.30 |      -8.00 | -103.00 |         111 |                   |
    | closed    |     #2 | Sell | 0.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.20 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "close hedge for #1" lauten
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     #2 by #1:
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
    | closed    |     #1 |  Buy | 0.00 | EURUSD |     2012.03.19 11:00:05 |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
-   | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.30 |      -8.00 | -103.00 |         222 | order comment     |
+   | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.30 |      -8.00 | -103.00 |         222 |                   |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     - Der ClosePrice des schließenden Tickets (by) wird auf seinen OpenPrice gesetzt (byOpenPrice == byClosePrice), der ClosePrice des zu schließenden Tickets auf byOpenPrice.
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, Commission nicht (wird erstattet). Das schließende Ticket (by) wird auf NULL gesetzt.
+    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird erstattet. Die LotSize des schließenden Tickets (by) wird
+      auf 0 gesetzt.
 
 
    Partielles Close
    ================
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   |           | Ticket | Type | Lots | Symbol |            OpenTime     | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment           |
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | open      |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 |                     |   1.3237'4 | -0.56 |       0.00 |  499.80 |         111 | order comment     |
-   | open      |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 |                     |   1.3239'4 | -1.50 |       0.00 | -837.00 |         222 | order comment     |
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+   |           | Ticket | Type | Lots | Symbol |            OpenTime     | OpenPrice |           CloseTime | ClosePrice |  Swap | Commission |  Profit | MagicNumber | Comment/Online             | Comment/Tester < Build 416 | Comment/Tester >= Build 416 |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+   | open      |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 |                     |   1.3237'4 | -0.56 |      -5.60 |  499.80 |         111 |                            |                            |                             |
+   | open      |     #2 | Sell | 1.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 |                     |   1.3239'4 | -1.50 |      -8.00 | -837.00 |         222 |                            |                            |                             |
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
 
     #smaller(1) by #larger(2):
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 | -2.06 |       0.00 |  -72.10 |         111 | partial close     | müßte unverändert sein
-   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1 | müßte "partial close/close hedge for #1" lauten
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.00 |         222 | split from #1     | müßte "split from #2" lauten
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, Commission wird aufgeteilt und erstattet. Das schließende Ticket (by) wird auf NULL gesetzt.
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+   | closed    |     #1 |  Buy | 0.70 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3155'7 | -2.06 |      -5.60 |  -72.10 |         111 | partial close              | partial close              | to #3                       | müßte unverändert sein
+   | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | müßte "partial close/close hedge for #1" lauten
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |  0.00 |      -2.40 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | müßte "split from #2" lauten
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden Tickets (by) wird auf 0 gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
 
     #larger(2) by #smaller(1):
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2 | müßte "close hedge for #2" lauten
-   | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.06 |       0.00 |  -72.10 |         222 | partial close     |
-   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |  0.00 |       0.00 | -251.10 |         222 | partial close     | müßte "split from #2" lauten
-   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, Commission wird erstattet bzw. aufgeteilt. Das schließende Ticket (by) wird auf NULL gesetzt.
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+   | closed    |     #1 |  Buy | 0.00 | EURUSD | 2012.03.19 11:00:05     |  1.3166'0 | 2012.03.19 20:00:01 |   1.3166'0 |  0.00 |       0.00 |    0.00 |         111 | close hedge by #2          | close hedge by #2          | close hedge by #2           | müßte "close hedge for #2" lauten
+   | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.06 |      -5.60 |  -72.10 |         222 | partial close              | partial close              |                             |
+   | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |  0.00 |      -2.40 | -251.10 |         222 | partial close              | partial close              |                             | müßte "split from #2" lauten
+   +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
+    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden Tickets (by) wird auf 0 gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
     - Zwischen den ursprünglichen Positionen und der Restposition besteht keine auswertbare Beziehung mehr.
 
-   (1) Die OpenTime der Restposition wird *nur* im Tester falsch gesetzt (3).
-   (2) Die OpenTime der Restposition wird auch im Tester korrekt gesetzt (3).
-   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode (#smaller by #larger) kommen kann. Im Tester wird daher
-       immer die umständlichere Methode (#larger by #smaller) verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar, denn theoretisch
-       könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt. Wichtiger ist, daß die Daten
-       der verbleibenden Restposition korrekt sind.
+   (1) Die OpenTime der Restposition wird im Tester falsch gesetzt (3).
+   (2) Die OpenTime der Restposition wird online und im Tester korrekt gesetzt (3).
+   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 "#smaller by #larger" kommen kann. Im Tester wird daher
+       immer die umständlichere Methode 2 "#larger by #smaller" verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar, denn theoretisch
+       könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt. Wichtiger scheint, daß die Daten
+       der verbleibenden immer Restposition korrekt sind.
    */
 
    // Tradereihenfolge analysieren
@@ -10092,7 +10093,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
  *
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default: 0)
- * @param  color  markerColor - Farbe des Chart-Markers          (default: kein Marker)
+ * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
@@ -10119,7 +10120,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor/*=CLR_NONE*/, do
  * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des Ticketsymbols addiert,
  *     die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert
  */
-bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
+bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, double& execution[]) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
@@ -10266,7 +10267,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  *
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default: 0)
- * @param  color  markerColor - Farbe des Chart-Markers          (default: kein Marker)
+ * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
@@ -10293,7 +10294,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
-/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor/*=CLR_NONE*/, double& execution[]) {
+/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (ArraySize(execution) != 9*sizeOfTickets+1)
@@ -10511,7 +10512,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  * Schließt die ausgeglichene Gesamtposition eines Symbols per OrderCloseBy().
  *
  * @param  int    tickets[]   - Tickets der gehedgten Positionen
- * @param  color  markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
@@ -10539,7 +10540,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  * (4) aus dem Öffnen und Schließen zusätzlicher Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
-/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor/*=CLR_NONE*/, double& execution[]) {
+/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, double& execution[]) {
    int sizeOfTickets = ArraySize(tickets);
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, arbeiten wir auf einer Kopie.
@@ -10618,7 +10619,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  * Drop-in-Ersatz für und erweiterte Version von OrderDelete(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
  * @param  int    ticket      - Ticket der zu schließenden Order
- * @param  color  markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  color  markerColor - Farbe des Chart-Markers
  * @param  double execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
@@ -10637,7 +10638,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor/*=C
  * - EXEC_SLIPPAGE  : (out) immer 0
  * - EXEC_TICKET    : (out) immer 0
  */
-bool OrderDeleteEx(int ticket, color markerColor/*=CLR_NONE*/, double& execution[]) {
+bool OrderDeleteEx(int ticket, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderDeleteEx(1)", O_PUSH)) return(false);
