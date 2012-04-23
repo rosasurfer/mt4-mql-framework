@@ -8888,6 +8888,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
             OrderPush("OrderSendEx(18)");
             WaitForTicket(ticket, false);                                                 // wartet und selektiert (FALSE)
 
+            if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
+               return(_int(-1, OrderPop("OrderSendEx(19)")));
+
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = OrderOpenTime();
             execution[EXEC_PRICE     ] = OrderOpenPrice();
@@ -8905,9 +8908,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
             log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-
-            if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-               return(_int(-1, OrderPop("OrderSendEx(19)")));
 
             if (IsError(catch("OrderSendEx(20)", NULL, O_POP)))
                return(-1);
@@ -9090,7 +9090,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   stopLoss    - StopLoss-Level
  * @param  double   takeProfit  - TakeProfit-Level
  * @param  datetime expires     - Gültigkeit (nur bei Pending-Orders)
- * @param  color    markerColor - Farbe des Chart-Markers (default: kein Marker)
+ * @param  color    markerColor - Farbe des Chart-Markers
  * @param  double   execution[] - ausführungsspezifische Daten
  *
  * @return bool - Erfolgsstatus
@@ -9109,7 +9109,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * - EXEC_SLIPPAGE  : (out) immer 0
  * - EXEC_TICKET    : (out) immer 0
  */
-bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor/*=CLR_NONE*/, double& execution[]) {
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(false);
@@ -9179,13 +9179,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
             // TODO: WaitForChanges() implementieren
 
+            if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
+               return(_false(OrderPop("OrderModifyEx(12)")));
+
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = modifyTime;
             execution[EXEC_PRICE     ] = 0;
             execution[EXEC_SWAP      ] = 0;
             execution[EXEC_COMMISSION] = 0;
             execution[EXEC_PROFIT    ] = 0;
-            execution[EXEC_DURATION  ] = (time2-firstTime1)/1000.0;       // in Sekunden
+            execution[EXEC_DURATION  ] = (time2-firstTime1)/1000.0;     // in Sekunden
             execution[EXEC_REQUOTES  ] = 0;
             execution[EXEC_SLIPPAGE  ] = 0;
             execution[EXEC_TICKET    ] = 0;
@@ -9193,9 +9196,6 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
             if (!IsTesting())
                PlaySound("RFQ.wav");
-
-            if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
-               return(_false(OrderPop("OrderModifyEx(12)")));
 
             return(IsNoError(catch("OrderModifyEx(13)", NULL, O_POP))); // regular exit
          }
@@ -9724,6 +9724,9 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
          if (success) {
             WaitForTicket(ticket, false);                                                    // wartet und re-selektiert (FALSE)
 
+            if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
+               return(_false(OrderPop("OrderCloseEx(11)")));
+
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = OrderCloseTime();
             execution[EXEC_PRICE     ] = OrderClosePrice();
@@ -9740,38 +9743,38 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
             // Restposition finden
             if (NE(lots, openLots)) {
                string strValue, strValue2;
-               if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fall-Back zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
+               if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {     // Fall-Back zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
                   // Der Tester überschreibt den OrderComment statt mit "to #2" mit "partial close".
-                  if (OrderComment() != "partial close")             return(_false(catch("OrderCloseEx(11)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
+                  if (OrderComment() != "partial close")             return(_false(catch("OrderCloseEx(12)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
                   strValue  = StringConcatenate("split from #", ticket);
                   strValue2 = StringConcatenate(      "from #", ticket);
 
-                  OrderPush("OrderCloseEx(12)");
+                  OrderPush("OrderCloseEx(13)");
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
-                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                   // FALSE: darf im Tester nicht auftreten
-                        catch("OrderCloseEx(13) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
+                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: darf im Tester nicht auftreten
+                        catch("OrderCloseEx(14) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
                         break;
                      }
                      if (OrderTicket() == ticket)        continue;
                      if (OrderComment() != strValue)
-                        if (OrderComment() != strValue2) continue;                        // falls der Unterschied in späteren Terminalversionen behoben ist
+                        if (OrderComment() != strValue2) continue;                           // falls der Unterschied in späteren Terminalversionen behoben ist
                      if (NE(lots+OrderLots(), openLots)) continue;
 
                      remainder = OrderTicket();
                      break;
                   }
-                  OrderPop("OrderCloseEx(14)");
+                  OrderPop("OrderCloseEx(15)");
                   if (remainder == 0) {
-                     if (IsLastError())                              return(_false(OrderPop("OrderCloseEx(15)")));
-                                                                     return(_false(catch("OrderCloseEx(16)   cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, O_POP)));
+                     if (IsLastError())                              return(_false(OrderPop("OrderCloseEx(16)")));
+                                                                     return(_false(catch("OrderCloseEx(17)   cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, O_POP)));
                   }
                }
                if (remainder == 0) {
-                  if (!StringIStartsWith(OrderComment(), "to #"))    return(_false(catch("OrderCloseEx(17)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
+                  if (!StringIStartsWith(OrderComment(), "to #"))    return(_false(catch("OrderCloseEx(18)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
                   strValue = StringRight(OrderComment(), -4);
-                  if (!StringIsDigit(strValue))                      return(_false(catch("OrderCloseEx(18)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
+                  if (!StringIsDigit(strValue))                      return(_false(catch("OrderCloseEx(19)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
                   remainder = StrToInteger(strValue);
-                  if (remainder == 0)                                return(_false(catch("OrderCloseEx(19)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
+                  if (remainder == 0)                                return(_false(catch("OrderCloseEx(20)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP)));
                }
                WaitForTicket(remainder, true);
                execution[EXEC_TICKET] = remainder;
@@ -9780,9 +9783,6 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
             log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
-
-            if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
-               return(_false(OrderPop("OrderCloseEx(20)")));
 
             return(IsNoError(catch("OrderCloseEx(21)", NULL, O_POP)));                       // regular exit
          }
@@ -10683,6 +10683,9 @@ bool OrderDeleteEx(int ticket, color markerColor/*=CLR_NONE*/, double& execution
          if (success) {
             WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
 
+            if (!ChartMarker.OrderDeleted_A(ticket, digits, markerColor))
+               return(_false(OrderPop("OrderDeleteEx(6)")));
+
             // Execution-Struktur füllen
             execution[EXEC_TIME      ] = OrderCloseTime();
             execution[EXEC_PRICE     ] = OrderClosePrice();
@@ -10697,9 +10700,6 @@ bool OrderDeleteEx(int ticket, color markerColor/*=CLR_NONE*/, double& execution
             log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
-
-            if (!ChartMarker.OrderDeleted_A(ticket, digits, markerColor))
-               return(_false(OrderPop("OrderDeleteEx(6)")));
 
             return(IsNoError(catch("OrderDeleteEx(7)", NULL, O_POP)));  // regular exit
          }
