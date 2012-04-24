@@ -594,6 +594,10 @@ string GetTerminalVersion() {
  * @return int - Build-Version oder 0, wenn ein Fehler auftrat
  */
 int GetTerminalBuild() {
+   static int build;                                                 // ohne Initializer (@see MQL.doc)
+   if (build != 0)
+      return(build);
+
    string version = GetTerminalVersion();
    if (StringLen(version) == 0)
       return(0);
@@ -607,10 +611,10 @@ int GetTerminalBuild() {
    if (!StringIsDigit(strings[size-1]))
       return(_ZERO(catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
-   int build = StrToInteger(strings[size-1]);
+   build = StrToInteger(strings[size-1]);
 
    if (IsError(catch("GetTerminalBuild(3)")))
-      return(0);
+      build = 0;
    return(build);
 }
 
@@ -4630,16 +4634,16 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       ArrayResize(tickets, 0);
 
    static int      accountNumber[1];
-   static datetime accountInitTime[1];                               // GMT-Zeit
-   static int      knownPendings[][2];                               // die bekannten pending Orders und ihr Typ
-   static int      knownPositions[];                                 // die bekannten Positionen
+   static datetime accountInitTime[1];                                                    // GMT-Zeit
+   static int      knownPendings[][2];                                                    // die bekannten pending Orders und ihr Typ
+   static int      knownPositions[];                                                      // die bekannten Positionen
 
-   if (accountNumber[0] == 0) {                                      // 1. Aufruf
+   if (accountNumber[0] == 0) {                                                           // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
-   else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
+   else if (accountNumber[0] != account) {                                                // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       ArrayResize(knownPendings, 0);
@@ -4652,7 +4656,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
 
    // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                                    // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
@@ -4661,12 +4665,12 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP) {
          pendings = ArrayRange(knownPendings, 0);
          for (n=0; n < pendings; n++)
-            if (knownPendings[n][0] == ticket)                       // bekannte pending Order
+            if (knownPendings[n][0] == ticket)                                            // bekannte pending Order
                break;
          if (n < pendings)
             continue;
 
-         ArrayResize(knownPendings, pendings+1);                     // neue (unbekannte) pending Order
+         ArrayResize(knownPendings, pendings+1);                                          // neue (unbekannte) pending Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
          //debug("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
@@ -4676,7 +4680,7 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
       else if (type==OP_BUY || type==OP_SELL) {
          positions = ArraySize(knownPositions);
          for (n=0; n < positions; n++)
-            if (knownPositions[n] == ticket)                         // bekannte Position
+            if (knownPositions[n] == ticket)                                              // bekannte Position
                break;
          if (n < positions)
             continue;
@@ -4690,17 +4694,17 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
 
-            if (flags & OFLAG_CURRENTSYMBOL != 0)   event &= (OrderSymbol()==Symbol())+0;    // MQL kann Booleans für Binärops. nicht casten
+            if (flags & OFLAG_CURRENTSYMBOL != 0)   event &= (OrderSymbol()==Symbol())+0; // MQL kann Booleans für Binärops. nicht casten
             if (flags & OFLAG_BUY           != 0)   event &= (type==OP_BUY )+0;
             if (flags & OFLAG_SELL          != 0)   event &= (type==OP_SELL)+0;
             if (flags & OFLAG_MARKETORDER   != 0) {
                for (int z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)                                         // Order war pending
+                  if (knownPendings[z][0] == ticket)                                      // Order war pending
                      break;                         event &= (z==pendings)+0;
             }
             if (flags & OFLAG_PENDINGORDER  != 0) {
                for (z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)                                         // Order war pending
+                  if (knownPendings[z][0] == ticket)                                      // Order war pending
                      break;                         event &= (z<pendings)+0;
             }
 
@@ -9876,23 +9880,23 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
 bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH)) return(false);
-   if (OrderCloseTime() != 0)                                     return(_false(catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
-   if (OrderType() > OP_SELL)                                     return(_false(catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(false);
+   if (OrderCloseTime() != 0)                                            return(_false(catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
+   if (OrderType() > OP_SELL)                                            return(_false(catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    int      ticketType     = OrderType();
    double   ticketLots     = OrderLots();
    datetime ticketOpenTime = OrderOpenTime();
    string   symbol         = OrderSymbol();
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)"))       return(_false(OrderPop("OrderCloseByEx(4)")));
-   if (OrderCloseTime() != 0)                                     return(_false(catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP)));
+   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(false);
+   if (OrderCloseTime() != 0)                                            return(_false(catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP)));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
    datetime oppositeOpenTime = OrderOpenTime();
-   if (ticketType != oppositeType^1)                              return(_false(catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
-   if (symbol != OrderSymbol())                                   return(_false(catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
+   if (ticketType != oppositeType^1)                                     return(_false(catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
+   if (symbol != OrderSymbol())                                          return(_false(catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);
@@ -9918,8 +9922,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
    | closed    |     #2 | Sell | 1.00 | EURUSD |     2012.03.19 14:00:05 |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.30 |      -8.00 | -103.00 |         222 |                   |
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+-------------------+
     - Der ClosePrice des schließenden Tickets (by) wird auf seinen OpenPrice gesetzt (byOpenPrice == byClosePrice), der ClosePrice des zu schließenden Tickets auf byOpenPrice.
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird erstattet. Die LotSize des schließenden Tickets (by) wird
-      auf 0 gesetzt.
+    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird erstattet. Die LotSize des schließenden Tickets
+      (by) wird auf 0 gesetzt.
 
 
    Partielles Close
@@ -9937,7 +9941,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
    | closed    |     #2 | Sell | 0.00 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3155'7 |  0.00 |       0.00 |    0.00 |         222 | close hedge by #1          | close hedge by #1          | close hedge by #1           | müßte "partial close/close hedge for #1" lauten
    | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 20:00:01 (1) |  1.3155'7 |                     |   1.3239'4 |  0.00 |      -2.40 | -251.00 |         222 | from #1                    | split from #1              | from #1                     | müßte "split from #2" lauten
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden Tickets (by) wird auf 0 gesetzt.
+    - Der Swap des schließenden Tickets (by) wird zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden
+      Tickets (by) wird auf 0 gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
 
     #larger(2) by #smaller(1):
@@ -9946,16 +9951,17 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
    | closed    |     #2 | Sell | 0.70 | EURUSD | 2012.03.19 14:00:05     |  1.3155'7 | 2012.03.19 20:00:01 |   1.3166'0 | -2.06 |      -5.60 |  -72.10 |         222 | partial close              | partial close              |                             |
    | remainder |     #3 | Sell | 0.30 | EURUSD | 2012.03.19 14:00:05 (2) |  1.3155'7 |                     |   1.3239'4 |  0.00 |      -2.40 | -251.10 |         222 | partial close              | partial close              |                             | müßte "split from #2" lauten
    +-----------+--------+------+------+--------+-------------------------+-----------+---------------------+------------+-------+------------+---------+-------------+----------------------------+----------------------------+-----------------------------+
-    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des schließenden Tickets (by) wird auf 0 gesetzt.
+    - Swap und Profit des schließenden Tickets (by) werden zum zu schließenden Ticket addiert, bereits berechnete Commission wird aufgeteilt und erstattet. Die LotSize des
+      schließenden Tickets (by) wird auf 0 gesetzt.
     - Der Profit der Restposition ist erst nach Schließen oder dem nächsten Tick korrekt aktualisiert (nur im Tester???).
     - Zwischen den ursprünglichen Positionen und der Restposition besteht keine auswertbare Beziehung mehr.
 
    (1) Die OpenTime der Restposition wird im Tester falsch gesetzt (3).
    (2) Die OpenTime der Restposition wird online und im Tester korrekt gesetzt (3).
-   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 "#smaller by #larger" kommen kann. Im Tester wird daher
-       immer die umständlichere Methode 2 "#larger by #smaller" verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar, denn theoretisch
-       könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt. Wichtiger scheint, daß die Daten
-       der verbleibenden immer Restposition korrekt sind.
+   (3) Es ist nicht absehbar, zu welchen Folgefehlern es künftig im Tester durch den OpenTime-Fehler beim Schließen nach Methode 1 "#smaller by #larger" kommen kann. Im Tester
+       wird daher immer die umständlichere Methode 2 "#larger by #smaller" verwendet. Die dabei fehlende Cross-Referenz wiederum macht sie für die Online-Verwendung unbrauchbar,
+       denn theoretisch könnten online Orders mit exakt den gleichen Orderdaten existieren. Dieser Fall wird im Tester, wo immer nur eine Strategie läuft, vernachlässigt.
+       Wichtiger scheint, daß die Daten der verbleibenden Restposition immer korrekt sind.
    */
 
    // Tradereihenfolge analysieren
@@ -9987,20 +9993,18 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
       }
       else {
          time1 = GetTickCount();
-         if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor);    // siehe oben (1)
+         if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor);    // siehe (3)
          else                 success = OrderCloseBy(larger, smaller, markerColor);
          time2 = GetTickCount();
 
          if (success) {
-            WaitForTicket(first, false);                                               // wartet und selektiert (FALSE)
-
             // Execution-Struktur füllen
+            WaitForTicket(first, false);                                               // wartet und selektiert (FALSE)
             execution[EXEC_SWAP      ] = OrderSwap();
             execution[EXEC_COMMISSION] = OrderCommission();
             execution[EXEC_PROFIT    ] = OrderProfit();
 
             WaitForTicket(second, false);                                              // wartet und selektiert (FALSE)
-
             execution[EXEC_TIME      ]  = OrderOpenTime();                             // Daten des zweiten Tickets
             execution[EXEC_PRICE     ]  = OrderOpenPrice();
             execution[EXEC_SWAP      ] += OrderSwap();
@@ -10014,27 +10018,23 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
 
             // Restposition finden
             if (NE(firstLots, secondLots)) {
-               if (smallerByLarger) {
-                  // Referenz: remainder.comment = "[split ]from #smaller"
-                  string strValue  = StringConcatenate(      "from #", smaller);
-                  string strValue2 = StringConcatenate("split from #", smaller);
+               if (smallerByLarger) {                                                  // online
+                  // Referenz: remainder.comment = "from #smaller"
+                  string strValue = StringConcatenate("from #", smaller);
 
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
-                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
-                        if (IsTesting()) return(_false(catch("OrderCloseByEx(9) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
-                        continue;
-                     }
-                     if (OrderComment()!=strValue) /*&&*/ if (OrderComment()!=strValue2)
-                        continue;
+                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;        // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
+                     if (OrderComment() != strValue)                  continue;
                      remainder = OrderTicket();
                      break;
                   }
-                  if (remainder == 0) return(_false(catch("OrderCloseByEx(10)   cannot find remaining position of close of #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP)));
+                  if (remainder == 0)
+                     return(_false(catch("OrderCloseByEx(9)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP)));
                }
 
-               if (largerBySmaller) {
+               else /*(largerBySmaller)*/ {                                            // im Tester
                   // keine Referenz vorhanden
-                  if (!OrderSelectByTicket(larger, "OrderCloseByEx(11)", false, true))
+                  if (!OrderSelectByTicket(larger, "OrderCloseByEx(10)", NULL, O_POP))
                      return(false);
                   int      remainderType        = OrderType();
                   double   remainderLots        = MathAbs(firstLots - secondLots);
@@ -10043,13 +10043,10 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
                   double   remainderOpenprice   = OrderOpenPrice();
                   datetime remainderCloseTime   = 0;
                   int      remainderMagicNumber = OrderMagicNumber();
-                  string   remainderComment     = "partial close";
+                  string   remainderComment     = ifString(GetTerminalBuild() < 416, "partial close", OrderComment());
 
                   for (i=OrdersTotal()-1; i >= 0; i--) {
-                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
-                        if (IsTesting()) return(_false(catch("OrderCloseByEx(12) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
-                        continue;
-                     }
+                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(catch("OrderCloseByEx(11) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
                      if (OrderType() == remainderType)
                         if (EQ(OrderLots(), remainderLots))
                            if (OrderSymbol() == remainderSymbol)
@@ -10062,7 +10059,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
                                              break;
                                           }
                   }
-                  if (remainder == 0) return(_false(catch("OrderCloseByEx(13)   cannot find remaining position of close of #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP)));
+                  if (remainder == 0)
+                     return(_false(catch("OrderCloseByEx(12)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP)));
                }
                execution[EXEC_TICKET] = remainder;
             }
@@ -10071,7 +10069,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
-            return(IsNoError(catch("OrderCloseByEx(14)", NULL, O_POP)));               // regular exit
+            return(IsNoError(catch("OrderCloseByEx(13)", NULL, O_POP)));               // regular exit
          }
 
          error = GetLastError();
@@ -10084,7 +10082,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
       }
       Sleep(300);                                                                      // 0.3 Sekunden warten
    }
-   return(_false(catch("OrderCloseByEx(15)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
+   return(_false(catch("OrderCloseByEx(14)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
 }
 
 
