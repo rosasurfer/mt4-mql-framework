@@ -237,15 +237,19 @@ int LoadCursorByName(int hInstance, string cursorName) {
 /**
  * Gibt die lesbare Repräsentation einer execution-Struktur zurück.
  *
- * @param  double execution[]
- *
+ * @param  double execution[] - Struktur
+ * @param  bool   debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (z.B. bei Strukturen mit mehreren Tickets)
+ *                              (default: nein)
  * @return string
  */
-string ExecutionToStr(double execution[]) {
-   string strings[];
+string ExecutionToStr(double execution[], bool debugOutput=false) {
+   string debugOut[], strings[]; ArrayResize(strings, 0);
 
-   int flags = execution[EXEC_FLAGS] + ifDouble(LT(execution[EXEC_FLAGS], 0), -0.1, +0.1);
+   int flags = execution[EXEC_FLAGS] + ifDouble(LT(execution[EXEC_FLAGS], 0), -0.1, +0.1);   // (int) double
    ArrayPushString(strings, "EXEC_FLAGS=>"+ flags);
+
+   if (debugOutput)
+      debug("ExecutionToStr()   "+ strings[0]);
 
    // Anzahl der Datensätze im Array ermitteln
    int tickets = (ArraySize(execution)-1) / 9;
@@ -270,6 +274,12 @@ string ExecutionToStr(double execution[]) {
       ArrayPushString(strings,         "EXEC_REQUOTES=>"  +             requotes                               );
       ArrayPushString(strings,         "EXEC_SLIPPAGE=>"  + NumberToStr(slippage,   ".1")                      );
       ArrayPushString(strings,         "EXEC_TICKET=>"    +             ticket                                 );
+
+      if (debugOutput) {
+         ArrayResize(debugOut, 0);
+         ArrayCopy(debugOut, strings, 0, 9*i+1);
+         debug("ExecutionToStr()    "+ JoinStrings(debugOut, ", "));
+      }
    }
 
    string result = StringConcatenate("{", JoinStrings(strings, ", "), "}");
@@ -9898,8 +9908,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
    // execution
-   if (ArraySize(execution) != 10)
-      ArrayResize(execution, 10);
+   ArrayResize(execution, 1);
+   ArrayResize(execution, 10);                                                         // Re-Initialisierung
    // -- Ende Parametervalidierung --
 
    /*
@@ -10168,11 +10178,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 
 
    // (5) Tickets symbolweise auslesen und Gruppen zunächst nur glattstellen
-   if (ArraySize(execution) != 9*sizeOfTickets+1)
-      ArrayResize(execution, 9*sizeOfTickets+1);
-   double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
-   ArrayInitialize(execution, 0);
-   execution[EXEC_FLAGS] = exec[EXEC_FLAGS];
+   ArrayResize(execution, 1);
+   ArrayResize(execution, 9*sizeOfTickets+1);                              // Re-Initialisierung
+   double exec[1];
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
    int copy[], flatSymbols[]; ArrayResize(copy, 0); ArrayResize(flatSymbols, 0);
@@ -10295,8 +10303,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 /*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
-   if (ArraySize(execution) != 9*sizeOfTickets+1)
-      ArrayResize(execution, 9*sizeOfTickets+1);
+
+   ArrayResize(execution, 1);
+   ArrayResize(execution, 9*sizeOfTickets+1);                           // Re-Initialisierung
 
 
    // (1) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
@@ -10398,8 +10407,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 /*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage/*=0*/, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
-   if (ArraySize(execution) != 9*sizeOfTickets+1)
-      ArrayResize(execution, 9*sizeOfTickets+1);
+
+   ArrayResize(execution, 1);
+   ArrayResize(execution, 9*sizeOfTickets+1);                        // Re-Initialisierung
 
    OrderPush("OrderMultiClose.Flatten(1)");
 
@@ -10472,13 +10482,13 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
 
       if (closeTicket != 0) {
-         debug("OrderMultiClose.Flatten()   by close of #"+ closeTicket +" for "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s"));
+         //debug("OrderMultiClose.Flatten()   "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s") +" by close of #"+ closeTicket);
          // OrderClose eines existierenden Tickets
          if (!OrderCloseEx(closeTicket, MathAbs(totalLots), NULL, slippage, CLR_NONE, exec))
             return(0);
       }
       else {
-         debug("OrderMultiClose.Flatten()   by open "+ OperationTypeDescription(type) +" order for "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s"));
+         //debug("OrderMultiClose.Flatten()   "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s") +" by open of "+ OperationTypeDescription(type) +" order");
          // OrderSend: neues Ticket öffnen
          if (OrderSendEx(symbol, type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, exec) == -1)
             return(0);
@@ -10551,14 +10561,11 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       return(false);
    log(StringConcatenate("OrderMultiClose.Flattened()   closing ", sizeOfCopy, " hedged ", OrderSymbol(), " positions ", IntsToStr(copy)));
 
-   // execution[] initialisieren
-   if (ArraySize(execution) != 9*sizeOfTickets+1)
-      ArrayResize(execution, 9*sizeOfTickets+1);
-   double flags = execution[EXEC_FLAGS];
-   ArrayInitialize(execution, 0);
-   execution[EXEC_FLAGS] = flags;
 
    // execution[TIME & PRICE] setzen
+   ArrayResize(execution, 1);                                                 // Re-Initialisierung
+   ArrayResize(execution, 9*sizeOfTickets+1);
+
    SortTicketsChronological(copy);                                            // zuletzt geöffnetes Ticket
    if (!OrderSelectByTicket(copy[sizeOfCopy-1], "OrderMultiClose.Flattened(2)", NULL, O_POP))
       return(false);

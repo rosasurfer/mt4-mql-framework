@@ -414,7 +414,7 @@
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   ExecutionToStr(double execution[]);
+   string   ExecutionToStr(double execution[], bool debugOutput);
    string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string format);
