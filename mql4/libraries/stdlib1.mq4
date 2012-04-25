@@ -2596,6 +2596,19 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
 
 /**
+ * Pseudo-Konstante (wird beim ersten Zugriff initialisiert).
+ *
+ * @return int - win32 message id
+ */
+int WM_MT4() {
+   static int id;                                                    // ohne Initializer (@see MQL.doc)
+   if (id == 0)
+      id = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+   return(id);
+}
+
+
+/**
  * Schickt per PostMessage() einen einzelnen Fake-Tick an den aktuellen Chart.
  *
  * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
@@ -2608,14 +2621,11 @@ int SendTick(bool sound=false) {
       return(-1);
    }
 
-   if (WM_MT4 == 0)
-      WM_MT4 = RegisterWindowMessageA("MetaTrader4_Internal_Message");
-
    int hWnd = WindowHandle(Symbol(), Period());
    if (hWnd == 0)
       return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   PostMessageA(hWnd, WM_MT4, 2, 1);
+   PostMessageA(hWnd, WM_MT4(), 2, 1);
    if (sound)
       PlaySound("tick1.wav");
    return(catch("SendTick(2)"));
@@ -5136,18 +5146,18 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
 
 /**
- * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Connection zum Tradeserver).
+ * Gibt die aktuelle Account-Nummer zurück (unabhängig von Verbindung zum Tradeserver).
  *
- * @return int - Account-Nummer (positiver Wert) oder 0, falls ein Fehler aufgetreten ist.
+ * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  *
  * NOTE:
- * ----
+ * -----
  * Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
  */
 int GetAccountNumber() {
    int account = AccountNumber();
 
-   if (account == 0) {                                // ohne Connection Titelzeile des Hauptfensters auswerten
+   if (account == 0) {                                               // ohne Connection Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetTerminalWindow());
       if (StringLen(title) == 0)
          return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
@@ -6585,20 +6595,22 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTerminalWindow() {
-   static int hWnd;                             // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   static int hWnd;                                                  // ohne Initializer (@see MQL.doc)
    if (hWnd != 0)
       return(hWnd);
 
    // WindowHandle()
    if (!IsTesting() || IsVisualMode()) {
-      hWnd = WindowHandle(Symbol(), NULL);      // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
+      hWnd = WindowHandle(Symbol(), NULL);                           // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
          if (GetClassName(hWnd) != MT4_TERMINAL_CLASSNAME) {
-            catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), handle originates from WindowHandle()", ERR_RUNTIME_ERROR);
+            catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
             hWnd = 0;
          }
-         return(hWnd);
+         else {
+            return(hWnd);
+         }
       }
    }
 
@@ -6622,12 +6634,13 @@ int GetTerminalWindow() {
 
 
 /**
- * Gibt das Fensterhandle des Strategy Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich, daß das Fenster noch nicht existiert.
+ * Gibt das Fensterhandle des Strategy Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich,
+ * daß das Fenster noch nicht existiert.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTesterWindow() {
-   static int hWndTester;                                   // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
+   static int hWndTester;                                            // ohne Initializer (@see MQL.doc)
    if (hWndTester != 0)
       return(hWndTester);
 
@@ -6677,7 +6690,7 @@ int GetTesterWindow() {
    if (build < 416) classTopLevel = "Afx:"+ StrToLower(IntegerToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+ IntegerToHexStr(hCursor) +":"+ IntegerToHexStr(hbrBackground) +":"+ IntegerToHexStr(hIcon));
    else             classTopLevel = "Afx:"+ StrToLower(    IntToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+     IntToHexStr(hCursor) +":"+     IntToHexStr(hbrBackground) +":"+     IntToHexStr(hIcon));
 
-   style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
+   style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
    if (build < 416) classTester   = "Afx:"+ StrToLower(IntegerToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+ IntegerToHexStr(hCursor) +":"+ IntegerToHexStr(hbrBackground) +":"+ IntegerToHexStr(hIcon));
    else             classTester   = "Afx:"+ StrToLower(    IntToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+     IntToHexStr(hCursor) +":"+     IntToHexStr(hbrBackground) +":"+     IntToHexStr(hIcon));
 
@@ -6749,18 +6762,18 @@ int GetTesterWindow() {
 /**
  * Gibt die ID des Userinterface-Threads zurück.
  *
- * @return int - tatsächliche Thread-ID (nicht das Pseudo-Handle)
+ * @return int - Thread-ID (nicht das Pseudo-Handle)
  */
 int GetUIThreadId() {
-   static int hThread;                       // in Library überleben statische Variablen Timeframe-Wechsel, solange sie nicht per Initializer initialisiert werden
-   if (hThread != 0)
-      return(hThread);
+   static int threadId;                                              // ohne Initializer (@see MQL.doc)
+   if (threadId != 0)
+      return(threadId);
 
    int iNull[];
-   hThread = GetWindowThreadProcessId(GetTerminalWindow(), iNull);
+   threadId = GetWindowThreadProcessId(GetTerminalWindow(), iNull);
 
    catch("GetUIThreadId()");
-   return(hThread);
+   return(threadId);
 }
 
 

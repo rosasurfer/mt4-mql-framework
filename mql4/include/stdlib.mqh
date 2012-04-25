@@ -435,6 +435,7 @@
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
+   int      WM_MT4();                                                // Pseudo-Konstante
 
 
    // Win32-Structs Getter und Setter

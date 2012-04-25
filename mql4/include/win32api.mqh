@@ -552,7 +552,7 @@
 #define WM_PENWINLAST                            0x038F
 #define WM_APP                                   0x8000
 
-int     WM_MT4;                                             // wird bei der ersten Verwendung per RegisterWindowMessage() initialisiert
+//#define WM_MT4                                            // @see stdlib::WM_MT4()
 
 
 // Mouse events
