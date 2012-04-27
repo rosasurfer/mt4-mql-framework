@@ -372,11 +372,11 @@
 // MessageBox() flags
 #define MB_OK                                  0x00000000   // buttons
 #define MB_OKCANCEL                            0x00000001
+#define MB_YESNO                               0x00000004
+#define MB_YESNOCANCEL                         0x00000003
 #define MB_ABORTRETRYIGNORE                    0x00000002
 #define MB_CANCELTRYCONTINUE                   0x00000006
 #define MB_RETRYCANCEL                         0x00000005
-#define MB_YESNO                               0x00000004
-#define MB_YESNOCANCEL                         0x00000003
 #define MB_HELP                                0x00004000   // additional help button
 
 #define MB_DEFBUTTON1                          0x00000000   // default button
