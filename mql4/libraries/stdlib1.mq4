@@ -2797,8 +2797,8 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
  * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
  *
  * @param  string filename       - Dateiname mit zu "{terminal-path}\experts\files" relativer Pfadangabe
- * @param  string result[]       - Ergebnisarray für die Zeilen der Datei
- * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen oder nicht (default: FALSE)
+ * @param  string result[]       - Array zur Aufnahme der einzelnen Zeilen
+ * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen (default: nein)
  *
  * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
