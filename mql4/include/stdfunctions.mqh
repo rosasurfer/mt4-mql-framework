@@ -731,7 +731,7 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   stdlib_onStart(Ticks, ValidBars, ChangedBars);
+   stdlib_onStart(Tick, ValidBars, ChangedBars);
 
 
    // (5) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
@@ -752,7 +752,7 @@ int start() {
 
 
    return(last_error);
-   DummyCalls();                                                     // unterdrücken Compilerwarnungen über unreferenzierte Funktionen
+   DummyCalls();                                                     // unterdrücken Compilerwarnungen bzgl. unreferenzierter Funktionen
 }
 
 
