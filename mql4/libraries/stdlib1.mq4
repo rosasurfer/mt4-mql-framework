@@ -188,6 +188,27 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Gibt die hexadezimale Repräsentation eines Strings zurück.
+ *
+ * @param  string value - Ausgangswert
+ *
+ * @return string - Hex-String
+ */
+string StringToHexStr(string value) {
+   value = StringConcatenate(value, "");                             // NULL-Pointer abfangen
+
+   string result = "";
+   int len = StringLen(value);
+
+   for (int i=0; i < len; i++) {
+      result = StringConcatenate(result, CharToHexStr(StringGetChar(value, i)));
+   }
+
+   return(result);
+}
+
+
+/**
  * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
  *
  * Alias für LoadCursorById()
@@ -2161,7 +2182,7 @@ string BufferToStr(int buffer[]) {
 
 
 /**
- * Gibt den kompletten Inhalt eines Byte-Buffers als hexadezimalen String zurück.
+ * Gibt den Inhalt eines Byte-Buffers als hexadezimalen String zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  *
@@ -2803,12 +2824,12 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
  * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
 int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
-   int fieldSeparator = '\t';
+   int hFile, hFileBin, fieldSeparator='\t';
 
    // Datei öffnen
-   int hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);  // FileOpen() erwartet Pfadangabe relativ zu .\experts\files
+   hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu .\experts\files
    if (hFile < 0)
-      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\")", GetLastError())));
+      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\", FILE_CSV|FILE_READ)", GetLastError())));
 
 
    // Schnelle Rückkehr bei leerer Datei
@@ -2820,29 +2841,30 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
 
 
    // Datei zeilenweise einlesen
-   bool newLine=true, blankLine=false, lineEnd=true;
-   string line, lines[]; ArrayResize(lines, 0);                         // Zwischenspeicher für gelesene Zeilen
-   int i = 0;                                                           // Zeilenzähler
+   bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
+   string line, value, lines[]; ArrayResize(lines, 0);                     // Zwischenspeicher für gelesene Zeilen
+   int i, len, fPointer;                                                   // Zeilenzähler und Länge des gelesenen Strings
 
    while (!FileIsEnding(hFile)) {
       newLine = false;
-      if (lineEnd) {                                                    // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
-         newLine   = true;                                              // Flags auf Zeilenbeginn setzen.
+      if (lineEnd) {                                                       // Wenn beim letzten Durchlauf das Zeilenende erreicht wurde,
+         newLine   = true;                                                 // Flags auf Zeilenbeginn setzen.
          blankLine = false;
          lineEnd   = false;
+         fPointer  = FileTell(hFile);                                      // zeigt immer auf den aktuellen Zeilenbeginn
       }
 
       // Zeile auslesen
-      string value = FileReadString(hFile);
+      value = FileReadString(hFile);
 
       // auf Zeilen- und Dateiende prüfen
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
-         lineEnd = true;
+         lineEnd  = true;
          if (newLine) {
             if (StringLen(value) == 0) {
-               if (FileIsEnding(hFile))                                 // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
+               if (FileIsEnding(hFile))                                    // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
                   break;
-               blankLine = true;                                        // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
+               blankLine = true;                                           // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
             }
          }
       }
@@ -2856,11 +2878,33 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
          i++;
          ArrayResize(lines, i);
          lines[i-1] = value;
-         //log("FileReadLines()   new line = \""+ lines[i-1] +"\"");
+         //debug("FileReadLines()   new line "+ i +",   "+ StringLen(value) +" chars,   fPointer="+ FileTell(hFile));
       }
       else {
-         lines[i-1] = StringConcatenate(lines[i-1], CharToStr(fieldSeparator), value);
-         //log("FileReadLines()   updated line = \""+ lines[i-1] +"\"");
+         // bei langen Zeilen prüfen, ob das letzte Zeichen ein Separator war (FileReadString() liest max. 4095 Zeichen)
+         len = StringLen(lines[i-1]);
+         if (len < 4095) {
+            wasSeparator = true;
+         }
+         else {
+            if (hFileBin == 0) {
+               hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
+               if (hFileBin < 0) {
+                  FileClose(hFile);
+                  return(_int(-1, catch("FileReadLines(3) ->FileOpen(\""+ filename +"\", FILE_BIN|FILE_READ)", GetLastError())));
+               }
+            }
+            if (!FileSeek(hFileBin, fPointer+len, SEEK_SET)) {
+               FileClose(hFile);
+               FileClose(hFileBin);
+               return(_int(-1, catch("FileReadLines(4) ->FileSeek(hFileBin, "+ (fPointer+len) +", SEEK_SET)", GetLastError())));
+            }
+            wasSeparator = (fieldSeparator == FileReadInteger(hFileBin, CHAR_VALUE));
+         }
+
+         if (wasSeparator) lines[i-1] = StringConcatenate(lines[i-1], CharToStr(fieldSeparator), value);
+         else              lines[i-1] = StringConcatenate(lines[i-1],                            value);
+         //debug("FileReadLines()   extend line "+ i +",   adding "+ StringLen(value) +" chars to existing "+ StringLen(lines[i-1]) +" chars,   fPointer="+ FileTell(hFile));
       }
    }
 
@@ -2868,18 +2912,22 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    int error = GetLastError();
    if (error!=ERR_END_OF_FILE) /*&&*/ if (IsError(error)) {
       FileClose(hFile);
-      return(_int(-1, catch("FileReadLines(2)", error)));
+      if (hFileBin != 0)
+         FileClose(hFileBin);
+      return(_int(-1, catch("FileReadLines(5)", error)));
    }
 
-   // Datei schließen
+   // Dateien schließen
    FileClose(hFile);
+   if (hFileBin != 0)
+      FileClose(hFileBin);
 
    // Zeilen in Ergebnisarray kopieren
    ArrayResize(result, i);
    if (i > 0)
       ArrayCopy(result, lines);
 
-   return(ifInt(catch("FileReadLines(3)")==NO_ERROR, i, -1));
+   return(ifInt(catch("FileReadLines(6)")==NO_ERROR, i, -1));
 }
 
 
