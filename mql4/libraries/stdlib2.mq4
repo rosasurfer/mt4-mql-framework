@@ -7,6 +7,7 @@
 
 #include <stdlib.mqh>
 
+
 #import "kernel32.dll"
    // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist etwas niedriger, da wir
    // den Buffer selbst parsen müssen. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
