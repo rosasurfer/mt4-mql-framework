@@ -2167,8 +2167,8 @@ string BufferToStr(int buffer[]) {
       for (int n=0; n < 4; n++) {                                                                           // | n |    byte    | char |
          int byte = integer & 0xFF;                               // einzelnes Byte des Integers lesen      // +---+------------+------+
          if (byte < 0x20) {                                       // nicht darstellbare Zeichen ersetzen    // | 0 | 0x000000FF |   1  |
-            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NULL-Byte                   (…)        // | 1 | 0x0000FF00 |   2  |
-            else              byte = PLACEHOLDER_CTL_CHAR;        // sonstiges Control-Character (•)        // | 2 | 0x00FF0000 |   3  |
+            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NUL-Byte          (…)                  // | 1 | 0x0000FF00 |   2  |
+            else              byte = PLACEHOLDER_CTL_CHAR;        // Control-Character (•)                  // | 2 | 0x00FF0000 |   3  |
          }                                                                                                  // | 3 | 0xFF000000 |   4  |
          result = StringSetChar(result, i<<2 + n, byte);          // Zeichen setzen                         // +---+------------+------+
          integer >>= 8;
