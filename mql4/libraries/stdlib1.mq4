@@ -2150,8 +2150,8 @@ int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/int tzi[])                     
 
 
 /**
- * Gibt den kompletten Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), Control-Character (<0x20) fett (•) dargestellt.
- * Nützlich, um im Buffer enthaltene Daten schnell visualisieren zu können.
+ * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), Control-Character (< 0x20) fett (•) dargestellt.
+ * Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  *
