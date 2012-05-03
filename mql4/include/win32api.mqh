@@ -83,42 +83,6 @@
 #import
 
 
-   /*
-   // MetaQuest-Code (nicht überprüft)
-   //
-   // messages
-   int  SendNotifyMessageA(int hWnd, int Msg, int wParam, int lParam);
-   void keybd_event(int bVk, int bScan, int dwFlags, int dwExtraInfo);
-   void mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
-
-   // windows
-   int  FindWindowA(string lpClassName, string lpWindowName);
-   int  GetWindowTextLengthA(int hWnd);
-   int  UpdateWindow(int hWnd);
-   int  EnableWindow(int hWnd, int bEnable);
-   int  DestroyWindow(int hWnd);
-   int  ShowWindow(int hWnd, int nCmdShow);
-   int  SetActiveWindow(int hWnd);
-   int  AnimateWindow(int hWnd, int dwTime, int dwFlags);
-   int  FlashWindow(int hWnd, int dwFlags);
-   int  CloseWindow(int hWnd);
-   int  MoveWindow(int hWnd, int X, int Y, int nWidth, int nHeight, int bRepaint);
-   int  SetWindowPos(int hWnd, int hWndInsertAfter, int X, int Y, int cx, int cy, int uFlags);
-   int  IsWindowVisible(int hWnd);
-   int  IsIconic(int hWnd);
-   int  IsZoomed(int hWnd);
-   int  SetFocus(int hWnd);
-   int  GetFocus();
-   int  IsWindowEnabled(int hWnd);
-
-   // miscellaneous
-   int  MessageBeep(int uType);
-   int  GetSystemMetrics(int nIndex);
-   int  ExitWindowsEx(int uFlags, int dwReserved);
-   int  SwapMouseButton(int fSwap);
-   */
-
-
 // AnimateWindow() commands
 #define AW_HOR_POSITIVE                      0x00000001
 #define AW_HOR_NEGATIVE                      0x00000002
