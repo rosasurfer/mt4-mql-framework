@@ -97,48 +97,42 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
    int error = GetLastError();
-   if (error == ERR_UNKNOWN_SYMBOL) {                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
-      last_error = ERR_TERMINAL_NOT_YET_READY;                       // (das Symbol kann später evt. noch "auftauchen")
+   if (error == ERR_UNKNOWN_SYMBOL) {                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+      last_error = ERR_TERMINAL_NOT_YET_READY;                       // das Symbol kann später evt. noch "auftauchen"
    }
-   else if (IsError(error)) {
-      catch("stdlib_onInit(1)", error);
-   }
-   else if (TickSize < 0.00000001) {
-      catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA);
-   }
+   else if (IsError(error))        catch("stdlib_onInit(1)", error);
+   else if (TickSize < 0.00000001) catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA);
 
    if (last_error == NO_ERROR) {
-      if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)
+      if (initFlags & IT_CHECK_TIMEZONE_CONFIG != 0)                 // IT_CHECK_TIMEZONE_CONFIG
          GetServerTimezone();
    }
-
+   /*
    if (last_error == NO_ERROR) {
-      if (IsExpert()) {                                              // nach Neuladen eines EA's den Orderkontext der Library ausdrücklich zurücksetzen
+      if (initFlags & IT_RESET_BARS_ON_HIST_UPDATE != 0) {}          // IT_RESET_BARS_ON_HIST_UPDATE: nicht hier, @see onInit()
+      if (initFlags & IT_TICKVALUE                 != 0) {}          // IT_TICKVALUE:                 nicht hier, @see onInit()
+   }
+   */
+   if (last_error == NO_ERROR) {                                     // Da Scripte noch ausgeführt werden können, wenn das Terminal-Hauptfenster schon nicht mehr existiert
+      GetTerminalWindow();                                           // (z.B. im Tester bei Shutdown), wird das Handle einmal ermittelt (und intern gecacht).
+   }
+
+
+   if (IsExpert()) {                                                 // nur EA's:
+      if (last_error == NO_ERROR) {                                  // nach Neuladen Orderkontext der Library ausdrücklich zurücksetzen
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
          if (IntInArray(reasons, uninitializeReason))
             OrderSelect(0, SELECT_BY_TICKET);
       }
-   }
 
-   // Es kann vorkommen, daß GetTerminalWindow() zu einem Zeitpunkt benutzt wird, an dem das Terminal-Hauptfenster nicht mehr existiert (z.B. im Tester
-   // bei Shutdown). Da sich das Handle während der Laufzeit der Terminal-Instanz nicht ändert und es intern gecacht wird, wird die Funktion sofort hier
-   // beim Laden der Library aufgerufen. Analog dazu ebenfalls das Handle des UI-Threads, dessen Ermittlung auf ein gültiges Hauptfenster-Handle angewiesen ist.
-   if (last_error == NO_ERROR) {
-      GetTerminalWindow();
-   }
-
-   if (last_error == NO_ERROR) {
-      GetUIThreadId();
-   }
-
-   if (last_error == NO_ERROR) {
-      if (IsTesting()) {                                             // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert)
-         int hWnd = GetTesterWindow();
-
-         if (hWnd != 0) {
-            string text = StringConcatenate("", "Tester");
-            if (!SetWindowTextA(hWnd, text))
-               catch("stdlib_onInit(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      if (last_error == NO_ERROR) {
+         if (IsTesting()) {                                          // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert)
+            int hWnd = GetTesterWindow();
+            if (hWnd != 0) {
+               if (!SetWindowTextA(hWnd, "Tester"))
+                  catch("stdlib_onInit(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+               // TODO: warten, bis die Titelzeile gesetzt ist (der startende neue Test kann die CPU völlig blockieren)
+            }
          }
       }
    }

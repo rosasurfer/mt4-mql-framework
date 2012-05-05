@@ -354,6 +354,7 @@
 // Flags für zusätzliche Initialisierungstasks, siehe onInit()
 #define IT_CHECK_TIMEZONE_CONFIG                        1   // prüft die Timezone-Konfiguration des aktuellen MT-Servers
 #define IT_RESET_BARS_ON_HIST_UPDATE                    2   //
+#define IT_TICKVALUE                                    3   // prüft, ob der TickValue berechnet werden können (benötigt einen vorhandenen Tick)
 
 
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
@@ -624,36 +625,43 @@ int onInit(int scriptType, int initFlags=NULL) {
       TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
       int error = GetLastError();
-      if (error == ERR_UNKNOWN_SYMBOL) {                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
-         last_error = ERR_TERMINAL_NOT_YET_READY;                    // (das Symbol kann später evt. noch "auftauchen")
+      if (error == ERR_UNKNOWN_SYMBOL) {                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+         last_error = ERR_TERMINAL_NOT_YET_READY;                    // das Symbol kann später evt. noch "auftauchen"
       }
       else if (IsError(error))        return(catch("onInit(1)", error));
       else if (TickSize < 0.00000001) return(catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
    }
 
-   if (last_error == NO_ERROR) {
+   if (last_error == NO_ERROR) {                                     // IT_CHECK_TIMEZONE_CONFIG
       if (initFlags & IT_CHECK_TIMEZONE_CONFIG     != 0) {}          // @see stdlib_onInit(): dort ist das Errorhandling der entspr. Funktion einfacher
    }
 
-   if (last_error == NO_ERROR) {
+   if (last_error == NO_ERROR) {                                     // IT_RESET_BARS_ON_HIST_UPDATE
       if (initFlags & IT_RESET_BARS_ON_HIST_UPDATE != 0) {}          // noch nicht implementiert
    }
 
-   if (last_error == NO_ERROR) {
-      if (IsExpert()) {                                              // nach Neuladen eines EA's Orderkontext ausdrücklich zurücksetzen
+   if (last_error == NO_ERROR) {                                     // IT_TICKVALUE
+      if (initFlags & IT_TICKVALUE != 0) {                           // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+         if (MarketInfo(Symbol(), MODE_TICKVALUE) < 0.00000001)
+            last_error = ERR_TERMINAL_NOT_YET_READY;
+      }
+   }
+
+
+   if (IsExpert()) {                                                 // nur EA's:
+      if (last_error == NO_ERROR) {                                  // nach Neuladen Orderkontext ausdrücklich zurücksetzen
          int reasons[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_ACCOUNT, REASON_APPEXIT };
          if (IntInArray(reasons, UninitializeReason()))
             OrderSelect(0, SELECT_BY_TICKET);
       }
-   }
 
-   if (last_error == NO_ERROR) {
-      if (IsVisualMode()) {
-         // Im Tester übernimmt der jeweilige EA die Chartinfo-Anzeige, die hier konfiguriert wird (@see ChartInfo-Indikator).
-         ChartInfo.appliedPrice = PRICE_BID;                         // im Tester einfacherweise immer PRICE_BID (ist schneller)
-         ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-         if (LT(ChartInfo.leverage, 1)) return(catch("onInit(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-         ChartInfo.CreateLabels();
+      if (last_error == NO_ERROR) {
+         if (IsVisualMode()) {                                       // Im Tester übernimmt der EA die Chartinfo-Anzeige, die hier konfiguriert wird.
+            ChartInfo.appliedPrice = PRICE_BID;                      // immer PRICE_BID; ist ausreichend und schneller (@see ChartInfo-Indikator)
+            ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+            if (LT(ChartInfo.leverage, 1)) return(catch("onInit(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+            ChartInfo.CreateLabels();
+         }
       }
    }
 
@@ -1512,7 +1520,6 @@ double PipValue(double lots = 1.0) {
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
 
    int error = GetLastError();
-
    if (IsError(error))         return(_ZERO(catch("PipValue(3)", error)));
    if (tickValue < 0.00000001) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
 
