@@ -354,7 +354,7 @@
 // Flags für zusätzliche Initialisierungstasks, siehe onInit()
 #define IT_CHECK_TIMEZONE_CONFIG                        1   // prüft die Timezone-Konfiguration des aktuellen MT-Servers
 #define IT_RESET_BARS_ON_HIST_UPDATE                    2   //
-#define IT_TICKVALUE                                    3   // prüft, ob der TickValue berechnet werden können (benötigt einen vorhandenen Tick)
+#define IT_TICKVALUE                                    4   // prüft, ob TickValue berechnet werden kann (benötigt einen vorhandenen Tick)
 
 
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
@@ -624,9 +624,10 @@ int onInit(int scriptType, int initFlags=NULL) {
       PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
       TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
-      int error = GetLastError();
-      if (error == ERR_UNKNOWN_SYMBOL) {                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-         last_error = ERR_TERMINAL_NOT_YET_READY;                    // das Symbol kann später evt. noch "auftauchen"
+      int error = GetLastError();                                    // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+      if (error == ERR_UNKNOWN_SYMBOL) {                             // das Symbol kann später evt. noch "auftauchen"
+         debug("onInit()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
+         last_error = ERR_TERMINAL_NOT_YET_READY;
       }
       else if (IsError(error))        return(catch("onInit(1)", error));
       else if (TickSize < 0.00000001) return(catch("onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
@@ -642,8 +643,11 @@ int onInit(int scriptType, int initFlags=NULL) {
 
    if (last_error == NO_ERROR) {                                     // IT_TICKVALUE
       if (initFlags & IT_TICKVALUE != 0) {                           // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
-         if (MarketInfo(Symbol(), MODE_TICKVALUE) < 0.00000001)
+         double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+         if (tickValue < 0.00000001) {
+            debug("onInit()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
             last_error = ERR_TERMINAL_NOT_YET_READY;
+         }
       }
    }
 
@@ -664,7 +668,6 @@ int onInit(int scriptType, int initFlags=NULL) {
          }
       }
    }
-
    return(last_error);
 }
 
@@ -723,8 +726,10 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen
-   if (Bars == 0)
+   if (Bars == 0) {
+      debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));              // kann bei Terminal-Start auftreten
+   }
 
 
    /*

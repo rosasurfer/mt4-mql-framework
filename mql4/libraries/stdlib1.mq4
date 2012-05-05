@@ -96,9 +96,10 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
-   int error = GetLastError();
-   if (error == ERR_UNKNOWN_SYMBOL) {                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-      last_error = ERR_TERMINAL_NOT_YET_READY;                       // das Symbol kann später evt. noch "auftauchen"
+   int error = GetLastError();                                       // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+   if (error == ERR_UNKNOWN_SYMBOL) {                                // das Symbol kann später evt. noch "auftauchen"
+      debug("stdlib_onInit()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
+      last_error = ERR_TERMINAL_NOT_YET_READY;
    }
    else if (IsError(error))        catch("stdlib_onInit(1)", error);
    else if (TickSize < 0.00000001) catch("stdlib_onInit(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA);
@@ -114,7 +115,10 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
    }
    */
    if (last_error == NO_ERROR) {                                     // Da Scripte noch ausgeführt werden können, wenn das Terminal-Hauptfenster schon nicht mehr existiert
-      GetTerminalWindow();                                           // (z.B. im Tester bei Shutdown), wird das Handle einmal ermittelt (und intern gecacht).
+      GetTerminalWindow();                                           // (z.B. im Tester bei Shutdown), wird das Handle hier einmal ermittelt und intern gecacht.
+   }
+   if (last_error == NO_ERROR) {                                     // Analog dazu ist GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen und im Tester ist das
+      GetUIThreadId();                                               // Handle bei Shutdown u.U. schon nicht mehr gültig: einmal hier ermitteln und intern cachen
    }
 
 
@@ -125,13 +129,21 @@ int stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitia
             OrderSelect(0, SELECT_BY_TICKET);
       }
 
-      if (last_error == NO_ERROR) {
-         if (IsTesting()) {                                          // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert)
+      if (IsTesting()) {                                             // nur im Tester:
+         if (last_error == NO_ERROR) {                               // Titelzeile des Testers zurücksetzen (ist ggf. noch vom letzten Test modifiziert)
             int hWnd = GetTesterWindow();
             if (hWnd != 0) {
                if (!SetWindowTextA(hWnd, "Tester"))
                   catch("stdlib_onInit(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-               // TODO: warten, bis die Titelzeile gesetzt ist (der startende neue Test kann die CPU völlig blockieren)
+               // TODO: warten, bis die Titelzeile gesetzt ist (der startende Test kann die CPU nahezu völlig blockieren)
+            }
+         }
+
+         if (last_error == NO_ERROR) {                               // Accountnummer einmal ermitteln (und intern cachen), da der spätere Aufruf u.U.
+            if (GetAccountNumber() == 0) {                           // den UI-Thread blockieren kann.
+               if (last_error == ERR_TERMINAL_NOT_YET_READY) {
+                  debug("stdlib_onInit()   ERR_TERMINAL_NOT_YET_READY (GetAccountNumber() = 0)");
+               }
             }
          }
       }
@@ -2625,15 +2637,15 @@ int WM_MT4() {
 
 
 /**
- * Schickt per PostMessage() einen einzelnen Fake-Tick an den aktuellen Chart.
+ * Schickt einen einzelnen Fake-Tick an den aktuellen Chart.
  *
  * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
  *
- * @return int - Fehlerstatus (-1, wenn das Script im Backtester läuft und WindowHandle() nicht benutzt werden kann)
+ * @return int - Fehlerstatus; -1, wenn der Tester läuft und WindowHandle() nicht benutzt werden kann
  */
 int SendTick(bool sound=false) {
    if (IsTesting()) {
-      debug("SendTick()   skipping in tester");    // TODO: IsTesting() funktioniert nicht in Indikatoren
+      debug("SendTick()   skipping in Tester");    // TODO: IsTesting() funktioniert nicht in Indikatoren
       return(-1);
    }
 
@@ -2644,6 +2656,7 @@ int SendTick(bool sound=false) {
    PostMessageA(hWnd, WM_MT4(), 2, 1);
    if (sound)
       PlaySound("tick1.wav");
+
    return(catch("SendTick(2)"));
 }
 
@@ -5189,35 +5202,47 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
 
 /**
- * Gibt die aktuelle Account-Nummer zurück (unabhängig von Verbindung zum Tradeserver).
+ * Gibt unabhängig von einer Tradeserver-Verbindung die Nummer des aktuellen Accounts zurück.
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
- *
- * NOTE:
- * -----
- * Während des Terminalstarts kann der Fehler ERR_TERMINAL_NOT_YET_READY auftreten.
  */
-int GetAccountNumber() {
+int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. während des Terminal-Starts
+   // Im Tester wird die Accountnummer gecacht.
+   static int cachedAccount;                                         // ohne Initializer (@see MQL.doc)
+   if (cachedAccount != 0)
+      return(cachedAccount);
+
    int account = AccountNumber();
 
-   if (account == 0) {                                               // ohne Connection Titelzeile des Hauptfensters auswerten
-      string title = GetWindowText(GetTerminalWindow());
-      if (StringLen(title) == 0)
+   if (account == 0x4000) {                                          // beim Test ohne Tradeserver-Verbindung
+      if (!IsTesting())
+         return(_ZERO(catch("GetAccountNumber(1) ->AccountNumber() got illegal account "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+      account = 0;
+   }
+
+   if (account == 0) {
+      string title = GetWindowText(GetTerminalWindow());             // Titelzeile des Hauptfensters auswerten:
+      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Endlosschleife
          return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
       if (pos < 1)
-         return(_ZERO(catch("GetAccountNumber(1)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+         return(_ZERO(catch("GetAccountNumber(2)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
-      string strAccount = StringLeft(title, pos);
-      if (!StringIsDigit(strAccount))
-         return(_ZERO(catch("GetAccountNumber(2)   account number in top window title contains non-digit characters: "+ strAccount, ERR_RUNTIME_ERROR)));
+      string strValue = StringLeft(title, pos);
+      if (!StringIsDigit(strValue))
+         return(_ZERO(catch("GetAccountNumber(3)   account number in top window title contains non-digit characters: "+ strValue, ERR_RUNTIME_ERROR)));
 
-      account = StrToInteger(strAccount);
+      account = StrToInteger(strValue);
    }
 
-   if (IsError(catch("GetAccountNumber(3)")))
+   if (IsError(catch("GetAccountNumber(4)")))
       return(0);
+
+   // Im Tester kann die Accountnummer problemlos gecacht werden und verhindert dadurch Thread-Probleme bei Verwendung von SendMessage().
+   if (IsTesting())       cachedAccount = account;                   // EA's
+   else if (iIsTesting()) cachedAccount = account;                   // Indikatoren
+
    return(account);
 }
 
@@ -6667,7 +6692,7 @@ int GetTerminalWindow() {
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
    if (hWndNext == 0) {
-      catch("GetTerminalWindow(2)   could not find terminal window", ERR_RUNTIME_ERROR);
+      catch("GetTerminalWindow(2)   cannot find terminal window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
    hWnd = hWndNext;
@@ -6869,6 +6894,13 @@ string UninitializeReasonToStr(int reason) {
  * @param  int hWnd - Handle des Fensters oder Controls
  *
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
+ *
+ *
+ * NOTE:
+ * -----
+ *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=true benutzen => UI-Thread-Endlosschleife
+ *
+ *  @see MSDN: This function causes a WM_GETTEXT message to be sent to the specified window or control.
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
