@@ -390,6 +390,7 @@
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
    int      SwitchExperts(bool enable);
+   int      LaunchExpertPropertiesDlg();
 
 
    // toString-Funktionen

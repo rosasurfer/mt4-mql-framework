@@ -195,6 +195,26 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Ruft den Input-Dialog des EA's des aktuellen Charts auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int LaunchExpertPropertiesDlg() {
+   if ( IsTesting()) return(catch("LaunchExpertPropertiesDlg(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+   if (iIsTesting()) return(catch("LaunchExpertPropertiesDlg(2)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+
+   int hWnd = WindowHandle(Symbol(), Period());
+   if (hWnd == 0)
+      return(catch("LaunchExpertPropertiesDlg(3) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+
+   if (!PostMessageA(hWnd, WM_COMMAND, WM_MT4_EXPERT_PROPERTIES, 0))
+      return(catch("LaunchExpertPropertiesDlg(4) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+   return(NO_ERROR);
+}
+
+
+/**
  * Gibt die hexadezimale Repräsentation eines Strings zurück.
  *
  * @param  string value - Ausgangswert
