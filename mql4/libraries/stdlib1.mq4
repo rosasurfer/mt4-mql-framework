@@ -5021,7 +5021,7 @@ int Explode(string object, string separator, string& results[], int limit=NULL) 
       ArrayResize(results, 1);
       results[0] = _object;
    }
-   else if (StringLen(separator) == 0) {     // String in einzelne Zeichen zerlegen
+   else if (StringLen(separator) == 0) {     // NUL-Separator: String in einzelne Zeichen zerlegen
       if (limit==NULL || limit > lenObject)
          limit = lenObject;
       ArrayResize(results, limit);
