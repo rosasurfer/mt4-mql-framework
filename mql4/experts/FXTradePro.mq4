@@ -1061,11 +1061,11 @@ bool FinishSequence() {
  */
 int OpenPosition(int type, double lotsize) {
    if (type!=OP_BUY && type!=OP_SELL) {
-      catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_ILLEGAL_INPUT_PARAMVALUE);
+      catch("OpenPosition(1)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (LE(lotsize, 0)) {
-      catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE);
+      catch("OpenPosition(2)   illegal parameter lotsize = "+ NumberToStr(lotsize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 
@@ -1604,7 +1604,7 @@ bool ValidateConfiguration() {
    if (progressionLevel > 0) {
       // TODO: Wurden die Level geändert, sicherstellen, daß nur zukünftige Level geändert wurden.
       if (Entry.type==ENTRYTYPE_LIMIT) /*&&*/ if (levels.type[0]!=Entry.iDirection)
-         return(_false(catch("ValidateConfiguration(31)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_ILLEGAL_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(31)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_INVALID_INPUT_PARAMVALUE)));
    }
 
    return(IsNoError(catch("ValidateConfiguration(32)")));

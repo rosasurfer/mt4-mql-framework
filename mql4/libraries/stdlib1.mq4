@@ -2624,7 +2624,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
 
 /**
- * Pseudo-Konstante (wird beim ersten Zugriff initialisiert).
+ * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
  *
  * @return int - win32 message id
  */
@@ -2653,7 +2653,7 @@ int SendTick(bool sound=false) {
    if (hWnd == 0)
       return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   PostMessageA(hWnd, WM_MT4(), 2, 1);
+   PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0);
    if (sound)
       PlaySound("tick1.wav");
 
@@ -3968,7 +3968,7 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
    serverTime = fxtTime + offset;
 
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_ILLEGAL_INPUT_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(serverTime);
 }
 
@@ -5982,8 +5982,6 @@ string ErrorDescription(int error) {
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                           ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
       case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                             ); // 5008
-      case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("illegal input parameter value"                                 ); // 5009
-      case ERR_LOCKED_INPUT_PARAMVALUE    : return("input parameter is locked"                                     ); // 5010
    }
    return("unknown error");
 }
@@ -6119,8 +6117,6 @@ string ErrorToStr(int error) {
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
-      case ERR_ILLEGAL_INPUT_PARAMVALUE   : return("ERR_ILLEGAL_INPUT_PARAMVALUE"   ); // 5009
-      case ERR_LOCKED_INPUT_PARAMVALUE    : return("ERR_LOCKED_INPUT_PARAMVALUE"    ); // 5010
    }
    return(error);
 }
@@ -8921,24 +8917,24 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    if (NE(MathModFix(lots, lotStep), 0))                       return(_int(-1, catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME)));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                           return(_int(-1, catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
-   if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(_int(-1, catch("OrderSendEx(7)   illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(price, 0))                                           return(_int(-1, catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(_int(-1, catch("OrderSendEx(7)   illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // slippage
-   if (LT(slippage, 0))                                        return(_int(-1, catch("OrderSendEx(8)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(slippage, 0))                                        return(_int(-1, catch("OrderSendEx(8)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // stopLoss
-   if (LT(stopLoss, 0))                                        return(_int(-1, catch("OrderSendEx(9)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (LT(stopLoss, 0))                                        return(_int(-1, catch("OrderSendEx(9)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE)));
    stopLoss = NormalizeDouble(stopLoss, digits);
    // takeProfit
-   if (NE(takeProfit, 0))                                      return(_int(-1, catch("OrderSendEx(10)   submission of take-profit orders not yet implemented", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   if (NE(takeProfit, 0))                                      return(_int(-1, catch("OrderSendEx(10)   submission of take-profit orders not yet implemented", ERR_INVALID_FUNCTION_PARAMVALUE)));
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
    if (comment == "0")     // = NULL
       comment = "";
-   else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(11)   illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   else if (StringLen(comment) > 27)                           return(_int(-1, catch("OrderSendEx(11)   illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);
@@ -9224,7 +9220,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (IsError(error))                                           return(_false(catch("OrderModifyEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP)));
    // openPrice
    openPrice = NormalizeDouble(openPrice, digits);
-   if (LE(openPrice, 0))                                         return(_false(catch("OrderModifyEx(5)   illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LE(openPrice, 0))                                         return(_false(catch("OrderModifyEx(5)   illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    if (NE(openPrice, OrderOpenPrice())) {
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(6)   cannot modify open price of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
       // TODO: Bid/Ask <=> openPrice prüfen
@@ -9232,24 +9228,24 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    }
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
-   if (LT(stopLoss, 0))                                          return(_false(catch("OrderModifyEx(7)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LT(stopLoss, 0))                                          return(_false(catch("OrderModifyEx(7)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    if (NE(stopLoss, OrderStopLoss())) {
       // TODO: Bid/Ask <=> stopLoss prüfen
       // TODO: StopDistance(stopLoss) prüfen
    }
    // takeProfit
    takeProfit = NormalizeDouble(takeProfit, digits);
-   if (LT(takeProfit, 0))                                        return(_false(catch("OrderModifyEx(8)   illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LT(takeProfit, 0))                                        return(_false(catch("OrderModifyEx(8)   illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    if (NE(takeProfit, OrderTakeProfit())) {
       // TODO: Bid/Ask <=> takeProfit prüfen
       // TODO: StopDistance(takeProfit) prüfen
    }
    // expires
-   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    if (expires != OrderExpiration())
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);
@@ -9751,17 +9747,17 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
       lots = openLots;
    }
    else if (NE(lots, openLots)) {
-      if (LT(lots, minLot))                                     return(_false(catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
-      if (GT(lots, openLots))                                   return(_false(catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(openLots, ".+") +")", ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
-      if (NE(MathModFix(lots, lotStep), 0))                     return(_false(catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+      if (LT(lots, minLot))                                     return(_false(catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      if (GT(lots, openLots))                                   return(_false(catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(openLots, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+      if (NE(MathModFix(lots, lotStep), 0))                     return(_false(catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                            return(_false(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LT(price, 0))                                            return(_false(catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // slippage
-   if (LT(slippage, 0))                                         return(_false(catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LT(slippage, 0))                                         return(_false(catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);
@@ -9994,7 +9990,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
    if (ticketType != oppositeType^1)                                     return(_false(catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
    if (symbol != OrderSymbol())                                          return(_false(catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
    ArrayResize(execution, 1);
    ArrayResize(execution, 10);                                                         // Re-Initialisierung
@@ -10230,9 +10226,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       if (OrderType() > OP_SELL)                               return(_false(catch("OrderMultiClose(4)   #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // -- Ende Parametervalidierung --
 
 
@@ -10738,7 +10734,7 @@ bool OrderDeleteEx(int ticket, color markerColor, double& execution[]) {
    if (!IsPendingTradeOperation(OrderType()))                    return(_false(catch("OrderDeleteEx(2)   #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP)));
    if (OrderCloseTime() != 0)                                    return(_false(catch("OrderDeleteEx(3)   #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP)));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_ILLEGAL_INPUT_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
    if (ArraySize(execution) != 10)
       ArrayResize(execution, 10);

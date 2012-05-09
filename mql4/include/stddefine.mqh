@@ -439,6 +439,11 @@
 #define SYMBOL_CHECKSIGN                              252   // check sign symbol
 
 
+// MT4 Windows Message ID's
+#define WM_MT4_TICK                                     2
+#define WM_MT4_EXPERT_PROPERTIES                    33048   // expert inputs dialog
+
+
 // MQL-Fehlercodes (Win32-Fehlercodes siehe win32api.mqh)
 #define ERR_NO_ERROR                                    0
 #define NO_ERROR                             ERR_NO_ERROR
@@ -551,8 +556,6 @@
 #define ERR_INVALID_MARKET_DATA                      5006   // invalid market data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
 #define ERR_CANCELLED_BY_USER                        5008   // action cancelled by user
-#define ERR_ILLEGAL_INPUT_PARAMVALUE                 5009
-#define ERR_LOCKED_INPUT_PARAMVALUE                  5010
 
 
 // globale Variablen, die überall zur Verfügung stehen
