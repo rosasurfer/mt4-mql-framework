@@ -210,6 +210,7 @@ int LaunchExpertPropertiesDlg() {
    if (!PostMessageA(hWnd, WM_COMMAND, WM_MT4_EXPERT_PROPERTIES, 0))
       return(catch("LaunchExpertPropertiesDlg(4) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
+   //debug("LaunchExpertPropertiesDlg()   message posted");
    return(NO_ERROR);
 }
 
@@ -3745,12 +3746,19 @@ bool StringIStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringEndsWith(string object, string postfix) {
+   int lenObject  = StringLen(object);
    int lenPostfix = StringLen(postfix);
-   if (lenPostfix == 0) {
-      catch("StringEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+
+   if (lenPostfix == 0)
+      return(_false(catch("StringEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (lenObject < lenPostfix)
       return(false);
-   }
-   return(StringFind(object, postfix) == StringLen(object)-lenPostfix);
+
+   if (lenObject == lenPostfix)
+      return(object == postfix);
+
+   return(StringFind(object, postfix) == lenObject-lenPostfix);
 }
 
 
@@ -3763,12 +3771,22 @@ bool StringEndsWith(string object, string postfix) {
  * @return bool
  */
 bool StringIEndsWith(string object, string postfix) {
+   int lenObject  = StringLen(object);
    int lenPostfix = StringLen(postfix);
-   if (lenPostfix == 0) {
-      catch("StringIEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+
+   if (lenPostfix == 0)
+      return(_false(catch("StringIEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (lenObject < lenPostfix)
       return(false);
-   }
-   return(StringFind(StringToUpper(object), StringToUpper(postfix)) == StringLen(object)-lenPostfix);
+
+   object  = StringToUpper(object);
+   postfix = StringToUpper(postfix);
+
+   if (lenObject == lenPostfix)
+      return(object == postfix);
+
+   return(StringFind(object, postfix) == lenObject-lenPostfix);
 }
 
 
