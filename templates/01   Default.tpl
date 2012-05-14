@@ -8769,7 +8769,7 @@ name=HigherTimeframes
 flags=339
 window_num=0
 <inputs>
-Periods=60
+Periods=200
 </inputs>
 </expert>
 period_flags=0
