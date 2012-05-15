@@ -6,6 +6,10 @@
  * @author  Cristi Dumitrescu <birt@eareview.net>
  * @see     http://eareview.net/tickdata
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -27,26 +31,6 @@ extern bool   Use.Variable.Spread.Files      = false;
 #define LAST_BUILD_KNOWN   406
 
 int mt4Build;
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int init() {
-   return(onInit(T_SCRIPT));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
-}
 
 
 /**

@@ -5,7 +5,12 @@
  * - oben rechts: aktueller Kurs und Spread
  * - unten Mitte: Größe einer Handels-Unit und im Moment gehaltene Position
  */
+#include <types.mqh>
+#define     __TYPE__      T_INDICATOR
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_chart_window
 
@@ -15,10 +20,7 @@
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR, IT_CHECK_TIMEZONE_CONFIG)))
-      return(last_error);
-
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -27,11 +29,11 @@ int init() {
    if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
    else if (price == "ask"   ) ChartInfo.appliedPrice = PRICE_ASK;
    else if (price == "median") ChartInfo.appliedPrice = PRICE_MEDIAN;
-   else return(catch("init(1)  invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(1)  invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    ChartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
    if (LT(ChartInfo.leverage, 1))
-      return(catch("init(2)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(2)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Label erzeugen
    ChartInfo.CreateLabels();
@@ -40,7 +42,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(3)"));
+   return(catch("onInit(3)"));
 }
 
 
@@ -49,9 +51,9 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
    RemoveChartObjects(objects);
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 

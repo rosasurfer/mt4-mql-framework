@@ -1,6 +1,10 @@
 /**
  * Berechnet die Kurse der momentan verfügbaren LiteForex-Indizes und zeigt sie an.
  */
+#include <types.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 #property indicator_chart_window
@@ -28,15 +32,12 @@ string symbols[] = { "USDLFX","AUDLFX","CADLFX","CHFLFX","EURLFX","GBPLFX","JPYL
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
    CreateLabels();
-   return(catch("init()"));
+   return(catch("onInit()"));
 }
 
 
@@ -45,9 +46,9 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
    RemoveChartObjects(objects);
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 
@@ -74,7 +75,7 @@ int CreateLabels() {
 
    // Background
    c++;
-   string label = StringConcatenate(__SCRIPT__, ".", c, ".Background");
+   string label = StringConcatenate(__NAME__, ".", c, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -87,7 +88,7 @@ int CreateLabels() {
    else GetLastError();
 
    c++;
-   label = StringConcatenate(__SCRIPT__, ".", c, ".Background");
+   label = StringConcatenate(__NAME__, ".", c, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -104,7 +105,7 @@ int CreateLabels() {
    for (int i=0; i < ArraySize(symbols); i++) {
       c++;
       // Symbol
-      label = StringConcatenate(__SCRIPT__, ".", c, ".", StringLeft(symbols[i], 3));
+      label = StringConcatenate(__NAME__, ".", c, ".", StringLeft(symbols[i], 3));
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

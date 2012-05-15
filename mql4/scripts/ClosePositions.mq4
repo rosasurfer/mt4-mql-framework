@@ -1,6 +1,10 @@
 /**
  * Schlieﬂt die angegebenen Positionen. Ohne zus‰tzliche Parameter werden alle offenen Positionen geschlossen.
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
@@ -27,11 +31,7 @@ int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_SCRIPT)))
-      return(last_error);
-
-
+int onInit() {
    // Parametervalidierung
    // Close.Symbols
    string values[];
@@ -50,7 +50,7 @@ int init() {
          case 'L': orderType = OP_BUY;  Close.Direction = "long";  break;
          case 'S': orderType = OP_SELL; Close.Direction = "short"; break;
          default:
-            return(catch("init(1)  Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("onInit(1)  Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT));
       }
    }
 
@@ -60,10 +60,10 @@ int init() {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {
          if (!StringIsDigit(strValue))
-            return(catch("init(2)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("onInit(2)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT));
          int iValue = StrToInteger(strValue);
          if (iValue <= 0)
-            return(catch("init(3)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("onInit(3)  Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT));
          ArrayPushInt(orderTickets, iValue);
       }
    }
@@ -74,10 +74,10 @@ int init() {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {
          if (!StringIsDigit(strValue))
-            return(catch("init(4)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("onInit(4)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT));
          iValue = StrToInteger(strValue);
          if (iValue <= 0)
-            return(catch("init(5)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(catch("onInit(5)  Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT));
          ArrayPushInt(orderMagics, iValue);
       }
    }
@@ -85,17 +85,7 @@ int init() {
    // Close.Comment
    orderComment = StringTrim(Close.Comment);
 
-   return(catch("init(6)"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -137,7 +127,7 @@ int onStart() {
    int selected = ArraySize(tickets);
    if (selected > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          double execution[] = {NULL};
          if (!OrderMultiClose(tickets, 0.1, Orange, execution))
@@ -146,7 +136,7 @@ int onStart() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("onStart()"));

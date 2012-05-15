@@ -1,7 +1,12 @@
 /**
  * Balance-Verlauf des aktuellen Accounts als Linienchart im Indikator-Subfenster
  */
+#include <types.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_separate_window
 
@@ -17,10 +22,7 @@ double iBalance[];
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber())
       return(SetLastError(stdlib_PeekLastError()));
@@ -34,17 +36,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init()"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
+   return(catch("onInit()"));
 }
 
 

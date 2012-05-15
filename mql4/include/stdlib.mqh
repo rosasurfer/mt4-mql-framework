@@ -6,29 +6,45 @@
 
 #import "stdlib.ex4"
 
-   /*private*/ int init();
-   /*private*/ int deinit();
-   /*private*/ int onStart();
-   /*private*/ int onTick();
+   // Laufzeitfunktionen
+   int      onInit();
+   int      onInitChartOpen();
+   int      onInitChartClose();
+   int      onInitRemove();
+   int      onInitRecompile();
+   int      onInitParameterChange();
+   int      onInitChartChange();
+   int      onInitAccountChange();
+   int      afterInit();
+
+   int      onStart();
+   int      onTick();
+
+   int      onDeinit();
+   int      onDeinitChartOpen();
+   int      onDeinitChartClose();
+   int      onDeinitRemove();
+   int      onDeinitRecompile();
+   int      onDeinitParameterChange();
+   int      onDeinitChartChange();
+   int      onDeinitAccountChange();
+   int      afterDeinit();
+
+   int      stdlib_init(bool calledByUser, int type, string name, int initFlags, int uninitializeReason);
+   int      stdlib_start(int tick, int validBars, int changedBars);
 
 
-   // Library-Funktionen
-   int      stdlib_onInit(int scriptType, string scriptName, int initFlags, int uninitializeReason);
-   int      stdlib_onStart(int tick, int validBars, int changedBars);
-   int      stdlib_GetLastError();
-   int      stdlib_PeekLastError();
+   // MQL-Statusfunktionen
+   bool     IsExpert();
+   bool     IsScript();
+   bool     IsIndicator();
+   bool     IndicatorIsTesting();
 
-
-   // Laufzeit- und Statusfunktionen
    string   GetTerminalVersion();
    int      GetTerminalBuild();
    int      GetTerminalWindow();
    int      GetTesterWindow();
    int      GetUIThreadId();
-   bool     IsExpert();
-   bool     IsIndicator();
-   bool     IsScript();
-   bool     iIsTesting();
 
 
    // Arrays
@@ -86,6 +102,9 @@
    string   JoinInts(int array[], string separator);
    string   JoinDoubles(double array[], string separator);
    string   JoinStrings(string array[], string separator);
+
+   int      SumInts(int array[]);
+   double   SumDoubles(double array[]);
 
 
    // Buffer-Funktionen
@@ -184,6 +203,17 @@
    string   GetDayOfWeek(datetime time, bool format);
    string   GetServerTimezone();                                  // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime TimeGMT();
+
+
+   // Error-Handling
+   bool     IsError(int value);
+   bool     IsNoError(int value);
+   bool     IsErrorCode(int value);
+   bool     IsLastError();
+   int      SetLastError(int error);
+   int      ResetLastError();
+   int      stdlib_GetLastError();
+   int      stdlib_PeekLastError();
 
 
    // Eventlistener
@@ -369,7 +399,6 @@
 
    string   AppliedPriceDescription(int appliedPrice);
    string   ErrorDescription(int error);
-   bool     IsErrorCode(int value);
    string   MovingAverageMethodDescription(int method);
    string   OperationTypeDescription(int type);
    string   PeriodDescription(int period);

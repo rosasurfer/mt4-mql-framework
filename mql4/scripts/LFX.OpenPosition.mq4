@@ -29,6 +29,10 @@
  *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
  *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -62,34 +66,30 @@ int    positions.counter [];
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_SCRIPT)))
-      return(last_error);
-
-
+int onInit() {
    // -- Beginn - Parametervalidierung
    // Currency
    string value = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
    if (!StringInArray(currencies, value))
-      return(catch("init(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT));
    Currency = value;
    // Direction
    value = StringToUpper(StringTrim(Direction));
    if (value == "")
-      return(catch("init(2)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(2)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
    switch (StringGetChar(value, 0)) {
       case 'B':
       case 'L': Direction = "long";  iDirection = OP_BUY;  break;
       case 'S': Direction = "short"; iDirection = OP_SELL; break;
       default:
-         return(catch("init(3)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         return(catch("onInit(3)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
    }
    // Units
    if (LT(Units, 0.1) || GT(Units, 1.5))
-      return(catch("init(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT));
    if (NE(MathModFix(Units, 0.1), 0))
-      return(catch("init(5)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(5)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT));
    Units = NormalizeDouble(Units, 1);
    // -- Ende - Parametervalidierung
 
@@ -97,19 +97,9 @@ int init() {
    // Leverage-Konfiguration einlesen
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
-      return(catch("init(6)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(6)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT));
 
-   return(catch("init(7)"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -168,7 +158,7 @@ int onStart() {
             continue;
          }
          PlaySound("notify.wav");                                                               // danach Bestätigung per Dialog
-         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __SCRIPT__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __NAME__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
             continue;
@@ -198,7 +188,7 @@ int onStart() {
 
    // (4) Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 

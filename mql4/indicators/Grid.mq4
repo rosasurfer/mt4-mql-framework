@@ -1,7 +1,12 @@
 /**
  * Chart-Grid. Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen Session.
  */
+#include <types.mqh>
+#define     __TYPE__      T_INDICATOR
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_chart_window
 
@@ -18,10 +23,7 @@ extern color Grid.Color = LightGray;
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR, IT_CHECK_TIMEZONE_CONFIG)))
-      return(last_error);
-
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -33,7 +35,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init()"));
+   return(catch("onInit()"));
 }
 
 
@@ -42,9 +44,9 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
    RemoveChartObjects(objects);
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 

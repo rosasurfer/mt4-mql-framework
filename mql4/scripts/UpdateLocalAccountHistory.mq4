@@ -1,27 +1,11 @@
 /**
  * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Margin Credits werden nicht mitgespeichert.
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int init() {
-   return(onInit(T_SCRIPT));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
-}
 
 
 /**
@@ -33,7 +17,7 @@ int onStart() {
    int account = AccountNumber();
    if (account == 0) {
       PlaySound("notify.wav");
-      MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
    }
 
@@ -180,11 +164,11 @@ int onStart() {
    if (orders == 0) {
       if (NE(lastBalance, AccountBalance())) {
          PlaySound("notify.wav");
-         MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+         MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
          return(catch("onStart(6)"));
       }
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(7)"));
    }
 
@@ -203,7 +187,7 @@ int onStart() {
       if (NE(lastBalance, AccountBalance()))
          return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
    }
    //log("onStart()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
@@ -220,7 +204,7 @@ int onStart() {
    if (NE(lastBalance, AccountBalance())) {
       log("onStart()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
-      MessageBox("Balance mismatch, more history data needed.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(10)"));
    }
 
@@ -297,7 +281,7 @@ int onStart() {
    FileClose(hFile);
 
    PlaySound("ding.wav");
-   MessageBox("History successfully updated.", __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+   MessageBox("History successfully updated.", __NAME__, MB_ICONINFORMATION|MB_OK);
    return(catch("onStart(17)"));
 }
 

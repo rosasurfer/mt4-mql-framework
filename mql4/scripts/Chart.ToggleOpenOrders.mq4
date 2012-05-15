@@ -1,6 +1,10 @@
 /**
  * Blendet die aktuell offenen Positionen ein oder aus.
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -13,32 +17,19 @@ string currency;                                                     // LFX-Währ
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_SCRIPT)))
-      return(last_error);
-
+int onInit() {
    PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
 
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
-      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __SCRIPT__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __NAME__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
 
    if (StringStartsWith(Symbol(), "LFX")) currency = StringRight(Symbol(), -3);
    else                                   currency = StringLeft (Symbol(), -3);
 
-   return(catch("init()"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
+   return(catch("onInit()"));
 }
 
 
@@ -196,7 +187,7 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int SaveAccountId(string id) {
-   string label = __SCRIPT__ +".account";
+   string label = __NAME__ +".account";
 
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
@@ -219,7 +210,7 @@ int SaveAccountId(string id) {
  * @return string - Name
  */
 string ReadAccountId() {
-   string label = __SCRIPT__ +".account";
+   string label = __NAME__ +".account";
    if (ObjectFind(label) != -1)
       return(ObjectDescription(label));
    return("");

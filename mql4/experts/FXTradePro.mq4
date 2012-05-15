@@ -52,6 +52,10 @@
  *  - Equity-Chart der laufenden Sequenz implementieren
  *  - ShowStatus() übersichtlicher gestalten (Textlabel statt Comment())
  */
+#include <types.mqh>
+#define     __TYPE__    T_EXPERT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
@@ -159,10 +163,7 @@ bool     firstTick = true;
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_EXPERT)))
-      return(ShowStatus(true));
-
+int onInit() {
    /*
    Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluß werden die Daten der ggf. laufenden Sequenz restauriert.
    Es gibt 4 unterschiedliche init()-Szenarien:
@@ -245,7 +246,7 @@ int init() {
    }
 
    // ---------------------------------------------------------------------------------------------------------------------------------------------------------
-   else catch("init(1)   unknown init() scenario", ERR_RUNTIME_ERROR);
+   else catch("onInit(1)   unknown init() scenario", ERR_RUNTIME_ERROR);
 
 
    // (2) Status anzeigen
@@ -253,19 +254,7 @@ int init() {
    if (IsLastError())
       return(last_error);
 
-
-   // (3) ggf. EA's aktivieren
-   int reasons1[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT };
-   if (IntInArray(reasons1, UninitializeReason())) /*&&*/ if (!IsExpertEnabled())
-      SwitchExperts(true);                                        // TODO: Bug, wenn mehrere EA's den EA-Modus gleichzeitig einschalten
-
-
-   // (4) nach Reload nicht auf den nächsten Tick warten (nur bei REASON_CHARTCHANGE oder REASON_ACCOUNT)
-   int reasons2[] = { REASON_REMOVE, REASON_CHARTCLOSE, REASON_APPEXIT, REASON_PARAMETERS, REASON_RECOMPILE };
-   if (IntInArray(reasons2, UninitializeReason())) /*&&*/ if (!IsTesting())
-      SendTick(false);
-
-   return(catch("init(2)"));
+   return(catch("onInit(2)"));
 }
 
 
@@ -274,17 +263,14 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
-   if (IsError(onDeinit()))
-      return(last_error);
-
+int onDeinit() {
    if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE))       // Der Tester schließt beim Beenden nur offene Positionen,
       return(SetLastError(stdlib_PeekLastError()));                  // offene Pending-Orders werden jedoch nicht gelöscht.
 
    if (UninitializeReason() == REASON_CHARTCHANGE) {
       // Input-Parameter sind nicht statisch: für's nächste init() in intern.* zwischenspeichern
-      intern.Entry.Condition = Entry.Condition;
-      intern.Entry.Direction = Entry.Direction;
+      intern.Entry.Condition = StringConcatenate(Entry.Condition, "");
+      intern.Entry.Direction = StringConcatenate(Entry.Direction, "");
       intern.TakeProfit      = TakeProfit;
       intern.StopLoss        = StopLoss;
       intern.Lotsize.Level.1 = Lotsize.Level.1;
@@ -294,7 +280,7 @@ int deinit() {
       intern.Lotsize.Level.5 = Lotsize.Level.5;
       intern.Lotsize.Level.6 = Lotsize.Level.6;
       intern.Lotsize.Level.7 = Lotsize.Level.7;
-      intern.Sequence.ID     = Sequence.ID;
+      intern.Sequence.ID     = StringConcatenate(Sequence.ID, "");
    }
    else if (UninitializeReason()==REASON_CHARTCLOSE || UninitializeReason()==REASON_RECOMPILE) {
       if (!IsTesting()) {
@@ -303,7 +289,7 @@ int deinit() {
             StoreChartSequenceId();                                  // beim nächsten init() nicht restauriert werden.
       }
    }
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 
@@ -767,7 +753,7 @@ bool ReadSequence() {
          }
 
          ForceSound("notify.wav");
-         int button = ForceMessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+         int button = ForceMessageBox("No tickets found for sequence "+ sequenceId +".\nMore history data needed?", __NAME__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             retry = true;
             continue;
@@ -781,7 +767,7 @@ bool ReadSequence() {
       for (i=0; i < progressionLevel; i++) {
          if (levels.ticket[i] == 0) {
             ForceSound("notify.wav");
-            button = ForceMessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __SCRIPT__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
+            button = ForceMessageBox("Ticket for progression level "+ (i+1) +" not found.\nMore history data needed.", __NAME__ +" - ReadSequence()", MB_ICONEXCLAMATION|MB_RETRYCANCEL);
             if (button == IDRETRY) {
                retry = true;
                break;
@@ -932,7 +918,7 @@ bool StartSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
-         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __SCRIPT__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to start a new trade sequence now?", __NAME__ +" - StartSequence()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
             return(_false(SetLastError(ERR_CANCELLED_BY_USER), catch("StartSequence(1)")));
       }
@@ -976,7 +962,7 @@ bool IncreaseProgression() {
    if (firstTick) {                                                        // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                                  // jedoch nicht im Tester
          ForceSound("notify.wav");
-         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __SCRIPT__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to increase the progression level now?", __NAME__ +" - IncreaseProgression()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
             return(_false(SetLastError(ERR_CANCELLED_BY_USER), catch("IncreaseProgression(1)")));
       }
@@ -1024,7 +1010,7 @@ bool FinishSequence() {
    if (firstTick) {                                                  // Sicherheitsabfrage, wenn der erste Tick sofort eine Orderfunktion triggert
       if (!IsTesting()) {                                            // jedoch nicht im Tester
          ForceSound("notify.wav");
-         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __SCRIPT__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
+         int button = ForceMessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to finish the sequence now?", __NAME__ +" - FinishSequence()", MB_ICONQUESTION|MB_OKCANCEL);
          if (button != IDOK)
             return(_false(SetLastError(ERR_CANCELLED_BY_USER), catch("FinishSequence(1)")));
       }
@@ -1359,8 +1345,8 @@ int ShowStatus(bool init=false) {
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
-   msg = StringConcatenate(__SCRIPT__, msg,                                  NL,
-                                                                             NL,
+   msg = StringConcatenate(__NAME__, msg, NL,
+                                          NL,
                           "Level:           ", progressionLevel, " / ", sequenceLength);
 
    double profitLoss, profitLossPips, lastPrice;
@@ -1437,7 +1423,7 @@ bool RestoreInputSequenceId() {
             return(true);
          }
       }
-      catch("RestoreInputSequenceId()  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT_PARAMVALUE);
+      catch("RestoreInputSequenceId()  Invalid input parameter Sequence.ID = \""+ Sequence.ID +"\"", ERR_INVALID_INPUT);
    }
    return(false);
 }
@@ -1457,57 +1443,57 @@ bool ValidateConfiguration() {
    string values[];
    // LimitValue | BollingerBands(35xM5, EMA, 2.0) | Envelopes(75xM15, ALMA, 2.0)
    if (Explode(strValue, "|", values, NULL) != 1)                    // vorerst wird nur eine Entry.Condition akzeptiert
-      return(_false(catch("ValidateConfiguration(1)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(1)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
    strValue = values[0];
    if (StringLen(strValue) == 0)
-      return(_false(catch("ValidateConfiguration(2)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(2)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
    // LimitValue
    if (StringIsNumeric(strValue)) {
       Entry.limit = StrToDouble(strValue);
       if (LT(Entry.limit, 0))
-         return(_false(catch("ValidateConfiguration(3)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(3)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
       Entry.type = ENTRYTYPE_LIMIT;
    }
    else if (!StringEndsWith(strValue, ")")) {
-      return(_false(catch("ValidateConfiguration(4)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(4)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
    }
    else {
       // [[Bollinger]Bands|Envelopes](35xM5, EMA, 2.0)
       strValue = StringToLower(StringLeft(strValue, -1));
       if (Explode(strValue, "(", values, NULL) != 2)
-         return(_false(catch("ValidateConfiguration(5)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(5)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
       if      (values[0] == "bands"         ) Entry.type = ENTRYTYPE_BANDS;
       else if (values[0] == "bollingerbands") Entry.type = ENTRYTYPE_BANDS;
       else if (values[0] == "env"           ) Entry.type = ENTRYTYPE_ENVELOPES;
       else if (values[0] == "envelopes"     ) Entry.type = ENTRYTYPE_ENVELOPES;
       else
-         return(_false(catch("ValidateConfiguration(6)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(6)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT)));
       // 35xM5, EMA, 2.0
       if (Explode(values[1], ",", values, NULL) != 3)
-         return(_false(catch("ValidateConfiguration(7)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(7)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT)));
       // MA-Deviation
       if (!StringIsNumeric(values[2]))
-         return(_false(catch("ValidateConfiguration(8)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(8)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT)));
       Entry.MA.deviation = StrToDouble(values[2]);
       if (LE(Entry.MA.deviation, 0))
-         return(_false(catch("ValidateConfiguration(9)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(9)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[2] +")", ERR_INVALID_INPUT)));
       // MA-Method
       Entry.MA.method = MovingAverageMethodToId(values[1]);
       if (Entry.MA.method == -1)
-         return(_false(catch("ValidateConfiguration(10)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(10)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT)));
       // MA-Periods(x)MA-Timeframe
       if (Explode(values[0], "x", values, NULL) != 2)
-         return(_false(catch("ValidateConfiguration(11)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(11)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT)));
       // MA-Periods
       if (!StringIsDigit(values[0]))
-         return(_false(catch("ValidateConfiguration(12)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(12)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT)));
       Entry.MA.periods = StrToInteger(values[0]);
       if (Entry.MA.periods < 1)
-         return(_false(catch("ValidateConfiguration(13)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(13)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[0] +")", ERR_INVALID_INPUT)));
       // MA-Timeframe
       Entry.MA.timeframe = PeriodToId(values[1]);
       if (Entry.MA.timeframe == -1)
-         return(_false(catch("ValidateConfiguration(14)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(14)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ values[1] +")", ERR_INVALID_INPUT)));
 
       // Für konstante Berechnungen bei Timeframe-Wechseln Timeframe möglichst nach M5 umrechnen.
       Entry.MA.periods.orig   = Entry.MA.periods;
@@ -1527,55 +1513,55 @@ bool ValidateConfiguration() {
          case 'l': Entry.Direction = "long";  Entry.iDirection = ENTRYDIRECTION_LONG;  break;
          case 's': Entry.Direction = "short"; Entry.iDirection = ENTRYDIRECTION_SHORT; break;
          default:
-            return(_false(catch("ValidateConfiguration(15)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT_PARAMVALUE)));
+            return(_false(catch("ValidateConfiguration(15)  Invalid input parameter Entry.Direction = \""+ Entry.Direction +"\" ("+ strValue +")", ERR_INVALID_INPUT)));
       }
    }
 
    // Entry.Condition <-> Entry.Direction
    if (Entry.type == ENTRYTYPE_LIMIT) {
       if (Entry.iDirection == ENTRYDIRECTION_LONGSHORT)
-         return(_false(catch("ValidateConfiguration(16)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(16)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT)));
    }
    else if (Entry.iDirection != ENTRYDIRECTION_LONGSHORT)
-      return(_false(catch("ValidateConfiguration(17)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(17)  Invalid input parameter Entry.Condition = \""+ Entry.Condition +"\" ("+ EntryTypeToStr(Entry.type) +" <-> "+ Entry.Direction +")", ERR_INVALID_INPUT)));
    Entry.Condition = StringTrim(Entry.Condition);
 
    // TakeProfit
    if (TakeProfit < 1)
-      return(_false(catch("ValidateConfiguration(18)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(18)  Invalid input parameter TakeProfit = "+ TakeProfit, ERR_INVALID_INPUT)));
 
    // StopLoss
    if (StopLoss < 1)
-      return(_false(catch("ValidateConfiguration(19)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT_PARAMVALUE)));
+      return(_false(catch("ValidateConfiguration(19)  Invalid input parameter StopLoss = "+ StopLoss, ERR_INVALID_INPUT)));
 
    // Lotsizes
    int levels = ArrayResize(levels.lots, 0);
 
-   if (LE(Lotsize.Level.1, 0)) return(_false(catch("ValidateConfiguration(20)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+   if (LE(Lotsize.Level.1, 0)) return(_false(catch("ValidateConfiguration(20)  Invalid input parameter Lotsize.Level.1 = "+ NumberToStr(Lotsize.Level.1, ".+"), ERR_INVALID_INPUT)));
    levels = ArrayPushDouble(levels.lots, Lotsize.Level.1);
 
    if (NE(Lotsize.Level.2, 0)) {
-      if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(_false(catch("ValidateConfiguration(21)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+      if (LT(Lotsize.Level.2, Lotsize.Level.1)) return(_false(catch("ValidateConfiguration(21)  Invalid input parameter Lotsize.Level.2 = "+ NumberToStr(Lotsize.Level.2, ".+"), ERR_INVALID_INPUT)));
       levels = ArrayPushDouble(levels.lots, Lotsize.Level.2);
 
       if (NE(Lotsize.Level.3, 0)) {
-         if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(_false(catch("ValidateConfiguration(22)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+         if (LT(Lotsize.Level.3, Lotsize.Level.2)) return(_false(catch("ValidateConfiguration(22)  Invalid input parameter Lotsize.Level.3 = "+ NumberToStr(Lotsize.Level.3, ".+"), ERR_INVALID_INPUT)));
          levels = ArrayPushDouble(levels.lots, Lotsize.Level.3);
 
          if (NE(Lotsize.Level.4, 0)) {
-            if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(_false(catch("ValidateConfiguration(23)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+            if (LT(Lotsize.Level.4, Lotsize.Level.3)) return(_false(catch("ValidateConfiguration(23)  Invalid input parameter Lotsize.Level.4 = "+ NumberToStr(Lotsize.Level.4, ".+"), ERR_INVALID_INPUT)));
             levels = ArrayPushDouble(levels.lots, Lotsize.Level.4);
 
             if (NE(Lotsize.Level.5, 0)) {
-               if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(_false(catch("ValidateConfiguration(24)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+               if (LT(Lotsize.Level.5, Lotsize.Level.4)) return(_false(catch("ValidateConfiguration(24)  Invalid input parameter Lotsize.Level.5 = "+ NumberToStr(Lotsize.Level.5, ".+"), ERR_INVALID_INPUT)));
                levels = ArrayPushDouble(levels.lots, Lotsize.Level.5);
 
                if (NE(Lotsize.Level.6, 0)) {
-                  if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(_false(catch("ValidateConfiguration(25)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+                  if (LT(Lotsize.Level.6, Lotsize.Level.5)) return(_false(catch("ValidateConfiguration(25)  Invalid input parameter Lotsize.Level.6 = "+ NumberToStr(Lotsize.Level.6, ".+"), ERR_INVALID_INPUT)));
                   levels = ArrayPushDouble(levels.lots, Lotsize.Level.6);
 
                   if (NE(Lotsize.Level.7, 0)) {
-                     if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(_false(catch("ValidateConfiguration(26)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT_PARAMVALUE)));
+                     if (LT(Lotsize.Level.7, Lotsize.Level.6)) return(_false(catch("ValidateConfiguration(26)  Invalid input parameter Lotsize.Level.7 = "+ NumberToStr(Lotsize.Level.7, ".+"), ERR_INVALID_INPUT)));
                      levels = ArrayPushDouble(levels.lots, Lotsize.Level.7);
                   }
                }
@@ -1592,9 +1578,9 @@ bool ValidateConfiguration() {
    if (IsError(error))                                return(_false(catch("ValidateConfiguration(27)   symbol=\""+ Symbol() +"\"", error)));
 
    for (int i=0; i < levels; i++) {
-      if (LT(levels.lots[i], minLot))                 return(_false(catch("ValidateConfiguration(28)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", ERR_INVALID_INPUT_PARAMVALUE)));
-      if (GT(levels.lots[i], maxLot))                 return(_false(catch("ValidateConfiguration(29)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", ERR_INVALID_INPUT_PARAMVALUE)));
-      if (NE(MathModFix(levels.lots[i], lotStep), 0)) return(_false(catch("ValidateConfiguration(30)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT_PARAMVALUE)));
+      if (LT(levels.lots[i], minLot))                 return(_false(catch("ValidateConfiguration(28)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", ERR_INVALID_INPUT)));
+      if (GT(levels.lots[i], maxLot))                 return(_false(catch("ValidateConfiguration(29)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", ERR_INVALID_INPUT)));
+      if (NE(MathModFix(levels.lots[i], lotStep), 0)) return(_false(catch("ValidateConfiguration(30)   Invalid input parameter Lotsize.Level."+ (i+1) +" = "+ NumberToStr(levels.lots[i], ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_INPUT)));
    }
    sequenceLength = ArraySize(levels.lots);
 
@@ -1604,7 +1590,7 @@ bool ValidateConfiguration() {
    if (progressionLevel > 0) {
       // TODO: Wurden die Level geändert, sicherstellen, daß nur zukünftige Level geändert wurden.
       if (Entry.type==ENTRYTYPE_LIMIT) /*&&*/ if (levels.type[0]!=Entry.iDirection)
-         return(_false(catch("ValidateConfiguration(31)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_INVALID_INPUT_PARAMVALUE)));
+         return(_false(catch("ValidateConfiguration(31)   illegal input parameter Entry.Direction = \""+ Entry.Direction +"\", it doesn't match "+ OperationTypeDescription(levels.type[0]) +" order at level 1", ERR_INVALID_INPUT)));
    }
 
    return(IsNoError(catch("ValidateConfiguration(32)")));
@@ -1830,20 +1816,20 @@ bool RestoreConfiguration() {
 
 
 /**
- * Gibt die lesbare Konstante eines Sequenzstatus-Codes zurück.
+ * Gibt die lesbare Konstante eines Status-Codes zurück.
  *
  * @param  int status - Status-Code
  *
  * @return string
  */
-string SequenceStatusToStr(int status) {
+string StatusToStr(int status) {
    switch (status) {
       case STATUS_WAITING    : return("STATUS_WAITING"    );
       case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
       case STATUS_FINISHED   : return("STATUS_FINISHED"   );
       case STATUS_DISABLED   : return("STATUS_DISABLED"   );
    }
-   return(_empty(catch("SequenceStatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -1889,7 +1875,7 @@ string EntryTypeDescription(int type) {
  * @return int - Fehlerstatus
  */
 int StoreChartSequenceId() {
-   string label = __SCRIPT__ +".sequenceId";
+   string label = __NAME__ +".sequenceId";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
@@ -1906,7 +1892,7 @@ int StoreChartSequenceId() {
  * @return bool - ob eine Sequenz-ID gefunden und restauriert wurde
  */
 bool RestoreChartSequenceId() {
-   string label = __SCRIPT__ +".sequenceId";
+   string label = __NAME__ +".sequenceId";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
       sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;   // (int) double
@@ -1922,15 +1908,15 @@ bool RestoreChartSequenceId() {
  * @return int - Fehlerstatus
  */
 int ClearChartSequenceId() {
-   string label = __SCRIPT__ +".sequenceId";
+   string label = __NAME__ +".sequenceId";
 
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
 
    return(catch("ClearChartSequenceId()"));
 
-   // Dummy-Calls, unterdrücken Compilerwarnungen über unbenutzte Funktionen
+   // Dummy-Calls, unterdrücken unnütze Compilerwarnungen
    EntryTypeDescription(NULL);
    EntryTypeToStr(NULL);
-   SequenceStatusToStr(NULL);
+   StatusToStr(NULL);
 }

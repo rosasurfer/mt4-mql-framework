@@ -5,6 +5,10 @@
 #property stacksize  32768
 
 
+#include <types.mqh>
+int         __TYPE__ = T_LIBRARY;
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
@@ -13,23 +17,6 @@
    // den Buffer selbst parsen müssen. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
 #import
-
-
-/**
- * Initialisierung der Library beim Laden in den Speicher
- */
-int init() {
-   __SCRIPT__ = WindowExpertName();
-   return(NO_ERROR);
-}
-
-
-/**
- * Deinitialisierung der Library beim Entladen aus dem Speicher
- */
-int deinit() {
-   return(NO_ERROR);
-}
 
 
 /**

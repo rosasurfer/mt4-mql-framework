@@ -1,7 +1,12 @@
 /**
  * Zeigt einen Schriftzug in unterschiedlichen Größen und Schriften an.
  */
+#include <types.mqh>
+#define     __TYPE__    T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_chart_window
 
@@ -19,26 +24,12 @@ string fontNames[]     = { "", "System", "Arial", "Arial Kursiv", "Arial Fett", 
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
    CreateLabels();
-   return(catch("init()"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   RemoveChartObjects(objects);
-   return(catch("deinit()"));
+   return(catch("onInit()"));
 }
 
 
@@ -65,7 +56,7 @@ int CreateLabels() {
    for (int fontSize=fromFontSize; fontSize < toFontSize; fontSize++) {
       // Backgrounds
       c++;
-      string label = StringConcatenate(__SCRIPT__, ".", c, ".Background");
+      string label = StringConcatenate(__NAME__, ".", c, ".Background");
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -81,7 +72,7 @@ int CreateLabels() {
       int yCoord = 100;
       for (int i=0; i < names; i++) {
          c++;
-         label = StringConcatenate(__SCRIPT__, ".", c, ".", fontNames[i]);
+         label = StringConcatenate(__NAME__, ".", c, ".", fontNames[i]);
          if (ObjectFind(label) > -1)
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

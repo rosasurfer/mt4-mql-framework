@@ -1,6 +1,10 @@
 /**
  * Zeigt die Eigenschaften eines Instruments an.
  */
+#include <types.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 #property indicator_chart_window
@@ -40,15 +44,12 @@ string names[] = { "TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPL
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
    CreateLabels();
-   return(catch("init()"));
+   return(catch("onInit()"));
 }
 
 
@@ -57,9 +58,9 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
    RemoveChartObjects(objects);
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 
@@ -69,7 +70,7 @@ int deinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error != NO_ERROR)
+   if (IsError(prev_error))
       return(SetLastError(prev_error));
 
    UpdateInfos();
@@ -86,7 +87,7 @@ int CreateLabels() {
 
    // Background
    c++;
-   string label = StringConcatenate(__SCRIPT__, ".", c, ".Background");
+   string label = StringConcatenate(__NAME__, ".", c, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -99,7 +100,7 @@ int CreateLabels() {
    else GetLastError();
 
    c++;
-   label = StringConcatenate(__SCRIPT__, ".", c, ".Background");
+   label = StringConcatenate(__NAME__, ".", c, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -115,7 +116,7 @@ int CreateLabels() {
    int yCoord = 140;
    for (int i=0; i < ArraySize(names); i++) {
       c++;
-      label = StringConcatenate(__SCRIPT__, ".", c, ".", names[i]);
+      label = StringConcatenate(__NAME__, ".", c, ".", names[i]);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {

@@ -1,9 +1,14 @@
 /**
  * Arnaud Legoux Moving Average
  *
- * @see        http://www.arnaudlegoux.com/
+ * @see  http://www.arnaudlegoux.com/
  */
+#include <types.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_chart_window
 
@@ -46,19 +51,16 @@ string legendLabel, indicatorName;
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // Konfiguration auswerten
    if (MA.Periods < 2)
-      return(catch("init(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
 
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
    if (maTimeframe == -1)
-      return(catch("init(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
 
    string price = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
    if      (price == "O") appliedPrice = PRICE_OPEN;
@@ -69,7 +71,7 @@ int init() {
    else if (price == "T") appliedPrice = PRICE_TYPICAL;
    else if (price == "W") appliedPrice = PRICE_WEIGHTED;
    else
-      return(catch("init(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
    // Buffer zuweisen
    IndicatorBuffers(6);
@@ -131,7 +133,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(4)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -140,10 +142,10 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
    RemoveChartObjects(objects);
    RepositionLegend();
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 

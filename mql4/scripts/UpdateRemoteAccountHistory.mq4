@@ -2,27 +2,11 @@
  * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten übertragen.
  * Die Auswertung und Zuordnung erfolgt auf dem Server.
  */
+#include <types.mqh>
+#define     __TYPE__   T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int init() {
-   return(onInit(T_SCRIPT));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
-}
 
 
 /**
@@ -35,7 +19,7 @@ int onStart() {
    if (account == 0) {
       log("onStart()  no trade server connection");
       PlaySound("notify.wav");
-      MessageBox("No trade server connection.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
    }
 
@@ -77,7 +61,7 @@ int onStart() {
             if (error == ERR_UNKNOWN_SYMBOL) {
                log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
-               MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+               MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
             }
             if (IsError(error))
@@ -116,7 +100,7 @@ int onStart() {
 
 
    // (2) CSV-Datei schreiben
-   string filename = ShortAccountCompany() +"\\tmp_"+ __SCRIPT__ +".txt";
+   string filename = ShortAccountCompany() +"\\tmp_"+ __NAME__ +".txt";
    int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
    if (hFile < 0)
       return(catch("onStart(2) ->FileOpen(\""+ filename +"\")"));
@@ -195,11 +179,11 @@ int onStart() {
    // (4) Antwort auswerten und Rückmeldung an den User geben
    if (result==200 || result==201) {
       PlaySound("ding.wav");
-      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), __SCRIPT__, MB_ICONINFORMATION|MB_OK);
+      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), __NAME__, MB_ICONINFORMATION|MB_OK);
    }
    else {
       PlaySound("notify.wav");
-      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(10)"));
 }

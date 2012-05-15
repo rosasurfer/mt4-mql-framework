@@ -19,7 +19,12 @@
  * - stdDev(PRICE_HIGH|PRICE_LOW) wäre die technisch exakter Methode, müßte aber für jede Bar manuell implementiert werden und ist am langsamsten.
  * - Es gilt: 1.65 * stdDev(PRICE_CLOSE) entspricht ca. 1.4 * stdDev(PRICE_HIGH|PRICE_LOW) (Übereinstimmung von 90-95%)
  */
+#include <types.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
 
 #property indicator_chart_window
 
@@ -60,10 +65,7 @@ double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: G
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_INDICATOR)))
-      return(last_error);
-
+int onInit() {
    // Konfiguration einlesen
    bool   externalConfig = false;
    string configSection, configLabel;
@@ -72,7 +74,7 @@ int init() {
    configLabel = StringToLower(StringTrim(Per.Symbol.Configuration));
    if (configLabel != "") {
       if (!StringContains(configLabel, "{symbol}"))
-         return(catch("init(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         return(catch("onInit(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT));
       configSection  = WindowExpertName();
       configLabel    = StringReplace(configLabel, "{symbol}", StdSymbol());
       externalConfig = true;
@@ -82,7 +84,7 @@ int init() {
    if (externalConfig)
       MA.Periods = GetGlobalConfigInt(configSection, configLabel +".MA.Periods", MA.Periods);
    if (MA.Periods < 2)
-      return(catch("init(2)  Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(2)  Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
@@ -91,7 +93,7 @@ int init() {
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
    if (maTimeframe == -1)
-      return(catch("init(3)  Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(3)  Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methoden
    if (externalConfig)
@@ -107,7 +109,7 @@ int init() {
    else if (value == "LWMA")   maMethod1 = MODE_LWMA;
    else if (value == "ALMA") { maMethod1 = MODE_ALMA; ALMA = true; }
    else
-      return(catch("init(4)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(4)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methode 2
    if (size == 2) {
@@ -118,10 +120,10 @@ int init() {
       else if (value == "LWMA")   maMethod2 = MODE_LWMA;
       else if (value == "ALMA") { maMethod2 = MODE_ALMA; ALMA = true; }
       else
-         return(catch("init(5)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         return(catch("onInit(5)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    else if (size > 2)
-      return(catch("init(6)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(6)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // AppliedPrice
    if (externalConfig)
@@ -135,32 +137,32 @@ int init() {
    else if (chr == "T") appliedPrice = PRICE_TYPICAL;
    else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
    else
-      return(catch("init(7)  Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(7)  Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviations
    if (externalConfig)
       Deviations = GetGlobalConfigString(configSection, configLabel +".Deviations", Deviations);
    size = Explode(Deviations, ",", values, NULL);
    if (size > 2)
-      return(catch("init(8)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(8)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
    if (!StringIsNumeric(value))
-      return(catch("init(9)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(9)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
    if (deviation1 <= 0)
-      return(catch("init(10)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(10)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
          if (!StringIsNumeric(value))
-            return(catch("init(11)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(catch("onInit(11)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
          if (deviation2 <= 0)
-            return(catch("init(12)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(catch("onInit(12)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
@@ -222,7 +224,7 @@ int init() {
    ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("init(13)", error));
+      return(catch("onInit(13)", error));
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
@@ -263,7 +265,7 @@ int init() {
    if (UninitializeReason() == REASON_PARAMETERS)
       SendTick(false);
 
-   return(catch("init(14)"));
+   return(catch("onInit(14)"));
 }
 
 
@@ -272,13 +274,13 @@ int init() {
  *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int onDeinit() {
 
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
 
    RemoveChartObjects(objects);
    RepositionLegend();
-   return(catch("deinit()"));
+   return(catch("onDeinit()"));
 }
 
 

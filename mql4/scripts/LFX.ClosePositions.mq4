@@ -1,6 +1,10 @@
 /**
  * Schlieﬂt die angegebenen LFX-Positionen.
  */
+#include <types.mqh>
+#define     __TYPE__    T_SCRIPT
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
@@ -25,14 +29,11 @@ int    sizeOfLabels;
  *
  * @return int - Fehlerstatus
  */
-int init() {
-   if (IsError(onInit(T_SCRIPT)))
-      return(last_error);
-
+int onInit() {
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
    if (StringLen(LFX.Labels) == 0)
-      return(catch("init(1)  Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(1)  Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT));
 
    // Parameter splitten und die einzelnen Label trimmen
    sizeOfLabels = Explode(LFX.Labels, ",", labels, NULL);
@@ -40,17 +41,7 @@ int init() {
    for (int i=0; i < sizeOfLabels; i++) {
       labels[i] = StringTrim(labels[i]);
    }
-   return(catch("init(2)"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   return(catch("deinit()"));
+   return(catch("onInit(2)"));
 }
 
 
@@ -92,7 +83,7 @@ int onStart() {
    int sizeOfPositions = ArraySize(positions);
    if (sizeOfPositions > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __SCRIPT__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          double execution[] = {NULL};
          if (!OrderMultiClose(tickets, 0.1, Orange, execution))
@@ -112,7 +103,7 @@ int onStart() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No matching positions found.", __SCRIPT__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(catch("onStart()"));
