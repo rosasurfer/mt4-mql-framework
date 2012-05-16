@@ -65,7 +65,7 @@ int afterDeinit(bool userCall) { return(NO_ERROR); }
 /**
  * Initialisierung der Library.
  *
- * @param  bool   userCall           - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool   userCall           - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)

@@ -63,7 +63,7 @@ double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: G
 /**
  * Initialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
  *
  * @return int - Fehlerstatus
  */
@@ -274,7 +274,7 @@ int onInit(bool userCall) {
 /**
  * Deinitialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch User-Code erfolgte
  *
  * @return int - Fehlerstatus
  */

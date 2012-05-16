@@ -591,7 +591,7 @@ string objects[];
 /**
  * Globale init()-Funktion für alle MQL-Programme.
  *
- * @param  bool userCall - TRUE:  Der Aufruf erfolgt durch Userland-Code. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
+ * @param  bool userCall - TRUE:  Der Aufruf erfolgt durch User-Code. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
  *                                Der letzte Errorcode last_error wird vor Abarbeitung nicht modifiziert.
  *
  *                         FALSE: Der Aufruf erfolgt durchs Terminal bei Programmstart oder nach vorherigem start()- und deinit()-Aufruf.
@@ -720,7 +720,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
  * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
  * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
  *
- * @param  bool userCall - ob der Aufruf durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool userCall - ob der Aufruf durch das Terminal oder durch User-Code erfolgte
  *
  * @return int - Fehlerstatus
  */

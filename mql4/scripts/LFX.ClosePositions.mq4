@@ -27,7 +27,7 @@ int    sizeOfLabels;
 /**
  * Initialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
  *
  * @return int - Fehlerstatus
  */
