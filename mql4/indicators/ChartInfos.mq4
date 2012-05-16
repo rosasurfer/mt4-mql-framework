@@ -4,6 +4,9 @@
  * - oben links:  Name des Instruments
  * - oben rechts: aktueller Kurs und Spread
  * - unten Mitte: Größe einer Handels-Unit und im Moment gehaltene Position
+ *
+ *
+ * Letzte Version mit Performance-Display: v1.38
  */
 #include <types.mqh>
 #define     __TYPE__      T_INDICATOR
