@@ -7,30 +7,30 @@
 #import "stdlib.ex4"
 
    // Laufzeitfunktionen
-   int      onInit();
-   int      onInitChartOpen();
+   int      onInit(bool userCall);
+   int      onInitUndefined();
    int      onInitChartClose();
    int      onInitRemove();
    int      onInitRecompile();
    int      onInitParameterChange();
    int      onInitChartChange();
    int      onInitAccountChange();
-   int      afterInit();
+   int      afterInit(bool userCall);
 
    int      onStart();
    int      onTick();
 
-   int      onDeinit();
-   int      onDeinitChartOpen();
+   int      onDeinit(bool userCall);
+   int      onDeinitUndefined();
    int      onDeinitChartClose();
    int      onDeinitRemove();
    int      onDeinitRecompile();
    int      onDeinitParameterChange();
    int      onDeinitChartChange();
    int      onDeinitAccountChange();
-   int      afterDeinit();
+   int      afterDeinit(bool userCall);
 
-   int      stdlib_init(bool calledByUser, int type, string name, int initFlags, int uninitializeReason);
+   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, int validBars, int changedBars);
 
 

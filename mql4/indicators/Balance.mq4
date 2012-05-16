@@ -20,9 +20,11 @@ double iBalance[];
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // ERR_TERMINAL_NOT_YET_READY abfangen
    if (!GetAccountNumber())
       return(SetLastError(stdlib_PeekLastError()));

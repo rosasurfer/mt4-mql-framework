@@ -21,9 +21,11 @@ extern color Grid.Color = LightGray;
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -42,9 +44,11 @@ int onInit() {
 /**
  * Deinitialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onDeinit() {
+int onDeinit(bool userCall) {
    RemoveChartObjects(objects);
    return(catch("onDeinit()"));
 }

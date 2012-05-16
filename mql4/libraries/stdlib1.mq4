@@ -38,35 +38,34 @@ int __DEINIT_FLAGS__[];
 
 
 // Laufzeitfunktionen
-int onInit()                  { return(NO_ERROR); }
-int onInitChartOpen()         { return(NO_ERROR); }
-int onInitChartClose()        { return(NO_ERROR); }
-int onInitRecompile()         { return(NO_ERROR); }
-int onInitRemove()            { return(NO_ERROR); }
-int onInitParameterChange()   { return(NO_ERROR); }
-int onInitChartChange()       { return(NO_ERROR); }
-int onInitAccountChange()     { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterInit()               { return(NO_ERROR); }
+int onInit(bool userCall)      { return(NO_ERROR); }
+int onInitUndefined()          { return(NO_ERROR); }
+int onInitChartClose()         { return(NO_ERROR); }
+int onInitRecompile()          { return(NO_ERROR); }
+int onInitRemove()             { return(NO_ERROR); }
+int onInitParameterChange()    { return(NO_ERROR); }
+int onInitChartChange()        { return(NO_ERROR); }
+int onInitAccountChange()      { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterInit(bool userCall)   { return(NO_ERROR); }
 
-int onStart()                 { return(NO_ERROR); }
-int onTick()                  { return(NO_ERROR); }
+int onStart()                  { return(NO_ERROR); }
+int onTick()                   { return(NO_ERROR); }
 
-int onDeinit()                { return(NO_ERROR); }
-
-int onDeinitChartOpen()       { return(NO_ERROR); }
-int onDeinitChartClose()      { return(NO_ERROR); }
-int onDeinitRemove()          { return(NO_ERROR); }
-int onDeinitRecompile()       { return(NO_ERROR); }
-int onDeinitParameterChange() { return(NO_ERROR); }
-int onDeinitChartChange()     { return(NO_ERROR); }
-int onDeinitAccountChange()   { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterDeinit()             { return(NO_ERROR); }
+int onDeinit(bool userCall)    { return(NO_ERROR); }
+int onDeinitUndefined()        { return(NO_ERROR); }
+int onDeinitChartClose()       { return(NO_ERROR); }
+int onDeinitRemove()           { return(NO_ERROR); }
+int onDeinitRecompile()        { return(NO_ERROR); }
+int onDeinitParameterChange()  { return(NO_ERROR); }
+int onDeinitChartChange()      { return(NO_ERROR); }
+int onDeinitAccountChange()    { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterDeinit(bool userCall) { return(NO_ERROR); }
 
 
 /**
  * Initialisierung der Library.
  *
- * @param  bool   calledByUser       - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ * @param  bool   userCall           - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
@@ -74,7 +73,7 @@ int afterDeinit()             { return(NO_ERROR); }
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(bool calledByUser, int type, string name, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    __TYPE__ &= type;
    __NAME__  = StringConcatenate(name, "::", WindowExpertName());
 
@@ -5250,22 +5249,22 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
 int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. während des Terminal-Starts
-   // Im Tester wird die Accountnummer gecacht.
-   static int cachedAccount;                                         // ohne Initializer (@see MQL.doc)
-   if (cachedAccount != 0)
-      return(cachedAccount);
+   // Im Tester cachen wir die die Accountnummer.
+   static int cached.account;                                        // ohne Initializer (@see MQL.doc)
+   if (cached.account != 0)
+      return(cached.account);
 
    int account = AccountNumber();
 
    if (account == 0x4000) {                                          // beim Test ohne Tradeserver-Verbindung
       if (!IsTesting())
-         return(_ZERO(catch("GetAccountNumber(1) ->AccountNumber() got illegal account "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+         return(_ZERO(catch("GetAccountNumber(1) ->AccountNumber() got illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
    if (account == 0) {
       string title = GetWindowText(GetTerminalWindow());             // Titelzeile des Hauptfensters auswerten:
-      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Endlosschleife
+      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
          return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
@@ -5274,7 +5273,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
 
       string strValue = StringLeft(title, pos);
       if (!StringIsDigit(strValue))
-         return(_ZERO(catch("GetAccountNumber(3)   account number in top window title contains non-digit characters: "+ strValue, ERR_RUNTIME_ERROR)));
+         return(_ZERO(catch("GetAccountNumber(3)   account number in top window title contains non-digit characters \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
@@ -5282,9 +5281,10 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
    if (IsError(catch("GetAccountNumber(4)")))
       return(0);
 
-   // Im Tester kann die Accountnummer problemlos gecacht werden und verhindert dadurch Thread-Probleme bei Verwendung von SendMessage().
-   if (IsTesting())               cachedAccount = account;                   // EA's
-   else if (IndicatorIsTesting()) cachedAccount = account;                   // Indikatoren
+   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage().
+   if      (         IsTesting()) cached.account = account;
+   else if (IndicatorIsTesting()) cached.account = account;
+ //else if (   ScriptIsTesting()) cached.account = account;          // TODO: implementieren
 
    return(account);
 }

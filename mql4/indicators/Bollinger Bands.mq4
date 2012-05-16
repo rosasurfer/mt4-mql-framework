@@ -63,9 +63,11 @@ double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: G
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // Konfiguration einlesen
    bool   externalConfig = false;
    string configSection, configLabel;
@@ -272,9 +274,11 @@ int onInit() {
 /**
  * Deinitialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onDeinit() {
+int onDeinit(bool userCall) {
 
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
 

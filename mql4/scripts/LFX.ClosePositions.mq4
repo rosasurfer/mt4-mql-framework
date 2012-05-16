@@ -27,9 +27,11 @@ int    sizeOfLabels;
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
    if (StringLen(LFX.Labels) == 0)

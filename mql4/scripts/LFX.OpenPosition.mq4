@@ -64,9 +64,11 @@ int    positions.counter [];
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // -- Beginn - Parametervalidierung
    // Currency
    string value = StringToUpper(StringTrim(Currency));

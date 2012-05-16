@@ -161,9 +161,11 @@ bool     firstTick = true;
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    /*
    Zuerst wird die aktuelle Sequenz-ID bestimmt, dann deren Konfiguration geladen und validiert. Zum Schluß werden die Daten der ggf. laufenden Sequenz restauriert.
    Es gibt 4 unterschiedliche init()-Szenarien:
@@ -261,9 +263,11 @@ int onInit() {
 /**
  * Deinitialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onDeinit() {
+int onDeinit(bool userCall) {
    if (IsTesting()) /*&&*/ if (!DeletePendingOrders(CLR_NONE))       // Der Tester schließt beim Beenden nur offene Positionen,
       return(SetLastError(stdlib_PeekLastError()));                  // offene Pending-Orders werden jedoch nicht gelöscht.
 

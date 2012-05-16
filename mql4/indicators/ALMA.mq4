@@ -49,9 +49,11 @@ string legendLabel, indicatorName;
 /**
  * Initialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onInit() {
+int onInit(bool userCall) {
    // Konfiguration auswerten
    if (MA.Periods < 2)
       return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
@@ -140,9 +142,11 @@ int onInit() {
 /**
  * Deinitialisierung
  *
+ * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int onDeinit() {
+int onDeinit(bool userCall) {
    RemoveChartObjects(objects);
    RepositionLegend();
    return(catch("onDeinit()"));

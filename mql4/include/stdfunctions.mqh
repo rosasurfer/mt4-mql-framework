@@ -591,19 +591,19 @@ string objects[];
 /**
  * Globale init()-Funktion für alle MQL-Programme.
  *
- * @param  bool calledByUser - FALSE: Der Aufruf erfolgt durchs Terminal bei Programmstart oder nach vorherigem start()- und deinit()-Aufruf.
- *                                    Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab. Ansonsten wird der letzte Errorcode last_error
- *                                    in prev_error gespeichert und vor Abarbeitung zurückgesetzt.
+ * @param  bool userCall - TRUE:  Der Aufruf erfolgt durch Userland-Code. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
+ *                                Der letzte Errorcode last_error wird vor Abarbeitung nicht modifiziert.
  *
- *                             TRUE:  Der Aufruf erfolgt durch Userland-Code. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
- *                                    Der letzte Errorcode last_error wird vor Abarbeitung nicht modifiziert.
+ *                         FALSE: Der Aufruf erfolgt durchs Terminal bei Programmstart oder nach vorherigem start()- und deinit()-Aufruf.
+ *                                Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab. Ansonsten wird der letzte Errorcode last_error
+ *                                in prev_error gespeichert und vor Abarbeitung zurückgesetzt.
  *
  * @return int - Fehlerstatus
  */
-int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    __NAME__ = WindowExpertName();
 
-   if (!calledByUser) {
+   if (!userCall) {
       __INIT__   = true;
       __DEINIT__ = false;
    }
@@ -611,7 +611,7 @@ int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (__STATUS__CANCELLED) return(NO_ERROR);
    if (IsLibrary())         return(NO_ERROR);                              // in Libraries vorerst nichts tun
 
-   if (!calledByUser) {
+   if (!userCall) {
       prev_error = last_error;                                             // Aufruf durch Terminal: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
    }
@@ -637,7 +637,7 @@ int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
    // stdlib
-   error = stdlib_init(calledByUser, __TYPE__, __NAME__, initFlags, UninitializeReason());
+   error = stdlib_init(userCall, __TYPE__, __NAME__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
@@ -679,13 +679,13 @@ int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (4) User-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
-   error = onInit();                                                       // Preprocessing-Hook
+   error = onInit(userCall);                                               // Preprocessing-Hook
                                                                            //
    if (IsError(error))      return(error);                                 // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
    if (__STATUS__CANCELLED) return(NO_ERROR);                              // bricht init() ab.
                                                                            //
    switch (UninitializeReason()) {                                         //
-      case REASON_CHARTOPEN  : error = onInitChartOpen();       break;     //
+      case REASON_CHARTOPEN  : error = onInitUndefined();       break;     //
       case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
       case REASON_REMOVE     : error = onInitRemove();          break;     //
       case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
@@ -696,7 +696,7 @@ int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsError(error))      return(error);                                 //
    if (__STATUS__CANCELLED) return(NO_ERROR);                              //
                                                                            //
-   error = afterInit();                                                    // Postprocessing-Hook
+   error = afterInit(userCall);                                            // Postprocessing-Hook
                                                                            //
    if (IsError(error))      return(error);                                 //
    if (__STATUS__CANCELLED) return(NO_ERROR);                              //
@@ -720,9 +720,11 @@ int init(bool calledByUser) { /*throws ERR_TERMINAL_NOT_YET_READY*/
  * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
  * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
  *
+ * @param  bool userCall - ob der Aufruf durch das Terminal oder durch Userland-Code erfolgte
+ *
  * @return int - Fehlerstatus
  */
-int deinit() {
+int deinit(bool userCall) {
    __DEINIT__ = true;
 
    if (IsLibrary())                                                        // in Libraries vorerst nichts tun
@@ -734,12 +736,12 @@ int deinit() {
 
 
    // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
-   int error = onDeinit();                                                 // Preprocessing-Hook
+   int error = onDeinit(userCall);                                         // Preprocessing-Hook
                                                                            //
    if (IsError(error)) return(error);                                      // Gibt eine der Funktionen einen Fehler zurück, bricht deinit() ab.
                                                                            //
    switch (UninitializeReason()) {                                         //
-      case REASON_CHARTOPEN  : error = onDeinitChartOpen();       break;   //
+      case REASON_CHARTOPEN  : error = onDeinitUndefined();       break;   //
       case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   //
       case REASON_REMOVE     : error = onDeinitRemove();          break;   //
       case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
@@ -749,7 +751,7 @@ int deinit() {
    }                                                                       //
    if (IsError(error)) return(error);                                      //
                                                                            //
-   return(afterDeinit());                                                  // Postprocessing-Hook
+   return(afterDeinit(userCall));                                          // Postprocessing-Hook
 }
 
 
