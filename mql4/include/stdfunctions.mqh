@@ -67,7 +67,67 @@
 #define PERIOD_MN1           43200        // monthly
 
 
-// Object visibility flags, siehe ObjectSet()
+// Object property ids, siehe ObjectSet()
+#define OBJPROP_TIME1            0
+#define OBJPROP_PRICE1           1
+#define OBJPROP_TIME2            2
+#define OBJPROP_PRICE2           3
+#define OBJPROP_TIME3            4
+#define OBJPROP_PRICE3           5
+#define OBJPROP_COLOR            6
+#define OBJPROP_STYLE            7
+#define OBJPROP_WIDTH            8
+#define OBJPROP_BACK             9
+#define OBJPROP_RAY             10
+#define OBJPROP_ELLIPSE         11
+#define OBJPROP_SCALE           12
+#define OBJPROP_ANGLE           13
+#define OBJPROP_ARROWCODE       14
+#define OBJPROP_TIMEFRAMES      15
+#define OBJPROP_DEVIATION       16
+#define OBJPROP_FONTSIZE       100
+#define OBJPROP_CORNER         101
+#define OBJPROP_XDISTANCE      102
+#define OBJPROP_YDISTANCE      103
+#define OBJPROP_FIBOLEVELS     200
+#define OBJPROP_LEVELCOLOR     201
+#define OBJPROP_LEVELSTYLE     202
+#define OBJPROP_LEVELWIDTH     203
+#define OBJPROP_FIRSTLEVEL0    210
+#define OBJPROP_FIRSTLEVEL1    211
+#define OBJPROP_FIRSTLEVEL2    212
+#define OBJPROP_FIRSTLEVEL3    213
+#define OBJPROP_FIRSTLEVEL4    214
+#define OBJPROP_FIRSTLEVEL5    215
+#define OBJPROP_FIRSTLEVEL6    216
+#define OBJPROP_FIRSTLEVEL7    217
+#define OBJPROP_FIRSTLEVEL8    218
+#define OBJPROP_FIRSTLEVEL9    219
+#define OBJPROP_FIRSTLEVEL10   220
+#define OBJPROP_FIRSTLEVEL11   221
+#define OBJPROP_FIRSTLEVEL12   222
+#define OBJPROP_FIRSTLEVEL13   223
+#define OBJPROP_FIRSTLEVEL14   224
+#define OBJPROP_FIRSTLEVEL15   225
+#define OBJPROP_FIRSTLEVEL16   226
+#define OBJPROP_FIRSTLEVEL17   227
+#define OBJPROP_FIRSTLEVEL18   228
+#define OBJPROP_FIRSTLEVEL19   229
+#define OBJPROP_FIRSTLEVEL20   230
+#define OBJPROP_FIRSTLEVEL21   231
+#define OBJPROP_FIRSTLEVEL22   232
+#define OBJPROP_FIRSTLEVEL23   233
+#define OBJPROP_FIRSTLEVEL24   234
+#define OBJPROP_FIRSTLEVEL25   235
+#define OBJPROP_FIRSTLEVEL26   236
+#define OBJPROP_FIRSTLEVEL27   237
+#define OBJPROP_FIRSTLEVEL28   238
+#define OBJPROP_FIRSTLEVEL29   239
+#define OBJPROP_FIRSTLEVEL30   240
+#define OBJPROP_FIRSTLEVEL31   241
+
+
+// Object visibility flags, siehe ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
 #define OBJ_PERIOD_M1       0x0001        // object is shown on 1-minute charts
 #define OBJ_PERIOD_M5       0x0002        // object is shown on 5-minute charts
 #define OBJ_PERIOD_M15      0x0004        // object is shown on 15-minute charts

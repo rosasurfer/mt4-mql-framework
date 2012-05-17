@@ -6,33 +6,6 @@
 
 #import "stdlib.ex4"
 
-   // Laufzeitfunktionen
-   int      onInit(bool userCall);
-   int      onInitUndefined();
-   int      onInitChartClose();
-   int      onInitRemove();
-   int      onInitRecompile();
-   int      onInitParameterChange();
-   int      onInitChartChange();
-   int      onInitAccountChange();
-   int      afterInit(bool userCall);
-
-   int      onStart();
-   int      onTick();
-
-   int      onDeinit(bool userCall);
-   int      onDeinitUndefined();
-   int      onDeinitChartClose();
-   int      onDeinitRemove();
-   int      onDeinitRecompile();
-   int      onDeinitParameterChange();
-   int      onDeinitChartChange();
-   int      onDeinitAccountChange();
-   int      afterDeinit(bool userCall);
-
-   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
-   int      stdlib_start(int tick, int validBars, int changedBars);
-
 
    // MQL-Statusfunktionen
    bool     IsExpert();
@@ -455,6 +428,34 @@
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
+
+
+   // Laufzeitfunktionen
+   int      onInit(bool userCall);
+   int      onInitUndefined();
+   int      onInitChartClose();
+   int      onInitRemove();
+   int      onInitRecompile();
+   int      onInitParameterChange();
+   int      onInitChartChange();
+   int      onInitAccountChange();
+   int      afterInit(bool userCall);
+
+   int      onStart();
+   int      onTick();
+
+   int      onDeinit(bool userCall);
+   int      onDeinitUndefined();
+   int      onDeinitChartClose();
+   int      onDeinitRemove();
+   int      onDeinitRecompile();
+   int      onDeinitParameterChange();
+   int      onDeinitChartChange();
+   int      onDeinitAccountChange();
+   int      afterDeinit(bool userCall);
+
+   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
+   int      stdlib_start(int tick, int validBars, int changedBars);
 
 
    // Win32-Funktionen

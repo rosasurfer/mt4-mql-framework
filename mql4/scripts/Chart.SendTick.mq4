@@ -14,8 +14,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   SendTick(true);
-   return(catch("onStart()"));
+   return(SendTick(true));
 }
 
 
