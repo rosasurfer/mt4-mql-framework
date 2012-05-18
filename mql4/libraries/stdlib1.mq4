@@ -2798,12 +2798,13 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "gcmfx-"             )) return("Gallant"         );
    else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
    else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
+   else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
    else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
    else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
    else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
    else if (StringStartsWith(server, "migbank-"           )) return("MIG"             );
    else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
-   else if (StringStartsWith(server, "sig-"               )) return("SIG"             );
+   else if (StringStartsWith(server, "sig-"               )) return("LiteForex"       );
    else if (StringStartsWith(server, "sts-"               )) return("STS"             );
    else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
 
@@ -6671,6 +6672,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
+   else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
