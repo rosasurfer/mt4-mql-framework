@@ -190,33 +190,31 @@
 
 
    // Eventlistener
-   bool     EventListener(int event, int results[], int flags);
-   bool     EventListener.BarOpen(int results[], int flags);
-
-   bool     EventListener.AccountChange(int results[], int flags);
-   bool     EventListener.AccountPayment(int results[], int flags);
-   bool     EventListener.HistoryChange(int results[], int flags);
-
-   bool     EventListener.OrderPlace(int results[], int flags);
-   bool     EventListener.OrderChange(int results[], int flags);
-   bool     EventListener.OrderCancel(int results[], int flags);
-
-   bool     EventListener.PositionOpen(int results[], int flags);
-   bool     EventListener.PositionClose(int results[], int flags);
+   bool     EventListener.BarOpen        (int    iData[], int criteria);
+   bool     EventListener.AccountChange  (int    iData[], int criteria);
+   bool     EventListener.AccountPayment (int    iData[], int criteria);
+   bool     EventListener.OrderPlace     (int    iData[], int criteria);
+   bool     EventListener.OrderChange    (int    iData[], int criteria);
+   bool     EventListener.OrderCancel    (int    iData[], int criteria);
+   bool     EventListener.PositionOpen   (int    iData[], int criteria);
+   bool     EventListener.PositionClose  (int    iData[], int criteria);
+   bool     EventListener.ChartCommand   (string sData[], int criteria);
+   bool     EventListener.InternalCommand(string sData[], int criteria);
+   bool     EventListener.ExternalCommand(string sData[], int criteria);
 
 
-   // Eventhandler
-   int      onBarOpen(int details[]);
-   int      onAccountChange(int details[]);
-   int      onAccountPayment(int tickets[]);
-   int      onHistoryChange(int tickets[]);
-
-   int      onOrderPlace(int tickets[]);
-   int      onOrderChange(int tickets[]);
-   int      onOrderCancel(int tickets[]);
-
-   int      onPositionOpen(int tickets[]);
-   int      onPositionClose(int tickets[]);
+   // abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
+   int      onBarOpen        (int    iData[]);
+   int      onAccountChange  (int    iData[]);
+   int      onAccountPayment (int    iData[]);
+   int      onOrderPlace     (int    iData[]);
+   int      onOrderChange    (int    iData[]);
+   int      onOrderCancel    (int    iData[]);
+   int      onPositionOpen   (int    iData[]);
+   int      onPositionClose  (int    iData[]);
+   int      onChartCommand   (string sData[]);
+   int      onInternalCommand(string sData[]);
+   int      onExternalCommand(string sData[]);
 
 
    // Farben

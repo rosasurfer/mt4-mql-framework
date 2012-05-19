@@ -37,31 +37,6 @@ int __DEINIT_FLAGS__[];
 #import
 
 
-// Laufzeitfunktionen
-int onInit(bool userCall)      { return(NO_ERROR); }
-int onInitUndefined()          { return(NO_ERROR); }
-int onInitChartClose()         { return(NO_ERROR); }
-int onInitRecompile()          { return(NO_ERROR); }
-int onInitRemove()             { return(NO_ERROR); }
-int onInitParameterChange()    { return(NO_ERROR); }
-int onInitChartChange()        { return(NO_ERROR); }
-int onInitAccountChange()      { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterInit(bool userCall)   { return(NO_ERROR); }
-
-int onStart()                  { return(NO_ERROR); }
-int onTick()                   { return(NO_ERROR); }
-
-int onDeinit(bool userCall)    { return(NO_ERROR); }
-int onDeinitUndefined()        { return(NO_ERROR); }
-int onDeinitChartClose()       { return(NO_ERROR); }
-int onDeinitRemove()           { return(NO_ERROR); }
-int onDeinitRecompile()        { return(NO_ERROR); }
-int onDeinitParameterChange()  { return(NO_ERROR); }
-int onDeinitChartChange()      { return(NO_ERROR); }
-int onDeinitAccountChange()    { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterDeinit(bool userCall) { return(NO_ERROR); }
-
-
 /**
  * Initialisierung der Library.
  *
@@ -74,7 +49,7 @@ int afterDeinit(bool userCall) { return(NO_ERROR); }
  * @return int - Fehlerstatus
  */
 int stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__ &= type;
+   __TYPE__ |= type;
    __NAME__  = StringConcatenate(name, "::", WindowExpertName());
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
@@ -162,6 +137,45 @@ int stdlib_start(int tick, int validBars, int changedBars) {
    ChangedBars = changedBars;
    return(NO_ERROR);
 }
+
+
+// Laufzeitfunktionen
+int onInit(bool userCall)      { return(NO_ERROR); }
+int onInitUndefined()          { return(NO_ERROR); }
+int onInitChartClose()         { return(NO_ERROR); }
+int onInitRecompile()          { return(NO_ERROR); }
+int onInitRemove()             { return(NO_ERROR); }
+int onInitParameterChange()    { return(NO_ERROR); }
+int onInitChartChange()        { return(NO_ERROR); }
+int onInitAccountChange()      { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterInit(bool userCall)   { return(NO_ERROR); }
+
+int onStart()                  { return(NO_ERROR); }
+int onTick()                   { return(NO_ERROR); }
+
+int onDeinit(bool userCall)    { return(NO_ERROR); }
+int onDeinitUndefined()        { return(NO_ERROR); }
+int onDeinitChartClose()       { return(NO_ERROR); }
+int onDeinitRemove()           { return(NO_ERROR); }
+int onDeinitRecompile()        { return(NO_ERROR); }
+int onDeinitParameterChange()  { return(NO_ERROR); }
+int onDeinitChartChange()      { return(NO_ERROR); }
+int onDeinitAccountChange()    { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterDeinit(bool userCall) { return(NO_ERROR); }
+
+
+// abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
+/*abstract*/ int onBarOpen        (int    iData[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onAccountChange  (int    iData[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onAccountPayment (int    iData[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderPlace     (int    iData[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderChange    (int    iData[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderCancel    (int    iData[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onPositionOpen   (int    iData[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onPositionClose  (int    iData[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onChartCommand   (string sData[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onInternalCommand(string sData[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onExternalCommand(string sData[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
 
 
 /**
@@ -4550,33 +4564,6 @@ datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein Event des angegebenen Typs aufgetreten ist.
- *
- * @param  int event     - Event
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
- *
- * @return bool - Ergebnis
- */
-bool EventListener(int event, int results[], int flags=0) {
-   switch (event) {
-      case EVENT_BAR_OPEN       : return(EventListener.BarOpen       (results, flags));
-      case EVENT_ORDER_PLACE    : return(EventListener.OrderPlace    (results, flags));
-      case EVENT_ORDER_CHANGE   : return(EventListener.OrderChange   (results, flags));
-      case EVENT_ORDER_CANCEL   : return(EventListener.OrderCancel   (results, flags));
-      case EVENT_POSITION_OPEN  : return(EventListener.PositionOpen  (results, flags));
-      case EVENT_POSITION_CLOSE : return(EventListener.PositionClose (results, flags));
-      case EVENT_ACCOUNT_CHANGE : return(EventListener.AccountChange (results, flags));
-      case EVENT_ACCOUNT_PAYMENT: return(EventListener.AccountPayment(results, flags));
-      case EVENT_HISTORY_CHANGE : return(EventListener.HistoryChange (results, flags));
-   }
-
-   catch("EventListener()  invalid parameter event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE);
-   return(false);
-}
-
-
-/**
  * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt.
  *
  * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (mehrere sind möglich)
@@ -4584,7 +4571,7 @@ bool EventListener(int event, int results[], int flags=0) {
  *
  * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
  */
-bool EventListener.BarOpen(int& results[], int flags=NULL) {
+bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (ArraySize(results) != 0)
       ArrayResize(results, 0);
 
@@ -4662,26 +4649,64 @@ bool EventListener.BarOpen(int& results[], int flags=NULL) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ *
+ * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login}
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ *
+ * NOTE:
+ * -----
+ * Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
+ * Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
+ */
+bool EventListener.AccountChange(int results[], int flags=NULL) {
+   static int accountData[3];                         // {last_account, current_account, current_account_login}
+
+   bool eventStatus = false;
+   int  account = AccountNumber();
+
+   if (account != 0) {                                // AccountNumber() == 0 ignorieren
+      if (accountData[1] == 0) {                      // 1. Lib-Aufruf
+         accountData[0] = 0;
+         accountData[1] = account;
+         accountData[2] = GMTToServerTime(TimeGMT());
+         //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
+      }
+      else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
+         accountData[0] = accountData[1];
+         accountData[1] = account;
+         accountData[2] = GMTToServerTime(TimeGMT());
+         //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
+         eventStatus = true;
+      }
+   }
+   //debug("EventListener.AccountChange()   eventStatus: "+ eventStatus);
+
+   if (ArraySize(results) != 3)
+      ArrayResize(results, 3);
+   ArrayCopy(results, accountData);
+
+   int error = GetLastError();
+   if (IsError(error))
+      return(_false(catch("EventListener.AccountChange()", error)));
+
+   return(eventStatus);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
  *
  * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderChange(int results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.AccountPayment(int results[], int flags=NULL) {
    // TODO: implementieren
-
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.OrderChange()", error)==NO_ERROR);
-
-   return(eventStatus);
+   return(false);
 }
 
 
@@ -4689,23 +4714,27 @@ bool EventListener.OrderChange(int results[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
  *
  * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderPlace(int results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.OrderPlace(int results[], int flags=NULL) {
    // TODO: implementieren
+   return(false);
+}
 
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.OrderPlace()", error)==NO_ERROR);
 
-   return(eventStatus);
+/**
+ * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
+ *
+ * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.OrderChange(int results[], int flags=NULL) {
+   // TODO: implementieren
+   return(false);
 }
 
 
@@ -4713,23 +4742,13 @@ bool EventListener.OrderPlace(int results[], int flags=0) {
  * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
  *
  * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.OrderCancel(int results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.OrderCancel(int results[], int flags=NULL) {
    // TODO: implementieren
-
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.OrderCancel()", error)==NO_ERROR);
-
-   return(eventStatus);
+   return(false);
 }
 
 
@@ -4739,10 +4758,10 @@ bool EventListener.OrderCancel(int results[], int flags=0) {
  *
  * @param  int tickets[] - Zielarray für Ticketnummern neu geöffneter Positionen
  * @param  int flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                         (default: 0)
+ *                         (default: keine)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionOpen(int& tickets[], int flags=0) {
+bool EventListener.PositionOpen(int& tickets[], int flags=NULL) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
@@ -4857,10 +4876,10 @@ bool EventListener.PositionOpen(int& tickets[], int flags=0) {
  *
  * @param  int tickets[] - Zielarray für Ticket-Nummern geschlossener Positionen
  * @param  int flags     - ein oder mehrere zusätzliche Orderkriterien: OFLAG_CURRENTSYMBOL, OFLAG_BUY, OFLAG_SELL, OFLAG_MARKETORDER, OFLAG_PENDINGORDER
- *                         (default: 0)
+ *                         (default: keine)
  * @return bool - Ergebnis
  */
-bool EventListener.PositionClose(int& tickets[], int flags=0) {
+bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
    if (account == 0)
@@ -4947,98 +4966,44 @@ bool EventListener.PositionClose(int& tickets[], int flags=0) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
  *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
+ * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.AccountPayment(int results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.ChartCommand(string commands[], int flags=NULL) {
    // TODO: implementieren
-
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.AccountPayment()", error)==NO_ERROR);
-
-   return(eventStatus);
+   return(false);
 }
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein HistoryChange-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein InternalCommand-Event aufgetreten ist.
  *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
+ * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
-bool EventListener.HistoryChange(int results[], int flags=0) {
-   bool eventStatus = false;
-
-   if (ArraySize(results) > 0)
-      ArrayResize(results, 0);
-
+bool EventListener.InternalCommand(string strResults[], int flags=NULL) {
    // TODO: implementieren
-
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(catch("EventListener.HistoryChange()", error)==NO_ERROR);
-
-   return(eventStatus);
+   return(false);
 }
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein AccountChange-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein ExternalCommand-Event aufgetreten ist.
  *
- * @param  int results[] - eventspezifische Detailinfos {last_account, current_account, current_account_login}
- * @param  int flags     - zusätzliche eventspezifische Flags (default: 0)
+ * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
+ * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
- *
- * NOTE:
- * -----
- * Während des Terminal-Starts und bei Accountwechseln mit schnellen Prozesoren kann AccountNumber() kurzfristig 0 zurückgeben.
- * Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  */
-bool EventListener.AccountChange(int results[], int flags=0) {
-   static int accountData[3];                         // {last_account, current_account, current_account_login}
-
-   bool eventStatus = false;
-   int  account = AccountNumber();
-
-   if (account != 0) {                                // AccountNumber() == 0 ignorieren
-      if (accountData[1] == 0) {                      // 1. Lib-Aufruf
-         accountData[0] = 0;
-         accountData[1] = account;
-         accountData[2] = GMTToServerTime(TimeGMT());
-         //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
-      }
-      else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
-         accountData[0] = accountData[1];
-         accountData[1] = account;
-         accountData[2] = GMTToServerTime(TimeGMT());
-         //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
-         eventStatus = true;
-      }
-   }
-   //debug("EventListener.AccountChange()   eventStatus: "+ eventStatus);
-
-   if (ArraySize(results) != 3)
-      ArrayResize(results, 3);
-   ArrayCopy(results, accountData);
-
-   int error = GetLastError();
-   if (error != NO_ERROR)
-      return(_false(catch("EventListener.AccountChange()", error)));
-
-   return(eventStatus);
+bool EventListener.ExternalCommand(string strResults[], int flags=NULL) {
+   // TODO: implementieren
+   return(false);
 }
 
 
@@ -6202,15 +6167,14 @@ string ShellExecuteErrorToStr(int error) {
  */
 string EventToStr(int event) {
    switch (event) {
-      case EVENT_BAR_OPEN       : return("BarOpen"       );
-      case EVENT_ORDER_PLACE    : return("OrderPlace"    );
-      case EVENT_ORDER_CHANGE   : return("OrderChange"   );
-      case EVENT_ORDER_CANCEL   : return("OrderCancel"   );
-      case EVENT_POSITION_OPEN  : return("PositionOpen"  );
-      case EVENT_POSITION_CLOSE : return("PositionClose" );
-      case EVENT_ACCOUNT_CHANGE : return("AccountChange" );
-      case EVENT_ACCOUNT_PAYMENT: return("AccountPayment");
-      case EVENT_HISTORY_CHANGE : return("HistoryChange" );
+      case EVENT_BAR_OPEN       : return("EVENT_BAR_OPEN"       );
+      case EVENT_ORDER_PLACE    : return("EVENT_ORDER_PLACE"    );
+      case EVENT_ORDER_CHANGE   : return("EVENT_ORDER_CHANGE"   );
+      case EVENT_ORDER_CANCEL   : return("EVENT_ORDER_CANCEL"   );
+      case EVENT_POSITION_OPEN  : return("EVENT_POSITION_OPEN"  );
+      case EVENT_POSITION_CLOSE : return("EVENT_POSITION_CLOSE" );
+      case EVENT_ACCOUNT_CHANGE : return("EVENT_ACCOUNT_CHANGE" );
+      case EVENT_ACCOUNT_PAYMENT: return("EVENT_ACCOUNT_PAYMENT");
    }
    return(_empty(catch("EventToStr()   unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7879,78 +7843,6 @@ int SearchStringArray(string haystack[], string needle) {
  */
 bool StringInArray(string haystack[], string needle) {
    return(SearchStringArray(haystack, needle) > -1);
-}
-
-
-/**
- *
- *
-abstract*/ int onBarOpen(int array[]) {
-   return(catch("onBarOpen()   local event handler onBarOpen() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onOrderPlace(int array[]) {
-   return(catch("onOrderPlace()   local event handler onOrderPlace() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onOrderChange(int array[]) {
-   return(catch("onOrderChange()   local event handler onOrderChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onOrderCancel(int array[]) {
-   return(catch("onOrderCancel()   local event handler onOrderCancel() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onPositionOpen(int array[]) {
-   return(catch("onPositionOpen()   local event handler onPositionOpen() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onPositionClose(int array[]) {
-   return(catch("onPositionClose()   local event handler onPositionClose() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onAccountChange(int array[]) {
-   return(catch("onAccountChange()   local event handler onAccountChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onAccountPayment(int array[]) {
-   return(catch("onAccountPayment()   local event handler onAccountPayment() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
-}
-
-
-/**
- *
- *
-abstract*/ int onHistoryChange(int array[]) {
-   return(catch("onHistoryChange()   local event handler of onHistoryChange() not found", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
