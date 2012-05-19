@@ -9006,9 +9006,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
          error = GetLastError();
 
          if (error == ERR_REQUOTE) {
-            if (IsTesting())
-               catch("OrderSendEx(21)", error);
             requotes++;
+            if (IsTesting())
+               break;
             continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
          if (IsNoError(error))
@@ -9879,8 +9879,9 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
 
          error = GetLastError();
          if (error == ERR_REQUOTE) {
-            if (IsTesting()) catch("OrderCloseEx(22)", error);
             requotes++;
+            if (IsTesting())
+               break;
             continue;                                                                        // nach ERR_REQUOTE Order schnellstmöglich wiederholen
          }
          if (IsNoError(error))
