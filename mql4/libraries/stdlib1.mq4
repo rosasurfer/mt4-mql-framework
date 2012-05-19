@@ -1304,11 +1304,11 @@ int ArrayDropBool(bool array[], bool value) {
  *
  * @return int - Anzahl der entfernten Elemente
  */
-int ArraySpliceBool(bool array[], int offset, int length) {
+int ArraySpliceBools(bool array[], int offset, int length) {
    int size = ArraySize(array);
-   if (offset < 0)      return(_ZERO(catch("ArraySpliceBool(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (offset > size-1) return(_ZERO(catch("ArraySpliceBool(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)      return(_ZERO(catch("ArraySpliceBool(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)      return(_ZERO(catch("ArraySpliceBools(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset > size-1) return(_ZERO(catch("ArraySpliceBools(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)      return(_ZERO(catch("ArraySpliceBools(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (size   == 0) return(0);
    if (length == 0) return(0);
@@ -1434,11 +1434,11 @@ int ArrayDropInt(int array[], int value) {
  *
  * @return int - Anzahl der entfernten Elemente
  */
-int ArraySpliceInt(int array[], int offset, int length) {
+int ArraySpliceInts(int array[], int offset, int length) {
    int size = ArraySize(array);
-   if (offset < 0)      return(_ZERO(catch("ArraySpliceInt(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (offset > size-1) return(_ZERO(catch("ArraySpliceInt(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)      return(_ZERO(catch("ArraySpliceInt(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)      return(_ZERO(catch("ArraySpliceInts(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset > size-1) return(_ZERO(catch("ArraySpliceInts(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)      return(_ZERO(catch("ArraySpliceInts(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (size   == 0) return(0);
    if (length == 0) return(0);
@@ -1564,11 +1564,11 @@ int ArrayDropDouble(double array[], double value) {
  *
  * @return int - Anzahl der entfernten Elemente
  */
-int ArraySpliceDouble(double array[], int offset, int length) {
+int ArraySpliceDoubles(double array[], int offset, int length) {
    int size = ArraySize(array);
-   if (offset < 0)      return(_ZERO(catch("ArraySpliceDouble(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (offset > size-1) return(_ZERO(catch("ArraySpliceDouble(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)      return(_ZERO(catch("ArraySpliceDouble(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)      return(_ZERO(catch("ArraySpliceDoubles(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset > size-1) return(_ZERO(catch("ArraySpliceDoubles(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)      return(_ZERO(catch("ArraySpliceDoubles(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (size   == 0) return(0);
    if (length == 0) return(0);
@@ -1696,11 +1696,11 @@ int ArrayDropString(string array[], string value) {
  *
  * @return int - Anzahl der entfernten Elemente
  */
-int ArraySpliceString(string array[], int offset, int length) {
+int ArraySpliceStrings(string array[], int offset, int length) {
    int size = ArraySize(array);
-   if (offset < 0)      return(_ZERO(catch("ArraySpliceString(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (offset > size-1) return(_ZERO(catch("ArraySpliceString(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)      return(_ZERO(catch("ArraySpliceString(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)      return(_ZERO(catch("ArraySpliceStrings(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset > size-1) return(_ZERO(catch("ArraySpliceStrings(2)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)      return(_ZERO(catch("ArraySpliceStrings(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (size   == 0) return(0);
    if (length == 0) return(0);
@@ -5970,10 +5970,10 @@ string ErrorDescription(int error) {
       case ERR_UNKNOWN_COMMAND            : return("unknown command"                                               ); // 4014
       case ERR_WRONG_JUMP                 : return("wrong jump"                                                    ); // 4015
       case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                         ); // 4016
-      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls are not allowed"                                     ); // 4017
+      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL function calls not allowed"                                ); // 4017
       case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                           ); // 4018
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
-      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("expert function calls are not allowed"                         ); // 4020
+      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("ex4 library function calls not allowed"                        ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
       case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050 invalid parameters count
@@ -10408,9 +10408,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
          execution[9*pos+EXEC_SWAP      ] = exec[9*i+EXEC_SWAP      ];
          execution[9*pos+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
          execution[9*pos+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
-         sizeOfGroup -= ArraySpliceInt(group, i, 1);                       // geschlossenes Ticket löschen
+         sizeOfGroup -= ArraySpliceInts(group, i, 1);                      // geschlossenes Ticket löschen
          sizeOfCopy  -= ArrayDropInt(copy,  group[i]);
-         ArraySpliceInt(tickets.symbol, i, 1);
+         ArraySpliceInts(tickets.symbol, i, 1);
       }
       if (newTicket != 0) {
          sizeOfGroup = ArrayPushInt(group, newTicket);                     // neues Ticket hinzufügen
@@ -10528,7 +10528,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       execution[9*i+EXEC_SWAP      ] = exec[9*i+EXEC_SWAP      ];
       execution[9*i+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
       execution[9*i+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
-      sizeOfCopy -= ArraySpliceInt(copy, i, 1);                         // geschlossenes Ticket löschen
+      sizeOfCopy -= ArraySpliceInts(copy, i, 1);                        // geschlossenes Ticket löschen
    }
    if (newTicket != 0)
       sizeOfCopy = ArrayPushInt(copy, newTicket);                       // neues Ticket hinzufügen
@@ -10781,7 +10781,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       if (!OrderCloseByEx(first, opposite, markerColor, exec))                // erste und Opposite-Position schließen
          return(_false(OrderPop("OrderMultiClose.Flattened(6)")));
 
-      sizeOfCopy -= ArraySpliceInt(copy, 0, 1);                               // erstes und opposite Ticket löschen
+      sizeOfCopy -= ArraySpliceInts(copy, 0, 1);                              // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(copy, opposite);
 
       if (NE(exec[EXEC_TICKET], 0))                                           // Restposition zu verbleibenden Tickets hinzufügen

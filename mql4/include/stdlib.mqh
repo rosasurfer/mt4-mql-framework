@@ -36,10 +36,10 @@
    int      ArrayDropDouble(double array[], double value);
    int      ArrayDropString(string array[], string value);
 
-   int      ArraySpliceBool(bool array[], int offset, int length);
-   int      ArraySpliceInt(int array[], int offset, int length);
-   int      ArraySpliceDouble(double array[], int offset, int length);
-   int      ArraySpliceString(string array[], int offset, int length);
+   int      ArraySpliceBools(bool array[], int offset, int length);
+   int      ArraySpliceInts(int array[], int offset, int length);
+   int      ArraySpliceDoubles(double array[], int offset, int length);
+   int      ArraySpliceStrings(string array[], int offset, int length);
 
    int      ArrayPushBool(bool& array[], bool value);
    int      ArrayPushInt(int array[], int value);
