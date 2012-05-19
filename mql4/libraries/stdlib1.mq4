@@ -165,17 +165,17 @@ int afterDeinit(bool userCall) { return(NO_ERROR); }
 
 
 // abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
-/*abstract*/ int onBarOpen        (int    iData[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onAccountChange  (int    iData[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onAccountPayment (int    iData[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderPlace     (int    iData[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderChange    (int    iData[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderCancel    (int    iData[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onPositionOpen   (int    iData[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onPositionClose  (int    iData[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onChartCommand   (string sData[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onInternalCommand(string sData[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onExternalCommand(string sData[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
 
 
 /**
@@ -4987,7 +4987,7 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.InternalCommand(string strResults[], int flags=NULL) {
+bool EventListener.InternalCommand(string commands[], int flags=NULL) {
    // TODO: implementieren
    return(false);
 }
@@ -5001,7 +5001,7 @@ bool EventListener.InternalCommand(string strResults[], int flags=NULL) {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.ExternalCommand(string strResults[], int flags=NULL) {
+bool EventListener.ExternalCommand(string commands[], int flags=NULL) {
    // TODO: implementieren
    return(false);
 }

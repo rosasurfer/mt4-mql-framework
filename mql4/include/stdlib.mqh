@@ -189,32 +189,32 @@
    int      stdlib_PeekLastError();
 
 
-   // Eventlistener
-   bool     EventListener.BarOpen        (int    iData[], int criteria);
-   bool     EventListener.AccountChange  (int    iData[], int criteria);
-   bool     EventListener.AccountPayment (int    iData[], int criteria);
-   bool     EventListener.OrderPlace     (int    iData[], int criteria);
-   bool     EventListener.OrderChange    (int    iData[], int criteria);
-   bool     EventListener.OrderCancel    (int    iData[], int criteria);
-   bool     EventListener.PositionOpen   (int    iData[], int criteria);
-   bool     EventListener.PositionClose  (int    iData[], int criteria);
-   bool     EventListener.ChartCommand   (string sData[], int criteria);
-   bool     EventListener.InternalCommand(string sData[], int criteria);
-   bool     EventListener.ExternalCommand(string sData[], int criteria);
+   // Eventlistener (*können* bei Verwendung im Programm überschrieben werden)
+   bool     EventListener.BarOpen        (int    data[], int criteria);
+   bool     EventListener.AccountChange  (int    data[], int criteria);
+   bool     EventListener.AccountPayment (int    data[], int criteria);
+   bool     EventListener.OrderPlace     (int    data[], int criteria);
+   bool     EventListener.OrderChange    (int    data[], int criteria);
+   bool     EventListener.OrderCancel    (int    data[], int criteria);
+   bool     EventListener.PositionOpen   (int    data[], int criteria);
+   bool     EventListener.PositionClose  (int    data[], int criteria);
+   bool     EventListener.ChartCommand   (string data[], int criteria);
+   bool     EventListener.InternalCommand(string data[], int criteria);
+   bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
-   int      onBarOpen        (int    iData[]);
-   int      onAccountChange  (int    iData[]);
-   int      onAccountPayment (int    iData[]);
-   int      onOrderPlace     (int    iData[]);
-   int      onOrderChange    (int    iData[]);
-   int      onOrderCancel    (int    iData[]);
-   int      onPositionOpen   (int    iData[]);
-   int      onPositionClose  (int    iData[]);
-   int      onChartCommand   (string sData[]);
-   int      onInternalCommand(string sData[]);
-   int      onExternalCommand(string sData[]);
+   // abstrakte Eventhandler (*müssen* bei Verwendung im Programm implementiert werden)
+   int      onBarOpen        (int    data[]);
+   int      onAccountChange  (int    data[]);
+   int      onAccountPayment (int    data[]);
+   int      onOrderPlace     (int    data[]);
+   int      onOrderChange    (int    data[]);
+   int      onOrderCancel    (int    data[]);
+   int      onPositionOpen   (int    data[]);
+   int      onPositionClose  (int    data[]);
+   int      onChartCommand   (string data[]);
+   int      onInternalCommand(string data[]);
+   int      onExternalCommand(string data[]);
 
 
    // Farben
