@@ -92,7 +92,7 @@ int stdlib_init(bool userCall, int type, string name, int initFlags, int uniniti
 
    // (4) für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
-      int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_CHARTOPEN, REASON_CHARTCLOSE };
+      int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
       if (IntInArray(reasons, uninitializeReason))
          OrderSelect(0, SELECT_BY_TICKET);
 
@@ -208,9 +208,9 @@ int stdlib_PeekLastError() {
 int LaunchExpertPropertiesDlg() {
    if (IsTesting())          return(catch("LaunchExpertPropertiesDlg(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
    if (IndicatorIsTesting()) return(catch("LaunchExpertPropertiesDlg(2)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
- //if (ScriptIsTesting())    return(catch("LaunchExpertPropertiesDlg(3)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));   // TODO: ScriptIsTesting() implementieren
+   if (ScriptIsTesting())    return(catch("LaunchExpertPropertiesDlg(3)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
 
-   int hWnd = WindowHandle(Symbol(), Period());
+   int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
       return(catch("LaunchExpertPropertiesDlg(4) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
@@ -352,9 +352,36 @@ string ExecutionToStr(double execution[], bool debugOutput=false) {
  * @return bool
  */
 bool IndicatorIsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
    if (IsIndicator())
-      return(GetCurrentThreadId() != GetUIThreadId());
-   return(false);
+      result = (GetCurrentThreadId() != GetUIThreadId());
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das Script im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool ScriptIsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if (IsScript()) {
+      int hChart  = WindowHandle(Symbol(), NULL);
+      int hWnd    = GetParent(hChart);
+      string text = GetWindowText(hWnd);
+      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert, bleibt also konstant
+   }
+   done = true;
+   return(result);
 }
 
 
@@ -1070,7 +1097,7 @@ int SortTicketsChronological(int& tickets[]) {
  * @return int - Fehlerstatus
  */
 int SwitchExperts(bool enable) {
-   if (IsTesting() || IndicatorIsTesting() /*|| ScriptIsTesting()*/)       // TODO: ScriptIsTesting() implementieren
+   if (IsTesting() || IndicatorIsTesting() || ScriptIsTesting())
       return(_NO_ERROR(debug("SwitchExperts()   skipping in Tester")));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
@@ -2683,10 +2710,10 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int SendTick(bool sound=false) {
-   if (IsTesting() || IndicatorIsTesting()/*|| ScriptIsTesting()*/)  // TODO: ScriptIsTesting() implementieren
+   if (IsTesting() || IndicatorIsTesting() || ScriptIsTesting())
       return(_NO_ERROR(debug("SendTick()   skipping in Tester")));
 
-   int hWnd = WindowHandle(Symbol(), Period());
+   int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
       return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
@@ -5250,7 +5277,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
    // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage().
    if      (         IsTesting()) cached.account = account;
    else if (IndicatorIsTesting()) cached.account = account;
- //else if (   ScriptIsTesting()) cached.account = account;          // TODO: implementieren
+   else if (   ScriptIsTesting()) cached.account = account;
 
    return(account);
 }
@@ -6871,13 +6898,13 @@ int GetUIThreadId() {
  */
 string UninitializeReasonDescription(int reason) {
    switch (reason) {
-      case REASON_CHARTOPEN  : return("chart opened"                          );
-      case REASON_CHARTCLOSE : return("chart closed or chart template changed");
-      case REASON_REMOVE     : return("program removed from chart"            );
-      case REASON_RECOMPILE  : return("program recompiled"                    );
-      case REASON_PARAMETERS : return("input parameters changed"              );
-      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed"     );
-      case REASON_ACCOUNT    : return("account changed"                       );
+      case REASON_UNDEFINED  : return("undefined"                        );
+      case REASON_CHARTCLOSE : return("chart closed or template changed" );
+      case REASON_REMOVE     : return("program removed from chart"       );
+      case REASON_RECOMPILE  : return("program recompiled"               );
+      case REASON_PARAMETERS : return("input parameters changed"         );
+      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed");
+      case REASON_ACCOUNT    : return("account changed"                  );
    }
    return(_empty(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -6892,7 +6919,7 @@ string UninitializeReasonDescription(int reason) {
  */
 string UninitializeReasonToStr(int reason) {
    switch (reason) {
-      case REASON_CHARTOPEN  : return("REASON_CHARTOPEN"   );
+      case REASON_UNDEFINED  : return("REASON_UNDEFINED"  );
       case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
       case REASON_REMOVE     : return("REASON_REMOVE"     );
       case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
@@ -6905,19 +6932,16 @@ string UninitializeReasonToStr(int reason) {
 
 
 /**
- * Gibt den Text der Titelbar des angegebenen Fensters zurück (wenn es einen hat).  Ist das angegebene Fenster ein Windows-Control,
- * wird dessen Text zurückgegeben.
+ * Gibt den Titelbartext des angegebenen Fensters oder den Text des angegebenen Windows-Control zurück.
  *
- * @param  int hWnd - Handle des Fensters oder Controls
+ * @param  int hWnd - Handle
  *
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
  * NOTE:
  * -----
- *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=true benutzen => UI-Thread-Endlosschleife
- *
- *  @see MSDN: This function causes a WM_GETTEXT message to be sent to the specified window or control.
+ *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=true benutzen, da UI-Thread-Deadlock
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;

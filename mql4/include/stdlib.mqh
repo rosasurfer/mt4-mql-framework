@@ -9,9 +9,10 @@
 
    // MQL-Statusfunktionen
    bool     IsExpert();
-   bool     IsScript();
    bool     IsIndicator();
+   bool     IsScript();
    bool     IndicatorIsTesting();
+   bool     ScriptIsTesting();
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();

@@ -330,11 +330,11 @@
 
 
 // UninitializeReason-Codes
-#define REASON_CHARTOPEN         0        // chart opened
+#define REASON_UNDEFINED         0        // no uninitialize reason
 #define REASON_REMOVE            1        // program removed from chart
 #define REASON_RECOMPILE         2        // program recompiled
 #define REASON_CHARTCHANGE       3        // chart symbol or timeframe changed
-#define REASON_CHARTCLOSE        4        // chart closed or chart template changed
+#define REASON_CHARTCLOSE        4        // chart closed or template changed
 #define REASON_PARAMETERS        5        // input parameters changed
 #define REASON_ACCOUNT           6        // account changed
 
@@ -657,13 +657,11 @@ string objects[];
 /**
  * Globale init()-Funktion für alle MQL-Programme.
  *
- * @param  bool userCall - TRUE:  Der Aufruf erfolgt durch User-Code. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
+ * @param  bool userCall - FALSE: Der Aufruf erfolgt durchs Terminal. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab. Ansonsten wird
+ *                                der letzte Errorcode last_error in prev_error gespeichert und vor Abarbeitung zurückgesetzt.
+ *
+ *                         TRUE:  Der Aufruf erfolgt nicht durch das Terminal. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
  *                                Der letzte Errorcode last_error wird vor Abarbeitung nicht modifiziert.
- *
- *                         FALSE: Der Aufruf erfolgt durchs Terminal bei Programmstart oder nach vorherigem start()- und deinit()-Aufruf.
- *                                Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab. Ansonsten wird der letzte Errorcode last_error
- *                                in prev_error gespeichert und vor Abarbeitung zurückgesetzt.
- *
  * @return int - Fehlerstatus
  */
 int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
@@ -720,14 +718,14 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    // (3) für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                       // ggf. EA's aktivieren
-      int reasons1[] = { REASON_CHARTOPEN, REASON_CHARTCLOSE, REASON_REMOVE };
+      int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
          error = SwitchExperts(true);                                      // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
             return(SetLastError(error));
       }
                                                                            // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
-      int reasons2[] = { REASON_CHARTOPEN, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
+      int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
       if (IntInArray(reasons2, UninitializeReason()))
          OrderSelect(0, SELECT_BY_TICKET);
 
@@ -744,41 +742,37 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
 
-   // (4) User-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
-   error = onInit(userCall);                                               // Preprocessing-Hook
+   // (4) User-spezifische init()-Routinen aufrufen
+   if (onInit(userCall) == -1)                                             // User-Routinen *können*, müssen aber nicht implementiert werden.
+      return(last_error);                                                  // Preprocessing-Hook
                                                                            //
-   if (IsError(error))      return(error);                                 // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-   if (__STATUS__CANCELLED) return(NO_ERROR);                              // bricht init() ab.
-                                                                           //
-   switch (UninitializeReason()) {                                         //
-      case REASON_CHARTOPEN  : error = onInitUndefined();       break;     //
+   switch (UninitializeReason()) {                                         // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;     //   bricht init() *nicht* ab.
       case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-      case REASON_REMOVE     : error = onInitRemove();          break;     //
+      case REASON_REMOVE     : error = onInitRemove();          break;     // - Gibt eine der Funktionen -1 zurück, bricht init() ab.
       case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
       case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
    }                                                                       //
-   if (IsError(error))      return(error);                                 //
-   if (__STATUS__CANCELLED) return(NO_ERROR);                              //
+   if (error == -1)                                                        //
+      return(last_error);                                                  //
                                                                            //
-   error = afterInit(userCall);                                            // Postprocessing-Hook
-                                                                           //
-   if (IsError(error))      return(error);                                 //
-   if (__STATUS__CANCELLED) return(NO_ERROR);                              //
+   afterInit(userCall);                                                    // Postprocessing-Hook
+   if (IsLastError() || __STATUS__CANCELLED)                               //
+      return(last_error);                                                  //
 
 
-   // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern ganz zum Schluß (so spät wie möglich) selbst einen Tick schicken
+   // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern (so spät wie möglich) selbst einen Tick schicken
    if (IsExpert()) {
       if (!IsTesting()) {                                                  // nicht bei REASON_CHARTCHANGE
          if (UninitializeReason() != REASON_CHARTCHANGE)
-            error = SendTick(false);                                       // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
+            SendTick(false);                                               // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
       }                                                                    // Message vor Verlassen von init() vom UI-Thread verarbeitet wurde.
    }
 
-   if (IsError(catch("init(4)")))
-      return(last_error);
-   return(error);
+   catch("init(4)");
+   return(last_error);
 }
 
 
@@ -802,12 +796,12 @@ int deinit(bool userCall) {
 
 
    // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
-   int error = onDeinit(userCall);                                         // Preprocessing-Hook
-                                                                           //
-   if (IsError(error)) return(error);                                      // Gibt eine der Funktionen einen Fehler zurück, bricht deinit() ab.
-                                                                           //
+   if (onDeinit(userCall) == -1)                                           // Preprocessing-Hook
+      return(last_error);                                                  //
+                                                                           // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+   int error;                                                              //   bricht deinit() *nicht* ab.
    switch (UninitializeReason()) {                                         //
-      case REASON_CHARTOPEN  : error = onDeinitUndefined();       break;   //
+      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
       case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   //
       case REASON_REMOVE     : error = onDeinitRemove();          break;   //
       case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
@@ -815,9 +809,11 @@ int deinit(bool userCall) {
       case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;   //
       case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   //
    }                                                                       //
-   if (IsError(error)) return(error);                                      //
+   if (error == -1)                                                        //
+      return(last_error);                                                  //
                                                                            //
-   return(afterDeinit(userCall));                                          // Postprocessing-Hook
+   afterDeinit(userCall);                                                  // Postprocessing-Hook
+   return(last_error);
 }
 
 
