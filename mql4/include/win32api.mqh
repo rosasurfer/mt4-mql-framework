@@ -57,6 +57,7 @@
    int  GetAncestor(int hWnd, int cmd);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
    int  GetDesktopWindow();
+   int  GetDlgItem(int hDlg, int nIDDlgItem);
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
