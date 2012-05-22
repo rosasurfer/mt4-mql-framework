@@ -6742,128 +6742,62 @@ int GetTerminalWindow() {
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTesterWindow() {
-   static int hWndTester;                                            // ohne Initializer (@see MQL.doc)
-   if (hWndTester != 0)
-      return(hWndTester);
-
-   /*
-   - Das Fenster kann im Terminalfensters oder in einem Toplevel-Window angedockt sein, das Handle dieses Child-Windows ist in beiden Fällen dasselbe.
-   - Die Afx-Klassennamen sind dynamisch und müssen zur Laufzeit ermittelt werden.
-
-   - Klassennamen:
-     +---------+------------------------------+-------------------------------------------+-------------------------------------------+------------------+
-     | Build   | Terminal                     | Tester Toplevel-Wrapper                   | Tester                                    | AfxControlBar    |
-     +---------+------------------------------+-------------------------------------------+-------------------------------------------+------------------+
-     | 225-402 | MetaQuotes::MetaTrader::4.00 | Afx:400000:8:10013:0:0                    | Afx:400000:b:10013:0:0                    | AfxControlBar42  |
-     +---------+------------------------------+-------------------------------------------+-------------------------------------------+------------------+
-     | 406-409 | MetaQuotes::MetaTrader::4.00 | Afx:400000:8:10013:0:0                    | Afx:400000:b:10013:0:0                    | AfxControlBar42s |
-     +---------+------------------------------+-------------------------------------------+-------------------------------------------+------------------+
-     | 416-419 | MetaQuotes::MetaTrader::4.00 | Afx:00400000:8:00010013:00000000:00000000 | Afx:00400000:b:00010013:00000000:00000000 | AfxControlBar90s |
-     +---------+------------------------------+-------------------------------------------+-------------------------------------------+------------------+
-
-   - Afx-Namensschema (@see http://msdn.microsoft.com/en-us/library/btbxa0ad%28v=vs.90%29.aspx)
-
-     Afx:%x:%x
-     Afx:%x:%x:%x:%x:%x
-
-     The hex digits that replace the %x characters are filled in from data from the WNDCLASS structure. The replaceable values for the %x characters
-     shown above are as follows:
-
-        WNDCLASS.hInstance
-        WNDCLASS.style
-        WNDCLASS.hCursor
-        WNDCLASS.hbrBackground
-        WNDCLASS.hIcon
-
-     The first form (Afx:%x:%x) is used when hCursor, hbrBackground and hIcon are all NULL.
-   */
-
-   // (1) Klassennamen bestimmen
-   string sNull, class, classTopLevel, classTester, classAfxControlBar;
-
-   int build         = GetTerminalBuild();
-   int hInstance     = GetModuleHandleA(sNull);
-   int style         = NULL;
-   int hCursor       = LoadCursor(NULL, IDC_ARROW);
-   int hbrBackground = NULL;
-   int hIcon         = NULL;
-
-   style = CS_DBLCLKS;
-   if (build < 416) classTopLevel = "Afx:"+ StrToLower(IntegerToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+ IntegerToHexStr(hCursor) +":"+ IntegerToHexStr(hbrBackground) +":"+ IntegerToHexStr(hIcon));
-   else             classTopLevel = "Afx:"+ StrToLower(    IntToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+     IntToHexStr(hCursor) +":"+     IntToHexStr(hbrBackground) +":"+     IntToHexStr(hIcon));
-
-   style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
-   if (build < 416) classTester   = "Afx:"+ StrToLower(IntegerToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+ IntegerToHexStr(hCursor) +":"+ IntegerToHexStr(hbrBackground) +":"+ IntegerToHexStr(hIcon));
-   else             classTester   = "Afx:"+ StrToLower(    IntToHexStr(hInstance) +":"+ IntegerToHexStr(style) +":"+     IntToHexStr(hCursor) +":"+     IntToHexStr(hbrBackground) +":"+     IntToHexStr(hIcon));
-
-   if      (build < 406) classAfxControlBar = "AfxControlBar42";
-   else if (build < 416) classAfxControlBar = "AfxControlBar42s";
-   else                  classAfxControlBar = "AfxControlBar90s";
-
-
-   // (2) Zunächst alle AfxControlBar-Child-Windows des Terminalfensters durchlaufen und prüfen, ob Tester dort angedockt ist.
-   int hChild = GetTopWindow(GetTerminalWindow());
-   while (hChild != 0) {
-      if (GetClassName(hChild) == classAfxControlBar) {
-         int hSubChild = GetTopWindow(hChild);
-         while (hSubChild != 0) {
-            class = GetClassName(hSubChild);
-            if (class == "ToolbarWindow32")                          // Haupttoolbar => weiter mit dem nächsten AfxControlBar-Child-Window
-               break;
-
-            if (class==classTester) /*&&*/ if (StringStartsWith(GetWindowText(hSubChild), "Tester")) {
-               hWndTester = hSubChild;                               // im Terminal-Window angedockt
-               break;
-            }
-            hSubChild = GetWindow(hSubChild, GW_HWNDNEXT);
-         }
-         if (hWndTester != 0)
-            break;
-      }
-      hChild = GetWindow(hChild, GW_HWNDNEXT);
-   }
+   static int hWndTester;                                                  // ohne Initializer (@see MQL.doc)
    if (hWndTester != 0)
       return(hWndTester);
 
 
-   // (3) Dann Toplevel-Windows durchlaufen und Testerfenster des eigenen Prozesses finden.
+   // Das Fenster kann im Terminalfenster angedockt sein oder in einem eigenen Toplevel-Window floaten, in beiden Fällen ist das Handle dasselbe und bleibt konstant.
+   // alte Version mit dynamischen Klassennamen: v1.498
+
+
+   // (1) Zunächst den im Application-MainWindow angedockten Tester suchen
+   int hWndMain = GetTerminalWindow();
+   if (hWndMain == 0)
+      return(0);
+   int hWnd = GetDlgItem(hWndMain, 59422);                                 // ID des Parent aller im MainWindow angedockten Fenster: 59422
+   if (hWnd == 0)
+      return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window for docked child windows")));
+   hWndTester = GetDlgItem(hWnd, 83);                                      // ID des Tester-Fensters selbst: 83
+   if (hWndTester != 0)
+      return(hWndTester);
+
+
+   // (2) Dann Toplevel-Windows durchlaufen und nach Testerfenster des eigenen Prozesses suchen
    int processId[1], hNext=GetTopWindow(NULL), me=GetCurrentProcessId();
    while (hNext != 0) {
-      //debug("GetTesterWindow()   top-level     hNext=0x"+ IntToHexStr(hNext) +"   class=\""+ GetClassName(hNext) +"\"   title=\""+ GetWindowText(hNext) +"\"");
-
       GetWindowThreadProcessId(hNext, processId);
+
       if (processId[0] == me) {
-         //debug("GetTesterWindow()   top-level(me) hNext=0x"+ IntToHexStr(hNext) +"   class=\""+ GetClassName(hNext) +"\"   title=\""+ GetWindowText(hNext) +"\"");
-
-         if (GetClassName(hNext)==classTopLevel) /*&&*/ if (StringStartsWith(GetWindowText(hNext), "Tester")) {
-            hChild = GetTopWindow(hNext);
-            if (hChild == 0)                                return(_ZERO(catch("GetTesterWindow(1)   cannot find any children of top-level Tester window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
-            if (GetClassName(hChild) != classAfxControlBar) return(_ZERO(catch("GetTesterWindow(2)   child of top-level Tester window 0x"+ IntToHexStr(hNext) +" is not of class \""+ classAfxControlBar +"\",  found \""+ GetClassName(hChild) +"\"", ERR_RUNTIME_ERROR)));
-
-            hSubChild = GetTopWindow(hChild);
-            if (hSubChild == 0)                             return(_ZERO(catch("GetTesterWindow(3)   cannot find any sub-children of top-level Tester window 0x"+ IntToHexStr(hNext) +"  class=\""+ GetClassName(hNext) +"\"  title=\""+ GetWindowText(hNext) +"\"", ERR_RUNTIME_ERROR)));
-            if (GetClassName(hSubChild) != classTester)     return(_ZERO(catch("GetTesterWindow(4)   sub-child of top-level Tester window 0x"+ IntToHexStr(hNext) +" is not of class \""+ classTester +"\",  found \""+ GetClassName(hSubChild) +"\"", ERR_RUNTIME_ERROR)));
-
-            hWndTester = hSubChild;                                  // im TopLevel-Window angedockt
+         if (StringStartsWith(GetWindowText(hNext), "Tester")) {
+            hWnd = GetDlgItem(hNext, 59423);                               // ID des Parent des im Top-Level-Window floatenden Testers: 59423
+            if (hWnd == 0)
+               return(_NULL(catch("GetTesterWindow(2)   cannot find children of top-level Tester window")));
+            hWndTester = GetDlgItem(hWnd, 83);                             // ID des Tester-Fensters selbst: 83
+            if (hWndTester == 0)
+               return(_NULL(catch("GetTesterWindow(3)   cannot find sub-children of top-level Tester window")));
             break;
          }
       }
       hNext = GetWindow(hNext, GW_HWNDNEXT);
    }
 
-   if (hWndTester == 0) {
-      if (IsScript())
-         return(_NULL(catch("GetTesterWindow(5)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
 
+   // (3) bei ausbleibenden Erfolg Umgebung prüfen und nur ggf. Exception werfen (das Tester-Fenster könnte noch nicht existieren)
+   if (hWndTester == 0) {
       if (IsExpert()) {
          if (IsTesting())
-            return(_NULL(catch("GetTesterWindow(6)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
+            return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
       }
-      else if (IndicatorIsTesting())
-         return(_NULL(catch("GetTesterWindow(7)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
-
+      else if (IndicatorIsTesting()) {
+         return(_NULL(catch("GetTesterWindow(5)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
+      }
+      else if (ScriptIsTesting()) {
+         return(_NULL(catch("GetTesterWindow(6)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
+      }
       log("GetTesterWindow()   cannot find Strategy Tester window");
    }
+
    return(hWndTester);
 }
 
