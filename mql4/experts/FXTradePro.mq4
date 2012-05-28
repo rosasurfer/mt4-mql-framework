@@ -35,7 +35,7 @@
  *  - Visualisierung des Entry.Limits implementieren
  *  - gesamte Sequenz vorher auf [TradeserverLimits] prüfen
  *  - einzelne Tradefunktionen vorher auf [TradeserverLimits] prüfen lassen
- *  - mehrere EA's schalten sich gegenseitig ab, wenn sie ohne Lock SwitchExperts(true) aufrufen
+ *  - mehrere EA's schalten sich gegenseitig ab, wenn sie ohne Lock Menu.Experts(true) aufrufen
  *
  *
  *  TODO:

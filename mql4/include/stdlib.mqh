@@ -13,10 +13,11 @@
    bool     IsScript();
    bool     IndicatorIsTesting();
    bool     ScriptIsTesting();
+   bool     This.IsTesting();                                        // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
-   int      GetTerminalWindow();
+   int      GetApplicationMainWindow();
    int      GetTesterWindow();
    int      GetUIThreadId();
 
@@ -190,7 +191,7 @@
    int      stdlib_PeekLastError();
 
 
-   // Eventlistener (*können* bei Verwendung im Programm überschrieben werden)
+   // Eventlistener, *können* im Programm überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -204,7 +205,7 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // abstrakte Eventhandler (*müssen* bei Verwendung im Programm implementiert werden)
+   // abstrakte Eventhandler, müssen bei Verwendung implementiert werden (im Programm, nicht hier)
    int      onBarOpen        (int    data[]);
    int      onAccountChange  (int    data[]);
    int      onAccountPayment (int    data[]);
@@ -255,7 +256,7 @@
 
 
    // Math, Numbers
-   bool     EQ(double a, double b, int digits);    bool CompareDoubles(double a, double b);     // MetaQuotes-Alias
+   bool     EQ(double a, double b, int digits); bool CompareDoubles(double a, double b);  // MetaQuotes-Alias
    bool     NE(double a, double b, int digits);
 
    bool     LT(double a, double b, int digits);
@@ -349,16 +350,16 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
 
-   string   StdSymbol();                                                               // Alias für GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                                          // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                 // Alias für GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                            // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                              // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                                          // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                            // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
@@ -390,18 +391,16 @@
    void     ForceSound(string soundfile);
    int      SendTextMessage(string receiver, string message);
    int      SendTick(bool sound);
-   int      SwitchExperts(bool enable);
-   int      LaunchExpertPropertiesDlg();
 
 
    // toString-Funktionen
    string   BoolToStr(bool value);
-   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);     // MetaQuotes-Alias
+   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);  // MetaQuotes-Alias
 
-   string   IntegerToHexStr(int integer); string DecimalToHexStr(int integer);                                          // Alias
-   string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                                // Alias
+   string   IntegerToHexStr(int integer); string DecimalToHexStr(int integer);                                       // Alias
+   string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                             // Alias
    string   WordToHexStr(int word);
-   string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                              // Alias
+   string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                           // Alias
    string   StringToHexStr(string value);
 
    string   BoolsToStr        (bool array[], string separator);
@@ -429,32 +428,10 @@
    string   WaitForSingleObjectValueToStr(int value);
 
 
-   // Laufzeitfunktionen
-   int      onInit(bool userCall);
-   int      onInitUndefined();
-   int      onInitChartClose();
-   int      onInitRemove();
-   int      onInitRecompile();
-   int      onInitParameterChange();
-   int      onInitChartChange();
-   int      onInitAccountChange();
-   int      afterInit(bool userCall);
-
-   int      onStart();
-   int      onTick();
-
-   int      onDeinit(bool userCall);
-   int      onDeinitUndefined();
-   int      onDeinitChartClose();
-   int      onDeinitRemove();
-   int      onDeinitRecompile();
-   int      onDeinitParameterChange();
-   int      onDeinitChartChange();
-   int      onDeinitAccountChange();
-   int      afterDeinit(bool userCall);
-
-   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
-   int      stdlib_start(int tick, int validBars, int changedBars);
+   // UI-Interaktionen
+   int      Menu.Experts(bool enable);
+   int      Chart.Expert.Properties();
+   int      Tester.Pause();
 
 
    // Win32-Funktionen
@@ -537,6 +514,35 @@
    bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]);
    string   wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
+
+
+   // Default-Implementierungen der Basisfunktionen (unbenutzt, jedoch notwendig)
+   int      onInit(bool userCall);
+   int      onInitUndefined();
+   int      onInitChartClose();
+   int      onInitRemove();
+   int      onInitRecompile();
+   int      onInitParameterChange();
+   int      onInitChartChange();
+   int      onInitAccountChange();
+   int      afterInit(bool userCall);
+
+   int      onStart();
+   int      onTick();
+
+   int      onDeinit(bool userCall);
+   int      onDeinitUndefined();
+   int      onDeinitChartClose();
+   int      onDeinitRemove();
+   int      onDeinitRecompile();
+   int      onDeinitParameterChange();
+   int      onDeinitChartChange();
+   int      onDeinitAccountChange();
+   int      afterDeinit(bool userCall);
+
+   // stdlib-Initialisierung
+   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
+   int      stdlib_start(int tick, int validBars, int changedBars);
 
 #import
 

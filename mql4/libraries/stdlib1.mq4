@@ -77,9 +77,9 @@ int stdlib_init(bool userCall, int type, string name, int initFlags, int uniniti
 
 
    // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn bestimmen und cachen
-   if (GetTerminalWindow() == 0)                                     // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
+   if (GetApplicationMainWindow() == 0)                              // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
       return(last_error);                                            // (z.B. im Tester bei Shutdown).
-   if (GetUIThreadId() == 0)                                         // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetTerminalWindow()
+   if (GetUIThreadId() == 0)                                         // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationMainWindow()
       return(last_error);
 
 
@@ -205,19 +205,38 @@ int stdlib_PeekLastError() {
  *
  * @return int - Fehlerstatus
  */
-int LaunchExpertPropertiesDlg() {
-   if (IsTesting())          return(catch("LaunchExpertPropertiesDlg(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
-   if (IndicatorIsTesting()) return(catch("LaunchExpertPropertiesDlg(2)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
-   if (ScriptIsTesting())    return(catch("LaunchExpertPropertiesDlg(3)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+int Chart.Expert.Properties() {
+   if (         IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+   if (IndicatorIsTesting()) return(catch("Chart.Expert.Properties(2)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+   if (   ScriptIsTesting()) return(catch("Chart.Expert.Properties(3)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("LaunchExpertPropertiesDlg(4) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.Expert.Properties(4) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   if (!PostMessageA(hWnd, WM_COMMAND, WM_MT4_EXPERT_PROPERTIES, 0))
-      return(catch("LaunchExpertPropertiesDlg(5) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0);
+   return(NO_ERROR);
+}
 
-   //debug("LaunchExpertPropertiesDlg()   message posted");
+
+/**
+ * Pausiert den Tester. Der Aufruf ist nur von einem Expert im Tester erlaubt.
+ *
+ * @return int - Fehlerstatus
+ */
+int Tester.Pause() {
+   if (    !IsExpert()) return(catch("Tester.Pause(1)   experts only function", ERR_FUNC_NOT_ALLOWED));
+   if (!IsVisualMode()) return(catch("Tester.Pause(2)   function not allowed in non-visual mode", ERR_FUNC_NOT_ALLOWED));
+
+   // der Tester läuft, ansonsten würde dieser Code nicht ausgeführt
+
+   int hWndMain = GetApplicationMainWindow();
+   if (hWndMain == 0)
+      return(0);
+
+   // TODO: Vorsicht!!! Prüfung von IsStopped() und init()/deinit() implementieren und dann ggf. PostMessage() verwenden
+
+   SendMessageA(hWndMain, WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
 }
 
@@ -378,8 +397,28 @@ bool ScriptIsTesting() {
       int hChart  = WindowHandle(Symbol(), NULL);
       int hWnd    = GetParent(hChart);
       string text = GetWindowText(hWnd);
-      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert, bleibt also konstant
+      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
    }
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if      (   IsExpert()) result =          IsTesting();
+   else if (IsIndicator()) result = IndicatorIsTesting();
+   else                    result =    ScriptIsTesting();
+
    done = true;
    return(result);
 }
@@ -1090,30 +1129,30 @@ int SortTicketsChronological(int& tickets[]) {
 
 
 /**
- * Aktiviert oder deaktiviert die Ausführung der EA-start()-Funktion bei Eintreffen von Ticks.
+ * Aktiviert oder deaktiviert die Ausführung von Expert Advisern (Aufruf von start() bei Eintreffen von Ticks).
  *
  * @param  bool enable - gewünschter Status
  *
  * @return int - Fehlerstatus
  */
-int SwitchExperts(bool enable) {
+int Menu.Experts(bool enable) {
    if (IsTesting() || IndicatorIsTesting() || ScriptIsTesting())
-      return(_NO_ERROR(debug("SwitchExperts()   skipping in Tester")));
+      return(_NO_ERROR(debug("Menu.Experts()   skipping in Tester")));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE
 
-   int hWnd = GetTerminalWindow();
+   int hWnd = GetApplicationMainWindow();
    if (hWnd == 0)
       return(last_error);
 
    if (enable) {
-      if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, WM_MT4_TOGGLE_EXPERTS, 0);
+      if (!IsExpertEnabled())                                        // TODO: Wann ist PostMessage(), wann SendMessage() vorzuziehen ???
+         SendMessageA(hWnd, WM_COMMAND, ID_MENU_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
       if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, WM_MT4_TOGGLE_EXPERTS, 0);
+         SendMessageA(hWnd, WM_COMMAND, ID_MENU_EXPERTS_ONOFF, 0);
    }
    return(NO_ERROR);
 }
@@ -2354,8 +2393,9 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  * @return string       - ANSI-String
  *
  *
- * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
- * ----
+ *  NOTE:
+ *  -----
+ *  Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
@@ -2710,15 +2750,45 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int SendTick(bool sound=false) {
-   if (IsTesting() || IndicatorIsTesting() || ScriptIsTesting())
-      return(_NO_ERROR(debug("SendTick()   skipping in Tester")));
+   bool testing, visualMode, stopped, paused;
+
+   if (IsExpert()) {
+      testing    = IsTesting();
+      visualMode = IsVisualMode();
+      stopped    = false;
+      paused     = false;
+   }
+   else if (IsIndicator()) {
+      testing    = IndicatorIsTesting();                             // TODO: IndicatorIsTesting() in init() und deinit() implementieren
+      visualMode = testing;
+      stopped    = false;
+      paused     = false;
+   }
+   else if (IsScript()) {
+      testing    = ScriptIsTesting();
+      visualMode = testing;
+      if (testing) {
+         int hWndSettings  = GetDlgItem(GetTesterWindow(), ID_TESTER_SETTINGS);
+         int hBtnStartStop = GetDlgItem(hWndSettings, ID_TESTER_STARTSTOP);
+         stopped = (GetWindowText(hBtnStartStop) == "Start");
+         paused  = (!stopped && GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME))==">>");
+      }
+      else {
+         stopped = false;
+         paused  = false;
+      }
+   }
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
       return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   if (!PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0))
-      return(catch("SendTick(2) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   if (!testing) {
+      PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0);
+   }
+   else if (visualMode && !stopped && paused) {
+      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_STEPFORWARD, 0);      // kann nur durch Scripte erreicht werden (EA's und Ind. sind niemals "paused")
+   }
 
    if (sound)
       PlaySound("tick1.wav");
@@ -2837,6 +2907,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
    else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
    else if (StringStartsWith(server, "gcmfx-"             )) return("Gallant"         );
+   else if (StringStartsWith(server, "gftforex-"          )) return("GFT"             );
    else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
    else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
    else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
@@ -3031,11 +3102,9 @@ string WaitForSingleObjectValueToStr(int value) {
  * @return string - Standardsymbol oder das aktuelle Symbol, wenn das Standardsymbol unbekannt ist
  *
  *
- * NOTE:
- * -----
- * Alias für GetStandardSymbol(Symbol())
- *
- * @see GetStandardSymbol()
+ *  NOTE:
+ *  -----
+ *  Alias für GetStandardSymbol(Symbol())
  */
 string StdSymbol() {
    // TODO: Bug bei Symbolwechsel, es wird weiter das statisch gespeicherte vorherige Symbol zurückgegeben
@@ -3059,12 +3128,9 @@ string StdSymbol() {
  * @return string - Standardsymbol oder der übergebene Ausgangswert, wenn das Brokersymbol unbekannt ist
  *
  *
- * NOTE:
- * -----
- * Alias für GetStandardSymbolOrAlt(symbol, symbol)
- *
- * @see GetStandardSymbolStrict()
- * @see GetStandardSymbolOrAlt()
+ *  NOTE:
+ *  -----
+ *  Alias für GetStandardSymbolOrAlt(symbol, symbol)
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0)
@@ -3083,12 +3149,10 @@ string GetStandardSymbol(string symbol) {
  * @return string - Ergebnis
  *
  *
- * NOTE:
- * -----
- * Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die bequeme Angabe eines Alternativwertes, läßt jedoch nicht mehr so
- * einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
- *
- * @see GetStandardSymbolStrict()
+ *  NOTE:
+ *  -----
+ *  Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die Angabe eines Alternativwertes, läßt jedoch nicht mehr so
+ *  einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0)
@@ -3319,12 +3383,9 @@ string GetStandardSymbolStrict(string symbol) {
  * @return string - Kurzname oder der übergebene Ausgangswert, wenn das Symbol unbekannt ist
  *
  *
- * NOTE:
- * -----
- * Alias für GetSymbolNameOrAlt(symbol, symbol)
- *
- * @see GetSymbolNameStrict()
- * @see GetSymbolNameOrAlt()
+ *  NOTE:
+ *  -----
+ *  Alias für GetSymbolNameOrAlt(symbol, symbol)
  */
 string GetSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
@@ -3494,12 +3555,9 @@ string GetSymbolNameStrict(string symbol) {
  * @return string - Langname oder der übergebene Ausgangswert, wenn kein Langname gefunden wurde
  *
  *
- * NOTE:
- * -----
- * Alias für GetLongSymbolNameOrAlt(symbol, symbol)
- *
- * @see GetLongSymbolNameStrict()
- * @see GetLongSymbolNameOrAlt()
+ *  NOTE:
+ *  -----
+ *  Alias für GetLongSymbolNameOrAlt(symbol, symbol)
  */
 string GetLongSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
@@ -4683,10 +4741,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
  *
  * @return bool - Ergebnis
  *
- * NOTE:
- * -----
- * Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
- * Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
+ *  NOTE:
+ *  -----
+ *  Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
+ *  Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
  */
 bool EventListener.AccountChange(int results[], int flags=NULL) {
    static int accountData[3];                         // {last_account, current_account, current_account_login}
@@ -5256,7 +5314,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
    }
 
    if (account == 0) {
-      string title = GetWindowText(GetTerminalWindow());             // Titelzeile des Hauptfensters auswerten:
+      string title = GetWindowText(GetApplicationMainWindow());      // Titelzeile des Hauptfensters auswerten:
       if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
          return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
@@ -5694,9 +5752,9 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  *
  *
- * NOTE: Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
- * -----
- *
+ *  NOTE:
+ *  -----
+ *  Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
  */
 int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (gmtTime < 0) {
@@ -6018,6 +6076,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                           ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
       case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                             ); // 5008
+      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                          ); // 5009
    }
    return("unknown error");
 }
@@ -6153,6 +6212,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
+      case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
    }
    return(error);
 }
@@ -6661,6 +6721,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
+   else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
@@ -6690,11 +6751,11 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
 
 
 /**
- * Gibt das Handle des Hauptfensters des MetaTrader-Terminals zurück.
+ * Gibt das Handle des MetaTrader-Hauptfensters zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
-int GetTerminalWindow() {
+int GetApplicationMainWindow() {
    static int hWnd;                                                  // ohne Initializer (@see MQL.doc)
    if (hWnd != 0)
       return(hWnd);
@@ -6707,7 +6768,7 @@ int GetTerminalWindow() {
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
          if (GetClassName(hWnd) != terminalClassName) {
-            catch("GetTerminalWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
+            catch("GetApplicationMainWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
             hWnd = 0;
          }
          else {
@@ -6726,7 +6787,7 @@ int GetTerminalWindow() {
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
    if (hWndNext == 0) {
-      catch("GetTerminalWindow(2)   cannot find terminal window", ERR_RUNTIME_ERROR);
+      catch("GetApplicationMainWindow(2)   cannot find application main window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
    hWnd = hWndNext;
@@ -6751,29 +6812,29 @@ int GetTesterWindow() {
    // alte Version mit dynamischen Klassennamen: v1.498
 
 
-   // (1) Zunächst den im Application-MainWindow angedockten Tester suchen
-   int hWndMain = GetTerminalWindow();
+   // (1) Zunächst den im Hauptfenster angedockten Tester suchen
+   int hWndMain = GetApplicationMainWindow();
    if (hWndMain == 0)
       return(0);
-   int hWnd = GetDlgItem(hWndMain, 59422);                                 // ID des Parent aller im MainWindow angedockten Fenster: 59422
+   int hWnd = GetDlgItem(hWndMain, ID_DOCKABLES_CONTAINER);                // Container für im Hauptfenster angedockte Fenster
    if (hWnd == 0)
-      return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window for docked child windows")));
-   hWndTester = GetDlgItem(hWnd, 83);                                      // ID des Tester-Fensters selbst: 83
+      return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window of docked child windows")));
+   hWndTester = GetDlgItem(hWnd, ID_TESTER);
    if (hWndTester != 0)
       return(hWndTester);
 
 
-   // (2) Dann Toplevel-Windows durchlaufen und nach Testerfenster des eigenen Prozesses suchen
+   // (2) Dann Toplevel-Windows durchlaufen und nicht angedocktes Testerfenster des eigenen Prozesses suchen
    int processId[1], hNext=GetTopWindow(NULL), me=GetCurrentProcessId();
    while (hNext != 0) {
       GetWindowThreadProcessId(hNext, processId);
 
       if (processId[0] == me) {
          if (StringStartsWith(GetWindowText(hNext), "Tester")) {
-            hWnd = GetDlgItem(hNext, 59423);                               // ID des Parent des im Top-Level-Window floatenden Testers: 59423
+            hWnd = GetDlgItem(hNext, ID_UNDOCKED_CONTAINER);               // Container für nicht angedockten Tester
             if (hWnd == 0)
                return(_NULL(catch("GetTesterWindow(2)   cannot find children of top-level Tester window")));
-            hWndTester = GetDlgItem(hWnd, 83);                             // ID des Tester-Fensters selbst: 83
+            hWndTester = GetDlgItem(hWnd, ID_TESTER);
             if (hWndTester == 0)
                return(_NULL(catch("GetTesterWindow(3)   cannot find sub-children of top-level Tester window")));
             break;
@@ -6812,7 +6873,7 @@ int GetUIThreadId() {
    if (threadId != 0)
       return(threadId);
 
-   int hWnd = GetTerminalWindow();
+   int hWnd = GetApplicationMainWindow();
    if (hWnd == 0)
       return(0);
 
@@ -6873,9 +6934,9 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
- * NOTE:
- * -----
- *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=true benutzen, da UI-Thread-Deadlock
+ *  NOTE:
+ *  -----
+ *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=TRUE benutzen, da UI-Thread-Deadlock
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;

@@ -484,10 +484,48 @@
 #define SYMBOL_CHECKSIGN                              252   // check sign symbol
 
 
-// MT4 Windows Message ID's
+// MT4 messages
 #define WM_MT4_TICK                                     2
-#define WM_MT4_TOGGLE_EXPERTS                       33020   // enable/disable experts
-#define WM_MT4_EXPERT_PROPERTIES                    33048   // expert inputs dialog
+
+
+// MT4 commands (menu or accelerator identifier)
+#define ID_MENU_CHART_STEPFORWARD                   33197   // Main menu: one step forward
+#define ID_MENU_CHART_STEPBACKWARD                  33198   //            one step backward
+#define ID_MENU_EXPERTS_ONOFF                       33020   //            activate/deactivate experts
+
+#define ID_CHART_EXPERT_PROPERTIES                  33048   // Chart:     Expert Inputs-Dialog
+#define ID_TESTER_STEPFORWARD   ID_MENU_CHART_STEPFORWARD   //            ja nach Testmode ein Tick oder eine Bar vorwärts
+
+
+// MT4 items (dialog or control identifier)
+#define ID_DOCKABLES_CONTAINER                      59422   // window containing all child windows docked inside the main application window
+#define ID_UNDOCKED_CONTAINER                       59423   // window containing undocked child windows (one per undocked child)
+
+#define ID_MARKETWATCH                                 80   // Market Watch
+#define ID_MARKETWATCH_SYMBOLS                      35441   // Market Watch - Symbols
+#define ID_MARKETWATCH_TICKCHART                    35442   // Market Watch - Tick Chart
+
+#define ID_NAVIGATOR                                   82   // Navigator
+#define ID_NAVIGATOR_COMMON                         35439   // Navigator - Common
+#define ID_NAVIGATOR_FAVOURITES                     35440   // Navigator - Favourites
+
+#define ID_TERMINAL                                    81   // Terminal
+#define ID_TERMINAL_TRADE                           33217   // Terminal - Trade
+#define ID_TERMINAL_ACCOUNTHISTORY                  33208   // Terminal - Account History
+#define ID_TERMINAL_NEWS                            33211   // Terminal - News
+#define ID_TERMINAL_ALERTS                          33206   // Terminal - Alerts
+#define ID_TERMINAL_MAILBOX                         33210   // Terminal - Mailbox
+#define ID_TERMINAL_EXPERTS                         35434   // Terminal - Experts
+#define ID_TERMINAL_JOURNAL                         33209   // Terminal - Journal
+
+#define ID_TESTER                                      83   // Tester
+#define ID_TESTER_SETTINGS                          33215   // Tester - Settings
+#define ID_TESTER_RESULTS                           33214   // Tester - Results
+#define ID_TESTER_GRAPH                             33207   // Tester - Graph
+#define ID_TESTER_REPORT                            33213   // Tester - Report
+#define ID_TESTER_JOURNAL             ID_TERMINAL_EXPERTS   // Tester - Journal (entspricht Terminal - Experts)
+#define ID_TESTER_PAUSERESUME                        1402   // Tester Pause/Resume button
+#define ID_TESTER_STARTSTOP                          1034   // Tester Start/Stop button
 
 
 // MQL-Fehlercodes
@@ -564,7 +602,7 @@
 #define ERR_INCOMPATIBLE_ARRAYS                      4056   // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING              4057
 #define ERR_GLOBAL_VARIABLE_NOT_FOUND                4058
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTING              4059
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTING              4059   // function not allowed in test mode
 #define ERR_FUNCTION_NOT_CONFIRMED                   4060
 #define ERR_SEND_MAIL_ERROR                          4061
 #define ERR_STRING_PARAMETER_EXPECTED                4062
@@ -606,6 +644,7 @@
 #define ERR_INVALID_MARKET_DATA                      5006   // invalid market data
 #define ERR_FILE_NOT_FOUND                           5007   // file not found
 #define ERR_CANCELLED_BY_USER                        5008   // execution cancelled by user
+#define ERR_FUNC_NOT_ALLOWED                         5009   // function not allowed
 
 
 // Variablen für ChartInfo-Block (siehe unten)
@@ -720,7 +759,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsExpert()) {                                                       // ggf. EA's aktivieren
       int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = SwitchExperts(true);                                      // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+         error = Menu.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
             return(SetLastError(error));
       }
@@ -930,7 +969,7 @@ int start.RelaunchInputDialog() {
 
    if (IsExpert()) {
       if (!IsTesting())
-         error = LaunchExpertPropertiesDlg();
+         error = Chart.Expert.Properties();
    }
    else if (IsIndicator()) {
       //error = LaunchIndicatorPropertiesDlg();                   // TODO: implementieren
@@ -1195,13 +1234,13 @@ int stack.selectedOrders[];                                          // @see Ord
  *
  * @param  int    ticket          - Ticket
  * @param  string location        - Bezeichner für eine evt. Fehlermeldung
- * @param  bool   orderPush       - Ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein).
- * @param  bool   onErrorOrderPop - Ob *im Fehlerfall* der letzte Orderkontext wiederhergestellt werden soll (default: nein bei orderPush=FALSE, ja bei orderPush=TRUE).
+ * @param  bool   orderPush       - ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein)
+ * @param  bool   onErrorOrderPop - ob im Fehlerfall der letzte Orderkontext wiederhergestellt werden soll (default: nein bei orderPush=FALSE, ja bei orderPush=TRUE)
  *
  * @return bool - Erfolgsstatus
  *
- *  NOTE:
- *  -----
+ * NOTE:
+ * -----
  * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
 bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool onErrorOrderPop=false) {
