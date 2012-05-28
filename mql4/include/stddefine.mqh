@@ -1357,7 +1357,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
 /**
  * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
  *
- * @param  double lots - Lotsize (default: 1)
+ * @param  double lots - Lotsize (default: 1 lot)
  *
  * @return double - PipValue oder 0, wenn ein Fehler auftrat
  *
