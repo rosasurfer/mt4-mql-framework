@@ -485,16 +485,17 @@
 
 
 // MT4 messages
-#define WM_MT4_TICK                                     2
+#define WM_MT4_TICK                                     2   // ein künstlicher Tick, führt start() aus
 
 
 // MT4 commands (menu or accelerator identifier)
-#define ID_MENU_CHART_STEPFORWARD                   33197   // Main menu: one step forward
-#define ID_MENU_CHART_STEPBACKWARD                  33198   //            one step backward
-#define ID_MENU_EXPERTS_ONOFF                       33020   //            activate/deactivate experts
+#define ID_MENU_CHART_STEPFORWARD                   33197   // Main menu: eine Bar vorwärts                  F12
+#define ID_MENU_CHART_STEPBACKWARD                  33198   //            eine Bar rückwärts           Shift+F12
+#define ID_MENU_EXPERTS_ONOFF                       33020   //            Experts on/off                  Ctrl+E
 
-#define ID_CHART_EXPERT_PROPERTIES                  33048   // Chart:     Expert Inputs-Dialog
-#define ID_TESTER_STEPFORWARD   ID_MENU_CHART_STEPFORWARD   //            ja nach Testmode ein Tick oder eine Bar vorwärts
+#define ID_CHART_EXPERT_PROPERTIES                  33048   // Chart: Expert Inputs-Dialog                    F7
+
+#define ID_TESTER_TICK          ID_MENU_CHART_STEPFORWARD   // Tester: ein Tick                              F12
 
 
 // MT4 items (dialog or control identifier)
@@ -533,7 +534,7 @@
 #define NO_ERROR                             ERR_NO_ERROR
 
 // trade server errors
-#define ERR_NO_RESULT                                   1
+#define ERR_NO_RESULT                                   1   // Tradeserver-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                2   // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                    3
 #define ERR_SERVER_BUSY                                 4

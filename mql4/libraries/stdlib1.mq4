@@ -2750,19 +2750,19 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int SendTick(bool sound=false) {
-   bool testing, visualMode, stopped, paused;
+   bool testing, visualMode, testerStopped, testerPaused;
 
    if (IsExpert()) {
-      testing    = IsTesting();
-      visualMode = IsVisualMode();
-      stopped    = false;
-      paused     = false;
+      testing       = IsTesting();
+      visualMode    = IsVisualMode();
+      testerStopped = false;                                         // Code wird ausgeführt, also beide FALSE
+      testerPaused  = false;
    }
    else if (IsIndicator()) {
-      testing    = IndicatorIsTesting();                             // TODO: IndicatorIsTesting() in init() und deinit() implementieren
-      visualMode = testing;
-      stopped    = false;
-      paused     = false;
+      testing       = IndicatorIsTesting();                          // TODO: IndicatorIsTesting() in init() und deinit() implementieren
+      visualMode    = testing;
+      testerStopped = false;                                         // Code wird ausgeführt, also beide FALSE
+      testerPaused  = false;
    }
    else if (IsScript()) {
       testing    = ScriptIsTesting();
@@ -2770,12 +2770,12 @@ int SendTick(bool sound=false) {
       if (testing) {
          int hWndSettings  = GetDlgItem(GetTesterWindow(), ID_TESTER_SETTINGS);
          int hBtnStartStop = GetDlgItem(hWndSettings, ID_TESTER_STARTSTOP);
-         stopped = (GetWindowText(hBtnStartStop) == "Start");
-         paused  = (!stopped && GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME))==">>");
+         testerStopped = (GetWindowText(hBtnStartStop) == "Start");
+         testerPaused  = (!testerStopped && GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME))==">>");
       }
       else {
-         stopped = false;
-         paused  = false;
+         testerStopped = false;                                      // wir sind nicht im Tester
+         testerPaused  = false;
       }
    }
 
@@ -2786,8 +2786,8 @@ int SendTick(bool sound=false) {
    if (!testing) {
       PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0);
    }
-   else if (visualMode && !stopped && paused) {
-      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_STEPFORWARD, 0);      // kann nur durch Scripte erreicht werden (EA's und Ind. sind niemals "paused")
+   else if (visualMode && !testerStopped && testerPaused) {
+      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);             // Bedingung kann nur durch Scripte erfüllt werden (EA's und Indikatoren sind niemals "paused")
    }
 
    if (sound)
