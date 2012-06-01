@@ -1178,8 +1178,8 @@ string CreateLegendLabel(string name) {
          if (StringStartsWith(objName, "Legend.")) {
             legendLabels++;
             Explode(objName, ".", substrings);
-            maxLegendId  = MathMax(maxLegendId, StrToInteger(substrings[1]));
-            maxYDistance = MathMax(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));
+            maxLegendId  = Max(maxLegendId, StrToInteger(substrings[1]));
+            maxYDistance = MathMax(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));  // TODO: (int) double
          }
          labelObj--;
       }
@@ -3951,11 +3951,11 @@ string StringSubstrFix(string object, int start, int length=EMPTY_VALUE) {
       return("");
 
    if (start < 0)
-      start = MathMax(0, start + StringLen(object));
+      start = Max(0, start + StringLen(object));
 
    if (length < 0) {
       start += 1 + length;
-      length = MathAbs(length);
+      length = Abs(length);
    }
    return(StringSubstr(object, start, length));
 }
@@ -4586,14 +4586,14 @@ int DecreasePeriod(int period = 0) {
 /**
  * Konvertiert einen Double in einen String und entfernt abschließende Nullstellen.
  *
- * @param  double value - Double
+ * @param  double value
  *
  * @return string
  */
 string DoubleToStrTrim(double value) {
    string result = value;
 
-   int digits = MathMax(1, CountDecimals(value));  // mindestens eine Dezimalstelle wird erhalten
+   int digits = Max(1, CountDecimals(value));                        // mindestens eine Dezimalstelle wird erhalten
 
    if (digits < 8)
       result = StringLeft(result, digits-8);
@@ -8404,10 +8404,10 @@ int RGBToHSVColor(color rgb, double& hsv[]) {
    int green = rgb >>  8 & 0xFF;
    int blue  = rgb >> 16 & 0xFF;
 
-   double r=red/255.0, g=green/255.0, b=blue/255.0;      // scale to unity (0-1)
+   double r=red/255.0, g=green/255.0, b=blue/255.0;                  // scale to unity (0-1)
 
-   double dMin   = MathMin(r, MathMin(g, b)); int iMin   = MathMin(red, MathMin(green, blue));
-   double dMax   = MathMax(r, MathMax(g, b)); int iMax   = MathMax(red, MathMax(green, blue));
+   double dMin   = MathMin(r, MathMin(g, b)); int iMin   = Min(red, Min(green, blue));
+   double dMax   = MathMax(r, MathMax(g, b)); int iMax   = Max(red, Max(green, blue));
    double dDelta = dMax - dMin;               int iDelta = iMax - iMin;
 
    double hue, sat, val=dMax;
@@ -8689,6 +8689,56 @@ int MathSign(double number) {
 
 
 /**
+ * Integer-Version von MathMin()
+ *
+ * Ermittelt die kleinere zweier Zahlen.
+ *
+ * @param  int  value1
+ * @param  int  value2
+ *
+ * @return int
+ */
+int Min(int value1, int value2) {
+   if (value1 < value2)
+      return(value1);
+   return(value2);
+}
+
+
+/**
+ * Integer-Version von MathMax()
+ *
+ * Ermittelt die größere zweier Zahlen.
+ *
+ * @param  int  value1
+ * @param  int  value2
+ *
+ * @return int
+ */
+int Max(int value1, int value2) {
+   if (value1 > value2)
+      return(value1);
+   return(value2);
+}
+
+
+/**
+ * Integer-Version von MathAbs()
+ *
+ * Ermittelt den Absolutwert einer Zahl.
+ *
+ * @param  int  value
+ *
+ * @return int
+ */
+int Abs(int value) {
+   if (value < 0)
+      return(-value);
+   return(value);
+}
+
+
+/**
  * Repeats a string.
  *
  * @param  string input - The string to be repeated.
@@ -8792,7 +8842,7 @@ string NumberToStr(double number, string mask) {
             continue;
          }
          else {
-            if  (char == '+') nRight = MathMax(nRight+(nSubpip > 0), CountDecimals(number));
+            if  (char == '+') nRight = Max(nRight+(nSubpip > 0), CountDecimals(number));     // (int) bool
             else if (!nDigit) nRight = CountDecimals(number);
             break;
          }
@@ -8800,7 +8850,7 @@ string NumberToStr(double number, string mask) {
       if (nDigit) {
          if (nSubpip >  0) nRight++;
          if (nSubpip == 8) nSubpip = 0;
-         nRight = MathMin(nRight, 8);
+         nRight = Min(nRight, 8);
       }
    }
 
@@ -8833,7 +8883,7 @@ string NumberToStr(double number, string mask) {
    // auf angegebene Länge kürzen
    int dLeft = StringFind(outStr, ".");
    if (nLeft == -1) nLeft = dLeft;
-   else             nLeft = MathMin(nLeft, dLeft);
+   else             nLeft = Min(nLeft, dLeft);
    outStr = StringSubstrFix(outStr, StringLen(outStr)-9-nLeft, nLeft+(nRight>0)+nRight);
 
    // Dezimal-Separator anpassen

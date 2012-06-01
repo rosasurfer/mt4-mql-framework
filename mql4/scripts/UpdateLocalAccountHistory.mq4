@@ -126,8 +126,8 @@ int onStart() {
          if (n == orders) return(catch("onStart(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
          if (i == n     ) return(catch("onStart(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
-         int first  = MathMin(i, n);
-         int second = MathMax(i, n);
+         int first  = Min(i, n);
+         int second = Max(i, n);
 
          // Orderdaten korrigieren
          lotSizes[i] = lotSizes[n];                                           // lotSizes[i] == 0.0 korrigieren

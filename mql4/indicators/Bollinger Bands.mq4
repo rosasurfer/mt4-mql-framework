@@ -235,7 +235,7 @@ int onInit(bool userCall) {
    }
 
    // Zeichenoptionen
-   int startDraw = MathMax(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
@@ -316,7 +316,7 @@ int onTick() {
    // Startbar ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
-   int startBar = MathMin(ChangedBars-1, Bars-MA.Periods);
+   int startBar = Min(ChangedBars-1, Bars-MA.Periods);
 
    double dev;
 

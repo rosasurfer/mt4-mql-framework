@@ -1899,7 +1899,7 @@ bool RestoreChartSequenceId() {
    string label = __NAME__ +".sequenceId";
 
    if (ObjectFind(label)!=-1) /*&&*/ if (ObjectType(label)==OBJ_LABEL) {
-      sequenceId = MathAbs(ObjectGet(label, OBJPROP_XDISTANCE)) +0.1;   // (int) double
+      sequenceId = Abs(ObjectGet(label, OBJPROP_XDISTANCE) +0.1);    // (int) double
       return(_true(catch("RestoreChartSequenceId(1)")));
    }
    return(_false(catch("RestoreChartSequenceId(2)")));

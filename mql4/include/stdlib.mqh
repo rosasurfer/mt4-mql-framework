@@ -265,10 +265,13 @@
    bool     GT(double a, double b, int digits);
    bool     GE(double a, double b, int digits);
 
-   int      CountDecimals(double value);
+   int      Abs(int value);
+   int      Min(int value1, int value2);
+   int      Max(int value1, int value2);
    double   MathModFix(double a, double b);
    double   MathRoundFix(double value, int decimals);
    int      MathSign(double value);
+   int      CountDecimals(double value);
 
 
    // Strings

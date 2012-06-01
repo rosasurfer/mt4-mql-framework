@@ -559,10 +559,10 @@ int iOHLCTimeRange(double& results[4], string symbol/*=NULL, datetime from, date
    if (tSec > 0)
       to += 60 - tSec;
 
-   int period = MathMin(pMinutes[TimeMinute(from)], pMinutes[TimeMinute(to)]);
+   int period = Min(pMinutes[TimeMinute(from)], pMinutes[TimeMinute(to)]);
 
    if (period == PERIOD_H1) {
-      period = MathMin(pHours[TimeHour(from)], pHours[TimeHour(to)]);
+      period = Min(pHours[TimeHour(from)], pHours[TimeHour(to)]);
 
       if (period==PERIOD_D1) if (TimeDayOfWeek(from)==MONDAY) if (TimeDayOfWeek(to)==SATURDAY)
          period = PERIOD_W1;
