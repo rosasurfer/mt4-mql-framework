@@ -38,19 +38,20 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung der Library.
+ * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des laufenden Programms.
  *
- * @param  bool   userCall           - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
+ * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__ |= type;
-   __NAME__  = StringConcatenate(name, "::", WindowExpertName());
+int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+   __TYPE__    |= type;
+   __NAME__     = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__ = whereami;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -131,37 +132,53 @@ int stdlib_init(bool userCall, int type, string name, int initFlags, int uniniti
  * @return int - Fehlerstatus
  */
 int stdlib_start(int tick, int validBars, int changedBars) {
-   Tick        = tick;                                               // der konkrete Wert hat keine Bedeutung
-   Ticks       = Tick;
-   ValidBars   = validBars;
-   ChangedBars = changedBars;
+   __WHEREAMI__ = FUNC_START;
+   Tick         = tick;                                              // der konkrete Wert hat keine Bedeutung
+   Ticks        = Tick;
+   ValidBars    = validBars;
+   ChangedBars  = changedBars;
+   return(NO_ERROR);
+}
+
+
+/**
+ * Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Programms.
+ *
+ * @param  int whereami           - ID der vom Terminal ausgeführten Root-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
+ * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
+ *
+ * @return int - Fehlerstatus
+ */
+int stdlib_deinit(int whereami, int deinitFlags, int uninitializeReason) {
+   __WHEREAMI__ = whereami;
    return(NO_ERROR);
 }
 
 
 // Laufzeitfunktionen
-int onInit(bool userCall)      { return(NO_ERROR); }
-int onInitUndefined()          { return(NO_ERROR); }
-int onInitChartClose()         { return(NO_ERROR); }
-int onInitRecompile()          { return(NO_ERROR); }
-int onInitRemove()             { return(NO_ERROR); }
-int onInitParameterChange()    { return(NO_ERROR); }
-int onInitChartChange()        { return(NO_ERROR); }
-int onInitAccountChange()      { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterInit(bool userCall)   { return(NO_ERROR); }
+int onInit()                  { return(NO_ERROR); }
+int onInitUndefined()         { return(NO_ERROR); }
+int onInitChartClose()        { return(NO_ERROR); }
+int onInitRecompile()         { return(NO_ERROR); }
+int onInitRemove()            { return(NO_ERROR); }
+int onInitParameterChange()   { return(NO_ERROR); }
+int onInitChartChange()       { return(NO_ERROR); }
+int onInitAccountChange()     { return(_int(IsExpert(), catch("onInitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterInit()               { return(NO_ERROR); }
 
-int onStart()                  { return(NO_ERROR); }
-int onTick()                   { return(NO_ERROR); }
+int onStart()                 { return(NO_ERROR); }
+int onTick()                  { return(NO_ERROR); }
 
-int onDeinit(bool userCall)    { return(NO_ERROR); }
-int onDeinitUndefined()        { return(NO_ERROR); }
-int onDeinitChartClose()       { return(NO_ERROR); }
-int onDeinitRemove()           { return(NO_ERROR); }
-int onDeinitRecompile()        { return(NO_ERROR); }
-int onDeinitParameterChange()  { return(NO_ERROR); }
-int onDeinitChartChange()      { return(NO_ERROR); }
-int onDeinitAccountChange()    { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
-int afterDeinit(bool userCall) { return(NO_ERROR); }
+int onDeinit()                { return(NO_ERROR); }
+int onDeinitUndefined()       { return(NO_ERROR); }
+int onDeinitChartClose()      { return(NO_ERROR); }
+int onDeinitRemove()          { return(NO_ERROR); }
+int onDeinitRecompile()       { return(NO_ERROR); }
+int onDeinitParameterChange() { return(NO_ERROR); }
+int onDeinitChartChange()     { return(NO_ERROR); }
+int onDeinitAccountChange()   { return(_int(IsExpert(), catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR), NO_ERROR)); }
+int afterDeinit()             { return(NO_ERROR); }
 
 
 // abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
@@ -220,21 +237,21 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Pausiert den Tester. Der Aufruf ist nur von einem Expert im Tester erlaubt.
+ * Pausiert den Tester. Der Aufruf ist nur aus einem Expert im Tester möglich.
  *
  * @return int - Fehlerstatus
  */
 int Tester.Pause() {
-   if (    !IsExpert()) return(catch("Tester.Pause(1)   experts only function", ERR_FUNC_NOT_ALLOWED));
-   if (!IsVisualMode()) return(catch("Tester.Pause(2)   function not allowed in non-visual mode", ERR_FUNC_NOT_ALLOWED));
+   if (    !IsExpert())             return(catch("Tester.Pause()   experts only function", ERR_FUNC_NOT_ALLOWED));
+   if (!IsVisualMode())             return(NO_ERROR);                // skipping
+   if (IsStopped())                 return(NO_ERROR);                // skipping (nach Klick auf "Stop" ist weder in start() noch in deinit() das IsStopped()-Flag gesetzt)
+   if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);                // skipping
 
-   // der Tester läuft, ansonsten würde dieser Code nicht ausgeführt
+   // Der Tester läuft, ansonsten würde dieser Code nicht ausgeführt.
 
    int hWndMain = GetApplicationMainWindow();
    if (hWndMain == 0)
       return(0);
-
-   // TODO: Vorsicht!!! Prüfung von IsStopped() und init()/deinit() implementieren und dann ggf. PostMessage() verwenden
 
    SendMessageA(hWndMain, WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
@@ -259,6 +276,23 @@ string StringToHexStr(string value) {
    }
 
    return(result);
+}
+
+
+/**
+ * Gibt die lesbare Konstante einer Root-Function ID zurück.
+ *
+ * @param  int id
+ *
+ * @return string
+ */
+string __whereamiToStr(int id) {
+   switch (id) {
+      case FUNC_INIT  : return("FUNC_INIT"  );
+      case FUNC_START : return("FUNC_START" );
+      case FUNC_DEINIT: return("FUNC_DEINIT");
+   }
+   return(_empty(catch("whereamiToStr()  illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 

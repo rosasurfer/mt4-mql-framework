@@ -672,8 +672,8 @@ bool   ChartInfo.positionChecked,
 
 // globale Variablen, stehen überall zur Verfügung
 string __NAME__;                                            // Name des aktuellen MQL-Programms
+int    __WHEREAMI__;                                        // Funktions-ID des aktuellen Terminalaufrufs: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool   __INIT__;                                            // Terminal hat init() aufgerufen
-bool   __DEINIT__;                                          // Terminal hat deinit() aufgerufen
 bool   __STATUS__HISTORY_UPDATE;                            // History-Update wurde getriggert
 bool   __STATUS__INVALID_INPUT;                             // ungültige Parametereingabe im Input-Dialog
 bool   __STATUS__RELAUNCH_INPUT;                            // Anforderung, den Input-Dialog zu laden
@@ -697,28 +697,24 @@ string objects[];
 /**
  * Globale init()-Funktion für alle MQL-Programme.
  *
- * @param  bool userCall - FALSE: Der Aufruf erfolgt durchs Terminal. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab. Ansonsten wird
- *                                der letzte Errorcode last_error in prev_error gespeichert und vor Abarbeitung zurückgesetzt.
+ * Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
+ * der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
- *                         TRUE:  Der Aufruf erfolgt nicht durch das Terminal. Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.
- *                                Der letzte Errorcode last_error wird vor Abarbeitung nicht modifiziert.
  * @return int - Fehlerstatus
  */
-int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    __NAME__ = WindowExpertName();
 
-   if (!userCall) {
-      __INIT__   = true;
-      __DEINIT__ = false;
-   }
-
-   if (__STATUS__CANCELLED) return(NO_ERROR);
    if (IsLibrary())         return(NO_ERROR);                              // in Libraries vorerst nichts tun
+   if (__STATUS__CANCELLED) return(NO_ERROR);
 
-   if (!userCall) {
-      prev_error = last_error;                                             // Aufruf durch Terminal: last_error sichern und zurücksetzen
-      last_error = NO_ERROR;
+   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal: last_error sichern und zurücksetzen
+      __WHEREAMI__ = FUNC_INIT;
+      prev_error   = last_error;
+      last_error   = NO_ERROR;
+      __INIT__     = true;                                                 // Flag für Tracking von ERR_TERMINAL_NOT_YET_READY
    }
+
 
    int error, initFlags=SumInts(__INIT_FLAGS__);
 
@@ -735,15 +731,15 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    error = GetLastError();                                                 // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
    if (error == ERR_UNKNOWN_SYMBOL) {                                      // das Symbol kann später evt. noch "auftauchen"
       debug("init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_INIT)));
    }
-   if (IsError(error))        return(catch("init(1)", error));
-   if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
+   if (IsError(error))        return(_int(catch("init(1)", error), __ifiwas__(FUNC_INIT)));
+   if (TickSize < 0.00000001) return(_int(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA), __ifiwas__(FUNC_INIT)));
 
    // stdlib
-   error = stdlib_init(userCall, __TYPE__, __NAME__, initFlags, UninitializeReason());
+   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error));
+      return(SetLastError(error, __ifiwas__(FUNC_INIT)));
 
 
    // (2) User-spezifische Init-Tasks ausführen
@@ -751,7 +747,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
-         return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+         return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_INIT)));
       }                                                                    // INIT_TIMEZONE:            @see stdlib_init()
    }                                                                       // INIT_BARS_ON_HIST_UPDATE: noch nicht implementiert
 
@@ -762,7 +758,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
          error = Menu.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
-            return(SetLastError(error));
+            return(SetLastError(error, __ifiwas__(FUNC_INIT)));
       }
                                                                            // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
@@ -774,17 +770,17 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
          ChartInfo.appliedPrice = PRICE_BID;                               // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
          ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
          if (LT(ChartInfo.leverage, 1))
-            return(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+            return(_int(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE), __ifiwas__(FUNC_INIT)));
          error = ChartInfo.CreateLabels();
          if (IsError(error))
-            return(error);
+            return(_int(error, __ifiwas__(FUNC_INIT)));
       }
    }
 
 
    // (4) User-spezifische init()-Routinen aufrufen
-   if (onInit(userCall) == -1)                                             // User-Routinen *können*, müssen aber nicht implementiert werden.
-      return(last_error);                                                  // Preprocessing-Hook
+   if (onInit() == -1)                                                     // User-Routinen *können*, müssen aber nicht implementiert werden.
+      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     // Preprocessing-Hook
                                                                            //
    switch (UninitializeReason()) {                                         // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
       case REASON_UNDEFINED  : error = onInitUndefined();       break;     //   bricht init() *nicht* ab.
@@ -796,11 +792,11 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
    }                                                                       //
    if (error == -1)                                                        //
-      return(last_error);                                                  //
+      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     //
                                                                            //
-   afterInit(userCall);                                                    // Postprocessing-Hook
+   afterInit();                                                            // Postprocessing-Hook
    if (IsLastError() || __STATUS__CANCELLED)                               //
-      return(last_error);                                                  //
+      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     //
 
 
    // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern (so spät wie möglich) selbst einen Tick schicken
@@ -812,7 +808,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
    catch("init(4)");
-   return(last_error);
+   return(_int(last_error, __ifiwas__(FUNC_INIT)));
 }
 
 
@@ -820,29 +816,30 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
  * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
  * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
  *
- * @param  bool userCall - ob der Aufruf durch das Terminal oder durch User-Code erfolgte
- *
  * @return int - Fehlerstatus
  */
-int deinit(bool userCall) {
-   __DEINIT__ = true;
-
+int deinit() {
    if (IsLibrary())                                                        // in Libraries vorerst nichts tun
       return(NO_ERROR);
 
+   if (__WHEREAMI__ == NULL)                                               // Aufruf durch Terminal
+      __WHEREAMI__ = FUNC_DEINIT;
+
 
    // (1) User-spezifische Deinit-Tasks ausführen
-   //int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   int error = stdlib_deinit(__WHEREAMI__, deinitFlags, UninitializeReason());
+   if (IsError(error))
+      SetLastError(error);
 
 
    // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onDeinit(userCall) == -1)                                           // Preprocessing-Hook
-      return(last_error);                                                  //
+   if (onDeinit() == -1)                                                   // Preprocessing-Hook
+      return(_int(last_error, __ifiwas__(FUNC_DEINIT)));                   //
                                                                            // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-   int error;                                                              //   bricht deinit() *nicht* ab.
-   switch (UninitializeReason()) {                                         //
-      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
-      case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   //
+   switch (UninitializeReason()) {                                         //   bricht deinit() *nicht* ab.
+      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   //
+      case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
       case REASON_REMOVE     : error = onDeinitRemove();          break;   //
       case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
       case REASON_PARAMETERS : error = onDeinitParameterChange(); break;   //
@@ -850,10 +847,12 @@ int deinit(bool userCall) {
       case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   //
    }                                                                       //
    if (error == -1)                                                        //
-      return(last_error);                                                  //
+      return(_int(last_error, __ifiwas__(FUNC_DEINIT)));                   //
                                                                            //
-   afterDeinit(userCall);                                                  // Postprocessing-Hook
-   return(last_error);
+   afterDeinit();                                                          // Postprocessing-Hook
+
+
+   return(_int(last_error, __ifiwas__(FUNC_DEINIT)));
 }
 
 
@@ -871,9 +870,18 @@ int deinit(bool userCall) {
  * @return int - Fehlerstatus
  */
 int start() {
+   if (__WHEREAMI__ != NULL) {
+      static bool done;                                              // permanent wiederholten Aufruf verhindern
+      if (!done) {
+         catch("start()   __WHEREAMI__ = "+ __whereamiToStr(__WHEREAMI__), ERR_WRONG_JUMP);
+         done = true;
+      }
+      return(last_error);
+   }
+   __WHEREAMI__ = FUNC_START;
+
    if (__STATUS__CANCELLED)
-      return(NO_ERROR);
-   __DEINIT__ = false;
+      return(_int(NO_ERROR, __ifiwas__(FUNC_START)));
 
    int error;
 
@@ -885,10 +893,10 @@ int start() {
    if (__INIT__) {
       if (IsLastError()) {                                           // init() ist mit Fehler zurückgekehrt
          if (IsScript() || last_error!=ERR_TERMINAL_NOT_YET_READY)
-            return(last_error);
-         error = init(true);
+            return(_int(last_error, __ifiwas__(FUNC_START)));
+         error = init();
          if (IsError(error))                                         // Indikatoren und EA's können init() erneut aufrufen
-            return(error);                                           // erneuter Fehler
+            return(_int(error, __ifiwas__(FUNC_START)));             // erneuter Fehler
       }
       __INIT__   = false;                                            // init() war (ggf. nach erneutem Aufruf) erfolgreich
       last_error = NO_ERROR;
@@ -905,14 +913,14 @@ int start() {
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      return(start.RelaunchInputDialog());
+      return(_int(start.RelaunchInputDialog(), __ifiwas__(FUNC_START)));
    }
 
 
-   // (3) Abschluß der Chart-Initialisierung überprüfen
+   // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
       debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));              // kann bei Terminal-Start auftreten
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_START)));
    }
 
 
@@ -930,7 +938,7 @@ int start() {
 
    // (4) stdLib benachrichtigen
    if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_PeekLastError(), __ifiwas__(FUNC_START)));
 
 
    // (5) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
@@ -944,7 +952,7 @@ int start() {
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
       if (IsError(error))
-         return(last_error);  // nicht error (ist hier die Summe aller aufgetretenen Fehler)
+         return(_int(last_error, __ifiwas__(FUNC_START)));           // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
    }
 
 
@@ -952,8 +960,9 @@ int start() {
    if (IsScript()) error = onStart();
    else            error = onTick();
 
+   __ifiwas__(FUNC_START);
    return(error);
-   DummyCalls();     // unterdrücken unnütze Compilerwarnungen
+   DummyCalls();                                                     // unterdrücken unnütze Compilerwarnungen
 }
 
 
@@ -1122,8 +1131,12 @@ bool IsLastError() {
  * @param  int error - Fehlercode
  *
  * @return int - derselbe Fehlercode (for chaining)
+ *
+ *
+ *  NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ *  -----
  */
-int SetLastError(int error) {
+int SetLastError(int error, int param=NULL) {
    last_error = error;
    return(error);
 }
@@ -1602,6 +1615,22 @@ bool GT(double double1, double double2, int digits=8) {
    if (EQ(double1, double2, digits))
       return(false);
    return(double1 > double2);
+}
+
+
+/**
+ * Setzt die interne Variable __WHEREAMI__ *nur dann* zurück, wenn sie der angegebenen ID entspricht.
+ *
+ * @param  int id - Root-Function id: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ *
+ * @return bool - ob die interne Variable __WHEREAMI__ der angegebenen ID entsprach
+ */
+bool __ifiwas__(int id) {
+   if (__WHEREAMI__ == id) {
+      __WHEREAMI__ = NULL;
+      return(true);
+   }
+   return(false);
 }
 
 

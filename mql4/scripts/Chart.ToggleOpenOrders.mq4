@@ -15,11 +15,9 @@ string currency;                                                     // LFX-Währ
 /**
  * Initialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
- *
  * @return int - Fehlerstatus
  */
-int onInit(bool userCall) {
+int onInit() {
    PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
 
    if (!StringContains(Symbol(), "LFX")) {

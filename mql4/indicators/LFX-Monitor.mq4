@@ -30,11 +30,9 @@ string symbols[] = { "USDLFX","AUDLFX","CADLFX","CHFLFX","EURLFX","GBPLFX","JPYL
 /**
  * Initialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden init()-Funktion durch das Terminal oder durch User-Code erfolgte
- *
  * @return int - Fehlerstatus
  */
-int onInit(bool userCall) {
+int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
 
@@ -46,11 +44,9 @@ int onInit(bool userCall) {
 /**
  * Deinitialisierung
  *
- * @param  bool userCall - ob der Aufruf der zugrunde liegenden deinit()-Funktion durch das Terminal oder durch User-Code erfolgte
- *
  * @return int - Fehlerstatus
  */
-int onDeinit(bool userCall) {
+int onDeinit() {
    RemoveChartObjects(objects);
    return(catch("onDeinit()"));
 }

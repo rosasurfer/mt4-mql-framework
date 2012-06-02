@@ -422,6 +422,7 @@
    string   RatesToStr      (double array[], string separator);
    string   StringsToStr    (string array[], string separator);
 
+   string   __whereamiToStr(int id);
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
@@ -519,8 +520,8 @@
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
 
 
-   // Default-Implementierungen der Basisfunktionen (unbenutzt, jedoch notwendig)
-   int      onInit(bool userCall);
+   // Default-Implementierungen der MQL-Root- und Userfunktionen (unbenutzt, jedoch notwendig)
+   int      onInit();
    int      onInitUndefined();
    int      onInitChartClose();
    int      onInitRemove();
@@ -528,12 +529,12 @@
    int      onInitParameterChange();
    int      onInitChartChange();
    int      onInitAccountChange();
-   int      afterInit(bool userCall);
+   int      afterInit();
 
    int      onStart();
    int      onTick();
 
-   int      onDeinit(bool userCall);
+   int      onDeinit();
    int      onDeinitUndefined();
    int      onDeinitChartClose();
    int      onDeinitRemove();
@@ -541,11 +542,13 @@
    int      onDeinitParameterChange();
    int      onDeinitChartChange();
    int      onDeinitAccountChange();
-   int      afterDeinit(bool userCall);
+   int      afterDeinit();
 
-   // stdlib-Initialisierung
-   int      stdlib_init(bool userCall, int type, string name, int initFlags, int uninitializeReason);
+
+   // erweiterte stdlib Root-Funktionen
+   int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, int validBars, int changedBars);
+   int      stdlib_deinit(int whereami, int deinitFlags, int uninitializeReason);
 
 #import
 
