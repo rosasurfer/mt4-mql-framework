@@ -219,7 +219,7 @@ int onStart() {
          return(catch("onStart(11) ->FileOpen()"));
 
       // Header schreiben
-      string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetTradeServerDirectory() +")\n"
+      string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetServerDirectory() +")\n"
                     + "#";
       if (FileWrite(hFile, header) < 0) {
          catch("onStart(12) ->FileWrite()");

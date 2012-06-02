@@ -14,7 +14,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   return(SendTick(true));
+   return(Chart.SendTick(true));
 }
 
 

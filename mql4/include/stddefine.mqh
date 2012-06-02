@@ -807,7 +807,7 @@ int init(bool userCall) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsExpert()) {
       if (!IsTesting()) {                                                  // nicht bei REASON_CHARTCHANGE
          if (UninitializeReason() != REASON_CHARTCHANGE)
-            SendTick(false);                                               // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
+            Chart.SendTick(false);                                         // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
       }                                                                    // Message vor Verlassen von init() vom UI-Thread verarbeitet wurde.
    }
 

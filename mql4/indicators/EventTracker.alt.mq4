@@ -134,7 +134,7 @@ int onInit(bool userCall) {
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
-      SendTick(false);
+      Chart.SendTick(false);
 
    return(catch("onInit(6)"));
 }
@@ -202,7 +202,7 @@ int onPositionOpen(int tickets[]) {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
          log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
@@ -245,7 +245,7 @@ int onPositionClose(int tickets[]) {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
          log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
@@ -282,7 +282,7 @@ int CheckBollingerBands() {
       // ggf. SMS verschicken
       if (SMS.Alerts) {
          string message = StringConcatenate(symbolName, ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
-         int error = SendTextMessage(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
+         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(SetLastError(error));
          log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));

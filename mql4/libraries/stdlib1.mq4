@@ -2749,7 +2749,7 @@ int WM_MT4() {
  *
  * @return int - Fehlerstatus
  */
-int SendTick(bool sound=false) {
+int Chart.SendTick(bool sound=false) {
    bool testing, visualMode, testerStopped, testerPaused;
 
    if (IsExpert()) {
@@ -2781,7 +2781,7 @@ int SendTick(bool sound=false) {
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!testing) {
       PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0);
@@ -2798,12 +2798,12 @@ int SendTick(bool sound=false) {
 
 
 /**
- * Gibt den Namen des aktuellen Kurshistory-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
+ * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
  * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig ermitteln.
  *
  * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
-string GetTradeServerDirectory() {
+string GetServerDirectory() {
    // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
    // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart des alten Verzeichnisses.
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
@@ -2829,7 +2829,7 @@ string GetTradeServerDirectory() {
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_empty(catch("GetTradeServerDirectory(1) ->FileOpenHistory(\""+ fileName +"\")")));
+         return(_empty(catch("GetServerDirectory(1) ->FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -2851,7 +2851,7 @@ string GetTradeServerDirectory() {
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(catch("GetTradeServerDirectory(2) ->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+                     return(catch("GetServerDirectory(2) ->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
                   break;
                }
             }
@@ -2859,17 +2859,17 @@ string GetTradeServerDirectory() {
          result = FindNextFileA(hFindDir, wfd);
       }
       if (result == INVALID_HANDLE_VALUE)
-         return(_empty(catch("GetTradeServerDirectory(3) ->kernel32::FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+         return(_empty(catch("GetServerDirectory(3) ->kernel32::FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
       FindClose(hFindDir);
-      //debug("GetTradeServerDirectory()   resolved directory = \""+ directory +"\"");
+      //debug("GetServerDirectory()   resolved directory = \""+ directory +"\"");
    }
 
    int error = GetLastError();
    if (IsError(error))
-      return(_empty(catch("GetTradeServerDirectory(4)", error)));
+      return(_empty(catch("GetServerDirectory(4)", error)));
 
    if (StringLen(directory) == 0)
-      return(_empty(catch("GetTradeServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    // 3.3) Wert cachen
    ArrayResize(cache.directory, 1);
@@ -2886,7 +2886,7 @@ string GetTradeServerDirectory() {
  * @return string - Kurzname
  */
 string ShortAccountCompany() {
-   string server=StringToLower(GetTradeServerDirectory());
+   string server=StringToLower(GetServerDirectory());
 
    if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
    else if (StringStartsWith(server, "alparibroker-"      )) return("Alpari"          );
@@ -6699,7 +6699,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
       return(cache.timezone[0]);
 
    // 3) Timezone-ID ermitteln
-   string timezone, directory=StringToLower(GetTradeServerDirectory());
+   string timezone, directory=StringToLower(GetServerDirectory());
 
    if (StringLen(directory) == 0)
       return("");
@@ -6737,7 +6737,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (StringLen(timezone) == 0)
-         return(_empty(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetTradeServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+         return(_empty(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
    // 4) Timezone-ID cachen
@@ -7897,9 +7897,9 @@ int RemoveChartObjects(string objects[]) {
  *
  * @return int - Fehlerstatus
  */
-int SendTextMessage(string receiver, string message) {
+int SendSMS(string receiver, string message) {
    if (!StringIsDigit(receiver))
-      return(catch("SendTextMessage(1)   invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("SendSMS(1)   invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // TODO: Gateway-Zugangsdaten auslagern
 
@@ -7913,7 +7913,7 @@ int SendTextMessage(string receiver, string message) {
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendTextMessage(1) ->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
+      return(catch("SendSMS(1) ->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
 
    /**
     * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
@@ -7926,7 +7926,7 @@ int SendTextMessage(string receiver, string message) {
     * wget: unable to resolve host address `api.clickatell.com'
     */
 
-   return(catch("SendTextMessage(2)"));
+   return(catch("SendSMS(2)"));
 }
 
 

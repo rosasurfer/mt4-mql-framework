@@ -45,7 +45,7 @@ int onInit(bool userCall) {
 
    // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List"-Window notwendig)
    if (UninitializeReason() == REASON_PARAMETERS)
-      SendTick(false);
+      Chart.SendTick(false);
 
    return(catch("onInit(3)"));
 }

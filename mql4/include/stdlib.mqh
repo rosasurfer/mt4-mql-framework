@@ -7,19 +7,30 @@
 #import "stdlib.ex4"
 
 
-   // MQL-Statusfunktionen
+   // MQL-Status- und Laufzeitumgebungs-Informationen
    bool     IsExpert();
    bool     IsIndicator();
    bool     IsScript();
    bool     IndicatorIsTesting();
    bool     ScriptIsTesting();
-   bool     This.IsTesting();                                        // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
+   bool     This.IsTesting();                   // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
    int      GetApplicationMainWindow();
    int      GetTesterWindow();
    int      GetUIThreadId();
+   string   GetServerDirectory();
+   string   GetServerTimezone();                // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetAccountNumber();
+   string   ShortAccountCompany();
+
+
+   // Terminal-Interaktion
+   int      Menu.Experts(bool enable);
+   int      Chart.Expert.Properties();
+   int      Chart.SendTick(bool sound);
+   int      Tester.Pause();
 
 
    // Arrays
@@ -176,7 +187,6 @@
    datetime GetServerNextSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
 
    string   GetDayOfWeek(datetime time, bool format);
-   string   GetServerTimezone();                                  // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime TimeGMT();
 
 
@@ -343,12 +353,9 @@
 
 
    // sonstiges
-   int      GetAccountNumber();
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
-   string   ShortAccountCompany();
    int      SortTicketsChronological(int tickets[]);
-   string   GetTradeServerDirectory();
 
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
@@ -392,8 +399,7 @@
    int      ForceAlert(string s1, string s2, string s3, string s4, string s5, string s6, string s7, string s8, string s9, string s10, string s11, string s12, string s13, string s14, string s15, string s16, string s17, string s18, string s19, string s20, string s21, string s22, string s23, string s24, string s25, string s26, string s27, string s28, string s29, string s30, string s31, string s32, string s33, string s34, string s35, string s36, string s37, string s38, string s39, string s40, string s41, string s42, string s43, string s44, string s45, string s46, string s47, string s48, string s49, string s50, string s51, string s52, string s53, string s54, string s55, string s56, string s57, string s58, string s59, string s60, string s61, string s62, string s63);
    int      ForceMessageBox(string message, string caption, int flags);
    void     ForceSound(string soundfile);
-   int      SendTextMessage(string receiver, string message);
-   int      SendTick(bool sound);
+   int      SendSMS(string receiver, string message);
 
 
    // toString-Funktionen
@@ -429,12 +435,6 @@
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonToStr(int reason);
    string   WaitForSingleObjectValueToStr(int value);
-
-
-   // UI-Interaktionen
-   int      Menu.Experts(bool enable);
-   int      Chart.Expert.Properties();
-   int      Tester.Pause();
 
 
    // Win32-Funktionen
