@@ -548,7 +548,7 @@
    // erweiterte stdlib Root-Funktionen
    int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, int validBars, int changedBars);
-   int      stdlib_deinit(int whereami, int deinitFlags, int uninitializeReason);
+   int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 
 #import
 

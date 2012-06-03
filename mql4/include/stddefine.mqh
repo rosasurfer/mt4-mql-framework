@@ -672,8 +672,7 @@ bool   ChartInfo.positionChecked,
 
 // globale Variablen, stehen überall zur Verfügung
 string __NAME__;                                            // Name des aktuellen MQL-Programms
-int    __WHEREAMI__;                                        // Funktions-ID des aktuellen Terminalaufrufs: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool   __INIT__;                                            // Terminal hat init() aufgerufen
+int    __WHEREAMI__;                                        // ID der vom Terminal momentan ausgeführten Basis-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool   __STATUS__HISTORY_UPDATE;                            // History-Update wurde getriggert
 bool   __STATUS__INVALID_INPUT;                             // ungültige Parametereingabe im Input-Dialog
 bool   __STATUS__RELAUNCH_INPUT;                            // Anforderung, den Input-Dialog zu laden
@@ -712,7 +711,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       last_error   = NO_ERROR;
-      __INIT__     = true;                                                 // Flag für Tracking von ERR_TERMINAL_NOT_YET_READY
    }
 
 
@@ -731,15 +729,15 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    error = GetLastError();                                                 // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
    if (error == ERR_UNKNOWN_SYMBOL) {                                      // das Symbol kann später evt. noch "auftauchen"
       debug("init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_INIT)));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    }
-   if (IsError(error))        return(_int(catch("init(1)", error), __ifiwas__(FUNC_INIT)));
-   if (TickSize < 0.00000001) return(_int(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA), __ifiwas__(FUNC_INIT)));
+   if (IsError(error))        return(catch("init(1)", error));
+   if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
    // stdlib
    error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error, __ifiwas__(FUNC_INIT)));
+      return(SetLastError(error));
 
 
    // (2) User-spezifische Init-Tasks ausführen
@@ -747,7 +745,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
-         return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_INIT)));
+         return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
       }                                                                    // INIT_TIMEZONE:            @see stdlib_init()
    }                                                                       // INIT_BARS_ON_HIST_UPDATE: noch nicht implementiert
 
@@ -758,7 +756,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
          error = Menu.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
-            return(SetLastError(error, __ifiwas__(FUNC_INIT)));
+            return(SetLastError(error));
       }
                                                                            // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
@@ -770,17 +768,17 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
          ChartInfo.appliedPrice = PRICE_BID;                               // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
          ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
          if (LT(ChartInfo.leverage, 1))
-            return(_int(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE), __ifiwas__(FUNC_INIT)));
+            return(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          error = ChartInfo.CreateLabels();
          if (IsError(error))
-            return(_int(error, __ifiwas__(FUNC_INIT)));
+            return(error);
       }
    }
 
 
    // (4) User-spezifische init()-Routinen aufrufen
    if (onInit() == -1)                                                     // User-Routinen *können*, müssen aber nicht implementiert werden.
-      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     // Preprocessing-Hook
+      return(last_error);                                                  // Preprocessing-Hook
                                                                            //
    switch (UninitializeReason()) {                                         // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
       case REASON_UNDEFINED  : error = onInitUndefined();       break;     //   bricht init() *nicht* ab.
@@ -792,11 +790,11 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
    }                                                                       //
    if (error == -1)                                                        //
-      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     //
+      return(last_error);                                                  //
                                                                            //
    afterInit();                                                            // Postprocessing-Hook
    if (IsLastError() || __STATUS__CANCELLED)                               //
-      return(_int(last_error, __ifiwas__(FUNC_INIT)));                     //
+      return(last_error);                                                  //
 
 
    // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern (so spät wie möglich) selbst einen Tick schicken
@@ -808,80 +806,27 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
    catch("init(4)");
-   return(_int(last_error, __ifiwas__(FUNC_INIT)));
+   return(last_error);
 }
 
-
-/**
- * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
- * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
- *
- * @return int - Fehlerstatus
- */
-int deinit() {
-   if (IsLibrary())                                                        // in Libraries vorerst nichts tun
-      return(NO_ERROR);
-
-   if (__WHEREAMI__ == NULL)                                               // Aufruf durch Terminal
-      __WHEREAMI__ = FUNC_DEINIT;
-
-
-   // (1) User-spezifische Deinit-Tasks ausführen
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
-   int error = stdlib_deinit(__WHEREAMI__, deinitFlags, UninitializeReason());
-   if (IsError(error))
-      SetLastError(error);
-
-
-   // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onDeinit() == -1)                                                   // Preprocessing-Hook
-      return(_int(last_error, __ifiwas__(FUNC_DEINIT)));                   //
-                                                                           // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-   switch (UninitializeReason()) {                                         //   bricht deinit() *nicht* ab.
-      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   //
-      case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
-      case REASON_REMOVE     : error = onDeinitRemove();          break;   //
-      case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
-      case REASON_PARAMETERS : error = onDeinitParameterChange(); break;   //
-      case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;   //
-      case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   //
-   }                                                                       //
-   if (error == -1)                                                        //
-      return(_int(last_error, __ifiwas__(FUNC_DEINIT)));                   //
-                                                                           //
-   afterDeinit();                                                          // Postprocessing-Hook
-
-
-   return(_int(last_error, __ifiwas__(FUNC_DEINIT)));
-}
-
+int testvar;
 
 /**
  * Globale start()-Funktion für alle MQL-Programme.
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() wurde nicht fehlerfrei ausgeführt, bricht start() ab.
- *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode last_error vor Abarbeitung zurückgesetzt.
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_YET_READY zurück,
+ *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
+ *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
- * - Erfolgt der Aufruf nach einem vorherigem start()-Aufruf (weiterer Tick), wird der letzte Errorcode last_error in
- *   prev_error gespeichert und vor Abarbeitung zurückgesetzt.
+ * - Der letzte Errorcode 'last_error' wird in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__WHEREAMI__ != NULL) {
-      static bool done;                                              // permanent wiederholten Aufruf verhindern
-      if (!done) {
-         catch("start()   __WHEREAMI__ = "+ __whereamiToStr(__WHEREAMI__), ERR_WRONG_JUMP);
-         done = true;
-      }
-      return(last_error);
-   }
-   __WHEREAMI__ = FUNC_START;
-
    if (__STATUS__CANCELLED)
-      return(_int(NO_ERROR, __ifiwas__(FUNC_START)));
+      return(NO_ERROR);
 
    int error;
 
@@ -890,37 +835,40 @@ int start() {
 
 
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
-   if (__INIT__) {
+   if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {                                           // init() ist mit Fehler zurückgekehrt
          if (IsScript() || last_error!=ERR_TERMINAL_NOT_YET_READY)
-            return(_int(last_error, __ifiwas__(FUNC_START)));
-         error = init();
-         if (IsError(error))                                         // Indikatoren und EA's können init() erneut aufrufen
-            return(_int(error, __ifiwas__(FUNC_START)));             // erneuter Fehler
+            return(last_error);
+         __WHEREAMI__ = FUNC_START;
+         error = init();                                             // Indikatoren und EA's können init() erneut aufrufen
+         if (IsError(error)) {                                       // erneuter Fehler
+            __WHEREAMI__ = FUNC_INIT;
+            return(error);
+         }
       }
-      __INIT__   = false;                                            // init() war (ggf. nach erneutem Aufruf) erfolgreich
-      last_error = NO_ERROR;
+      last_error = NO_ERROR;                                         // init() war (ggf. nach erneutem Aufruf) erfolgreich
       ValidBars  = 0;
    }
    else {
       prev_error = last_error;                                       // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
       if (prev_error == ERR_TERMINAL_NOT_YET_READY)
-         ValidBars = 0;                                              // wenn das Terminal beim letzten start()-Aufruf noch nicht bereit war
+         ValidBars = 0;                                              // falls das Terminal beim vorherigen start()-Aufruf noch nicht bereit war
    }
+   __WHEREAMI__ = FUNC_START;
 
 
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      return(_int(start.RelaunchInputDialog(), __ifiwas__(FUNC_START)));
+      return(start.RelaunchInputDialog());
    }
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
       debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY, __ifiwas__(FUNC_START)));
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    }
 
 
@@ -932,16 +880,16 @@ int start() {
    */
 
 
-   // (3) ChangedBars berechnen
+   // (5) ChangedBars berechnen
    ChangedBars = Bars - ValidBars;
 
 
-   // (4) stdLib benachrichtigen
+   // (6) stdLib benachrichtigen
    if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError(), __ifiwas__(FUNC_START)));
+      return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (5) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
+   // (7) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
    if (IsVisualMode()) {
       error = NO_ERROR;
       ChartInfo.positionChecked = false;
@@ -951,18 +899,59 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (IsError(error))
-         return(_int(last_error, __ifiwas__(FUNC_START)));           // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
+      if (IsError(error))                                            // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
+         return(last_error);
    }
 
 
-   // (6) neue Main-Funktion aufrufen
+   // (8) neue Main-Funktion aufrufen
    if (IsScript()) error = onStart();
    else            error = onTick();
 
-   __ifiwas__(FUNC_START);
    return(error);
    DummyCalls();                                                     // unterdrücken unnütze Compilerwarnungen
+}
+
+
+/**
+ * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
+ * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
+ *
+ * @return int - Fehlerstatus
+ */
+int deinit() {
+   __WHEREAMI__ = FUNC_DEINIT;
+
+   if (IsLibrary())                                                        // in Libraries vorerst nichts tun
+      return(NO_ERROR);
+
+
+   // (1) User-spezifische Deinit-Tasks ausführen
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   int error = stdlib_deinit(deinitFlags, UninitializeReason());
+   if (IsError(error))
+      SetLastError(error);
+
+
+   // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
+   if (onDeinit() == -1)                                                   // Preprocessing-Hook
+      return(last_error);                                                  //
+                                                                           // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+   switch (UninitializeReason()) {                                         //   bricht deinit() *nicht* ab.
+      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   //
+      case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
+      case REASON_REMOVE     : error = onDeinitRemove();          break;   //
+      case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
+      case REASON_PARAMETERS : error = onDeinitParameterChange(); break;   //
+      case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;   //
+      case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   //
+   }                                                                       //
+   if (error == -1)                                                        //
+      return(last_error);                                                  //
+                                                                           //
+   afterDeinit();                                                          // Postprocessing-Hook
+
+   return(last_error);
 }
 
 
@@ -1615,22 +1604,6 @@ bool GT(double double1, double double2, int digits=8) {
    if (EQ(double1, double2, digits))
       return(false);
    return(double1 > double2);
-}
-
-
-/**
- * Setzt die interne Variable __WHEREAMI__ *nur dann* zurück, wenn sie der angegebenen ID entspricht.
- *
- * @param  int id - Root-Function id: FUNC_INIT | FUNC_START | FUNC_DEINIT
- *
- * @return bool - ob die interne Variable __WHEREAMI__ der angegebenen ID entsprach
- */
-bool __ifiwas__(int id) {
-   if (__WHEREAMI__ == id) {
-      __WHEREAMI__ = NULL;
-      return(true);
-   }
-   return(false);
 }
 
 

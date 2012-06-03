@@ -42,7 +42,7 @@ int __DEINIT_FLAGS__[];
  *
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
- * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
@@ -144,14 +144,13 @@ int stdlib_start(int tick, int validBars, int changedBars) {
 /**
  * Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Programms.
  *
- * @param  int whereami           - ID der vom Terminal ausgeführten Root-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
  * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int stdlib_deinit(int whereami, int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__ = whereami;
+int stdlib_deinit(int deinitFlags, int uninitializeReason) {
+   __WHEREAMI__ = FUNC_DEINIT;
    return(NO_ERROR);
 }
 
@@ -292,7 +291,7 @@ string __whereamiToStr(int id) {
       case FUNC_START : return("FUNC_START" );
       case FUNC_DEINIT: return("FUNC_DEINIT");
    }
-   return(_empty(catch("whereamiToStr()  illegal parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return("unknown ("+ id +")");
 }
 
 
