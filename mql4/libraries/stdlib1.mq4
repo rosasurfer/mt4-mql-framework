@@ -99,12 +99,12 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
       if (IsTesting()) {                                             // nur im Tester
          error = ResetLastError();
-         int hWnd = GetTesterWindow();                               // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-         if (hWnd == 0) {
+         int hWndTester = GetTesterWindow();                         // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
+         if (hWndTester == 0) {
             if (IsLastError())
                return(last_error);
          }                                                           // TODO: Warten, bis die Titelzeile gesetzt ist (der startende Test kann die Abarbeitung
-         else if (!SetWindowTextA(hWnd, "Tester"))                   //       der MessageQueue des UI-Threads wesentlich verzögern).
+         else if (!SetWindowTextA(hWndTester, "Tester"))             //       der MessageQueue des UI-Threads wesentlich verzögern).
             return(catch("stdlib_init(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
          SetLastError(error);
 
@@ -217,20 +217,21 @@ int stdlib_PeekLastError() {
 
 
 /**
- * Ruft den Input-Dialog des EA's des aktuellen Charts auf.
+ * Hinterlegt in der Message-Queue des aktuellen Charts eine Nachricht zum Aufruf des Input-Dialogs des EA's.
  *
  * @return int - Fehlerstatus
  */
 int Chart.Expert.Properties() {
-   if (         IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
-   if (IndicatorIsTesting()) return(catch("Chart.Expert.Properties(2)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
-   if (   ScriptIsTesting()) return(catch("Chart.Expert.Properties(3)", ERR_FUNC_NOT_ALLOWED_IN_TESTING));
+   if (This.IsTesting())
+      return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("Chart.Expert.Properties(4) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.Expert.Properties(2) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0);
+   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
+      return(catch("Chart.Expert.Properties(3) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
    return(NO_ERROR);
 }
 
@@ -409,7 +410,7 @@ bool IndicatorIsTesting() {
       return(result);
 
    if (IsIndicator())
-      result = (GetCurrentThreadId() != GetUIThreadId());
+      result = GetCurrentThreadId() != GetUIThreadId();
 
    done = true;
    return(result);
@@ -1162,25 +1163,26 @@ int SortTicketsChronological(int& tickets[]) {
 
 
 /**
- * Aktiviert oder deaktiviert die Ausführung von Expert Advisern (Aufruf von start() bei Eintreffen von Ticks).
+ * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
+ * Wird üblicherweise aus der init()-Funktion aufgerufen.
  *
- * @param  bool enable - gewünschter Status
+ * @param  bool enable - gewünschter Status: On/Off
  *
  * @return int - Fehlerstatus
  */
 int Menu.Experts(bool enable) {
-   if (IsTesting() || IndicatorIsTesting() || ScriptIsTesting())
+   if (This.IsTesting())
       return(_NO_ERROR(debug("Menu.Experts()   skipping in Tester")));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
-   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE
+   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
    int hWnd = GetApplicationMainWindow();
    if (hWnd == 0)
       return(last_error);
 
    if (enable) {
-      if (!IsExpertEnabled())                                        // TODO: Wann ist PostMessage(), wann SendMessage() vorzuziehen ???
+      if (!IsExpertEnabled())
          SendMessageA(hWnd, WM_COMMAND, ID_MENU_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
@@ -2817,7 +2819,8 @@ int Chart.SendTick(bool sound=false) {
       return(catch("Chart.SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!testing) {
-      PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0);
+      if (!PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0))
+         return(catch("Chart.SendTick(2) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    }
    else if (visualMode && !testerStopped && testerPaused) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);             // Bedingung kann nur durch Scripte erfüllt werden (EA's und Indikatoren sind niemals "paused")
@@ -5366,9 +5369,8 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
       return(0);
 
    // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage().
-   if      (         IsTesting()) cached.account = account;
-   else if (IndicatorIsTesting()) cached.account = account;
-   else if (   ScriptIsTesting()) cached.account = account;
+   if (This.IsTesting())
+      cached.account = account;
 
    return(account);
 }
@@ -6068,7 +6070,7 @@ string ErrorDescription(int error) {
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056 incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("function not allowed in test mode"                             ); // 4059
+      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in test mode"                             ); // 4059
       case ERR_FUNCTION_NOT_CONFIRMED     : return("function not confirmed"                                        ); // 4060
       case ERR_SEND_MAIL_ERROR            : return("send mail error"                                               ); // 4061
       case ERR_STRING_PARAMETER_EXPECTED  : return("string parameter expected"                                     ); // 4062
@@ -6204,7 +6206,7 @@ string ErrorToStr(int error) {
       case ERR_INCOMPATIBLE_ARRAYS        : return("ERR_INCOMPATIBLE_ARRAYS"        ); // 4056
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("ERR_GLOBAL_VARIABLES_PROCESSING"); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("ERR_GLOBAL_VARIABLE_NOT_FOUND"  ); // 4058
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTING: return("ERR_FUNC_NOT_ALLOWED_IN_TESTING"); // 4059
+      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("ERR_FUNC_NOT_ALLOWED_IN_TESTER" ); // 4059
       case ERR_FUNCTION_NOT_CONFIRMED     : return("ERR_FUNCTION_NOT_CONFIRMED"     ); // 4060
       case ERR_SEND_MAIL_ERROR            : return("ERR_SEND_MAIL_ERROR"            ); // 4061
       case ERR_STRING_PARAMETER_EXPECTED  : return("ERR_STRING_PARAMETER_EXPECTED"  ); // 4062
@@ -6879,16 +6881,9 @@ int GetTesterWindow() {
 
    // (3) bei ausbleibenden Erfolg Umgebung prüfen und nur ggf. Exception werfen (das Tester-Fenster könnte noch nicht existieren)
    if (hWndTester == 0) {
-      if (IsExpert()) {
-         if (IsTesting())
-            return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
-      }
-      else if (IndicatorIsTesting()) {
-         return(_NULL(catch("GetTesterWindow(5)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
-      }
-      else if (ScriptIsTesting()) {
-         return(_NULL(catch("GetTesterWindow(6)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
-      }
+      if (This.IsTesting())
+         return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
+
       log("GetTesterWindow()   cannot find Strategy Tester window");
    }
 
