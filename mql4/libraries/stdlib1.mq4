@@ -6112,6 +6112,7 @@ string ErrorDescription(int error) {
       case ERR_FILE_NOT_FOUND             : return("file not found"                                                ); // 5007
       case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                             ); // 5008
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                          ); // 5009
+      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                     ); // 5010
    }
    return("unknown error");
 }
@@ -6248,6 +6249,7 @@ string ErrorToStr(int error) {
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
       case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
+      case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); // 5010
    }
    return(error);
 }

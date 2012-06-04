@@ -647,6 +647,7 @@
 #define ERR_FILE_NOT_FOUND                                         5007    // file not found
 #define ERR_CANCELLED_BY_USER                                      5008    // execution cancelled by user
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
+#define ERR_INVALID_COMMAND                                        5010    // invalid or unknow command
 
 
 // Variablen für ChartInfo-Block (siehe unten)
