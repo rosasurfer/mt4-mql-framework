@@ -185,6 +185,21 @@ int onStart() {
       PlaySound("notify.wav");
       MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
+
+
+   ArrayResize(tickets,      0);
+   ArrayResize(types,        0);
+   ArrayResize(symbols,      0);
+   ArrayResize(units,        0);
+   ArrayResize(openTimes,    0);
+   ArrayResize(closeTimes,   0);
+   ArrayResize(openPrices,   0);
+   ArrayResize(closePrices,  0);
+   ArrayResize(commissions,  0);
+   ArrayResize(swaps,        0);
+   ArrayResize(profits,      0);
+   ArrayResize(magicNumbers, 0);
+   ArrayResize(comments,     0);
    return(catch("onStart(10)"));
 }
 
@@ -211,7 +226,7 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
       return(SetLastError(ERR_RUNTIME_ERROR));
 
    // Serverantwort zeilenweise einlesen
-   string response[];
+   string response[], values[];
    if (FileReadLines(filename +".response", response, false) == -1)           // FileReadLines() erwartet relativen Pfad
       return(SetLastError(ERR_RUNTIME_ERROR));
 
@@ -222,7 +237,6 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
       lpErrorMsg = "Server error, try again later.";
    }
    else {
-      string values[];
       Explode(response[0], ":", values, NULL);
       string strErrorCode = StringTrim(values[0]);
 
@@ -238,8 +252,11 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
    }
    //log("UploadDataFile()   result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
 
-   int error = catch("UploadDataFile()");
-   if (error != NO_ERROR)
-      return(error);
+
+   ArrayResize(response, 0);
+   ArrayResize(values,   0);
+
+   if (IsError(catch("UploadDataFile()")))
+      return(last_error);
    return(errorCode);
 }

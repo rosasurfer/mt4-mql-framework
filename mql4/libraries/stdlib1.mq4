@@ -114,7 +114,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
             return(last_error);
          }
       }
-
+      ArrayResize(reasons, 0);
    }
 
    return(catch("stdlib_init(4)"));
@@ -393,6 +393,10 @@ string ExecutionToStr(double execution[], bool debugOutput=false) {
 
    string result = StringConcatenate("{", JoinStrings(strings, ", "), "}");
 
+
+   ArrayResize(debugOut, 0);
+   ArrayResize(strings,  0);
+
    if (IsError(catch("ExecutionToStr()")))
       return("");
    return(result);
@@ -650,11 +654,13 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    }
 
    int length;
-
    if (chars == 0) length = ArrayResize(names, 0);                   // keine Sections gefunden (File nicht gefunden oder leer)
    else            length = ExplodeStrings(buffer, names);
 
-   if (catch("GetPrivateProfileSectionNames") != NO_ERROR)
+
+   ArrayResize(buffer, 0);
+
+   if (IsError(catch("GetPrivateProfileSectionNames")))
       return(-1);
    return(length);
 }
@@ -748,6 +754,10 @@ string GetTerminalVersion() {
    // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
+
+   ArrayResize(filename,   0);
+   ArrayResize(infoBuffer, 0);
+
    if (IsError(catch("GetTerminalVersion(6)")))
       return("");
    return(version);
@@ -778,6 +788,9 @@ int GetTerminalBuild() {
       return(_ZERO(catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
    build = StrToInteger(strings[size-1]);
+
+
+   ArrayResize(strings, 0);
 
    if (IsError(catch("GetTerminalBuild(3)")))
       build = 0;
@@ -1158,6 +1171,7 @@ int SortTicketsChronological(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
+   ArrayResize(data, 0);
    return(catch("SortTicketsChronological(3)", NULL, O_POP));
 }
 
@@ -1231,6 +1245,9 @@ string CreateLegendLabel(string name) {
    else GetLastError();
    ObjectSetText(label, " ");
 
+
+   ArrayResize(substrings, 0);
+
    if (IsError(catch("CreateLegendLabel()")))
       return("");
    return(label);
@@ -1272,6 +1289,9 @@ int RepositionLegend() {
          ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
       }
    }
+
+   ArrayResize(legends,    0);
+   ArrayResize(yDistances, 0);
    return(catch("RepositionLegend()"));
 }
 
@@ -2747,6 +2767,11 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    //debug("GetWin32ShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
+
+   ArrayResize(buffer,    0);
+   ArrayResize(chars,     0);
+   ArrayResize(lfnBuffer, 0);
+
    if (IsError(catch("GetWin32ShortcutTarget(13)")))
       return("");
    return(target);
@@ -2772,7 +2797,6 @@ int WM_MT4() {
 
    if (id == -1)
       return(0);
-
    return(id);
 }
 
@@ -3109,7 +3133,8 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    if (i > 0)
       ArrayCopy(result, lines);
 
-   return(ifInt(catch("FileReadLines(6)")==NO_ERROR, i, -1));
+   ArrayResize(lines, 0);
+   return(ifInt(IsError(catch("FileReadLines(6)")), -1, i));
 }
 
 
@@ -3679,25 +3704,6 @@ string GetLongSymbolNameStrict(string symbol) {
 
 
 /**
- *
- */
-void trace(string script, string function) {
-   string stack[];
-   int    stackSize = ArraySize(stack);
-
-   if (script != "-1") {
-      ArrayResize(stack, stackSize+1);
-      stack[stackSize] = StringConcatenate(script, "::", function);
-   }
-   else if (stackSize > 0) {
-      ArrayResize(stack, stackSize-1);
-   }
-
-   Print("trace()    ", script, "::", function, "   stackSize=", ArraySize(stack));
-}
-
-
-/**
  * Konvertiert einen Boolean in den String "true" oder "false".
  *
  * @param  bool value
@@ -3732,7 +3738,7 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-
+   string result;
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -3754,7 +3760,11 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
          }
          strValuesX[x] = BoolsToStr(valuesY, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+
+      ArrayResize(strValuesX, 0);
+      ArrayResize(   valuesY, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -3774,7 +3784,12 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+
+      ArrayResize(strValuesX, 0);
+      ArrayResize(strValuesY, 0);
+      ArrayResize(   valuesZ, 0);
+      return(result);
    }
 
    return(_empty(catch("BoolsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -3803,7 +3818,6 @@ datetime TimeGMT() {
    int error = GetLastError();
    if (IsError(error))
       return(_int(-1, catch("TimeGMT()", error)));
-
    return(time);
 }
 
@@ -3852,10 +3866,8 @@ double MathModFix(double a, double b) {
  * @return bool
  */
 bool StringStartsWith(string object, string prefix) {
-   if (StringLen(prefix) == 0) {
-      catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (StringLen(prefix) == 0)
+      return(_false(catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(StringFind(object, prefix) == 0);
 }
 
@@ -3869,10 +3881,8 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringIStartsWith(string object, string prefix) {
-   if (StringLen(prefix) == 0) {
-      catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (StringLen(prefix) == 0)
+      return(_false(catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
@@ -4499,6 +4509,8 @@ string IntegerToHexStr(int integer) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
+
+   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4529,6 +4541,8 @@ string ByteToHexStr(int byte) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
+
+   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4559,6 +4573,8 @@ string WordToHexStr(int word) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
+
+   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4581,6 +4597,8 @@ string DwordToHexStr(int dword) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
+
+   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4892,10 +4910,10 @@ bool EventListener.PositionOpen(int& tickets[], int flags=NULL) {
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
 
-   static int      accountNumber[1];
+   static int      accountNumber  [1];
    static datetime accountInitTime[1];                                                    // GMT-Zeit
-   static int      knownPendings[][2];                                                    // die bekannten pending Orders und ihr Typ
-   static int      knownPositions[];                                                      // die bekannten Positionen
+   static int      knownPendings  [][2];                                                  // die bekannten pending Orders und ihr Typ
+   static int      knownPositions [];                                                     // die bekannten Positionen
 
    if (accountNumber[0] == 0) {                                                           // 1. Aufruf
       accountNumber[0]   = account;
@@ -5312,7 +5330,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    // vor evt. Fehler-Rückkehr auf jeden Fall Datei schließen
    FileClose(hFile);
 
-   if (error != NO_ERROR)     // ret
+   if (IsError(error))        // ret
       return(error);
 
 
@@ -5326,6 +5344,8 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
       //log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
 
+   ArrayResize(header, 0);
+   ArrayResize(result, 0);
    return(catch("GetAccountHistory(7)"));
 }
 
@@ -5457,6 +5477,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    ArrayResize(cache.values, 0); ArrayCopy(cache.values, values);
    log("GetBalanceHistory()   caching "+ ArraySize(times) +" balance values for account "+ account);
 
+   ArrayResize(data, 0);
    return(catch("GetBalanceHistory(5)"));
 }
 
@@ -5474,7 +5495,11 @@ string GetComputerName() {
    if (!GetComputerNameA(buffer[0], lpBufferSize))
       return(_empty(catch("GetComputerName() ->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   return(buffer[0]);
+   string result = buffer[0];
+
+   ArrayResize(buffer,       0);
+   ArrayResize(lpBufferSize, 0);
+   return(result);
 }
 
 
@@ -5505,7 +5530,9 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   if (catch("GetConfigBool()") != NO_ERROR)
+   ArrayResize(buffer, 0);
+
+   if (IsError(catch("GetConfigBool()")))
       return(false);
    return(result);
 }
@@ -5530,6 +5557,8 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
+
+   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetConfigDouble()")))
       return(0);
@@ -5588,17 +5617,22 @@ bool IsLocalConfigKey(string section, string key) {
    string keys[];
    GetPrivateProfileKeys(GetLocalConfigPath(), section, keys);
 
+   bool result;
    int size = ArraySize(keys);
-   if (size == 0)
-      return(false);
 
-   key = StringToLower(key);
+   if (size != 0) {
+      key = StringToLower(key);
 
-   for (int i=0; i < size; i++) {
-      if (key == StringToLower(keys[i]))
-         return(true);
+      for (int i=0; i < size; i++) {
+         if (key == StringToLower(keys[i])) {
+            result = true;
+            break;
+         }
+      }
    }
-   return(false);
+
+   ArrayResize(keys, 0);
+   return(result);
 }
 
 
@@ -5614,17 +5648,22 @@ bool IsGlobalConfigKey(string section, string key) {
    string keys[];
    GetPrivateProfileKeys(GetGlobalConfigPath(), section, keys);
 
+   bool result;
    int size = ArraySize(keys);
-   if (size == 0)
-      return(false);
 
-   key = StringToLower(key);
+   if (size != 0) {
+      key = StringToLower(key);
 
-   for (int i=0; i < size; i++) {
-      if (key == StringToLower(keys[i]))
-         return(true);
+      for (int i=0; i < size; i++) {
+         if (key == StringToLower(keys[i])) {
+            result = true;
+            break;
+         }
+      }
    }
-   return(false);
+
+   ArrayResize(keys, 0);
+   return(result);
 }
 
 
@@ -5718,7 +5757,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   if (catch("GetGlobalConfigBool()") != NO_ERROR)
+   ArrayResize(buffer, 0);
+
+   if (IsError(catch("GetGlobalConfigBool()")))
       return(false);
    return(result);
 }
@@ -5740,6 +5781,8 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
+
+   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetGlobalConfigDouble()")))
       return(0);
@@ -5878,9 +5921,12 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
+   string result = buffer[0];
+   ArrayResize(buffer, 0);
+
    if (IsError(catch("GetPrivateProfileString()")))
       return("");
-   return(buffer[0]);
+   return(result);
 }
 
 
@@ -5908,7 +5954,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   if (catch("GetLocalConfigBool()") != NO_ERROR)
+   ArrayResize(buffer, 0);
+
+   if (IsError(catch("GetLocalConfigBool()")))
       return(false);
    return(result);
 }
@@ -5930,6 +5978,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
+   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetLocalConfigDouble()")))
       return(0);
@@ -6322,9 +6371,10 @@ int GetLocalToGMTOffset() {
       offset *= -60;
    }
 
-   if (catch("GetLocalToGMTOffset()") != NO_ERROR)
-      return(EMPTY_VALUE);
+   ArrayResize(tzi, 0);
 
+   if (IsError(catch("GetLocalToGMTOffset()")))
+      return(EMPTY_VALUE);
    return(offset);
 }
 
@@ -6829,6 +6879,7 @@ int GetApplicationMainWindow() {
    }
    hWnd = hWndNext;
 
+   ArrayResize(processId, 0);
    return(hWnd);
 }
 
@@ -6889,6 +6940,7 @@ int GetTesterWindow() {
       log("GetTesterWindow()   cannot find Strategy Tester window");
    }
 
+   ArrayResize(processId, 0);
    return(hWndTester);
 }
 
@@ -6984,7 +7036,10 @@ string GetWindowText(int hWnd) {
       // GetLastWin32Error() prüfen, hWnd könnte ungültig sein
    }
 
-   return(buffer[0]);
+   string result = buffer[0];
+   ArrayResize(buffer, 0);
+
+   return(result);
 }
 
 
@@ -7010,7 +7065,10 @@ string GetClassName(int hWnd) {
    if (chars == 0)
       return(_empty(catch("GetClassName() ->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   return(buffer[0]);
+   string result = buffer[0];
+   ArrayResize(buffer, 0);
+
+   return(result);
 }
 
 
@@ -7109,10 +7167,8 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
    double   values[]; ArrayResize(values, 0);
 
    int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (in times[0] stehen die ältesten Werte)
-   if (error != NO_ERROR) {
-      catch("iAccountBalanceSeries(1)");
+   if (IsError(error))
       return(error);
-   }
 
    int bar, lastBar, historySize=ArraySize(values);
 
@@ -7142,6 +7198,8 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
       buffer[bar] = buffer[lastBar];
    }
 
+   ArrayResize(times,  0);
+   ArrayResize(values, 0);
    return(catch("iAccountBalanceSeries(2)"));
 }
 
@@ -7160,10 +7218,8 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (time < 0) {
-      catch("iBarShiftPrevious(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
-   }
+   if (time < 0)
+      return(_int(EMPTY_VALUE, catch("iBarShiftPrevious(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Datenreihe holen
    datetime times[];
@@ -7181,7 +7237,9 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
       }
    }
 
-   if (error != NO_ERROR) {
+   ArrayResize(times, 0);
+
+   if (IsError(error)) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftPrevious(2)", error);
@@ -7205,10 +7263,8 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*thr
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (time < 0) {
-      catch("iBarShiftNext(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(EMPTY_VALUE);
-   }
+   if (time < 0)
+      return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
@@ -7232,7 +7288,9 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*thr
       }
    }
 
-   if (error != NO_ERROR) {
+   ArrayResize(times, 0);
+
+   if (IsError(error)) {
       last_error = error;
       if (error != ERR_HISTORY_UPDATE)
          catch("iBarShiftNext(2)", error);
@@ -7290,7 +7348,10 @@ string JoinBools(bool values[], string separator) {
       else           strings[i] = "false";
    }
 
-   return(JoinStrings(strings, separator));
+   string result = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
+   return(result);
 }
 
 
@@ -7317,7 +7378,10 @@ string JoinDoubles(double values[], string separator) {
          return("");
    }
 
-   return(JoinStrings(strings, separator));
+   string result = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
+   return(result);
 }
 
 
@@ -7365,7 +7429,7 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-
+   string result;
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -7387,7 +7451,10 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
          }
          strValuesX[x] = DoublesToStr(valuesY, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+      ArrayResize(strValuesX, 0);
+      ArrayResize(   valuesY, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -7407,7 +7474,11 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+      ArrayResize(strValuesX, 0);
+      ArrayResize(strValuesY, 0);
+      ArrayResize(   valuesZ, 0);
+      return(result);
    }
 
    return(_empty(catch("DoublesToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -7438,11 +7509,15 @@ string RatesToStr(double values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], PriceFormat);
-      if (StringLen(strings[i]) == 0)
+      if (StringLen(strings[i]) == 0) {
+         ArrayResize(strings, 0);
          return("");
+      }
    }
 
    string joined = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7473,11 +7548,15 @@ string MoneysToStr(double values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], ".2");
-      if (StringLen(strings[i]) == 0)
+      if (StringLen(strings[i]) == 0) {
+         ArrayResize(strings, 0);
          return("");
+      }
    }
 
    string joined = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7505,7 +7584,9 @@ string JoinInts(int values[], string separator) {
       strings[i] = values[i];
    }
 
-   return(JoinStrings(strings, separator));
+   string result = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+   return(result);
 }
 
 
@@ -7550,6 +7631,7 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result;
 
 
    // 1-dimensionales Array
@@ -7572,7 +7654,10 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
          }
          strValuesX[x] = IntsToStr(valuesY, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+      ArrayResize(strValuesX, 0);
+      ArrayResize(   valuesY, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -7592,7 +7677,11 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
+      ArrayResize(strValuesX, 0);
+      ArrayResize(strValuesY, 0);
+      ArrayResize(   valuesZ, 0);
+      return(result);
    }
 
    return(_empty(catch("IntsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -7628,6 +7717,8 @@ string TimesToStr(datetime values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7661,6 +7752,8 @@ string CharsToStr(int values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7690,11 +7783,15 @@ string OperationTypesToStr(int values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = OperationTypeToStr(values[i]);
-      if (StringLen(strings[i]) == 0)
+      if (StringLen(strings[i]) == 0) {
+         ArrayResize(strings, 0);
          return("");
+      }
    }
 
    string joined = JoinStrings(strings, separator);
+   ArrayResize(strings, 0);
+
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -8027,10 +8124,8 @@ datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
  * @return bool
  */
 bool StringContains(string object, string substring) {
-   if (StringLen(substring) == 0) {
-      catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (StringLen(substring) == 0)
+      return(_false(catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(StringFind(object, substring) != -1);
 }
 
@@ -8044,10 +8139,8 @@ bool StringContains(string object, string substring) {
  * @return bool
  */
 bool StringIContains(string object, string substring) {
-   if (StringLen(substring) == 0) {
-      catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(false);
-   }
+   if (StringLen(substring) == 0)
+      return(_false(catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
 
@@ -8308,6 +8401,7 @@ bool IsFile(string pathName) {
          FindClose(hSearch);
          result = !wfd.FileAttribute.Directory(wfd);
       }
+      ArrayResize(wfd, 0);
    }
 
    catch("IsFile()");
@@ -8334,6 +8428,7 @@ bool IsDirectory(string pathName) {
          FindClose(hSearch);
          result = wfd.FileAttribute.Directory(wfd);
       }
+      ArrayResize(wfd, 0);
    }
 
    catch("IsDirectory()");
@@ -8534,7 +8629,6 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
    int error = GetLastError();
    if (IsError(error))
       return(_int(-1, catch("HSVValuesToRGBColor(4)", error)));
-
    return(rgb);
 }
 
@@ -8588,6 +8682,8 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 
                // zurück nach RGB konvertieren
                color result = HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]);
+
+               ArrayResize(hsv, 0);
 
                int error = GetLastError();
                if (IsError(error))
@@ -8667,6 +8763,7 @@ string DoubleToStrEx(double value, int digits) {
    if (isNegative)
       result = StringConcatenate("-", result);
 
+   ArrayResize(decimals, 0);
    return(result);
 }
 
