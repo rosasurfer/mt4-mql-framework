@@ -114,7 +114,6 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
             return(last_error);
          }
       }
-      ArrayResize(reasons, 0);
    }
 
    return(catch("stdlib_init(4)"));
@@ -391,15 +390,9 @@ string ExecutionToStr(double execution[], bool debugOutput=false) {
       }
    }
 
-   string result = StringConcatenate("{", JoinStrings(strings, ", "), "}");
-
-
-   ArrayResize(debugOut, 0);
-   ArrayResize(strings,  0);
-
    if (IsError(catch("ExecutionToStr()")))
       return("");
-   return(result);
+   return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
 }
 
 
@@ -657,9 +650,6 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    if (chars == 0) length = ArrayResize(names, 0);                   // keine Sections gefunden (File nicht gefunden oder leer)
    else            length = ExplodeStrings(buffer, names);
 
-
-   ArrayResize(buffer, 0);
-
    if (IsError(catch("GetPrivateProfileSectionNames")))
       return(-1);
    return(length);
@@ -755,9 +745,6 @@ string GetTerminalVersion() {
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
 
-   ArrayResize(filename,   0);
-   ArrayResize(infoBuffer, 0);
-
    if (IsError(catch("GetTerminalVersion(6)")))
       return("");
    return(version);
@@ -788,9 +775,6 @@ int GetTerminalBuild() {
       return(_ZERO(catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
    build = StrToInteger(strings[size-1]);
-
-
-   ArrayResize(strings, 0);
 
    if (IsError(catch("GetTerminalBuild(3)")))
       build = 0;
@@ -1131,6 +1115,7 @@ int SortTicketsChronological(int& tickets[]) {
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
       return(NO_ERROR);
+
    int data[][2]; ArrayResize(data, sizeOfTickets);
 
    OrderPush("SortTicketsChronological(1)");
@@ -1171,7 +1156,6 @@ int SortTicketsChronological(int& tickets[]) {
       tickets[i] = data[i][1];
    }
 
-   ArrayResize(data, 0);
    return(catch("SortTicketsChronological(3)", NULL, O_POP));
 }
 
@@ -1245,9 +1229,6 @@ string CreateLegendLabel(string name) {
    else GetLastError();
    ObjectSetText(label, " ");
 
-
-   ArrayResize(substrings, 0);
-
    if (IsError(catch("CreateLegendLabel()")))
       return("");
    return(label);
@@ -1289,9 +1270,6 @@ int RepositionLegend() {
          ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
       }
    }
-
-   ArrayResize(legends,    0);
-   ArrayResize(yDistances, 0);
    return(catch("RepositionLegend()"));
 }
 
@@ -2767,11 +2745,6 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    //debug("GetWin32ShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-
-   ArrayResize(buffer,    0);
-   ArrayResize(chars,     0);
-   ArrayResize(lfnBuffer, 0);
-
    if (IsError(catch("GetWin32ShortcutTarget(13)")))
       return("");
    return(target);
@@ -3133,7 +3106,8 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    if (i > 0)
       ArrayCopy(result, lines);
 
-   ArrayResize(lines, 0);
+   if (ArraySize(lines) > 0)
+      ArrayResize(lines, 0);
    return(ifInt(IsError(catch("FileReadLines(6)")), -1, i));
 }
 
@@ -3738,7 +3712,6 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -3760,11 +3733,7 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
          }
          strValuesX[x] = BoolsToStr(valuesY, separator);
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-
-      ArrayResize(strValuesX, 0);
-      ArrayResize(   valuesY, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -3784,12 +3753,7 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-
-      ArrayResize(strValuesX, 0);
-      ArrayResize(strValuesY, 0);
-      ArrayResize(   valuesZ, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
    return(_empty(catch("BoolsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -4509,8 +4473,6 @@ string IntegerToHexStr(int integer) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
-
-   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4541,8 +4503,6 @@ string ByteToHexStr(int byte) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
-
-   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4573,8 +4533,6 @@ string WordToHexStr(int word) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
-
-   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -4597,8 +4555,6 @@ string DwordToHexStr(int dword) {
       hexStr = StringConcatenate(char, hexStr);
       value >>= 4;                                 // value / 16
    }
-
-   ArrayResize(chars, 0);
    return(hexStr);
 }
 
@@ -5341,11 +5297,11 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
       cache.account[0] = account;
       ArrayResize(cache, 0);
       ArrayCopy(cache, result);
+      ArrayResize(result, 0);
       //log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
    }
 
    ArrayResize(header, 0);
-   ArrayResize(result, 0);
    return(catch("GetAccountHistory(7)"));
 }
 
@@ -5407,7 +5363,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
  */
 int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    int      cache.account[1];
-   datetime cache.times[];
+   datetime cache.times [];
    double   cache.values[];
 
    ArrayResize(times,  0);
@@ -5431,8 +5387,10 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    // Cache-Miss, Balance-Daten aus Account-History auslesen
    string data[][HISTORY_COLUMNS]; ArrayResize(data, 0);
    int error = GetAccountHistory(account, data);
-   if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2)", error));
-   if (error != NO_ERROR            ) return(catch("GetBalanceHistory(3)"));
+   if (IsError(error)) {
+      if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2)", error));
+                                         return(catch("GetBalanceHistory(3)"));
+   }
 
    // Balancedatensätze einlesen und auswerten (History ist nach CloseTime sortiert)
    datetime time, lastTime;
@@ -5495,11 +5453,7 @@ string GetComputerName() {
    if (!GetComputerNameA(buffer[0], lpBufferSize))
       return(_empty(catch("GetComputerName() ->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   string result = buffer[0];
-
-   ArrayResize(buffer,       0);
-   ArrayResize(lpBufferSize, 0);
-   return(result);
+   return(buffer[0]);
 }
 
 
@@ -5530,8 +5484,6 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   ArrayResize(buffer, 0);
-
    if (IsError(catch("GetConfigBool()")))
       return(false);
    return(result);
@@ -5557,8 +5509,6 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
-
-   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetConfigDouble()")))
       return(0);
@@ -5631,7 +5581,8 @@ bool IsLocalConfigKey(string section, string key) {
       }
    }
 
-   ArrayResize(keys, 0);
+   if (ArraySize(keys) > 0)
+      ArrayResize(keys, 0);
    return(result);
 }
 
@@ -5662,7 +5613,8 @@ bool IsGlobalConfigKey(string section, string key) {
       }
    }
 
-   ArrayResize(keys, 0);
+   if (ArraySize(keys) > 0)
+      ArrayResize(keys, 0);
    return(result);
 }
 
@@ -5757,8 +5709,6 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   ArrayResize(buffer, 0);
-
    if (IsError(catch("GetGlobalConfigBool()")))
       return(false);
    return(result);
@@ -5781,8 +5731,6 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
    double result = StrToDouble(buffer[0]);
-
-   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetGlobalConfigDouble()")))
       return(0);
@@ -5921,12 +5869,9 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   string result = buffer[0];
-   ArrayResize(buffer, 0);
-
    if (IsError(catch("GetPrivateProfileString()")))
       return("");
-   return(result);
+   return(buffer[0]);
 }
 
 
@@ -5954,8 +5899,6 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
       result = false;
    }
 
-   ArrayResize(buffer, 0);
-
    if (IsError(catch("GetLocalConfigBool()")))
       return(false);
    return(result);
@@ -5978,7 +5921,6 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
-   ArrayResize(buffer, 0);
 
    if (IsError(catch("GetLocalConfigDouble()")))
       return(0);
@@ -6370,8 +6312,6 @@ int GetLocalToGMTOffset() {
          offset += tzi.DaylightBias(tzi);
       offset *= -60;
    }
-
-   ArrayResize(tzi, 0);
 
    if (IsError(catch("GetLocalToGMTOffset()")))
       return(EMPTY_VALUE);
@@ -6879,7 +6819,6 @@ int GetApplicationMainWindow() {
    }
    hWnd = hWndNext;
 
-   ArrayResize(processId, 0);
    return(hWnd);
 }
 
@@ -6940,7 +6879,6 @@ int GetTesterWindow() {
       log("GetTesterWindow()   cannot find Strategy Tester window");
    }
 
-   ArrayResize(processId, 0);
    return(hWndTester);
 }
 
@@ -7036,10 +6974,7 @@ string GetWindowText(int hWnd) {
       // GetLastWin32Error() prüfen, hWnd könnte ungültig sein
    }
 
-   string result = buffer[0];
-   ArrayResize(buffer, 0);
-
-   return(result);
+   return(buffer[0]);
 }
 
 
@@ -7065,10 +7000,7 @@ string GetClassName(int hWnd) {
    if (chars == 0)
       return(_empty(catch("GetClassName() ->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   string result = buffer[0];
-   ArrayResize(buffer, 0);
-
-   return(result);
+   return(buffer[0]);
 }
 
 
@@ -7166,7 +7098,7 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
    datetime times []; ArrayResize(times , 0);
    double   values[]; ArrayResize(values, 0);
 
-   int error = GetBalanceHistory(account, times, values);   // aufsteigend nach Zeit sortiert (in times[0] stehen die ältesten Werte)
+   int error = GetBalanceHistory(account, times, values);            // aufsteigend nach Zeit sortiert (in times[0] stehen die ältesten Werte)
    if (IsError(error))
       return(error);
 
@@ -7176,9 +7108,9 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
    for (int i=0; i < historySize; i++) {
       // Barindex des Zeitpunkts berechnen
       bar = iBarShiftNext(NULL, 0, times[i]);
-      if (bar == EMPTY_VALUE)                               // ERR_HISTORY_UPDATE ?
+      if (bar == EMPTY_VALUE)                                        // ERR_HISTORY_UPDATE ?
          return(last_error);
-      if (bar == -1)                                        // dieser und alle folgenden Werte sind zu neu für den Chart
+      if (bar == -1)                                                 // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
       // Lücken mit vorherigem Balancewert füllen
@@ -7198,8 +7130,9 @@ int iAccountBalanceSeries(int account, double& buffer[]) {
       buffer[bar] = buffer[lastBar];
    }
 
-   ArrayResize(times,  0);
-   ArrayResize(values, 0);
+   if (ArraySize(times)  > 0) ArrayResize(times,  0);
+   if (ArraySize(values) > 0) ArrayResize(values, 0);
+
    return(catch("iAccountBalanceSeries(2)"));
 }
 
@@ -7236,8 +7169,6 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
          error = GetLastError();                            // ERR_HISTORY_UPDATE ???
       }
    }
-
-   ArrayResize(times, 0);
 
    if (IsError(error)) {
       last_error = error;
@@ -7287,8 +7218,6 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*thr
          //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für den Chart, bar bleibt -1
       }
    }
-
-   ArrayResize(times, 0);
 
    if (IsError(error)) {
       last_error = error;
@@ -7349,7 +7278,9 @@ string JoinBools(bool values[], string separator) {
    }
 
    string result = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
+
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
 
    return(result);
 }
@@ -7379,7 +7310,9 @@ string JoinDoubles(double values[], string separator) {
    }
 
    string result = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
+
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
 
    return(result);
 }
@@ -7429,7 +7362,6 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -7451,10 +7383,7 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
          }
          strValuesX[x] = DoublesToStr(valuesY, separator);
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-      ArrayResize(strValuesX, 0);
-      ArrayResize(   valuesY, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -7474,11 +7403,7 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-      ArrayResize(strValuesX, 0);
-      ArrayResize(strValuesY, 0);
-      ArrayResize(   valuesZ, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
    return(_empty(catch("DoublesToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -7509,15 +7434,11 @@ string RatesToStr(double values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], PriceFormat);
-      if (StringLen(strings[i]) == 0) {
-         ArrayResize(strings, 0);
+      if (StringLen(strings[i]) == 0)
          return("");
-      }
    }
 
    string joined = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
-
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7548,15 +7469,11 @@ string MoneysToStr(double values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], ".2");
-      if (StringLen(strings[i]) == 0) {
-         ArrayResize(strings, 0);
+      if (StringLen(strings[i]) == 0)
          return("");
-      }
    }
 
    string joined = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
-
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7585,7 +7502,8 @@ string JoinInts(int values[], string separator) {
    }
 
    string result = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
    return(result);
 }
 
@@ -7654,10 +7572,7 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
          }
          strValuesX[x] = IntsToStr(valuesY, separator);
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-      ArrayResize(strValuesX, 0);
-      ArrayResize(   valuesY, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
    else dim3 = ArrayRange(values3, 2);
 
@@ -7677,11 +7592,7 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
          }
          strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
       }
-      result = StringConcatenate("{", JoinStrings(strValuesX, separator), "}");
-      ArrayResize(strValuesX, 0);
-      ArrayResize(strValuesY, 0);
-      ArrayResize(   valuesZ, 0);
-      return(result);
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
    return(_empty(catch("IntsToStr()  illegal parameter values, too many dimensions = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -7717,8 +7628,6 @@ string TimesToStr(datetime values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
-
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7752,8 +7661,6 @@ string CharsToStr(int values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
-
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -7783,15 +7690,11 @@ string OperationTypesToStr(int values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = OperationTypeToStr(values[i]);
-      if (StringLen(strings[i]) == 0) {
-         ArrayResize(strings, 0);
+      if (StringLen(strings[i]) == 0)
          return("");
-      }
    }
 
    string joined = JoinStrings(strings, separator);
-   ArrayResize(strings, 0);
-
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -8797,7 +8700,7 @@ double MathRoundFix(double number, int decimals) {
    // TODO: Verarbeitung negativer decimals prüfen
 
    double operand = MathPow(10, decimals);
-   return(MathRound(number*operand + MathSign(number)*0.000000000001) / operand);
+   return(MathRound(number*operand + Sign(number)*0.000000000001) / operand);
 }
 
 
@@ -8808,7 +8711,7 @@ double MathRoundFix(double number, int decimals) {
  *
  * @return int - Vorzeichen (+1, 0, -1)
  */
-int MathSign(double number) {
+int Sign(double number) {
    if (GT(number, 0)) return( 1);
    if (LT(number, 0)) return(-1);
    return(0);
