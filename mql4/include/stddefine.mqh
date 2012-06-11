@@ -648,6 +648,7 @@
 #define ERR_CANCELLED_BY_USER                                      5008    // execution cancelled by user
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
 #define ERR_INVALID_COMMAND                                        5010    // invalid or unknow command
+#define ERR_ILLEGAL_STATE                                          5011    // illegal state
 
 
 // Variablen für ChartInfo-Block (siehe unten)
@@ -706,10 +707,10 @@ string objects[];
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    __NAME__ = WindowExpertName();
 
-   if (IsLibrary())         return(NO_ERROR);                              // in Libraries vorerst nichts tun
+   if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
-   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal: last_error sichern und zurücksetzen
+   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal: last_error sichern und zurücksetzen
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       last_error   = NO_ERROR;
@@ -721,15 +722,13 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    PipDigits   = Digits & (~1);
-   PipPoint    = MathPow(10, Digits-PipDigits) +0.1;                       // (int) double
-   PipPoints   = PipPoint;
-   Pip         = 1/MathPow(10, PipDigits);
-   Pips        = Pip;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1; PipPoint = PipPoints;    // (int) double
+   Pip         = 1/MathPow(10, PipDigits);           Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
-   error = GetLastError();                                                 // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-   if (error == ERR_UNKNOWN_SYMBOL) {                                      // das Symbol kann später evt. noch "auftauchen"
+   error = GetLastError();                                                    // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+   if (error == ERR_UNKNOWN_SYMBOL) {                                         // das Symbol kann später evt. noch "auftauchen"
       debug("init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    }
@@ -743,31 +742,31 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) User-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TICKVALUE != 0) {                                  // INIT_TICKVALUE: schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (initFlags & INIT_TICKVALUE != 0) {                                     // INIT_TICKVALUE: schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
          return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-      }                                                                    // INIT_TIMEZONE:            @see stdlib_init()
-   }                                                                       // INIT_BARS_ON_HIST_UPDATE: noch nicht implementiert
+      }                                                                       // INIT_TIMEZONE:            @see stdlib_init()
+   }                                                                          // INIT_BARS_ON_HIST_UPDATE: noch nicht implementiert
 
 
    // (3) für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                       // ggf. EA's aktivieren
+   if (IsExpert()) {                                                          // ggf. EA's aktivieren
       int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = Menu.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+         error = Menu.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
             return(SetLastError(error));
       }
-                                                                           // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+                                                                              // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
       if (IntInArray(reasons2, UninitializeReason()))
          OrderSelect(0, SELECT_BY_TICKET);
 
 
-      if (IsVisualMode()) {                                                // Im Tester übernimmt der EA die ChartInfo-Anzeige, die hier konfiguriert wird.
-         ChartInfo.appliedPrice = PRICE_BID;                               // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
+      if (IsVisualMode()) {                                                   // Im Tester übernimmt der EA die ChartInfo-Anzeige, die hier konfiguriert wird.
+         ChartInfo.appliedPrice = PRICE_BID;                                  // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
          ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
          if (LT(ChartInfo.leverage, 1))
             return(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
@@ -779,39 +778,38 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (4) User-spezifische init()-Routinen aufrufen
-   if (onInit() == -1)                                                     // User-Routinen *können*, müssen aber nicht implementiert werden.
-      return(last_error);                                                  // Preprocessing-Hook
-                                                                           //
-   switch (UninitializeReason()) {                                         // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;     //   bricht init() *nicht* ab.
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-      case REASON_REMOVE     : error = onInitRemove();          break;     // - Gibt eine der Funktionen -1 zurück, bricht init() ab.
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
-   }                                                                       //
-   if (error == -1)                                                        //
-      return(last_error);                                                  //
-                                                                           //
-   afterInit();                                                            // Postprocessing-Hook
-   if (IsLastError() || __STATUS__CANCELLED)                               //
-      return(last_error);                                                  //
+   if (onInit() == -1)                                                        // User-Routinen *können*, müssen aber nicht implementiert werden.
+      return(last_error);                                                     // Preprocessing-Hook
+                                                                              //
+   switch (UninitializeReason()) {                                            // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;        //   bricht init() *nicht* ab.
+      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
+      case REASON_REMOVE     : error = onInitRemove();          break;        // - Gibt eine der Funktionen -1 zurück, bricht init() ab.
+      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        //
+      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
+      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
+   }                                                                          //
+   if (error == -1)                                                           //
+      return(last_error);                                                     //
+                                                                              //
+   afterInit();                                                               // Postprocessing-Hook
+   if (IsLastError() || __STATUS__CANCELLED)                                  //
+      return(last_error);                                                     //
 
 
    // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern (so spät wie möglich) selbst einen Tick schicken
    if (IsExpert()) {
-      if (!IsTesting()) {                                                  // nicht bei REASON_CHARTCHANGE
+      if (!IsTesting()) {                                                     // nicht bei REASON_CHARTCHANGE
          if (UninitializeReason() != REASON_CHARTCHANGE)
-            Chart.SendTick(false);                                         // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
-      }                                                                    // Message vor Verlassen von init() vom UI-Thread verarbeitet wurde.
+            Chart.SendTick(false);                                            // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
+      }                                                                       // Message vor Verlassen von init() vom UI-Thread verarbeitet wurde.
    }
 
    catch("init(4)");
    return(last_error);
 }
 
-int testvar;
 
 /**
  * Globale start()-Funktion für alle MQL-Programme.
@@ -829,6 +827,17 @@ int testvar;
 int start() {
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
+
+
+   // Time machine bug im Tester abfangen
+   static datetime lastTime;
+   if (lastTime!=0) /*&&*/ if (TimeCurrent() < lastTime) {
+      __STATUS__CANCELLED = true;
+      return(catch("start(1)   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+   }
+   lastTime = TimeCurrent();
+
+
 
    int error;
 

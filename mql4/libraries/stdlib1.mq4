@@ -56,20 +56,18 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
    prev_error = last_error;
-   last_error = NO_ERROR;                                            // last_error sichern und zurücksetzen
+   last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
 
 
    // (1) globale Variablen re-initialisieren
    PipDigits   = Digits & (~1);
-   PipPoint    = MathPow(10, Digits-PipDigits) +0.1;                 // (int) double
-   PipPoints   = PipPoint;
-   Pip         = 1/MathPow(10, PipDigits);
-   Pips        = Pip;
+   PipPoints   = MathPow(10, Digits-PipDigits) +0.1; PipPoint = PipPoints;    // (int) double
+   Pip         = 1/MathPow(10, PipDigits);           Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
-   int error = GetLastError();                                       // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-   if (error == ERR_UNKNOWN_SYMBOL) {                                // das Symbol kann später evt. noch "auftauchen"
+   int error = GetLastError();                                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+   if (error == ERR_UNKNOWN_SYMBOL) {                                         // das Symbol kann später evt. noch "auftauchen"
       debug("stdlib_init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
    }
@@ -78,37 +76,37 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn bestimmen und cachen
-   if (GetApplicationMainWindow() == 0)                              // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
-      return(last_error);                                            // (z.B. im Tester bei Shutdown).
-   if (GetUIThreadId() == 0)                                         // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationMainWindow()
+   if (GetApplicationMainWindow() == 0)                                       // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
+      return(last_error);                                                     // (z.B. im Tester bei Shutdown).
+   if (GetUIThreadId() == 0)                                                  // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationMainWindow()
       return(last_error);
 
 
    // (3) User-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TIMEZONE != 0) {                             // INIT_TIMEZONE: Zeitzonen-Konfiguration überprüfen
+   if (initFlags & INIT_TIMEZONE != 0) {                                      // INIT_TIMEZONE: Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
 
    // (4) für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+   if (IsExpert()) {                                                          // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
       if (IntInArray(reasons, uninitializeReason))
          OrderSelect(0, SELECT_BY_TICKET);
 
-      if (IsTesting()) {                                             // nur im Tester
+      if (IsTesting()) {                                                      // nur im Tester
          error = ResetLastError();
-         int hWndTester = GetTesterWindow();                         // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
+         int hWndTester = GetTesterWindow();                                  // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
          if (hWndTester == 0) {
             if (IsLastError())
                return(last_error);
-         }                                                           // TODO: Warten, bis die Titelzeile gesetzt ist (der startende Test kann die Abarbeitung
-         else if (!SetWindowTextA(hWndTester, "Tester"))             //       der MessageQueue des UI-Threads wesentlich verzögern).
+         }                                                                    // TODO: Warten, bis die Titelzeile gesetzt ist (der startende Test kann die Abarbeitung
+         else if (!SetWindowTextA(hWndTester, "Tester"))                      //       der MessageQueue des UI-Threads wesentlich verzögern).
             return(catch("stdlib_init(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
          SetLastError(error);
 
-         if (GetAccountNumber() == 0) {                              // Accountnummer ermitteln und cachen, da der spätere Aufruf den UI-Thread blockieren *kann*.
+         if (GetAccountNumber() == 0) {                                       // Accountnummer ermitteln und cachen, da der spätere Aufruf den UI-Thread blockieren *kann*.
             if (last_error == ERR_TERMINAL_NOT_YET_READY)
                debug("stdlib_init()   ERR_TERMINAL_NOT_YET_READY (GetAccountNumber() = 0)");
             return(last_error);
@@ -2926,9 +2924,9 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "alpariuk-"          )) return("Alpari"          );
    else if (StringStartsWith(server, "alparius-"          )) return("Alpari"          );
    else if (StringStartsWith(server, "apbgtrading-"       )) return("APBG"            );
-   else if (StringStartsWith(server, "atcbrokers-"        )) return("ATC Brokers"     );
-   else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC Brokers"     );
-   else if (StringStartsWith(server, "atcbrokersliq1-"    )) return("ATC Brokers"     );
+   else if (StringStartsWith(server, "atcbrokers-"        )) return("ATC"             );
+   else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC"             );
+   else if (StringStartsWith(server, "atcbrokersliq1-"    )) return("ATC"             );
    else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
    else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
    else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
@@ -6104,6 +6102,7 @@ string ErrorDescription(int error) {
       case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                             ); // 5008
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                          ); // 5009
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                     ); // 5010
+      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                         ); // 5011
    }
    return("unknown error");
 }
@@ -6241,6 +6240,7 @@ string ErrorToStr(int error) {
       case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
       case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
       case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); // 5010
+      case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); // 5011
    }
    return(error);
 }
