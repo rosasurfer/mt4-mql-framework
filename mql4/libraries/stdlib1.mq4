@@ -1285,7 +1285,7 @@ int RepositionLegend() {
 bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
-      case ERR_COMMON_ERROR:                 //        2   trade denied
+      case ERR_COMMON_ERROR:                 //        2   trade denied                                                       // TODO: Warum ist dies temporär?
       case ERR_SERVER_BUSY:                  //        4   trade server is busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
@@ -1297,12 +1297,12 @@ bool IsTemporaryTradeError(int error) {
          return(true);
 
       // permanent errors
-      case ERR_NO_RESULT:                    //        1   no result
+      case ERR_NO_RESULT:                    //        1   no result                                                          // TODO: Ist temporär!
       case ERR_INVALID_TRADE_PARAMETERS:     //        3   invalid trade parameters
       case ERR_OLD_VERSION:                  //        5   old version of client terminal
-      case ERR_NO_CONNECTION:                //        6   no connection to trade server
+      case ERR_NO_CONNECTION:                //        6   no connection to trade server                                      // TODO: Ist temporär!
       case ERR_NOT_ENOUGH_RIGHTS:            //        7   not enough rights
-      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests
+      case ERR_TOO_FREQUENT_REQUESTS:        // ???    8   too frequent requests                                              // TODO: Ist temporär!
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
@@ -1313,8 +1313,8 @@ bool IsTemporaryTradeError(int error) {
       case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
-      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests
-      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market
+      case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                                  // TODO: Ist temporär!
+      case ERR_TRADE_MODIFY_DENIED:          //      145   modification denied because too close to market                    // TODO: Ist temporär!
       case ERR_TRADE_EXPIRATION_DENIED:      //      147   expiration settings denied by broker
       case ERR_TRADE_TOO_MANY_ORDERS:        //      148   number of open and pending orders has reached the broker limit
       case ERR_TRADE_HEDGE_PROHIBITED:       //      149   hedging prohibited
