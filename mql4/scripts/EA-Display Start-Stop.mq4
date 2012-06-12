@@ -1,7 +1,7 @@
 /**
- * SnowRoller Orderdisplay
+ * SnowRoller StartStopDisplay
  *
- * Schickt der SnowRoller-Instanz im aktuellen Chart das Kommando, den Orderanzeige-Modus zu wechseln.
+ * Schickt der SnowRoller-Instanz im aktuellen Chart das Kommando, den Modus der Start/Stop-Anzeige zu wechseln.
  */
 #include <types.mqh>
 #define     __TYPE__    T_SCRIPT
@@ -53,7 +53,7 @@ int onStart() {
                return(catch("onStart(1)"));
             ObjectSet(label, OBJPROP_TIMEFRAMES, EMPTY);                         // hidden on all timeframes
          }
-         ObjectSetText(label, "orderdisplay", 1);
+         ObjectSetText(label, "startstopdisplay", 1);
 
 
          // (4) Tick senden

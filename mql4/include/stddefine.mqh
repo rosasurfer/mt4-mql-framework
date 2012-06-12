@@ -1032,6 +1032,36 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
 /**
+ * Zeigt eine Warnung optisch und akustisch an.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode (wird *nicht* gesetzt)
+ *
+ * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
+ */
+int warn(string message, int error=NO_ERROR) {
+   string strError;
+   if (IsError(error))
+      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
+
+   Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::", message, strError);
+
+   if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
+      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+      string strings[];
+      if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("WARN in ", __NAME__, NL, NL, StringTrimLeft(message + strError));
+      else                                      message = StringConcatenate("WARN in ", __NAME__, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] + strError));
+
+      // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
+
+      ForceSound("alert.wav");
+      ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
+   }
+
+}
+
+
+/**
  * Logged eine Message und einen ggf. angegebenen Fehler.
  *
  * @param  string message - Message
@@ -2179,4 +2209,5 @@ void DummyCalls() {
    ResetLastError();
    SetLastError(NULL);
    WaitForTicket(NULL);
+   warn(NULL);
 }
