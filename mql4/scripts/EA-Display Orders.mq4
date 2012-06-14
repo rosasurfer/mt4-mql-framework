@@ -1,7 +1,7 @@
 /**
- * SnowRoller Orderdisplay
+ * EA-Display Orders
  *
- * Schickt der SnowRoller-Instanz im aktuellen Chart das Kommando, den Orderanzeige-Modus zu wechseln.
+ * Schickt dem Expert im aktuellen Chart das Kommando, den Orderanzeige-Modus zu wechseln.
  */
 #include <types.mqh>
 #define     __TYPE__    T_SCRIPT
@@ -19,8 +19,8 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string ids [];
-   int  status[], sizeOfIds;
+   string ids[];
+   int status[], sizeOfIds;
 
 
    // (1) Sequenzen im aktuellen Chart ermitteln
