@@ -45,8 +45,8 @@ int onStart() {
       }
 
 
+      // (3) Command setzen                                                      // TODO: Commands zu bereits existierenden Commands hinzufügen
       for (i=0; i < sizeOfIds; i++) {                                            // TODO: Zugriff synchronisieren
-         // (3) Command setzen                                                   // TODO: Commands zu bereits existierenden Commands hinzufügen
          string label = StringConcatenate("SnowRoller.", ids[i], ".command");
          if (ObjectFind(label) != 0) {
             if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))

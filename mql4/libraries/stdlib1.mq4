@@ -2755,20 +2755,20 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
 int WM_MT4() {
-   static int id;                                                    // ohne Initializer (@see MQL.doc)
+   static int message;                                               // ohne Initializer (@see MQL.doc)
 
-   if (id == 0) {
-      id = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+   if (message == 0) {
+      message = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
-      if (id == 0) {
-         id = -1;                                                    // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
+      if (message == 0) {
+         message = -1;                                               // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
          catch("WM_MT4() ->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
       }
    }
 
-   if (id == -1)
+   if (message == -1)
       return(0);
-   return(id);
+   return(message);
 }
 
 
