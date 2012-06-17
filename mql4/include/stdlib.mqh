@@ -247,7 +247,6 @@
    // Files, I/O
    bool     IsFile(string pathName);
    bool     IsDirectory(string pathName);
-
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
    int      GetPrivateProfileSectionNames(string fileName, string names[]);
