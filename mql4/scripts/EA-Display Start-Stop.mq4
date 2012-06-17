@@ -19,7 +19,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string ids[];
+   string ids[], label, mutex="mutex.ChartCommand";
    int status[], sizeOfIds;
 
 
@@ -45,21 +45,27 @@ int onStart() {
       }
 
 
-      // (3) Command setzen                                                      // TODO: Commands zu bereits existierenden Commands hinzufügen
-      for (i=0; i < sizeOfIds; i++) {                                            // TODO: Zugriff synchronisieren
-         string label = StringConcatenate("SnowRoller.", ids[i], ".command");
+      // (3) Command setzen
+      if (!AquireLock(mutex))
+         return(SetLastError(stdlib_PeekLastError()));
+
+      for (i=0; i < sizeOfIds; i++) {
+         label = StringConcatenate("SnowRoller.", ids[i], ".command");           // TODO: Commands zu bereits existierenden Commands hinzufügen
          if (ObjectFind(label) != 0) {
             if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-               return(catch("onStart(1)"));
+               return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
             ObjectSet(label, OBJPROP_TIMEFRAMES, EMPTY);                         // hidden on all timeframes
          }
          ObjectSetText(label, "startstopdisplay", 1);
-
-
-         // (4) Tick senden
-         Chart.SendTick(false);
-         return(catch("onStart(2)"));                                            // regular exit
       }
+
+      if (!ReleaseLock(mutex))
+         return(SetLastError(stdlib_PeekLastError()));
+
+
+      // (4) Tick senden
+      Chart.SendTick(false);
+      return(catch("onStart(2)"));                                               // regular exit
    }
 
    if (!IsLastError()) {

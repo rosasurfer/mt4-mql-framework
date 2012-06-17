@@ -37,6 +37,7 @@
    int  LoadLibraryA(string lpLibFileName);
    void OutputDebugStringA(string lpMessage);
    bool ReadProcessMemory(int hProcess, int lpBaseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
+   int  SleepEx(int milliseconds, bool alertable);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);                                                                   //         +-- stdlib::DeletePrivateProfileSection()

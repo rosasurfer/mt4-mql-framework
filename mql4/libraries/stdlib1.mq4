@@ -139,7 +139,7 @@ int stdlib_start(int tick, int validBars, int changedBars) {
 
 
 /**
- * Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Programms.
+ * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Programms.
  *
  * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
  * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
@@ -148,7 +148,12 @@ int stdlib_start(int tick, int validBars, int changedBars) {
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
    __WHEREAMI__ = FUNC_DEINIT;
-   return(NO_ERROR);
+
+   int error = NO_ERROR;
+
+   if (!ReleaseLocks(true))
+      error = last_error;
+   return(error);
 }
 
 
@@ -210,6 +215,141 @@ int stdlib_GetLastError() {
  */
 int stdlib_PeekLastError() {
    return(last_error);
+}
+
+
+string lock.names   [];                // Namen der Locks, die vom aktuellen Thread gehalten werden
+int    lock.counters[];                // Anzahl der akquirierten Locks je Name
+
+
+/**
+ * Wartet solange, bis das Lock mit dem angegebenen Namen erworben wurde.
+ *
+ * @param  string mutexName - Namensbezeichner des Mutexes
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool AquireLock(string mutexName) {
+   if (StringLen(mutexName) == 0)
+      return(_false(catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+
+   // (1) check, if we already own that lock
+   int i = SearchStringArray(lock.names, mutexName);
+   if (i > -1) {
+      //debug("AquireLock()   already own lock for mutex \""+ mutexName +"\"");
+      lock.counters[i]++;
+      return(true);
+   }
+
+
+   datetime now, startTime=GetTickCount();
+   int error, duration, seconds=1;
+
+
+   // (2) no, run until the lock is aquired
+   while (true) {
+      // try to get it
+      if (GlobalVariableSetOnCondition(mutexName, 1, 0)) {
+         //debug("AquireLock()   got the lock");
+         ArrayPushString(lock.names, mutexName);
+         ArrayPushInt   (lock.counters,      1);
+         return(true);
+      }
+      error = GetLastError();
+
+      // create the mutex if it doesn't exist
+      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
+         if (GlobalVariableSet(mutexName, 0) == 0) {
+            error = GetLastError();
+            if (IsNoError(error))
+               error = ERR_RUNTIME_ERROR;
+            return(_false(catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", error)));
+         }
+         continue;
+      }
+      else if (IsError(error)) {
+         return(_false(catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error)));
+      }
+
+      if (IsStopped())
+         return(_false(warn("AquireLock(4)   did not get lock for mutex \""+ mutexName +"\", stopping...")));
+
+      // warn every second and cancel after 10 seconds
+      duration = GetTickCount() - startTime;
+      if (duration >= seconds*1000) {
+         if (seconds >= 10)
+            return(_false(catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR)));
+         warn("AquireLock(6)   did not get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., retrying...");
+         seconds++;
+      }
+
+      debug("AquireLock()   did not get lock for mutex \""+ mutexName +"\", retrying...");
+      if      (IsScript())                 Sleep(100);
+      else if (IsExpert() && !IsTesting()) Sleep(100);
+      else                                 SleepEx(100, true);       // Expert im Tester oder Indicator
+   }
+
+   return(_false(catch("AquireLock(7)", ERR_WRONG_JUMP)));
+}
+
+
+
+/**
+ * Gibt das gehaltene Lock mit dem angegebenen Namen wieder frei.
+ *
+ * @param  string mutexName - Namensbezeichner des Mutexes
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ReleaseLock(string mutexName) {
+   if (StringLen(mutexName) == 0)
+      return(_false(catch("ReleaseLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // check, if we indeed own that lock
+   int i = SearchStringArray(lock.names, mutexName);
+   if (i == -1)
+      return(_false(catch("ReleaseLock(2)   do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR)));
+
+   // we do, decrease the counter
+   lock.counters[i]--;
+
+   // remove it, if counter is zero
+   if (lock.counters[i] == 0) {
+      ArraySpliceStrings(lock.names,    i, 1);
+      ArraySpliceInts   (lock.counters, i, 1);
+
+      if (GlobalVariableSet(mutexName, 0) == 0) {
+         int error = GetLastError();
+         if (IsNoError(error))
+            error = ERR_RUNTIME_ERROR;
+         return(_false(catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", error)));
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Gibt alle noch gehaltenen Locks frei.
+ *
+ * @param  bool warn - ob für jedes gehaltene Lock eine Warnung ausgegeben werden soll (default: nein)
+ *
+ * @return bool - Erfolgsstatus
+ */
+/*private*/ bool ReleaseLocks(bool warn=false) {
+   int error, size=ArraySize(lock.names);
+
+   if (size > 0) {
+      for (int i = size-1; i>=0; i--) {
+         if (warn)
+            warn("ReleaseLocks()   unreleased lock found for mutex \""+ lock.names[i] +"\"");
+
+         if (!ReleaseLock(lock.names[i]))
+            error = last_error;
+      }
+   }
+   return(IsNoError(error));
 }
 
 
@@ -1179,11 +1319,11 @@ int Menu.Experts(bool enable) {
 
    if (enable) {
       if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_MENU_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
       if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_MENU_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    return(NO_ERROR);
 }
@@ -2814,7 +2954,7 @@ int Chart.SendTick(bool sound=false) {
       return(catch("Chart.SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!testing) {
-      if (!PostMessageA(hWnd, WM_MT4(), WM_MT4_TICK, 0))
+      if (!PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0))
          return(catch("Chart.SendTick(2) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    }
    else if (visualMode && !testerStopped && testerPaused) {

@@ -23,7 +23,7 @@
 // Mathematische Konstanten
 #define Math.PI                  3.1415926535897932384626433832795028841971693993751      // intern 3.141592653589793 (15 korrekte Dezimalstellen)
 
-
+                                                                                          // in Libraries vorerst nichts tun
 // Zeitkonstanten
 #define SECOND                   1
 #define MINUTE                  60
@@ -484,21 +484,24 @@
 #define SYMBOL_CHECKSIGN                              252   // check sign symbol
 
 
-// MT4 messages
-#define WM_MT4_TICK                                     2   // ein künstlicher Tick, führt start() aus
+// MT4 internal messages
+#define MT4_TICK                                        2   // künstlicher Tick, führt start() aus
+#define MT4_COMPILE_REQUEST                         12345
+#define MT4_COMPILE_PERMISSION                      12346
+#define MT4_COMPILE_FINISHED                        12349   // Rescan und Reload modifizierter .ex4-Files
 
 
-// MT4 commands (menu or accelerator identifier)
-#define ID_MENU_CHART_STEPFORWARD                   33197   // Main menu: eine Bar vorwärts                  F12
-#define ID_MENU_CHART_STEPBACKWARD                  33198   //            eine Bar rückwärts           Shift+F12
-#define ID_MENU_EXPERTS_ONOFF                       33020   //            Experts on/off                  Ctrl+E
+// MT4 command ids (menu or accelerator identifier)
+#define ID_EXPERTS_ONOFF                            33020   // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_EXPERT_PROPERTIES                  33048   // Chart: Expert Inputs-Dialog                    F7
+#define ID_CHART_STEPFORWARD                        33197   // Chart: eine Bar vorwärts                      F12
+#define ID_CHART_STEPBACKWARD                       33198   //        eine Bar rückwärts               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES                  33048   //        Expert Properties-Dialog                F7
 
-#define ID_TESTER_TICK          ID_MENU_CHART_STEPFORWARD   // Tester: ein Tick                              F12
+#define ID_TESTER_TICK               ID_CHART_STEPFORWARD   // Tester: nächster Tick                         F12
 
 
-// MT4 items (dialog or control identifier)
+// MT4 item ids (dialog or control identifier)
 #define ID_DOCKABLES_CONTAINER                      59422   // window containing all child windows docked inside the main application window
 #define ID_UNDOCKED_CONTAINER                       59423   // window containing undocked child windows (one per undocked child)
 
@@ -521,12 +524,12 @@
 
 #define ID_TESTER                                      83   // Tester
 #define ID_TESTER_SETTINGS                          33215   // Tester - Settings
+#define ID_TESTER_PAUSERESUME                        1402   // Tester - Settings Pause/Resume button
+#define ID_TESTER_STARTSTOP                          1034   // Tester - Settings Start/Stop button
 #define ID_TESTER_RESULTS                           33214   // Tester - Results
 #define ID_TESTER_GRAPH                             33207   // Tester - Graph
 #define ID_TESTER_REPORT                            33213   // Tester - Report
 #define ID_TESTER_JOURNAL             ID_TERMINAL_EXPERTS   // Tester - Journal (entspricht Terminal - Experts)
-#define ID_TESTER_PAUSERESUME                        1402   // Tester Pause/Resume button
-#define ID_TESTER_STARTSTOP                          1034   // Tester Start/Stop button
 
 
 // MQL-Fehlercodes
@@ -661,9 +664,9 @@ string ChartInfo.instrument,
        ChartInfo.freezeLevel,
        ChartInfo.stopoutLevel;
 
-int    ChartInfo.appliedPrice = PRICE_MEDIAN;               // Bid | Ask | Median (default)
+int    ChartInfo.appliedPrice = PRICE_MEDIAN;                        // Bid | Ask | Median (default)
 
-double ChartInfo.leverage,                                  // Hebel zur UnitSize-Berechnung
+double ChartInfo.leverage,                                           // Hebel zur UnitSize-Berechnung
        ChartInfo.longPosition,
        ChartInfo.shortPosition,
        ChartInfo.totalPosition;
@@ -674,26 +677,27 @@ bool   ChartInfo.positionChecked,
 
 
 // globale Variablen, stehen überall zur Verfügung
-string __NAME__;                                            // Name des aktuellen MQL-Programms
-int    __WHEREAMI__;                                        // ID der vom Terminal momentan ausgeführten Basis-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool   __STATUS__HISTORY_UPDATE;                            // History-Update wurde getriggert
-bool   __STATUS__INVALID_INPUT;                             // ungültige Parametereingabe im Input-Dialog
-bool   __STATUS__RELAUNCH_INPUT;                            // Anforderung, den Input-Dialog zu laden
-bool   __STATUS__CANCELLED;                                 // Programmausführung durch Benutzer-Dialog abgebrochen
+string __NAME__;                                                     // Name des aktuellen MQL-Programms
+int    __WHEREAMI__;                                                 // ID der vom Terminal momentan ausgeführten Basis-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
+bool   __STATUS__INVALID_INPUT;                                      // ungültige Parametereingabe im Input-Dialog
+bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, den Input-Dialog zu laden
+bool   __STATUS__CANCELLED;                                          // Programmausführung durch Benutzer-Dialog abgebrochen
 
-int    prev_error = NO_ERROR;                               // der letzte Fehler des vorherigen start()-Aufrufs
-int    last_error = NO_ERROR;                               // der letzte Fehler des aktuellen start()-Aufrufs
+int    prev_error = NO_ERROR;                                        // der letzte Fehler des vorherigen start()-Aufrufs
+int    last_error = NO_ERROR;                                        // der letzte Fehler des aktuellen start()-Aufrufs
 
-double Pip, Pips;                                           // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
-int    PipDigits;                                           // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
-int    PipPoint, PipPoints;                                 // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
-double TickSize;                                            // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von MODE_POINT)
-string PriceFormat;                                         // Preisformat des aktuellen Symbols für NumberToStr()
+double Pip, Pips;                                                    // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
+int    PipDigits;                                                    // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
+int    PipPoint, PipPoints;                                          // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
+double TickSize;                                                     // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von MODE_POINT)
+string PriceFormat;                                                  // Preisformat des aktuellen Symbols für NumberToStr()
 int    Tick, Ticks;
 int    ValidBars;
 int    ChangedBars;
 
-string objects[];
+
+string objects[];                                                    // Namen der Objekte, die mit Beenden des Programms automatisch entfernt werden
 
 
 /**
@@ -933,34 +937,39 @@ int start() {
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
 
-   if (IsLibrary())                                                        // in Libraries vorerst nichts tun
+   if (IsLibrary())                                                              // in Libraries vorerst nichts tun
       return(NO_ERROR);
 
 
-   // (1) User-spezifische Deinit-Tasks ausführen
+   // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
+   int error = onDeinit();                                                       // Preprocessing-Hook
+                                                                                 //
+   if (error != -1) {                                                            // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      switch (UninitializeReason()) {                                            //   bricht deinit() *nicht* ab.
+         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
+         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      // - Gibt eine der Funktionen -1 zurück, bricht deinit() alle weiteren User-Routinen ab.
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
+         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
+         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
+         case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
+         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
+      }                                                                          //
+   }                                                                             //
+   if (error != -1)                                                              //
+      error = afterDeinit();                                                     // Postprocessing-Hook
+
+
+   // (2) User-spezifische Deinit-Tasks ausführen
    int deinitFlags = SumInts(__DEINIT_FLAGS__);
-   int error = stdlib_deinit(deinitFlags, UninitializeReason());
+   if (error != -1) {
+      // do something...
+   }
+
+
+   // (3) stdlib deinitialisieren
+   error = stdlib_deinit(deinitFlags, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
-
-
-   // (2) User-spezifische deinit()-Routinen aufrufen                      // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onDeinit() == -1)                                                   // Preprocessing-Hook
-      return(last_error);                                                  //
-                                                                           // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-   switch (UninitializeReason()) {                                         //   bricht deinit() *nicht* ab.
-      case REASON_UNDEFINED  : error = onDeinitUndefined();       break;   //
-      case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   // - Gibt eine der Funktionen -1 zurück, bricht deinit() ab.
-      case REASON_REMOVE     : error = onDeinitRemove();          break;   //
-      case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
-      case REASON_PARAMETERS : error = onDeinitParameterChange(); break;   //
-      case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;   //
-      case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   //
-   }                                                                       //
-   if (error == -1)                                                        //
-      return(last_error);                                                  //
-                                                                           //
-   afterDeinit();                                                          // Postprocessing-Hook
 
    return(last_error);
 }
@@ -1701,6 +1710,19 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als den letzten Fehlercode zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  beliebige Parameter (werden ignoriert)
+ *
+ * @return int - last_error
+ */
+int _last_error(int param1=NULL, int param2=NULL, int param3=NULL) {
+   return(last_error);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als (int) 0 zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -2169,6 +2191,7 @@ void DummyCalls() {
    _empty();
    _false();
    _int(NULL);
+   _last_error();
    _NO_ERROR();
    _NULL();
    _string(NULL);

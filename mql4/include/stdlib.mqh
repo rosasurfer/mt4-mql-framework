@@ -256,6 +256,11 @@
    int      DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
 
 
+   // Locks
+   bool     AquireLock(string mutexName);
+   bool     ReleaseLock(string mutexName);
+
+
    // MagicNumbers
    int      StrategyId(int magicNumber);
    string   LFX.Currency(int magicNumber);
