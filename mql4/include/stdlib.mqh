@@ -505,7 +505,7 @@
    int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
 
    int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
-   string   wdf.FileAttributesToStr       (/*WIN32_FIND_DATA*/int wdf[]);
+   string   wfd.FileAttributesToStr       (/*WIN32_FIND_DATA*/int wfd[]);
    bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
    bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
    bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]);

@@ -2190,13 +2190,13 @@ string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(Buf
 /**
  * Gibt die lesbare Version eines FileAttributes zurück.
  *
- * @param  int wdf[] - WIN32_FIND_DATA structure
+ * @param  int wfd[] - WIN32_FIND_DATA structure
  *
  * @return string
  */
-string wdf.FileAttributesToStr(/*WIN32_FIND_DATA*/int wdf[]) {
+string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
    string result = "";
-   int flags = wfd.FileAttributes(wdf);
+   int flags = wfd.FileAttributes(wfd);
 
    if (flags & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_READONLY"     );
    if (flags & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_HIDDEN"       );
@@ -2522,7 +2522,7 @@ int BufferGetChar(int buffer[], int pos) {
  * @param  int from     - Index des ersten Bytes des für die Charactersequenz reservierten Bereichs, beginnend mit 0
  * @param  int length   - Anzahl der im Buffer für die Charactersequenz reservierten Bytes
  *
- * @return string       - ANSI-String
+ * @return string - ANSI-String
  */
 string BufferCharsToStr(int buffer[], int from, int length) {
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
@@ -2536,21 +2536,21 @@ string BufferCharsToStr(int buffer[], int from, int length) {
       return("");
 
    string result = "";
-   int    chars, fromInt=fromChar>>2, toInt=toChar>>2, n=fromChar&0x03; // Indizes der relevanten Array-Integers und des ersten Chars (liegt evt. nicht auf Integer-Boundary)
+   int    chars, fromInt=fromChar>>2, toInt=toChar>>2, n=fromChar&0x03;    // Indizes der relevanten Array-Integers und des ersten Chars (liegt evt. nicht auf Integer-Boundary)
 
    for (int i=fromInt; i <= toInt; i++) {
       int byte, integer=buffer[i];
 
-      for (; n < 4; n++) {                                           // n: 0-1-2-3
+      for (; n < 4; n++) {                                                 // n: 0-1-2-3
          if (chars == length)
             break;
-         byte = integer >> (n<<3) & 0xFF;                            // integer >> 0-8-16-24
-         if (byte == 0x00)                                           // NULL-Byte: Ausbruch aus innerer Schleife
+         byte = integer >> (n<<3) & 0xFF;                                  // integer >> 0-8-16-24
+         if (byte == 0x00)                                                 // NULL-Byte: Ausbruch aus innerer Schleife
             break;
          result = StringConcatenate(result, CharToStr(byte));
          chars++;
       }
-      if (byte == 0x00)                                              // NULL-Byte: Ausbruch aus äußerer Schleife
+      if (byte == 0x00)                                                    // NULL-Byte: Ausbruch aus äußerer Schleife
          break;
       n = 0;
    }
@@ -2562,13 +2562,13 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters).
+ * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters) zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Charactersequenz
  * @param  int length   - Anzahl der Integers des im Buffer für die Charactersequenz reservierten Bereiches
  *
- * @return string       - ANSI-String
+ * @return string - ANSI-String
  *
  *
  *  NOTE:
