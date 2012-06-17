@@ -244,13 +244,16 @@ bool AquireLock(string mutexName) {
 
 
    datetime now, startTime=GetTickCount();
-   int error, duration, seconds=1;
+   int      error, duration, seconds=1;
+   string   globalVarName = mutexName;
+   if (This.IsTesting())
+      globalVarName = StringConcatenate("tester.", mutexName);
 
 
    // (2) no, run until the lock is aquired
    while (true) {
       // try to get it
-      if (GlobalVariableSetOnCondition(mutexName, 1, 0)) {
+      if (GlobalVariableSetOnCondition(globalVarName, 1, 0)) {
          //debug("AquireLock()   got the lock");
          ArrayPushString(lock.names, mutexName);
          ArrayPushInt   (lock.counters,      1);
@@ -260,7 +263,7 @@ bool AquireLock(string mutexName) {
 
       // create the mutex if it doesn't exist
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
-         if (GlobalVariableSet(mutexName, 0) == 0) {
+         if (GlobalVariableSet(globalVarName, 0) == 0) {
             error = GetLastError();
             if (IsNoError(error))
                error = ERR_RUNTIME_ERROR;
@@ -319,7 +322,11 @@ bool ReleaseLock(string mutexName) {
       ArraySpliceStrings(lock.names,    i, 1);
       ArraySpliceInts   (lock.counters, i, 1);
 
-      if (GlobalVariableSet(mutexName, 0) == 0) {
+      string globalVarName = mutexName;
+      if (This.IsTesting())
+         globalVarName = StringConcatenate("tester.", mutexName);
+
+      if (GlobalVariableSet(globalVarName, 0) == 0) {
          int error = GetLastError();
          if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
