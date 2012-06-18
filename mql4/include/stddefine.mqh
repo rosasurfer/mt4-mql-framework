@@ -606,7 +606,7 @@
 #define ERR_INCOMPATIBLE_ARRAYS                                    4056    // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057
 #define ERR_GLOBAL_VARIABLE_NOT_FOUND                              4058
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTING                            4059    // function not allowed in test mode
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTING                            4059    // function not allowed in tester
 #define ERR_FUNC_NOT_ALLOWED_IN_TESTER  ERR_FUNC_NOT_ALLOWED_IN_TESTING
 #define ERR_FUNCTION_NOT_CONFIRMED                                 4060
 #define ERR_SEND_MAIL_ERROR                                        4061
