@@ -218,7 +218,7 @@ int stdlib_PeekLastError() {
 }
 
 
-string lock.names   [];                // Namen der Locks, die vom aktuellen Thread gehalten werden
+string lock.names   [];                // Namen der Locks, die vom aktuellen Programm gehalten werden
 int    lock.counters[];                // Anzahl der akquirierten Locks je Name
 
 
@@ -840,19 +840,24 @@ int DeletePrivateProfileKey(string fileName, string section, string key) {
  * @return string - Version oder Leerstring, falls ein Fehler auftrat
  */
 string GetTerminalVersion() {
+   static string static.result[1];
+   if (StringLen(static.result) > 0)
+      return(static.result[0]);
+
+
    int    bufferSize = MAX_PATH;
-   string filename[]; InitializeStringBuffer(filename, bufferSize);
-   int chars = GetModuleFileNameA(NULL, filename[0], bufferSize);
+   string fileName[]; InitializeStringBuffer(fileName, bufferSize);
+   int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
    if (chars == 0)
       return(_empty(catch("GetTerminalVersion(1) ->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int iNull[];
-   int infoSize = GetFileVersionInfoSizeA(filename[0], iNull);
+   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
    if (infoSize == 0)
       return(_empty(catch("GetTerminalVersion(2) ->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
-   if (!GetFileVersionInfoA(filename[0], 0, infoSize, infoBuffer))
+   if (!GetFileVersionInfoA(fileName[0], 0, infoSize, infoBuffer))
       return(_empty(catch("GetTerminalVersion(3) ->version::GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
@@ -889,10 +894,11 @@ string GetTerminalVersion() {
    // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
-
    if (IsError(catch("GetTerminalVersion(6)")))
       return("");
-   return(version);
+
+   static.result[0] = version;
+   return(static.result[0]);
 }
 
 
@@ -902,9 +908,9 @@ string GetTerminalVersion() {
  * @return int - Build-Version oder 0, wenn ein Fehler auftrat
  */
 int GetTerminalBuild() {
-   static int build;                                                 // ohne Initializer (@see MQL.doc)
-   if (build != 0)
-      return(build);
+   static int static.result;                                         // ohne Initializer (@see MQL.doc)
+   if (static.result != 0)
+      return(static.result);
 
    string version = GetTerminalVersion();
    if (StringLen(version) == 0)
@@ -919,11 +925,13 @@ int GetTerminalBuild() {
    if (!StringIsDigit(strings[size-1]))
       return(_ZERO(catch("GetTerminalBuild(2)   unexpected terminal version format = \""+ version +"\"", ERR_RUNTIME_ERROR)));
 
-   build = StrToInteger(strings[size-1]);
+   int build = StrToInteger(strings[size-1]);
 
    if (IsError(catch("GetTerminalBuild(3)")))
       build = 0;
-   return(build);
+
+   static.result = build;
+   return(static.result);
 }
 
 
@@ -1079,13 +1087,9 @@ int LFX.Instance(int magicNumber) {
  * @return string - Dateiname
  */
 string GetLocalConfigPath() {
-   static string cache.localConfigPath[];                            // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
-   if (ArraySize(cache.localConfigPath) == 0) {
-      ArrayResize(cache.localConfigPath, 1);
-      cache.localConfigPath[0] = "";
-   }
-   else if (StringLen(cache.localConfigPath[0]) > 0)                 // ... und möglichst gecachten Wert zurückgeben
-      return(cache.localConfigPath[0]);
+   static string static.result[1];                                   // ohne Initializer ...
+   if (StringLen(static.result[0]) > 0)
+      return(static.result[0]);
 
    // Cache-miss, aktuellen Wert ermitteln
    string iniFile = StringConcatenate(TerminalPath(), "\\metatrader-local-config.ini");
@@ -1110,11 +1114,11 @@ string GetLocalConfigPath() {
       }
    }
 
-   cache.localConfigPath[0] = iniFile;                               // Ergebnis cachen
+   static.result[0] = iniFile;
 
    if (IsError(catch("GetLocalConfigPath(2)")))
       return("");
-   return(iniFile);
+   return(static.result[0]);
 }
 
 
@@ -1125,13 +1129,9 @@ string GetLocalConfigPath() {
  * @return string - Dateiname
  */
 string GetGlobalConfigPath() {
-   static string cache.globalConfigPath[];                           // timeframe-übergreifenden String-Cache einrichten (ohne Initializer) ...
-   if (ArraySize(cache.globalConfigPath) == 0) {
-      ArrayResize(cache.globalConfigPath, 1);
-      cache.globalConfigPath[0] = "";
-   }
-   else if (StringLen(cache.globalConfigPath[0]) > 0)                // ... und möglichst gecachten Wert zurückgeben
-      return(cache.globalConfigPath[0]);
+   static string static.result[1];                                   // ohne Initializer ...
+   if (StringLen(static.result[0]) > 0)
+      return(static.result[0]);
 
    // Cache-miss, aktuellen Wert ermitteln
    string iniFile = StringConcatenate(TerminalPath(), "\\..\\metatrader-global-config.ini");
@@ -1156,11 +1156,11 @@ string GetGlobalConfigPath() {
       }
    }
 
-   cache.globalConfigPath[0] = iniFile;                              // Ergebnis cachen
+   static.result[0] = iniFile;
 
    if (IsError(catch("GetGlobalConfigPath(2)")))
       return("");
-   return(iniFile);
+   return(static.result[0]);
 }
 
 
@@ -2986,17 +2986,17 @@ string GetServerDirectory() {
    // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart des alten Verzeichnisses.
    // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
 
-   static string cache.directory[];
+   static string static.result[1];
    static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
-      ArrayResize(cache.directory, 0);
+      static.result[0] = "";
    lastTick = Tick;
 
    // 2) wenn Wert im Cache, gecachten Wert zurückgeben
-   if (ArraySize(cache.directory) > 0)
-      return(cache.directory[0]);
+   if (StringLen(static.result[0]) > 0)
+      return(static.result[0]);
 
    // 3.1) Wert ermitteln
    string directory = AccountServer();
@@ -3049,11 +3049,8 @@ string GetServerDirectory() {
    if (StringLen(directory) == 0)
       return(_empty(catch("GetServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
-   // 3.3) Wert cachen
-   ArrayResize(cache.directory, 1);
-   cache.directory[0] = directory;
-
-   return(directory);
+   static.result[0] = directory;
+   return(static.result[0]);
 }
 
 
@@ -3287,15 +3284,23 @@ string WaitForSingleObjectValueToStr(int value) {
  *  Alias für GetStandardSymbol(Symbol())
  */
 string StdSymbol() {
-   // TODO: Bug bei Symbolwechsel, es wird weiter das statisch gespeicherte vorherige Symbol zurückgegeben
+   static string static.lastSymbol[1], static.result[1];
+   /*
+   Indikatoren:  lokale Library-Arrays:  live:    werden bei Symbolwechsel nicht zurückgesetzt
+   EA's:         lokale Library-Arrays:  live:    werden bei Symbolwechsel nicht zurückgesetzt
+   EA's:         lokale Library-Arrays:  Tester:  werden bei Symbolwechsel und Start nicht zurückgesetzt
+   */
 
-   static string stdSymbol[1];                                       // Um Strings timeframeübergreifend statisch zu speichern, müssen sie in einem Array abgelegt werden.
-   static bool   done;
-   if (!done) {
-      stdSymbol[0] = GetStandardSymbol(Symbol());
-      done = true;
+   // Symbolwechsel erkennen
+   if (StringLen(static.result[0]) > 0) {
+      if (Symbol() == static.lastSymbol[0])
+         return(static.result[0]);
    }
-   return(stdSymbol[0]);
+
+   static.lastSymbol[0] = Symbol();
+   static.result    [0] = GetStandardSymbol(Symbol());
+
+   return(static.result[0]);
 }
 
 
@@ -5328,15 +5333,15 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    if (ArrayRange(results, 1) != HISTORY_COLUMNS)
       return(catch("GetAccountHistory(1)   invalid parameter results["+ ArrayRange(results, 0) +"]["+ ArrayRange(results, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
-   int    cache.account[1];
-   string cache[][HISTORY_COLUMNS];
+   static int    static.account[1];
+   static string static.results[][HISTORY_COLUMNS];
 
    ArrayResize(results, 0);
 
-   // Daten nach Möglichkeit aus dem Cache liefern
-   if (cache.account[0] == account) {
-      ArrayCopy(results, cache);
-      log("GetAccountHistory()   delivering "+ ArrayRange(cache, 0) +" history entries for account "+ account +" from cache");
+   // nach Möglichkeit die gecachten Daten liefern
+   if (account == static.account[0]) {
+      ArrayCopy(results, static.results);
+      log("GetAccountHistory()   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(2)"));
    }
 
@@ -5437,13 +5442,13 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
    // Daten in Zielarray kopieren und cachen
    if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
-      ArrayCopy(results, result);
-
-      cache.account[0] = account;
-      ArrayResize(cache, 0);
-      ArrayCopy(cache, result);
+      //log("GetAccountHistory()   caching "+ ArrayRange(result, 0) +" history entries for account "+ account);
+      static.account[0] = account;
+      ArrayResize(static.results, 0);
+      ArrayCopy  (static.results, result);
       ArrayResize(result, 0);
-      //log("GetAccountHistory()   caching "+ ArrayRange(cache, 0) +" history entries for account "+ account);
+
+      ArrayCopy(results, static.results);
    }
 
    ArrayResize(header, 0);
@@ -5457,10 +5462,9 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
 int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. während des Terminal-Starts
-   // Im Tester cachen wir die die Accountnummer.
-   static int cached.account;                                        // ohne Initializer (@see MQL.doc)
-   if (cached.account != 0)
-      return(cached.account);
+   static int static.result;
+   if (static.result != 0)
+      return(static.result);
 
    int account = AccountNumber();
 
@@ -5489,11 +5493,11 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
    if (IsError(catch("GetAccountNumber(4)")))
       return(0);
 
-   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage().
+   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage() in _DEINIT_.
    if (This.IsTesting())
-      cached.account = account;
+      static.result = account;
 
-   return(account);
+   return(account);                                                  // nicht die statische Variable zurückgeben (kann 0 sein)
 }
 
 
@@ -5507,15 +5511,15 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
  * @return int - Fehlerstatus
  */
 int GetBalanceHistory(int account, datetime& times[], double& values[]) {
-   int      cache.account[1];
-   datetime cache.times [];
-   double   cache.values[];
+   static int      static.account[1];
+   static datetime static.times [];
+   static double   static.values[];
 
    ArrayResize(times,  0);
    ArrayResize(values, 0);
 
    // Daten nach Möglichkeit aus dem Cache liefern       TODO: paralleles Cachen mehrerer Wertereihen ermöglichen
-   if (cache.account[0] == account) {
+   if (account == static.account[0]) {
       /**
        * TODO: Fehler tritt nach Neustart auf, wenn Balance-Indikator geladen ist und AccountNumber() noch 0 zurückgibt
        *
@@ -5523,9 +5527,9 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
        * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
        * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)  [4051 - invalid function parameter value]
        */
-      ArrayCopy(times , cache.times);
-      ArrayCopy(values, cache.values);
-      log("GetBalanceHistory()   delivering "+ ArraySize(cache.times) +" balance values for account "+ account +" from cache");
+      ArrayCopy(times,  static.times);
+      ArrayCopy(values, static.values);
+      log("GetBalanceHistory()   delivering "+ ArraySize(times) +" balance values for account "+ account +" from cache");
       return(catch("GetBalanceHistory(1)"));
    }
 
@@ -5575,9 +5579,9 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    }
 
    // Daten cachen
-   cache.account[0] = account;
-   ArrayResize(cache.times,  0); ArrayCopy(cache.times,  times );
-   ArrayResize(cache.values, 0); ArrayCopy(cache.values, values);
+   static.account[0] = account;
+   ArrayResize(static.times,  0); ArrayCopy(static.times,  times );
+   ArrayResize(static.values, 0); ArrayCopy(static.values, values);
    log("GetBalanceHistory()   caching "+ ArraySize(times) +" balance values for account "+ account);
 
    ArrayResize(data, 0);
@@ -5591,6 +5595,10 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
 string GetComputerName() {
+   static string static.result[1];
+   if (StringLen(static.result[0]) > 0)
+      return(static.result[0]);
+
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
    int    lpBufferSize[1]; lpBufferSize[0] = bufferSize;
@@ -5598,7 +5606,8 @@ string GetComputerName() {
    if (!GetComputerNameA(buffer[0], lpBufferSize))
       return(_empty(catch("GetComputerName() ->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   return(buffer[0]);
+   static.result[0] = buffer[0];
+   return(static.result[0]);
 }
 
 
@@ -5620,7 +5629,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0] , buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0],  buffer[0], bufferSize, GetLocalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
    bool result = true;
@@ -5651,7 +5660,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0]                   , buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, buffer[0],                    buffer[0], bufferSize, GetLocalConfigPath());
 
    double result = StrToDouble(buffer[0]);
 
@@ -5674,7 +5683,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 int GetConfigInt(string section, string key, int defaultValue=0) {
    // zuerst globale, dann lokale Config auslesen
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
-       result = GetPrivateProfileIntA(section, key, result      , GetLocalConfigPath());
+       result = GetPrivateProfileIntA(section, key, result,       GetLocalConfigPath());
 
    if (IsError(catch("GetConfigInt()")))
       return(0);
@@ -6860,19 +6869,19 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart mit den alten Bars.
    Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Chart mit neuer Zeitzone befinden.
    */
-   static string cache.timezone[];
+   static string static.timezone[1];
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   // (1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
    if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
-      ArrayResize(cache.timezone, 0);
+      static.timezone[0] = "";
    lastTick = Tick;
 
-   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
-   if (ArraySize(cache.timezone) > 0)
-      return(cache.timezone[0]);
+   if (StringLen(static.timezone[0]) > 0)
+      return(static.timezone[0]);
 
-   // 3) Timezone-ID ermitteln
+
+   // (2) Timezone-ID ermitteln
    string timezone, directory=StringToLower(GetServerDirectory());
 
    if (StringLen(directory) == 0)
@@ -6914,12 +6923,11 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
          return(_empty(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
-   // 4) Timezone-ID cachen
-   ArrayResize(cache.timezone, 1);
-   cache.timezone[0] = timezone;
 
    if (IsError(catch("GetServerTimezone(2)")))
       return("");
+
+   static.timezone[0] = timezone;
    return(timezone);
 }
 
@@ -8824,31 +8832,6 @@ string DoubleToStrMorePrecision(double value, int precision) {
 }
 
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
-//                                                                                    //
-// MQL Utility Funktionen                                                             //
-//                                                                                    //
-// @see http://www.forexfactory.com/showthread.php?p=2695655                          //
-//                                                                                    //
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
-
-
-/**
- * Returns a numeric value rounded to the specified number of decimals - works around a precision bug in MQL4.
- *
- * @param  double number
- * @param  int    decimals
- *
- * @return double - rounded value
- */
-double MathRoundFix(double number, int decimals) {
-   // TODO: Verarbeitung negativer decimals prüfen
-
-   double operand = MathPow(10, decimals);
-   return(MathRound(number*operand + Sign(number)*0.000000000001) / operand);
-}
-
-
 /**
  * Gibt das Vorzeichen einer Zahl zurück.
  *
@@ -8933,6 +8916,31 @@ string StringRepeat(string input, int times) {
       output = StringConcatenate(output, input);
    }
    return(output);
+}
+
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+//                                                                                    //
+// MQL Utility Funktionen                                                             //
+//                                                                                    //
+// @see http://www.forexfactory.com/showthread.php?p=2695655                          //
+//                                                                                    //
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! //
+
+
+/**
+ * Returns a numeric value rounded to the specified number of decimals - works around a precision bug in MQL4.
+ *
+ * @param  double number
+ * @param  int    decimals
+ *
+ * @return double - rounded value
+ */
+double MathRoundFix(double number, int decimals) {
+   // TODO: Verarbeitung negativer decimals prüfen
+
+   double operand = MathPow(10, decimals);
+   return(MathRound(number*operand + Sign(number)*0.000000000001) / operand);
 }
 
 
@@ -11102,3 +11110,62 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    }
    return(true);
 }
+
+
+/*
+// --------------------------------------------------------------------------------------------------------------------------------
+// Tests mit globalen Arrays
+// @return string
+string staticString[1];
+string StaticString() {
+   if (StringLen(staticString[0]) == 0) staticString[0] = "s0";
+   else                                 staticString[0] = StringConcatenate("s", StrToInteger(StringRight(staticString[0], -1))+1);
+   return(staticString[0]);
+}
+// @return bool
+bool staticBool[1];
+bool StaticBool() {
+   staticBool[0] = !staticBool[0];
+   return(staticBool[0]);
+}
+// @return int
+int staticInt[1];
+int StaticInt() {
+   staticInt[0] = staticInt[0] + 1;
+   return(staticInt[0]);
+}
+// @return double
+double staticDouble[1];
+double StaticDouble() {
+   staticDouble[0] = staticDouble[0] + 1;
+   return(staticDouble[0]);
+}
+*/
+// --------------------------------------------------------------------------------------------------------------------------------
+// Tests mit lokalen Arrays
+// @return string
+string StaticString() {
+   static string staticString[1];
+   if (StringLen(staticString[0]) == 0) staticString[0] = "s0";
+   else                                 staticString[0] = StringConcatenate("s", StrToInteger(StringRight(staticString[0], -1))+1);
+   return(staticString[0]);
+}
+// @return bool
+bool StaticBool() {
+   static bool staticBool[1];
+   staticBool[0] = !staticBool[0];
+   return(staticBool[0]);
+}
+// @return int
+int StaticInt() {
+   static int staticInt[1];
+   staticInt[0] = staticInt[0] + 1;
+   return(staticInt[0]);
+}
+// @return double
+double StaticDouble() {
+   static double staticDouble[1];
+   staticDouble[0] = staticDouble[0] + 1;
+   return(staticDouble[0]);
+}
+// --------------------------------------------------------------------------------------------------------------------------------

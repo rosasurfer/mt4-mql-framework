@@ -6,7 +6,6 @@
 
 #import "stdlib.ex4"
 
-
    // MQL-Status- und Laufzeitumgebungs-Informationen
    bool     IsExpert();
    bool     IsIndicator();
@@ -553,6 +552,13 @@
    int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
+
+
+   // Tests
+   string   StaticString();
+   bool     StaticBool();
+   int      StaticInt();
+   double   StaticDouble();
 
 #import
 
