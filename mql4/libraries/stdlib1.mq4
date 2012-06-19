@@ -8440,7 +8440,7 @@ string UrlEncode(string value) {
  * @return bool
  */
 bool IsFile(string pathName) {
-   bool result = false;
+   bool result;
 
    if (StringLen(pathName) > 0) {
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
@@ -8454,7 +8454,6 @@ bool IsFile(string pathName) {
       ArrayResize(wfd, 0);
    }
 
-   catch("IsFile()");
    return(result);
 }
 
@@ -8467,7 +8466,7 @@ bool IsFile(string pathName) {
  * @return bool
  */
 bool IsDirectory(string pathName) {
-   bool result = false;
+   bool result;
 
    if (StringLen(pathName) > 0) {
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
@@ -8481,7 +8480,6 @@ bool IsDirectory(string pathName) {
       ArrayResize(wfd, 0);
    }
 
-   catch("IsDirectory()");
    return(result);
 }
 
