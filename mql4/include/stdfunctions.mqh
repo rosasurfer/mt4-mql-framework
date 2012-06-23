@@ -322,7 +322,7 @@
 #define ASM_ABSOLUTE             1
 
 
-// Flags zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
+// ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
 #define CORNER_TOP_LEFT          0        // default
 #define CORNER_TOP_RIGHT         1
 #define CORNER_BOTTOM_LEFT       2
@@ -413,6 +413,12 @@
 #define EXEC_REQUOTES                                   7   // Anzahl der aufgetretenen Requotes
 #define EXEC_SLIPPAGE                                   8   // Slippage der Orderausführung in Pips
 #define EXEC_TICKET                                     9   // durch die Ausführung erzeugtes Ticket
+
+
+// FindFileNames() flags
+#define FF_SORT                                         1   // Ergebnisse von NTFS-Laufwerken werden immer sortiert
+#define FF_DIRSONLY                                     2
+#define FF_FILESONLY                                    4
 
 
 // MessageBox() flags

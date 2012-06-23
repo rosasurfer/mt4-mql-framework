@@ -244,8 +244,11 @@
 
 
    // Files, I/O
-   bool     IsFile(string pathName);
-   bool     IsDirectory(string pathName);
+   bool     IsFile(string filename);
+   bool     IsDirectory(string filename);
+   bool     IsMqlFile(string filename);
+   bool     IsMqlDirectory(string filename);
+   int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
    int      GetPrivateProfileSectionNames(string fileName, string names[]);

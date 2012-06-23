@@ -2677,9 +2677,9 @@ int ExplodeStringsW(int buffer[], string& results[]) {
 /**
  * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
  *
- * @return string lnkFilename - Pfadangabe zum Shortcut
+ * @return string lnkFilename - vollständige Pfadangabe zum Shortcut
  *
- * @return string - Dateipfad der Zieldatei
+ * @return string - Dateipfad der Zieldatei oder Leerstring, falls ein Fehler auftrat
  */
 string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
@@ -3013,32 +3013,31 @@ string GetServerDirectory() {
       // Datei suchen und Verzeichnisnamen auslesen
       string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
-      int hFindDir=FindFirstFileA(pattern, wfd), result=hFindDir;
+      int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
 
-      while (result > 0) {
+      while (next > 0) {
          if (wfd.FileAttribute.Directory(wfd)) {
             string name = wfd.FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
-               if (hFindFile == INVALID_HANDLE_VALUE) {
-                  // hier müßte eigentlich auf ERR_FILE_NOT_FOUND geprüft werden, doch MQL kann es nicht
-               }
-               else {
+               if (hFindFile != INVALID_HANDLE_VALUE) {
                   //debug("FindTradeServerDirectory()   file = "+ pattern +"   found");
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(catch("GetServerDirectory(2) ->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+                     return(_empty(catch("GetServerDirectory(2) ->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
          }
-         result = FindNextFileA(hFindDir, wfd);
+         next = FindNextFileA(hFindDir, wfd);
       }
-      if (result == INVALID_HANDLE_VALUE)
-         return(_empty(catch("GetServerDirectory(3) ->kernel32::FindFirstFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      if (hFindDir == INVALID_HANDLE_VALUE)
+         return(_empty(catch("GetServerDirectory(3) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+
       FindClose(hFindDir);
+      ArrayResize(wfd, 0);
       //debug("GetServerDirectory()   resolved directory = \""+ directory +"\"");
    }
 
@@ -4022,7 +4021,8 @@ bool StringEndsWith(string object, string postfix) {
    if (lenObject == lenPostfix)
       return(object == postfix);
 
-   return(StringFind(object, postfix) == lenObject-lenPostfix);
+   int start = lenObject-lenPostfix;
+   return(StringFind(object, postfix, start) == start);
 }
 
 
@@ -4050,7 +4050,8 @@ bool StringIEndsWith(string object, string postfix) {
    if (lenObject == lenPostfix)
       return(object == postfix);
 
-   return(StringFind(object, postfix) == lenObject-lenPostfix);
+   int start = lenObject-lenPostfix;
+   return(StringFind(object, postfix, start) == start);
 }
 
 
@@ -8443,25 +8444,24 @@ string UrlEncode(string value) {
 /**
  * Prüft, ob der angegebene Name eine existierende und normale Datei ist (kein Verzeichnis).
  *
- * @return string pathName - Pfadangabe
+ * @return string filename - vollständiger Dateiname (für Windows-Dateifunktionen)
  *
  * @return bool
  */
-bool IsFile(string pathName) {
+bool IsFile(string filename) {
    bool result;
 
-   if (StringLen(pathName) > 0) {
+   if (StringLen(filename) > 0) {
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(pathName, wfd);
+      int hSearch = FindFirstFileA(filename, wfd);
 
-      if (hSearch != INVALID_HANDLE_VALUE) {          // TODO: konkreten Fehler prüfen
-         FindClose(hSearch);
+      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = !wfd.FileAttribute.Directory(wfd);
+         FindClose(hSearch);
       }
       ArrayResize(wfd, 0);
    }
-
    return(result);
 }
 
@@ -8469,26 +8469,110 @@ bool IsFile(string pathName) {
 /**
  * Prüft, ob der angegebene Name ein existierendes Verzeichnis ist (keine normale Datei).
  *
- * @return string pathName - Pfadangabe
+ * @return string filename - vollständiger Dateiname (für Windows-Dateifunktionen)
  *
  * @return bool
  */
-bool IsDirectory(string pathName) {
+bool IsDirectory(string filename) {
    bool result;
 
-   if (StringLen(pathName) > 0) {
+   if (StringLen(filename) > 0) {
+      while (StringRight(filename, 1) == "\\") {
+         filename = StringLeft(filename, -1);
+      }
+
       /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
 
-      int hSearch = FindFirstFileA(pathName, wfd);
+      int hSearch = FindFirstFileA(filename, wfd);
 
-      if (hSearch != INVALID_HANDLE_VALUE) {
-         FindClose(hSearch);
+      if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
          result = wfd.FileAttribute.Directory(wfd);
+         FindClose(hSearch);
       }
       ArrayResize(wfd, 0);
    }
-
    return(result);
+}
+
+
+/**
+ * Prüft, ob der angegebene Name eine existierende und normale MQL-Datei ist (kein Verzeichnis).
+ *
+ * @return string filename - zu ".\files\" relativer Dateiname (für MQL-Dateifunktionen)
+ *
+ * @return bool
+ */
+bool IsMqlFile(string filename) {
+   if (IsScript() || !This.IsTesting()) filename = StringConcatenate(TerminalPath(), "\\experts\\files\\", filename);
+   else                                 filename = StringConcatenate(TerminalPath(), "\\tester\\files\\",  filename);
+   return(IsFile(filename));
+}
+
+
+/**
+ * Prüft, ob der angegebene Name ein existierendes MQL-Verzeichnis ist (keine normale Datei).
+ *
+ * @return string filename - zu ".\files\" relativer Dateiname (für MQL-Dateifunktionen)
+ *
+ * @return bool
+ */
+bool IsMqlDirectory(string filename) {
+   if (IsScript() || !This.IsTesting()) filename = StringConcatenate(TerminalPath(), "\\experts\\files\\", filename);
+   else                                 filename = StringConcatenate(TerminalPath(), "\\tester\\files\\",  filename);
+   return(IsDirectory(filename));
+}
+
+
+/**
+ * Findet alle zum angegebenen Muster passenden Dateinamen. Pseudo-Verzeichnisse ("." und "..") werden nicht berücksichtigt.
+ *
+ * @param  string  pattern     - Namensmuster mit Wildcards nach Windows-Konventionen
+ * @param  string& lpResults[] - Zeiger auf Array zur Aufnahme der Suchergebnisse
+ * @param  int     flags       - zusätzliche Suchflags: [FF_DIRSONLY | FF_FILESONLY | FF_SORT] (default: keine)
+ *
+ *                               FF_DIRSONLY:  return only directory entries which match the pattern (default: all entries)
+ *                               FF_FILESONLY: return only file entries which match the pattern      (default: all entries)
+ *                               FF_SORT:      sort returned entries                                 (default: NTFS: sorting, FAT: no sorting)
+ *
+ * @return int - Anzahl der gefundenen Einträge oder -1, falls ein Fehler auftrat
+ */
+int FindFileNames(string pattern, string& lpResults[], int flags=NULL) {
+   if (StringLen(pattern) == 0)
+      return(_int(-1, catch("FindFileNames(1)   illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   ArrayResize(lpResults, 0);
+
+   string name;
+   /*WIN32_FIND_DATA*/ int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+   int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
+
+   while (next > 0) {
+      name = wfd.FileName(wfd);
+      //debug("FindFileNames()   \""+ name +"\"   "+ wfd.FileAttributesToStr(wfd));
+
+      while (true) {
+         if (wfd.FileAttribute.Directory(wfd)) {
+            if (flags & FF_FILESONLY != 0)  break;
+            if (name ==  ".")               break;
+            if (name == "..")               break;
+         }
+         else if (flags & FF_DIRSONLY != 0) break;
+         ArrayPushString(lpResults, name);
+         break;
+      }
+      next = FindNextFileA(hSearch, wfd);
+   }
+   ArrayResize(wfd, 0);
+
+   if (hSearch == INVALID_HANDLE_VALUE)                              // INVALID_HANDLE_VALUE = nichts gefunden
+      return(0);
+   FindClose(hSearch);
+
+   int size = ArraySize(lpResults);
+
+   if (flags & FF_SORT!=0) /*&&*/ if (size > 1) {                    // TODO: Ergebnisse ggf. sortieren
+   }
+   return(size);
 }
 
 
