@@ -229,7 +229,7 @@ int onInit() {
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
       double minutes = maTimeframe * MA.Periods;                     // Timeframe * Anzahl Bars = Range in Minuten
-      MA.Periods = MathRound(minutes / Period());
+      MA.Periods = Round(minutes / Period());
    }
 
    // Zeichenoptionen
@@ -247,7 +247,7 @@ int onInit() {
    if (MA.Periods > 1) {                                             // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       if (ALMA) {
          ArrayResize(wALMA, MA.Periods);
-         int    m = MathRound(ALMA.GaussianOffset * (MA.Periods-1)); // (int) double
+         int    m = Round(ALMA.GaussianOffset * (MA.Periods-1));
          double s = MA.Periods / ALMA.Sigma;
          double wSum;
          for (int i=0; i < MA.Periods; i++) {

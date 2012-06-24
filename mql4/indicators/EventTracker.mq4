@@ -273,7 +273,7 @@ int CheckBollingerBands() {
 
    // EventListener aufrufen und bei Erfolg Event signalisieren
    if (EventListener.BandsCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
-      int    crossing = event[CROSSING_TYPE ] +0.1;                  // (int) double
+      int    crossing = Round(event[CROSSING_TYPE]);
       double value    = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
       debug("CheckBollingerBands()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 

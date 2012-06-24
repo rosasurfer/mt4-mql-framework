@@ -61,8 +61,8 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
    // (1) globale Variablen re-initialisieren
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1; PipPoint = PipPoints;    // (int) double
-   Pip         = 1/MathPow(10, PipDigits);           Pips     = Pip;
+   PipPoints   = Round(MathPow(10, Digits-PipDigits)); PipPoint = PipPoints;
+   Pip         =     1/MathPow(10, PipDigits);         Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -497,8 +497,8 @@ int LoadCursorByName(int hInstance, string cursorName) {
  */
 string ExecutionToStr(double execution[], bool debugOutput=false) {
    string debugOut[], strings[]; ArrayResize(strings, 0);
+   int flags = Round(execution[EXEC_FLAGS]);
 
-   int flags = execution[EXEC_FLAGS] + ifDouble(LT(execution[EXEC_FLAGS], 0), -0.1, +0.1);   // (int) double
    ArrayPushString(strings, "EXEC_FLAGS=>"+ flags);
 
    if (debugOutput)
@@ -1357,7 +1357,7 @@ string CreateLegendLabel(string name) {
             legendLabels++;
             Explode(objName, ".", substrings);
             maxLegendId  = Max(maxLegendId, StrToInteger(substrings[1]));
-            maxYDistance = MathMax(maxYDistance, ObjectGet(objName, OBJPROP_YDISTANCE));  // TODO: (int) double
+            maxYDistance = Max(maxYDistance, Round(ObjectGet(objName, OBJPROP_YDISTANCE)));
          }
          labelObj--;
       }
@@ -8870,7 +8870,7 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
    }
    else {
       double h  = hue / 60;                           // h = hue / 360 * 6
-      int    i  = MathFloor(h);
+      int    i  = h;
       double f  = h - i;                              // f(ract) = MathMod(h, 1)
       double d1 = value * (1 - saturation        );
       double d2 = value * (1 - saturation *    f );
@@ -8884,9 +8884,9 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
       else             { red = value; green = d1;    blue = d2;    }
    }
 
-   int r = MathRound(red   * 255);
-   int g = MathRound(green * 255);
-   int b = MathRound(blue  * 255);
+   int r = Round(red   * 255);
+   int g = Round(green * 255);
+   int b = Round(blue  * 255);
 
    color rgb = r + g<<8 + b<<16;
 
@@ -9007,14 +9007,14 @@ string DoubleToStrEx(double value, int digits) {
    }
 
    double integer    = MathFloor(value);
-   string strInteger = DoubleToStr(integer +0.1, 0);
+   string strInteger = Round(integer);
 
    double remainder    = MathRound((value-integer) * decimals[digits]);
    string strRemainder = "";
 
    for (int i=0; i < digits; i++) {
-      double fraction  = MathFloor(remainder/10);
-      int    digit     = MathRound(remainder - fraction*10) +0.1;    // (int) double
+      double fraction = MathFloor(remainder/10);
+      int    digit    = Round(remainder - fraction*10);
       strRemainder = digit + strRemainder;
       remainder    = fraction;
    }
@@ -9037,70 +9037,6 @@ string DoubleToStrEx(double value, int digits) {
  */
 string DoubleToStrMorePrecision(double value, int precision) {
    return(DoubleToStrEx(value, precision));
-}
-
-
-/**
- * Gibt das Vorzeichen einer Zahl zurück.
- *
- * @param  double number - Zahl
- *
- * @return int - Vorzeichen (+1, 0, -1)
- */
-int Sign(double number) {
-   if (GT(number, 0)) return( 1);
-   if (LT(number, 0)) return(-1);
-   return(0);
-}
-
-
-/**
- * Integer-Version von MathMin()
- *
- * Ermittelt die kleinere zweier Zahlen.
- *
- * @param  int  value1
- * @param  int  value2
- *
- * @return int
- */
-int Min(int value1, int value2) {
-   if (value1 < value2)
-      return(value1);
-   return(value2);
-}
-
-
-/**
- * Integer-Version von MathMax()
- *
- * Ermittelt die größere zweier Zahlen.
- *
- * @param  int  value1
- * @param  int  value2
- *
- * @return int
- */
-int Max(int value1, int value2) {
-   if (value1 > value2)
-      return(value1);
-   return(value2);
-}
-
-
-/**
- * Integer-Version von MathAbs()
- *
- * Ermittelt den Absolutwert einer Zahl.
- *
- * @param  int  value
- *
- * @return int
- */
-int Abs(int value) {
-   if (value < 0)
-      return(-value);
-   return(value);
 }
 
 
@@ -9354,9 +9290,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    double lotStep        = MarketInfo(symbol, MODE_LOTSTEP);
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;                            // (int) double
-   double pip            = 1/MathPow(10, pipDigits), pips=pip;
-   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;                          // (int) double
+   int    pipPoints      = Round(MathPow(10, digits-pipDigits));
+   double pip            =     1/MathPow(10, pipDigits), pips=pip;
+   int    slippagePoints = Round(slippage * pipPoints);
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
@@ -10241,9 +10177,9 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
    */
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathPow(10, digits-pipDigits) +0.1;                               // (int) double
-   double pip            = 1/MathPow(10, pipDigits), pips=pip;
-   int    slippagePoints = MathFloor(slippage * pipPoints) +0.1;                             // (int) double
+   int    pipPoints      = Round(MathPow(10, digits-pipDigits));
+   double pip            =     1/MathPow(10, pipDigits), pips=pip;
+   int    slippagePoints = Round(slippage * pipPoints);
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    int    time1, time2, firstTime1, requotes, remainder;
@@ -11138,7 +11074,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       sizeOfCopy -= ArrayDropInt(copy, opposite);
 
       if (NE(exec[EXEC_TICKET], 0))                                           // Restposition zu verbleibenden Tickets hinzufügen
-         sizeOfCopy = ArrayPushInt(copy, exec[EXEC_TICKET] +0.1);             // (int) double
+         sizeOfCopy = ArrayPushInt(copy, Round(exec[EXEC_TICKET]));
 
       i = SearchIntArray(tickets, first);                                     // Ausgangsticket für realisierte Beträge ermitteln
       if (i == -1) {                                                          // Reihenfolge: first, opposite, last

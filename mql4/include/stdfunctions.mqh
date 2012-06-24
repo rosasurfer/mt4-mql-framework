@@ -2282,6 +2282,7 @@ void DummyCalls() {
    _string(NULL);
    _true();
    _ZERO();
+   Abs(NULL);
    ChartInfo.CreateLabels();
    ChartInfo.UpdateMarginLevels();
    ChartInfo.UpdatePosition();
@@ -2309,13 +2310,17 @@ void DummyCalls() {
    LE(NULL, NULL);
    log();
    LT(NULL, NULL);
+   Max(NULL, NULL);
+   Min(NULL, NULL);
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    OrderSelectByTicket(NULL, NULL);
    PipValue();
    ResetLastError();
+   Round(NULL);
    SetLastError(NULL);
+   Sign(NULL);
    WaitForTicket(NULL);
    warn(NULL);
 }

@@ -291,6 +291,7 @@
    int      Max(int value1, int value2);
    double   MathModFix(double a, double b);
    double   MathRoundFix(double value, int decimals);
+   int      Round(double value);
    int      Sign(double value);
    int      CountDecimals(double value);
 
@@ -556,7 +557,7 @@
    int      afterDeinit();
 
 
-   // erweiterte stdlib Root-Funktionen
+   // erweiterte stdlib Basisfunktionen
    int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);

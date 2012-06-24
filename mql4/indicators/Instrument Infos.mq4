@@ -174,10 +174,10 @@ int UpdateInfos() {
 
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED   );
    double lotValue          = Bid / tickSize * tickValue;
-   double leverage          = lotValue / marginRequired;                  ObjectSetText(names[MARGINREQUIRED], StringConcatenate("Margin required: ", NumberToStr(marginRequired, ", .2+"), " ", accountCurrency, "  (1:", MathRound(leverage), ")"), Font.Size, Font.Name, Font.Color);
+   double leverage          = lotValue / marginRequired;                  ObjectSetText(names[MARGINREQUIRED], StringConcatenate("Margin required: ", NumberToStr(marginRequired, ", .2+"), " ", accountCurrency, "  (1:", Round(leverage), ")"), Font.Size, Font.Name, Font.Color);
 
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED     );
-          marginHedged      = marginHedged / lotSize * 100;               ObjectSetText(names[MARGINHEDGED  ], StringConcatenate("Margin hedged:  ", MathRound(marginHedged), "%"), Font.Size, Font.Name, Font.Color);
+          marginHedged      = marginHedged / lotSize * 100;               ObjectSetText(names[MARGINHEDGED  ], StringConcatenate("Margin hedged:  ", Round(marginHedged), "%"), Font.Size, Font.Name, Font.Color);
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE         );
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG         );
@@ -203,7 +203,7 @@ int UpdateInfos() {
    double starts            = MarketInfo(symbol, MODE_STARTING         ); if (starts  > 0) ObjectSetText(names[STARTING  ], StringConcatenate("Future starts: ", TimeToStr(starts)), Font.Size, Font.Name, Font.Color);
    double expires           = MarketInfo(symbol, MODE_EXPIRATION       ); if (expires > 0) ObjectSetText(names[EXPIRATION], StringConcatenate("Future expires: ", TimeToStr(expires)), Font.Size, Font.Name, Font.Color);
 
-   int    accountLeverage   = AccountLeverage();                          ObjectSetText(names[ACCOUNT_LEVERAGE], StringConcatenate("Account leverage:       1:", MathRound(accountLeverage)), Font.Size, Font.Name, Font.Color);
+   int    accountLeverage   = AccountLeverage();                          ObjectSetText(names[ACCOUNT_LEVERAGE], StringConcatenate("Account leverage:       1:", Round(accountLeverage)), Font.Size, Font.Name, Font.Color);
    int    stopoutLevel      = AccountStopoutLevel();                      ObjectSetText(names[STOPOUT_LEVEL   ], StringConcatenate("Account stopout level: ", NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+"), ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), Font.Size, Font.Name, Font.Color);
 
    int error = GetLastError();
