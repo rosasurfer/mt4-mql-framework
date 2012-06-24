@@ -732,8 +732,8 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    PipDigits   = Digits & (~1);
-   PipPoints   = MathPow(10, Digits-PipDigits) +0.1; PipPoint = PipPoints;    // (int) double
-   Pip         = 1/MathPow(10, PipDigits);           Pips     = Pip;
+   PipPoints   = Round(MathPow(10, Digits-PipDigits)); PipPoint = PipPoints;
+   Pip         =     1/MathPow(10, PipDigits);         Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -1807,6 +1807,85 @@ double _double(double param1, int param2=NULL, int param3=NULL) {
  */
 string _string(string param1, int param2=NULL, int param3=NULL) {
    return(param1);
+}
+
+
+/**
+ * Integer-Version von MathMin()
+ *
+ * Ermittelt die kleinere zweier Ganzzahlen.
+ *
+ * @param  int  value1
+ * @param  int  value2
+ *
+ * @return int
+ */
+int Min(int value1, int value2) {
+   if (value1 < value2)
+      return(value1);
+   return(value2);
+}
+
+
+/**
+ * Integer-Version von MathMax()
+ *
+ * Ermittelt die größere zweier Ganzzahlen.
+ *
+ * @param  int  value1
+ * @param  int  value2
+ *
+ * @return int
+ */
+int Max(int value1, int value2) {
+   if (value1 > value2)
+      return(value1);
+   return(value2);
+}
+
+
+/**
+ * Integer-Version von MathAbs()
+ *
+ * Ermittelt den Absolutwert einer Ganzzahl.
+ *
+ * @param  int  value
+ *
+ * @return int
+ */
+int Abs(int value) {
+   if (value < 0)
+      return(-value);
+   return(value);
+}
+
+
+/**
+ * Gibt das Vorzeichen einer Zahl zurück.
+ *
+ * @param  double number - Zahl
+ *
+ * @return int - Vorzeichen (+1, 0, -1)
+ */
+int Sign(double number) {
+   if (GT(number, 0)) return( 1);
+   if (LT(number, 0)) return(-1);
+   return(0);
+}
+
+
+/**
+ * Integer-Version von MathRound(), entspricht dem sauberen Casten eines Doubles in einen Integer.
+ *
+ * @param  double value - Zahl
+ *
+ * @return int
+ */
+int Round(double value) {
+   value = MathRound(value);
+   if (value < 0) value -= 0.1;
+   else           value += 0.1;
+   return(value);
 }
 
 
