@@ -1618,6 +1618,37 @@ int ArrayUnshiftBool(bool array[], bool value) {
 
 
 /**
+ * Vereint die Werte zweier Boolean-Arrays.
+ *
+ * @param  bool array1[] - Boolean-Array
+ * @param  bool array2[] - Boolean-Array
+ * @param  bool merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
+   // Da merged[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   bool tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
  * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
  *
  * @param  int array[] - Integer-Array
@@ -1744,6 +1775,37 @@ int ArrayUnshiftInt(int array[], int value) {
    int size = ArrayPushInt(array, value);
    ReverseIntArray(array);
    return(size);
+}
+
+
+/**
+ * Vereint die Werte zweier Integer-Arrays.
+ *
+ * @param  int array1[] - Integer-Array
+ * @param  int array2[] - Integer-Array
+ * @param  int merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeIntArrays(int array1[], int array2[], int merged[]) {
+   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   int tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
 }
 
 
@@ -1878,6 +1940,37 @@ int ArrayUnshiftDouble(double array[], double value) {
 
 
 /**
+ * Vereint die Werte zweier Double-Arrays.
+ *
+ * @param  double array1[] - Double-Array
+ * @param  double array2[] - Double-Array
+ * @param  double merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
+   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   double tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
  * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
  *
  * @param  string array[] - String-Array
@@ -2006,6 +2099,37 @@ int ArrayUnshiftString(string array[], string value) {
    int size = ArrayPushString(array, value);
    ReverseStringArray(array);
    return(size);
+}
+
+
+/**
+ * Vereint die Werte zweier String-Arrays.
+ *
+ * @param  string array1[] - String-Array
+ * @param  string array2[] - String-Array
+ * @param  string merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeStringArrays(string array1[], string array2[], string merged[]) {
+   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   string tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
 }
 
 

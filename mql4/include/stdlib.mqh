@@ -83,6 +83,11 @@
    bool     IsReverseIndexedDoubleArray(double array[]);
    bool     IsReverseIndexedSringArray(string array[]);
 
+   int      MergeBoolArrays(bool array1[], bool array2[], bool merged[]);
+   int      MergeIntArrays(int array1[], int array2[], int merged[]);
+   int      MergeDoubleArrays(double array1[], double array2[], double merged[]);
+   int      MergeStringArrays(string array1[], string array2[], string merged[]);
+
    string   JoinBools(bool array[], string separator);
    string   JoinInts(int array[], string separator);
    string   JoinDoubles(double array[], string separator);
