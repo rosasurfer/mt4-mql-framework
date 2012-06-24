@@ -339,12 +339,12 @@
    bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
-   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, double execution[]);
-   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double execution[]);
-   bool     OrderDeleteEx(int ticket, color markerColor, double execution[]);
-   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, double execution[]);
-   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, double execution[]);
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, double execution[]);
+   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int execFlags, double execution[]);
+   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int execFlags, double execution[]);
+   bool     OrderDeleteEx(int ticket, color markerColor, int execFlags, double execution[]);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int execFlags, double execution[]);
+   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, double execution[]);
+   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int execFlags, double execution[]);
    bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);

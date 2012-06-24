@@ -9253,7 +9253,8 @@ string NumberToStr(double number, string mask) {
  * @param  int      magicNumber - MagicNumber                     (default: 0          )
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC        )
  * @param  color    markerColor - Farbe des Chartmarkers
- * @param  double   execution[] - ausführungsspezifische Daten
+ * @param  int      execFlags   - die Ausführung steuernde Flags
+ * @param  double   execution[] - Ausführungsdaten
  *
  * @return int - Ticket oder -1, falls ein Fehler auftrat
  *
@@ -9271,7 +9272,7 @@ string NumberToStr(double number, string mask) {
  * - EXEC_SLIPPAGE  : (out) Gesamtslippage der Orderausführung in Pips nach Requotes (positiv: zu ungunsten; negativ: zu gunsten)
  * - EXEC_TICKET    : (out) das erzeugte Ticket (wie von der Funktion zurückgegeben)
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, double& execution[]) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")      // = NULL
@@ -9569,7 +9570,8 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   takeProfit  - TakeProfit-Level
  * @param  datetime expires     - Gültigkeit (nur bei Pending-Orders)
  * @param  color    markerColor - Farbe des Chart-Markers
- * @param  double   execution[] - ausführungsspezifische Daten
+ * @param  int      execFlags   - die Ausführung steuernde Flags
+ * @param  double   execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -9587,7 +9589,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * - EXEC_SLIPPAGE  : (out) immer 0
  * - EXEC_TICKET    : (out) immer 0
  */
-bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, double& execution[]) {
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(false);
@@ -10090,7 +10092,8 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * @param  double price       - Preis                           (wird zur Zeit ignoriert    )
  * @param  double slippage    - akzeptable Slippage in Pips     (default: 0                 )
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -10110,7 +10113,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  *
  * 1) vom MT4-Server berechnet, kann bei partiellem Close vom theoretischen Wert abweichen
  */
-bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slippage/*=0*/, color markerColor, double& execution[]) {
+bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slippage/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseEx(1)", O_PUSH)) return(false);
@@ -10332,7 +10335,8 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  * @param  int    ticket      - Ticket der zu schließenden Position
  * @param  int    opposite    - Ticket der zum Schließen zu verwendenden Gegenposition
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -10352,7 +10356,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  *
  * (1) vom MT4-Server berechnet, bei partiellem Close aufgeteilt (kann vom tatsächlichen Wert abweichen)
  */
-bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& execution[]) {
+bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(false);
@@ -10567,7 +10571,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default: 0)
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
@@ -10593,7 +10598,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, double& executi
  * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des Ticketsymbols addiert,
  *     die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert
  */
-bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, double& execution[]) {
+bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
@@ -10615,7 +10620,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 
    // (2) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1)
-      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execution) && OrderPop("OrderMultiClose(7)"));
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execFlags, execution) && OrderPop("OrderMultiClose(7)"));
 
 
    // (3) Zuordnung der Tickets zu Symbolen ermitteln
@@ -10639,7 +10644,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
    // (4) Tickets gemeinsam schließen, wenn alle zum selben Symbol gehören
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1)
-      return(OrderMultiClose.OneSymbol(tickets, slippage, markerColor, execution));
+      return(OrderMultiClose.OneSymbol(tickets, slippage, markerColor, execFlags, execution));
 
 
    // (5) Tickets symbolweise auslesen und Gruppen zunächst nur glattstellen
@@ -10660,7 +10665,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
             ArrayPushInt(group, copy[i]);
       }
       exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
-      int newTicket = OrderMultiClose.Flatten(group, slippage, exec);
+      int newTicket = OrderMultiClose.Flatten(group, slippage, execFlags, exec);
       if (IsLastError())
          return(false);
 
@@ -10715,7 +10720,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       sizeOfGroup = ArraySize(group);
 
       exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
-      if (!OrderMultiClose.Flattened(group, markerColor, exec))
+      if (!OrderMultiClose.Flattened(group, markerColor, execFlags, exec))
          return(false);
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -10739,7 +10744,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip (default: 0)
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
@@ -10765,7 +10771,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
-/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor, double& execution[]) {
+/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
 
@@ -10775,7 +10781,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 
    // (1) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
    if (sizeOfTickets == 1)
-      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execution));
+      return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execFlags, execution));
 
 
    // (2) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
@@ -10785,7 +10791,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 
    // (3) Gesamtposition glatt stellen
    double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
-   int newTicket = OrderMultiClose.Flatten(copy, slippage, exec);
+   int newTicket = OrderMultiClose.Flatten(copy, slippage, execFlags, exec);
    if (IsLastError())
       return(false);
 
@@ -10820,7 +10826,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
 
    // (4) Teilpositionen auflösen
    exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
-   if (!OrderMultiClose.Flattened(copy, markerColor, exec))
+   if (!OrderMultiClose.Flattened(copy, markerColor, execFlags, exec))
       return(false);
 
    for (i=0; i < sizeOfCopy; i++) {
@@ -10842,7 +10848,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  *
  * @param  int    tickets[]   - Tickets der auszugleichenden Positionen
  * @param  double slippage    - akzeptable Slippage in Pip (default: 0)
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return int - ein resultierendes neues Ticket (falls zutreffend); 0, falls ein Fehler auftrat (@see last_error)
  *
@@ -10869,7 +10876,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  * (3) ist die Gesamtposition bereits ausgeglichen, der OrderOpen-Wert des zuletzt geöffneten Tickets (dieses glich die Gesamtposition aus)
  * (4) vom MT4-Server berechnet, kann vom tatsächlichen Wert abweichen
  */
-/*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage/*=0*/, double& execution[]) {
+/*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage/*=0*/, int execFlags, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
 
@@ -10949,13 +10956,13 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
       if (closeTicket != 0) {
          //debug("OrderMultiClose.Flatten()   "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s") +" by close of #"+ closeTicket);
          // OrderClose eines existierenden Tickets
-         if (!OrderCloseEx(closeTicket, MathAbs(totalLots), NULL, slippage, CLR_NONE, exec))
+         if (!OrderCloseEx(closeTicket, MathAbs(totalLots), NULL, slippage, CLR_NONE, execFlags, exec))
             return(0);
       }
       else {
          //debug("OrderMultiClose.Flatten()   "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s") +" by open of "+ OperationTypeDescription(type) +" order");
          // OrderSend: neues Ticket öffnen
-         if (OrderSendEx(symbol, type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, exec) == -1)
+         if (OrderSendEx(symbol, type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, execFlags, exec) == -1)
             return(0);
       }
       newTicket = exec[EXEC_TICKET];
@@ -10986,7 +10993,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  *
  * @param  int    tickets[]   - Tickets der gehedgten Positionen
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -11013,7 +11021,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  * (4) aus dem Öffnen und Schließen zusätzlicher Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
-/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, double& execution[]) {
+/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int execFlags, double& execution[]) {
    int sizeOfTickets = ArraySize(tickets);
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, arbeiten wir auf einer Kopie.
@@ -11059,7 +11067,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
          return(_false(catch("OrderMultiClose.Flattened(5)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP)));
 
       double exec[] = {NULL};
-      if (!OrderCloseByEx(first, opposite, markerColor, exec))                // erste und Opposite-Position schließen
+      if (!OrderCloseByEx(first, opposite, markerColor, execFlags, exec))     // erste und Opposite-Position schließen
          return(_false(OrderPop("OrderMultiClose.Flattened(6)")));
 
       sizeOfCopy -= ArraySpliceInts(copy, 0, 1);                              // erstes und opposite Ticket löschen
@@ -11090,7 +11098,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  *
  * @param  int    ticket      - Ticket der zu schließenden Order
  * @param  color  markerColor - Farbe des Chart-Markers
- * @param  double execution[] - ausführungsspezifische Daten
+ * @param  int    execFlags   - die Ausführung steuernde Flags
+ * @param  double execution[] - Ausführungsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -11108,7 +11117,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, do
  * - EXEC_SLIPPAGE  : (out) immer 0
  * - EXEC_TICKET    : (out) immer 0
  */
-bool OrderDeleteEx(int ticket, color markerColor, double& execution[]) {
+bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderDeleteEx(1)", O_PUSH)) return(false);
@@ -11226,6 +11235,7 @@ bool OrderDeleteEx(int ticket, color markerColor, double& execution[]) {
  * @return bool - Erfolgsstatus
  */
 bool DeletePendingOrders(color markerColor=CLR_NONE) {
+   int    flags       = NULL;
    double execution[] = {NULL};
    int size = OrdersTotal();
 
@@ -11237,7 +11247,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
             continue;
          if (IsPendingTradeOperation(OrderType())) {
             execution[EXEC_FLAGS] = NULL;
-            if (!OrderDeleteEx(OrderTicket(), CLR_NONE, execution))
+            if (!OrderDeleteEx(OrderTicket(), CLR_NONE, flags, execution))
                return(_false(OrderPop("DeletePendingOrders(2)")));
          }
       }
