@@ -205,7 +205,7 @@
    int      stdlib_PeekLastError();
 
 
-   // Eventlistener, *können* im Programm überschrieben werden
+   // Eventlistener, können bei Verwendung im Programm überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -219,7 +219,7 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // abstrakte Eventhandler, müssen bei Verwendung implementiert werden (im Programm, nicht hier)
+   // abstrakte Eventhandler, müssen bei Verwendung im Programm implementiert werden
    int      onBarOpen        (int    data[]);
    int      onAccountChange  (int    data[]);
    int      onAccountPayment (int    data[]);
@@ -417,8 +417,7 @@
    // toString-Funktionen
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);  // MetaQuotes-Alias
-
-   string   IntegerToHexStr(int integer); string DecimalToHexStr(int integer);                                       // Alias
+   string   IntegerToHexStr(int integer);
    string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                             // Alias
    string   WordToHexStr(int word);
    string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                           // Alias
@@ -532,7 +531,7 @@
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
 
 
-   // Default-Implementierungen der MQL-Root- und Userfunktionen (unbenutzt, jedoch notwendig)
+   // Default-Implementierungen der MQL-Basis- und Userfunktionen
    int      onInit();
    int      onInitUndefined();
    int      onInitChartClose();
@@ -572,8 +571,8 @@
 #import
 
 
-// ShowWindow()-Konstanten für WinExecWait()
-#define SW_SHOW                           5        // Details zu diesen Werten in win32api.mqh
+// ShowWindow()-Konstanten für WinExecWait(), Details @see win32api.mqh
+#define SW_SHOW                           5
 #define SW_SHOWNA                         8
 #define SW_HIDE                           0
 #define SW_SHOWMAXIMIZED                  3

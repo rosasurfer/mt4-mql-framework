@@ -4753,14 +4753,6 @@ string IntegerToHexStr(int integer) {
 
 
 /**
- * Alias
- */
-string DecimalToHexStr(int integer) {
-   return(IntegerToHexStr(integer));
-}
-
-
-/**
  * Gibt die hexadezimale Repräsentation eines Bytes zurück.
  *
  * @param  int byte - Byte

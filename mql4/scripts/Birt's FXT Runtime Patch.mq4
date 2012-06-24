@@ -100,7 +100,7 @@ void DontOverwriteFXTPatch() {
       PatchProcess(patchAddr1 + 7, patch);
       PatchProcess(patchAddr2 + 9, patch);
       PatchProcess(patchAddr3 + 7, patch);
-      Print("FXT overwriting disabled. Addresses patched: 0x"+ DecimalToHexStr(patchAddr1) +", 0x"+ DecimalToHexStr(patchAddr2) +", 0x"+ DecimalToHexStr(patchAddr3) +".");
+      Print("FXT overwriting disabled. Addresses patched: 0x"+ IntToHexStr(patchAddr1) +", 0x"+ IntToHexStr(patchAddr2) +", 0x"+ IntToHexStr(patchAddr3) +".");
    }
    else {
       Print("FXT overwriting already disabled or unable to find the location to patch.");
@@ -168,7 +168,7 @@ void Remove2GBLimitPatch() {
 
       int iNull[];
       int new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
+      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       int offset = new - calcbase;
       int b[4];
       StoreDword(offset, b);
@@ -259,7 +259,7 @@ void Remove2GBLimitPatch() {
       PatchProcess(patchaddr, byte);
 
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
+      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
       PatchProcess(patchaddr + 1, b);           // fix jump
@@ -360,7 +360,7 @@ void Remove2GBLimitPatch() {
          catch("Remove2GBLimitPatch(10)");
          return;
       }
-      Print("Patcharea: 0x"+ DecimalToHexStr(patcharea));
+      Print("Patcharea: 0x"+ IntToHexStr(patcharea));
       patcharea += 17;
       offset = fseek - patcharea;
       patcharea -= 4;
@@ -384,7 +384,7 @@ void Remove2GBLimitPatch() {
       PatchProcess(patchaddr, bytes);
 
       new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-      Print("Patch address found: 0x" + DecimalToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + DecimalToHexStr(new) + ".");
+      Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
       PatchProcess(patchaddr + 2, b);
@@ -590,12 +590,12 @@ void VariableSpreadPatch() {
    if (patcharea2 != 0) {
       int byte[] = { 0 };
       PatchProcess(patcharea2 + 6, byte); // remove the volume check
-      volstr = " Volume check removed at 0x" + DecimalToHexStr(patcharea2 + 6) + ".";
+      volstr = " Volume check removed at 0x" + IntToHexStr(patcharea2 + 6) + ".";
    }
    else {
       Print("Volume check NOT removed. You may encounter problems when spread is 0.");
    }
-   Print("Process patched for variable spread at 0x" + DecimalToHexStr(patchaddr) + "." + volstr);
+   Print("Process patched for variable spread at 0x" + IntToHexStr(patchaddr) + "." + volstr);
 
    catch("VariableSpreadPatch(2)");
 }
