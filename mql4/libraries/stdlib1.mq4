@@ -491,32 +491,30 @@ int LoadCursorByName(int hInstance, string cursorName) {
  * Gibt die lesbare Repräsentation einer execution-Struktur zurück.
  *
  * @param  double execution[] - Struktur
- * @param  bool   debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (z.B. bei Strukturen mit mehreren Tickets)
- *                              (default: nein)
+ * @param  bool   debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ *
  * @return string
  */
 string ExecutionToStr(double execution[], bool debugOutput=false) {
    string debugOut[], strings[]; ArrayResize(strings, 0);
-   int flags = Round(execution[EXEC_FLAGS]);
 
-   ArrayPushString(strings, "EXEC_FLAGS=>"+ flags);
-
-   if (debugOutput)
-      debug("ExecutionToStr()   "+ strings[0]);
+   int size = ArraySize(execution);
+   if (size % 9 != 0)
+      return(_empty(catch("ExecutionToStr()   illegal size of execution[] = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Anzahl der Datensätze im Array ermitteln
-   int tickets = (ArraySize(execution)-1) / 9;
+   int tickets = size / 9;
 
    for (int i=0; i < tickets; i++) {
-      datetime time       = execution[9*i+EXEC_TIME      ] +0.1;
-      double   price      = execution[9*i+EXEC_PRICE     ];
-      double   swap       = execution[9*i+EXEC_SWAP      ];
-      double   commission = execution[9*i+EXEC_COMMISSION];
-      double   profit     = execution[9*i+EXEC_PROFIT    ];
-      double   duration   = execution[9*i+EXEC_DURATION  ];
-      int      requotes   = execution[9*i+EXEC_REQUOTES  ] +0.1;
-      double   slippage   = execution[9*i+EXEC_SLIPPAGE  ];
-      int      ticket     = execution[9*i+EXEC_TICKET    ] +0.1;
+      datetime time       = Round(execution[9*i+EXEC_TIME      ]);
+      double   price      =       execution[9*i+EXEC_PRICE     ];
+      double   swap       =       execution[9*i+EXEC_SWAP      ];
+      double   commission =       execution[9*i+EXEC_COMMISSION];
+      double   profit     =       execution[9*i+EXEC_PROFIT    ];
+      double   duration   =       execution[9*i+EXEC_DURATION  ];
+      int      requotes   = Round(execution[9*i+EXEC_REQUOTES  ]);
+      double   slippage   =       execution[9*i+EXEC_SLIPPAGE  ];
+      int      ticket     = Round(execution[9*i+EXEC_TICKET    ]);
 
       ArrayPushString(strings, (i+1) +"=EXEC_TIME=>"      +    ifString(time==0, 0, TimeToStr(time, TIME_FULL)));
       ArrayPushString(strings,         "EXEC_PRICE=>"     + NumberToStr(price,      ".+")                      );
@@ -530,7 +528,7 @@ string ExecutionToStr(double execution[], bool debugOutput=false) {
 
       if (debugOutput) {
          ArrayResize(debugOut, 0);
-         ArrayCopy(debugOut, strings, 0, 9*i+1);
+         ArrayCopy(debugOut, strings, 0, 9*i);
          debug("ExecutionToStr()    "+ JoinStrings(debugOut, ", "));
       }
    }
@@ -9161,7 +9159,7 @@ string NumberToStr(double number, string mask) {
             continue;
          }
          else {
-            if  (char == '+') nRight = Max(nRight+(nSubpip > 0), CountDecimals(number));     // (int) bool
+            if  (char == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(number));     // (int) bool
             else if (!nDigit) nRight = CountDecimals(number);
             break;
          }
@@ -9259,18 +9257,17 @@ string NumberToStr(double number, string mask) {
  * @return int - Ticket oder -1, falls ein Fehler auftrat
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) OrderOpenTime
- * - EXEC_PRICE     : (out) OrderOpenPrice (bei Pending-Orders der Pending-Price, bei Market-Orders der ausgeführte OpenPrice)
- * - EXEC_SWAP      : (out) immer 0
- * - EXEC_COMMISSION: (out) OrderCommission (nur bei Market-Orders)
- * - EXEC_PROFIT    : (out) immer 0
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : (out) Gesamtslippage der Orderausführung in Pips nach Requotes (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) das erzeugte Ticket (wie von der Funktion zurückgegeben)
+ * Elemente des Parameters execution[] (out)
+ * -----------------------------------------
+ * - EXEC_TIME      : OrderOpenTime
+ * - EXEC_PRICE     : OrderOpenPrice (bei Pending-Orders der Pending-Price, bei Market-Orders der ausgeführte OpenPrice)
+ * - EXEC_SWAP      : immer 0
+ * - EXEC_COMMISSION: OrderCommission (nur bei Market-Orders)
+ * - EXEC_PROFIT    : immer 0
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes
+ * - EXEC_SLIPPAGE  : Gesamtslippage der Orderausführung in Pips nach Requotes (positiv: zu ungunsten; negativ: zu gunsten)
+ * - EXEC_TICKET    : das erzeugte Ticket (wie von der Funktion zurückgegeben)
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -9317,8 +9314,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE)));
    // execution
-   if (ArraySize(execution) != 10)
-      ArrayResize(execution, 10);
+   if (ArraySize(execution) != 9)
+      ArrayResize(execution, 9);
    // -- Ende Parametervalidierung --
 
    int    ticket, time1, time2, firstTime1, requotes;
@@ -9576,18 +9573,17 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @return bool - Erfolgsstatus
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) Zeitpunkt der Orderausführung
- * - EXEC_PRICE     : (out) immer 0
- * - EXEC_SWAP      : (out) immer 0
- * - EXEC_COMMISSION: (out) immer 0
- * - EXEC_PROFIT    : (out) immer 0
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) immer 0
- * - EXEC_SLIPPAGE  : (out) immer 0
- * - EXEC_TICKET    : (out) immer 0
+ * Elemente des Parameters execution[] (out)
+ * -----------------------------------------
+ * - EXEC_TIME      : Zeitpunkt der Orderausführung
+ * - EXEC_PRICE     : immer 0
+ * - EXEC_SWAP      : immer 0
+ * - EXEC_COMMISSION: immer 0
+ * - EXEC_PROFIT    : immer 0
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : immer 0
+ * - EXEC_SLIPPAGE  : immer 0
+ * - EXEC_TICKET    : immer 0
  */
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -9629,8 +9625,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
-   if (ArraySize(execution) != 10)
-      ArrayResize(execution, 10);
+   if (ArraySize(execution) != 9)
+      ArrayResize(execution, 9);
    // -- Ende Parametervalidierung --
 
    double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
@@ -10098,18 +10094,17 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * @return bool - Erfolgsstatus
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) OrderCloseTime
- * - EXEC_PRICE     : (out) OrderClosePrice
- * - EXEC_SWAP      : (out) realisierter Swap der geschlossenen (Teil-)Position (1)
- * - EXEC_COMMISSION: (out) realisierte Commission der geschlossenen (Teil-)Position (1)
- * - EXEC_PROFIT    : (out) realisierter Profit der geschlossenen (Teil-)Position (1)
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) Ticket einer verbleibenden Restposition (nur bei partiellem Close)
+ * Elemente des Parameters execution[] (out)
+ * -----------------------------------------
+ * - EXEC_TIME      : OrderCloseTime
+ * - EXEC_PRICE     : OrderClosePrice
+ * - EXEC_SWAP      : realisierter Swap der geschlossenen (Teil-)Position (1)
+ * - EXEC_COMMISSION: realisierte Commission der geschlossenen (Teil-)Position (1)
+ * - EXEC_PROFIT    : realisierter Profit der geschlossenen (Teil-)Position (1)
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes
+ * - EXEC_SLIPPAGE  : Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten)
+ * - EXEC_TICKET    : Ticket einer verbleibenden Restposition (nur bei partiellem Close)
  *
  * 1) vom MT4-Server berechnet, kann bei partiellem Close vom theoretischen Wert abweichen
  */
@@ -10142,8 +10137,8 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
-   if (ArraySize(execution) != 10)
-      ArrayResize(execution, 10);
+   if (ArraySize(execution) != 9)
+      ArrayResize(execution, 9);
    // -- Ende Parametervalidierung --
 
    /*
@@ -10341,18 +10336,17 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  * @return bool - Erfolgsstatus
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) effektiver Zeitpunkt, zu dem die (Teil-)Position geschlossen wurde
- * - EXEC_PRICE     : (out) effektiver Preis, zu dem die (Teil-)Position geschlossen wurde
- * - EXEC_SWAP      : (out) realisierter OrderSwap der geschlossenen (Teil-)Position (1)
- * - EXEC_COMMISSION: (out) realisierte OrderCommission der geschlossenen (Teil-)Position (1)
- * - EXEC_PROFIT    : (out) realisierter OrderProfit der geschlossenen (Teil-)Position (1)
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) immer 0
- * - EXEC_SLIPPAGE  : (out) immer 0
- * - EXEC_TICKET    : (out) Ticket einer verbleibenden Restposition (bei partiellem Close)
+ * Elemente des Parameters execution[] (out)
+ * -----------------------------------------
+ * - EXEC_TIME      : effektiver Zeitpunkt, zu dem die (Teil-)Position geschlossen wurde
+ * - EXEC_PRICE     : effektiver Preis, zu dem die (Teil-)Position geschlossen wurde
+ * - EXEC_SWAP      : realisierter OrderSwap der geschlossenen (Teil-)Position (1)
+ * - EXEC_COMMISSION: realisierte OrderCommission der geschlossenen (Teil-)Position (1)
+ * - EXEC_PROFIT    : realisierter OrderProfit der geschlossenen (Teil-)Position (1)
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : immer 0
+ * - EXEC_SLIPPAGE  : immer 0
+ * - EXEC_TICKET    : Ticket einer verbleibenden Restposition (bei partiellem Close)
  *
  * (1) vom MT4-Server berechnet, bei partiellem Close aufgeteilt (kann vom tatsächlichen Wert abweichen)
  */
@@ -10377,8 +10371,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, 
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
-   ArrayResize(execution, 1);
-   ArrayResize(execution, 10);                                                         // Re-Initialisierung
+   ArrayResize(execution, 0);
+   ArrayResize(execution, 9);                                        // Re-Initialisierung
    // -- Ende Parametervalidierung --
 
    /*
@@ -10577,25 +10571,20 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, 
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
+ * Für jedes übergebene Ticket enthält execution[] entsprechend der Reihenfolge nach Rückkehr die folgenden Elemente:
+ * ------------------------------------------------------------------------------------------------------------------
+ * - EXEC_TIME      : Ausführungszeitpunkt der flat-stellenden Transaktion des Ticketsymbols
+ * - EXEC_PRICE     : Ausführungspreis der flat-stellenden Transaktion des Ticketsymbols
+ * - EXEC_SWAP      : OrderSwap dieses Tickets (1)(2)
+ * - EXEC_COMMISSION: OrderCommission dieses Tickets (1)(2)
+ * - EXEC_PROFIT    : OrderProfit dieses Tickets (1)(2)
+ * - EXEC_DURATION  : Dauer der flat-stellenden Transaktion des Ticketsymbols in Sekunden
+ * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes
+ * - EXEC_SLIPPAGE  : Slippage der flat-stellenden Transaktion des Ticketsymbols in Pips (positiv: zu ungunsten; negativ: zu gunsten)
+ * - EXEC_TICKET    : immer 0
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
- *
- * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion des Ticketsymbols
- * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion des Ticketsymbols
- * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (2)(3)
- * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (2)(3)
- * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (2)(3)
- * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion des Ticketsymbols in Sekunden
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion des Ticketsymbols in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) immer 0
- *
- * (1) entsprechend der Reihenfolge in tickets[]
- * (2) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
- * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des Ticketsymbols addiert,
+ * (1) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
+ * (2) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des Ticketsymbols addiert,
  *     die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert
  */
 bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, int execFlags, double& execution[]) {
@@ -10603,7 +10592,6 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
    // tickets
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)                                     return(_false(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
-
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
@@ -10648,9 +10636,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
 
 
    // (5) Tickets symbolweise auslesen und Gruppen zunächst nur glattstellen
-   ArrayResize(execution, 1);
-   ArrayResize(execution, 9*sizeOfTickets+1);                              // Re-Initialisierung
-   double exec[1];
+   ArrayResize(execution, 0);
+   ArrayResize(execution, 9*sizeOfTickets);                                // Re-Initialisierung
+   double exec[];
 
    // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
    int copy[], flatSymbols[]; ArrayResize(copy, 0); ArrayResize(flatSymbols, 0);
@@ -10664,7 +10652,6 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
          if (si == tickets.symbol[i])
             ArrayPushInt(group, copy[i]);
       }
-      exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
       int newTicket = OrderMultiClose.Flatten(group, slippage, execFlags, exec);
       if (IsLastError())
          return(false);
@@ -10683,10 +10670,10 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
       }
       for (i=0; i < sizeOfGroup; i++) {
          if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-            if (EQ(exec[9*i+EXEC_TICKET], -1))
+            if (Round(exec[9*i+EXEC_TICKET]) == -1)
                break;
          }
-         else if (EQ(exec[9*i+EXEC_TICKET], newTicket))                    // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+         else if (Round(exec[9*i+EXEC_TICKET]) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
             break;
       }
       if (i < sizeOfGroup) {                                               // break getriggert => geschlossenes Ticket gefunden
@@ -10719,7 +10706,6 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
       }
       sizeOfGroup = ArraySize(group);
 
-      exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
       if (!OrderMultiClose.Flattened(group, markerColor, execFlags, exec))
          return(false);
 
@@ -10750,33 +10736,28 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
+ * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
+ * -------------------------------------------------------------------------------------------------------------------------------
+ * - EXEC_TIME      : Ausführungszeitpunkt der flat-stellenden Transaktion
+ * - EXEC_PRICE     : Ausführungspreis der flat-stellenden Transaktion
+ * - EXEC_SWAP      : OrderSwap dieses Tickets (1)(2)
+ * - EXEC_COMMISSION: OrderCommission dieses Tickets (1)(2)
+ * - EXEC_PROFIT    : OrderProfit dieses Tickets (1)(2)
+ * - EXEC_DURATION  : Dauer der flat-stellenden Transaktion in Sekunden
+ * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes
+ * - EXEC_SLIPPAGE  : Slippage der flat-stellenden Transaktion in Pips (positiv: zu ungunsten; negativ: zu gunsten)
+ * - EXEC_TICKET    : immer 0
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
- *
- * - EXEC_TIME      : (out) Ausführungszeitpunkt der flat-stellenden Transaktion
- * - EXEC_PRICE     : (out) Ausführungspreis der flat-stellenden Transaktion
- * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (2)(3)
- * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (2)(3)
- * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (2)(3)
- * - EXEC_DURATION  : (out) Dauer der flat-stellenden Transaktion in Sekunden
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : (out) Slippage der flat-stellenden Transaktion in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : (out) immer 0
- *
- * (1) entsprechend der Reihenfolge in tickets[]
- * (2) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
- * (3) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
+ * (1) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
+ * (2) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
 /*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage/*=0*/, color markerColor, int execFlags, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
 
-   ArrayResize(execution, 1);
-   ArrayResize(execution, 9*sizeOfTickets+1);                           // Re-Initialisierung
+   ArrayResize(execution, 0);
+   ArrayResize(execution, 9*sizeOfTickets);                             // Re-Initialisierung
 
 
    // (1) schnelles Close, wenn nur ein einziges Ticket angegeben wurde
@@ -10784,13 +10765,13 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
       return(OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, execFlags, execution));
 
 
-   // (2) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
+   // (2) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, arbeiten wir auf einer Kopie.
    int copy[]; ArrayResize(copy, 0);
    int sizeOfCopy = ArrayCopy(copy, tickets);
 
 
    // (3) Gesamtposition glatt stellen
-   double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
+   double exec[];
    int newTicket = OrderMultiClose.Flatten(copy, slippage, execFlags, exec);
    if (IsLastError())
       return(false);
@@ -10805,10 +10786,10 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
    }
    for (i=0; i < sizeOfTickets; i++) {
       if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-         if (EQ(exec[9*i+EXEC_TICKET], -1))
+         if (Round(exec[9*i+EXEC_TICKET]) == -1)
             break;
       }
-      else if (EQ(exec[9*i+EXEC_TICKET], newTicket))                    // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+      else if (Round(exec[9*i+EXEC_TICKET]) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
          break;
    }
    if (i < sizeOfTickets) {                                             // break getriggert => geschlossenes Ticket gefunden
@@ -10825,7 +10806,6 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
 
 
    // (4) Teilpositionen auflösen
-   exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
    if (!OrderMultiClose.Flattened(copy, markerColor, execFlags, exec))
       return(false);
 
@@ -10854,34 +10834,28 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
  * @return int - ein resultierendes neues Ticket (falls zutreffend); 0, falls ein Fehler auftrat (@see last_error)
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
+ * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
+ * -------------------------------------------------------------------------------------------------------------------------------
+ * - EXEC_TIME      : Zeitpunkt der Glattstellung (1)(2)
+ * - EXEC_PRICE     : Ausführungspreis der Glattstellung (1)(2)
+ * - EXEC_SWAP      : realisierter OrderSwap beim Schließen dieses Tickets (falls zutreffend) (3)
+ * - EXEC_COMMISSION: realisierte OrderCommission beim Schließen dieses Tickets (falls zutreffend) (3)
+ * - EXEC_PROFIT    : realisierter OrderProfit beim Schließen dieses Tickets (falls zutreffend) (3)
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden (1)
+ * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes (1)
+ * - EXEC_SLIPPAGE  : Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (1)
+ * - EXEC_TICKET    : durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket; -1, wenn dieses Ticket vollständig geschlossen wurde (falls zutreffend)
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
- *
- * - EXEC_TIME      : (out) Zeitpunkt der Glattstellung (2)(3)
- * - EXEC_PRICE     : (out) Ausführungspreis der Glattstellung (2)(3)
- * - EXEC_SWAP      : (out) realisierter OrderSwap beim Schließen dieses Tickets (falls zutreffend) (4)
- * - EXEC_COMMISSION: (out) realisierte OrderCommission beim Schließen dieses Tickets (falls zutreffend) (4)
- * - EXEC_PROFIT    : (out) realisierter OrderProfit beim Schließen dieses Tickets (falls zutreffend) (4)
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden (2)
- * - EXEC_REQUOTES  : (out) Anzahl der aufgetretenen Requotes (2)
- * - EXEC_SLIPPAGE  : (out) Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (2)
- * - EXEC_TICKET    : (out) durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket; -1, wenn dieses Ticket vollständig
- *                          geschlossen wurde (falls zutreffend)
- *
- * (1) entsprechend der Reihenfolge in tickets[]
- * (2) Wert ist bei allen Tickets gleich
- * (3) ist die Gesamtposition bereits ausgeglichen, der OrderOpen-Wert des zuletzt geöffneten Tickets (dieses glich die Gesamtposition aus)
- * (4) vom MT4-Server berechnet, kann vom tatsächlichen Wert abweichen
+ * (1) Wert ist bei allen Tickets gleich
+ * (2) ist die Gesamtposition bereits ausgeglichen, der OrderOpen-Wert des zuletzt geöffneten Tickets (dieses glich die Gesamtposition aus)
+ * (3) vom MT4-Server berechnet, kann vom tatsächlichen Wert abweichen
  */
 /*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage/*=0*/, int execFlags, double& execution[]) {
    // keine nochmalige Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
 
-   ArrayResize(execution, 1);
-   ArrayResize(execution, 9*sizeOfTickets+1);                        // Re-Initialisierung
+   ArrayResize(execution, 0);
+   ArrayResize(execution, 9*sizeOfTickets);                          // Re-Initialisierung
 
    OrderPush("OrderMultiClose.Flatten(1)");
 
@@ -10950,8 +10924,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
          }
       }
 
-      int    type = totalPosition^1;
-      double exec[1]; exec[EXEC_FLAGS] = execution[EXEC_FLAGS];
+      int type = totalPosition^1;
+      double exec[];
 
       if (closeTicket != 0) {
          //debug("OrderMultiClose.Flatten()   "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, "", "s") +" by close of #"+ closeTicket);
@@ -10965,7 +10939,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
          if (OrderSendEx(symbol, type, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, execFlags, exec) == -1)
             return(0);
       }
-      newTicket = exec[EXEC_TICKET];
+      newTicket = Round(exec[EXEC_TICKET]);
 
       for (i=0; i < sizeOfTickets; i++) {
          execution[9*i+EXEC_TIME      ] =                                   exec[EXEC_TIME      ];
@@ -10976,9 +10950,9 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
          execution[9*i+EXEC_DURATION  ] =                                   exec[EXEC_DURATION  ];
          execution[9*i+EXEC_REQUOTES  ] =                                   exec[EXEC_REQUOTES  ];
          execution[9*i+EXEC_SLIPPAGE  ] =                                   exec[EXEC_SLIPPAGE  ];
-         if (tickets[i] != closeTicket)     execution[9*i+EXEC_TICKET] =  0;
-         else if (EQ(exec[EXEC_TICKET], 0)) execution[9*i+EXEC_TICKET] = -1;                          // Ticket vollständig geschlossen
-         else                               execution[9*i+EXEC_TICKET] = exec[EXEC_TICKET];           // Ticket partiell geschlossen
+         if (tickets[i] != closeTicket) execution[9*i+EXEC_TICKET] =  0;
+         else if (newTicket == 0)       execution[9*i+EXEC_TICKET] = -1;               // Ticket vollständig geschlossen
+         else                           execution[9*i+EXEC_TICKET] = newTicket;        // Ticket partiell geschlossen
       }
    }
 
@@ -10999,26 +10973,21 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
  * @return bool - Erfolgsstatus
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
+ * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
+ * -------------------------------------------------------------------------------------------------------------------------------
+ * - EXEC_TIME      : OrderOpenTime des zuletzt geöffneten Tickets (1)
+ * - EXEC_PRICE     : OrderOpenPrice des zuletzt geöffneten Tickets (1)
+ * - EXEC_SWAP      : OrderSwap dieses Tickets (2)(3)
+ * - EXEC_COMMISSION: OrderCommission dieses Tickets (2)(3)
+ * - EXEC_PROFIT    : OrderProfit dieses Tickets (2)(3)
+ * - EXEC_DURATION  : immer 0
+ * - EXEC_REQUOTES  : immer 0
+ * - EXEC_SLIPPAGE  : immer 0
+ * - EXEC_TICKET    : immer 0
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr die folgenden Elemente (1):
- *
- * - EXEC_TIME      : (out) OrderOpenTime des zuletzt geöffneten Tickets (2)
- * - EXEC_PRICE     : (out) OrderOpenPrice des zuletzt geöffneten Tickets (2)
- * - EXEC_SWAP      : (out) OrderSwap dieses Tickets (3)(4)
- * - EXEC_COMMISSION: (out) OrderCommission dieses Tickets (3)(4)
- * - EXEC_PROFIT    : (out) OrderProfit dieses Tickets (3)(4)
- * - EXEC_DURATION  : (out) immer 0
- * - EXEC_REQUOTES  : (out) immer 0
- * - EXEC_SLIPPAGE  : (out) immer 0
- * - EXEC_TICKET    : (out) immer 0
- *
- * (1) entsprechend der Reihenfolge in tickets[]
- * (2) Wert ist bei allen Tickets gleich
- * (3) vom MT4-Server berechnet (kann vom tatsächlichen Einzelwert abweichen
- * (4) aus dem Öffnen und Schließen zusätzlicher Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
+ * (1) Wert ist bei allen Tickets gleich
+ * (2) vom MT4-Server berechnet (kann vom tatsächlichen Einzelwert abweichen
+ * (3) aus dem Öffnen und Schließen zusätzlicher Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
  *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
  */
 /*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int execFlags, double& execution[]) {
@@ -11036,8 +11005,8 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
 
 
    // execution[TIME & PRICE] setzen
-   ArrayResize(execution, 1);                                                 // Re-Initialisierung
-   ArrayResize(execution, 9*sizeOfTickets+1);
+   ArrayResize(execution, 0);
+   ArrayResize(execution, 9*sizeOfTickets);                                   // Re-Initialisierung
 
    SortTicketsChronological(copy);                                            // zuletzt geöffnetes Ticket
    if (!OrderSelectByTicket(copy[sizeOfCopy-1], "OrderMultiClose.Flattened(2)", NULL, O_POP))
@@ -11066,15 +11035,16 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
       if (opposite == 0)
          return(_false(catch("OrderMultiClose.Flattened(5)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP)));
 
-      double exec[] = {NULL};
+      double exec[];
       if (!OrderCloseByEx(first, opposite, markerColor, execFlags, exec))     // erste und Opposite-Position schließen
          return(_false(OrderPop("OrderMultiClose.Flattened(6)")));
 
       sizeOfCopy -= ArraySpliceInts(copy, 0, 1);                              // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(copy, opposite);
 
-      if (NE(exec[EXEC_TICKET], 0))                                           // Restposition zu verbleibenden Tickets hinzufügen
-         sizeOfCopy = ArrayPushInt(copy, Round(exec[EXEC_TICKET]));
+      int newTicket = Round(exec[EXEC_TICKET]);
+      if (newTicket != 0)                                                     // Restposition zu verbleibenden Tickets hinzufügen
+         sizeOfCopy = ArrayPushInt(copy, newTicket);
 
       i = SearchIntArray(tickets, first);                                     // Ausgangsticket für realisierte Beträge ermitteln
       if (i == -1) {                                                          // Reihenfolge: first, opposite, last
@@ -11104,18 +11074,17 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
  * @return bool - Erfolgsstatus
  *
  *
- * Elemente des Parameters execution[]
- * -----------------------------------
- * - EXEC_FLAGS     : (in)  Steuerung der Orderausführung (default: NULL)
- * - EXEC_TIME      : (out) OrderCloseTime
- * - EXEC_PRICE     : (out) OrderClosePrice
- * - EXEC_SWAP      : (out) immer 0
- * - EXEC_COMMISSION: (out) immer 0
- * - EXEC_PROFIT    : (out) immer 0
- * - EXEC_DURATION  : (out) Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : (out) immer 0
- * - EXEC_SLIPPAGE  : (out) immer 0
- * - EXEC_TICKET    : (out) immer 0
+ * Elemente des Parameters execution[] (out)
+ * -----------------------------------------
+ * - EXEC_TIME      : OrderCloseTime
+ * - EXEC_PRICE     : OrderClosePrice
+ * - EXEC_SWAP      : immer 0
+ * - EXEC_COMMISSION: immer 0
+ * - EXEC_PROFIT    : immer 0
+ * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
+ * - EXEC_REQUOTES  : immer 0
+ * - EXEC_SLIPPAGE  : immer 0
+ * - EXEC_TICKET    : immer 0
  */
 bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& execution[]) {
    // -- Beginn Parametervalidierung --
@@ -11126,8 +11095,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& executi
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // execution
-   if (ArraySize(execution) != 10)
-      ArrayResize(execution, 10);
+   if (ArraySize(execution) != 9)
+      ArrayResize(execution, 9);
    // -- Ende Parametervalidierung --
 
    /*
@@ -11235,8 +11204,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& executi
  * @return bool - Erfolgsstatus
  */
 bool DeletePendingOrders(color markerColor=CLR_NONE) {
-   int    flags       = NULL;
-   double execution[] = {NULL};
+   int flags = NULL;
+   double execution[];
    int size = OrdersTotal();
 
    if (size > 0) {
@@ -11246,7 +11215,6 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
          if (IsPendingTradeOperation(OrderType())) {
-            execution[EXEC_FLAGS] = NULL;
             if (!OrderDeleteEx(OrderTicket(), CLR_NONE, flags, execution))
                return(_false(OrderPop("DeletePendingOrders(2)")));
          }

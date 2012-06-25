@@ -403,16 +403,15 @@
 
 
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
-#define EXEC_FLAGS                                      0   // Steuerung der Ausführung
-#define EXEC_TIME                                       1   // Ausführungszeit
-#define EXEC_PRICE                                      2   // Ausführungspreis
-#define EXEC_SWAP                                       3   // Swap-Betrag
-#define EXEC_COMMISSION                                 4   // Commission-Betrag
-#define EXEC_PROFIT                                     5   // Profit-Betrag
-#define EXEC_DURATION                                   6   // Dauer der Orderausführung in Sekunden
-#define EXEC_REQUOTES                                   7   // Anzahl der aufgetretenen Requotes
-#define EXEC_SLIPPAGE                                   8   // Slippage der Orderausführung in Pips
-#define EXEC_TICKET                                     9   // durch die Ausführung erzeugtes Ticket
+#define EXEC_TIME                                       0   // Ausführungszeit                           0      9    18
+#define EXEC_PRICE                                      1   // Ausführungspreis                          1     10    19
+#define EXEC_SWAP                                       2   // Swap-Betrag                               2     11    20
+#define EXEC_COMMISSION                                 3   // Commission-Betrag                         3     12    21
+#define EXEC_PROFIT                                     4   // Profit-Betrag                             4     13    22
+#define EXEC_DURATION                                   5   // Dauer der Orderausführung in Sekunden     5     14    23
+#define EXEC_REQUOTES                                   6   // Anzahl der aufgetretenen Requotes         6     15    24
+#define EXEC_SLIPPAGE                                   7   // Slippage der Orderausführung in Pips      7     16    25
+#define EXEC_TICKET                                     8   // durch die Ausführung erzeugtes Ticket     8     17    26
 
 
 // FindFileNames() flags
