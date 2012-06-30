@@ -839,9 +839,8 @@ int DeletePrivateProfileKey(string fileName, string section, string key) {
  */
 string GetTerminalVersion() {
    static string static.result[1];
-   if (StringLen(static.result) > 0)
+   if (StringLen(static.result[0]) > 0)
       return(static.result[0]);
-
 
    int    bufferSize = MAX_PATH;
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
