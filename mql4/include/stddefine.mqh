@@ -683,14 +683,17 @@ bool   ChartInfo.positionChecked,
 
 // globale Variablen, stehen überall zur Verfügung
 string __NAME__;                                                     // Name des aktuellen MQL-Programms
-int    __WHEREAMI__;                                                 // ID der vom Terminal momentan ausgeführten Basis-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+int    __WHEREAMI__;                                                 // ID der vom Terminal momentan ausgeführten Basisfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+bool   __INIT_TIMEZONE;
+bool   __INIT_TICKVALUE;
+bool   __INIT_BARS_ON_HIST_UPDATE;
+bool   __LOG_INSTANCE_ID;
+bool   __LOGFILE_PER_INSTANCE;
 bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
 bool   __STATUS__INVALID_INPUT;                                      // ungültige Parametereingabe im Input-Dialog
 bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, den Input-Dialog zu laden
 bool   __STATUS__CANCELLED;                                          // Programmausführung durch Benutzer-Dialog abgebrochen
 
-int    __init_flags__;
-int    __deinit_flags__;
 int    prev_error = NO_ERROR;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int    last_error = NO_ERROR;                                        // der letzte Fehler des aktuellen start()-Aufrufs
 
@@ -716,8 +719,13 @@ string objects[];                                                    // Namen de
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __NAME__       = WindowExpertName();
-   __init_flags__ = SumInts(__INIT_FLAGS__);
+   __NAME__                   = WindowExpertName();
+     int initFlags            = SumInts(__INIT_FLAGS__);
+   __INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
+   __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
+   __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
+   __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
+   __LOGFILE_PER_INSTANCE     = initFlags & LOGFILE_PER_INSTANCE;
 
    if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
@@ -745,13 +753,13 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
    // stdlib
-   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __init_flags__, UninitializeReason());
+   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
 
    // (2) User-spezifische Init-Tasks ausführen
-   if (__init_flags__ & INIT_TICKVALUE != 0) {                                // INIT_TICKVALUE: schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (__INIT_TICKVALUE) {                                                    // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
@@ -940,8 +948,7 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__     = FUNC_DEINIT;
-   __deinit_flags__ = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__ = FUNC_DEINIT;
 
    if (IsLibrary())                                                              // in Libraries vorerst nichts tun
       return(NO_ERROR);
@@ -972,7 +979,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(__deinit_flags__, UninitializeReason());
+   error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 
@@ -1031,16 +1038,15 @@ int debug(string message, int error=NO_ERROR) {
    if (static.debugToLog == 1)
       return(log(message, error));
 
-
-   if (error != NO_ERROR)
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
    string name = __NAME__;
-   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+   if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
    }
+
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
    return(error);
@@ -1048,10 +1054,10 @@ int debug(string message, int error=NO_ERROR) {
 
 
 /**
- * Fügt eine Message dem aktuellen Logfile hinzu.
+ * Fügt dem Logfile eine Warn-Message hinzu.
  *
  * @param  string message - Message
- * @param  int    error   - Error-Code (wird *nicht* gesetzt)
+ * @param  int    error   - Error-Code (wird nicht gesetzt)
  *
  * @return int - der angegebene Error-Code
  *
@@ -1064,14 +1070,26 @@ int log(string message="", int error=NO_ERROR) {
    if (StringLen(message) == 0)
       message = "???";
 
-   if (error != NO_ERROR)
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
    string name = __NAME__;
-   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+   if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+   }
+
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   if (__LOGFILE_PER_INSTANCE) {
+      string fileName = LogfileName();
+      if (StringLen(fileName) > 0) {
+      }
+      else {
+         // Print
+      }
+   }
+   else {
+      // Print
    }
 
    Print(name, "::", message);
@@ -1080,10 +1098,19 @@ int log(string message="", int error=NO_ERROR) {
 
 
 /**
+ *
+ * @return string
+ */
+string LogfileName() {
+   return("logfile.log");
+}
+
+
+/**
  * Zeigt eine Message optisch und akustisch an.
  *
  * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode (wird *nicht* gesetzt)
+ * @param  int    error   - anzuzeigender Fehlercode (wird nicht gesetzt)
  *
  * @return int - der angegebene Error-Code
  *
@@ -1093,20 +1120,20 @@ int log(string message="", int error=NO_ERROR) {
  * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int warn(string message, int error=NO_ERROR) {
-   string strError;
-   if (IsError(error))
-      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
-
    string name = __NAME__;
-   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+   if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
    }
 
+   string strError;
+   if (IsError(error))
+      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
+
    Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, strError);
 
-   if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
+   if (IsTesting()) {                                                // Im Tester wird Expert::Alert() ignoriert, Message dort forcieren.
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
       string strings[];
       if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("WARN in ", name, NL, NL, StringTrimLeft(message + strError));
@@ -1141,18 +1168,19 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                           GetLastError();                    // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      string message = ifString(StringLen(location) > 0, location, "???");
-
-      string name = __NAME__;
-      if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+      string message, name=__NAME__;
+      if (__LOG_INSTANCE_ID) {
          int pos = StringFind(name, "::");
          if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
          else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
       }
 
+      if (StringLen(location) > 0) message = location;
+      else                         message = "???";
+
       Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
 
-      if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
+      if (IsTesting()) {                                             // Im Tester wird Expert::Alert() ignoriert, Fehler dort forcieren.
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
          string strings[];
          if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("ERROR in ", name, NL, NL, StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]"));

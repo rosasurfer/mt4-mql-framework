@@ -49,10 +49,14 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__      |= type;
-   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__   = whereami;
-   __init_flags__ = initFlags;
+   __TYPE__                  |= type;
+   __NAME__                   = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__               = whereami;
+   __INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
+   __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
+   __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
+   __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
+   __LOGFILE_PER_INSTANCE     = initFlags & LOGFILE_PER_INSTANCE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -84,7 +88,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (3) User-spezifische Init-Tasks ausführen
-   if (__init_flags__ & INIT_TIMEZONE != 0) {                                 // INIT_TIMEZONE: Zeitzonen-Konfiguration überprüfen
+   if (__INIT_TIMEZONE) {                                                     // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -148,8 +152,7 @@ int stdlib_start(int tick, int validBars, int changedBars) {
  * @return int - Fehlerstatus
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__     = FUNC_DEINIT;
-   __deinit_flags__ = deinitFlags;
+   __WHEREAMI__ = FUNC_DEINIT;
 
    int error = NO_ERROR;
 
