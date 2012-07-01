@@ -689,6 +689,8 @@ bool   __STATUS__INVALID_INPUT;                                      // ungültig
 bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, den Input-Dialog zu laden
 bool   __STATUS__CANCELLED;                                          // Programmausführung durch Benutzer-Dialog abgebrochen
 
+int    __init_flags__;
+int    __deinit_flags__;
 int    prev_error = NO_ERROR;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int    last_error = NO_ERROR;                                        // der letzte Fehler des aktuellen start()-Aufrufs
 
@@ -714,7 +716,8 @@ string objects[];                                                    // Namen de
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __NAME__ = WindowExpertName();
+   __NAME__       = WindowExpertName();
+   __init_flags__ = SumInts(__INIT_FLAGS__);
 
    if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
@@ -726,9 +729,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
 
-   int error, initFlags=SumInts(__INIT_FLAGS__);
-
-
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    PipDigits   = Digits & (~1);
    PipPoints   = Round(MathPow(10, Digits-PipDigits)); PipPoint = PipPoints;
@@ -736,7 +736,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
-   error = GetLastError();                                                    // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
+   int error = GetLastError();                                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
    if (error == ERR_UNKNOWN_SYMBOL) {                                         // das Symbol kann später evt. noch "auftauchen"
       debug("init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
@@ -745,13 +745,13 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
    // stdlib
-   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
+   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __init_flags__, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
 
    // (2) User-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TICKVALUE != 0) {                                     // INIT_TICKVALUE: schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (__init_flags__ & INIT_TICKVALUE != 0) {                                // INIT_TICKVALUE: schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
@@ -940,7 +940,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = FUNC_DEINIT;
+   __WHEREAMI__     = FUNC_DEINIT;
+   __deinit_flags__ = SumInts(__DEINIT_FLAGS__);
 
    if (IsLibrary())                                                              // in Libraries vorerst nichts tun
       return(NO_ERROR);
@@ -965,14 +966,13 @@ int deinit() {
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
    if (error != -1) {
       // do something...
    }
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(deinitFlags, UninitializeReason());
+   error = stdlib_deinit(__deinit_flags__, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 
@@ -996,12 +996,128 @@ int start.RelaunchInputDialog() {
          error = Chart.Expert.Properties();
    }
    else if (IsIndicator()) {
-      //error = LaunchIndicatorPropertiesDlg();                   // TODO: implementieren
+      //error = LaunchIndicatorPropertiesDlg();                      // TODO: implementieren
    }
 
    if (IsError(error))
       SetLastError(error);
    return(error);
+}
+
+
+#import "kernel32.dll"
+   void OutputDebugStringA(string lpMessage);
+#import
+
+
+/**
+ * Sends a message to OutputDebugString() to be viewed and logged by SysInternals DebugView.
+ *
+ * @param  string message - Message
+ * @param  int    error   - Error-Code
+ *
+ * @return int - der angegebene Error-Code
+ *
+ *
+ * NOTE:
+ * -----
+ * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ */
+int debug(string message, int error=NO_ERROR) {
+   static int static.debugToLog = -1;
+   if (static.debugToLog == -1)
+      static.debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
+
+   if (static.debugToLog == 1)
+      return(log(message, error));
+
+
+   if (error != NO_ERROR)
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   string name = __NAME__;
+   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+   }
+
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
+   return(error);
+}
+
+
+/**
+ * Fügt eine Message dem aktuellen Logfile hinzu.
+ *
+ * @param  string message - Message
+ * @param  int    error   - Error-Code (wird *nicht* gesetzt)
+ *
+ * @return int - der angegebene Error-Code
+ *
+ *
+ * NOTE:
+ * -----
+ * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ */
+int log(string message="", int error=NO_ERROR) {
+   if (StringLen(message) == 0)
+      message = "???";
+
+   if (error != NO_ERROR)
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   string name = __NAME__;
+   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+   }
+
+   Print(name, "::", message);
+   return(error);
+}
+
+
+/**
+ * Zeigt eine Message optisch und akustisch an.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode (wird *nicht* gesetzt)
+ *
+ * @return int - der angegebene Error-Code
+ *
+ *
+ * NOTE:
+ * -----
+ * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ */
+int warn(string message, int error=NO_ERROR) {
+   string strError;
+   if (IsError(error))
+      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
+
+   string name = __NAME__;
+   if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+   }
+
+   Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, strError);
+
+   if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
+      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+      string strings[];
+      if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("WARN in ", name, NL, NL, StringTrimLeft(message + strError));
+      else                                      message = StringConcatenate("WARN in ", name, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] + strError));
+
+      // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
+
+      ForceSound("alert.wav");
+      ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
+   }
+
 }
 
 
@@ -1014,6 +1130,11 @@ int start.RelaunchInputDialog() {
  * @param  bool   orderPop - ob ein zuvor gespeicherter Orderkontext wiederhergestellt werden soll (default: nein)
  *
  * @return int - der aufgetretene Error-Code
+ *
+ *
+ * NOTE:
+ * -----
+ * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error == NO_ERROR) error = GetLastError();
@@ -1022,13 +1143,20 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error != NO_ERROR) {
       string message = ifString(StringLen(location) > 0, location, "???");
 
-      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
+      string name = __NAME__;
+      if (__init_flags__ & LOG_INSTANCE_ID > 0) {
+         int pos = StringFind(name, "::");
+         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
+         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+      }
+
+      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
 
       if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
          string strings[];
-         if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("ERROR in ", __NAME__, NL, NL, StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
-         else                                      message = StringConcatenate("ERROR in ", __NAME__, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
+         if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("ERROR in ", name, NL, NL, StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
+         else                                      message = StringConcatenate("ERROR in ", name, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
 
          // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
 
@@ -1042,96 +1170,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       OrderPop(location);
 
    return(error);
-}
-
-
-/**
- * Zeigt eine Warnung optisch und akustisch an.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode (wird *nicht* gesetzt)
- *
- * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
- */
-int warn(string message, int error=NO_ERROR) {
-   string strError;
-   if (IsError(error))
-      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
-
-   Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::", message, strError);
-
-   if (IsTesting()) {                                             // Im Tester werden Alerts() in Experts ignoriert, deshalb Fehler dort manuell signalisieren.
-      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-      string strings[];
-      if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("WARN in ", __NAME__, NL, NL, StringTrimLeft(message + strError));
-      else                                      message = StringConcatenate("WARN in ", __NAME__, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] + strError));
-
-      // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
-
-      ForceSound("alert.wav");
-      ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
-   }
-
-}
-
-
-/**
- * Logged eine Message und einen ggf. angegebenen Fehler.
- *
- * @param  string message - Message
- * @param  int    error   - Error-Code
- *
- * @return int - der angegebene Error-Code
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
- */
-int log(string message="", int error=NO_ERROR) {
-   if (StringLen(message) == 0)
-      message = "???";
-
-   message = StringConcatenate(__NAME__, "::", message);
-
-   if (error != NO_ERROR)
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
-   Print(message);
-   return(error);
-}
-
-
-#import "kernel32.dll"
-   void OutputDebugStringA(string lpMessage);
-#import
-
-
-/**
- * Send information to OutputDebugString() to be viewed and logged by SysInternals DebugView.
- *
- * @param  string message - Message
- * @param  int    error   - Error-Code
- *
- * @return void - immer 0; als int deklariert, um Verwendung als Funktionsargument zu ermöglichen
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, damit das laufende Script als Auslöser angezeigt wird.
- */
-int debug(string message, int error=NO_ERROR) {
-   static int debugToLog = -1;
-
-   if (debugToLog == -1)
-      debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
-
-   if (debugToLog == 1) {
-      log(message, error);
-   }
-   else {
-      if (error != NO_ERROR)
-         message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-      OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __NAME__, "::", message));
-   }
 }
 
 

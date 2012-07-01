@@ -13,6 +13,7 @@
    bool     IndicatorIsTesting();
    bool     ScriptIsTesting();
    bool     This.IsTesting();                   // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
+   int      InstanceId(int id);
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();

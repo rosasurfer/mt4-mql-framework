@@ -49,9 +49,10 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__    |= type;
-   __NAME__     = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__ = whereami;
+   __TYPE__      |= type;
+   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__   = whereami;
+   __init_flags__ = initFlags;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -83,7 +84,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (3) User-spezifische Init-Tasks ausführen
-   if (initFlags & INIT_TIMEZONE != 0) {                                      // INIT_TIMEZONE: Zeitzonen-Konfiguration überprüfen
+   if (__init_flags__ & INIT_TIMEZONE != 0) {                                 // INIT_TIMEZONE: Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -147,7 +148,8 @@ int stdlib_start(int tick, int validBars, int changedBars) {
  * @return int - Fehlerstatus
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__ = FUNC_DEINIT;
+   __WHEREAMI__     = FUNC_DEINIT;
+   __deinit_flags__ = deinitFlags;
 
    int error = NO_ERROR;
 
@@ -218,8 +220,23 @@ int stdlib_PeekLastError() {
 }
 
 
-string lock.names   [];                // Namen der Locks, die vom aktuellen Programm gehalten werden
-int    lock.counters[];                // Anzahl der akquirierten Locks je Name
+/**
+ * Setzt bzw. gibt die aktuelle Instanz-ID zurück.
+ *
+ * @param  int id - neue Instanz-ID
+ *
+ * @return int - Instanz-ID
+ */
+int InstanceId(int id) {
+   static int static.result;                                         // ohne Initializer (@see MQL.doc)
+   if (id != NULL)
+      static.result = id;
+   return(static.result);
+}
+
+
+string lock.names   [];                                              // Namen der Locks, die vom aktuellen Programm gehalten werden
+int    lock.counters[];                                              // Anzahl der akquirierten Locks je Name
 
 
 /**
@@ -4258,7 +4275,8 @@ string StringReplace(string object, string search, string replace) {
 
    int startPos = 0;
    int foundPos = StringFind(object, search, startPos);
-   if (foundPos == -1) return(object);
+   if (foundPos == -1)
+      return(object);
 
    string result = "";
 
@@ -9401,12 +9419,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
 
-         string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::OrderSendEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
-         Alert(message);                                                                  // nach Fertigstellung durch log() ersetzen
-         if (IsTesting()) {
-            ForceSound("alert.wav");
-            ForceMessageBox(message, __NAME__, MB_ICONERROR|MB_OK);
-         }
+         warn(StringConcatenate("OrderSendEx()   temporary trade error after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
       }
    }
 
@@ -9680,12 +9693,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          if (!IsTemporaryTradeError(error))                             // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
 
-         string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::OrderModifyEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
-         Alert(message);                                                // nach Fertigstellung durch log() ersetzen
-         if (IsTesting()) {
-            ForceSound("alert.wav");
-            ForceMessageBox(message, __NAME__, MB_ICONERROR|MB_OK);
-         }
+         warn(StringConcatenate("OrderModifyEx()   temporary trade error after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying..."), error);
       }
    }
 
@@ -10549,8 +10557,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                            // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-                                                                                       // Alert() nach Fertigstellung durch log() ersetzen
-         ForceAlert(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::OrderCloseByEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
+
+         warn(StringConcatenate("OrderCloseByEx()   temporary trade error after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying..."), error);
       }
       Sleep(300);                                                                      // 0.3 Sekunden warten
    }
@@ -11157,12 +11165,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& executi
          if (!IsTemporaryTradeError(error))                             // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
 
-         string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::OrderDeleteEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying...");
-         Alert(message);                                                // nach Fertigstellung durch log() ersetzen
-         if (IsTesting()) {
-            ForceSound("alert.wav");
-            ForceMessageBox(message, __NAME__, MB_ICONERROR|MB_OK);
-         }
+         warn(StringConcatenate("OrderDeleteEx()   temporary trade error after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying..."), error);
       }
    }
 
