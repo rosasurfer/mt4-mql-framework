@@ -1021,9 +1021,9 @@ int start.RelaunchInputDialog() {
  * Sends a message to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  *
  * @param  string message - Message
- * @param  int    error   - Error-Code
+ * @param  int    error   - Fehlercode
  *
- * @return int - der angegebene Error-Code
+ * @return int - derselbe Fehlercode
  *
  *
  * NOTE:
@@ -1042,7 +1042,7 @@ int debug(string message, int error=NO_ERROR) {
    if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
 
    if (IsError(error))
@@ -1054,19 +1054,19 @@ int debug(string message, int error=NO_ERROR) {
 
 
 /**
- * Fügt dem Logfile eine Warn-Message hinzu.
+ * Loggt eine Message je nach Konfigurations ins globale oder instanz-eigene Logfile.
  *
  * @param  string message - Message
- * @param  int    error   - Error-Code (wird nicht gesetzt)
+ * @param  int    error   - Fehlercode
  *
- * @return int - der angegebene Error-Code
+ * @return int - derselbe Fehlercode
  *
  *
  * NOTE:
  * -----
  * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
-int log(string message="", int error=NO_ERROR) {
+int log(string message, int error=NO_ERROR) {
    if (StringLen(message) == 0)
       message = "???";
 
@@ -1074,45 +1074,70 @@ int log(string message="", int error=NO_ERROR) {
    if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
+
+   message = StringConcatenate(name, "::", message);
 
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   if (__LOGFILE_PER_INSTANCE) {
-      string fileName = LogfileName();
-      if (StringLen(fileName) > 0) {
-      }
-      else {
-         // Print
-      }
-   }
-   else {
-      // Print
-   }
+   if (__LOGFILE_PER_INSTANCE)
+      if (instanceLog(message))
+         return(error);
 
-   Print(name, "::", message);
+   Print(message);
    return(error);
 }
 
 
 /**
+ * Loggt eine Message in das separate, instanz-eigene Logfile.
  *
- * @return string
+ * @param  string message - vollständige, zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
+ *
+ * @return bool - Erfolgsstatus: FALSE, wenn keine Instanz-ID gesetzt ist oder ein Fehler auftrat
  */
-string LogfileName() {
-   return("logfile.log");
+bool instanceLog(string message) {
+   bool old.LOGFILE_PER_INSTANCE = __LOGFILE_PER_INSTANCE;
+   int id = InstanceId(NULL);
+   if (id == NULL)
+      return(false);
+
+   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+
+   string fileName = StringConcatenate(id, ".log");
+
+   int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
+   if (hFile < 0) {
+      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      return(false);
+   }
+
+   if (!FileSeek(hFile, 0, SEEK_END)) {
+      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(2) ->FileSeek()"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      FileClose(hFile);
+      return(_false(GetLastError()));
+   }
+
+   if (FileWrite(hFile, message) < 0) {
+      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(3) ->FileWrite()"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      FileClose(hFile);
+      return(_false(GetLastError()));
+   }
+
+   FileClose(hFile);
+   return(true);
 }
 
 
 /**
- * Zeigt eine Message optisch und akustisch an.
+ * Gibt optisch und akustisch eine Warnung aus.
  *
  * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode (wird nicht gesetzt)
+ * @param  int    error   - anzuzeigender Fehlercode
  *
- * @return int - der angegebene Error-Code
+ * @return int - derselbe Fehlercode
  *
  *
  * NOTE:
@@ -1124,27 +1149,32 @@ int warn(string message, int error=NO_ERROR) {
    if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
 
-   string strError;
-   if (IsError(error))
-      strError = StringConcatenate("  [", error, " - ", ErrorDescription(error), "]");
+   if (IsError(error)) message = StringConcatenate(name, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
+   else                message = StringConcatenate(name, "::", message);
 
-   Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, strError);
 
-   if (IsTesting()) {                                                // Im Tester wird Expert::Alert() ignoriert, Message dort forcieren.
+   if (__LOGFILE_PER_INSTANCE)
+      instanceLog(StringConcatenate("WARN: ", message));
+
+
+   if (IsTesting()) {
+      // Im Tester können weder Alert() noch MessageBox() verwendet werden, die Anzeige wird forciert.
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-      string strings[];
-      if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("WARN in ", name, NL, NL, StringTrimLeft(message + strError));
-      else                                      message = StringConcatenate("WARN in ", name, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] + strError));
-
-      // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
+      pos = StringFind(message, ") ");                                                                   // Message am ersten Leerzeichen nach der ersten
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                                   // schließenden Klammer umbrechen
+      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
       ForceSound("alert.wav");
-      ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
+      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
    }
-
+   else {
+      // außerhalb des Testers
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+   }
+   return(error);
 }
 
 
@@ -1168,28 +1198,33 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                           GetLastError();                    // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      string message, name=__NAME__;
+      string name = __NAME__;
       if (__LOG_INSTANCE_ID) {
          int pos = StringFind(name, "::");
          if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, pos-2));
+         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
       }
 
-      if (StringLen(location) > 0) message = location;
-      else                         message = "???";
+      string message = StringConcatenate(name, "::", location, "  [", error, " - ", ErrorDescription(error), "]");
 
-      Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
 
-      if (IsTesting()) {                                             // Im Tester wird Expert::Alert() ignoriert, Fehler dort forcieren.
+      if (__LOGFILE_PER_INSTANCE)
+         instanceLog(StringConcatenate("ERROR: ", message));
+
+
+      if (IsTesting()) {
+         // Im Tester können weder Alert() noch MessageBox() verwendet werden, die Anzeige wird forciert.
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-         string strings[];
-         if (Explode(message, ")", strings, 2)==1) message = StringConcatenate("ERROR in ", name, NL, NL, StringTrimLeft(message +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
-         else                                      message = StringConcatenate("ERROR in ", name, "::", StringTrim(strings[0]), ")", NL, NL, StringTrimLeft(strings[1] +"  ["+ error +" - "+ ErrorDescription(error) +"]"));
-
-         // TODO: Das Splitten muß nach dem letzten Funktionsnamen erfolgen (mehrere Klammerpaare sind möglich, nicht nur eines).
+         pos = StringFind(message, ") ");                                                                   // Message am ersten Leerzeichen nach der ersten
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);                                  // schließenden Klammer umbrechen
+         else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
          ForceSound("alert.wav");
-         ForceMessageBox(message, caption, MB_ICONERROR|MB_OK);
+         ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+      }
+      else {
+         // außerhalb des Testers
+         Alert("ERROR:  ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
       last_error = error;
    }
@@ -1265,37 +1300,16 @@ int ResetLastError() {
 
 
 /**
- * Zeigt eine MessageBox auch dann an, wenn Alert() im aktuellen Kontext unterdrückt wird (im Tester).
- *
- * @param string s1-s63 - bis zu 63 beliebige Parameter
- *
- * @return void - immer 0 (als int deklariert, um Verwendung als Funktionsargument zu ermöglichen)
- *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
- */
-int ForceAlert(string s1="", string s2="", string s3="", string s4="", string s5="", string s6="", string s7="", string s8="", string s9="", string s10="", string s11="", string s12="", string s13="", string s14="", string s15="", string s16="", string s17="", string s18="", string s19="", string s20="", string s21="", string s22="", string s23="", string s24="", string s25="", string s26="", string s27="", string s28="", string s29="", string s30="", string s31="", string s32="", string s33="", string s34="", string s35="", string s36="", string s37="", string s38="", string s39="", string s40="", string s41="", string s42="", string s43="", string s44="", string s45="", string s46="", string s47="", string s48="", string s49="", string s50="", string s51="", string s52="", string s53="", string s54="", string s55="", string s56="", string s57="", string s58="", string s59="", string s60="", string s61="", string s62="", string s63="") {
-   string message = StringConcatenate(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, s36, s37, s38, s39, s40, s41, s42, s43, s44, s45, s46, s47, s48, s49, s50, s51, s52, s53, s54, s55, s56, s57, s58, s59, s60, s61, s62, s63);
-   Alert(message);                                                   // sorgt dafür, daß die Message auf jeden Fall im Log erscheint
-
-   if (IsTesting()) {
-      ForceSound("alert.wav");
-      ForceMessageBox(message, __NAME__, MB_ICONINFORMATION|MB_OK);
-   }
-}
-
-
-/**
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft bei Zutreffen deren Eventhandler auf.
  *
  * @param  int events - Event-Flags
  *
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
+ *
  * NOTE:
  * -----
- *  @use  HandleEvent(), um für die Prüfung event-spezifische Parameter anzugeben
+ * @use  HandleEvent(), um für die Prüfung weitere, event-spezifische Parameter anzugeben
  */
 bool HandleEvents(int events) {
    int status = 0;
@@ -1463,8 +1477,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
       string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::WaitForTicket()   #", ticket, " not yet accessible");
 
-      if (IsTesting())           ForceAlert(message);
-      else if (i > 0 && i%10==0)      Alert(message, " after ", DoubleToStr(i*delay/1000.0, 1), " s");
+      if (IsTesting())           warn (message);
+      else if (i > 0 && i%10==0) Alert(message, " after ", DoubleToStr(i*delay/1000.0, 1), " s");
       Sleep(delay);
       i++;
    }
@@ -2357,7 +2371,6 @@ void DummyCalls() {
    ChartInfo.UpdateUnitSize();
    debug(NULL);
    EQ(NULL, NULL);
-   ForceAlert();
    GE(NULL, NULL);
    GT(NULL, NULL);
    HandleEvent(NULL);
@@ -2373,7 +2386,7 @@ void DummyCalls() {
    IsNoError(NULL);
    IsScript();
    LE(NULL, NULL);
-   log();
+   log(NULL);
    LT(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);

@@ -747,37 +747,15 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
 
 
 /**
- * Dropin-Ersatz für MessageBox()
- *
- * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (im Tester oder in Indikatoren).
- *
- * @param string message
- * @param string caption
- * @param int    flags
- *
- * @return int - Tastencode
- */
-int ForceMessageBox(string message, string caption, int flags=MB_OK) {
-   if (!StringIStartsWith(caption, Symbol()))
-      caption = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), " - ", caption);
-
-   int button;
-
-   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
-   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
-
-   return(button);
-}
-
-
-/**
  * Dropin-Ersatz für PlaySound()
  *
- * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals nicht unterstützt wird (im Tester).
+ * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
  *
  * @param string soundfile
+ *
+ * @return int - Fehlerstatus
  */
-void ForceSound(string soundfile) {
+int ForceSound(string soundfile) {
    if (!IsTesting()) {
       PlaySound(soundfile);
    }
@@ -785,6 +763,33 @@ void ForceSound(string soundfile) {
       soundfile = StringConcatenate(TerminalPath(), "\\sounds\\", soundfile);
       PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
    }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Dropin-Ersatz für MessageBox()
+ *
+ * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
+ *
+ * @param string caption
+ * @param string message
+ * @param int    flags
+ *
+ * @return int - Tastencode
+ */
+int ForceMessageBox(string caption, string message, int flags=MB_OK) {
+   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(NULL));
+
+   if (!StringContains(caption, prefix))
+      caption = StringConcatenate(prefix, " - ", caption);
+
+   int button;
+
+   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
+   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
+
+   return(button);
 }
 
 
@@ -10285,7 +10290,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
          if (!IsTemporaryTradeError(error))                                                  // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
                                                                                              // nach Fertigstellung durch log() ersetzen
-         ForceAlert(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::OrderCloseEx()   temporary trade error ", ErrorToStr(error), " after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying...");
+         warn(StringConcatenate("OrderCloseEx()   temporary trade error after ", DoubleToStr((time2-firstTime1)/1000.0, 3), " s", ifString(requotes==0, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
       }
       Sleep(300);                                                                            // 0.3 Sekunden warten
    }
