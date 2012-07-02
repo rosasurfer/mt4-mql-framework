@@ -688,7 +688,7 @@ bool   __INIT_TIMEZONE;
 bool   __INIT_TICKVALUE;
 bool   __INIT_BARS_ON_HIST_UPDATE;
 bool   __LOG_INSTANCE_ID;
-bool   __LOGFILE_PER_INSTANCE;
+bool   __LOG_PER_INSTANCE;
 bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
 bool   __STATUS__INVALID_INPUT;                                      // ungültige Parametereingabe im Input-Dialog
 bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, den Input-Dialog zu laden
@@ -725,7 +725,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
    __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
    __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
-   __LOGFILE_PER_INSTANCE     = initFlags & LOGFILE_PER_INSTANCE;
+   __LOG_PER_INSTANCE         = initFlags & LOG_PER_INSTANCE;
 
    if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
@@ -1082,7 +1082,7 @@ int log(string message, int error=NO_ERROR) {
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   if (__LOGFILE_PER_INSTANCE)
+   if (__LOG_PER_INSTANCE)
       if (instanceLog(message))
          return(error);
 
@@ -1099,7 +1099,7 @@ int log(string message, int error=NO_ERROR) {
  * @return bool - Erfolgsstatus: FALSE, wenn keine Instanz-ID gesetzt ist oder ein Fehler auftrat
  */
 bool instanceLog(string message) {
-   bool old.LOGFILE_PER_INSTANCE = __LOGFILE_PER_INSTANCE;
+   bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
    int id = InstanceId(NULL);
    if (id == NULL)
       return(false);
@@ -1110,18 +1110,18 @@ bool instanceLog(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("instanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(2) ->FileSeek()"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("instanceLog(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOGFILE_PER_INSTANCE = false; catch("instanceLog(3) ->FileWrite()"); __LOGFILE_PER_INSTANCE = old.LOGFILE_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("instanceLog(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1156,7 +1156,7 @@ int warn(string message, int error=NO_ERROR) {
    else                message = StringConcatenate(name, "::", message);
 
 
-   if (__LOGFILE_PER_INSTANCE)
+   if (__LOG_PER_INSTANCE)
       instanceLog(StringConcatenate("WARN: ", message));
 
 
@@ -1208,7 +1208,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(name, "::", location, "  [", error, " - ", ErrorDescription(error), "]");
 
 
-      if (__LOGFILE_PER_INSTANCE)
+      if (__LOG_PER_INSTANCE)
          instanceLog(StringConcatenate("ERROR: ", message));
 
 

@@ -56,7 +56,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
    __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
    __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
-   __LOGFILE_PER_INSTANCE     = initFlags & LOGFILE_PER_INSTANCE;
+   __LOG_PER_INSTANCE         = initFlags & LOG_PER_INSTANCE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
