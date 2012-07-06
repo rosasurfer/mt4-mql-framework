@@ -63,7 +63,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    prev_error = last_error;
    last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
 
-   if (This.IsTesting())
+   if (IsTesting())
       __LOG = (__LOG && GetGlobalConfigBool(name, "Logger.Tester", true));
 
 
@@ -223,6 +223,74 @@ int stdlib_GetLastError() {
  */
 int stdlib_PeekLastError() {
    return(last_error);
+}
+
+
+/**
+ * Ob der Indikator im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool IndicatorIsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("IndicatorIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if (IsIndicator())
+      result = GetCurrentThreadId() != GetUIThreadId();
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das Script im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool ScriptIsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("ScriptIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if (IsScript()) {
+      int hChart  = WindowHandle(Symbol(), NULL);
+      int hWnd    = GetParent(hChart);
+      string text = GetWindowText(hWnd);
+      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
+   }
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if      (   IsExpert()) result =          IsTesting();
+   else if (IsIndicator()) result = IndicatorIsTesting();
+   else                    result =    ScriptIsTesting();
+
+   done = true;
+   return(result);
 }
 
 

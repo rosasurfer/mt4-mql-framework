@@ -717,6 +717,9 @@ string objects[];                                                    // Namen de
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
+   if (IsLibrary())
+      return(NO_ERROR);                                                       // in Libraries vorerst nichts tun
+
    __NAME__                       = WindowExpertName();
      int initFlags                = SumInts(__INIT_FLAGS__);
    __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
@@ -725,7 +728,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    bool _INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
    bool _INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
 
-   if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal: last_error sichern und zurücksetzen
@@ -733,7 +735,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       prev_error   = last_error;
       last_error   = NO_ERROR;
    }
-   if (This.IsTesting())
+   if (IsTesting())
       __LOG = (__LOG && GetGlobalConfigBool(__NAME__, "Logger.Tester", true));
 
 
@@ -1543,6 +1545,8 @@ double PipValue(double lots = 1.0) {
  * @return bool
  */
 bool IsIndicator() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("IsIndicator()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_INDICATOR);
 }
 
@@ -1553,6 +1557,8 @@ bool IsIndicator() {
  * @return bool
  */
 bool IsExpert() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("IsExpert()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_EXPERT);
 }
 
@@ -1563,6 +1569,8 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("IsScript()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_SCRIPT);
 }
 
@@ -1574,77 +1582,6 @@ bool IsScript() {
  */
 bool IsLibrary() {
    return(__TYPE__ & T_LIBRARY);
-}
-
-
-/**
- * Ob der Indikator im Tester ausgeführt wird.
- *
- * @return bool
- *
- *
- * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
- * -----
- */
-bool IndicatorIsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if (IsIndicator())
-      result = GetCurrentThreadId() != GetUIThreadId();
-
-   done = true;
-   return(result);
-}
-
-
-/**
- * Ob das Script im Tester ausgeführt wird.
- *
- * @return bool
- *
- *
- * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
- * -----
- */
-bool ScriptIsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if (IsScript()) {
-      int hChart  = WindowHandle(Symbol(), NULL);
-      int hWnd    = GetParent(hChart);
-      string text = GetWindowText(hWnd);
-      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
-   }
-
-   done = true;
-   return(result);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return bool
- *
- *
- * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
- * -----
- */
-bool This.IsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if      (   IsExpert()) result =          IsTesting();
-   else if (IsIndicator()) result = IndicatorIsTesting();
-   else                    result =    ScriptIsTesting();
-
-   done = true;
-   return(result);
 }
 
 
@@ -2470,7 +2407,6 @@ void DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   IndicatorIsTesting();
    IsError(NULL);
    IsExpert();
    IsIndicator();
@@ -2489,10 +2425,8 @@ void DummyCalls() {
    PipValue();
    ResetLastError();
    Round(NULL);
-   ScriptIsTesting();
    SetLastError(NULL);
    Sign(NULL);
-   This.IsTesting();
    WaitForTicket(NULL);
    warn(NULL);
 }
