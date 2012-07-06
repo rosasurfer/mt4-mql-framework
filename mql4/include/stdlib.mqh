@@ -100,6 +100,7 @@
 
    // Buffer-Funktionen
    int      InitializeBuffer(int buffer[], int length);
+   int      InitializeDoubleBuffer(double buffer[], int size);
    int      InitializeStringBuffer(string buffer[], int length);
 
    string   BufferToStr(int buffer[]);

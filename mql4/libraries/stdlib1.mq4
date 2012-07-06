@@ -995,6 +995,28 @@ int InitializeBuffer(int buffer[], int length) {
 
 
 /**
+ * Initialisiert einen Buffer zur Aufnahme von Doubles der gewünschten Anzahl.
+ *
+ * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
+ * @param  int    size     - Anzahl der aufzunehmenden Werte
+ *
+ * @return int - Fehlerstatus
+ */
+int InitializeDoubleBuffer(double buffer[], int size) {
+   if (ArrayDimension(buffer) > 1)
+      return(catch("InitializeDoubleBuffer(1)  invalid parameter buffer, too many dimensions = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (size < 0)
+      return(catch("InitializeDoubleBuffer(2)  invalid parameter size = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (ArraySize(buffer) != size)
+      ArrayResize(buffer, size);
+   ArrayInitialize(buffer, 0);
+
+   return(catch("InitializeDoubleBuffer(3)"));
+}
+
+
+/**
  * Initialisiert einen Buffer zur Aufnahme eines Strings der gewünschten Länge.
  *
  * @param  string buffer[] - das für den Buffer zu verwendende String-Array
