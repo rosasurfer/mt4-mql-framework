@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
 int onStart() {
    int account = AccountNumber();
    if (account == 0) {
-      log("onStart()  no trade server connection");
+      if (__LOG) log("onStart()  no trade server connection");
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
@@ -59,7 +59,7 @@ int onStart() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {
-               log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
+               if (__LOG) log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
@@ -250,7 +250,7 @@ int UploadDataFile(string filename, string& lpErrorMsg) {
          lpErrorMsg = "Server error, try again later.";
       }
    }
-   //log("UploadDataFile()   result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
+   //if (__LOG) log("UploadDataFile()   result = "+ errorCode +"   msg = \""+ lpErrorMsg +"\"");
 
 
    ArrayResize(response, 0);

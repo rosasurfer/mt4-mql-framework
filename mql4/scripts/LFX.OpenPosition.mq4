@@ -240,7 +240,7 @@ int onStart() {
    int    lfxDigits = ifInt(Currency=="JPY", 3, 5);
    string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   log("onStart()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   if (__LOG) log("onStart()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
    // (9) Position in "experts\files\SIG\remote_positions.ini" eintragen

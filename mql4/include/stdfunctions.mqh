@@ -684,9 +684,7 @@ bool   ChartInfo.positionChecked,
 // globale Variablen, stehen überall zur Verfügung
 string __NAME__;                                                     // Name des aktuellen MQL-Programms
 int    __WHEREAMI__;                                                 // ID der vom Terminal momentan ausgeführten Basisfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool   __INIT_TIMEZONE;
-bool   __INIT_TICKVALUE;
-bool   __INIT_BARS_ON_HIST_UPDATE;
+bool   __LOG = true;
 bool   __LOG_INSTANCE_ID;
 bool   __LOG_PER_INSTANCE;
 bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
@@ -719,13 +717,13 @@ string objects[];                                                    // Namen de
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __NAME__                   = WindowExpertName();
-     int initFlags            = SumInts(__INIT_FLAGS__);
-   __INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
-   __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
-   __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
-   __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE         = initFlags & LOG_PER_INSTANCE;
+   __NAME__                       = WindowExpertName();
+     int initFlags                = SumInts(__INIT_FLAGS__);
+   __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
+   __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
+   bool _INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
+   bool _INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
+   bool _INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
 
    if (IsLibrary())         return(NO_ERROR);                                 // in Libraries vorerst nichts tun
    if (__STATUS__CANCELLED) return(NO_ERROR);
@@ -735,6 +733,8 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       prev_error   = last_error;
       last_error   = NO_ERROR;
    }
+   if (This.IsTesting())
+      __LOG = (__LOG && GetGlobalConfigBool(__NAME__, "Logger.Tester", true));
 
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -759,13 +759,17 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) User-spezifische Init-Tasks ausführen
-   if (__INIT_TICKVALUE) {                                                    // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (_INIT_TIMEZONE) {                                                      // @see stdlib_init()
+   }
+   if (_INIT_TICKVALUE) {                                                     // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
          return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-      }                                                                       // INIT_TIMEZONE:            @see stdlib_init()
-   }                                                                          // INIT_BARS_ON_HIST_UPDATE: noch nicht implementiert
+      }
+   }
+   if (_INIT_BARS_ON_HIST_UPDATE) {                                           // noch nicht implementiert
+   }
 
 
    // (3) für EA's durchzuführende globale Initialisierungen
@@ -1035,26 +1039,22 @@ int debug(string message, int error=NO_ERROR) {
    if (static.debugToLog == -1)
       static.debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
 
-   if (static.debugToLog == 1)
-      return(log(message, error));
-
-   string name = __NAME__;
-   if (__LOG_INSTANCE_ID) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
+   if (static.debugToLog == 1) {
+      bool old.__LOG = __LOG; __LOG = true;
+      log(message, error);    __LOG = old.__LOG;
+      return(error);
    }
 
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __NAME__, "::", message));
    return(error);
 }
 
 
 /**
- * Loggt eine Message je nach Konfigurations ins globale oder instanz-eigene Logfile.
+ * Loggt eine Message.
  *
  * @param  string message - Message
  * @param  int    error   - Fehlercode
@@ -1067,8 +1067,14 @@ int debug(string message, int error=NO_ERROR) {
  * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int log(string message, int error=NO_ERROR) {
-   if (StringLen(message) == 0)
-      message = "???";
+   if (!__LOG) return(error);
+
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   if (__LOG_PER_INSTANCE)
+      if (logInstance(StringConcatenate(__NAME__, "::", message)))         // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         return(error);
 
    string name = __NAME__;
    if (__LOG_INSTANCE_ID) {
@@ -1076,52 +1082,45 @@ int log(string message, int error=NO_ERROR) {
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
+   Print(StringConcatenate(name, "::", message));                          // ggf. mit Instanz-ID
 
-   message = StringConcatenate(name, "::", message);
-
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
-   if (__LOG_PER_INSTANCE)
-      if (instanceLog(message))
-         return(error);
-
-   Print(message);
    return(error);
 }
 
 
 /**
- * Loggt eine Message in das separate, instanz-eigene Logfile.
+ * Loggt eine Message in das instanz-eigenes Logfile.
  *
  * @param  string message - vollständige, zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
  *
- * @return bool - Erfolgsstatus: FALSE, wenn keine Instanz-ID gesetzt ist oder ein Fehler auftrat
+ * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
  */
-bool instanceLog(string message) {
+bool logInstance(string message) {
+   if (!__LOG) return(true);
+
    bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
    int id = InstanceId(NULL);
    if (id == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringRightPad(PeriodDescription(NULL), 3, " "), "  ", message);
 
    string fileName = StringConcatenate(id, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_PER_INSTANCE = false; catch("instanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logInstance(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_PER_INSTANCE = false; catch("instanceLog(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logInstance(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_PER_INSTANCE = false; catch("instanceLog(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logInstance(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1145,6 +1144,11 @@ bool instanceLog(string message) {
  * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int warn(string message, int error=NO_ERROR) {
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+
+   // (1) Programmnamen umschreiben
    string name = __NAME__;
    if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
@@ -1152,28 +1156,34 @@ int warn(string message, int error=NO_ERROR) {
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
 
-   if (IsError(error)) message = StringConcatenate(name, "::", message, "  [", error, " - ", ErrorDescription(error), "]");
-   else                message = StringConcatenate(name, "::", message);
 
-
+   // (2) Logging
+   bool logged, alerted;
    if (__LOG_PER_INSTANCE)
-      instanceLog(StringConcatenate("WARN: ", message));
+      logged = logInstance(StringConcatenate("WARN: ", __NAME__, "::", message));                     // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+   if (!logged) {
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);           // loggt automatisch, ggf. mit Instanz-ID
+      alerted = true;
+   }
+   message = StringConcatenate(name, "::", message);
 
 
+   // (3) Anzeige
    if (IsTesting()) {
-      // Im Tester können weder Alert() noch MessageBox() verwendet werden, die Anzeige wird forciert.
+      // im Tester: weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-      pos = StringFind(message, ") ");                                                                   // Message am ersten Leerzeichen nach der ersten
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                                   // schließenden Klammer umbrechen
+      pos = StringFind(message, ") ");                                                                // Message am ersten Leerzeichen nach der ersten
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                                // schließenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
       ForceSound("alert.wav");
       ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
    }
-   else {
+   else if (!alerted) {
       // außerhalb des Testers
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
    }
+
    return(error);
 }
 
@@ -1186,7 +1196,7 @@ int warn(string message, int error=NO_ERROR) {
  * @param  int    error    - manuelles Forcieren eines bestimmten Fehlers
  * @param  bool   orderPop - ob ein zuvor gespeicherter Orderkontext wiederhergestellt werden soll (default: nein)
  *
- * @return int - der aufgetretene Error-Code
+ * @return int - der aufgetretene Fehler
  *
  *
  * NOTE:
@@ -1198,6 +1208,10 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                           GetLastError();                    // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
+      string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
+
+
+      // (1) Programmnamen umschreiben
       string name = __NAME__;
       if (__LOG_INSTANCE_ID) {
          int pos = StringFind(name, "::");
@@ -1205,26 +1219,32 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
       }
 
-      string message = StringConcatenate(name, "::", location, "  [", error, " - ", ErrorDescription(error), "]");
 
-
+      // (2) Logging
+      bool logged, alerted;
       if (__LOG_PER_INSTANCE)
-         instanceLog(StringConcatenate("ERROR: ", message));
+         logged = logInstance(StringConcatenate("ERROR: ", __NAME__, "::", message));                    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (!logged) {
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);          // loggt automatisch, ggf. mit Instanz-ID
+         alerted = true;
+      }
+      message = StringConcatenate(name, "::", message);
 
 
+      // (3) Anzeige
       if (IsTesting()) {
-         // Im Tester können weder Alert() noch MessageBox() verwendet werden, die Anzeige wird forciert.
+         // im Tester: weder Alert() noch MessageBox() können verwendet werden
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-         pos = StringFind(message, ") ");                                                                   // Message am ersten Leerzeichen nach der ersten
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);                                  // schließenden Klammer umbrechen
+         pos = StringFind(message, ") ");                                                                // Message am ersten Leerzeichen nach der ersten
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);                               // schließenden Klammer umbrechen
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
          ForceSound("alert.wav");
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
       }
-      else {
+      else if (!alerted) {
          // außerhalb des Testers
-         Alert("ERROR:  ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
       last_error = error;
    }
@@ -1554,6 +1574,77 @@ bool IsScript() {
  */
 bool IsLibrary() {
    return(__TYPE__ & T_LIBRARY);
+}
+
+
+/**
+ * Ob der Indikator im Tester ausgeführt wird.
+ *
+ * @return bool
+ *
+ *
+ * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
+ * -----
+ */
+bool IndicatorIsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if (IsIndicator())
+      result = GetCurrentThreadId() != GetUIThreadId();
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das Script im Tester ausgeführt wird.
+ *
+ * @return bool
+ *
+ *
+ * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
+ * -----
+ */
+bool ScriptIsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if (IsScript()) {
+      int hChart  = WindowHandle(Symbol(), NULL);
+      int hWnd    = GetParent(hChart);
+      string text = GetWindowText(hWnd);
+      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
+   }
+
+   done = true;
+   return(result);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ *
+ *
+ * NOTE: Im Header implementiert, um Verwendung vor Initialisierung der Library zu ermöglichen.
+ * -----
+ */
+bool This.IsTesting() {
+   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
+   if (done)
+      return(result);
+
+   if      (   IsExpert()) result =          IsTesting();
+   else if (IsIndicator()) result = IndicatorIsTesting();
+   else                    result =    ScriptIsTesting();
+
+   done = true;
+   return(result);
 }
 
 
@@ -2379,6 +2470,7 @@ void DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   IndicatorIsTesting();
    IsError(NULL);
    IsExpert();
    IsIndicator();
@@ -2397,8 +2489,10 @@ void DummyCalls() {
    PipValue();
    ResetLastError();
    Round(NULL);
+   ScriptIsTesting();
    SetLastError(NULL);
    Sign(NULL);
+   This.IsTesting();
    WaitForTicket(NULL);
    warn(NULL);
 }

@@ -49,19 +49,22 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__                  |= type;
-   __NAME__                   = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__               = whereami;
-   __INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
-   __INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
-   __INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
-   __LOG_INSTANCE_ID          = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE         = initFlags & LOG_PER_INSTANCE;
+   __TYPE__                      |= type;
+   __NAME__                       = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__                   = whereami;
+   __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
+   __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
+   bool _INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
+   bool _INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
+   bool _INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
    prev_error = last_error;
    last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
+
+   if (This.IsTesting())
+      __LOG = (__LOG && GetGlobalConfigBool(name, "Logger.Tester", true));
 
 
    // (1) globale Variablen re-initialisieren
@@ -88,7 +91,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (3) User-spezifische Init-Tasks ausführen
-   if (__INIT_TIMEZONE) {                                                     // Zeitzonen-Konfiguration überprüfen
+   if (_INIT_TIMEZONE) {                                                      // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -556,65 +559,6 @@ string ExecutionToStr(double execution[], bool debugOutput=false) {
    if (IsError(catch("ExecutionToStr()")))
       return("");
    return(StringConcatenate("{", JoinStrings(strings, ", "), "}"));
-}
-
-
-/**
- * Ob der Indikator im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool IndicatorIsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if (IsIndicator())
-      result = GetCurrentThreadId() != GetUIThreadId();
-
-   done = true;
-   return(result);
-}
-
-
-/**
- * Ob das Script im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool ScriptIsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if (IsScript()) {
-      int hChart  = WindowHandle(Symbol(), NULL);
-      int hWnd    = GetParent(hChart);
-      string text = GetWindowText(hWnd);
-      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
-   }
-
-   done = true;
-   return(result);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
-      return(result);
-
-   if      (   IsExpert()) result =          IsTesting();
-   else if (IsIndicator()) result = IndicatorIsTesting();
-   else                    result =    ScriptIsTesting();
-
-   done = true;
-   return(result);
 }
 
 
@@ -1337,7 +1281,7 @@ int SortTicketsChronological(int& tickets[]) {
  */
 int Menu.Experts(bool enable) {
    if (This.IsTesting())
-      return(_NO_ERROR(debug("Menu.Experts()   skipping in Tester")));
+      return(debug("Menu.Experts()   skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
@@ -2964,8 +2908,10 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    bool hasShellItemIdList = (dwFlags & 0x00000001 == 0x00000001);
    bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
 
-   if (!pointsToFileOrDir)
-      return(_empty(log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"")));
+   if (!pointsToFileOrDir) {
+      if (__LOG) log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
+      return("");
+   }
 
    // --------------------------------------------------------------------------
    // Shell item id list (starts at offset 76 with 2 byte length):
@@ -3270,7 +3216,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecAndWait(2) ->kernel32::WaitForSingleObject()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      else                       log("WinExecAndWait() ->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      else if (__LOG)            log("WinExecAndWait() ->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi.hProcess(pi));
@@ -5481,7 +5427,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    // nach Möglichkeit die gecachten Daten liefern
    if (account == static.account[0]) {
       ArrayCopy(results, static.results);
-      log("GetAccountHistory()   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
+      if (__LOG) log("GetAccountHistory()   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(2)"));
    }
 
@@ -5582,7 +5528,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
    // Daten in Zielarray kopieren und cachen
    if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
-      //log("GetAccountHistory()   caching "+ ArrayRange(result, 0) +" history entries for account "+ account);
+      //if (__LOG) log("GetAccountHistory()   caching "+ ArrayRange(result, 0) +" history entries for account "+ account);
       static.account[0] = account;
       ArrayResize(static.results, 0);
       ArrayCopy  (static.results, result);
@@ -5669,7 +5615,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
-      log("GetBalanceHistory()   delivering "+ ArraySize(times) +" balance values for account "+ account +" from cache");
+      if (__LOG) log("GetBalanceHistory()   delivering "+ ArraySize(times) +" balance values for account "+ account +" from cache");
       return(catch("GetBalanceHistory(1)"));
    }
 
@@ -5722,7 +5668,7 @@ int GetBalanceHistory(int account, datetime& times[], double& values[]) {
    static.account[0] = account;
    ArrayResize(static.times,  0); ArrayCopy(static.times,  times );
    ArrayResize(static.values, 0); ArrayCopy(static.values, values);
-   log("GetBalanceHistory()   caching "+ ArraySize(times) +" balance values for account "+ account);
+   if (__LOG) log("GetBalanceHistory()   caching "+ ArraySize(times) +" balance values for account "+ account);
 
    ArrayResize(data, 0);
    return(catch("GetBalanceHistory(5)"));
@@ -5772,11 +5718,13 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    GetPrivateProfileStringA(section, key, buffer[0],  buffer[0], bufferSize, GetLocalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
-   bool result = true;
 
-   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
-      result = false;
-   }
+   bool result;
+   if      (buffer[0] == ""    ) result = defaultValue;
+   else if (buffer[0] == "1"   ) result = true;
+   else if (buffer[0] == "true") result = true;
+   else if (buffer[0] == "yes" ) result = true;
+   else if (buffer[0] == "on"  ) result = true;
 
    if (IsError(catch("GetConfigBool()")))
       return(false);
@@ -5997,11 +5945,13 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
-   bool result = true;
 
-   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
-      result = false;
-   }
+   bool result;
+   if      (buffer[0] == ""    ) result = defaultValue;
+   else if (buffer[0] == "1"   ) result = true;
+   else if (buffer[0] == "true") result = true;
+   else if (buffer[0] == "yes" ) result = true;
+   else if (buffer[0] == "on"  ) result = true;
 
    if (IsError(catch("GetGlobalConfigBool()")))
       return(false);
@@ -6187,11 +6137,13 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetLocalConfigPath());
 
    buffer[0] = StringToLower(buffer[0]);
-   bool result = true;
 
-   if (buffer[0]!="1") /*&&*/ if (buffer[0]!="true") /*&&*/ if (buffer[0]!="yes") /*&&*/ if (buffer[0]!="on") {
-      result = false;
-   }
+   bool result;
+   if      (buffer[0] == ""    ) result = defaultValue;
+   else if (buffer[0] == "1"   ) result = true;
+   else if (buffer[0] == "true") result = true;
+   else if (buffer[0] == "yes" ) result = true;
+   else if (buffer[0] == "on"  ) result = true;
 
    if (IsError(catch("GetLocalConfigBool()")))
       return(false);
@@ -6672,7 +6624,8 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   return(_int(-1, log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (__LOG) log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(-1);
 }
 
 
@@ -6888,7 +6841,8 @@ int PeriodToId(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   return(_int(-1, log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (__LOG) log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(-1);
 }
 
 
@@ -7171,7 +7125,7 @@ int GetTesterWindow() {
       if (This.IsTesting())
          return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
 
-      log("GetTesterWindow()   cannot find Strategy Tester window");
+      if (__LOG) log("GetTesterWindow()   cannot find Strategy Tester window");
    }
 
    return(hWndTester);
@@ -9352,7 +9306,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
       error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
-         log("OrderSendEx()   trade context busy, retrying...");
+         if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
          Sleep(300);                                                                      // 0.3 Sekunden warten
       }
       else {
@@ -9406,7 +9360,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
             execution[EXEC_SLIPPAGE  ] = NormalizeDouble(slippage/pips, 1);               // in Pips
             execution[EXEC_TICKET    ] = ticket;
 
-            log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
+            if (__LOG) log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(ticket, type, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
@@ -9659,7 +9613,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
-         log("OrderModifyEx()   trade context busy, retrying...");
+         if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
          Sleep(300);                                                    // 0.3 Sekunden warten
       }
       else {
@@ -9689,7 +9643,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             execution[EXEC_SLIPPAGE  ] = 0;
             execution[EXEC_TICKET    ] = 0;
 
-            //log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
+            //if (__LOG) log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
             if (!IsTesting())
                PlaySound("RFQ.wav");
 
@@ -10197,7 +10151,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
       error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
-         log("OrderCloseEx()   trade context busy, retrying...");
+         if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
       }
       else {
          if      (OrderType() == OP_BUY ) price = MarketInfo(OrderSymbol(), MODE_BID);
@@ -10271,7 +10225,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
                execution[EXEC_TICKET] = remainder;
             }
 
-            log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
+            if (__LOG) log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(ticket, lots, firstPrice, digits, time2-firstTime1, requotes));
             if (!IsTesting())
                PlaySound(ifString(requotes==0, "OrderOk.wav", "Blip.wav"));
 
@@ -10477,7 +10431,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, 
       error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
-         log("OrderCloseByEx()   trade context busy, retrying...");
+         if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
       }
       else {
          time1 = GetTickCount();
@@ -10553,7 +10507,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int execFlags, 
                execution[EXEC_TICKET] = remainder;
             }
 
-            log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", second, ", remainder", ifString(remainder==0, ": none", " #"+ remainder), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
+            if (__LOG) log(StringConcatenate("OrderCloseByEx()   closed #", first, " by #", second, ", remainder", ifString(remainder==0, ": none", " #"+ remainder), " after ", DoubleToStr((time2-time1)/1000.0, 3), " s"));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
@@ -11016,7 +10970,7 @@ bool OrderMultiClose(int tickets[], double slippage/*=0*/, color markerColor, in
    // Logging
    if (!OrderSelectByTicket(copy[0], "OrderMultiClose.Flattened(1)", O_PUSH))
       return(false);
-   log(StringConcatenate("OrderMultiClose.Flattened()   closing ", sizeOfCopy, " hedged ", OrderSymbol(), " positions ", IntsToStr(copy)));
+   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened()   closing ", sizeOfCopy, " hedged ", OrderSymbol(), " positions ", IntsToStr(copy)));
 
 
    // execution[TIME & PRICE] setzen
@@ -11134,7 +11088,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& executi
       error = NO_ERROR;
 
       if (IsTradeContextBusy()) {
-         log("OrderDeleteEx()   trade context busy, retrying...");
+         if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
          Sleep(300);                                                    // 0.3 Sekunden warten
       }
       else {
@@ -11161,7 +11115,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int execFlags, double& executi
             execution[EXEC_SLIPPAGE  ] = 0;
             execution[EXEC_TICKET    ] = 0;
 
-            log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
+            if (__LOG) log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(ticket, digits, time2-time1));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 

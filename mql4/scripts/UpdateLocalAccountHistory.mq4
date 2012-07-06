@@ -190,7 +190,7 @@ int onStart() {
       MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
    }
-   //log("onStart()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
+   //if (__LOG) log("onStart()   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
 
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
@@ -202,7 +202,7 @@ int onStart() {
       lastBalance     = balances[i];
    }
    if (NE(lastBalance, AccountBalance())) {
-      log("onStart()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
+      if (__LOG) log("onStart()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(10)"));

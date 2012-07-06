@@ -203,10 +203,10 @@ int onPositionOpen(int tickets[]) {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
-         log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         log(StringConcatenate("onPositionOpen()   ", message));
+         if (__LOG) log(StringConcatenate("onPositionOpen()   ", message));
       }
    }
 
@@ -246,10 +246,10 @@ int onPositionClose(int tickets[]) {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
-         log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         log(StringConcatenate("onPositionClose()   ", message));
+         if (__LOG) log(StringConcatenate("onPositionClose()   ", message));
       }
    }
 
@@ -283,10 +283,10 @@ int CheckBollingerBands() {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (error != NO_ERROR)
             return(SetLastError(error));
-         log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         log(StringConcatenate("CheckBollingerBands()   ", message));
+         if (__LOG) log(StringConcatenate("CheckBollingerBands()   ", message));
       }
 
       // ggf. Sound abspielen
