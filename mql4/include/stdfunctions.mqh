@@ -402,146 +402,150 @@
 #define C_ZAR                "ZAR"
 
 
+// Struct sizes
+#define ORDER_EXECUTION.size                72
+
+
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
-#define EXEC_TIME                                       0   // Ausführungszeit                           0      9    18
-#define EXEC_PRICE                                      1   // Ausführungspreis                          1     10    19
-#define EXEC_SWAP                                       2   // Swap-Betrag                               2     11    20
-#define EXEC_COMMISSION                                 3   // Commission-Betrag                         3     12    21
-#define EXEC_PROFIT                                     4   // Profit-Betrag                             4     13    22
-#define EXEC_DURATION                                   5   // Dauer der Orderausführung in Sekunden     5     14    23
-#define EXEC_REQUOTES                                   6   // Anzahl der aufgetretenen Requotes         6     15    24
-#define EXEC_SLIPPAGE                                   7   // Slippage der Orderausführung in Pips      7     16    25
-#define EXEC_TICKET                                     8   // durch die Ausführung erzeugtes Ticket     8     17    26
+#define EXEC_TIME                            0
+#define EXEC_PRICE                           1
+#define EXEC_SWAP                            2
+#define EXEC_COMMISSION                      3
+#define EXEC_PROFIT                          4
+#define EXEC_DURATION                        5
+#define EXEC_REQUOTES                        6
+#define EXEC_SLIPPAGE                        7
+#define EXEC_TICKET                          8
 
 
 // FindFileNames() flags
-#define FF_SORT                                         1   // Ergebnisse von NTFS-Laufwerken werden immer sortiert
-#define FF_DIRSONLY                                     2
-#define FF_FILESONLY                                    4
+#define FF_SORT                              1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
+#define FF_DIRSONLY                          2
+#define FF_FILESONLY                         4
 
 
 // MessageBox() flags
-#define MB_OK                                  0x00000000   // buttons
-#define MB_OKCANCEL                            0x00000001
-#define MB_YESNO                               0x00000004
-#define MB_YESNOCANCEL                         0x00000003
-#define MB_ABORTRETRYIGNORE                    0x00000002
-#define MB_CANCELTRYCONTINUE                   0x00000006
-#define MB_RETRYCANCEL                         0x00000005
-#define MB_HELP                                0x00004000   // additional help button
+#define MB_OK                       0x00000000     // buttons
+#define MB_OKCANCEL                 0x00000001
+#define MB_YESNO                    0x00000004
+#define MB_YESNOCANCEL              0x00000003
+#define MB_ABORTRETRYIGNORE         0x00000002
+#define MB_CANCELTRYCONTINUE        0x00000006
+#define MB_RETRYCANCEL              0x00000005
+#define MB_HELP                     0x00004000     // additional help button
 
-#define MB_DEFBUTTON1                          0x00000000   // default button
-#define MB_DEFBUTTON2                          0x00000100
-#define MB_DEFBUTTON3                          0x00000200
-#define MB_DEFBUTTON4                          0x00000300
+#define MB_DEFBUTTON1               0x00000000     // default button
+#define MB_DEFBUTTON2               0x00000100
+#define MB_DEFBUTTON3               0x00000200
+#define MB_DEFBUTTON4               0x00000300
 
-#define MB_ICONEXCLAMATION                     0x00000030   // icons
-#define MB_ICONWARNING                 MB_ICONEXCLAMATION
-#define MB_ICONINFORMATION                     0x00000040
-#define MB_ICONASTERISK                MB_ICONINFORMATION
-#define MB_ICONQUESTION                        0x00000020
-#define MB_ICONSTOP                            0x00000010
-#define MB_ICONERROR                          MB_ICONSTOP
-#define MB_ICONHAND                           MB_ICONSTOP
-#define MB_USERICON                            0x00000080
+#define MB_ICONEXCLAMATION          0x00000030     // icons
+#define MB_ICONWARNING      MB_ICONEXCLAMATION
+#define MB_ICONINFORMATION          0x00000040
+#define MB_ICONASTERISK     MB_ICONINFORMATION
+#define MB_ICONQUESTION             0x00000020
+#define MB_ICONSTOP                 0x00000010
+#define MB_ICONERROR               MB_ICONSTOP
+#define MB_ICONHAND                MB_ICONSTOP
+#define MB_USERICON                 0x00000080
 
-#define MB_APPLMODAL                           0x00000000   // modality
-#define MB_SYSTEMMODAL                         0x00001000
-#define MB_TASKMODAL                           0x00002000
+#define MB_APPLMODAL                0x00000000     // modality
+#define MB_SYSTEMMODAL              0x00001000
+#define MB_TASKMODAL                0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY                0x00020000   // other
-#define MB_RIGHT                               0x00080000
-#define MB_RTLREADING                          0x00100000
-#define MB_SETFOREGROUND                       0x00010000
-#define MB_TOPMOST                             0x00040000
-#define MB_NOFOCUS                             0x00008000
-#define MB_SERVICE_NOTIFICATION                0x00200000
+#define MB_DEFAULT_DESKTOP_ONLY     0x00020000     // other
+#define MB_RIGHT                    0x00080000
+#define MB_RTLREADING               0x00100000
+#define MB_SETFOREGROUND            0x00010000
+#define MB_TOPMOST                  0x00040000
+#define MB_NOFOCUS                  0x00008000
+#define MB_SERVICE_NOTIFICATION     0x00200000
 
 
 // MessageBox() return codes
-#define IDOK                                            1
-#define IDCANCEL                                        2
-#define IDABORT                                         3
-#define IDRETRY                                         4
-#define IDIGNORE                                        5
-#define IDYES                                           6
-#define IDNO                                            7
-#define IDCLOSE                                         8
-#define IDHELP                                          9
-#define IDTRYAGAIN                                     10
-#define IDCONTINUE                                     11
+#define IDOK                                 1
+#define IDCANCEL                             2
+#define IDABORT                              3
+#define IDRETRY                              4
+#define IDIGNORE                             5
+#define IDYES                                6
+#define IDNO                                 7
+#define IDCLOSE                              8
+#define IDHELP                               9
+#define IDTRYAGAIN                          10
+#define IDCONTINUE                          11
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                                1   // right pointing arrow (default open ticket marker)
-#define SYMBOL_ORDEROPEN_UP              SYMBOL_ORDEROPEN   // right pointing up arrow                               // ??? wird so nicht angezeigt
-#define SYMBOL_ORDEROPEN_DOWN                           2   // right pointing down arrow                             // ??? wird so nicht angezeigt
-#define SYMBOL_ORDERCLOSE                               3   // left pointing arrow (default closed ticket marker)
+#define SYMBOL_ORDEROPEN                     1     // right pointing arrow (default open ticket marker)
+#define SYMBOL_ORDEROPEN_UP   SYMBOL_ORDEROPEN     // right pointing up arrow                               // ??? wird so nicht angezeigt
+#define SYMBOL_ORDEROPEN_DOWN                2     // right pointing down arrow                             // ??? wird so nicht angezeigt
+#define SYMBOL_ORDERCLOSE                    3     // left pointing arrow (default closed ticket marker)
 
-#define SYMBOL_DASH                                     4   // dash symbol (default stoploss and takeprofit marker)
-#define SYMBOL_LEFTPRICE                                5   // left sided price label
-#define SYMBOL_RIGHTPRICE                               6   // right sided price label
-#define SYMBOL_THUMBSUP                                67   // thumb up symbol
-#define SYMBOL_THUMBSDOWN                              68   // thumb down symbol
-#define SYMBOL_ARROWUP                                241   // arrow up symbol
-#define SYMBOL_ARROWDOWN                              242   // arrow down symbol
-#define SYMBOL_STOPSIGN                               251   // stop sign symbol
-#define SYMBOL_CHECKSIGN                              252   // check sign symbol
+#define SYMBOL_DASH                          4     // dash symbol (default stoploss and takeprofit marker)
+#define SYMBOL_LEFTPRICE                     5     // left sided price label
+#define SYMBOL_RIGHTPRICE                    6     // right sided price label
+#define SYMBOL_THUMBSUP                     67     // thumb up symbol
+#define SYMBOL_THUMBSDOWN                   68     // thumb down symbol
+#define SYMBOL_ARROWUP                     241     // arrow up symbol
+#define SYMBOL_ARROWDOWN                   242     // arrow down symbol
+#define SYMBOL_STOPSIGN                    251     // stop sign symbol
+#define SYMBOL_CHECKSIGN                   252     // check sign symbol
 
 
 // MT4 internal messages
-#define MT4_TICK                                        2   // künstlicher Tick, führt start() aus
-#define MT4_COMPILE_REQUEST                         12345
-#define MT4_COMPILE_PERMISSION                      12346
-#define MT4_COMPILE_FINISHED                        12349   // Rescan und Reload modifizierter .ex4-Files
+#define MT4_TICK                             2     // künstlicher Tick, führt start() aus
+#define MT4_COMPILE_REQUEST              12345
+#define MT4_COMPILE_PERMISSION           12346
+#define MT4_COMPILE_FINISHED             12349     // Rescan und Reload modifizierter .ex4-Files
 
 
 // MT4 command ids (menu or accelerator identifier)
-#define ID_EXPERTS_ONOFF                            33020   // Toolbar: Experts on/off                    Ctrl+E
+#define ID_EXPERTS_ONOFF                 33020     // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_STEPFORWARD                        33197   // Chart: eine Bar vorwärts                      F12
-#define ID_CHART_STEPBACKWARD                       33198   //        eine Bar rückwärts               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES                  33048   //        Expert Properties-Dialog                F7
+#define ID_CHART_STEPFORWARD             33197     // Chart: eine Bar vorwärts                      F12
+#define ID_CHART_STEPBACKWARD            33198     //        eine Bar rückwärts               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES       33048     //        Expert Properties-Dialog                F7
 
-#define ID_TESTER_TICK               ID_CHART_STEPFORWARD   // Tester: nächster Tick                         F12
+#define ID_TESTER_TICK    ID_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
 
 
 // MT4 item ids (dialog or control identifier)
-#define ID_DOCKABLES_CONTAINER                      59422   // window containing all child windows docked inside the main application window
-#define ID_UNDOCKED_CONTAINER                       59423   // window containing undocked child windows (one per undocked child)
+#define ID_DOCKABLES_CONTAINER           59422     // window containing all child windows docked inside the main application window
+#define ID_UNDOCKED_CONTAINER            59423     // window containing undocked child windows (one per undocked child)
 
-#define ID_MARKETWATCH                                 80   // Market Watch
-#define ID_MARKETWATCH_SYMBOLS                      35441   // Market Watch - Symbols
-#define ID_MARKETWATCH_TICKCHART                    35442   // Market Watch - Tick Chart
+#define ID_MARKETWATCH                      80     // Market Watch
+#define ID_MARKETWATCH_SYMBOLS           35441     // Market Watch - Symbols
+#define ID_MARKETWATCH_TICKCHART         35442     // Market Watch - Tick Chart
 
-#define ID_NAVIGATOR                                   82   // Navigator
-#define ID_NAVIGATOR_COMMON                         35439   // Navigator - Common
-#define ID_NAVIGATOR_FAVOURITES                     35440   // Navigator - Favourites
+#define ID_NAVIGATOR                        82     // Navigator
+#define ID_NAVIGATOR_COMMON              35439     // Navigator - Common
+#define ID_NAVIGATOR_FAVOURITES          35440     // Navigator - Favourites
 
-#define ID_TERMINAL                                    81   // Terminal
-#define ID_TERMINAL_TRADE                           33217   // Terminal - Trade
-#define ID_TERMINAL_ACCOUNTHISTORY                  33208   // Terminal - Account History
-#define ID_TERMINAL_NEWS                            33211   // Terminal - News
-#define ID_TERMINAL_ALERTS                          33206   // Terminal - Alerts
-#define ID_TERMINAL_MAILBOX                         33210   // Terminal - Mailbox
-#define ID_TERMINAL_EXPERTS                         35434   // Terminal - Experts
-#define ID_TERMINAL_JOURNAL                         33209   // Terminal - Journal
+#define ID_TERMINAL                         81     // Terminal
+#define ID_TERMINAL_TRADE                33217     // Terminal - Trade
+#define ID_TERMINAL_ACCOUNTHISTORY       33208     // Terminal - Account History
+#define ID_TERMINAL_NEWS                 33211     // Terminal - News
+#define ID_TERMINAL_ALERTS               33206     // Terminal - Alerts
+#define ID_TERMINAL_MAILBOX              33210     // Terminal - Mailbox
+#define ID_TERMINAL_EXPERTS              35434     // Terminal - Experts
+#define ID_TERMINAL_JOURNAL              33209     // Terminal - Journal
 
-#define ID_TESTER                                      83   // Tester
-#define ID_TESTER_SETTINGS                          33215   // Tester - Settings
-#define ID_TESTER_PAUSERESUME                        1402   // Tester - Settings Pause/Resume button
-#define ID_TESTER_STARTSTOP                          1034   // Tester - Settings Start/Stop button
-#define ID_TESTER_RESULTS                           33214   // Tester - Results
-#define ID_TESTER_GRAPH                             33207   // Tester - Graph
-#define ID_TESTER_REPORT                            33213   // Tester - Report
-#define ID_TESTER_JOURNAL             ID_TERMINAL_EXPERTS   // Tester - Journal (entspricht Terminal - Experts)
+#define ID_TESTER                           83     // Tester
+#define ID_TESTER_SETTINGS               33215     // Tester - Settings
+#define ID_TESTER_PAUSERESUME             1402     // Tester - Settings Pause/Resume button
+#define ID_TESTER_STARTSTOP               1034     // Tester - Settings Start/Stop button
+#define ID_TESTER_RESULTS                33214     // Tester - Results
+#define ID_TESTER_GRAPH                  33207     // Tester - Graph
+#define ID_TESTER_REPORT                 33213     // Tester - Report
+#define ID_TESTER_JOURNAL  ID_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
 // MQL-Fehlercodes
 #define ERR_NO_ERROR                                                  0
 #define NO_ERROR                                           ERR_NO_ERROR
 
-// trade server errors
+// Trade server errors
 #define ERR_NO_RESULT                                                 1    // Tradeserver-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
@@ -574,7 +578,7 @@
 #define ERR_TRADE_HEDGE_PROHIBITED                                  149
 #define ERR_TRADE_PROHIBITED_BY_FIFO                                150
 
-// errors causing an immediate execution stop
+// Errors causing an immediate execution stop
 #define ERR_WRONG_FUNCTION_POINTER                                 4001    // If execution stopped due to one of those errors, the error code is available
 #define ERR_NO_MEMORY_FOR_CALL_STACK                               4003    // at the next call of start() or deinit().
 #define ERR_RECURSIVE_STACK_OVERFLOW                               4004
@@ -586,13 +590,13 @@
 #define ERR_ZERO_DIVIDE                                            4013
 #define ERR_UNKNOWN_COMMAND                                        4014
 
-// errors causing an immediate execution stop until the program is re-initialized; start() or deinit() will not get called again
+// Errors causing an immediate execution stop until the program is re-initialized; start() or deinit() will not get called again
 #define ERR_CANNOT_LOAD_LIBRARY                                    4018
 #define ERR_CANNOT_CALL_FUNCTION                                   4019
 #define ERR_DLL_CALLS_NOT_ALLOWED                                  4017    // DLL imports
 #define ERR_EXTERNAL_CALLS_NOT_ALLOWED                             4020    // ex4 library imports
 
-// runtime errors
+// Runtime errors
 #define ERR_RUNTIME_ERROR                                          4000    // user runtime error (never generated by the terminal)
 #define ERR_ARRAY_INDEX_OUT_OF_RANGE                               4002
 #define ERR_NOT_ENOUGH_STACK_FOR_PARAM                             4005
@@ -602,6 +606,7 @@
 #define ERR_NOT_INITIALIZED_ARRAY                                  4016
 #define ERR_NO_MEMORY_FOR_RETURNED_STR                             4021
 #define ERR_SYSTEM_BUSY                                            4022
+//                                                                 4023    // ???
 #define ERR_INVALID_FUNCTION_PARAMSCNT                             4050    // invalid parameters count
 #define ERR_INVALID_FUNCTION_PARAMVALUE                            4051    // invalid parameter value
 #define ERR_STRING_FUNCTION_INTERNAL                               4052
@@ -644,7 +649,7 @@
 #define ERR_NO_SPECIFIED_SUBWINDOW                                 4206
 #define ERR_SOME_OBJECT_ERROR                                      4207
 
-// custom errors
+// Custom errors
 #define ERR_WIN32_ERROR                                            5000    // win32 api error
 #define ERR_FUNCTION_NOT_IMPLEMENTED                               5001    // function not implemented
 #define ERR_INVALID_INPUT                                          5002    // invalid input parameter

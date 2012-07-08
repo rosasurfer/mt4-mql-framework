@@ -112,7 +112,7 @@
    string   BufferCharsToStr(int buffer[], int from, int length);    //string BufferGetStringA(int buffer[], int from, int length);    // Alias
    string   BufferWCharsToStr(int buffer[], int from, int length);   //string BufferGetStringW(int buffer[], int from, int length);    // Alias
 
-   //int    BufferSetStringA(int buffer[], int pos, string value);   //int BufferSetString(int buffer[], int pos, string value);       // Alias
+   int      BufferSetStringA(int buffer[], int offset, string value);  int BufferSetString(int buffer[], int offset, string value);    // Alias
    //int    BufferSetStringW(int buffer[], int pos, string value);
 
    int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);                     // Alias
@@ -450,16 +450,22 @@
    string   WaitForSingleObjectValueToStr(int value);
 
 
-   // Win32-Funktionen
-   string   GetClassName(int hWnd);
-   string   GetComputerName();
-   string   GetWin32ShortcutTarget(string lnkFile);
-   string   GetWindowText(int hWnd);
-   int      LoadCursor(int hInstance, int resourceId);
-   int      LoadCursorById(int hInstance, int resourceId);
-   int      LoadCursorByName(int hInstance, string cursorName);
-   int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      WM_MT4();                                                // MetaTrader4_Internal_Message (Pseudo-Konstante)
+   // MQL-Structs Getter und Setter
+   string   oe.Symbol    (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Digits    (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Bid       (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Ask       (/*ORDER_EXECUTION*/int oe[]);
+   datetime oe.Time      (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Ticket    (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Price     (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.StopLoss  (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.TakeProfit(/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Swap      (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Commission(/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Profit    (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Duration  (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Requotes  (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Slippage  (/*ORDER_EXECUTION*/int oe[]);
 
 
    // Win32-Structs Getter und Setter
@@ -532,6 +538,18 @@
    string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
 
 
+   // Win32-Funktionen
+   string   GetClassName(int hWnd);
+   string   GetComputerName();
+   string   GetWin32ShortcutTarget(string lnkFile);
+   string   GetWindowText(int hWnd);
+   int      LoadCursor(int hInstance, int resourceId);
+   int      LoadCursorById(int hInstance, int resourceId);
+   int      LoadCursorByName(int hInstance, string cursorName);
+   int      WinExecAndWait(string cmdLine, int cmdShow);
+   int      WM_MT4();                                                // MetaTrader4_Internal_Message (Pseudo-Konstante)
+
+
    // Default-Implementierungen der MQL-Basis- und Userfunktionen
    int      onInit();
    int      onInitUndefined();
@@ -569,6 +587,12 @@
    int      StaticInt();
    double   StaticDouble();
 
+
+#import "sample1.ex4"
+   int      GetBufferAddress(int buffer[]);
+#import "sample2.ex4"
+   int      GetStringAddress(string value);
+   string   GetStringValue(int address);
 #import
 
 

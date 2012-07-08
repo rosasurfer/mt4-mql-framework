@@ -15,7 +15,7 @@
  * |         |         |        |        |        |                 |                       |                2.147.483.647 |                  4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
  * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |  double,string | MQL-double: 53 bit Mantisse (Integers bis 53 bit ohne Genauigkeitsverlust)
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |  double,string | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
  * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
@@ -33,7 +33,12 @@ int __DEINIT_FLAGS__[];
 
 
 #import "stdlib2.ex4"
-   int GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
+   int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
+#import "sample1.ex4"
+   int    GetBufferAddress(int buffer[]);
+#import "sample2.ex4"
+   int    GetStringAddress(string value);
+   string GetStringValue(int address);
 #import
 
 
@@ -2787,6 +2792,36 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
    if (IsError(catch("BufferWCharsToStr(3)")))
       return("");
    return(result);
+}
+
+
+/**
+ * Schreibt einen String an die angegebene Position eines Byte-Buffers.
+ *
+ * @param  int    buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ * @param  int    offset   - Schreiboffset innerhalb des Buffers
+ * @param  string value    - zu schreibender Wert
+ *
+ * @return int - Fehlerstatus
+ */
+int BufferSetString(int buffer[], int offset, string value) {
+   int chars = ArraySize(buffer) << 2;
+   int len   = StringLen(value) + 1;
+
+   if (offset < 0)         return(catch("BufferSetString(1)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset >= chars)    return(catch("BufferSetString(2)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset+len > chars) return(catch("BufferSetString(3)  buffer overrun for parameters offset="+ offset +" and value=\""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   RtlMoveMemory(GetBufferAddress(buffer), GetStringAddress(value), StringLen(value)+1);
+   return(NO_ERROR);
+}
+
+
+/**
+ * Alias für BufferSetString()
+ */
+int BufferSetStringA(int buffer[], int offset, string value) {
+   return(BufferSetString(buffer, offset, value));
 }
 
 
@@ -6388,6 +6423,7 @@ string ErrorDescription(int error) {
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("ex4 library function calls not allowed"                        ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
       case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022
+    //case 4023: ???
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                              ); // 4050 invalid parameters count
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
@@ -6526,6 +6562,7 @@ string ErrorToStr(int error) {
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("ERR_EXTERNAL_CALLS_NOT_ALLOWED" ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("ERR_NO_MEMORY_FOR_RETURNED_STR" ); // 4021
       case ERR_SYSTEM_BUSY                : return("ERR_SYSTEM_BUSY"                ); // 4022
+    //case 4023                           : // ???
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("ERR_INVALID_FUNCTION_PARAMSCNT" ); // 4050
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); // 4051
       case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); // 4052
@@ -9302,6 +9339,44 @@ string NumberToStr(double number, string mask) {
       return("");
    return(outStr);
 }
+
+
+/**
+ * MQL structure ORDER_EXECUTION
+ *
+ * typedef struct _ORDER_EXECUTION {
+ *    TCHAR cSymbol;             // 16      => oe[ 0]          // Ordersymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
+ *    DWORD nDigits;             //  4      => oe[ 4]          // Digits des Ordersymbols
+ *    DWORD nBid;                //  4      => oe[ 5]          // Bid-Preis vor Ausführung in Points
+ *    DWORD nAsk;                //  4      => oe[ 6]          // Ask-Preis vor Ausführung in Points
+ *    DWORD nTime;               //  4      => oe[ 7]          // Ausführungszeitpunkt des Tradeservers
+ *    DWORD nTicket;             //  4      => oe[ 8]          // resultierendes Ticket
+ *    DWORD nPrice;              //  4      => oe[ 9]          // Ausführungspreis in Points
+ *    DWORD nStopLoss;           //  4      => oe[10]          // StopLoss-Preis in Points
+ *    DWORD nTakeProfit;         //  4      => oe[11]          // TakeProfit-Preis in Points
+ *    DWORD nSwap;               //  4      => oe[12]          // Swap-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nCommission;         //  4      => oe[13]          // Commission-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nProfit;             //  4      => oe[14]          // Profit in Hundertsteln der Account-Währung
+ *    DWORD nDuration;           //  4      => oe[15]          // Dauer der Auführung in Millisekunden
+ *    DWORD nRequotes;           //  4      => oe[16]          // Anzahl aufgetretener Requotes
+ *    DWORD nSlippage;           //  4      => oe[17]          // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ * } ORDER_EXECUTION, oe;        // 72 byte = int[18]
+ */
+string   oe.Symbol    (/*ORDER_EXECUTION*/int oe[]) { return(BufferCharsToStr(oe, 0, 12)); }
+int      oe.Digits    (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 4]); }
+double   oe.Bid       (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 5]/MathPow(10, digits), digits)); }
+double   oe.Ask       (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 6]/MathPow(10, digits), digits)); }
+datetime oe.Time      (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 7]); }
+int      oe.Ticket    (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 8]); }
+double   oe.Price     (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 9]/MathPow(10, digits), digits)); }
+double   oe.StopLoss  (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[10]/MathPow(10, digits), digits)); }
+double   oe.TakeProfit(/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[11]/MathPow(10, digits), digits)); }
+double   oe.Swap      (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[12]/100.0, 2)); }
+double   oe.Commission(/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[13]/100.0, 2)); }
+double   oe.Profit    (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[14]/100.0, 2)); }
+int      oe.Duration  (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[15]); }
+int      oe.Requotes  (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[16]); }
+double   oe.Slippage  (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe);                 return(oe[17]/MathPow(10, digits-(digits & (~1)))); }
 
 
 /**
