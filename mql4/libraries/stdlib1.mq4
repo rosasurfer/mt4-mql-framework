@@ -74,8 +74,8 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
    // (1) globale Variablen re-initialisieren
    PipDigits   = Digits & (~1);
-   PipPoints   = Round(MathPow(10, Digits-PipDigits)); PipPoint = PipPoints;
-   Pip         =     1/MathPow(10, PipDigits);         Pips     = Pip;
+   PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
+   Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -9362,21 +9362,74 @@ string NumberToStr(double number, string mask) {
  *    DWORD nSlippage;           //  4      => oe[17]          // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
  * } ORDER_EXECUTION, oe;        // 72 byte = int[18]
  */
-string   oe.Symbol    (/*ORDER_EXECUTION*/int oe[]) { return(BufferCharsToStr(oe, 0, 12)); }
-int      oe.Digits    (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 4]); }
-double   oe.Bid       (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 5]/MathPow(10, digits), digits)); }
-double   oe.Ask       (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 6]/MathPow(10, digits), digits)); }
-datetime oe.Time      (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 7]); }
-int      oe.Ticket    (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 8]); }
-double   oe.Price     (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 9]/MathPow(10, digits), digits)); }
-double   oe.StopLoss  (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[10]/MathPow(10, digits), digits)); }
-double   oe.TakeProfit(/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[11]/MathPow(10, digits), digits)); }
-double   oe.Swap      (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[12]/100.0, 2)); }
-double   oe.Commission(/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[13]/100.0, 2)); }
-double   oe.Profit    (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[14]/100.0, 2)); }
-int      oe.Duration  (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[15]); }
-int      oe.Requotes  (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[16]); }
-double   oe.Slippage  (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe);                 return(oe[17]/MathPow(10, digits-(digits & (~1)))); }
+string   oe.Symbol       (/*ORDER_EXECUTION*/int oe[]) {                          return(BufferCharsToStr(oe, 0, 12)); }
+int      oe.Digits       (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 4]); }
+double   oe.Bid          (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 5]/MathPow(10, digits), digits)); }
+double   oe.Ask          (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 6]/MathPow(10, digits), digits)); }
+datetime oe.Time         (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 7]); }
+int      oe.Ticket       (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[ 8]); }
+double   oe.Price        (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[ 9]/MathPow(10, digits), digits)); }
+double   oe.StopLoss     (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[10]/MathPow(10, digits), digits)); }
+double   oe.TakeProfit   (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe); return(NormalizeDouble(oe[11]/MathPow(10, digits), digits)); }
+double   oe.Swap         (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[12]/100.0, 2)); }
+double   oe.Commission   (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[13]/100.0, 2)); }
+double   oe.Profit       (/*ORDER_EXECUTION*/int oe[]) {                           return(NormalizeDouble(oe[14]/100.0, 2)); }
+int      oe.Duration     (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[15]); }
+int      oe.Requotes     (/*ORDER_EXECUTION*/int oe[]) {                                           return(oe[16]); }
+double   oe.Slippage     (/*ORDER_EXECUTION*/int oe[]) { int digits=oe.Digits(oe);                 return(oe[17]/MathPow(10, digits<<31>>31)); }
+
+string   oe.setSymbol    (/*ORDER_EXECUTION*/int &oe[], string   symbol    ) {
+   if (StringLen(symbol) == 0) return(_empty(catch(StringConcatenate("oe.setSymbol(1)  invalid parameter symbol = \"", symbol, "\""), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > 12) return(_empty(catch(StringConcatenate("oe.setSymbol(2)  invalid parameter symbol = \"", symbol, "\""), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (IsError(BufferSetString(oe, 0, symbol))) return("");                                                                                   return(symbol    ); }
+int      oe.setDigits    (/*ORDER_EXECUTION*/int &oe[], int      digits    ) { oe[ 4] = digits;                                               return(digits    ); }
+double   oe.setBid       (/*ORDER_EXECUTION*/int &oe[], double   bid       ) { oe[ 5] = Round(bid * MathPow(10, oe.Digits(oe)));              return(bid       ); }
+double   oe.setAsk       (/*ORDER_EXECUTION*/int &oe[], double   ask       ) { oe[ 6] = Round(ask * MathPow(10, oe.Digits(oe)));              return(ask       ); }
+datetime oe.setTime      (/*ORDER_EXECUTION*/int &oe[], datetime time      ) { oe[ 7] = time;                                                 return(time      ); }
+int      oe.setTicket    (/*ORDER_EXECUTION*/int &oe[], int      ticket    ) { oe[ 8] = ticket;                                               return(ticket    ); }
+double   oe.setPrice     (/*ORDER_EXECUTION*/int &oe[], double   price     ) { oe[ 9] = Round(price * MathPow(10, oe.Digits(oe)));            return(price     ); }
+double   oe.setStopLoss  (/*ORDER_EXECUTION*/int &oe[], double   stopLoss  ) { oe[10] = Round(stopLoss * MathPow(10, oe.Digits(oe)));         return(stopLoss  ); }
+double   oe.setTakeProfit(/*ORDER_EXECUTION*/int &oe[], double   takeProfit) { oe[11] = Round(takeProfit * MathPow(10, oe.Digits(oe)));       return(takeProfit); }
+double   oe.setSwap      (/*ORDER_EXECUTION*/int &oe[], double   swap      ) { oe[12] = Round(swap * 100);                                    return(swap      ); }
+double   oe.setCommission(/*ORDER_EXECUTION*/int &oe[], double   comission ) { oe[13] = Round(comission * 100);                               return(comission ); }
+double   oe.setProfit    (/*ORDER_EXECUTION*/int &oe[], double   profit    ) { oe[14] = Round(profit * 100);                                  return(profit    ); }
+int      oe.setDuration  (/*ORDER_EXECUTION*/int &oe[], int      milliSec  ) { oe[15] = milliSec;                                             return(milliSec  ); }
+int      oe.setRequotes  (/*ORDER_EXECUTION*/int &oe[], int      requotes  ) { oe[16] = requotes;                                             return(requotes  ); }
+double   oe.setSlippage  (/*ORDER_EXECUTION*/int &oe[], double   slippage  ) { oe[17] = Round(slippage * MathPow(10, oe.Digits(oe)<<31>>31)); return(slippage  ); }
+
+
+/**
+ * Gibt die lesbare Repräsentation einer ORDER_EXECUTION-Struktur zurück.
+ *
+ * @param  double execution[] - Struktur
+ * @param  bool   debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ *
+ * @return string
+ */
+string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false) {
+   int    digits      = oe.Digits(oe);
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   string output = StringConcatenate( "{symbol=\""  ,             oe.Symbol    (oe) +"\"",
+                                     ", digits="    ,             oe.Digits    (oe),
+                                     ", bid="       , NumberToStr(oe.Bid       (oe), priceFormat),
+                                     ", ask="       , NumberToStr(oe.Ask       (oe), priceFormat),
+                                     ", time='"     ,   TimeToStr(oe.Time      (oe), TIME_FULL) +"'",
+                                     ", ticket="    ,             oe.Ticket    (oe),
+                                     ", price="     , NumberToStr(oe.Price     (oe), priceFormat),
+                                     ", stopLoss="  , NumberToStr(oe.StopLoss  (oe), priceFormat),
+                                     ", takeProfit=", NumberToStr(oe.TakeProfit(oe), priceFormat),
+                                     ", swap="      , DoubleToStr(oe.Swap      (oe), 2),
+                                     ", commission=", DoubleToStr(oe.Commission(oe), 2),
+                                     ", profit="    , DoubleToStr(oe.Profit    (oe), 2),
+                                     ", duration="  ,             oe.Duration  (oe),
+                                     ", requotes="  ,             oe.Requotes  (oe),
+                                     ", slippage="  , DoubleToStr(oe.Slippage  (oe), 1), "}");
+   if (debugOutput)
+      debug("ORDER_EXECUTION.toStr()   "+ output);
+   return(output);
+}
 
 
 /**
@@ -9424,8 +9477,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
    double lotStep        = MarketInfo(symbol, MODE_LOTSTEP);
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = Round(MathPow(10, digits-pipDigits));
-   double pip            =     1/MathPow(10, pipDigits), pips=pip;
+   int    pipPoints      = Round(MathPow(10, digits<<31>>31));
+   double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = Round(slippage * pipPoints);
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -9569,7 +9622,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
  */
 /*private*/ string OrderSendEx.LogMessage(int ticket, int type, double lots, double price, int digits, int time, int requotes) {
    int    pipDigits   = digits & (~1);
-   double pip         = 1/MathPow(10, pipDigits);
+   double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Das Ticket ist bereits selektiert
@@ -10301,8 +10354,8 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
    */
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = Round(MathPow(10, digits-pipDigits));
-   double pip            =     1/MathPow(10, pipDigits), pips=pip;
+   int    pipPoints      = Round(MathPow(10, digits<<31>>31));
+   double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = Round(slippage * pipPoints);
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
@@ -10422,7 +10475,7 @@ bool OrderCloseEx(int ticket, double lots/*=0*/, double price/*=0*/, double slip
  */
 /*private*/ string OrderCloseEx.LogMessage(int ticket, double lots, double price, int digits, int time, int requotes) {
    int    pipDigits   = digits & (~1);
-   double pip         = 1/MathPow(10, pipDigits);
+   double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
    // Ticket ist hier immer selektiert

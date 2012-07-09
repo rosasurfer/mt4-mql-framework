@@ -443,6 +443,7 @@
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string format);
    string   OperationTypeToStr(int type);
+   string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
@@ -451,21 +452,37 @@
 
 
    // MQL-Structs Getter und Setter
-   string   oe.Symbol    (/*ORDER_EXECUTION*/int oe[]);
-   int      oe.Digits    (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Bid       (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Ask       (/*ORDER_EXECUTION*/int oe[]);
-   datetime oe.Time      (/*ORDER_EXECUTION*/int oe[]);
-   int      oe.Ticket    (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Price     (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.StopLoss  (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.TakeProfit(/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Swap      (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Commission(/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Profit    (/*ORDER_EXECUTION*/int oe[]);
-   int      oe.Duration  (/*ORDER_EXECUTION*/int oe[]);
-   int      oe.Requotes  (/*ORDER_EXECUTION*/int oe[]);
-   double   oe.Slippage  (/*ORDER_EXECUTION*/int oe[]);
+   string   oe.Symbol       (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Digits       (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Bid          (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Ask          (/*ORDER_EXECUTION*/int oe[]);
+   datetime oe.Time         (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Ticket       (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Price        (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.StopLoss     (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.TakeProfit   (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Swap         (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Commission   (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Profit       (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Duration     (/*ORDER_EXECUTION*/int oe[]);
+   int      oe.Requotes     (/*ORDER_EXECUTION*/int oe[]);
+   double   oe.Slippage     (/*ORDER_EXECUTION*/int oe[]);
+
+   string   oe.setSymbol    (/*ORDER_EXECUTION*/int oe[], string   symbol);
+   int      oe.setDigits    (/*ORDER_EXECUTION*/int oe[], int      digits);
+   double   oe.setBid       (/*ORDER_EXECUTION*/int oe[], double   bid);
+   double   oe.setAsk       (/*ORDER_EXECUTION*/int oe[], double   ask);
+   datetime oe.setTime      (/*ORDER_EXECUTION*/int oe[], datetime time);
+   int      oe.setTicket    (/*ORDER_EXECUTION*/int oe[], int      ticket);
+   double   oe.setPrice     (/*ORDER_EXECUTION*/int oe[], double   price);
+   double   oe.setStopLoss  (/*ORDER_EXECUTION*/int oe[], double   stopLoss);
+   double   oe.setTakeProfit(/*ORDER_EXECUTION*/int oe[], double   takeProfit);
+   double   oe.setSwap      (/*ORDER_EXECUTION*/int oe[], double   swap);
+   double   oe.setCommission(/*ORDER_EXECUTION*/int oe[], double   commission);
+   double   oe.setProfit    (/*ORDER_EXECUTION*/int oe[], double   profit);
+   int      oe.setDuration  (/*ORDER_EXECUTION*/int oe[], int      millisec);
+   int      oe.setRequotes  (/*ORDER_EXECUTION*/int oe[], int      requotes);
+   double   oe.setSlippage  (/*ORDER_EXECUTION*/int oe[], double   slippage);
 
 
    // Win32-Structs Getter und Setter

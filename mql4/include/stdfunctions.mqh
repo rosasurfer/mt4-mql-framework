@@ -746,8 +746,8 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    PipDigits   = Digits & (~1);
-   PipPoints   = Round(MathPow(10, Digits-PipDigits)); PipPoint = PipPoints;
-   Pip         =     1/MathPow(10, PipDigits);         Pips     = Pip;
+   PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
+   Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
 
@@ -2143,7 +2143,7 @@ int ChartInfo.UpdatePrice() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateSpread() {
-   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits-PipDigits);
+   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits<<31>>31);
 
    ObjectSetText(ChartInfo.spread, strSpread, 9, "Tahoma", SlateGray);
 
