@@ -342,10 +342,9 @@
    bool     IsPendingTradeOperation(int value);
 
 /*ok*/int   OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
+/*ok*/bool  OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
 
 
-
-   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, double execution[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, double execution[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, double execution[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, double execution[]);

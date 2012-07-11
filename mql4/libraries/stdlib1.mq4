@@ -9463,11 +9463,11 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
  * @param  datetime expires     - Gültigkeit der Order            (default: GTC   )
  * @param  color    markerColor - Farbe des Chartmarkers
  * @param  int      oeFlags     - die Ausführung steuernde Flags
- * @param  int      oe[]        - Ausführungsdetails
+ * @param  int      oe[]        - Ausführungsdetails (struct ORDER_EXECUTION)
  *
  * @return int - Ticket oder -1, falls ein Fehler auftrat
  */
-int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, int oeFlags, int oe[]) {
+int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*/, double slippage/*=0*/, double stopLoss/*=0*/, double takeProfit/*=0*/, string comment/*=""*/, int magicNumber/*=0*/, datetime expires/*=0*/, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // symbol
    if (symbol == "0")      // = NULL
@@ -9614,11 +9614,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price/*=0*
 /**
  * Generiert eine ausführliche Logmessage für OrderSendEx().
  *
- * @param  int oe[] - Ausführungsdetails
+ * @param  int oe[] - Ausführungsdetails (struct ORDER_EXECUTION)
  *
  * @return string
  */
-/*private*/ string OrderSendEx.LogMessage(int oe[]) {
+/*private*/ string OrderSendEx.LogMessage(/*ORDER_EXECUTION*/int oe[]) {
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -9746,24 +9746,11 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  datetime expires     - Gültigkeit (nur bei Pending-Orders)
  * @param  color    markerColor - Farbe des Chart-Markers
  * @param  int      oeFlags     - die Ausführung steuernde Flags
- * @param  double   execution[] - Ausführungsdaten
+ * @param  int      oe[]        - Ausführungsdetails (struct ORDER_EXECUTION)
  *
  * @return bool - Erfolgsstatus
- *
- *
- * Elemente des Parameters execution[] (out)
- * -----------------------------------------
- * - EXEC_TIME      : Zeitpunkt der Orderausführung
- * - EXEC_PRICE     : immer 0
- * - EXEC_SWAP      : immer 0
- * - EXEC_COMMISSION: immer 0
- * - EXEC_PROFIT    : immer 0
- * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden
- * - EXEC_REQUOTES  : immer 0
- * - EXEC_SLIPPAGE  : immer 0
- * - EXEC_TICKET    : immer 0
  */
-bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, double &execution[]) {
+bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
    if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(false);
@@ -9802,15 +9789,20 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
-   // execution
-   if (ArraySize(execution) != 9)
-      ArrayResize(execution, 9);
+   // oe
+   oe.setSymbol  (oe, OrderSymbol() );
+   oe.setDigits  (oe, digits        );
+   oe.setType    (oe, OrderType()   );
+   oe.setLots    (oe, OrderLots()   );
+   oe.setTicket  (oe, ticket        );
+   oe.setComment (oe, OrderComment());
+   oe.setRequotes(oe, 0             );
+   oe.setSlippage(oe, 0             );
    // -- Ende Parametervalidierung --
 
    double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
-
-   int      time1, time2, firstTime1;
-   datetime modifyTime;
+   int    firstTime1=GetTickCount(), time1;
+   bool   success;
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
@@ -9818,52 +9810,49 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
-         Sleep(300);                                                    // 0.3 Sekunden warten
+         Sleep(300);                                                                // 0.3 Sekunden warten
       }
       else {
-         time1      = GetTickCount();
-         modifyTime = TimeCurrent();
-         if (firstTime1 == 0)                                           // Zeit der ersten Ausführung
-            firstTime1 = time1;
+         oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
+         oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
-         bool success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
-         time2 = GetTickCount();
+         time1   = GetTickCount();
+         success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
+
+         oe.setDuration(oe, GetTickCount()-firstTime1);                             // Gesamtzeit in Millisekunden
 
          if (success) {
-            WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
+            WaitForTicket(ticket, false);                                           // wartet und re-selektiert (FALSE)
             // TODO: WaitForChanges() implementieren
 
             if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
                return(_false(OrderPop("OrderModifyEx(12)")));
 
-            // Execution-Struktur füllen
-            execution[EXEC_TIME      ] = modifyTime;
-            execution[EXEC_PRICE     ] = 0;
-            execution[EXEC_SWAP      ] = 0;
-            execution[EXEC_COMMISSION] = 0;
-            execution[EXEC_PROFIT    ] = 0;
-            execution[EXEC_DURATION  ] = (time2-firstTime1)/1000.0;     // in Sekunden
-            execution[EXEC_REQUOTES  ] = 0;
-            execution[EXEC_SLIPPAGE  ] = 0;
-            execution[EXEC_TICKET    ] = 0;
+            oe.setTime      (oe, OrderOpenTime()  );
+            oe.setPrice     (oe, OrderOpenPrice() );
+            oe.setStopLoss  (oe, OrderStopLoss()  );
+            oe.setTakeProfit(oe, OrderTakeProfit());
+            oe.setSwap      (oe, OrderSwap()      );
+            oe.setCommission(oe, OrderCommission());
+            oe.setProfit    (oe, OrderProfit()    );
 
-            //if (__LOG) log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(ticket, digits, time2-time1));    // TODO: OrderModifyEx.LogMessage() implementieren
+          //if (__LOG) log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(oe));     // TODO: OrderModifyEx.LogMessage() implementieren
             if (!IsTesting())
                PlaySound("RFQ.wav");
 
-            return(IsNoError(catch("OrderModifyEx(13)", NULL, O_POP))); // regular exit
+            return(IsNoError(catch("OrderModifyEx(13)", NULL, O_POP)));             // regular exit
          }
+
          error = GetLastError();
          if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                             // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                                         // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-
-         warn(StringConcatenate("OrderModifyEx()   temporary trade error after ", DoubleToStr((time2-time1)/1000.0, 3), " s, retrying..."), error);
+         warn(StringConcatenate("OrderModifyEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
 
-   return(_false(catch("OrderModifyEx(14)   permanent trade error after "+ DoubleToStr((time2-time1)/1000.0, 3) +" s", error, O_POP)));
+   return(_false(catch("OrderModifyEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP)));
 }
 
 
