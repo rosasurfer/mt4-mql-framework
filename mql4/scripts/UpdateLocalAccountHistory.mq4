@@ -377,11 +377,11 @@ int SortTickets(int sortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
  * Sortiert die in sameCloses[] übergebenen Daten und aktualisiert die entsprechenden Einträge in data[].
  *
  * @param  int  sameCloses[] - Array mit Ausgangsdaten
- * @param  int& data[]       - das zu aktualisierende Originalarray
+ * @param  int &data[]       - das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& data[][/*{CloseTime, OpenTime, Ticket}*/]) {
+int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int &data[][/*{CloseTime, OpenTime, Ticket}*/]) {
    int sameClosesCopy[][3]; ArrayResize(sameClosesCopy, 0);
    ArrayCopy(sameClosesCopy, sameCloses);                // Originalreihenfolge der Indizes in Kopie speichern
 
@@ -407,11 +407,11 @@ int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int& data
  * Sortiert die in sameOpens[] übergebenen Daten nach Ticket und aktualisiert die entsprechenden Einträge in data[].
  *
  * @param  int  sameOpens[] - Array mit Ausgangsdaten
- * @param  int& data[]      - das zu aktualisierende Originalarray
+ * @param  int &data[]      - das zu aktualisierende Originalarray
  *
  * @return int - Fehlerstatus
  */
-int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int& data[][/*{OpenTime, CloseTime, Ticket}*/]) {
+int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, CloseTime, Ticket}*/]) {
    int sameOpensCopy[][2]; ArrayResize(sameOpensCopy, 0);
    ArrayCopy(sameOpensCopy, sameOpens);                  // Originalreihenfolge der Indizes in Kopie speichern
 

@@ -210,13 +210,13 @@ int onStart() {
       double   tp          = NULL;
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
-      int      flags       = NULL;
-      double   execution[] = {NULL};
+      int      oeFlags     = NULL;
 
       if (IsError(stdlib_PeekLastError())) return(SetLastError(stdlib_PeekLastError()));  // vor Orderaufgabe alle aufgetretenen Fehler abfangen
       if (IsError(catch("onStart(6)")))    return(last_error);
 
-      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, flags, execution);
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
          return(SetLastError(stdlib_PeekLastError()));
    }

@@ -637,7 +637,7 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
 /**
  *
  */
-void StoreDword(int addr, int& bytes[]) {
+void StoreDword(int addr, int &bytes[]) {
    bytes[0] = addr       & 0xFF;
    bytes[1] = addr >>  8 & 0xFF;
    bytes[2] = addr >> 16 & 0xFF;

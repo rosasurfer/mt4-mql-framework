@@ -403,7 +403,7 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size                72
+#define ORDER_EXECUTION.size               108
 
 
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
@@ -1103,8 +1103,6 @@ int log(string message, int error=NO_ERROR) {
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
  */
 bool logInstance(string message) {
-   if (!__LOG) return(true);
-
    bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
    int id = InstanceId(NULL);
    if (id == NULL)
