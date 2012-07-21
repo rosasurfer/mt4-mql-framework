@@ -403,7 +403,8 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size               108
+#define ORDER_EXECUTION.size               124
+#define ORDER_EXECUTION.length              31     // Ceil(ORDER_EXECUTION.size/4)
 
 
 // Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
@@ -1480,7 +1481,7 @@ bool OrderPop(string location) {
  *
  * @param  int  ticket    - Orderticket
  * @param  bool orderKeep - ob der aktuelle Orderkontext bewahrt werden soll (default: ja)
- *                          wenn FALSE, ist das Ticket nach Rückkehr selektiert
+ *                          wenn FALSE, ist das angegebene Ticket nach Rückkehr selektiert
  *
  * @return bool - Erfolgsstatus
  *
@@ -1999,6 +2000,30 @@ int Round(double value) {
 }
 
 
+/**
+ * Integer-Version von MathFloor()
+ *
+ * @param  double value - Zahl
+ *
+ * @return int
+ */
+int Floor(double value) {
+   return(Round(MathFloor(value)));
+}
+
+
+/**
+ * Integer-Version von MathCeil()
+ *
+ * @param  double value - Zahl
+ *
+ * @return int
+ */
+int Ceil(double value) {
+   return(Round(MathCeil(value)));
+}
+
+
 // =======================================================================================================================================================
 // ============================  Beginn ChartInfo-Block (wird sowohl im ChartInfos-Indikator als auch in jedem EA verwendet)  ============================
 // =======================================================================================================================================================
@@ -2393,6 +2418,7 @@ void DummyCalls() {
    _true();
    _ZERO();
    Abs(NULL);
+   Ceil(NULL);
    ChartInfo.CreateLabels();
    ChartInfo.UpdateMarginLevels();
    ChartInfo.UpdatePosition();
@@ -2402,6 +2428,7 @@ void DummyCalls() {
    ChartInfo.UpdateUnitSize();
    debug(NULL);
    EQ(NULL, NULL);
+   Floor(NULL);
    GE(NULL, NULL);
    GT(NULL, NULL);
    HandleEvent(NULL);

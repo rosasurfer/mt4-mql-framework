@@ -382,8 +382,8 @@ int SortTickets(int sortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
  * @return int - Fehlerstatus
  */
 int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int &data[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   int sameClosesCopy[][3]; ArrayResize(sameClosesCopy, 0);
-   ArrayCopy(sameClosesCopy, sameCloses);                // Originalreihenfolge der Indizes in Kopie speichern
+   int sameCloses.copy[][3]; ArrayResize(sameCloses.copy, 0);
+   ArrayCopy(sameCloses.copy, sameCloses);               // Originalreihenfolge der Indizes in Kopie speichern
 
    // Zeilen nach OpenTime sortieren
    ArraySort(sameCloses);
@@ -392,9 +392,9 @@ int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int &data
    int open, ticket, i, rows=ArrayRange(sameCloses, 0);
 
    for (int n=0; n < rows; n++) {
-      open   = sameCloses    [n][0];
-      ticket = sameCloses    [n][1];
-      i      = sameClosesCopy[n][2];
+      open   = sameCloses     [n][0];
+      ticket = sameCloses     [n][1];
+      i      = sameCloses.copy[n][2];
       data[i][1] = open;                                 // Originaldaten mit den sortierten Werten überschreiben
       data[i][2] = ticket;
    }
@@ -412,8 +412,8 @@ int SortTickets.SameClose(int sameCloses[][/*{OpenTime, Ticket, i}*/], int &data
  * @return int - Fehlerstatus
  */
 int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, CloseTime, Ticket}*/]) {
-   int sameOpensCopy[][2]; ArrayResize(sameOpensCopy, 0);
-   ArrayCopy(sameOpensCopy, sameOpens);                  // Originalreihenfolge der Indizes in Kopie speichern
+   int sameOpens.copy[][2]; ArrayResize(sameOpens.copy, 0);
+   ArrayCopy(sameOpens.copy, sameOpens);                 // Originalreihenfolge der Indizes in Kopie speichern
 
    // alle Zeilen nach Ticket sortieren
    ArraySort(sameOpens);
@@ -421,8 +421,8 @@ int SortTickets.SameOpen(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTi
    int ticket, i, rows=ArrayRange(sameOpens, 0);
 
    for (int n=0; n < rows; n++) {
-      ticket = sameOpens    [n][0];
-      i      = sameOpensCopy[n][1];
+      ticket = sameOpens     [n][0];
+      i      = sameOpens.copy[n][1];
       data[i][2] = ticket;                               // Originaldaten mit den sortierten Werten überschreiben
    }
 
