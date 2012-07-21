@@ -2615,33 +2615,73 @@ int    tzi.DaylightBias(/*TIME_ZONE_INFORMATION*/int tzi[])                     
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NULL-Bytes werden gestrichelt (…), Control-Character (< 0x20) fett (•) dargestellt.
+ * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h) fett (•) dargestellt.
  * Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
  *
- * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
+ * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
  * @return string
  */
 string BufferToStr(int buffer[]) {
-   int    size   = ArraySize(buffer);
-   string result = CreateString(size << 2);                       // ein Integer = 4 Byte = 4 Zeichen
+   int dimensions = ArrayDimension(buffer);
+   if (dimensions != 1)
+      return(BuffersToStr(buffer));
 
+   string result = "";
+   int size = ArraySize(buffer);                                        // ein Integer = 4 Byte = 4 Zeichen
+
+   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < size; i++) {
-      int integer = buffer[i];                                    // Integers nacheinander verarbeiten
-                                                                                                            // +---+------------+------+
-      for (int n=0; n < 4; n++) {                                                                           // | n |    byte    | char |
-         int byte = integer & 0xFF;                               // einzelnes Byte des Integers lesen      // +---+------------+------+
-         if (byte < 0x20) {                                       // nicht darstellbare Zeichen ersetzen    // | 0 | 0x000000FF |   1  |
-            if (byte == 0x00) byte = PLACEHOLDER_ZERO_CHAR;       // NUL-Byte          (…)                  // | 1 | 0x0000FF00 |   2  |
-            else              byte = PLACEHOLDER_CTL_CHAR;        // Control-Character (•)                  // | 2 | 0x00FF0000 |   3  |
-         }                                                                                                  // | 3 | 0xFF000000 |   4  |
-         result = StringSetChar(result, i<<2 + n, byte);          // Zeichen setzen                         // +---+------------+------+
+      int integer = buffer[i];                                          // Integers nacheinander verarbeiten
+                                                                                                                     // +---+------------+------+
+      for (int b=0; b < 4; b++) {                                                                                    // | b |    byte    | char |
+         int char = integer & 0xFF;                                     // ein einzelnes Byte des Integers lesen     // +---+------------+------+
+         if (char < 0x20) {                                             // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
+            if (char == 0x00) char = PLACEHOLDER_ZERO_CHAR;             // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+            else              char = PLACEHOLDER_CTL_CHAR;              // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+         }                                                                                                           // | 3 | 0xFF000000 |   4  |
+         result = StringConcatenate(result, CharToStr(char));                                                        // +---+------------+------+
          integer >>= 8;
       }
    }
+   return(result);
+}
 
-   if (IsError(catch("BufferToStr()")))
-      return("");
+
+/**
+ * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h) fett (•) dargestellt.
+ * Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
+ *
+ * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
+ *
+ * @return string
+ */
+string BuffersToStr(int buffer[][]) {
+   int dimensions = ArrayDimension(buffer);
+   if (dimensions > 2) return(_empty(catch("BuffersToStr()  invalid parameter buffer, too many dimensions ("+ dimensions +")", ERR_INCOMPATIBLE_ARRAYS)));
+
+   if (dimensions == 1)
+      return(BufferToStr(buffer));
+
+   string result = "";
+   int dim1=ArrayRange(buffer, 0), dim2=ArrayRange(buffer, 1);          // ein Integer = 4 Byte = 4 Zeichen
+
+   // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
+   for (int i=0; i < dim1; i++) {
+      for (int n=0; n < dim2; n++) {
+         int integer = buffer[i][n];                                    // Integers nacheinander verarbeiten
+                                                                                                                     // +---+------------+------+
+         for (int b=0; b < 4; b++) {                                                                                 // | b |    byte    | char |
+            int char = integer & 0xFF;                                  // ein einzelnes Byte des Integers lesen     // +---+------------+------+
+            if (char < 0x20) {                                          // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
+               if (char == 0x00) char = PLACEHOLDER_ZERO_CHAR;          // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+               else              char = PLACEHOLDER_CTL_CHAR;           // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+            }                                                                                                        // | 3 | 0xFF000000 |   4  |
+            result = StringConcatenate(result, CharToStr(char));                                                     // +---+------------+------+
+            integer >>= 8;
+         }
+      }
+   }
    return(result);
 }
 

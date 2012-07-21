@@ -23,7 +23,7 @@
 // Mathematische Konstanten
 #define Math.PI                  3.1415926535897932384626433832795028841971693993751      // intern 3.141592653589793 (15 korrekte Dezimalstellen)
 
-                                                                                          // in Libraries vorerst nichts tun
+
 // Zeitkonstanten
 #define SECOND                   1
 #define MINUTE                  60

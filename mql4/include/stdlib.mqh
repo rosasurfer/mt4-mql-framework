@@ -103,7 +103,7 @@
    int      InitializeDoubleBuffer(double buffer[], int size);
    int      InitializeStringBuffer(string buffer[], int length);
 
-   string   BufferToStr(int buffer[]);
+   string   BufferToStr(int buffer[]);    string BuffersToStr(int buffer[][]);
    string   BufferToHexStr(int buffer[]); string BuffersToHexStr(int buffer[][]);
 
    int      BufferGetChar(int buffer[], int pos);
