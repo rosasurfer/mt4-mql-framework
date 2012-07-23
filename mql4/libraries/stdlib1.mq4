@@ -10459,7 +10459,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  *
  * @param  int    ticket      - Ticket der zu schließenden Position
  * @param  double lots        - zu schließendes Volumen in Lots (default: komplette Position)
- * @param  double price       - Preis                           (wird zur Zeit ignoriert    )
+ * @param  double price       - Preis (wird zur Zeit ignoriert)
  * @param  double slippage    - akzeptable Slippage in Pips
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  int    oeFlags     - die Ausführung steuernde Flags
@@ -10970,27 +10970,28 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   // execution
+   ArrayResize(execution, sizeOfTickets*9);
+   ArrayInitialize(execution, 0);
    // -- Ende Parametervalidierung --
-
-   /*ORDER_EXECUTION*/int oe2[]; InitializeBuffer(oe2, ORDER_EXECUTION.size);
 
 
    // (2) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
-      if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe2))
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(OrderPop("OrderMultiClose(7)")));
 
-      execution[EXEC_TIME      ] = oe.CloseTime (oe2);
-      execution[EXEC_PRICE     ] = oe.ClosePrice(oe2);
-      execution[EXEC_SWAP      ] = oe.Swap      (oe2);
-      execution[EXEC_COMMISSION] = oe.Commission(oe2);
-      execution[EXEC_PROFIT    ] = oe.Profit    (oe2);
-      execution[EXEC_DURATION  ] = oe.Duration  (oe2)/1000.0;
-      execution[EXEC_REQUOTES  ] = oe.Requotes  (oe2);
-      execution[EXEC_SLIPPAGE  ] = oe.Slippage  (oe2);
+      execution[EXEC_TIME      ] = oe.CloseTime (oe);
+      execution[EXEC_PRICE     ] = oe.ClosePrice(oe);
+      execution[EXEC_SWAP      ] = oe.Swap      (oe);
+      execution[EXEC_COMMISSION] = oe.Commission(oe);
+      execution[EXEC_PROFIT    ] = oe.Profit    (oe);
+      execution[EXEC_DURATION  ] = oe.Duration  (oe)/1000.0;
+      execution[EXEC_REQUOTES  ] = oe.Requotes  (oe);
+      execution[EXEC_SLIPPAGE  ] = oe.Slippage  (oe);
       execution[EXEC_TICKET    ] = 0;
-      ArrayResize(oe2, 0);
-
+      ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(8)"));
    }
 
@@ -11012,30 +11013,44 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (!OrderPop("OrderMultiClose(10)"))
       return(false);
 
+   /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.length]; ArrayResize(oes, sizeOfTickets); InitializeBuffer(oes, ORDER_EXECUTION.size);
+
 
    // (4) Tickets gemeinsam schließen, wenn alle zum selben Symbol gehören
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
-      return(OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, execution));
+      if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes))
+         return(false);
+
+      for (i=0; i < sizeOfTickets; i++) {
+         execution[9*i+EXEC_TIME      ] = oes.CloseTime (oes, i);
+         execution[9*i+EXEC_PRICE     ] = oes.ClosePrice(oes, i);
+         execution[9*i+EXEC_SWAP      ] = oes.Swap      (oes, i);
+         execution[9*i+EXEC_COMMISSION] = oes.Commission(oes, i);
+         execution[9*i+EXEC_PROFIT    ] = oes.Profit    (oes, i);
+         execution[9*i+EXEC_DURATION  ] = oes.Duration  (oes, i)/1000.0;
+         execution[9*i+EXEC_REQUOTES  ] = oes.Requotes  (oes, i);
+         execution[9*i+EXEC_SLIPPAGE  ] = oes.Slippage  (oes, i);
+         execution[9*i+EXEC_TICKET    ] = 0;
+      }
+      ArrayResize(oes, 0);
+      return(true);
    }
 
 
-   // (5) Tickets symbolweise auslesen und Gruppen zunächst nur glattstellen
-   ArrayResize(execution, 0);
-   ArrayResize(execution, 9*sizeOfTickets);                                // Re-Initialisierung
+   // (5) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
+   int tickets.copy[], flatSymbols[]; ArrayResize(tickets.copy, 0); ArrayResize(flatSymbols, 0);
+   int sizeOfCopy=ArrayCopy(tickets.copy, tickets), pos, group[];
+
+
+   // (6) Tickets symbolweise selektieren und Gruppen zunächst nur glattstellen
    double exec[];
-
-   // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, wird auf einer Kopie gearbeitet.
-   int copy[], flatSymbols[]; ArrayResize(copy, 0); ArrayResize(flatSymbols, 0);
-   int sizeOfCopy=ArrayCopy(copy, tickets), pos, group[];
-
 
    for (si=0; si < sizeOfSymbols; si++) {
       ArrayResize(group, 0);
-
       for (i=0; i < sizeOfCopy; i++) {
          if (si == tickets.symbol[i])
-            ArrayPushInt(group, copy[i]);
+            ArrayPushInt(group, tickets.copy[i]);
       }
       int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, exec);
       if (IsLastError())
@@ -11067,12 +11082,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          execution[9*pos+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
          execution[9*pos+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
          sizeOfGroup -= ArraySpliceInts(group, i, 1);                      // geschlossenes Ticket löschen
-         sizeOfCopy  -= ArrayDropInt(copy,  group[i]);
+         sizeOfCopy  -= ArrayDropInt(tickets.copy, group[i]);
          ArraySpliceInts(tickets.symbol, i, 1);
       }
       if (newTicket != 0) {
          sizeOfGroup = ArrayPushInt(group, newTicket);                     // neues Ticket hinzufügen
-         sizeOfCopy  = ArrayPushInt(copy,  newTicket);
+         sizeOfCopy  = ArrayPushInt(tickets.copy, newTicket);
          ArrayPushInt(tickets.symbol, si);
       }
 
@@ -11081,17 +11096,18 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
 
 
-   // (6) verbliebene Teilpositionen der glattgestellten Gruppen schließen
+   // (7) verbliebene Teilpositionen der glattgestellten Gruppen schließen
    int flats = ArraySize(flatSymbols);
    for (i=0; i < flats; i++) {
       ArrayResize(group, 0);
       for (int n=0; n < sizeOfCopy; n++) {
          if (flatSymbols[i] == tickets.symbol[n])
-            ArrayPushInt(group, copy[n]);
+            ArrayPushInt(group, tickets.copy[n]);
       }
       sizeOfGroup = ArraySize(group);
+      ArrayResize(oes, sizeOfGroup); InitializeBuffer(oes, ORDER_EXECUTION.size);
 
-      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, exec))
+      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes))
          return(false);
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -11099,91 +11115,99 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          pos = SearchIntArray(tickets, group[j]);
          if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
             pos = symbols.lastTicket[flatSymbols[i]];
-         execution[9*pos+EXEC_SWAP      ] += exec[9*j+EXEC_SWAP      ];
-         execution[9*pos+EXEC_COMMISSION] += exec[9*j+EXEC_COMMISSION];    // Beträge jeweils addieren
-         execution[9*pos+EXEC_PROFIT    ] += exec[9*j+EXEC_PROFIT    ];
+         execution[9*pos+EXEC_SWAP      ] += oes.Swap      (oes, j);
+         execution[9*pos+EXEC_COMMISSION] += oes.Commission(oes, j);       // Beträge jeweils addieren
+         execution[9*pos+EXEC_PROFIT    ] += oes.Profit    (oes, j);
       }
    }
 
+   ArrayResize(oes, 0);
+   ArrayResize(exec, 0);
    return(IsNoError(catch("OrderMultiClose(11)")));
 }
 
 
 /**
- * Schließt mehrere offene Positionen eines Instruments auf möglichst effektive Art und Weise.
+ * Schließt mehrere offene Positionen eines Symbols auf möglichst effektive Art und Weise.
  *
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
  * @param  double slippage    - zu akzeptierende Slippage in Pip
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  double execution[] - Ausführungsdaten
+ * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
  *
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
- * -------------------------------------------------------------------------------------------------------------------------------
- * - EXEC_TIME      : Ausführungszeitpunkt der flat-stellenden Transaktion
- * - EXEC_PRICE     : Ausführungspreis der flat-stellenden Transaktion
- * - EXEC_SWAP      : OrderSwap dieses Tickets (1)(2)
- * - EXEC_COMMISSION: OrderCommission dieses Tickets (1)(2)
- * - EXEC_PROFIT    : OrderProfit dieses Tickets (1)(2)
- * - EXEC_DURATION  : Dauer der flat-stellenden Transaktion in Sekunden
- * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes
- * - EXEC_SLIPPAGE  : Slippage der flat-stellenden Transaktion in Pips (positiv: zu ungunsten; negativ: zu gunsten)
- * - EXEC_TICKET    : immer 0
+ *  NOTE:
+ *  -----
+ *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der flat-stellenden Transaktion (bei allen Tickets gleich).
  *
- * (1) vom MT4-Server berechnet, kann vom tatsächlichen Einzelwert abweichen
- * (2) aus weiteren Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
- *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
+ *  2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
+ *     die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
-/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, double &execution[]) {
-   // keine nochmalige Parametervalidierung (private)
+/*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+   // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
-
-   ArrayResize(execution, 0);
-   ArrayResize(execution, 9*sizeOfTickets);                             // Re-Initialisierung
+   if (sizeOfTickets == 0)
+      return(_false(catch("OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
    // (1) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
-      /*ORDER_EXECUTION*/int oe2[]; InitializeBuffer(oe2, ORDER_EXECUTION.size);
-      if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe2))
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(false);
-
-      execution[EXEC_TIME      ] = oe.CloseTime    (oe2);
-      execution[EXEC_PRICE     ] = oe.ClosePrice   (oe2);
-      execution[EXEC_SWAP      ] = oe.Swap         (oe2);
-      execution[EXEC_COMMISSION] = oe.Commission   (oe2);
-      execution[EXEC_PROFIT    ] = oe.Profit       (oe2);
-      execution[EXEC_DURATION  ] = oe.Duration     (oe2)/1000.0;
-      execution[EXEC_REQUOTES  ] = oe.Requotes     (oe2);
-      execution[EXEC_SLIPPAGE  ] = oe.Slippage     (oe2);
-      execution[EXEC_TICKET    ] = 0;
-      ArrayResize(oe2, 0);
-
+      RtlMoveMemory(GetBufferAddress(oes), GetBufferAddress(oe), ORDER_EXECUTION.size);
+      ArrayResize(oe, 0);
       return(true);
    }
 
 
-   // (2) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, arbeiten wir auf einer Kopie.
+   // (2) oes[] vorbelegen
+   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.OneSymbol(2)", O_PUSH))
+      return(false);
+   int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+
+   for (int i=0; i < sizeOfTickets; i++) {
+      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.OneSymbol(3)", NULL, O_POP))
+         return(false);
+      oes.setSymbol    (oes, i, OrderSymbol()    );
+      oes.setDigits    (oes, i, digits           );
+      oes.setTicket    (oes, i, tickets[i]       );
+      oes.setType      (oes, i, OrderType()      );
+      oes.setLots      (oes, i, OrderLots()      );
+      oes.setOpenTime  (oes, i, OrderOpenTime()  );
+      oes.setOpenPrice (oes, i, OrderOpenPrice() );
+      oes.setStopLoss  (oes, i, OrderStopLoss()  );
+      oes.setTakeProfit(oes, i, OrderTakeProfit());
+      oes.setComment   (oes, i, OrderComment()   );
+   }
+
+
+   // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
    int tickets.copy[]; ArrayResize(tickets.copy, 0);
    int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
 
 
-   // (3) Gesamtposition glatt stellen
+   // (4) Gesamtposition glatt stellen
    double exec[];
    int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, exec);
    if (IsLastError())
-      return(false);
+      return(_false(OrderPop("OrderMultiClose.OneSymbol(4)")));
 
-   for (int i=0; i < sizeOfTickets; i++) {
-      execution[9*i+EXEC_TIME    ] = exec[EXEC_TIME    ];               // Werte sind bei allen exec[]-Tickets gleich
-      execution[9*i+EXEC_PRICE   ] = exec[EXEC_PRICE   ];
-      execution[9*i+EXEC_DURATION] = exec[EXEC_DURATION];
-      execution[9*i+EXEC_REQUOTES] = exec[EXEC_REQUOTES];
-      execution[9*i+EXEC_SLIPPAGE] = exec[EXEC_SLIPPAGE];
-      execution[9*i+EXEC_TICKET  ] = 0;
+   for (i=0; i < sizeOfTickets; i++) {
+      /*
+      // TODO: Bid und Ask aus OrderMultiClose.Flatten() übernehmen
+      oes.setBid(oes, i, double bid);
+      oes.setAsk(oes, i, double ask);
+      */
+      oes.setCloseTime (oes, i,  Round(exec[EXEC_TIME    ]));           // Werte sind bei allen exec[]-Tickets gleich
+      oes.setClosePrice(oes, i,        exec[EXEC_PRICE   ]);
+      oes.setDuration  (oes, i, 1000 * exec[EXEC_DURATION]);
+      oes.setRequotes  (oes, i,  Round(exec[EXEC_REQUOTES]));
+      oes.setSlippage  (oes, i,        exec[EXEC_SLIPPAGE]);
    }
    for (i=0; i < sizeOfTickets; i++) {
       if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
@@ -11194,76 +11218,76 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          break;
    }
    if (i < sizeOfTickets) {                                             // break getriggert => geschlossenes Ticket gefunden
-      execution[9*i+EXEC_SWAP      ] = exec[9*i+EXEC_SWAP      ];
-      execution[9*i+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
-      execution[9*i+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
+      oes.setSwap      (oes, i, exec[9*i+EXEC_SWAP      ]);
+      oes.setCommission(oes, i, exec[9*i+EXEC_COMMISSION]);
+      oes.setProfit    (oes, i, exec[9*i+EXEC_PROFIT    ]);
       sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);                // geschlossenes Ticket löschen
    }
    if (newTicket != 0)
       sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);               // neues Ticket hinzufügen
 
-   if (sizeOfCopy == 0)
-      return(IsNoError(catch("OrderMultiClose.OneSymbol(1)")));
 
+   // (5) Teilpositionen auflösen
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
-   // (4) Teilpositionen auflösen
-   if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, exec))
-      return(false);
+   if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
+      return(_false(OrderPop("OrderMultiClose.OneSymbol(5)")));
 
    for (i=0; i < sizeOfCopy; i++) {
       int pos = SearchIntArray(tickets, tickets.copy[i]);
       if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
          pos = sizeOfTickets-1;
-      execution[9*pos+EXEC_SWAP      ] += exec[9*i+EXEC_SWAP      ];
-      execution[9*pos+EXEC_COMMISSION] += exec[9*i+EXEC_COMMISSION];    // Beträge jeweils addieren
-      execution[9*pos+EXEC_PROFIT    ] += exec[9*i+EXEC_PROFIT    ];
+      oes.addSwap      (oes, pos, oes.Swap      (oes2, i));
+      oes.addCommission(oes, pos, oes.Commission(oes2, i));             // Beträge jeweils addieren
+      oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
    }
 
-   return(IsNoError(catch("OrderMultiClose.OneSymbol(2)")));
+   ArrayResize(oes2, 0);
+   return(IsNoError(catch("OrderMultiClose.OneSymbol(6)", NULL, O_POP)));
 }
 
 
 /**
- * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine zusätzliche Tradeoperation aus. Dies geschieht
- * bevorzugt durch (partielles) Schließen einer der Positionen oder durch Öffnen einer neuen Position.
+ * Gleicht die Gesamtposition mehrerer Tickets eines Symbols durch eine Tradeoperation aus. Dies geschieht bevorzugt durch (partielles) Schließen
+ * einer der Positionen, anderenfalls durch Öffnen einer neuen Position.
  *
- * @param  int    tickets[]   - Tickets der auszugleichenden Positionen
- * @param  double slippage    - akzeptable Slippage in Pip
- * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  double execution[] - Ausführungsdaten
+ * @param  int    tickets[] - Tickets der auszugleichenden Positionen
+ * @param  double slippage  - akzeptable Slippage in Pip
+ * @param  int    oeFlags   - die Ausführung steuernde Flags
+ * @param  int    oes[]     - Ausführungsdetails (ORDER_EXECUTION[])
  *
- * @return int - ein resultierendes neues Ticket (falls zutreffend); 0, falls ein Fehler auftrat (@see last_error)
+ * @return int - ein resultierendes neues Ticket (falls zutreffend) oder 0, falls ein Fehler auftrat (siehe NOTES)
  *
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
- * -------------------------------------------------------------------------------------------------------------------------------
- * - EXEC_TIME      : Zeitpunkt der Glattstellung (1)(2)
- * - EXEC_PRICE     : Ausführungspreis der Glattstellung (1)(2)
- * - EXEC_SWAP      : realisierter OrderSwap beim Schließen dieses Tickets (falls zutreffend) (3)
- * - EXEC_COMMISSION: realisierte OrderCommission beim Schließen dieses Tickets (falls zutreffend) (3)
- * - EXEC_PROFIT    : realisierter OrderProfit beim Schließen dieses Tickets (falls zutreffend) (3)
- * - EXEC_DURATION  : Dauer der Orderausführung in Sekunden (1)
- * - EXEC_REQUOTES  : Anzahl der aufgetretenen Requotes (1)
- * - EXEC_SLIPPAGE  : Slippage der Orderausführung in Pips (positiv: zu ungunsten; negativ: zu gunsten) (1)
- * - EXEC_TICKET    : durch partielles Schließen dieses Tickets erzeugtes weiteres Ticket; -1, wenn dieses Ticket vollständig geschlossen wurde (falls zutreffend)
+ *  NOTE:
+ *  -----
+ *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
+ *     War die Gesamtposition bereits ausgeglichen, enthalten sie OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der glattstellenden Transaktion).
  *
- * (1) Wert ist bei allen Tickets gleich
- * (2) ist die Gesamtposition bereits ausgeglichen, der OrderOpen-Wert des zuletzt geöffneten Tickets (dieses glich die Gesamtposition aus)
- * (3) vom MT4-Server berechnet, kann vom tatsächlichen Wert abweichen
+ *  2) Nach Rückkehr enthalten oe.Swap, oe.Commission und oe.Profit *nur dann* einen Wert, wenn das jeweilige Ticket beim Glattstellen zumindest partiell geschlossen wurde.
+ *     Diese vom MT4-Server berechneten Werte können vom tatsächlichen Wert abweichen.
+ *
+ *  3) Nach Rückkehr enthalten oe.RemainingTicket und oe.RemainingLots *nur dann* einen Wert, wenn das jeweilige Ticket zum Glattstellen verwendet wurde.
+ *     Der Wert von oe.RemainingTicket ist -1, wenn das jeweilige Ticket vollständig geschlossen wurde. Der Wert ist ein weiteres, neues Ticket, wenn das jeweilige Ticket
+ *     partiell geschlossen wurde. Nur bei einem der übergebenen Tickets sind oe.RemainingTicket und oe.RemainingLots gesetzt.
+ *
+ *  4) Der gesetzte Wert oe.RemainingTicket (siehe vorheriger Punkt 3) entspricht dem Rückgabewert der Funktion.
+ *
  */
-/*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, double &execution[]) {
-   // keine nochmalige Parametervalidierung (private)
+/*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+   // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
-   ArrayResize(execution, 0);
-   ArrayResize(execution, 9*sizeOfTickets);                                            // Re-Initialisierung
 
    OrderPush("OrderMultiClose.Flatten(1)");
 
+
+   // (1) Gesamtposition ermitteln und einzelne Lotsizes speichern
    double totalLots, lots[];
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(2)", NULL, O_POP))
-         return(0);                                                  // einzelne Lotsizes speichern und Gesamtposition ermitteln
+         return(0);
       if (OrderType() == OP_BUY) { totalLots += OrderLots(); ArrayPushDouble(lots,  OrderLots()); }
       else                       { totalLots -= OrderLots(); ArrayPushDouble(lots, -OrderLots()); }
    }
@@ -11378,88 +11402,101 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
 /**
- * Schließt die ausgeglichene Gesamtposition eines Symbols per OrderCloseBy().
+ * Löst die ausgeglichene Gesamtposition eines Symbols auf.
  *
- * @param  int    tickets[]   - Tickets der gehedgten Positionen
+ * @param  int    tickets[]   - Tickets der ausgeglichenen Positionen
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  int    oeFlags     - die Ausführung steuernde Flags
- * @param  double execution[] - Ausführungsdaten
+ * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
  *
  * @return bool - Erfolgsstatus
  *
  *
- * Für jedes übergebene Ticket enthält execution[] nach Rückkehr entsprechend der Reihenfolge in tickets[] die folgenden Elemente:
- * -------------------------------------------------------------------------------------------------------------------------------
- * - EXEC_TIME      : OrderOpenTime des zuletzt geöffneten Tickets (1)
- * - EXEC_PRICE     : OrderOpenPrice des zuletzt geöffneten Tickets (1)
- * - EXEC_SWAP      : OrderSwap dieses Tickets (2)(3)
- * - EXEC_COMMISSION: OrderCommission dieses Tickets (2)(3)
- * - EXEC_PROFIT    : OrderProfit dieses Tickets (2)(3)
- * - EXEC_DURATION  : immer 0
- * - EXEC_REQUOTES  : immer 0
- * - EXEC_SLIPPAGE  : immer 0
- * - EXEC_TICKET    : immer 0
+ *  NOTE:
+ *  -----
+ *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der glattstellenden Transaktion).
+ *     Diese Werte sind bei allen Tickets gleich.
  *
- * (1) Wert ist bei allen Tickets gleich
- * (2) vom MT4-Server berechnet (kann vom tatsächlichen Einzelwert abweichen
- * (3) aus dem Öffnen und Schließen zusätzlicher Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets addiert,
- *     die Summe der Einzelwerte aller Tickets entspricht dem tatsächlichen Gesamtwert
+ *  2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
+ *     die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
-/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, double &execution[]) {
+/*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    int sizeOfTickets = ArraySize(tickets);
+   if (sizeOfTickets < 2)
+      return(_false(catch("OrderMultiClose.Flattened(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
-   // tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu verhindern, arbeiten wir auf einer Kopie.
-   int copy[]; ArrayResize(copy, 0);
-   ArrayCopy(copy, tickets);
-   int sizeOfCopy = sizeOfTickets;
 
-   // Logging
-   if (!OrderSelectByTicket(copy[0], "OrderMultiClose.Flattened(1)", O_PUSH))
+   // (1) oes[] vorbelegen
+   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.Flattened(2)", O_PUSH))
       return(false);
-   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened()   closing ", sizeOfCopy, " hedged ", OrderSymbol(), " positions ", IntsToStr(copy)));
+   int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   double bid    = MarketInfo(OrderSymbol(), MODE_BID   );
+   double ask    = MarketInfo(OrderSymbol(), MODE_ASK   );
 
-
-   // execution[TIME & PRICE] setzen
-   ArrayResize(execution, 0);
-   ArrayResize(execution, 9*sizeOfTickets);                                   // Re-Initialisierung
-
-   SortTicketsChronological(copy);                                            // zuletzt geöffnetes Ticket
-   if (!OrderSelectByTicket(copy[sizeOfCopy-1], "OrderMultiClose.Flattened(2)", NULL, O_POP))
-      return(false);
    for (int i=0; i < sizeOfTickets; i++) {
-      execution[9*i+EXEC_TIME ] = OrderOpenTime();
-      execution[9*i+EXEC_PRICE] = OrderOpenPrice();
+      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flattened(3)", NULL, O_POP))
+         return(false);
+      oes.setSymbol    (oes, i, OrderSymbol()    );
+      oes.setDigits    (oes, i, digits           );
+      oes.setBid       (oes, i, bid              );
+      oes.setAsk       (oes, i, ask              );
+      oes.setTicket    (oes, i, OrderTicket()    );
+      oes.setType      (oes, i, OrderType()      );
+      oes.setLots      (oes, i, OrderLots()      );
+      oes.setOpenTime  (oes, i, OrderOpenTime()  );
+      oes.setOpenPrice (oes, i, OrderOpenPrice() );
+      oes.setStopLoss  (oes, i, OrderStopLoss()  );
+      oes.setTakeProfit(oes, i, OrderTakeProfit());
+      oes.setComment   (oes, i, OrderComment()   );
    }
 
 
-   // Teilpositionen nacheinander auflösen
+   // (2) Logging
+   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened()   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntsToStr(tickets)));
+
+
+   // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
+   int tickets.copy[]; ArrayResize(tickets.copy, 0);
+   int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
+
+   SortTicketsChronological(tickets.copy);
+   if (!OrderSelectByTicket(tickets.copy[sizeOfCopy-1], "OrderMultiClose.Flattened(4)", NULL, O_POP)) // das zuletzt geöffnete Ticket
+      return(false);
+   for (i=0; i < sizeOfTickets; i++) {
+      oes.setCloseTime (oes, i, OrderOpenTime() );
+      oes.setClosePrice(oes, i, OrderOpenPrice());
+   }
+
+
+   // (4) Teilpositionen nacheinander auflösen
    while (sizeOfCopy > 0) {
-      int opposite, first=copy[0];
-      if (!OrderSelectByTicket(first, "OrderMultiClose.Flattened(3)", NULL, O_POP))
+      int opposite, first=tickets.copy[0];
+      if (!OrderSelectByTicket(first, "OrderMultiClose.Flattened(5)", NULL, O_POP))
          return(false);
       int firstType = OrderType();
 
       for (i=1; i < sizeOfCopy; i++) {
-         if (!OrderSelectByTicket(copy[i], "OrderMultiClose.Flattened(4)", NULL, O_POP))
+         if (!OrderSelectByTicket(tickets.copy[i], "OrderMultiClose.Flattened(6)", NULL, O_POP))
             return(false);
          if (OrderType() == firstType^1) {
-            opposite = copy[i];                                               // erste Opposite-Position ermitteln
+            opposite = tickets.copy[i];                                       // erste Opposite-Position ermitteln
             break;
          }
       }
       if (opposite == 0)
-         return(_false(catch("OrderMultiClose.Flattened(5)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP)));
+         return(_false(catch("OrderMultiClose.Flattened(7)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP)));
 
-      /*ORDER_EXECUTION*/int oe2[]; InitializeBuffer(oe2, ORDER_EXECUTION.size);
-      if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe2))        // erste und Opposite-Position schließen
-         return(_false(OrderPop("OrderMultiClose.Flattened(6)")));
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))         // erste und Opposite-Position schließen
+         return(_false(OrderPop("OrderMultiClose.Flattened(8)")));
 
-      sizeOfCopy -= ArraySpliceInts(copy, 0, 1);                              // erstes und opposite Ticket löschen
-      sizeOfCopy -= ArrayDropInt(copy, opposite);
+      sizeOfCopy -= ArraySpliceInts(tickets.copy, 0, 1);                      // erstes und opposite Ticket löschen
+      sizeOfCopy -= ArrayDropInt(tickets.copy, opposite);
 
-      int newTicket = oe.RemainingTicket(oe2);
+      int newTicket = oe.RemainingTicket(oe);
       if (newTicket != 0)                                                     // Restposition zu verbleibenden Tickets hinzufügen
-         sizeOfCopy = ArrayPushInt(copy, newTicket);
+         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);
 
       i = SearchIntArray(tickets, first);                                     // Ausgangsticket für realisierte Beträge ermitteln
       if (i == -1) {                                                          // Reihenfolge: first, opposite, last
@@ -11467,15 +11504,15 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          if (i == -1)
             i = sizeOfTickets-1;
       }
-      execution[9*i+EXEC_SWAP      ] += oe.Swap      (oe2);                   // Beträge addieren
-      execution[9*i+EXEC_COMMISSION] += oe.Commission(oe2);
-      execution[9*i+EXEC_PROFIT    ] += oe.Profit    (oe2);
+      oes.addSwap      (oes, i, oe.Swap      (oe));                           // Beträge addieren
+      oes.addCommission(oes, i, oe.Commission(oe));
+      oes.addProfit    (oes, i, oe.Profit    (oe));
 
-      SortTicketsChronological(copy);
+      SortTicketsChronological(tickets.copy);
    }
 
-   ArrayResize(oe2, 0);
-   return(IsNoError(catch("OrderMultiClose.Flattened(7)", NULL, O_POP)));
+   ArrayResize(oe, 0);
+   return(IsNoError(catch("OrderMultiClose.Flattened(9)", NULL, O_POP)));
 }
 
 
