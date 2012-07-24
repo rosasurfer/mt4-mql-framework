@@ -407,18 +407,6 @@
 #define ORDER_EXECUTION.length              31     // Ceil(ORDER_EXECUTION.size/4)
 
 
-// Element-ID's ausführungsspezifischer Orderdaten, siehe Parameter execution[] der Orderfunktionen
-#define EXEC_TIME                            0
-#define EXEC_PRICE                           1
-#define EXEC_SWAP                            2
-#define EXEC_COMMISSION                      3
-#define EXEC_PROFIT                          4
-#define EXEC_DURATION                        5
-#define EXEC_REQUOTES                        6
-#define EXEC_SLIPPAGE                        7
-#define EXEC_TICKET                          8
-
-
 // FindFileNames() flags
 #define FF_SORT                              1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
 #define FF_DIRSONLY                          2

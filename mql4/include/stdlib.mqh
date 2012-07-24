@@ -344,16 +344,12 @@
    bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
-/*ok*/int   OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
-/*ok*/bool  OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
-/*ok*/bool  OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
-/*ok*/bool  OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
-/*ok*/bool  OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
-
-
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, double execution[]);
-
-
+   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
+   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
+   bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
+   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
+   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oe[]);
    bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);
@@ -445,7 +441,6 @@
    string   AppliedPriceToStr(int appliedPrice);
    string   ErrorToStr(int error);
    string   EventToStr(int event);
-   string   ExecutionToStr(double execution[], bool debugOutput);
    string   MessageBoxCmdToStr(int cmd);
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string format);
