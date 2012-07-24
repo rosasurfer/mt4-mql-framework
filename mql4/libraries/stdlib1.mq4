@@ -10990,7 +10990,6 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       execution[EXEC_DURATION  ] = oe.Duration  (oe)/1000.0;
       execution[EXEC_REQUOTES  ] = oe.Requotes  (oe);
       execution[EXEC_SLIPPAGE  ] = oe.Slippage  (oe);
-      execution[EXEC_TICKET    ] = 0;
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(8)"));
    }
@@ -11013,74 +11012,71 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (!OrderPop("OrderMultiClose(10)"))
       return(false);
 
-   /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.length]; ArrayResize(oes, sizeOfTickets); InitializeBuffer(oes, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfTickets); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
 
    // (4) Tickets gemeinsam schließen, wenn alle zum selben Symbol gehören
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
-      if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes))
+      if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(false);
 
       for (i=0; i < sizeOfTickets; i++) {
-         execution[9*i+EXEC_TIME      ] = oes.CloseTime (oes, i);
-         execution[9*i+EXEC_PRICE     ] = oes.ClosePrice(oes, i);
-         execution[9*i+EXEC_SWAP      ] = oes.Swap      (oes, i);
-         execution[9*i+EXEC_COMMISSION] = oes.Commission(oes, i);
-         execution[9*i+EXEC_PROFIT    ] = oes.Profit    (oes, i);
-         execution[9*i+EXEC_DURATION  ] = oes.Duration  (oes, i)/1000.0;
-         execution[9*i+EXEC_REQUOTES  ] = oes.Requotes  (oes, i);
-         execution[9*i+EXEC_SLIPPAGE  ] = oes.Slippage  (oes, i);
-         execution[9*i+EXEC_TICKET    ] = 0;
+         execution[9*i+EXEC_TIME      ] = oes.CloseTime (oes2, i);
+         execution[9*i+EXEC_PRICE     ] = oes.ClosePrice(oes2, i);
+         execution[9*i+EXEC_SWAP      ] = oes.Swap      (oes2, i);
+         execution[9*i+EXEC_COMMISSION] = oes.Commission(oes2, i);
+         execution[9*i+EXEC_PROFIT    ] = oes.Profit    (oes2, i);
+         execution[9*i+EXEC_DURATION  ] = oes.Duration  (oes2, i)/1000.0;
+         execution[9*i+EXEC_REQUOTES  ] = oes.Requotes  (oes2, i);
+         execution[9*i+EXEC_SLIPPAGE  ] = oes.Slippage  (oes2, i);
       }
-      ArrayResize(oes, 0);
+      ArrayResize(oes2, 0);
       return(true);
    }
 
 
    // (5) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
    int tickets.copy[], flatSymbols[]; ArrayResize(tickets.copy, 0); ArrayResize(flatSymbols, 0);
-   int sizeOfCopy=ArrayCopy(tickets.copy, tickets), pos, group[];
+   int sizeOfCopy=ArrayCopy(tickets.copy, tickets), pos, group[], sizeOfGroup;
 
 
    // (6) Tickets symbolweise selektieren und Gruppen zunächst nur glattstellen
-   double exec[];
-
    for (si=0; si < sizeOfSymbols; si++) {
       ArrayResize(group, 0);
       for (i=0; i < sizeOfCopy; i++) {
          if (si == tickets.symbol[i])
             ArrayPushInt(group, tickets.copy[i]);
       }
-      int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, exec);
+      sizeOfGroup = ArraySize(group);
+      ArrayResize(oes2, sizeOfGroup); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+
+      int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);
       if (IsLastError())
          return(false);
-
-      int sizeOfGroup = ArraySize(group);
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
       for (i=0; i < sizeOfGroup; i++) {
          pos = SearchIntArray(tickets, group[i]);
-         execution[9*pos+EXEC_TIME    ] = exec[EXEC_TIME    ];             // Werte sind in der ganzen Gruppe gleich
-         execution[9*pos+EXEC_PRICE   ] = exec[EXEC_PRICE   ];
-         execution[9*pos+EXEC_DURATION] = exec[EXEC_DURATION];
-         execution[9*pos+EXEC_REQUOTES] = exec[EXEC_REQUOTES];
-         execution[9*pos+EXEC_SLIPPAGE] = exec[EXEC_SLIPPAGE];
-         execution[9*pos+EXEC_TICKET  ] = 0;
+         execution[9*pos+EXEC_TIME    ] = oes.CloseTime (oes2, i);         // Werte sind in der ganzen Gruppe gleich
+         execution[9*pos+EXEC_PRICE   ] = oes.ClosePrice(oes2, i);
+         execution[9*pos+EXEC_DURATION] = oes.Duration  (oes2, i)/1000.0;
+         execution[9*pos+EXEC_REQUOTES] = oes.Requotes  (oes2, i);
+         execution[9*pos+EXEC_SLIPPAGE] = oes.Slippage  (oes2, i);
       }
       for (i=0; i < sizeOfGroup; i++) {
          if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-            if (Round(exec[9*i+EXEC_TICKET]) == -1)
+            if (oes.RemainingTicket(oes2, i) == -1)
                break;
          }
-         else if (Round(exec[9*i+EXEC_TICKET]) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+         else if (oes.RemainingTicket(oes2, i) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
             break;
       }
       if (i < sizeOfGroup) {                                               // break getriggert => geschlossenes Ticket gefunden
          pos = SearchIntArray(tickets, group[i]);
-         execution[9*pos+EXEC_SWAP      ] = exec[9*i+EXEC_SWAP      ];
-         execution[9*pos+EXEC_COMMISSION] = exec[9*i+EXEC_COMMISSION];
-         execution[9*pos+EXEC_PROFIT    ] = exec[9*i+EXEC_PROFIT    ];
+         execution[9*pos+EXEC_SWAP      ] = oes.Swap      (oes2, i);
+         execution[9*pos+EXEC_COMMISSION] = oes.Commission(oes2, i);
+         execution[9*pos+EXEC_PROFIT    ] = oes.Profit    (oes2, i);
          sizeOfGroup -= ArraySpliceInts(group, i, 1);                      // geschlossenes Ticket löschen
          sizeOfCopy  -= ArrayDropInt(tickets.copy, group[i]);
          ArraySpliceInts(tickets.symbol, i, 1);
@@ -11105,9 +11101,9 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             ArrayPushInt(group, tickets.copy[n]);
       }
       sizeOfGroup = ArraySize(group);
-      ArrayResize(oes, sizeOfGroup); InitializeBuffer(oes, ORDER_EXECUTION.size);
+      ArrayResize(oes2, sizeOfGroup); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
-      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes))
+      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
          return(false);
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -11115,14 +11111,13 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          pos = SearchIntArray(tickets, group[j]);
          if (pos == -1)                                                    // neue Tickets dem letzten übergebenen Ticket zuordnen
             pos = symbols.lastTicket[flatSymbols[i]];
-         execution[9*pos+EXEC_SWAP      ] += oes.Swap      (oes, j);
-         execution[9*pos+EXEC_COMMISSION] += oes.Commission(oes, j);       // Beträge jeweils addieren
-         execution[9*pos+EXEC_PROFIT    ] += oes.Profit    (oes, j);
+         execution[9*pos+EXEC_SWAP      ] += oes.Swap      (oes2, j);
+         execution[9*pos+EXEC_COMMISSION] += oes.Commission(oes2, j);      // Beträge jeweils addieren
+         execution[9*pos+EXEC_PROFIT    ] += oes.Profit    (oes2, j);
       }
    }
 
-   ArrayResize(oes, 0);
-   ArrayResize(exec, 0);
+   ArrayResize(oes2, 0);
    return(IsNoError(catch("OrderMultiClose(11)")));
 }
 
@@ -11192,35 +11187,33 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (4) Gesamtposition glatt stellen
-   double exec[];
-   int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, exec);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+
+   int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);
    if (IsLastError())
       return(_false(OrderPop("OrderMultiClose.OneSymbol(4)")));
 
    for (i=0; i < sizeOfTickets; i++) {
-      /*
-      // TODO: Bid und Ask aus OrderMultiClose.Flatten() übernehmen
-      oes.setBid(oes, i, double bid);
-      oes.setAsk(oes, i, double ask);
-      */
-      oes.setCloseTime (oes, i,  Round(exec[EXEC_TIME    ]));           // Werte sind bei allen exec[]-Tickets gleich
-      oes.setClosePrice(oes, i,        exec[EXEC_PRICE   ]);
-      oes.setDuration  (oes, i, 1000 * exec[EXEC_DURATION]);
-      oes.setRequotes  (oes, i,  Round(exec[EXEC_REQUOTES]));
-      oes.setSlippage  (oes, i,        exec[EXEC_SLIPPAGE]);
+      oes.setBid       (oes, i, oes.Bid       (oes2, i));
+      oes.setAsk       (oes, i, oes.Ask       (oes2, i));
+      oes.setCloseTime (oes, i, oes.CloseTime (oes2, i));               // Werte sind bei allen oes2-Tickets gleich
+      oes.setClosePrice(oes, i, oes.ClosePrice(oes2, i));
+      oes.setDuration  (oes, i, oes.Duration  (oes2, i));
+      oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
+      oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
    }
    for (i=0; i < sizeOfTickets; i++) {
       if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-         if (Round(exec[9*i+EXEC_TICKET]) == -1)
+         if (oes.RemainingTicket(oes2, i) == -1)
             break;
       }
-      else if (Round(exec[9*i+EXEC_TICKET]) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+      else if (oes.RemainingTicket(oes2, i) == newTicket)               // neues Ticket: unabhängige neue Position oder ein Ticket wurde partiell geschlossen
          break;
    }
    if (i < sizeOfTickets) {                                             // break getriggert => geschlossenes Ticket gefunden
-      oes.setSwap      (oes, i, exec[9*i+EXEC_SWAP      ]);
-      oes.setCommission(oes, i, exec[9*i+EXEC_COMMISSION]);
-      oes.setProfit    (oes, i, exec[9*i+EXEC_PROFIT    ]);
+      oes.setSwap      (oes, i, oes.Swap      (oes2, i));
+      oes.setCommission(oes, i, oes.Commission(oes2, i));
+      oes.setProfit    (oes, i, oes.Profit    (oes2, i));
       sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);                // geschlossenes Ticket löschen
    }
    if (newTicket != 0)
@@ -11228,7 +11221,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (5) Teilpositionen auflösen
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
    if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
       return(_false(OrderPop("OrderMultiClose.OneSymbol(5)")));
@@ -11282,17 +11275,23 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
+   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.Flatten(2)", O_PUSH))
+      return(0);
+   string symbol = OrderSymbol();
+   int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   double bid    = MarketInfo(OrderSymbol(), MODE_BID   );
+   double ask    = MarketInfo(OrderSymbol(), MODE_ASK   );
+
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-   OrderPush("OrderMultiClose.Flatten(2)");
    double totalLots, lots[];
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
          return(0);
-      oes.setSymbol    (oes, i, OrderSymbol()    );
-      oes.setDigits    (oes, i, MarketInfo(OrderSymbol(), MODE_DIGITS));
-      oes.setBid       (oes, i, MarketInfo(OrderSymbol(), MODE_BID   ));
-      oes.setAsk       (oes, i, MarketInfo(OrderSymbol(), MODE_ASK   ));
+      oes.setSymbol    (oes, i, symbol           );
+      oes.setDigits    (oes, i, digits           );
+      oes.setBid       (oes, i, bid              );
+      oes.setAsk       (oes, i, ask              );
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setType      (oes, i, OrderType()      );
       oes.setLots      (oes, i, OrderLots()      );
@@ -11375,14 +11374,14 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
                oes.setSwap      (oes, i, oe.Swap      (oe));
                oes.setCommission(oes, i, oe.Commission(oe));
                oes.setProfit    (oes, i, oe.Profit    (oe));
-               if (newTicket == 0) { oes.RemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
-               else                { oes.RemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
+               if (newTicket == 0) { oes.setRemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
+               else                { oes.setRemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
             }
          }
       }
       else {
          // (3.2) neues, ausgleichendes Ticket öffnen
-         if (OrderSendEx(oes.Symbol(oes, 0), totalPosition^1, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, oeFlags, oe) == -1)
+         if (OrderSendEx(symbol, totalPosition^1, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, oeFlags, oe) == -1)
             return(0);
          newTicket = oe.RemainingTicket(oe);
 
@@ -11398,8 +11397,8 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             if (tickets[i] == closeTicket) {
                oes.setSwap      (oes, i, oe.Swap      (oe));
                oes.setCommission(oes, i, oe.Commission(oe));
-               if (newTicket == 0) { oes.RemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
-               else                { oes.RemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
+               if (newTicket == 0) { oes.setRemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
+               else                { oes.setRemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
             }
          }
       }
