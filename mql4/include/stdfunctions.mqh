@@ -730,7 +730,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       last_error   = NO_ERROR;
    }
    if (IsTesting())
-      __LOG = (__LOG && GetGlobalConfigBool(__NAME__, "Logger.Tester", true));
+      __LOG = (__LOG && GetConfigBool(__NAME__, "Logger.Tester", true));
 
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)

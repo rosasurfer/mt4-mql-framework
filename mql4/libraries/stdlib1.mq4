@@ -69,7 +69,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
 
    if (IsTesting())
-      __LOG = (__LOG && GetGlobalConfigBool(name, "Logger.Tester", true));
+      __LOG = (__LOG && GetConfigBool(name, "Logger.Tester", true));
 
 
    // (1) globale Variablen re-initialisieren
@@ -9736,13 +9736,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             oe.setSwap      (oe, OrderSwap()      );
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, 0                );
-            oe.setRequotes  (oe, requotes);
+            oe.setRequotes  (oe, requotes         );
                if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - oe.Ask(oe);
                else if (OrderType() == OP_SELL) slippage = oe.Bid(oe) - OrderOpenPrice();
                else                             slippage = 0;
             oe.setSlippage(oe, NormalizeDouble(slippage/pips, 1));                        // Gesamtslippage nach Requotes in Pip
 
             if (__LOG) log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(oe));
+
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
@@ -9763,7 +9764,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-
          warn(StringConcatenate("OrderSendEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(!requotes, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
       }
    }
