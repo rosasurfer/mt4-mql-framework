@@ -1142,7 +1142,7 @@ int warn(string message, int error=NO_ERROR) {
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
 
-   // (1) Programmnamen umschreiben
+   // (1) Programmnamen ggf. um Instanz-ID erweitern
    string name = __NAME__;
    if (__LOG_INSTANCE_ID) {
       int pos = StringFind(name, "::");
@@ -1489,10 +1489,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      string message = StringConcatenate(Symbol(), ",", PeriodDescription(NULL), "  ", __NAME__, "::WaitForTicket()   #", ticket, " not yet accessible");
-
-      if (IsTesting())           warn (message);
-      else if (i > 0 && i%10==0) Alert(message, " after ", DoubleToStr(i*delay/1000.0, 1), " s");
+      if (IsTesting())           warn("WaitForTicket()   #"+ ticket +" not yet accessible");
+      else if (i > 0 && i%10==0) warn("WaitForTicket()   #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000.0, 1) +" s");
       Sleep(delay);
       i++;
    }

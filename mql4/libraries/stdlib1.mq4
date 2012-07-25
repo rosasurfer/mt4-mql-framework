@@ -9723,7 +9723,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (ticket > 0) {
             OrderPush("OrderSendEx(18)");
-            WaitForTicket(ticket, false);                                                 // wartet und selektiert (FALSE)
+            WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
 
             if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
                return(_int(-1, OrderPop("OrderSendEx(19)")));
@@ -9735,15 +9735,14 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             oe.setTakeProfit(oe, OrderTakeProfit());
             oe.setSwap      (oe, OrderSwap()      );
             oe.setCommission(oe, OrderCommission());
-            oe.setProfit    (oe, 0                );
+            oe.setProfit    (oe, 0                );                                      // 0, egal was der Server meldet
             oe.setRequotes  (oe, requotes         );
                if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - oe.Ask(oe);
                else if (OrderType() == OP_SELL) slippage = oe.Bid(oe) - OrderOpenPrice();
                else                             slippage = 0;
             oe.setSlippage(oe, NormalizeDouble(slippage/pips, 1));                        // Gesamtslippage nach Requotes in Pip
 
-            if (__LOG) log("OrderSendEx()   opened "+ OrderSendEx.LogMessage(oe));
-
+            if (__LOG) log(StringConcatenate("OrderSendEx()   ", OrderSendEx.LogMessage(oe)));
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
@@ -9767,7 +9766,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          warn(StringConcatenate("OrderSendEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(!requotes, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
       }
    }
-
    return(_int(-1, catch("OrderSendEx(21)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(!requotes, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error)));
 }
 
@@ -9783,7 +9781,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
@@ -9794,7 +9791,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if (slippage > 0) strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits<<31>>31), " pip slippage)");
          else              strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits<<31>>31), " pip positive slippage)");
       }
-   string message = StringConcatenate("#", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice);
+   string message = StringConcatenate("opened #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice);
    if (NE(oe.StopLoss  (oe), 0)) message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (NE(oe.TakeProfit(oe), 0)) message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
    string comment = oe.Comment(oe);
@@ -9806,11 +9803,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       if (requotes > 1)
          message = StringConcatenate(message, "s");
    }
-   message = StringConcatenate(message, strSlippage);
-
-   if (IsError(catch("OrderSendEx.LogMessage()")))
-      return("");
-   return(message);
+   return(StringConcatenate(message, strSlippage));
 }
 
 
@@ -9982,7 +9975,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setDuration(oe, GetTickCount()-firstTime1);                             // Gesamtzeit in Millisekunden
 
          if (success) {
-            WaitForTicket(ticket, false);                                           // wartet und re-selektiert (FALSE)
+            WaitForTicket(ticket, false);                                           // FALSE wartet und selektiert
             // TODO: WaitForChanges() implementieren
 
             if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
@@ -9996,7 +9989,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, OrderProfit()    );
 
-          //if (__LOG) log("OrderModifyEx()   "+ OrderModifyEx.LogMessage(oe));     // TODO: OrderModifyEx.LogMessage() implementieren
+            if (__LOG) log(StringConcatenate("OrderModifyEx()   ", OrderModifyEx.LogMessage(oe, oldOpenPrice, oldStopLoss, oldTakeprofit)));
             if (!IsTesting())
                PlaySound("RFQ.wav");
 
@@ -10011,8 +10004,37 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          warn(StringConcatenate("OrderModifyEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
-
    return(_false(catch("OrderModifyEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP)));
+}
+
+
+/**
+ * Generiert eine ausführliche Logmessage für OrderModifyEx().
+ *
+ * @param  int    oe[]          - Ausführungsdetails (ORDER_EXECUTION)
+ * @param  double oldOpenPrice  - alter OpenPrice
+ * @param  double oldStopLoss   - alter StopLoss
+ * @param  double oldTakeProfit - alter TakeProfit
+ *
+ * @return string
+ */
+/*private*/ string OrderModifyEx.LogMessage(/*ORDER_EXECUTION*/int oe[], double oldOpenPrice, double oldStopLoss, double oldTakeProfit) {
+   int    digits      = oe.Digits(oe);
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string strType     = OperationTypeDescription(oe.Type(oe));
+   string strLots     = NumberToStr(oe.Lots(oe), ".+");
+
+   double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
+
+   string strPrice = NumberToStr(openPrice, priceFormat);
+      if (NE(openPrice, oldOpenPrice)) strPrice = StringConcatenate(NumberToStr(oldOpenPrice, priceFormat), "=>", strPrice);
+
+   string strSL; if (NE(stopLoss,   oldStopLoss))   strSL = StringConcatenate(", sl: ", NumberToStr(oldStopLoss,   priceFormat), "=>", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (NE(takeProfit, oldTakeProfit)) strTP = StringConcatenate(", tp: ", NumberToStr(oldTakeProfit, priceFormat), "=>", NumberToStr(takeProfit, priceFormat));
+
+   string message = StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
+   return(message);
 }
 
 
@@ -10522,7 +10544,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          oe.setDuration(oe, GetTickCount()-firstTime1);                                      // Gesamtzeit in Millisekunden
 
          if (success) {
-            WaitForTicket(ticket, false);                                                    // wartet und re-selektiert (FALSE)
+            WaitForTicket(ticket, false);                                                    // FALSE wartet und selektiert
 
             if (!ChartMarker.PositionClosed_A(ticket, digits, markerColor))
                return(_false(OrderPop("OrderCloseEx(11)")));
@@ -10792,12 +10814,12 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
          if (success) {
             // Execution-Struktur füllen
-            WaitForTicket(first, false);                                               // wartet und selektiert (FALSE)
+            WaitForTicket(first, false);                                               // FALSE wartet und selektiert
             oe.setSwap      (oe, OrderSwap()      );
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, OrderProfit()    );
 
-            WaitForTicket(second, false);                                              // wartet und selektiert (FALSE)
+            WaitForTicket(second, false);                                              // FALSE wartet und selektiert
             oe.setCloseTime (oe, OrderOpenTime()  );                                   // Daten des zweiten Tickets
             oe.setClosePrice(oe, OrderOpenPrice() );
             oe.addSwap      (oe, OrderSwap()      );
@@ -11523,12 +11545,12 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          oe.setDuration(oe, GetTickCount()-firstTime1);                 // Gesamtzeit in Millisekunden
 
          if (success) {
-            WaitForTicket(ticket, false);                               // wartet und re-selektiert (FALSE)
+            WaitForTicket(ticket, false);                               // FALSE wartet und selektiert
 
             if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
                return(_false(OrderPop("OrderDeleteEx(5)")));
 
-            if (__LOG) log("OrderDeleteEx()   "+ OrderDeleteEx.LogMessage(oe));
+            if (__LOG) log(StringConcatenate("OrderDeleteEx()   ", OrderDeleteEx.LogMessage(oe)));
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
@@ -11540,7 +11562,6 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                             // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-
          warn(StringConcatenate("OrderDeleteEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
@@ -11559,14 +11580,11 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string strType     = OperationTypeDescription(oe.Type(oe));
+   string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
-   string strType  = OperationTypeDescription(oe.Type(oe));
-   string strLots  = NumberToStr(oe.Lots(oe), ".+");
-   string strPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string message  = StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
-
-   if (IsError(catch("OrderDeleteEx.LogMessage()")))
-      return("");
+   string message = StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
    return(message);
 }
 
