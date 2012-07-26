@@ -10028,13 +10028,12 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-      if (NE(openPrice, oldOpenPrice)) strPrice = StringConcatenate(NumberToStr(oldOpenPrice, priceFormat), "=>", strPrice);
+      if (NE(openPrice, oldOpenPrice)) strPrice = StringConcatenate(NumberToStr(oldOpenPrice, priceFormat), " =>", strPrice);
 
-   string strSL; if (NE(stopLoss,   oldStopLoss))   strSL = StringConcatenate(", sl: ", NumberToStr(oldStopLoss,   priceFormat), "=>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (NE(takeProfit, oldTakeProfit)) strTP = StringConcatenate(", tp: ", NumberToStr(oldTakeProfit, priceFormat), "=>", NumberToStr(takeProfit, priceFormat));
+   string strSL; if (NE(stopLoss,   oldStopLoss))   strSL = StringConcatenate(", sl: ", NumberToStr(oldStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (NE(takeProfit, oldTakeProfit)) strTP = StringConcatenate(", tp: ", NumberToStr(oldTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
 
-   string message = StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
-   return(message);
+   return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
@@ -10600,7 +10599,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                oe.setRemainingLots  (oe, openLots-lots);
             }
 
-            if (__LOG) log("OrderCloseEx()   "+ OrderCloseEx.LogMessage(oe));
+            if (__LOG) log(StringConcatenate("OrderCloseEx()   ", OrderCloseEx.LogMessage(oe)));
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
@@ -10619,7 +10618,6 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                                  // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-                                                                                             // nach Fertigstellung durch log() ersetzen
          warn(StringConcatenate("OrderCloseEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(requotes, StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s")), ""), ", retrying..."), error);
       }
       Sleep(300);                                                                            // 0.3 Sekunden warten
@@ -10636,6 +10634,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @return string
  */
 /*private*/ string OrderCloseEx.LogMessage(/*ORDER_EXECUTION*/int oe[]) {
+
+   debug("OrderCloseEx.LogMessage()");
+
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
@@ -11584,8 +11585,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
-   string message = StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
-   return(message);
+   return(StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
