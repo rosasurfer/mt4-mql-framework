@@ -582,7 +582,6 @@
    string   GetComputerName();
    string   GetWin32ShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
-   int      LoadCursor(int hInstance, int resourceId);
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);

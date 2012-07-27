@@ -232,6 +232,20 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Kopiert einen Speicherbereich. Die betroffenen Speicherblöcke können sich überlappen.
+ *
+ * @param  int destination - Zieladresse
+ * @param  int source      - Quelladdrese
+ * @param  int bytes       - Anzahl zu kopierender Bytes
+ *
+ * @return string
+ */
+void CopyMemory(int destination, int source, int bytes) {
+   RtlMoveMemory(destination, source, bytes);
+}
+
+
+/**
  * Ob der Indikator im Tester ausgeführt wird.
  *
  * @return bool
@@ -2792,7 +2806,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
       return(BufferCharsToStr(buffer, from, length));
 
    int dest[]; InitializeBuffer(dest, ArraySize(buffer)*4);
-   RtlMoveMemory(GetBufferAddress(dest), GetBufferAddress(buffer), ArraySize(buffer)*4);
+   CopyMemory(GetBufferAddress(dest), GetBufferAddress(buffer), ArraySize(buffer)*4);
 
    string result = BufferCharsToStr(dest, from, length);
    ArrayResize(dest, 0);
@@ -2866,7 +2880,7 @@ int BufferSetString(int buffer[], int offset, string value) {
    if (offset >= chars)    return(catch("BufferSetString(2)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (offset+len > chars) return(catch("BufferSetString(3)  buffer overrun for parameters offset="+ offset +" and value=\""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   RtlMoveMemory(GetBufferAddress(buffer)+offset, GetStringAddress(value), StringLen(value)+1);
+   CopyMemory(GetBufferAddress(buffer)+offset, GetStringAddress(value), StringLen(value)+1);
    return(NO_ERROR);
 }
 
@@ -10974,7 +10988,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, oe.Error(oe)), OrderPop("OrderMultiClose(7)")));
-      RtlMoveMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(8)") && !oes.setError(oes, -1, last_error));
    }
@@ -11003,7 +11017,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfSymbols == 1) {
       if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, oes.Error(oes2, 0)), OrderPop("OrderMultiClose(10)")));
-      RtlMoveMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
       return(OrderPop("OrderMultiClose(11)") && !oes.setError(oes, -1, last_error));
    }
@@ -11149,7 +11163,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, oe.Error(oe))));
-      RtlMoveMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(true);
    }
