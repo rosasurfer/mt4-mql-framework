@@ -9611,14 +9611,14 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
  *
  * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
  *
- * @param  string   symbol      - Symbol des Instruments          (default: aktuelles Instrument)
+ * @param  string   symbol      - Symbol des Instruments (default: aktuelles Instrument)
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
  * @param  double   lots        - Transaktionsvolumen in Lots
- * @param  double   price       - Preis (nur bei pending Orders)
+ * @param  double   price       - Preis (nur bei Pending-Orders)
  * @param  double   slippage    - akzeptable Slippage in Pip
  * @param  double   stopLoss    - StopLoss-Level
  * @param  double   takeProfit  - TakeProfit-Level
- * @param  string   comment     - Orderkommentar, max. 27 Zeichen
+ * @param  string   comment     - Orderkommentar (max. 27 Zeichen)
  * @param  int      magicNumber - MagicNumber
  * @param  datetime expires     - Gültigkeit der Order
  * @param  color    markerColor - Farbe des Chartmarkers
@@ -9740,7 +9740,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
                if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - oe.Ask(oe);
                else if (OrderType() == OP_SELL) slippage = oe.Bid(oe) - OrderOpenPrice();
                else                             slippage = 0;
-            oe.setSlippage(oe, NormalizeDouble(slippage/pips, 1));                        // Gesamtslippage nach Requotes in Pip
+            oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits<<31>>31));           // Gesamtslippage nach Requotes in Pip
 
             if (__LOG) log(StringConcatenate("OrderSendEx()   ", OrderSendEx.LogMessage(oe)));
             if (!IsTesting())
