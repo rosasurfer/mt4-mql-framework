@@ -10576,7 +10576,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                   OrderPush("OrderCloseEx(13)");
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
                      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                   // FALSE: darf im Tester nicht auftreten
-                        oe.setError(oe, catch("OrderCloseEx(14) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR));
+                        catch("OrderCloseEx(14) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
                         break;
                      }
                      if (OrderTicket() == ticket)        continue;
@@ -10609,7 +10609,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
-            return(IsNoError(catch("OrderCloseEx(21)", NULL, O_POP)));   // regular exit
+            return(IsNoError(oe.setError(oe, catch("OrderCloseEx(21)", NULL, O_POP))));   // regular exit
          }
 
          error = GetLastError();
@@ -10628,7 +10628,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       }
       Sleep(300);                                                                            // 0.3 Sekunden warten
    }
-   return(_false(catch("OrderCloseEx(23)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(requotes, " and "+ requotes +" requote"+ ifString(requotes==1, "", "s"), ""), error, O_POP)));
+   return(_false(oe.setError(oe, catch("OrderCloseEx(23)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(requotes, " and "+ requotes +" requote"+ ifString(requotes==1, "", "s"), ""), error, O_POP))));
 }
 
 
@@ -10696,23 +10696,23 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(false);
-   if (OrderCloseTime() != 0)                                            return(_false(catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP)));
-   if (OrderType() > OP_SELL)                                            return(_false(catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(_false(oe.setError(oe, last_error)));
+   if (OrderCloseTime() != 0)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (OrderType() > OP_SELL)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
    int      ticketType     = OrderType();
    double   ticketLots     = OrderLots();
    datetime ticketOpenTime = OrderOpenTime();
    string   symbol         = OrderSymbol();
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(false);
-   if (OrderCloseTime() != 0)                                            return(_false(catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP)));
+   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(_false(oe.setError(oe, last_error));
+   if (OrderCloseTime() != 0)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP))));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
    datetime oppositeOpenTime = OrderOpenTime();
-   if (ticketType != oppositeType^1)                                     return(_false(catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
-   if (symbol != OrderSymbol())                                          return(_false(catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP)));
+   if (ticketType != oppositeType^1)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
+   if (symbol != OrderSymbol())                                          return(_false(oe.setError(oe, catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(oe.setError(oe, catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // oe
    ArrayInitialize(oe, 0);
    oe.setSymbol   (oe, OrderSymbol());
@@ -10816,20 +10816,20 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
          time1 = GetTickCount();
-         if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor);    // siehe (3)
+         if (smallerByLarger) success = OrderCloseBy(smaller, larger, markerColor);       // siehe (3)
          else                 success = OrderCloseBy(larger, smaller, markerColor);
 
-         oe.setDuration(oe, GetTickCount()-time1);                                     // Zeit in Millisekunden
+         oe.setDuration(oe, GetTickCount()-time1);                                        // Zeit in Millisekunden
 
          if (success) {
             // oe[] füllen
-            WaitForTicket(first, false);                                               // FALSE wartet und selektiert
+            WaitForTicket(first, false);                                                  // FALSE wartet und selektiert
             oe.setSwap      (oe, OrderSwap()      );
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, OrderProfit()    );
 
-            WaitForTicket(second, false);                                              // FALSE wartet und selektiert
-            oe.setCloseTime (oe, OrderOpenTime()  );                                   // Daten des zweiten Tickets
+            WaitForTicket(second, false);                                                 // FALSE wartet und selektiert
+            oe.setCloseTime (oe, OrderOpenTime()  );                                      // Daten des zweiten Tickets
             oe.setClosePrice(oe, OrderOpenPrice() );
             oe.addSwap      (oe, OrderSwap()      );
             oe.addCommission(oe, OrderCommission());
@@ -10837,24 +10837,24 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
             // Restposition finden
             if (NE(firstLots, secondLots)) {
-               if (smallerByLarger) {                                                  // online
+               if (smallerByLarger) {                                                     // online
                   // Referenz: remainder.comment = "from #smaller"
                   string strValue = StringConcatenate("from #", smaller);
 
                   for (int i=OrdersTotal()-1; i >= 0; i--) {
-                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;        // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
+                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;           // FALSE: während des Auslesens wurde in einem anderen Thread ein offenes Ticket geschlossen (darf im Tester nicht auftreten)
                      if (OrderComment() != strValue)                  continue;
                      remainder = OrderTicket();
                      break;
                   }
                   if (remainder == 0)
-                     return(_false(catch("OrderCloseByEx(9)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP)));
+                     return(_false(oe.setError(oe, catch("OrderCloseByEx(9)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP))));
                }
 
-               else /*(largerBySmaller)*/ {                                            // im Tester
+               else /*(largerBySmaller)*/ {                                               // im Tester
                   // keine Referenz vorhanden
                   if (!OrderSelectByTicket(larger, "OrderCloseByEx(10)", NULL, O_POP))
-                     return(false);
+                     return(_false(oe.setError(oe, last_error));
                   int      remainderType        = OrderType();
                   double   remainderLots        = MathAbs(firstLots - secondLots);
                   string   remainderSymbol      = OrderSymbol();
@@ -10865,7 +10865,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                   string   remainderComment     = ifString(GetTerminalBuild() < 416, "partial close", OrderComment());
 
                   for (i=OrdersTotal()-1; i >= 0; i--) {
-                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(catch("OrderCloseByEx(11) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP)));
+                     if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(oe.setError(oe, catch("OrderCloseByEx(11) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP))));
                      if (OrderType() == remainderType)
                         if (EQ(OrderLots(), remainderLots))
                            if (OrderSymbol() == remainderSymbol)
@@ -10879,7 +10879,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                                           }
                   }
                   if (remainder == 0)
-                     return(_false(catch("OrderCloseByEx(12)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP)));
+                     return(_false(oe.setError(oe, catch("OrderCloseByEx(12)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP))));
                }
                oe.setRemainingTicket(oe, remainder    );
                oe.setRemainingLots  (oe, remainderLots);
@@ -10889,19 +10889,19 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
             if (!IsTesting())
                PlaySound("OrderOk.wav");
 
-            return(IsNoError(catch("OrderCloseByEx(13)", NULL, O_POP)));               // regular exit
+            return(IsNoError(oe.setError(oe, catch("OrderCloseByEx(13)", NULL, O_POP)))); // regular exit
          }
 
          error = GetLastError();
          if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
-         if (!IsTemporaryTradeError(error))                                            // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
+         if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
          warn(StringConcatenate("OrderCloseByEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
-      Sleep(300);                                                                      // 0.3 Sekunden warten
+      Sleep(300);                                                                         // 0.3 Sekunden warten
    }
-   return(_false(catch("OrderCloseByEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP)));
+   return(_false(oe.setError(oe, catch("OrderCloseByEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
 }
 
 
@@ -10952,18 +10952,18 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                     return(_false(catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (sizeOfTickets == 0)                                     return(_false(oes.setError(oes, -1, catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
       if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
-         return(false);
-      if (OrderCloseTime() != 0)                               return(_false(catch("OrderMultiClose(3)   #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP)));
-      if (OrderType() > OP_SELL)                               return(_false(catch("OrderMultiClose(4)   #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP)));
+         return(_false(oes.setError(oes, -1, last_error));
+      if (OrderCloseTime() != 0)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(3)   #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP))));
+      if (OrderType() > OP_SELL)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(4)   #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP))));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(_false(catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (LT(slippage, 0))                                        return(_false(oes.setError(oes, -1, catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP)));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oes.setError(oes, -1, catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // oes
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
    // -- Ende Parametervalidierung --
@@ -10973,10 +10973,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfTickets == 1) {
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(OrderPop("OrderMultiClose(7)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(7)")));
       RtlMoveMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
-      return(OrderPop("OrderMultiClose(8)"));
+      return(_bool(OrderPop("OrderMultiClose(8)"), oes.setError(oes, -1, last_error)));
+
+      return(!oes.setError(oes, -1, last_error) && OrderPop("OrderMultiClose(8)"));
    }
 
 
