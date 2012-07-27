@@ -89,9 +89,9 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn bestimmen und cachen
-   if (GetApplicationMainWindow() == 0)                                       // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
+   if (GetApplicationWindow() == 0)                                           // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
       return(last_error);                                                     // (z.B. im Tester bei Shutdown).
-   if (GetUIThreadId() == 0)                                                  // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationMainWindow()
+   if (GetUIThreadId() == 0)                                                  // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationWindow()
       return(last_error);
 
 
@@ -503,7 +503,7 @@ int Tester.Pause() {
 
    // Der Tester läuft, ansonsten würde dieser Code nicht ausgeführt.
 
-   int hWndMain = GetApplicationMainWindow();
+   int hWndMain = GetApplicationWindow();
    if (hWndMain == 0)
       return(0);
 
@@ -1334,7 +1334,7 @@ int Menu.Experts(bool enable) {
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
-   int hWnd = GetApplicationMainWindow();
+   int hWnd = GetApplicationWindow();
    if (hWnd == 0)
       return(last_error);
 
@@ -5743,7 +5743,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
    }
 
    if (account == 0) {
-      string title = GetWindowText(GetApplicationMainWindow());      // Titelzeile des Hauptfensters auswerten:
+      string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
       if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
          return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
@@ -7215,7 +7215,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
-int GetApplicationMainWindow() {
+int GetApplicationWindow() {
    static int hWnd;                                                  // ohne Initializer (@see MQL.doc)
    if (hWnd != 0)
       return(hWnd);
@@ -7228,7 +7228,7 @@ int GetApplicationMainWindow() {
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
          if (GetClassName(hWnd) != terminalClassName) {
-            catch("GetApplicationMainWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
+            catch("GetApplicationWindow(1)   wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
             hWnd = 0;
          }
          else {
@@ -7247,7 +7247,7 @@ int GetApplicationMainWindow() {
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
    if (hWndNext == 0) {
-      catch("GetApplicationMainWindow(2)   cannot find application main window", ERR_RUNTIME_ERROR);
+      catch("GetApplicationWindow(2)   cannot find application main window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
    hWnd = hWndNext;
@@ -7273,7 +7273,7 @@ int GetTesterWindow() {
 
 
    // (1) Zunächst den im Hauptfenster angedockten Tester suchen
-   int hWndMain = GetApplicationMainWindow();
+   int hWndMain = GetApplicationWindow();
    if (hWndMain == 0)
       return(0);
    int hWnd = GetDlgItem(hWndMain, ID_DOCKABLES_CONTAINER);                // Container für im Hauptfenster angedockte Fenster
@@ -7326,7 +7326,7 @@ int GetUIThreadId() {
    if (threadId != 0)
       return(threadId);
 
-   int hWnd = GetApplicationMainWindow();
+   int hWnd = GetApplicationWindow();
    if (hWnd == 0)
       return(0);
 
