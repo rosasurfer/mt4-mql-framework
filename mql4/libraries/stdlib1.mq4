@@ -9454,7 +9454,7 @@ int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {         
 double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][31]/100.0, 2));                    }
 
 // Setter
-int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[01]    = error;                                                    return(error     ); }
+int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                    return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (StringLen(symbol) == 0) return(_empty(catch("oe.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (StringLen(symbol) > 12) return(_empty(catch("oe.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
