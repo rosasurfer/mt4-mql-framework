@@ -17,7 +17,7 @@
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
-   int      GetApplicationMainWindow();
+   int      GetApplicationWindow();
    int      GetTesterWindow();
    int      GetUIThreadId();
    string   GetServerDirectory();

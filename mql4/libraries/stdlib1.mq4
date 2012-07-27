@@ -553,16 +553,6 @@ string __whereamiToStr(int id) {
 /**
  * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
  *
- * Alias für LoadCursorById()
- */
-int LoadCursor(int hInstance, int resourceId) {
-   return(LoadCursorById(hInstance, resourceId));
-}
-
-
-/**
- * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
- *
  * @param  int hInstance  - Application instance handle
  * @param  int resourceId - cursor ID
  *
