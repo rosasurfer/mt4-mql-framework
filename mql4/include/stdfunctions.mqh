@@ -403,8 +403,8 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size               124
-#define ORDER_EXECUTION.length              31     // Ceil(ORDER_EXECUTION.size/4)
+#define ORDER_EXECUTION.size               128
+#define ORDER_EXECUTION.length              32     // Ceil(ORDER_EXECUTION.size/4)
 
 
 // FindFileNames() flags

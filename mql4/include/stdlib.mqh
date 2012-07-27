@@ -454,6 +454,7 @@
 
 
    // MQL-Structs Getter und Setter
+   int      oe.Error             (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);
    string   oe.Symbol            (/*ORDER_EXECUTION*/int oe[]);                       string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);
    int      oe.Digits            (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);
    double   oe.Bid               (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i);
@@ -477,6 +478,7 @@
    int      oe.RemainingTicket   (/*ORDER_EXECUTION*/int oe[]);                       int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i);
    double   oe.RemainingLots     (/*ORDER_EXECUTION*/int oe[]);                       double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i);
 
+   int      oe.setError          (/*ORDER_EXECUTION*/int oe[], int      error     );  int      oes.setError          (/*ORDER_EXECUTION*/int oe[][], int i, int      error     );
    string   oe.setSymbol         (/*ORDER_EXECUTION*/int oe[], string   symbol    );  string   oes.setSymbol         (/*ORDER_EXECUTION*/int oe[][], int i, string   symbol    );
    int      oe.setDigits         (/*ORDER_EXECUTION*/int oe[], int      digits    );  int      oes.setDigits         (/*ORDER_EXECUTION*/int oe[][], int i, int      digits    );
    double   oe.setBid            (/*ORDER_EXECUTION*/int oe[], double   bid       );  double   oes.setBid            (/*ORDER_EXECUTION*/int oe[][], int i, double   bid       );
