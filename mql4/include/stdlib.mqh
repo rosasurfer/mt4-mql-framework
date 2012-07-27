@@ -577,6 +577,7 @@
 
 
    // Win32-Funktionen
+   void     CopyMemory(int destination, int source, int bytes);
    string   GetClassName(int hWnd);
    string   GetComputerName();
    string   GetWin32ShortcutTarget(string lnkFile);
