@@ -847,13 +847,14 @@ int start() {
 
 
    // Time machine bug im Tester abfangen
-   static datetime lastTime;
-   if (lastTime!=0) /*&&*/ if (TimeCurrent() < lastTime) {
-      __STATUS__CANCELLED = true;
-      return(catch("start(1)   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+   if (IsTesting()) {
+      static datetime lastTime;
+      if (TimeCurrent() < lastTime) {
+         __STATUS__CANCELLED = true;
+         return(catch("start(1)   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+      }
+      lastTime = TimeCurrent();
    }
-   lastTime = TimeCurrent();
-
 
 
    int error;
@@ -927,7 +928,7 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (IsError(error))                                            // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
+      if (error != NO_ERROR)                                         // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
          return(last_error);
    }
 
