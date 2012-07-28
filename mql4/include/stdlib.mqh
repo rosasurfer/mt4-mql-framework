@@ -12,7 +12,7 @@
    bool     IsScript();
    bool     IndicatorIsTesting();
    bool     ScriptIsTesting();
-   bool     This.IsTesting();                   // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
+   bool     This.IsTesting();                                        // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
    int      InstanceId(int id);
 
    string   GetTerminalVersion();
@@ -21,7 +21,7 @@
    int      GetTesterWindow();
    int      GetUIThreadId();
    string   GetServerDirectory();
-   string   GetServerTimezone();                // throws ERR_INVALID_TIMEZONE_CONFIG
+   string   GetServerTimezone();                                     // throws ERR_INVALID_TIMEZONE_CONFIG
    int      GetAccountNumber();
    string   ShortAccountCompany();
    bool     Tester.IsLogging();
