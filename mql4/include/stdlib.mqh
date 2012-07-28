@@ -31,6 +31,7 @@
    int      Chart.Expert.Properties();
    int      Chart.SendTick(bool sound);
    int      Tester.Pause();
+   bool     Tester.IsLoggingEnabled(string expert);
 
 
    // Arrays

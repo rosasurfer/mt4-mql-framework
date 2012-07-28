@@ -69,7 +69,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
 
    if (IsTesting())
-      __LOG = (__LOG && GetConfigBool(name, "Logger.Tester", true));
+      __LOG = (__LOG && Tester.IsLoggingEnabled(name));
 
 
    // (1) globale Variablen re-initialisieren
@@ -509,6 +509,18 @@ int Tester.Pause() {
 
    SendMessageA(hWndMain, WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
+}
+
+
+/**
+ * Ob das Logging im Tester für den angegebenen EA aktiviert ist.
+ *
+ * @param  string name - EA-Name
+ *
+ * @return bool
+ */
+bool Tester.IsLoggingEnabled(string name) {
+   return(GetConfigBool(name, "Logger.Tester", true));
 }
 
 
