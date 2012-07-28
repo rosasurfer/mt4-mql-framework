@@ -24,6 +24,7 @@
    string   GetServerTimezone();                // throws ERR_INVALID_TIMEZONE_CONFIG
    int      GetAccountNumber();
    string   ShortAccountCompany();
+   bool     Tester.IsLogging();
 
 
    // Terminal-Interaktionen
@@ -31,7 +32,6 @@
    int      Chart.Expert.Properties();
    int      Chart.SendTick(bool sound);
    int      Tester.Pause();
-   bool     Tester.IsLogging();
 
 
    // Arrays
