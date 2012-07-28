@@ -730,7 +730,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       last_error   = NO_ERROR;
    }
    if (IsTesting())
-      __LOG = (__LOG && Tester.IsLoggingEnabled(__NAME__));
+      __LOG = Tester.IsLogging();
 
 
    // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -1572,6 +1572,30 @@ bool IsScript() {
  */
 bool IsLibrary() {
    return(__TYPE__ & T_LIBRARY);
+}
+
+
+/**
+ * Ob im Tester das Logging für den aktuellen EA aktiviert ist. Standardmäßig ist im Tester das Logging zur Performancesteigerung NICHT aktiv.
+ *
+ * @return bool
+ *
+ *
+ * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib_init() zu ermöglichen.
+ * -----
+ */
+bool Tester.IsLogging() {
+   if (!IsExpert())
+      return(false);
+
+   string name = __NAME__;
+
+   if (IsLibrary()) {
+      if (StringLen(__NAME__) == 0)
+         return(_false(catch("Tester.IsLogging()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
+   }
+   return(GetConfigBool(name, "Logger.Tester", false));
 }
 
 
