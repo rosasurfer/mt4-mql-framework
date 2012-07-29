@@ -109,15 +109,8 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          OrderSelect(0, SELECT_BY_TICKET);
 
       if (IsTesting()) {                                                      // nur im Tester
-         error = ResetLastError();
-         int hWndTester = GetTesterWindow();                                  // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-         if (hWndTester == 0) {
-            if (IsLastError())
-               return(last_error);
-         }                                                                    // TODO: Warten, bis die Titelzeile gesetzt ist (der startende Test kann die Abarbeitung
-         else if (!SetWindowTextA(hWndTester, "Tester"))                      //       der MessageQueue des UI-Threads wesentlich verzögern).
-            return(catch("stdlib_init(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-         SetLastError(error);
+         if (!SetWindowTextA(GetTesterWindow(), "Tester"))                    // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
+            return(catch("stdlib_init(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (GetAccountNumber() == 0) {                                       // Accountnummer ermitteln und cachen, da der spätere Aufruf den UI-Thread blockieren *kann*.
             if (last_error == ERR_TERMINAL_NOT_YET_READY)
@@ -126,7 +119,6 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          }
       }
    }
-
    return(catch("stdlib_init(4)"));
 }
 
@@ -3216,7 +3208,7 @@ int Chart.SendTick(bool sound=false) {
       testerStopped = false;                                         // Code wird ausgeführt, also beide FALSE
       testerPaused  = false;
    }
-   else if (IsScript()) {
+   else /*_Script_*/ {
       testing    = ScriptIsTesting();
       visualMode = testing;
       if (testing) {
@@ -9712,18 +9704,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LT(price - stopDistance*pips, ask)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
+            if (LE(price, ask))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOPS))));
+            if (LT(price - stopDistance*pips, ask)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
          }
          else if (type == OP_SELLSTOP) {
-            if (GT(price + stopDistance*pips, bid)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
+            if (GE(price, bid))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOPS))));
+            if (GT(price + stopDistance*pips, bid)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
          }
          price = NormalizeDouble(price, digits);
 
          if (NE(stopLoss, 0)) {
             if (IsLongTradeOperation(type)) {
-               if (GE(stopLoss, price))   return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
+               if (GE(stopLoss, price))   return(_int(-1, oe.setError(oe, catch("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
             }
-            else if (LE(stopLoss, price)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
+            else if (LE(stopLoss, price)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
          }
 
          time1  = GetTickCount();
@@ -9732,11 +9726,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
 
          if (ticket > 0) {
-            OrderPush("OrderSendEx(18)");
+            OrderPush("OrderSendEx(20)");
             WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
 
             if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(19)")));
+               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(21)")));
 
             oe.setTicket    (oe, ticket           );
             oe.setOpenTime  (oe, OrderOpenTime()  );
@@ -9756,7 +9750,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
-            if (IsError(catch("OrderSendEx(20)", NULL, O_POP)))
+            if (IsError(catch("OrderSendEx(22)", NULL, O_POP)))
                return(_int(-1, oe.setError(oe, last_error)));
             return(ticket);                                                               // regular exit
          }
@@ -9776,7 +9770,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          warn(StringConcatenate("OrderSendEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(!requotes, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
       }
    }
-   return(_int(-1, oe.setError(oe, catch("OrderSendEx(21)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(!requotes, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error))));
+   return(_int(-1, oe.setError(oe, catch("OrderSendEx(23)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(!requotes, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error))));
 }
 
 
