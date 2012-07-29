@@ -25,6 +25,7 @@
    int      GetAccountNumber();
    string   ShortAccountCompany();
    bool     Tester.IsLogging();
+   bool     Tester.IsPaused();
 
 
    // Terminal-Interaktionen

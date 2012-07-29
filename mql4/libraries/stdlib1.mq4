@@ -483,24 +483,51 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Pausiert den Tester. Der Aufruf ist nur aus einem Expert im Tester möglich.
+ * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus
  */
 int Tester.Pause() {
-   if (    !IsExpert())             return(catch("Tester.Pause()   experts only function", ERR_FUNC_NOT_ALLOWED));
-   if (!IsVisualMode())             return(NO_ERROR);                // skipping
-   if (IsStopped())                 return(NO_ERROR);                // skipping (nach Klick auf "Stop" ist weder in start() noch in deinit() das IsStopped()-Flag gesetzt)
-   if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);                // skipping
+   if (!This.IsTesting()) return(catch("Tester.Pause()   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   // Der Tester läuft, ansonsten würde dieser Code nicht ausgeführt.
+   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
+   if (!IsScript())
+      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   int hWndMain = GetApplicationWindow();
-   if (hWndMain == 0)
-      return(0);
-
-   SendMessageA(hWndMain, WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
+   SendMessageA(GetApplicationWindow(), WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
+}
+
+
+/**
+ * Ob der Tester momentan im Pause-Modus läuft. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return bool
+ */
+bool Tester.IsPaused() {
+   if (!This.IsTesting()) return(_false(catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED)));
+
+   bool testerStopped;
+   int  hWndSettings = GetDlgItem(GetTesterWindow(), ID_TESTER_SETTINGS);
+
+   if (IsExpert()) {
+      if (!IsVisualMode())
+         return(false);
+      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;
+   }
+   else if (IsIndicator()) {
+      // visualMode = true;
+      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;                                    // Indicator::deinit() wird zeitgleich zu EA:deinit() ausgeführt,
+   }                                                                                               // der EA stoppt(e) also auch
+   else /*_Script_*/ {
+      // visualMode = true;
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_STARTSTOP  )) == "Start";   // muß im Script reichen
+   }
+
+   if (testerStopped)
+      return(false);
+
+   return(GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME)) == ">>");
 }
 
 
@@ -3194,45 +3221,15 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int Chart.SendTick(bool sound=false) {
-   bool testing, visualMode, testerStopped, testerPaused;
-
-   if (IsExpert()) {
-      testing       = IsTesting();
-      visualMode    = IsVisualMode();
-      testerStopped = false;                                         // Code wird ausgeführt, also beide FALSE
-      testerPaused  = false;
-   }
-   else if (IsIndicator()) {
-      testing       = IndicatorIsTesting();                          // TODO: IndicatorIsTesting() in init() und deinit() implementieren
-      visualMode    = testing;
-      testerStopped = false;                                         // Code wird ausgeführt, also beide FALSE
-      testerPaused  = false;
-   }
-   else /*_Script_*/ {
-      testing    = ScriptIsTesting();
-      visualMode = testing;
-      if (testing) {
-         int hWndSettings  = GetDlgItem(GetTesterWindow(), ID_TESTER_SETTINGS);
-         int hBtnStartStop = GetDlgItem(hWndSettings, ID_TESTER_STARTSTOP);
-         testerStopped = (GetWindowText(hBtnStartStop) == "Start");
-         testerPaused  = (!testerStopped && GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME))==">>");
-      }
-      else {
-         testerStopped = false;                                      // wir sind nicht im Tester
-         testerPaused  = false;
-      }
-   }
-
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("Chart.SendTick(1) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.SendTick() ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   if (!testing) {
-      if (!PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0))
-         return(catch("Chart.SendTick(2) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   if (!This.IsTesting()) {
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0);
    }
-   else if (visualMode && !testerStopped && testerPaused) {
-      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);             // Bedingung kann nur durch Scripte erfüllt werden (EA's und Indikatoren sind niemals "paused")
+   else if (Tester.IsPaused()) {
+      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
    if (sound)
