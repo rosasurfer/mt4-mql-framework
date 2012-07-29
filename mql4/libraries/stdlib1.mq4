@@ -9512,8 +9512,9 @@ double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   
 int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[30]    = ticket;                                                   return(ticket    ); }
 double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[31]    = Round(lots * 100);                                        return(lots      ); }
 
-int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int      error     ) {
-   if (i == -1) for (int n=ArrayRange(oe, 0); n >= 0; n--) oes.setError(oe, n, error);        oe[i][ 0] = error;                                                    return(error     ); }
+int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error) {
+   if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][ 0] = error;                                                    return(error     ); }
+                                                                                              oe[i][ 0] = error;                                                    return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (StringLen(symbol) == 0) return(_empty(catch("oes.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (StringLen(symbol) > 12) return(_empty(catch("oes.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -11001,7 +11002,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfTickets == 1) {
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(oes.setError(oes, -1, oe.Error(oe)), OrderPop("OrderMultiClose(7)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(7)")));
       CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(8)") && !oes.setError(oes, -1, last_error));
@@ -11030,7 +11031,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
       if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
-         return(_false(oes.setError(oes, -1, oes.Error(oes2, 0)), OrderPop("OrderMultiClose(10)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(10)")));
       CopyMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
       return(OrderPop("OrderMultiClose(11)") && !oes.setError(oes, -1, last_error));
@@ -11127,7 +11128,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       ArrayResize(oes2, sizeOfGroup); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
-         return(_false(oes.setError(oes, -1, oes.Error(oes2, 0))));
+         return(_false(oes.setError(oes, -1, last_error)));
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
       for (int j=0; j < sizeOfGroup; j++) {
@@ -11176,7 +11177,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfTickets == 1) {
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
-         return(_false(oes.setError(oes, -1, oe.Error(oe))));
+         return(_false(oes.setError(oes, -1, last_error)));
       CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(true);
@@ -11215,7 +11216,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);
    if (IsLastError())
-      return(_false(oes.setError(oes, -1, oes.Error(oes2, 0)), OrderPop("OrderMultiClose.OneSymbol(4)")));
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(4)")));
 
    for (i=0; i < sizeOfTickets; i++) {
       oes.setBid       (oes, i, oes.Bid       (oes2, i));
@@ -11248,7 +11249,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
    if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
-      return(_false(oes.setError(oes, -1, oes.Error(oes2, 0)), OrderPop("OrderMultiClose.OneSymbol(5)")));
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(5)")));
 
    for (i=0; i < sizeOfCopy; i++) {
       int pos = SearchIntArray(tickets, tickets.copy[i]);
@@ -11382,7 +11383,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       if (closeTicket != 0) {
          // (3.1) partielles oder vollständiges OrderClose eines vorhandenen Tickets
          if (!OrderCloseEx(closeTicket, MathAbs(totalLots), NULL, slippage, CLR_NONE, oeFlags, oe))
-            return(_ZERO(oes.setError(oes, -1, oe.Error(oe))));
+            return(_ZERO(oes.setError(oes, -1, last_error)));
          newTicket = oe.RemainingTicket(oe);
 
          for (i=0; i < sizeOfTickets; i++) {
@@ -11406,7 +11407,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       else {
          // (3.2) neues, ausgleichendes Ticket öffnen
          if (OrderSendEx(symbol, totalPosition^1, MathAbs(totalLots), NULL, slippage, NULL, NULL, NULL, NULL, NULL, CLR_NONE, oeFlags, oe) == -1)
-            return(_ZERO(oes.setError(oes, -1, oe.Error(oe))));
+            return(_ZERO(oes.setError(oes, -1, last_error)));
          newTicket = oe.Ticket(oe);
 
          for (i=0; i < sizeOfTickets; i++) {
@@ -11512,9 +11513,10 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       if (opposite == 0)
          return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(7)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
+
       /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))                     // erste und Opposite-Position schließen
-         return(_false(oes.setError(oes, -1, oe.Error(oe)), OrderPop("OrderMultiClose.Flattened(8)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.Flattened(8)")));
 
       sizeOfCopy -= ArraySpliceInts(tickets.copy, 0, 1);                                  // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(tickets.copy, opposite);
