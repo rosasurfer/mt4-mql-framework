@@ -475,7 +475,7 @@ int Chart.Expert.Properties() {
    if (hWnd == 0)
       return(catch("Chart.Expert.Properties(2) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
-   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
+   if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(NO_ERROR);
@@ -494,7 +494,7 @@ int Tester.Pause() {
    if (!IsScript())
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   SendMessageA(GetApplicationWindow(), WM_COMMAND, ID_TESTER_PAUSERESUME, 0);
+   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
 }
 
@@ -508,7 +508,7 @@ bool Tester.IsPaused() {
    if (!This.IsTesting()) return(_false(catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED)));
 
    bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), ID_TESTER_SETTINGS);
+   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
 
    if (IsExpert()) {
       if (!IsVisualMode())
@@ -521,13 +521,13 @@ bool Tester.IsPaused() {
    }                                                                                               // der EA stoppt(e) also auch
    else /*_Script_*/ {
       // visualMode = true;
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_STARTSTOP  )) == "Start";   // muß im Script reichen
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
    }
 
    if (testerStopped)
       return(false);
 
-   return(GetWindowText(GetDlgItem(hWndSettings, ID_TESTER_PAUSERESUME)) == ">>");
+   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
 }
 
 
@@ -1359,11 +1359,11 @@ int Menu.Experts(bool enable) {
 
    if (enable) {
       if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, IDC_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
       if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, IDC_EXPERTS_ONOFF, 0);
    }
    return(NO_ERROR);
 }
@@ -3229,7 +3229,7 @@ int Chart.SendTick(bool sound=false) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0);
    }
    else if (Tester.IsPaused()) {
-      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
+      SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_TICK, 0);
    }
 
    if (sound)
@@ -7265,10 +7265,10 @@ int GetTesterWindow() {
    int hWndMain = GetApplicationWindow();
    if (hWndMain == 0)
       return(0);
-   int hWnd = GetDlgItem(hWndMain, ID_DOCKABLES_CONTAINER);                // Container für im Hauptfenster angedockte Fenster
+   int hWnd = GetDlgItem(hWndMain, IDD_DOCKABLES_CONTAINER);               // Container für im Hauptfenster angedockte Fenster
    if (hWnd == 0)
       return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window of docked child windows")));
-   hWndTester = GetDlgItem(hWnd, ID_TESTER);
+   hWndTester = GetDlgItem(hWnd, IDD_TESTER);
    if (hWndTester != 0)
       return(hWndTester);
 
@@ -7280,10 +7280,10 @@ int GetTesterWindow() {
 
       if (processId[0] == me) {
          if (StringStartsWith(GetWindowText(hNext), "Tester")) {
-            hWnd = GetDlgItem(hNext, ID_UNDOCKED_CONTAINER);               // Container für nicht angedockten Tester
+            hWnd = GetDlgItem(hNext, IDD_UNDOCKED_CONTAINER);              // Container für nicht angedockten Tester
             if (hWnd == 0)
                return(_NULL(catch("GetTesterWindow(2)   cannot find children of top-level Tester window")));
-            hWndTester = GetDlgItem(hWnd, ID_TESTER);
+            hWndTester = GetDlgItem(hWnd, IDD_TESTER);
             if (hWndTester == 0)
                return(_NULL(catch("GetTesterWindow(3)   cannot find sub-children of top-level Tester window")));
             break;

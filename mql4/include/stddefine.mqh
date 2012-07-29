@@ -403,131 +403,131 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size               128
-#define ORDER_EXECUTION.length              32     // Ceil(ORDER_EXECUTION.size/4)
+#define ORDER_EXECUTION.size                  128
+#define ORDER_EXECUTION.length                 32     // Ceil(ORDER_EXECUTION.size/4)
 
 
 // FindFileNames() flags
-#define FF_SORT                              1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
-#define FF_DIRSONLY                          2
-#define FF_FILESONLY                         4
+#define FF_SORT                                 1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
+#define FF_DIRSONLY                             2
+#define FF_FILESONLY                            4
 
 
 // MessageBox() flags
-#define MB_OK                       0x00000000     // buttons
-#define MB_OKCANCEL                 0x00000001
-#define MB_YESNO                    0x00000004
-#define MB_YESNOCANCEL              0x00000003
-#define MB_ABORTRETRYIGNORE         0x00000002
-#define MB_CANCELTRYCONTINUE        0x00000006
-#define MB_RETRYCANCEL              0x00000005
-#define MB_HELP                     0x00004000     // additional help button
+#define MB_OK                          0x00000000     // buttons
+#define MB_OKCANCEL                    0x00000001
+#define MB_YESNO                       0x00000004
+#define MB_YESNOCANCEL                 0x00000003
+#define MB_ABORTRETRYIGNORE            0x00000002
+#define MB_CANCELTRYCONTINUE           0x00000006
+#define MB_RETRYCANCEL                 0x00000005
+#define MB_HELP                        0x00004000     // additional help button
 
-#define MB_DEFBUTTON1               0x00000000     // default button
-#define MB_DEFBUTTON2               0x00000100
-#define MB_DEFBUTTON3               0x00000200
-#define MB_DEFBUTTON4               0x00000300
+#define MB_DEFBUTTON1                  0x00000000     // default button
+#define MB_DEFBUTTON2                  0x00000100
+#define MB_DEFBUTTON3                  0x00000200
+#define MB_DEFBUTTON4                  0x00000300
 
-#define MB_ICONEXCLAMATION          0x00000030     // icons
-#define MB_ICONWARNING      MB_ICONEXCLAMATION
-#define MB_ICONINFORMATION          0x00000040
-#define MB_ICONASTERISK     MB_ICONINFORMATION
-#define MB_ICONQUESTION             0x00000020
-#define MB_ICONSTOP                 0x00000010
-#define MB_ICONERROR               MB_ICONSTOP
-#define MB_ICONHAND                MB_ICONSTOP
-#define MB_USERICON                 0x00000080
+#define MB_ICONEXCLAMATION             0x00000030     // icons
+#define MB_ICONWARNING         MB_ICONEXCLAMATION
+#define MB_ICONINFORMATION             0x00000040
+#define MB_ICONASTERISK        MB_ICONINFORMATION
+#define MB_ICONQUESTION                0x00000020
+#define MB_ICONSTOP                    0x00000010
+#define MB_ICONERROR                  MB_ICONSTOP
+#define MB_ICONHAND                   MB_ICONSTOP
+#define MB_USERICON                    0x00000080
 
-#define MB_APPLMODAL                0x00000000     // modality
-#define MB_SYSTEMMODAL              0x00001000
-#define MB_TASKMODAL                0x00002000
+#define MB_APPLMODAL                   0x00000000     // modality
+#define MB_SYSTEMMODAL                 0x00001000
+#define MB_TASKMODAL                   0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY     0x00020000     // other
-#define MB_RIGHT                    0x00080000
-#define MB_RTLREADING               0x00100000
-#define MB_SETFOREGROUND            0x00010000
-#define MB_TOPMOST                  0x00040000
-#define MB_NOFOCUS                  0x00008000
-#define MB_SERVICE_NOTIFICATION     0x00200000
+#define MB_DEFAULT_DESKTOP_ONLY        0x00020000     // other
+#define MB_RIGHT                       0x00080000
+#define MB_RTLREADING                  0x00100000
+#define MB_SETFOREGROUND               0x00010000
+#define MB_TOPMOST                     0x00040000
+#define MB_NOFOCUS                     0x00008000
+#define MB_SERVICE_NOTIFICATION        0x00200000
 
 
 // MessageBox() return codes
-#define IDOK                                 1
-#define IDCANCEL                             2
-#define IDABORT                              3
-#define IDRETRY                              4
-#define IDIGNORE                             5
-#define IDYES                                6
-#define IDNO                                 7
-#define IDCLOSE                              8
-#define IDHELP                               9
-#define IDTRYAGAIN                          10
-#define IDCONTINUE                          11
+#define IDOK                                    1
+#define IDCANCEL                                2
+#define IDABORT                                 3
+#define IDRETRY                                 4
+#define IDIGNORE                                5
+#define IDYES                                   6
+#define IDNO                                    7
+#define IDCLOSE                                 8
+#define IDHELP                                  9
+#define IDTRYAGAIN                             10
+#define IDCONTINUE                             11
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                     1     // right pointing arrow (default open ticket marker)
-#define SYMBOL_ORDEROPEN_UP   SYMBOL_ORDEROPEN     // right pointing up arrow                               // ??? wird so nicht angezeigt
-#define SYMBOL_ORDEROPEN_DOWN                2     // right pointing down arrow                             // ??? wird so nicht angezeigt
-#define SYMBOL_ORDERCLOSE                    3     // left pointing arrow (default closed ticket marker)
+#define SYMBOL_ORDEROPEN                        1     // right pointing arrow (default open ticket marker)
+#define SYMBOL_ORDEROPEN_UP      SYMBOL_ORDEROPEN     // right pointing up arrow                               // ??? wird so nicht angezeigt
+#define SYMBOL_ORDEROPEN_DOWN                   2     // right pointing down arrow                             // ??? wird so nicht angezeigt
+#define SYMBOL_ORDERCLOSE                       3     // left pointing arrow (default closed ticket marker)
 
-#define SYMBOL_DASH                          4     // dash symbol (default stoploss and takeprofit marker)
-#define SYMBOL_LEFTPRICE                     5     // left sided price label
-#define SYMBOL_RIGHTPRICE                    6     // right sided price label
-#define SYMBOL_THUMBSUP                     67     // thumb up symbol
-#define SYMBOL_THUMBSDOWN                   68     // thumb down symbol
-#define SYMBOL_ARROWUP                     241     // arrow up symbol
-#define SYMBOL_ARROWDOWN                   242     // arrow down symbol
-#define SYMBOL_STOPSIGN                    251     // stop sign symbol
-#define SYMBOL_CHECKSIGN                   252     // check sign symbol
+#define SYMBOL_DASH                             4     // dash symbol (default stoploss and takeprofit marker)
+#define SYMBOL_LEFTPRICE                        5     // left sided price label
+#define SYMBOL_RIGHTPRICE                       6     // right sided price label
+#define SYMBOL_THUMBSUP                        67     // thumb up symbol
+#define SYMBOL_THUMBSDOWN                      68     // thumb down symbol
+#define SYMBOL_ARROWUP                        241     // arrow up symbol
+#define SYMBOL_ARROWDOWN                      242     // arrow down symbol
+#define SYMBOL_STOPSIGN                       251     // stop sign symbol
+#define SYMBOL_CHECKSIGN                      252     // check sign symbol
 
 
 // MT4 internal messages
-#define MT4_TICK                             2     // künstlicher Tick, führt start() aus
-#define MT4_COMPILE_REQUEST              12345
-#define MT4_COMPILE_PERMISSION           12346
-#define MT4_COMPILE_FINISHED             12349     // Rescan und Reload modifizierter .ex4-Files
+#define MT4_TICK                                2     // künstlicher Tick, führt start() aus
+#define MT4_COMPILE_REQUEST                 12345
+#define MT4_COMPILE_PERMISSION              12346
+#define MT4_COMPILE_FINISHED                12349     // Rescan und Reload modifizierter .ex4-Files
 
 
 // MT4 command ids (menu or accelerator identifier)
-#define ID_EXPERTS_ONOFF                 33020     // Toolbar: Experts on/off                    Ctrl+E
+#define IDC_EXPERTS_ONOFF                   33020     // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_STEPFORWARD             33197     // Chart: eine Bar vorwärts                      F12
-#define ID_CHART_STEPBACKWARD            33198     //        eine Bar rückwärts               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES       33048     //        Expert Properties-Dialog                F7
+#define IDC_CHART_STEPFORWARD               33197     // Chart: eine Bar vorwärts                      F12
+#define IDC_CHART_STEPBACKWARD              33198     //        eine Bar rückwärts               Shift+F12
+#define IDC_CHART_EXPERT_PROPERTIES         33048     //        Expert Properties-Dialog                F7
 
-#define ID_TESTER_TICK    ID_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
+#define IDC_TESTER_TICK     IDC_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
 
 
 // MT4 item ids (dialog or control identifier)
-#define ID_DOCKABLES_CONTAINER           59422     // window containing all child windows docked inside the main application window
-#define ID_UNDOCKED_CONTAINER            59423     // window containing undocked child windows (one per undocked child)
+#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked inside the main application window
+#define IDD_UNDOCKED_CONTAINER              59423     // window containing undocked child windows (one per undocked child)
 
-#define ID_MARKETWATCH                      80     // Market Watch
-#define ID_MARKETWATCH_SYMBOLS           35441     // Market Watch - Symbols
-#define ID_MARKETWATCH_TICKCHART         35442     // Market Watch - Tick Chart
+#define IDD_MARKETWATCH                        80     // Market Watch
+#define IDD_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
+#define IDD_MARKETWATCH_TICKCHART           35442     // Market Watch - Tick Chart
 
-#define ID_NAVIGATOR                        82     // Navigator
-#define ID_NAVIGATOR_COMMON              35439     // Navigator - Common
-#define ID_NAVIGATOR_FAVOURITES          35440     // Navigator - Favourites
+#define IDD_NAVIGATOR                          82     // Navigator
+#define IDD_NAVIGATOR_COMMON                35439     // Navigator - Common
+#define IDD_NAVIGATOR_FAVOURITES            35440     // Navigator - Favourites
 
-#define ID_TERMINAL                         81     // Terminal
-#define ID_TERMINAL_TRADE                33217     // Terminal - Trade
-#define ID_TERMINAL_ACCOUNTHISTORY       33208     // Terminal - Account History
-#define ID_TERMINAL_NEWS                 33211     // Terminal - News
-#define ID_TERMINAL_ALERTS               33206     // Terminal - Alerts
-#define ID_TERMINAL_MAILBOX              33210     // Terminal - Mailbox
-#define ID_TERMINAL_EXPERTS              35434     // Terminal - Experts
-#define ID_TERMINAL_JOURNAL              33209     // Terminal - Journal
+#define IDD_TERMINAL                           81     // Terminal
+#define IDD_TERMINAL_TRADE                  33217     // Terminal - Trade
+#define IDD_TERMINAL_ACCOUNTHISTORY         33208     // Terminal - Account History
+#define IDD_TERMINAL_NEWS                   33211     // Terminal - News
+#define IDD_TERMINAL_ALERTS                 33206     // Terminal - Alerts
+#define IDD_TERMINAL_MAILBOX                33210     // Terminal - Mailbox
+#define IDD_TERMINAL_EXPERTS                35434     // Terminal - Experts
+#define IDD_TERMINAL_JOURNAL                33209     // Terminal - Journal
 
-#define ID_TESTER                           83     // Tester
-#define ID_TESTER_SETTINGS               33215     // Tester - Settings
-#define ID_TESTER_PAUSERESUME             1402     // Tester - Settings Pause/Resume button
-#define ID_TESTER_STARTSTOP               1034     // Tester - Settings Start/Stop button
-#define ID_TESTER_RESULTS                33214     // Tester - Results
-#define ID_TESTER_GRAPH                  33207     // Tester - Graph
-#define ID_TESTER_REPORT                 33213     // Tester - Report
-#define ID_TESTER_JOURNAL  ID_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
+#define IDD_TESTER                             83     // Tester
+#define IDD_TESTER_SETTINGS                 33215     // Tester - Settings
+#define IDC_TESTER_PAUSERESUME               1402     // Tester - Settings Pause/Resume button
+#define IDC_TESTER_STARTSTOP                 1034     // Tester - Settings Start/Stop button
+#define IDD_TESTER_RESULTS                  33214     // Tester - Results
+#define IDD_TESTER_GRAPH                    33207     // Tester - Graph
+#define IDD_TESTER_REPORT                   33213     // Tester - Report
+#define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
 // MQL-Fehlercodes
