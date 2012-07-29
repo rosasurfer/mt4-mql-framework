@@ -549,6 +549,7 @@
 #define ERR_TRADE_TIMEOUT                                           128
 #define ERR_INVALID_PRICE                                           129    // Kurs bewegt sich zu schnell (aus dem Fenster)
 #define ERR_INVALID_STOPS                                           130
+#define ERR_INVALID_STOP                              ERR_INVALID_STOPS
 #define ERR_INVALID_TRADE_VOLUME                                    131
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133

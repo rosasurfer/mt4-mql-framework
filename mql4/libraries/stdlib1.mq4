@@ -1459,7 +1459,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_MALFUNCTIONAL_TRADE:          //        9   malfunctional trade operation
       case ERR_ACCOUNT_DISABLED:             //       64   account disabled
       case ERR_INVALID_ACCOUNT:              //       65   invalid account
-      case ERR_INVALID_STOPS:                //      130   invalid stop
+      case ERR_INVALID_STOP:                 //      130   invalid stop
       case ERR_INVALID_TRADE_VOLUME:         //      131   invalid trade volume
       case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
@@ -6429,7 +6429,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_ACCOUNT            : return("invalid account"                                               ); //   65
       case ERR_TRADE_TIMEOUT              : return("trade timeout"                                                 ); //  128
       case ERR_INVALID_PRICE              : return("invalid price"                                                 ); //  129 Kurs bewegt sich zu schnell (aus dem Fenster)
-      case ERR_INVALID_STOPS              : return("invalid stop"                                                  ); //  130
+      case ERR_INVALID_STOP               : return("invalid stop"                                                  ); //  130
       case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                          ); //  131
       case ERR_MARKET_CLOSED              : return("market is closed"                                              ); //  132
       case ERR_TRADE_DISABLED             : return("trading is disabled"                                           ); //  133
@@ -6568,7 +6568,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_ACCOUNT            : return("ERR_INVALID_ACCOUNT"            ); //   65
       case ERR_TRADE_TIMEOUT              : return("ERR_TRADE_TIMEOUT"              ); //  128
       case ERR_INVALID_PRICE              : return("ERR_INVALID_PRICE"              ); //  129
-      case ERR_INVALID_STOPS              : return("ERR_INVALID_STOPS"              ); //  130
+      case ERR_INVALID_STOP               : return("ERR_INVALID_STOP"               ); //  130
       case ERR_INVALID_TRADE_VOLUME       : return("ERR_INVALID_TRADE_VOLUME"       ); //  131
       case ERR_MARKET_CLOSED              : return("ERR_MARKET_CLOSED"              ); //  132
       case ERR_TRADE_DISABLED             : return("ERR_TRADE_DISABLED"             ); //  133
@@ -9704,20 +9704,20 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LE(price, ask))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOPS))));
-            if (LT(price - stopDistance*pips, ask)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
+            if (LE(price, ask))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
+            if (LT(price - stopDistance*pips, ask)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
          }
          else if (type == OP_SELLSTOP) {
-            if (GE(price, bid))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOPS))));
-            if (GT(price + stopDistance*pips, bid)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOPS))));
+            if (GE(price, bid))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
+            if (GT(price + stopDistance*pips, bid)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
          }
          price = NormalizeDouble(price, digits);
 
          if (NE(stopLoss, 0)) {
             if (IsLongTradeOperation(type)) {
-               if (GE(stopLoss, price))   return(_int(-1, oe.setError(oe, catch("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
+               if (GE(stopLoss, price))   return(_int(-1, oe.setError(oe, catch("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
             }
-            else if (LE(stopLoss, price)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOPS))));
+            else if (LE(stopLoss, price)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
          }
 
          time1  = GetTickCount();
