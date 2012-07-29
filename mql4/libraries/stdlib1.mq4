@@ -483,23 +483,6 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
- *
- * @return int - Fehlerstatus
- */
-int Tester.Pause() {
-   if (!This.IsTesting()) return(catch("Tester.Pause()   Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
-   if (!IsScript())
-      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
-
-   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
-   return(NO_ERROR);
-}
-
-
-/**
  * Ob der Tester momentan im Pause-Modus läuft. Der Aufruf ist nur im Tester möglich.
  *
  * @return bool
@@ -529,6 +512,56 @@ bool Tester.IsPaused() {
 
    return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
 }
+
+
+/**
+ * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return int - Fehlerstatus
+ */
+int Tester.Pause() {
+   if (!This.IsTesting()) return(catch("Tester.Pause()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
+   if (!IsScript())
+      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
+
+   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
+   return(NO_ERROR);
+}
+
+
+/**
+ * Stoppt den Tester. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return int - Fehlerstatus
+ */
+int Tester.Stop() {
+   if (!This.IsTesting()) return(catch("Tester.Stop()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (Tester.IsStopped())             return(NO_ERROR);             // skipping
+   if (!IsScript())
+      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
+
+   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ob der Tester momentan gestoppt ist. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return bool
+ */
+bool Tester.IsStopped() {
+   if (!This.IsTesting()) return(_false(catch("Tester.IsStopped()   Tester only function", ERR_FUNC_NOT_ALLOWED)));
+
+   if (IsScript()) {
+      int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
+      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start");            // muß im Script reichen
+   }
+   return(IsStopped() || __WHEREAMI__==FUNC_DEINIT);                                               // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+}                                                                                                  // zeitgleich zu EA:deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**

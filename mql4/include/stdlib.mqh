@@ -26,6 +26,7 @@
    string   ShortAccountCompany();
    bool     Tester.IsLogging();
    bool     Tester.IsPaused();
+   bool     Tester.IsStopped();
 
 
    // Terminal-Interaktionen
@@ -33,6 +34,7 @@
    int      Chart.Expert.Properties();
    int      Chart.SendTick(bool sound);
    int      Tester.Pause();
+   int      Tester.Stop();
 
 
    // Arrays
