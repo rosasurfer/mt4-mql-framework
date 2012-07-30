@@ -1078,7 +1078,7 @@ int log(string message, int error=NO_ERROR) {
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    if (__LOG_PER_INSTANCE)
-      if (logInstance(StringConcatenate(__NAME__, "::", message)))         // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (logToInstanceLog(StringConcatenate(__NAME__, "::", message)))    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
          return(error);
 
    string name = __NAME__;
@@ -1100,7 +1100,7 @@ int log(string message, int error=NO_ERROR) {
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
  */
-bool logInstance(string message) {
+bool logToInstanceLog(string message) {
    bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
    int id = InstanceId(NULL);
    if (id == NULL)
@@ -1112,18 +1112,18 @@ bool logInstance(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_PER_INSTANCE = false; catch("logInstance(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_PER_INSTANCE = false; catch("logInstance(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_PER_INSTANCE = false; catch("logInstance(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1163,7 +1163,7 @@ int warn(string message, int error=NO_ERROR) {
    // (2) Logging
    bool logged, alerted;
    if (__LOG_PER_INSTANCE)
-      logged = logInstance(StringConcatenate("WARN: ", __NAME__, "::", message));                     // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      logged = logToInstanceLog(StringConcatenate("WARN: ", __NAME__, "::", message));                // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);           // loggt automatisch, ggf. mit Instanz-ID
       alerted = true;
@@ -1226,7 +1226,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // (2) Logging
       bool logged, alerted;
       if (__LOG_PER_INSTANCE)
-         logged = logInstance(StringConcatenate("ERROR: ", __NAME__, "::", message));                    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         logged = logToInstanceLog(StringConcatenate("ERROR: ", __NAME__, "::", message));               // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);          // loggt automatisch, ggf. mit Instanz-ID
          alerted = true;
