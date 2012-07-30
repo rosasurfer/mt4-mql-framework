@@ -6413,21 +6413,21 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 /**
  * Gibt den Wochentag des angegebenen Zeitpunkts zurück.
  *
- * @param  datetime time - Zeitpunkt
- * @param  bool     long - TRUE, um die Langform zurückzugeben (default)
- *                         FALSE, um die Kurzform zurückzugeben
+ * @param  datetime time       - Zeitpunkt
+ * @param  bool     longFormat - TRUE, um die Langform zurückzugeben (default)
+ *                               FALSE, um die Kurzform zurückzugeben
  *
  * @return string - Wochentag
  */
-string GetDayOfWeek(datetime time, bool long=true) {
+string GetDayOfWeek(datetime time, bool longFormat=true) {
    if (time < 0)
-      return(_empty(catch("GetDayOfWeek(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetDayOfWeek(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
    string day = weekDays[TimeDayOfWeek(time)];
 
-   if (!long)
+   if (!longFormat)
       day = StringSubstr(day, 0, 3);
 
    return(day);

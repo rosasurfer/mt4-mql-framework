@@ -196,7 +196,7 @@
    datetime GetServerNextSessionStartTime(datetime serverTime);   // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime GetServerNextSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   string   GetDayOfWeek(datetime time, bool format);
+   string   GetDayOfWeek(datetime time, bool longFormat);
    datetime TimeGMT();
 
 
