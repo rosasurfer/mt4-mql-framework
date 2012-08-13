@@ -9407,77 +9407,83 @@ string NumberToStr(double number, string mask) {
  *    DWORD nError;              //   4      => oe[ 0]         // Fehlercode
  *    TCHAR cSymbol;             //  16      => oe[ 1]         // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
  *    DWORD nDigits;             //   4      => oe[ 5]         // Digits des Ordersymbols
- *    DWORD nBid;                //   4      => oe[ 6]         // Bid-Preis vor Ausführung in Points
- *    DWORD nAsk;                //   4      => oe[ 7]         // Ask-Preis vor Ausführung in Points
- *    DWORD nTicket;             //   4      => oe[ 8]         // aktuelles Ticket
- *    DWORD nType;               //   4      => oe[ 9]         // Operation-Type
- *    DWORD nLots;               //   4      => oe[10]         // Ordervolumen in Hundertsteln eines Lots
- *    DWORD nOpenTime;           //   4      => oe[11]         // OrderOpenTime
- *    DWORD nOpenPrice;          //   4      => oe[12]         // OpenPrice in Points
- *    DWORD nStopLoss;           //   4      => oe[13]         // StopLoss-Preis in Points
- *    DWORD nTakeProfit;         //   4      => oe[14]         // TakeProfit-Preis in Points
- *    DWORD nCloseTime;          //   4      => oe[15]         // OrderCloseTime
- *    DWORD nClosePrice;         //   4      => oe[16]         // ClosePrice in Points
- *    DWORD nSwap;               //   4      => oe[17]         // Swap-Betrag in Hundertsteln der Account-Währung
- *    DWORD nCommission;         //   4      => oe[18]         // Commission-Betrag in Hundertsteln der Account-Währung
- *    DWORD nProfit;             //   4      => oe[19]         // Profit in Hundertsteln der Account-Währung
- *    TCHAR cComment;            //  28      => oe[20]         // Orderkommentar, bis zu 27 Zeichen + NUL
- *    DWORD nDuration;           //   4      => oe[27]         // Dauer der Auführung in Millisekunden
- *    DWORD nRequotes;           //   4      => oe[28]         // Anzahl aufgetretener Requotes
- *    DWORD nSlippage;           //   4      => oe[29]         // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
- *    DWORD nRemainingTicket;    //   4      => oe[30]         // zusätzlich erzeugtes, verbleibendes Ticket
- *    DWORD nRemainingLots;      //   4      => oe[31]         // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
- * } ORDER_EXECUTION, oe;        // 128 byte = int[32]
+ *    DWORD nStopDistance;       //   4      => oe[ 6]         // Stop-Distance in Points
+ *    DWORD nFreezeDistance;     //   4      => oe[ 7]         // Freeze-Distance in Points
+ *    DWORD nBid;                //   4      => oe[ 8]         // Bid-Preis vor Ausführung in Points
+ *    DWORD nAsk;                //   4      => oe[ 9]         // Ask-Preis vor Ausführung in Points
+ *    DWORD nTicket;             //   4      => oe[10]         // aktuelles Ticket
+ *    DWORD nType;               //   4      => oe[11]         // Operation-Type
+ *    DWORD nLots;               //   4      => oe[12]         // Ordervolumen in Hundertsteln eines Lots
+ *    DWORD nOpenTime;           //   4      => oe[13]         // OrderOpenTime
+ *    DWORD nOpenPrice;          //   4      => oe[14]         // OpenPrice in Points
+ *    DWORD nStopLoss;           //   4      => oe[15]         // StopLoss-Preis in Points
+ *    DWORD nTakeProfit;         //   4      => oe[16]         // TakeProfit-Preis in Points
+ *    DWORD nCloseTime;          //   4      => oe[17]         // OrderCloseTime
+ *    DWORD nClosePrice;         //   4      => oe[18]         // ClosePrice in Points
+ *    DWORD nSwap;               //   4      => oe[19]         // Swap-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nCommission;         //   4      => oe[20]         // Commission-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nProfit;             //   4      => oe[21]         // Profit in Hundertsteln der Account-Währung
+ *    TCHAR cComment;            //  28      => oe[22]         // Orderkommentar, bis zu 27 Zeichen + NUL
+ *    DWORD nDuration;           //   4      => oe[29]         // Dauer der Auführung in Millisekunden
+ *    DWORD nRequotes;           //   4      => oe[30]         // Anzahl aufgetretener Requotes
+ *    DWORD nSlippage;           //   4      => oe[31]         // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    DWORD nRemainingTicket;    //   4      => oe[32]         // zusätzlich erzeugtes, verbleibendes Ticket
+ *    DWORD nRemainingLots;      //   4      => oe[33]         // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
+ * } ORDER_EXECUTION, oe;        // 136 byte = int[34]
  */
 
 // Getter
-int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 0]);                                 }
-string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                              return(BufferCharsToStr(oe, 4, 12));                             }
-int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 5]);                                 }
-double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 6]/MathPow(10, digits), digits));    }
-double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 7]/MathPow(10, digits), digits));    }
-int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 8]);                                 }
-int      oe.Type               (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 9]);                                 }
-double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[10]/100.0, 2));                       }
-datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[11]);                                 }
-double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[12]/MathPow(10, digits), digits));    }
-double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[13]/MathPow(10, digits), digits));    }
-double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[14]/MathPow(10, digits), digits));    }
-datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[15]);                                 }
-double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[16]/MathPow(10, digits), digits));    }
-double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[17]/100.0, 2));                       }
-double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[18]/100.0, 2));                       }
-double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[19]/100.0, 2));                       }
-string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                              return(BufferCharsToStr(oe, 80, 27));                            }
-int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[27]);                                 }
-int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[28]);                                 }
-double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);                     return(oe[29]/MathPow(10, digits<<31>>31));     }
-int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[30]);                                 }
-double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[31]/100.0, 2));                       }
+int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 0]);                                                 }
+string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) { /*!!!*/                      return(BufferCharsToStr(oe, 4, 12));                                             }
+int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 5]);                                                 }
+double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 6]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
+double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 7]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
+double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 8]/MathPow(10, digits), digits));                    }
+double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 9]/MathPow(10, digits), digits));                    }
+int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[10]);                                                 }
+int      oe.Type               (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[11]);                                                 }
+double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[12]/100.0, 2));                                       }
+datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[13]);                                                 }
+double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[14]/MathPow(10, digits), digits));                    }
+double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[15]/MathPow(10, digits), digits));                    }
+double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[16]/MathPow(10, digits), digits));                    }
+datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[17]);                                                 }
+double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[18]/MathPow(10, digits), digits));                    }
+double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[19]/100.0, 2));                                       }
+double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[20]/100.0, 2));                                       }
+double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[21]/100.0, 2));                                       }
+string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) { /*!!!*/                      return(BufferCharsToStr(oe, 88, 27));                                            }
+int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[29]);                                                 }
+int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[30]);                                                 }
+double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[31]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
+int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[32]);                                                 }
+double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[33]/100.0, 2));                                       }
 
-int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 0]);                              }
-string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                              return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 4, 12));     }
-int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 5]);                              }
-double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 6]/MathPow(10, digits), digits)); }
-double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 7]/MathPow(10, digits), digits)); }
-int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 8]);                              }
-int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 9]);                              }
-double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][10]/100.0, 2));                    }
-datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][11]);                              }
-double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][12]/MathPow(10, digits), digits)); }
-double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][13]/MathPow(10, digits), digits)); }
-double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][14]/MathPow(10, digits), digits)); }
-datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][15]);                              }
-double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][16]/MathPow(10, digits), digits)); }
-double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][17]/100.0, 2));                    }
-double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][18]/100.0, 2));                    }
-double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][19]/100.0, 2));                    }
-string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                              return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 80, 27));    }
-int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][27]);                              }
-int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][28]);                              }
-double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i);                 return(oe[i][29]/MathPow(10, digits<<31>>31));  }
-int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][30]);                              }
-double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][31]/100.0, 2));                    }
+int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 0]);                                              }
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) { /*!!!*/                      return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 4, 12));                     }
+int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 5]);                                              }
+double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 6]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
+double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 7]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
+double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 8]/MathPow(10, digits), digits));                 }
+double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 9]/MathPow(10, digits), digits));                 }
+int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][10]);                                              }
+int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][11]);                                              }
+double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][12]/100.0, 2));                                    }
+datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][13]);                                              }
+double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][14]/MathPow(10, digits), digits));                 }
+double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][15]/MathPow(10, digits), digits));                 }
+double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][16]/MathPow(10, digits), digits));                 }
+datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][17]);                                              }
+double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][18]/MathPow(10, digits), digits));                 }
+double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][19]/100.0, 2));                                    }
+double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][20]/100.0, 2));                                    }
+double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][21]/100.0, 2));                                    }
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) { /*!!!*/                      return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 88, 27));                    }
+int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][29]);                                              }
+int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][30]);                                              }
+double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][31]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
+int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][32]);                                              }
+double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][33]/100.0, 2));                                    }
 
 // Setter
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                    return(error     ); }
@@ -9486,31 +9492,33 @@ string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   
    if (StringLen(symbol) > 12) return(_empty(catch("oe.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (IsError(BufferSetString(oe, 4, symbol))) return("");                                                                                                         return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                   return(digits    ); }
-double   oe.setBid             (/*ORDER_EXECUTION*/int &oe[],          double   bid       ) { oe[ 6]    = Round(bid * MathPow(10, oe.Digits(oe)));                  return(bid       ); }
-double   oe.setAsk             (/*ORDER_EXECUTION*/int &oe[],          double   ask       ) { oe[ 7]    = Round(ask * MathPow(10, oe.Digits(oe)));                  return(ask       ); }
-int      oe.setTicket          (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[ 8]    = ticket;                                                   return(ticket    ); }
-int      oe.setType            (/*ORDER_EXECUTION*/int &oe[],          int      type      ) { oe[ 9]    = type;                                                     return(type      ); }
-double   oe.setLots            (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[10]    = Round(lots * 100);                                        return(lots      ); }
-datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int &oe[],          datetime openTime  ) { oe[11]    = openTime;                                                 return(openTime  ); }
-double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int &oe[],          double   openPrice ) { oe[12]    = Round(openPrice * MathPow(10, oe.Digits(oe)));            return(openPrice ); }
-double   oe.setStopLoss        (/*ORDER_EXECUTION*/int &oe[],          double   stopLoss  ) { oe[13]    = Round(stopLoss * MathPow(10, oe.Digits(oe)));             return(stopLoss  ); }
-double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int &oe[],          double   takeProfit) { oe[14]    = Round(takeProfit * MathPow(10, oe.Digits(oe)));           return(takeProfit); }
-datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int &oe[],          datetime closeTime ) { oe[15]    = closeTime;                                                return(closeTime ); }
-double   oe.setClosePrice      (/*ORDER_EXECUTION*/int &oe[],          double   closePrice) { oe[16]    = Round(closePrice * MathPow(10, oe.Digits(oe)));           return(closePrice); }
-double   oe.setSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[17]    = Round(swap * 100);                                        return(swap      ); }
-double   oe.addSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[17]   += Round(swap * 100);                                        return(swap      ); }
-double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[18]    = Round(comission * 100);                                   return(comission ); }
-double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[18]   += Round(comission * 100);                                   return(comission ); }
-double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[19]    = Round(profit * 100);                                      return(profit    ); }
-double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[19]   += Round(profit * 100);                                      return(profit    ); }
+double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = Round(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
+double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 7]    = Round(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
+double   oe.setBid             (/*ORDER_EXECUTION*/int &oe[],          double   bid       ) { oe[ 8]    = Round(bid * MathPow(10, oe.Digits(oe)));                  return(bid       ); }
+double   oe.setAsk             (/*ORDER_EXECUTION*/int &oe[],          double   ask       ) { oe[ 9]    = Round(ask * MathPow(10, oe.Digits(oe)));                  return(ask       ); }
+int      oe.setTicket          (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[10]    = ticket;                                                   return(ticket    ); }
+int      oe.setType            (/*ORDER_EXECUTION*/int &oe[],          int      type      ) { oe[11]    = type;                                                     return(type      ); }
+double   oe.setLots            (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[12]    = Round(lots * 100);                                        return(lots      ); }
+datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int &oe[],          datetime openTime  ) { oe[13]    = openTime;                                                 return(openTime  ); }
+double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int &oe[],          double   openPrice ) { oe[14]    = Round(openPrice * MathPow(10, oe.Digits(oe)));            return(openPrice ); }
+double   oe.setStopLoss        (/*ORDER_EXECUTION*/int &oe[],          double   stopLoss  ) { oe[15]    = Round(stopLoss * MathPow(10, oe.Digits(oe)));             return(stopLoss  ); }
+double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int &oe[],          double   takeProfit) { oe[16]    = Round(takeProfit * MathPow(10, oe.Digits(oe)));           return(takeProfit); }
+datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int &oe[],          datetime closeTime ) { oe[17]    = closeTime;                                                return(closeTime ); }
+double   oe.setClosePrice      (/*ORDER_EXECUTION*/int &oe[],          double   closePrice) { oe[18]    = Round(closePrice * MathPow(10, oe.Digits(oe)));           return(closePrice); }
+double   oe.setSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[19]    = Round(swap * 100);                                        return(swap      ); }
+double   oe.addSwap            (/*ORDER_EXECUTION*/int &oe[],          double   swap      ) { oe[19]   += Round(swap * 100);                                        return(swap      ); }
+double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[20]    = Round(comission * 100);                                   return(comission ); }
+double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[20]   += Round(comission * 100);                                   return(comission ); }
+double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]    = Round(profit * 100);                                      return(profit    ); }
+double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]   += Round(profit * 100);                                      return(profit    ); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (StringLen(comment) > 27) return(_empty(catch("oe.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (IsError(BufferSetString(oe, 80, comment))) return("");                                                                                                       return(comment   ); }
-int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[27]    = milliSec;                                                 return(milliSec  ); }
-int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[28]    = requotes;                                                 return(requotes  ); }
-double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[29]    = Round(slippage * MathPow(10, oe.Digits(oe)<<31>>31));     return(slippage  ); }
-int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[30]    = ticket;                                                   return(ticket    ); }
-double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[31]    = Round(lots * 100);                                        return(lots      ); }
+   if (IsError(BufferSetString(oe, 88, comment))) return("");                                                                                                       return(comment   ); }
+int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                 return(milliSec  ); }
+int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                 return(requotes  ); }
+double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[31]    = Round(slippage * MathPow(10, oe.Digits(oe)<<31>>31));     return(slippage  ); }
+int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int &oe[],          int      ticket    ) { oe[32]    = ticket;                                                   return(ticket    ); }
+double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int &oe[],          double   lots      ) { oe[33]    = Round(lots * 100);                                        return(lots      ); }
 
 int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error) {
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][ 0] = error;                                                    return(error     ); }
@@ -9520,31 +9528,33 @@ string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   
    if (StringLen(symbol) > 12) return(_empty(catch("oes.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 4, symbol))) return("");                                                                                 return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                   return(digits    ); }
-double   oes.setBid            (/*ORDER_EXECUTION*/int &oe[][], int i, double   bid       ) { oe[i][ 6] = Round(bid * MathPow(10, oes.Digits(oe, i)));              return(bid       ); }
-double   oes.setAsk            (/*ORDER_EXECUTION*/int &oe[][], int i, double   ask       ) { oe[i][ 7] = Round(ask * MathPow(10, oes.Digits(oe, i)));              return(ask       ); }
-int      oes.setTicket         (/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][ 8] = ticket;                                                   return(ticket    ); }
-int      oes.setType           (/*ORDER_EXECUTION*/int &oe[][], int i, int      type      ) { oe[i][ 9] = type;                                                     return(type      ); }
-double   oes.setLots           (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][10] = Round(lots * 100);                                        return(lots      ); }
-datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int &oe[][], int i, datetime openTime  ) { oe[i][11] = openTime;                                                 return(openTime  ); }
-double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int &oe[][], int i, double   openPrice ) { oe[i][12] = Round(openPrice * MathPow(10, oes.Digits(oe, i)));        return(openPrice ); }
-double   oes.setStopLoss       (/*ORDER_EXECUTION*/int &oe[][], int i, double   stopLoss  ) { oe[i][13] = Round(stopLoss * MathPow(10, oes.Digits(oe, i)));         return(stopLoss  ); }
-double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int &oe[][], int i, double   takeProfit) { oe[i][14] = Round(takeProfit * MathPow(10, oes.Digits(oe, i)));       return(takeProfit); }
-datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int &oe[][], int i, datetime closeTime ) { oe[i][15] = closeTime;                                                return(closeTime ); }
-double   oes.setClosePrice     (/*ORDER_EXECUTION*/int &oe[][], int i, double   closePrice) { oe[i][16] = Round(closePrice * MathPow(10, oes.Digits(oe, i)));       return(closePrice); }
-double   oes.setSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][17] = Round(swap * 100);                                        return(swap      ); }
-double   oes.addSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][17]+= Round(swap * 100);                                        return(swap      ); }
-double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][18] = Round(comission * 100);                                   return(comission ); }
-double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][18]+= Round(comission * 100);                                   return(comission ); }
-double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][19] = Round(profit * 100);                                      return(profit    ); }
-double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][19]+= Round(profit * 100);                                      return(profit    ); }
+double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = Round(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
+double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 7] = Round(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
+double   oes.setBid            (/*ORDER_EXECUTION*/int &oe[][], int i, double   bid       ) { oe[i][ 8] = Round(bid * MathPow(10, oes.Digits(oe, i)));              return(bid       ); }
+double   oes.setAsk            (/*ORDER_EXECUTION*/int &oe[][], int i, double   ask       ) { oe[i][ 9] = Round(ask * MathPow(10, oes.Digits(oe, i)));              return(ask       ); }
+int      oes.setTicket         (/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][10] = ticket;                                                   return(ticket    ); }
+int      oes.setType           (/*ORDER_EXECUTION*/int &oe[][], int i, int      type      ) { oe[i][11] = type;                                                     return(type      ); }
+double   oes.setLots           (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][12] = Round(lots * 100);                                        return(lots      ); }
+datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int &oe[][], int i, datetime openTime  ) { oe[i][13] = openTime;                                                 return(openTime  ); }
+double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int &oe[][], int i, double   openPrice ) { oe[i][14] = Round(openPrice * MathPow(10, oes.Digits(oe, i)));        return(openPrice ); }
+double   oes.setStopLoss       (/*ORDER_EXECUTION*/int &oe[][], int i, double   stopLoss  ) { oe[i][15] = Round(stopLoss * MathPow(10, oes.Digits(oe, i)));         return(stopLoss  ); }
+double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int &oe[][], int i, double   takeProfit) { oe[i][16] = Round(takeProfit * MathPow(10, oes.Digits(oe, i)));       return(takeProfit); }
+datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int &oe[][], int i, datetime closeTime ) { oe[i][17] = closeTime;                                                return(closeTime ); }
+double   oes.setClosePrice     (/*ORDER_EXECUTION*/int &oe[][], int i, double   closePrice) { oe[i][18] = Round(closePrice * MathPow(10, oes.Digits(oe, i)));       return(closePrice); }
+double   oes.setSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][19] = Round(swap * 100);                                        return(swap      ); }
+double   oes.addSwap           (/*ORDER_EXECUTION*/int &oe[][], int i, double   swap      ) { oe[i][19]+= Round(swap * 100);                                        return(swap      ); }
+double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][20] = Round(comission * 100);                                   return(comission ); }
+double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][20]+= Round(comission * 100);                                   return(comission ); }
+double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21] = Round(profit * 100);                                      return(profit    ); }
+double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21]+= Round(profit * 100);                                      return(profit    ); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (StringLen(comment) > 27) return(_empty(catch("oes.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 80, comment))) return("");                                                                               return(comment   ); }
-int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][27] = milliSec;                                                 return(milliSec  ); }
-int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][28] = requotes;                                                 return(requotes  ); }
-double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][29] = Round(slippage * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(slippage  ); }
-int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][30] = ticket;                                                   return(ticket    ); }
-double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][31] = Round(lots * 100);                                        return(lots      ); }
+   if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 88, comment))) return("");                                                                               return(comment   ); }
+int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                 return(milliSec  ); }
+int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                 return(requotes  ); }
+double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][31] = Round(slippage * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(slippage  ); }
+int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int &oe[][], int i, int      ticket    ) { oe[i][32] = ticket;                                                   return(ticket    ); }
+double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   lots      ) { oe[i][33] = Round(lots * 100);                                        return(lots      ); }
 
 
 /**
@@ -9572,6 +9582,8 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
       line        = StringConcatenate("{error="          ,       ifString(IsNoError(oe.Error          (oe)), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
                                      ", symbol=\""       ,                          oe.Symbol         (oe), "\"",
                                      ", digits="         ,                          oe.Digits         (oe),
+                                     ", stopDistance="   ,              DoubleToStr(oe.StopDistance   (oe), 1),
+                                     ", freezeDistance=" ,              DoubleToStr(oe.FreezeDistance (oe), 1),
                                      ", bid="            ,              NumberToStr(oe.Bid            (oe), priceFormat),
                                      ", ask="            ,              NumberToStr(oe.Ask            (oe), priceFormat),
                                      ", ticket="         ,                          oe.Ticket         (oe),
@@ -9607,6 +9619,8 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
          line        = StringConcatenate("[", i, "]={error="          ,       ifString(IsNoError(oes.Error          (oe, i)), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
                                                   ", symbol=\""       ,                          oes.Symbol         (oe, i), "\"",
                                                   ", digits="         ,                          oes.Digits         (oe, i),
+                                                  ", stopDistance="   ,              DoubleToStr(oes.StopDistance   (oe, i), 1),
+                                                  ", freezeDistance=" ,              DoubleToStr(oes.FreezeDistance (oe, i), 1),
                                                   ", bid="            ,              NumberToStr(oes.Bid            (oe, i), priceFormat),
                                                   ", ask="            ,              NumberToStr(oes.Ask            (oe, i), priceFormat),
                                                   ", ticket="         ,                          oes.Ticket         (oe, i),
@@ -9675,6 +9689,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = Round(slippage * pipPoints);
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
+   double freezeDistance = MarketInfo(symbol, MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
    if (IsError(error))                                         return(_int(-1, oe.setError(oe, catch("OrderSendEx(1)   symbol=\""+ symbol +"\"", error))));
@@ -9690,12 +9705,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(7)   illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE))));
    // slippage
    if (LT(slippage, 0))                                        return(_int(-1, oe.setError(oe, catch("OrderSendEx(8)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE))));
-   // stopLoss
+   // stopLoss (Validierung von StopDistance erfolgt später)
    if (LT(stopLoss, 0))                                        return(_int(-1, oe.setError(oe, catch("OrderSendEx(9)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE))));
-   stopLoss = NormalizeDouble(stopLoss, digits);
+   stopLoss = NormalizeDouble(stopLoss, digits);               // StopDistance-Validierung erfolgt später
    // takeProfit
    if (NE(takeProfit, 0))                                      return(_int(-1, oe.setError(oe, catch("OrderSendEx(10)   submission of take-profit orders not yet implemented", ERR_INVALID_FUNCTION_PARAMVALUE))));
-   takeProfit = NormalizeDouble(takeProfit, digits);
+   takeProfit = NormalizeDouble(takeProfit, digits);           // StopDistance-Validierung erfolgt später
    // comment
    if (comment == "0")     // = NULL
       comment = "";
@@ -9706,11 +9721,13 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, oe.setError(oe, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE))));
    // oe
    ArrayInitialize(oe, 0);
-   oe.setSymbol   (oe, symbol );
-   oe.setDigits   (oe, digits );
-   oe.setType     (oe, type   );
-   oe.setLots     (oe, lots   );
-   oe.setComment  (oe, comment);
+   oe.setSymbol        (oe, symbol        );
+   oe.setDigits        (oe, digits        );
+   oe.setStopDistance  (oe, stopDistance  );
+   oe.setFreezeDistance(oe, freezeDistance);
+   oe.setType          (oe, type          );
+   oe.setLots          (oe, lots          );
+   oe.setComment       (oe, comment       );
    // -- Ende Parametervalidierung --
 
    int ticket, firstTime1=GetTickCount(), time1, requotes;
@@ -9718,14 +9735,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
-      error = NO_ERROR;
-
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
          Sleep(300);                                                                      // 0.3 Sekunden warten
       }
       else {
-         // zu verwendenden OpenPrice bestimmen und ggf. StopDistance validieren
+         // OpenPrice <> StopDistance validieren
          double bid = MarketInfo(symbol, MODE_BID);
          double ask = MarketInfo(symbol, MODE_ASK);
          if (time1 == 0) {
@@ -9735,21 +9750,36 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if      (type == OP_BUY    ) price = ask;
          else if (type == OP_SELL   ) price = bid;
          else if (type == OP_BUYSTOP) {
-            if (LE(price, ask))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
-            if (LT(price - stopDistance*pips, ask)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
+            if (LE(price, ask))                                  return(_int(-1, oe.setError(oe, catch("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
+            if (LT(price - stopDistance*pips, ask))              return(_int(-1, oe.setError(oe, catch("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
          }
          else if (type == OP_SELLSTOP) {
-            if (GE(price, bid))                     return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
-            if (GT(price + stopDistance*pips, bid)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
+            if (GE(price, bid))                                  return(_int(-1, oe.setError(oe, catch("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP))));
+            if (GT(price + stopDistance*pips, bid))              return(_int(-1, oe.setError(oe, catch("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
          }
          price = NormalizeDouble(price, digits);
 
+         // StopLoss <> StopDistance validieren
          if (NE(stopLoss, 0)) {
             if (IsLongTradeOperation(type)) {
-               if (GE(stopLoss, price))   return(_int(-1, oe.setError(oe, catch("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
+               if (GE(stopLoss, price))                          return(_int(-1, oe.setError(oe, catch("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
+               if (type == OP_BUY) {
+                  if (GE(stopLoss, bid))                         return(_int(-1, oe.setError(oe, catch("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP))));
+                  if (GT(stopLoss, bid - stopDistance*pips))     return(_int(-1, oe.setError(oe, catch("OrderSendEx(20)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
+               }
+               else if (GT(stopLoss, price - stopDistance*pips)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(21)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
             }
-            else if (LE(stopLoss, price)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
+            else /*short*/ {
+               if (LE(stopLoss, price))                          return(_int(-1, oe.setError(oe, catch("OrderSendEx(22)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP))));
+               if (type == OP_SELL) {
+                  if (LE(stopLoss, ask))                         return(_int(-1, oe.setError(oe, catch("OrderSendEx(23)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP))));
+                  if (LT(stopLoss, ask + stopDistance*pips))     return(_int(-1, oe.setError(oe, catch("OrderSendEx(24)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
+               }
+               else if (LT(stopLoss, price + stopDistance*pips)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(25)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP))));
+            }
          }
+
+         // TakeProfit <> StopDistance validieren
 
          time1  = GetTickCount();
          ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
@@ -9757,11 +9787,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
 
          if (ticket > 0) {
-            OrderPush("OrderSendEx(20)");
+            OrderPush("OrderSendEx(26)");
             WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
 
             if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(21)")));
+               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(27)")));
 
             oe.setTicket    (oe, ticket           );
             oe.setOpenTime  (oe, OrderOpenTime()  );
@@ -9772,20 +9802,25 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, 0                );                                      // 0, egal was der Server meldet
             oe.setRequotes  (oe, requotes         );
-               if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - oe.Ask(oe);
-               else if (OrderType() == OP_SELL) slippage = oe.Bid(oe) - OrderOpenPrice();
+               if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - ask;
+               else if (OrderType() == OP_SELL) slippage = bid - OrderOpenPrice();
                else                             slippage = 0;
             oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits<<31>>31));           // Gesamtslippage nach Requotes in Pip
 
-            if (__LOG) log(StringConcatenate("OrderSendEx()   ", OrderSendEx.LogMessage(oe)));
+            if (__LOG) log(StringConcatenate("OrderSendEx()   ", OrderSendEx.SuccessMsg(oe)));
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
-            if (IsError(catch("OrderSendEx(22)", NULL, O_POP)))
+            if (IsError(catch("OrderSendEx(28)", NULL, O_POP)))
                return(_int(-1, oe.setError(oe, last_error)));
             return(ticket);                                                               // regular exit
          }
+
          error = GetLastError();
+         oe.setError     (oe, error     );
+         oe.setOpenPrice (oe, price     );                                                // Soll-Daten für Error-Messages
+         oe.setStopLoss  (oe, stopLoss  );
+         oe.setTakeProfit(oe, takeProfit);
 
          if (error == ERR_REQUOTE) {
             requotes++;
@@ -9795,27 +9830,30 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             continue;                                                                     // nach ERR_REQUOTE Order sofort wiederholen
          }
          if (IsNoError(error))
-            error = ERR_RUNTIME_ERROR;
+            error = oe.setError(oe, ERR_RUNTIME_ERROR);
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderSendEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(!requotes, "", StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s"))), ", retrying..."), error);
+         warn(StringConcatenate("OrderSendEx(29)   ", OrderSendEx.TempTradeErrorMsg(oe)), error);
       }
    }
-   return(_int(-1, oe.setError(oe, catch("OrderSendEx(23)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(!requotes, "", " and "+ requotes +" requote"+ ifString(requotes==1, "", "s")), error))));
+   return(_int(-1, catch("OrderSendEx(30)   "+ OrderSendEx.PermTradeErrorMsg(oe), error)));
 }
 
 
 /**
- * Generiert eine ausführliche Logmessage für OrderSendEx().
+ * Logmessage für OrderSendEx().
  *
  * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
  *
  * @return string
  */
-/*private*/ string OrderSendEx.LogMessage(/*ORDER_EXECUTION*/int oe[]) {
+/*private*/ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+   //"opened #1 Buy 0.5 GBPUSD at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)"
+
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
@@ -9839,6 +9877,66 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          message = StringConcatenate(message, "s");
    }
    return(StringConcatenate(message, strSlippage));
+}
+
+
+/**
+ * Logmessage für OrderSendEx().
+ *
+ * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ *
+ * @return string
+ */
+/*private*/ string OrderSendEx.TempTradeErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+   //"temporary trade error after 0.345 s and 1 requote, retrying..."
+
+   string message = StringConcatenate("temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
+
+   int requotes = oe.Requotes(oe);
+   if (requotes > 0) {
+      message = StringConcatenate(message, " and ", requotes, " requote");
+      if (requotes > 1)
+         message = StringConcatenate(message, "s");
+   }
+   return(StringConcatenate(message, ", retrying..."));
+}
+
+
+/**
+ * Logmessage für OrderSendEx().
+ *
+ * @param  int oe[] - Ausführungsdetails (ORDER_EXECUTION)
+ *
+ * @return string
+ */
+/*private*/ string OrderSendEx.PermTradeErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+   //"permanent trade error while trying to Buy 0.5 GBPUSD at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote"
+
+   int    digits       = oe.Digits(oe);
+   int    pipDigits    = digits & (~1);
+   string priceFormat  = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+
+   string strType      = OperationTypeDescription(oe.Type(oe));
+   string strLots      = NumberToStr(oe.Lots     (oe), ".+"       );
+   string strPrice     = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string strBid       = NumberToStr(oe.Bid      (oe), priceFormat);
+   string strAsk       = NumberToStr(oe.Ask      (oe), priceFormat);
+
+   string message = StringConcatenate("permanent trade error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " (market ", strBid, "/", strAsk, ")");
+
+   if (NE(oe.StopLoss  (oe), 0))         message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
+   if (NE(oe.TakeProfit(oe), 0))         message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
+   if (oe.Error(oe) == ERR_INVALID_STOP) message = StringConcatenate(message, ", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
+
+   message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
+
+   int requotes = oe.Requotes(oe);
+   if (requotes > 0) {
+      message = StringConcatenate(message, " and ", requotes, " requote");
+      if (requotes > 1)
+         message = StringConcatenate(message, "s");
+   }
+   return(message);
 }
 
 
@@ -10036,10 +10134,10 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderModifyEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
+         warn(StringConcatenate("OrderModifyEx(14)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
-   return(_false(oe.setError(oe, catch("OrderModifyEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderModifyEx(15)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
 }
 
 
@@ -10653,11 +10751,11 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderCloseEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(requotes, StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s")), ""), ", retrying..."), error);
+         warn(StringConcatenate("OrderCloseEx(23)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(requotes, StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s")), ""), ", retrying..."), error);
       }
       Sleep(300);                                                                            // 0.3 Sekunden warten
    }
-   return(_false(oe.setError(oe, catch("OrderCloseEx(23)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(requotes, " and "+ requotes +" requote"+ ifString(requotes==1, "", "s"), ""), error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderCloseEx(24)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(requotes, " and "+ requotes +" requote"+ ifString(requotes==1, "", "s"), ""), error, O_POP))));
 }
 
 
@@ -10926,11 +11024,11 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderCloseByEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
+         warn(StringConcatenate("OrderCloseByEx(14)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
       Sleep(300);                                                                         // 0.3 Sekunden warten
    }
-   return(_false(oe.setError(oe, catch("OrderCloseByEx(14)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderCloseByEx(15)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
 }
 
 
@@ -11621,10 +11719,10 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderDeleteEx()   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
+         warn(StringConcatenate("OrderDeleteEx(7)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
-   return(_false(oe.setError(oe, catch("OrderDeleteEx(7)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
+   return(_false(oe.setError(oe, catch("OrderDeleteEx(8)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
 }
 
 

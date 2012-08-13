@@ -426,9 +426,9 @@
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);  // MetaQuotes-Alias
    string   IntegerToHexStr(int integer);
-   string   ByteToHexStr(int byte);       string CharToHexStr(int char);                                             // Alias
+   string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                 // Alias
    string   WordToHexStr(int word);
-   string   DwordToHexStr(int dword);     string IntToHexStr(int integer);                                           // Alias
+   string   DwordToHexStr(int dword); string IntToHexStr(int integer);                                               // Alias
    string   StringToHexStr(string value);
 
    string   BoolsToStr        (bool array[], string separator);
@@ -461,6 +461,8 @@
    int      oe.Error             (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);
    string   oe.Symbol            (/*ORDER_EXECUTION*/int oe[]);                       string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);
    int      oe.Digits            (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);
+   double   oe.StopDistance      (/*ORDER_EXECUTION*/int oe[]);                       double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i);
+   double   oe.FreezeDistance    (/*ORDER_EXECUTION*/int oe[]);                       double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i);
    double   oe.Bid               (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i);
    double   oe.Ask               (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i);
    int      oe.Ticket            (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i);
@@ -485,6 +487,8 @@
    int      oe.setError          (/*ORDER_EXECUTION*/int oe[], int      error     );  int      oes.setError          (/*ORDER_EXECUTION*/int oe[][], int i, int      error     );
    string   oe.setSymbol         (/*ORDER_EXECUTION*/int oe[], string   symbol    );  string   oes.setSymbol         (/*ORDER_EXECUTION*/int oe[][], int i, string   symbol    );
    int      oe.setDigits         (/*ORDER_EXECUTION*/int oe[], int      digits    );  int      oes.setDigits         (/*ORDER_EXECUTION*/int oe[][], int i, int      digits    );
+   double   oe.setStopDistance   (/*ORDER_EXECUTION*/int oe[], double   distance  );  double   oes.setStopDistance   (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
+   double   oe.setFreezeDistance (/*ORDER_EXECUTION*/int oe[], double   distance  );  double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
    double   oe.setBid            (/*ORDER_EXECUTION*/int oe[], double   bid       );  double   oes.setBid            (/*ORDER_EXECUTION*/int oe[][], int i, double   bid       );
    double   oe.setAsk            (/*ORDER_EXECUTION*/int oe[], double   ask       );  double   oes.setAsk            (/*ORDER_EXECUTION*/int oe[][], int i, double   ask       );
    int      oe.setTicket         (/*ORDER_EXECUTION*/int oe[], int      ticket    );  int      oes.setTicket         (/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );

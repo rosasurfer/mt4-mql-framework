@@ -403,8 +403,8 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size                  128
-#define ORDER_EXECUTION.length                 32     // Ceil(ORDER_EXECUTION.size/4)
+#define ORDER_EXECUTION.size                  136
+#define ORDER_EXECUTION.length                 34     // Ceil(ORDER_EXECUTION.size/4)
 
 
 // FindFileNames() flags
@@ -1498,14 +1498,14 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())           warn("WaitForTicket()   #"+ ticket +" not yet accessible");
-      else if (i > 0 && i%10==0) warn("WaitForTicket()   #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000.0, 1) +" s");
+      if (IsTesting())           warn("WaitForTicket(3)   #"+ ticket +" not yet accessible");
+      else if (i > 0 && i%10==0) warn("WaitForTicket(4)   #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000.0, 1) +" s");
       Sleep(delay);
       i++;
    }
 
    if (orderKeep) {
-      if (!OrderPop("WaitForTicket(3)"))
+      if (!OrderPop("WaitForTicket(5)"))
          return(false);
    }
 
