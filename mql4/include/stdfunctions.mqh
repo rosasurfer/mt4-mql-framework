@@ -402,11 +402,6 @@
 #define C_ZAR                "ZAR"
 
 
-// Struct sizes
-#define ORDER_EXECUTION.size                  136
-#define ORDER_EXECUTION.length                 34     // Ceil(ORDER_EXECUTION.size/4)
-
-
 // FindFileNames() flags
 #define FF_SORT                                 1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
 #define FF_DIRSONLY                             2
@@ -530,6 +525,15 @@
 #define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
+// Order execution flags
+#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP wird geloggt, last_error wird jedoch nicht gesetzt
+
+
+// Struct sizes
+#define ORDER_EXECUTION.size                  136
+#define ORDER_EXECUTION.length                 34     // Ceil(ORDER_EXECUTION.size/4)
+
+
 // MQL-Fehlercodes
 #define ERR_NO_ERROR                                                  0
 #define NO_ERROR                                           ERR_NO_ERROR
@@ -548,8 +552,8 @@
 #define ERR_INVALID_ACCOUNT                                          65
 #define ERR_TRADE_TIMEOUT                                           128
 #define ERR_INVALID_PRICE                                           129    // Kurs bewegt sich zu schnell (aus dem Fenster)
-#define ERR_INVALID_STOPS                                           130
-#define ERR_INVALID_STOP                              ERR_INVALID_STOPS
+#define ERR_INVALID_STOP                                            130
+#define ERR_INVALID_STOPS                              ERR_INVALID_STOP
 #define ERR_INVALID_TRADE_VOLUME                                    131
 #define ERR_MARKET_CLOSED                                           132
 #define ERR_TRADE_DISABLED                                          133
@@ -606,16 +610,16 @@
 #define ERR_INCOMPATIBLE_ARRAYS                                    4056    // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057
 #define ERR_GLOBAL_VARIABLE_NOT_FOUND                              4058
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTING                            4059    // function not allowed in tester
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTER  ERR_FUNC_NOT_ALLOWED_IN_TESTING
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTER                             4059
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTING  ERR_FUNC_NOT_ALLOWED_IN_TESTER
 #define ERR_FUNCTION_NOT_CONFIRMED                                 4060
 #define ERR_SEND_MAIL_ERROR                                        4061
 #define ERR_STRING_PARAMETER_EXPECTED                              4062
 #define ERR_INTEGER_PARAMETER_EXPECTED                             4063
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
-#define ERR_HISTORY_WILL_UPDATED                                   4066    // history in update state
-#define ERR_HISTORY_UPDATE                     ERR_HISTORY_WILL_UPDATED
+#define ERR_HISTORY_UPDATE                                         4066
+#define ERR_HISTORY_WILL_UPDATED                     ERR_HISTORY_UPDATE
 #define ERR_TRADE_ERROR                                            4067    // error in trading function
 #define ERR_END_OF_FILE                                            4099    // end of file
 #define ERR_SOME_FILE_ERROR                                        4100    // some file error
@@ -625,7 +629,7 @@
 #define ERR_INCOMPATIBLE_FILEACCESS                                4104
 #define ERR_NO_ORDER_SELECTED                                      4105    // no order selected
 #define ERR_UNKNOWN_SYMBOL                                         4106    // unknown symbol
-#define ERR_INVALID_PRICE_PARAM                                    4107
+#define ERR_INVALID_PRICE_PARAM                                    4107    // invalid price parameter
 #define ERR_INVALID_TICKET                                         4108    // invalid ticket
 #define ERR_TRADE_NOT_ALLOWED                                      4109
 #define ERR_LONGS_NOT_ALLOWED                                      4110
