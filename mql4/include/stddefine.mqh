@@ -526,7 +526,7 @@
 
 
 // Order execution flags
-#define OE_MUTE_INVALID_STOP                    1     // ERR_INVALID_STOP wird geloggt, last_error wird jedoch nicht gesetzt
+#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP wird nur geloggt, last_error nicht gesetzt
 
 
 // Struct sizes

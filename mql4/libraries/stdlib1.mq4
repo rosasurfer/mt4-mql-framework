@@ -9582,8 +9582,8 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
       line        = StringConcatenate("{error="          ,       ifString(IsNoError(oe.Error          (oe)), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
                                      ", symbol=\""       ,                          oe.Symbol         (oe), "\"",
                                      ", digits="         ,                          oe.Digits         (oe),
-                                     ", stopDistance="   ,              DoubleToStr(oe.StopDistance   (oe), 1),
-                                     ", freezeDistance=" ,              DoubleToStr(oe.FreezeDistance (oe), 1),
+                                     ", stopDistance="   ,              NumberToStr(oe.StopDistance   (oe), ".+"),
+                                     ", freezeDistance=" ,              NumberToStr(oe.FreezeDistance (oe), ".+"),
                                      ", bid="            ,              NumberToStr(oe.Bid            (oe), priceFormat),
                                      ", ask="            ,              NumberToStr(oe.Ask            (oe), priceFormat),
                                      ", ticket="         ,                          oe.Ticket         (oe),
@@ -9727,6 +9727,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setFreezeDistance(oe, freezeDistance);
    oe.setType          (oe, type          );
    oe.setLots          (oe, lots          );
+   oe.setStopLoss      (oe, stopLoss      );
+   oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
    // -- Ende Parametervalidierung --
 
@@ -9747,9 +9749,12 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             oe.setBid(oe, bid);
             oe.setAsk(oe, ask);
          }
-         if      (type == OP_BUY    ) price = ask;
-         else if (type == OP_SELL   ) price = bid;
-         else if (type == OP_BUYSTOP) {
+         if      (type == OP_BUY ) price = ask;
+         else if (type == OP_SELL) price = bid;
+         price = NormalizeDouble(price, digits);
+         oe.setOpenPrice(oe, price);
+
+         if (type == OP_BUYSTOP) {
             if (LE(price, ask))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
             if (LT(price - stopDistance*pips, ask))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
          }
@@ -9757,7 +9762,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             if (GE(price, bid))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
             if (GT(price + stopDistance*pips, bid))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
          }
-         price = NormalizeDouble(price, digits);
 
          // StopLoss <> StopDistance validieren
          if (NE(stopLoss, 0)) {
@@ -9861,10 +9865,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (serverError) {
       switch (error) {
          case ERR_INVALID_PRICE:
-         case ERR_INVALID_STOP :
          case ERR_PRICE_CHANGED:
-         case ERR_OFF_QUOTES   :
-         case ERR_REQUOTE      :
+         case ERR_REQUOTE:
+         case ERR_OFF_QUOTES:
+         case ERR_INVALID_STOP:
             string symbol = oe.Symbol(oe);
             oe.setBid(oe, MarketInfo(symbol, MODE_BID));
             oe.setAsk(oe, MarketInfo(symbol, MODE_ASK));
@@ -9872,7 +9876,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    }
 
    // (2) je nach execution-Flags die gewünschten Laufzeitfehler unterdrücken
-   if (oeFlags & OE_MUTE_INVALID_STOP == true) {
+   if (oeFlags & OE_CATCH_INVALID_STOP == true) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
          return(error);
