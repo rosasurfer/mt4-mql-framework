@@ -59,9 +59,6 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    __WHEREAMI__                   = whereami;
    __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
-   bool _INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
-   bool _INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
-   bool _INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -96,7 +93,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
 
    // (3) User-spezifische Init-Tasks ausführen
-   if (_INIT_TIMEZONE) {                                                      // Zeitzonen-Konfiguration überprüfen
+   if (_bool(initFlags & INIT_TIMEZONE)) {                                    // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
@@ -611,7 +608,7 @@ string __whereamiToStr(int id) {
  * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
  */
 int LoadCursorById(int hInstance, int resourceId) {
-   if (resourceId & 0xFFFF0000 != 0)                                 // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
+   if (_bool(resourceId & 0xFFFF0000))                               // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
       catch("LoadCursorById()  illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be lower then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE);
 
    int hCursor = LoadCursorW(hInstance, resourceId);
@@ -2388,21 +2385,21 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
    string result = "";
    int flags = wfd.FileAttributes(wfd);
 
-   if (flags & FILE_ATTRIBUTE_READONLY      == FILE_ATTRIBUTE_READONLY     ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_READONLY"     );
-   if (flags & FILE_ATTRIBUTE_HIDDEN        == FILE_ATTRIBUTE_HIDDEN       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_HIDDEN"       );
-   if (flags & FILE_ATTRIBUTE_SYSTEM        == FILE_ATTRIBUTE_SYSTEM       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SYSTEM"       );
-   if (flags & FILE_ATTRIBUTE_DIRECTORY     == FILE_ATTRIBUTE_DIRECTORY    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DIRECTORY"    );
-   if (flags & FILE_ATTRIBUTE_ARCHIVE       == FILE_ATTRIBUTE_ARCHIVE      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ARCHIVE"      );
-   if (flags & FILE_ATTRIBUTE_DEVICE        == FILE_ATTRIBUTE_DEVICE       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DEVICE"       );
-   if (flags & FILE_ATTRIBUTE_NORMAL        == FILE_ATTRIBUTE_NORMAL       ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NORMAL"       );
-   if (flags & FILE_ATTRIBUTE_TEMPORARY     == FILE_ATTRIBUTE_TEMPORARY    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_TEMPORARY"    );
-   if (flags & FILE_ATTRIBUTE_SPARSE_FILE   == FILE_ATTRIBUTE_SPARSE_FILE  ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SPARSE_FILE"  );
-   if (flags & FILE_ATTRIBUTE_REPARSE_POINT == FILE_ATTRIBUTE_REPARSE_POINT) result = StringConcatenate(result, " | FILE_ATTRIBUTE_REPARSE_POINT");
-   if (flags & FILE_ATTRIBUTE_COMPRESSED    == FILE_ATTRIBUTE_COMPRESSED   ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_COMPRESSED"   );
-   if (flags & FILE_ATTRIBUTE_OFFLINE       == FILE_ATTRIBUTE_OFFLINE      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_OFFLINE"      );
-   if (flags & FILE_ATTRIBUTE_NOT_INDEXED   == FILE_ATTRIBUTE_NOT_INDEXED  ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NOT_INDEXED"  );
-   if (flags & FILE_ATTRIBUTE_ENCRYPTED     == FILE_ATTRIBUTE_ENCRYPTED    ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ENCRYPTED"    );
-   if (flags & FILE_ATTRIBUTE_VIRTUAL       == FILE_ATTRIBUTE_VIRTUAL      ) result = StringConcatenate(result, " | FILE_ATTRIBUTE_VIRTUAL"      );
+   if (_bool(flags & FILE_ATTRIBUTE_READONLY     )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_READONLY"     );
+   if (_bool(flags & FILE_ATTRIBUTE_HIDDEN       )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_HIDDEN"       );
+   if (_bool(flags & FILE_ATTRIBUTE_SYSTEM       )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SYSTEM"       );
+   if (_bool(flags & FILE_ATTRIBUTE_DIRECTORY    )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DIRECTORY"    );
+   if (_bool(flags & FILE_ATTRIBUTE_ARCHIVE      )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ARCHIVE"      );
+   if (_bool(flags & FILE_ATTRIBUTE_DEVICE       )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_DEVICE"       );
+   if (_bool(flags & FILE_ATTRIBUTE_NORMAL       )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NORMAL"       );
+   if (_bool(flags & FILE_ATTRIBUTE_TEMPORARY    )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_TEMPORARY"    );
+   if (_bool(flags & FILE_ATTRIBUTE_SPARSE_FILE  )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_SPARSE_FILE"  );
+   if (_bool(flags & FILE_ATTRIBUTE_REPARSE_POINT)) result = StringConcatenate(result, " | FILE_ATTRIBUTE_REPARSE_POINT");
+   if (_bool(flags & FILE_ATTRIBUTE_COMPRESSED   )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_COMPRESSED"   );
+   if (_bool(flags & FILE_ATTRIBUTE_OFFLINE      )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_OFFLINE"      );
+   if (_bool(flags & FILE_ATTRIBUTE_NOT_INDEXED  )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_NOT_INDEXED"  );
+   if (_bool(flags & FILE_ATTRIBUTE_ENCRYPTED    )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_ENCRYPTED"    );
+   if (_bool(flags & FILE_ATTRIBUTE_VIRTUAL      )) result = StringConcatenate(result, " | FILE_ATTRIBUTE_VIRTUAL"      );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 3);
@@ -2514,19 +2511,19 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
    string result = "";
    int flags = si.Flags(si);
 
-   if (flags & STARTF_FORCEONFEEDBACK  == STARTF_FORCEONFEEDBACK ) result = StringConcatenate(result, " | STARTF_FORCEONFEEDBACK" );
-   if (flags & STARTF_FORCEOFFFEEDBACK == STARTF_FORCEOFFFEEDBACK) result = StringConcatenate(result, " | STARTF_FORCEOFFFEEDBACK");
-   if (flags & STARTF_PREVENTPINNING   == STARTF_PREVENTPINNING  ) result = StringConcatenate(result, " | STARTF_PREVENTPINNING"  );
-   if (flags & STARTF_RUNFULLSCREEN    == STARTF_RUNFULLSCREEN   ) result = StringConcatenate(result, " | STARTF_RUNFULLSCREEN"   );
-   if (flags & STARTF_TITLEISAPPID     == STARTF_TITLEISAPPID    ) result = StringConcatenate(result, " | STARTF_TITLEISAPPID"    );
-   if (flags & STARTF_TITLEISLINKNAME  == STARTF_TITLEISLINKNAME ) result = StringConcatenate(result, " | STARTF_TITLEISLINKNAME" );
-   if (flags & STARTF_USECOUNTCHARS    == STARTF_USECOUNTCHARS   ) result = StringConcatenate(result, " | STARTF_USECOUNTCHARS"   );
-   if (flags & STARTF_USEFILLATTRIBUTE == STARTF_USEFILLATTRIBUTE) result = StringConcatenate(result, " | STARTF_USEFILLATTRIBUTE");
-   if (flags & STARTF_USEHOTKEY        == STARTF_USEHOTKEY       ) result = StringConcatenate(result, " | STARTF_USEHOTKEY"       );
-   if (flags & STARTF_USEPOSITION      == STARTF_USEPOSITION     ) result = StringConcatenate(result, " | STARTF_USEPOSITION"     );
-   if (flags & STARTF_USESHOWWINDOW    == STARTF_USESHOWWINDOW   ) result = StringConcatenate(result, " | STARTF_USESHOWWINDOW"   );
-   if (flags & STARTF_USESIZE          == STARTF_USESIZE         ) result = StringConcatenate(result, " | STARTF_USESIZE"         );
-   if (flags & STARTF_USESTDHANDLES    == STARTF_USESTDHANDLES   ) result = StringConcatenate(result, " | STARTF_USESTDHANDLES"   );
+   if (_bool(flags & STARTF_FORCEONFEEDBACK )) result = StringConcatenate(result, " | STARTF_FORCEONFEEDBACK" );
+   if (_bool(flags & STARTF_FORCEOFFFEEDBACK)) result = StringConcatenate(result, " | STARTF_FORCEOFFFEEDBACK");
+   if (_bool(flags & STARTF_PREVENTPINNING  )) result = StringConcatenate(result, " | STARTF_PREVENTPINNING"  );
+   if (_bool(flags & STARTF_RUNFULLSCREEN   )) result = StringConcatenate(result, " | STARTF_RUNFULLSCREEN"   );
+   if (_bool(flags & STARTF_TITLEISAPPID    )) result = StringConcatenate(result, " | STARTF_TITLEISAPPID"    );
+   if (_bool(flags & STARTF_TITLEISLINKNAME )) result = StringConcatenate(result, " | STARTF_TITLEISLINKNAME" );
+   if (_bool(flags & STARTF_USECOUNTCHARS   )) result = StringConcatenate(result, " | STARTF_USECOUNTCHARS"   );
+   if (_bool(flags & STARTF_USEFILLATTRIBUTE)) result = StringConcatenate(result, " | STARTF_USEFILLATTRIBUTE");
+   if (_bool(flags & STARTF_USEHOTKEY       )) result = StringConcatenate(result, " | STARTF_USEHOTKEY"       );
+   if (_bool(flags & STARTF_USEPOSITION     )) result = StringConcatenate(result, " | STARTF_USEPOSITION"     );
+   if (_bool(flags & STARTF_USESHOWWINDOW   )) result = StringConcatenate(result, " | STARTF_USESHOWWINDOW"   );
+   if (_bool(flags & STARTF_USESIZE         )) result = StringConcatenate(result, " | STARTF_USESIZE"         );
+   if (_bool(flags & STARTF_USESTDHANDLES   )) result = StringConcatenate(result, " | STARTF_USESTDHANDLES"   );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 3);
@@ -3140,8 +3137,8 @@ string GetWin32ShortcutTarget(string lnkFilename) {
        dwFlags |= chars[22] << 16;
        dwFlags |= chars[23] << 24;
 
-   bool hasShellItemIdList = (dwFlags & 0x00000001 == 0x00000001);
-   bool pointsToFileOrDir  = (dwFlags & 0x00000002 == 0x00000002);
+   bool hasShellItemIdList = _bool(dwFlags & 0x00000001);
+   bool pointsToFileOrDir  = _bool(dwFlags & 0x00000002);
 
    if (!pointsToFileOrDir) {
       if (__LOG) log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
@@ -5367,18 +5364,18 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
 
-            if (flags & OFLAG_CURRENTSYMBOL != 0)   event &= (OrderSymbol()==Symbol())+0; // MQL kann Booleans für Binärops. nicht casten
-            if (flags & OFLAG_BUY           != 0)   event &= (type==OP_BUY )+0;
-            if (flags & OFLAG_SELL          != 0)   event &= (type==OP_SELL)+0;
-            if (flags & OFLAG_MARKETORDER   != 0) {
+            if (_bool(flags & OFLAG_CURRENTSYMBOL)) event &= _int(OrderSymbol() == Symbol());
+            if (_bool(flags & OFLAG_BUY          )) event &= _int(         type == OP_BUY  );
+            if (_bool(flags & OFLAG_SELL         )) event &= _int(         type == OP_SELL );
+            if (_bool(flags & OFLAG_MARKETORDER  )) {
                for (int z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)                                      // Order war pending
-                     break;                         event &= (z==pendings)+0;
+                     break;                         event &= _int(z == pendings);
             }
-            if (flags & OFLAG_PENDINGORDER  != 0) {
+            if (_bool(flags & OFLAG_PENDINGORDER )) {
                for (z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)                                      // Order war pending
-                     break;                         event &= (z<pendings)+0;
+                     break;                         event &= _int(z < pendings);
             }
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
@@ -5458,11 +5455,11 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
                else if (type == OP_SELL)                pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
-            if (flags & OFLAG_CURRENTSYMBOL != 0) event &= (OrderSymbol()==Symbol()) +0;  // MQL kann Booleans für Binäroperationen nicht casten
-            if (flags & OFLAG_BUY           != 0) event &= (type==OP_BUY )           +0;
-            if (flags & OFLAG_SELL          != 0) event &= (type==OP_SELL)           +0;
-            if (flags & OFLAG_MARKETORDER   != 0) event &= (!pending)                +0;
-            if (flags & OFLAG_PENDINGORDER  != 0) event &= ( pending)                +0;
+            if (_bool(flags & OFLAG_CURRENTSYMBOL)) event &= _int(OrderSymbol() == Symbol());
+            if (_bool(flags & OFLAG_BUY          )) event &= _int(type == OP_BUY );
+            if (_bool(flags & OFLAG_SELL         )) event &= _int(type == OP_SELL);
+            if (_bool(flags & OFLAG_MARKETORDER  )) event &= _int(!pending);
+            if (_bool(flags & OFLAG_PENDINGORDER )) event &= _int( pending);
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1)
@@ -7140,15 +7137,15 @@ int PeriodFlag(int period=NULL) {
 string PeriodFlagToStr(int flags) {
    string result = "";
 
-   if (flags & F_PERIOD_M1  != 0) result = StringConcatenate(result, "|M1" );
-   if (flags & F_PERIOD_M5  != 0) result = StringConcatenate(result, "|M5" );
-   if (flags & F_PERIOD_M15 != 0) result = StringConcatenate(result, "|M15");
-   if (flags & F_PERIOD_M30 != 0) result = StringConcatenate(result, "|M30");
-   if (flags & F_PERIOD_H1  != 0) result = StringConcatenate(result, "|H1" );
-   if (flags & F_PERIOD_H4  != 0) result = StringConcatenate(result, "|H4" );
-   if (flags & F_PERIOD_D1  != 0) result = StringConcatenate(result, "|D1" );
-   if (flags & F_PERIOD_W1  != 0) result = StringConcatenate(result, "|W1" );
-   if (flags & F_PERIOD_MN1 != 0) result = StringConcatenate(result, "|MN1");
+   if (_bool(flags & F_PERIOD_M1 )) result = StringConcatenate(result, "|M1" );
+   if (_bool(flags & F_PERIOD_M5 )) result = StringConcatenate(result, "|M5" );
+   if (_bool(flags & F_PERIOD_M15)) result = StringConcatenate(result, "|M15");
+   if (_bool(flags & F_PERIOD_M30)) result = StringConcatenate(result, "|M30");
+   if (_bool(flags & F_PERIOD_H1 )) result = StringConcatenate(result, "|H1" );
+   if (_bool(flags & F_PERIOD_H4 )) result = StringConcatenate(result, "|H4" );
+   if (_bool(flags & F_PERIOD_D1 )) result = StringConcatenate(result, "|D1" );
+   if (_bool(flags & F_PERIOD_W1 )) result = StringConcatenate(result, "|W1" );
+   if (_bool(flags & F_PERIOD_MN1)) result = StringConcatenate(result, "|MN1");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8831,11 +8828,11 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
 
       while (true) {
          if (wfd.FileAttribute.Directory(wfd)) {
-            if (flags & FF_FILESONLY != 0)  break;
-            if (name ==  ".")               break;
-            if (name == "..")               break;
+            if (_bool(flags & FF_FILESONLY))  break;
+            if (name ==  ".")                 break;
+            if (name == "..")                 break;
          }
-         else if (flags & FF_DIRSONLY != 0) break;
+         else if (_bool(flags & FF_DIRSONLY)) break;
          ArrayPushString(lpResults, name);
          break;
       }
@@ -8849,7 +8846,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
 
    int size = ArraySize(lpResults);
 
-   if (flags & FF_SORT!=0) /*&&*/ if (size > 1) {                    // TODO: Ergebnisse ggf. sortieren
+   if (_bool(flags & FF_SORT)) /*&&*/ if (size > 1) {                // TODO: Ergebnisse ggf. sortieren
    }
    return(size);
 }
@@ -9876,7 +9873,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    }
 
    // (2) je nach execution-Flags die gewünschten Laufzeitfehler unterdrücken
-   if (oeFlags & OE_CATCH_INVALID_STOP == true) {
+   if (_bool(oeFlags & OE_CATCH_INVALID_STOP)) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
          return(error);

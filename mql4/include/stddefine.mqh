@@ -723,9 +723,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
      int initFlags                = SumInts(__INIT_FLAGS__);
    __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
-   bool _INIT_TIMEZONE            = initFlags & INIT_TIMEZONE;
-   bool _INIT_TICKVALUE           = initFlags & INIT_TICKVALUE;
-   bool _INIT_BARS_ON_HIST_UPDATE = initFlags & INIT_BARS_ON_HIST_UPDATE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -760,16 +757,16 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) User-spezifische Init-Tasks ausführen
-   if (_INIT_TIMEZONE) {                                                         // @see stdlib_init()
+   if (_bool(initFlags & INIT_TIMEZONE)) {                                       // @see stdlib_init()
    }
-   if (_INIT_TICKVALUE) {                                                        // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (_bool(initFlags & INIT_TICKVALUE)) {                                      // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
          return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
       }
    }
-   if (_INIT_BARS_ON_HIST_UPDATE) {                                              // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {                            // noch nicht implementiert
    }
 
 
