@@ -9700,6 +9700,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // price
    if (LT(price, 0))                                           return(_int(-1, oe.setError(oe, catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE))));
    if (IsPendingTradeOperation(type)) /*&&*/ if (EQ(price, 0)) return(_int(-1, oe.setError(oe, catch("OrderSendEx(7)   illegal "+ OperationTypeDescription(type) +" price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE))));
+   price = NormalizeDouble(price, digits);
    // slippage
    if (LT(slippage, 0))                                        return(_int(-1, oe.setError(oe, catch("OrderSendEx(8)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE))));
    // stopLoss
@@ -9724,6 +9725,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setFreezeDistance(oe, freezeDistance);
    oe.setType          (oe, type          );
    oe.setLots          (oe, lots          );
+   oe.setOpenPrice     (oe, price         );
    oe.setStopLoss      (oe, stopLoss      );
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
