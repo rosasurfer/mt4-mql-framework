@@ -9782,7 +9782,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             }
          }
 
-         // TakeProfit <> StopDistance validieren
+         // TODO: TakeProfit <> StopDistance validieren
 
          time1  = GetTickCount();
          ticket = OrderSend(symbol, type, lots, price, slippagePoints, stopLoss, takeProfit, comment, magicNumber, expires, markerColor);
@@ -9808,14 +9808,15 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
                if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - ask;
                else if (OrderType() == OP_SELL) slippage = bid - OrderOpenPrice();
                else                             slippage = 0;
-            oe.setSlippage(oe, NormalizeDouble(slippage/pips, digits<<31>>31));           // Gesamtslippage nach Requotes in Pip
+            oe.setSlippage  (oe, NormalizeDouble(slippage/pips, digits<<31>>31));         // Gesamtslippage nach Requotes in Pip
 
             if (__LOG) log(StringConcatenate("OrderSendEx()   ", OrderSendEx.SuccessMsg(oe)));
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
             if (IsError(catch("OrderSendEx(28)", NULL, O_POP)))
-               return(_int(-1, oe.setError(oe, last_error)));
+               ticket = -1;
+            oe.setError(oe, last_error);
             return(ticket);                                                               // regular exit
          }
 
@@ -9848,7 +9849,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
- * @param  bool   serverError - ob der Fehler Client- oder Server-seitig aufgetreten ist
+ * @param  bool   serverError - ob der Fehler client- oder server-seitig aufgetreten ist
  * @param  int    oeFlags     - die Ausführung steuernde Flags
  * @param  int    oe[]        - Ausführungsdetails (ORDER_EXECUTION)
  *
