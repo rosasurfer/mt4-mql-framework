@@ -10209,10 +10209,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
    string strPrice = NumberToStr(openPrice, priceFormat);
-      if (NE(openPrice, oldOpenPrice)) strPrice = StringConcatenate(NumberToStr(oldOpenPrice, priceFormat), " =>", strPrice);
-
-   string strSL; if (NE(stopLoss,   oldStopLoss))   strSL = StringConcatenate(", sl: ", NumberToStr(oldStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
-   string strTP; if (NE(takeProfit, oldTakeProfit)) strTP = StringConcatenate(", tp: ", NumberToStr(oldTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
+                 if (NE(openPrice,  oldOpenPrice) ) strPrice = StringConcatenate(NumberToStr(oldOpenPrice, priceFormat), " =>", strPrice);
+   string strSL; if (NE(stopLoss,   oldStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(oldStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
+   string strTP; if (NE(takeProfit, oldTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(oldTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
 
    return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
