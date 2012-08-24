@@ -9717,7 +9717,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_int(-1, oe.setError(oe, catch("OrderSendEx(12)   illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_FUNCTION_PARAMVALUE))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_int(-1, oe.setError(oe, catch("OrderSendEx(13)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE))));
-   // oe
+   // -- Ende Parametervalidierung --
+
+   // oe initialisieren
    ArrayInitialize(oe, 0);
    oe.setSymbol        (oe, symbol        );
    oe.setDigits        (oe, digits        );
@@ -9729,7 +9731,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    oe.setStopLoss      (oe, stopLoss      );
    oe.setTakeProfit    (oe, takeProfit    );
    oe.setComment       (oe, comment       );
-   // -- Ende Parametervalidierung --
 
    int ticket, firstTime1=GetTickCount(), time1, requotes;
 
@@ -10127,7 +10128,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (!IsPendingTradeOperation(OrderType()))                 return(_false(oe.setError(oe, catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(oe.setError(oe, catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-   // oe
+   // oe initialisieren
    ArrayInitialize(oe, 0);
    oe.setSymbol        (oe, OrderSymbol() );
    oe.setDigits        (oe, digits        );
@@ -10669,7 +10670,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
    if (LT(slippage, 0))                                         return(_false(oe.setError(oe, catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(oe.setError(oe, catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-   // oe
+   // -- Ende Parametervalidierung --
+
+   // oe initialisieren
    ArrayInitialize (oe, 0);
    oe.setSymbol    (oe, OrderSymbol()    );
    oe.setDigits    (oe, digits           );
@@ -10681,7 +10684,6 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
    oe.setStopLoss  (oe, OrderStopLoss()  );
    oe.setTakeProfit(oe, OrderTakeProfit());
    oe.setComment   (oe, OrderComment()   );
-   // -- Ende Parametervalidierung --
 
    /*
    Vollständiges Close
@@ -10908,14 +10910,15 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
    if (symbol != OrderSymbol())                                          return(_false(oe.setError(oe, catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(oe.setError(oe, catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-   // oe
+   // -- Ende Parametervalidierung --
+
+   // oe initialisieren
    ArrayInitialize(oe, 0);
    oe.setSymbol   (oe, OrderSymbol());
    oe.setDigits   (oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
    oe.setTicket   (oe, ticket       );
    oe.setType     (oe, ticketType   );
    oe.setLots     (oe, ticketLots   );
-   // -- Ende Parametervalidierung --
 
    /*
    Vollständiges Close
@@ -11159,9 +11162,10 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (LT(slippage, 0))                                        return(_false(oes.setError(oes, -1, catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oes.setError(oes, -1, catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-   // oes
-   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
    // -- Ende Parametervalidierung --
+
+   // oes initialisieren
+   ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
    // (2) schnelles Close, wenn nur ein Ticket angegeben wurde
@@ -11727,8 +11731,10 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    if (OrderCloseTime() != 0)                                    return(_false(oe.setError(oe, catch("OrderDeleteEx(3)   #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(oe.setError(oe, catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-   // oe
-   ArrayInitialize (oe, 0);
+   // -- Ende Parametervalidierung --
+
+   // oe initialisieren
+   ArrayInitialize(oe, 0);
    oe.setSymbol    (oe, OrderSymbol()    );
    oe.setDigits    (oe, MarketInfo(OrderSymbol(), MODE_DIGITS));
    oe.setTicket    (oe, ticket           );
@@ -11739,7 +11745,6 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    oe.setStopLoss  (oe, OrderStopLoss()  );
    oe.setTakeProfit(oe, OrderTakeProfit());
    oe.setComment   (oe, OrderComment()   );
-   // -- Ende Parametervalidierung --
 
    /*
    +---------+--------+----------+------+--------+---------------------+-----------+---------------------+------------+------+------------+--------+-------------+---------------+
