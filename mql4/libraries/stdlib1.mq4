@@ -10149,7 +10149,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       oe.setCommission(oe, OrderCommission()                  );
       oe.setProfit    (oe, OrderProfit()                      );
 
-      warn("OrderModifyEx(12)   nothing to modify");
+      warn(StringConcatenate("OrderModifyEx(12)   nothing to modify for #", ticket));
       return(IsNoError(oe.setError(oe, catch("OrderModifyEx(13)", NULL, O_POP))));
    }
    // -- Ende Parametervalidierung --
