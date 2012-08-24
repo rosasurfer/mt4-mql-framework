@@ -9653,7 +9653,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
 /**
  * TODO: Es werden noch keine Limit- und TakeProfit-Orders unterstützt.
  *
- * Drop-in-Ersatz für und erweiterte Version von OrderSend(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ * Erweiterte Version von OrderSend().
  *
  * @param  string   symbol      - Symbol des Instruments (default: aktuelles Instrument)
  * @param  int      type        - Operation type: [OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_BUYSTOP|OP_SELLSTOP]
@@ -9685,7 +9685,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    int    pipPoints      = Round(MathPow(10, digits<<31>>31));
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = Round(slippage * pipPoints);
-   double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL)/pipPoints;
+   double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(symbol, MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
@@ -9845,7 +9845,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
 /**
- * "Exception-Handler" für in OrderSendEx() aufgetretene Fehler. Je nach Aufruf wird der Fehler nur geloggt oder zusätzlich ein Laufzeitfehler ausgelöst.
+ * Exception-Handler für in OrderSendEx() aufgetretene Fehler. Je nach Aufruf wird ein Laufzeitfehler ausgelöst oder der Fehler nur geloggt.
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
@@ -10072,7 +10072,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
 
 
 /**
- * Drop-in-Ersatz für und erweiterte Version von OrderModify(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ * Erweiterte Version von OrderModify().
  *
  * @param  int      ticket      - zu änderndes Ticket
  * @param  double   openPrice   - OpenPrice (nur bei Pending-Orders)
@@ -10091,9 +10091,12 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(_false(oe.setError(oe, last_error)));
    if (!IsTradeOperation(OrderType()))                           return(_false(oe.setError(oe, catch("OrderModifyEx(2)   #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
    if (OrderCloseTime() != 0)                                    return(_false(oe.setError(oe, catch("OrderModifyEx(3)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
-   int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-   int    pipDigits   = digits & (~1);
-   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
+   int    pipDigits      = digits & (~1);
+   int    pipPoints      = Round(MathPow(10, digits<<31>>31));
+   double stopDistance   = MarketInfo(OrderSymbol(), MODE_STOPLEVEL  )/pipPoints;
+   double freezeDistance = MarketInfo(OrderSymbol(), MODE_FREEZELEVEL)/pipPoints;
+   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
    if (IsError(error))                                           return(_false(oe.setError(oe, catch("OrderModifyEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP))));
    // openPrice
@@ -10126,21 +10129,38 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(oe.setError(oe, catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // oe
    ArrayInitialize(oe, 0);
-   oe.setSymbol   (oe, OrderSymbol() );
-   oe.setDigits   (oe, digits        );
-   oe.setTicket   (oe, ticket        );
-   oe.setType     (oe, OrderType()   );
-   oe.setLots     (oe, OrderLots()   );
-   oe.setComment  (oe, OrderComment());
+   oe.setSymbol        (oe, OrderSymbol() );
+   oe.setDigits        (oe, digits        );
+   oe.setStopDistance  (oe, stopDistance  );
+   oe.setFreezeDistance(oe, freezeDistance);
+   oe.setTicket        (oe, ticket        );
+   oe.setType          (oe, OrderType()   );
+   oe.setLots          (oe, OrderLots()   );
+   oe.setOpenPrice     (oe, openPrice     );
+   oe.setStopLoss      (oe, stopLoss      );
+   oe.setTakeProfit    (oe, takeProfit    );
+   oe.setComment       (oe, OrderComment());
+
+   double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeProfit=OrderTakeProfit();
+   if (EQ(openPrice, oldOpenPrice)) /*&&*/ if (EQ(stopLoss, oldStopLoss)) /*&&*/ if (EQ(takeProfit, oldTakeProfit)) {
+      oe.setBid       (oe, MarketInfo(OrderSymbol(), MODE_BID));
+      oe.setAsk       (oe, MarketInfo(OrderSymbol(), MODE_ASK));
+      oe.setSwap      (oe, OrderSwap()                        );
+      oe.setCommission(oe, OrderCommission()                  );
+      oe.setProfit    (oe, OrderProfit()                      );
+
+      warn("OrderModifyEx(12)   nothing to modify");
+      return(IsNoError(oe.setError(oe, catch("OrderModifyEx(13)", NULL, O_POP))));
+   }
    // -- Ende Parametervalidierung --
 
-   double oldOpenPrice=OrderOpenPrice(), oldStopLoss=OrderStopLoss(), oldTakeprofit=OrderTakeProfit();
-   int    firstTime1=GetTickCount(), time1;
-   bool   success;
+   int  startTime = GetTickCount();
+   bool success;
+
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (!IsStopped()) {
-      error = NO_ERROR;
+      error = oe.setError(oe, NO_ERROR);
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
@@ -10150,17 +10170,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
          oe.setAsk(oe, MarketInfo(OrderSymbol(), MODE_ASK));
 
-         time1   = GetTickCount();
          success = OrderModify(ticket, openPrice, stopLoss, takeProfit, expires, markerColor);
 
-         oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
+         oe.setDuration(oe, GetTickCount()-startTime);                                    // Gesamtzeit in Millisekunden
 
          if (success) {
             WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
             // TODO: WaitForChanges() implementieren
 
-            if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeprofit))
-               return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(12)")));
+            if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), oldOpenPrice, oldStopLoss, oldTakeProfit))
+               return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(14)")));
 
             oe.setOpenTime  (oe, OrderOpenTime()  );
             oe.setOpenPrice (oe, OrderOpenPrice() );
@@ -10170,22 +10189,22 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
             oe.setCommission(oe, OrderCommission());
             oe.setProfit    (oe, OrderProfit()    );
 
-            if (__LOG) log(StringConcatenate("OrderModifyEx()   ", OrderModifyEx.LogMessage(oe, oldOpenPrice, oldStopLoss, oldTakeprofit)));
+            if (__LOG) log(StringConcatenate("OrderModifyEx()   ", OrderModifyEx.LogMessage(oe, oldOpenPrice, oldStopLoss, oldTakeProfit)));
             if (!IsTesting())
                PlaySound("RFQ.wav");
 
-            return(IsNoError(oe.setError(oe, catch("OrderModifyEx(13)", NULL, O_POP))));  // regular exit
+            return(IsNoError(oe.setError(oe, catch("OrderModifyEx(15)", NULL, O_POP))));  // regular exit
          }
 
-         error = GetLastError();
+         error = oe.setError(oe, GetLastError());
          if (IsNoError(error))
-            error = ERR_RUNTIME_ERROR;
+            error = oe.setError(oe, ERR_RUNTIME_ERROR);
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderModifyEx(14)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
+         warn(StringConcatenate("OrderModifyEx(16)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
    }
-   return(_false(oe.setError(oe, catch("OrderModifyEx(15)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
+   return(_false(catch("OrderModifyEx(17)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP)));
 }
 
 
@@ -10200,6 +10219,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @return string
  */
 /*private*/ string OrderModifyEx.LogMessage(/*ORDER_EXECUTION*/int oe[], double oldOpenPrice, double oldStopLoss, double oldTakeProfit) {
+   // modified #1 Stop Buy 0.1 GBPUSD at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
+
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -10604,7 +10625,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
 
 
 /**
- * Drop-in-Ersatz für und erweiterte Version von OrderClose(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ * Erweiterte Version von OrderClose().
  *
  * @param  int    ticket      - Ticket der zu schließenden Position
  * @param  double lots        - zu schließendes Volumen in Lots (default: komplette Position)
@@ -10853,7 +10874,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
 
 /**
- * Drop-in-Ersatz für und erweiterte Version von OrderCloseBy(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ * Erweiterte Version von OrderCloseBy().
  *
  * @param  int   ticket      - Ticket der zu schließenden Position
  * @param  int   opposite    - Ticket der zum Schließen zu verwendenden Gegenposition
@@ -11689,7 +11710,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
 /**
- * Drop-in-Ersatz für und erweiterte Version von OrderDelete(). Fängt temporäre Tradeserver-Fehler ab und behandelt sie entsprechend.
+ * Erweiterte Version von OrderDelete().
  *
  * @param  int   ticket      - Ticket der zu schließenden Order
  * @param  color markerColor - Farbe des Chart-Markers

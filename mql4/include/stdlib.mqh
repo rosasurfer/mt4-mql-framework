@@ -348,8 +348,9 @@
    bool     IsShortTradeOperation(int value);
    bool     IsPendingTradeOperation(int value);
 
-   int      OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
-   bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
+   // di => StopDistance/FreezeDistance integeriert
+   int/*di*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
+  bool/*di*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
