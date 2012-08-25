@@ -375,18 +375,18 @@ bool AquireLock(string mutexName) {
       }
 
       if (IsStopped())
-         return(_false(warn("AquireLock(4)   did not get lock for mutex \""+ mutexName +"\", stopping...")));
+         return(_false(warn(StringConcatenate("AquireLock(4)   couldn't get lock for mutex \"", mutexName, "\", stopping..."))));
 
       // warn every second and cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
             return(_false(catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR)));
-         warn("AquireLock(6)   did not get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., retrying...");
+         warn(StringConcatenate("AquireLock(6)   couldn't get lock for mutex \"", mutexName, "\" after ", DoubleToStr(duration/1000.0, 3), " sec., retrying..."));
          seconds++;
       }
 
-      debug("AquireLock()   did not get lock for mutex \""+ mutexName +"\", retrying...");
+      //debug("AquireLock()   couldn't get lock for mutex \""+ mutexName +"\", retrying...");
       if      (IsScript())                 Sleep(100);
       else if (IsExpert() && !IsTesting()) Sleep(100);
       else                                 SleepEx(100, true);       // Expert im Tester oder Indicator
@@ -449,7 +449,7 @@ bool ReleaseLock(string mutexName) {
    if (size > 0) {
       for (int i = size-1; i>=0; i--) {
          if (warn)
-            warn("ReleaseLocks()   unreleased lock found for mutex \""+ lock.names[i] +"\"");
+            warn(StringConcatenate("ReleaseLocks()   unreleased lock found for mutex \"", lock.names[i], "\""));
 
          if (!ReleaseLock(lock.names[i]))
             error = last_error;
