@@ -6446,7 +6446,7 @@ string ErrorDescription(int error) {
       case ERR_NO_RESULT                  : return("no result"                                                     ); //    1
       case ERR_COMMON_ERROR               : return("trade denied"                                                  ); //    2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                      ); //    3
-      case ERR_SERVER_BUSY                : return("trade server is busy"                                          ); //    4
+      case ERR_SERVER_BUSY                : return("trade server busy"                                             ); //    4
       case ERR_OLD_VERSION                : return("old version of client terminal"                                ); //    5
       case ERR_NO_CONNECTION              : return("no connection to trade server"                                 ); //    6
       case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                             ); //    7
@@ -6458,20 +6458,20 @@ string ErrorDescription(int error) {
       case ERR_INVALID_PRICE              : return("invalid price"                                                 ); //  129 Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_INVALID_STOP               : return("invalid stop"                                                  ); //  130
       case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                          ); //  131
-      case ERR_MARKET_CLOSED              : return("market is closed"                                              ); //  132
-      case ERR_TRADE_DISABLED             : return("trading is disabled"                                           ); //  133
+      case ERR_MARKET_CLOSED              : return("market closed"                                                 ); //  132
+      case ERR_TRADE_DISABLED             : return("trading disabled"                                              ); //  133
       case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                              ); //  134
       case ERR_PRICE_CHANGED              : return("price changed"                                                 ); //  135
       case ERR_OFF_QUOTES                 : return("off quotes"                                                    ); //  136
-      case ERR_BROKER_BUSY                : return("broker is busy"                                                ); //  137
+      case ERR_BROKER_BUSY                : return("broker busy"                                                   ); //  137
       case ERR_REQUOTE                    : return("requote"                                                       ); //  138
-      case ERR_ORDER_LOCKED               : return("order is locked"                                               ); //  139
+      case ERR_ORDER_LOCKED               : return("order locked"                                                  ); //  139
       case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                                   ); //  140
       case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                             ); //  141
       case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"               ); //  145
-      case ERR_TRADE_CONTEXT_BUSY         : return("trade context is busy"                                         ); //  146
+      case ERR_TRADE_CONTEXT_BUSY         : return("trade context busy"                                            ); //  146
       case ERR_TRADE_EXPIRATION_DENIED    : return("expiration settings denied by broker"                          ); //  147
-      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open and pending orders has reached the broker limit"); //  148
+      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open and pending orders reached the broker limit"    ); //  148
       case ERR_TRADE_HEDGE_PROHIBITED     : return("hedging prohibited"                                            ); //  149
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                      ); //  150
 
@@ -6493,10 +6493,10 @@ string ErrorDescription(int error) {
       case ERR_UNKNOWN_COMMAND            : return("unknown command"                                               ); // 4014
       case ERR_WRONG_JUMP                 : return("wrong jump"                                                    ); // 4015
       case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                         ); // 4016
-      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL function calls not allowed"                                ); // 4017
+      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls not allowed"                                         ); // 4017
       case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                           ); // 4018
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                          ); // 4019
-      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("ex4 library function calls not allowed"                        ); // 4020
+      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("library calls not allowed"                                     ); // 4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"      ); // 4021
       case ERR_SYSTEM_BUSY                : return("system busy"                                                   ); // 4022
     //case 4023: ???
@@ -6509,7 +6509,7 @@ string ErrorDescription(int error) {
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056 incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                     ); // 4058
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in test mode"                             ); // 4059
+      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in tester"                                ); // 4059
       case ERR_FUNCTION_NOT_CONFIRMED     : return("function not confirmed"                                        ); // 4060
       case ERR_SEND_MAIL_ERROR            : return("send mail error"                                               ); // 4061
       case ERR_STRING_PARAMETER_EXPECTED  : return("string parameter expected"                                     ); // 4062
@@ -6528,9 +6528,9 @@ string ErrorDescription(int error) {
       case ERR_UNKNOWN_SYMBOL             : return("unknown symbol"                                                ); // 4106
       case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"                    ); // 4107
       case ERR_INVALID_TICKET             : return("invalid ticket"                                                ); // 4108
-      case ERR_TRADE_NOT_ALLOWED          : return("live trading is not enabled"                                   ); // 4109
-      case ERR_LONGS_NOT_ALLOWED          : return("long trades are not enabled"                                   ); // 4110
-      case ERR_SHORTS_NOT_ALLOWED         : return("short trades are not enabled"                                  ); // 4111
+      case ERR_TRADE_NOT_ALLOWED          : return("live trading not enabled"                                      ); // 4109
+      case ERR_LONGS_NOT_ALLOWED          : return("long trades not enabled"                                       ); // 4110
+      case ERR_SHORTS_NOT_ALLOWED         : return("short trades not enabled"                                      ); // 4111
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                         ); // 4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                       ); // 4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                          ); // 4202
