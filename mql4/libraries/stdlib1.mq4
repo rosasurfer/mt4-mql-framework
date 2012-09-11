@@ -1551,6 +1551,78 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
+ * Fügt ein Element am Ende eines Boolean-Arrays an.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  bool value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushBool(bool &array[], bool value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines Integer-Arrays an.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushInt(int &array[], int value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines Double-Arrays an.
+ *
+ * @param  double array[] - Double-Array
+ * @param  double value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushDouble(double &array[], double value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
+ * Fügt ein Element am Ende eines String-Arrays an.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayPushString(string &array[], string value) {
+   int size = ArraySize(array);
+
+   ArrayResize(array, size+1);
+   array[size] = value;
+
+   return(size+1);
+}
+
+
+/**
  * Entfernt ein Element vom Ende eines Boolean-Arrays und gibt es zurück.
  *
  * @param  bool array[] - Boolean-Array
@@ -1566,6 +1638,127 @@ bool ArrayPopBool(bool array[]) {
    ArrayResize(array, size-1);
 
    return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+int ArrayPopInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopInt()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   int popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Ende eines Double-Array und gibt es zurück.
+ *
+ * @param  int double[] - Double-Array
+ *
+ * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+double ArrayPopDouble(double array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayPopDouble()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   double popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
+ *
+ * @param  string array[] - String-Array
+ *
+ * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
+ */
+string ArrayPopString(string array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_empty(catch("ArrayPopString()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   string popped = array[size-1];
+   ArrayResize(array, size-1);
+
+   return(popped);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines Boolean-Arrays an.
+ *
+ * @param  bool array[] - Boolean-Array
+ * @param  bool value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftBool(bool array[], bool value) {
+   ReverseBoolArray(array);
+   int size = ArrayPushBool(array, value);
+   ReverseBoolArray(array);
+   return(size);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines Integer-Arrays an.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftInt(int array[], int value) {
+   ReverseIntArray(array);
+   int size = ArrayPushInt(array, value);
+   ReverseIntArray(array);
+   return(size);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines Double-Arrays an.
+ *
+ * @param  double array[] - Double-Array
+ * @param  double value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftDouble(double array[], double value) {
+   ReverseDoubleArray(array);
+   int size = ArrayPushDouble(array, value);
+   ReverseDoubleArray(array);
+   return(size);
+}
+
+
+/**
+ * Fügt ein Element am Beginn eines String-Arrays an.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays
+ */
+int ArrayUnshiftString(string array[], string value) {
+   ReverseStringArray(array);
+   int size = ArrayPushString(array, value);
+   ReverseStringArray(array);
+   return(size);
 }
 
 
@@ -1592,6 +1785,72 @@ bool ArrayShiftBool(bool array[]) {
 
 
 /**
+ * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+int ArrayShiftInt(int array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftInt()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   int shifted = array[0];
+
+   if (size > 1)
+      ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurück.
+ *
+ * @param  double array[] - Double-Array
+ *
+ * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ */
+double ArrayShiftDouble(double array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_NULL(catch("ArrayShiftDouble()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   double shifted = array[0];
+
+   if (size > 1)
+      ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
+ * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurück.
+ *
+ * @param  string array[] - String-Array
+ *
+ * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
+ */
+string ArrayShiftString(string array[]) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(_empty(catch("ArrayShiftString()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+
+   string shifted = array[0];
+
+   if (size > 1)
+      ArrayCopy(array, array, 0, 1);
+   ArrayResize(array, size-1);
+
+   return(shifted);
+}
+
+
+/**
  * Entfernt alle Vorkommen eines Elements aus einem Boolean-Array.
  *
  * @param  bool array[] - Boolean-Array
@@ -1603,6 +1862,83 @@ int ArrayDropBool(bool array[], bool value) {
    int size = ArraySize(array);
    if (size == 0)
       return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (array[i] == value) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
+ * Entfernt alle Vorkommen eines Elements aus einem Integer-Array.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropInt(int array[], int value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (array[i] == value) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
+ * Entfernt alle Vorkommen eines Elements aus einem Double-Array.
+ *
+ * @param  double array[] - Double-Array
+ * @param  double value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropDouble(double array[], double value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   for (int count, i=size-1; i>=0; i--) {
+      if (EQ(array[i], value)) {
+         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+            ArrayCopy(array, array, i, i+1);
+         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+         count++;
+      }
+   }
+   return(count);
+}
+
+
+/**
+ * Entfernt alle Vorkommen eines Elements aus einem String-Array.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - zu entfernendes Element
+ *
+ * @return int - Anzahl der entfernten Elemente
+ */
+int ArrayDropString(string array[], string value) {
+   int size = ArraySize(array);
+   if (size == 0)
+      return(0);
+
+   // TODO: nicht initialisierten String verarbeiten (NULL-Pointer)
 
    for (int count, i=size-1; i>=0; i--) {
       if (array[i] == value) {
@@ -1647,137 +1983,6 @@ int ArraySpliceBools(bool array[], int offset, int length) {
 
 
 /**
- * Fügt ein Element am Ende eines Boolean-Arrays an.
- *
- * @param  bool array[] - Boolean-Array
- * @param  bool value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayPushBool(bool &array[], bool value) {
-   int size = ArraySize(array);
-
-   ArrayResize(array, size+1);
-   array[size] = value;
-
-   return(size+1);
-}
-
-
-/**
- * Fügt ein Element am Beginn eines Boolean-Arrays an.
- *
- * @param  bool array[] - Boolean-Array
- * @param  bool value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayUnshiftBool(bool array[], bool value) {
-   ReverseBoolArray(array);
-   int size = ArrayPushBool(array, value);
-   ReverseBoolArray(array);
-   return(size);
-}
-
-
-/**
- * Vereint die Werte zweier Boolean-Arrays.
- *
- * @param  bool array1[] - Boolean-Array
- * @param  bool array2[] - Boolean-Array
- * @param  bool merged[] - resultierendes Array
- *
- * @return int - Größe des resultierenden Arrays
- */
-int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
-   // Da merged[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
-   bool tmp[]; ArrayResize(tmp, 0);
-
-   int size1 = ArraySize(array1);
-   if (size1 > 0)
-      ArrayCopy(tmp, array1);
-
-   int size2 = ArraySize(array2);
-   if (size2 > 0)
-      ArrayCopy(tmp, array2, size1);
-
-   int size3 = size1 + size2;
-   if (size3 > 0)
-      ArrayCopy(merged, tmp);
-   ArrayResize(merged, size3);
-
-   ArrayResize(tmp, 0);
-   return(size3);
-}
-
-
-/**
- * Entfernt ein Element vom Ende eines Integer-Arrays und gibt es zurück.
- *
- * @param  int array[] - Integer-Array
- *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-int ArrayPopInt(int array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayPopInt()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   int popped = array[size-1];
-   ArrayResize(array, size-1);
-
-   return(popped);
-}
-
-
-/**
- * Entfernt ein Element vom Beginn eines Integer-Arrays und gibt es zurück.
- *
- * @param  int array[] - Integer-Array
- *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-int ArrayShiftInt(int array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayShiftInt()   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   int shifted = array[0];
-
-   if (size > 1)
-      ArrayCopy(array, array, 0, 1);
-   ArrayResize(array, size-1);
-
-   return(shifted);
-}
-
-
-/**
- * Entfernt alle Vorkommen eines Elements aus einem Integer-Array.
- *
- * @param  int array[] - Integer-Array
- * @param  int value   - zu entfernendes Element
- *
- * @return int - Anzahl der entfernten Elemente
- */
-int ArrayDropInt(int array[], int value) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(0);
-
-   for (int count, i=size-1; i>=0; i--) {
-      if (array[i] == value) {
-         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
-            ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
-         count++;
-      }
-   }
-   return(count);
-}
-
-
-/**
  * Entfernt einen Teil aus einem Integer-Array.
  *
  * @param  int array[] - Integer-Array
@@ -1804,137 +2009,6 @@ int ArraySpliceInts(int array[], int offset, int length) {
    ArrayResize(array, size-length);
 
    return(length);
-}
-
-
-/**
- * Fügt ein Element am Ende eines Integer-Arrays an.
- *
- * @param  int array[] - Integer-Array
- * @param  int value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayPushInt(int &array[], int value) {
-   int size = ArraySize(array);
-
-   ArrayResize(array, size+1);
-   array[size] = value;
-
-   return(size+1);
-}
-
-
-/**
- * Fügt ein Element am Beginn eines Integer-Arrays an.
- *
- * @param  int array[] - Integer-Array
- * @param  int value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayUnshiftInt(int array[], int value) {
-   ReverseIntArray(array);
-   int size = ArrayPushInt(array, value);
-   ReverseIntArray(array);
-   return(size);
-}
-
-
-/**
- * Vereint die Werte zweier Integer-Arrays.
- *
- * @param  int array1[] - Integer-Array
- * @param  int array2[] - Integer-Array
- * @param  int merged[] - resultierendes Array
- *
- * @return int - Größe des resultierenden Arrays
- */
-int MergeIntArrays(int array1[], int array2[], int merged[]) {
-   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
-   int tmp[]; ArrayResize(tmp, 0);
-
-   int size1 = ArraySize(array1);
-   if (size1 > 0)
-      ArrayCopy(tmp, array1);
-
-   int size2 = ArraySize(array2);
-   if (size2 > 0)
-      ArrayCopy(tmp, array2, size1);
-
-   int size3 = size1 + size2;
-   if (size3 > 0)
-      ArrayCopy(merged, tmp);
-   ArrayResize(merged, size3);
-
-   ArrayResize(tmp, 0);
-   return(size3);
-}
-
-
-/**
- * Entfernt ein Element vom Ende eines Double-Array und gibt es zurück.
- *
- * @param  int double[] - Double-Array
- *
- * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-double ArrayPopDouble(double array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayPopDouble()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   double popped = array[size-1];
-   ArrayResize(array, size-1);
-
-   return(popped);
-}
-
-
-/**
- * Entfernt ein Element vom Beginn eines Double-Arrays und gibt es zurück.
- *
- * @param  double array[] - Double-Array
- *
- * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
- */
-double ArrayShiftDouble(double array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_NULL(catch("ArrayShiftDouble()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   double shifted = array[0];
-
-   if (size > 1)
-      ArrayCopy(array, array, 0, 1);
-   ArrayResize(array, size-1);
-
-   return(shifted);
-}
-
-
-/**
- * Entfernt alle Vorkommen eines Elements aus einem Double-Array.
- *
- * @param  double array[] - Double-Array
- * @param  double value   - zu entfernendes Element
- *
- * @return int - Anzahl der entfernten Elemente
- */
-int ArrayDropDouble(double array[], double value) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(0);
-
-   for (int count, i=size-1; i>=0; i--) {
-      if (EQ(array[i], value)) {
-         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
-            ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
-         count++;
-      }
-   }
-   return(count);
 }
 
 
@@ -1969,139 +2043,6 @@ int ArraySpliceDoubles(double array[], int offset, int length) {
 
 
 /**
- * Fügt ein Element am Ende eines Double-Arrays an.
- *
- * @param  double array[] - Double-Array
- * @param  double value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayPushDouble(double &array[], double value) {
-   int size = ArraySize(array);
-
-   ArrayResize(array, size+1);
-   array[size] = value;
-
-   return(size+1);
-}
-
-
-/**
- * Fügt ein Element am Beginn eines Double-Arrays an.
- *
- * @param  double array[] - Double-Array
- * @param  double value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays
- */
-int ArrayUnshiftDouble(double array[], double value) {
-   ReverseDoubleArray(array);
-   int size = ArrayPushDouble(array, value);
-   ReverseDoubleArray(array);
-   return(size);
-}
-
-
-/**
- * Vereint die Werte zweier Double-Arrays.
- *
- * @param  double array1[] - Double-Array
- * @param  double array2[] - Double-Array
- * @param  double merged[] - resultierendes Array
- *
- * @return int - Größe des resultierenden Arrays
- */
-int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
-   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
-   double tmp[]; ArrayResize(tmp, 0);
-
-   int size1 = ArraySize(array1);
-   if (size1 > 0)
-      ArrayCopy(tmp, array1);
-
-   int size2 = ArraySize(array2);
-   if (size2 > 0)
-      ArrayCopy(tmp, array2, size1);
-
-   int size3 = size1 + size2;
-   if (size3 > 0)
-      ArrayCopy(merged, tmp);
-   ArrayResize(merged, size3);
-
-   ArrayResize(tmp, 0);
-   return(size3);
-}
-
-
-/**
- * Entfernt ein Element vom Ende eines String-Arrays und gibt es zurück.
- *
- * @param  string array[] - String-Array
- *
- * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
- */
-string ArrayPopString(string array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_empty(catch("ArrayPopString()   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   string popped = array[size-1];
-   ArrayResize(array, size-1);
-
-   return(popped);
-}
-
-
-/**
- * Entfernt ein Element vom Beginn eines String-Arrays und gibt es zurück.
- *
- * @param  string array[] - String-Array
- *
- * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
- */
-string ArrayShiftString(string array[]) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(_empty(catch("ArrayShiftString()   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
-
-   string shifted = array[0];
-
-   if (size > 1)
-      ArrayCopy(array, array, 0, 1);
-   ArrayResize(array, size-1);
-
-   return(shifted);
-}
-
-
-/**
- * Entfernt alle Vorkommen eines Elements aus einem String-Array.
- *
- * @param  string array[] - String-Array
- * @param  string value   - zu entfernendes Element
- *
- * @return int - Anzahl der entfernten Elemente
- */
-int ArrayDropString(string array[], string value) {
-   int size = ArraySize(array);
-   if (size == 0)
-      return(0);
-
-   // TODO: nicht initialisierten String verarbeiten (NULL-Pointer)
-
-   for (int count, i=size-1; i>=0; i--) {
-      if (array[i] == value) {
-         if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
-            ArrayCopy(array, array, i, i+1);
-         size = ArrayResize(array, size-1);        // Array um ein Element kürzen
-         count++;
-      }
-   }
-   return(count);
-}
-
-
-/**
  * Entfernt einen Teil aus einem String-Array.
  *
  * @param  string array[] - String-Array
@@ -2132,123 +2073,293 @@ int ArraySpliceStrings(string array[], int offset, int length) {
 
 
 /**
- * Fügt ein Element am Ende eines String-Arrays an.
+ * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  bool array[]  - Ausgangs-Array
+ * @param  int  offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  bool values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
-int ArrayPushString(string &array[], string value) {
-   int size = ArraySize(array);
+int ArrayInsertBools(bool array[], int offset, bool values[]) {
+   if (ArrayDimension(array) > 1)  return(_int(-1, catch("ArrayInsertBools(1)   invalid parameter array (too many dimensions = "+ ArrayDimension(array) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_int(-1, catch("ArrayInsertBools(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_int(-1, catch("ArrayInsertBools(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(values) > 1) return(_int(-1, catch("ArrayInsertBools(4)   invalid parameter values (too many dimensions = "+ ArrayDimension(values) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
 
-   ArrayResize(array, size+1);
-   array[size] = value;
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeBoolArrays(values, array, array));
 
-   return(size+1);
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeBoolArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   return(newSize);
 }
 
 
 /**
- * Fügt ein Element am Beginn eines String-Arrays an.
+ * Fügt in ein Integer-Array die Elemente eines anderen Integer-Arrays ein.
  *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  int array[]  - Ausgangs-Array
+ * @param  int offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  int values[] - einzufügende Elemente
  *
- * @return int - neue Größe des Arrays
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
-int ArrayUnshiftString(string array[], string value) {
-   ReverseStringArray(array);
-   int size = ArrayPushString(array, value);
-   ReverseStringArray(array);
-   return(size);
+int ArrayInsertInts(int array[], int offset, int values[]) {
+   if (ArrayDimension(array) > 1)  return(_int(-1, catch("ArrayInsertInts(1)   invalid parameter array (too many dimensions = "+ ArrayDimension(array) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_int(-1, catch("ArrayInsertInts(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_int(-1, catch("ArrayInsertInts(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(values) > 1) return(_int(-1, catch("ArrayInsertInts(4)   invalid parameter values (too many dimensions = "+ ArrayDimension(values) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeIntArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeIntArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   return(newSize);
 }
 
 
 /**
- * Vereint die Werte zweier String-Arrays.
+ * Fügt in ein Double-Array die Elemente eines anderen Double-Arrays ein.
  *
- * @param  string array1[] - String-Array
- * @param  string array2[] - String-Array
- * @param  string merged[] - resultierendes Array
+ * @param  double array[]  - Ausgangs-Array
+ * @param  int    offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  double values[] - einzufügende Elemente
  *
- * @return int - Größe des resultierenden Arrays
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
-int MergeStringArrays(string array1[], string array2[], string merged[]) {
-   // Da results[] Referenz auf array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+int ArrayInsertDoubles(double array[], int offset, double values[]) {
+   if (ArrayDimension(array) > 1)  return(_int(-1, catch("ArrayInsertDoubles(1)   invalid parameter array (too many dimensions = "+ ArrayDimension(array) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_int(-1, catch("ArrayInsertDoubles(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_int(-1, catch("ArrayInsertDoubles(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(values) > 1) return(_int(-1, catch("ArrayInsertDoubles(4)   invalid parameter values (too many dimensions = "+ ArrayDimension(values) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeDoubleArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeDoubleArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten
+   ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   return(newSize);
+}
+
+
+/**
+ * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
+ *
+ * @param  string array[]  - Ausgangs-Array
+ * @param  int    offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  string values[] - einzufügende Elemente
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ */
+int ArrayInsertStrings(string array[], int offset, string values[]) {
+   if (ArrayDimension(array) > 1)  return(_int(-1, catch("ArrayInsertStrings(1)   invalid parameter array (too many dimensions = "+ ArrayDimension(array) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_int(-1, catch("ArrayInsertStrings(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_int(-1, catch("ArrayInsertStrings(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(values) > 1) return(_int(-1, catch("ArrayInsertStrings(4)   invalid parameter values (too many dimensions = "+ ArrayDimension(values) +")", ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeStringArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeStringArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() überschreibt bei String-Arrays den sich überlappenden Bereich (analog zu CopyMemory()), wir müssen mit einer zusätzlichen Kopie arbeiten
    string tmp[]; ArrayResize(tmp, 0);
-
-   int size1 = ArraySize(array1);
-   if (size1 > 0)
-      ArrayCopy(tmp, array1);
-
-   int size2 = ArraySize(array2);
-   if (size2 > 0)
-      ArrayCopy(tmp, array2, size1);
-
-   int size3 = size1 + size2;
-   if (size3 > 0)
-      ArrayCopy(merged, tmp);
-   ArrayResize(merged, size3);
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Elemente nach Offset
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente nach Offset nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
 
    ArrayResize(tmp, 0);
-   return(size3);
+   return(newSize);
 }
 
 
 /**
- * Ob die Indizierung der internen Implementierung des angegebenen Boolean-Arrays umgekehrt ist oder nicht.
+ * Prüft, ob ein Boolean in einem Array enthalten ist.
  *
- * @param bool array[] - Boolean-Array
+ * @param  bool haystack[] - zu durchsuchendes Array
+ * @param  bool needle     - zu suchender Wert
  *
  * @return bool
  */
-bool IsReverseIndexedBoolArray(bool array[]) {
-   if (ArraySetAsSeries(array, false))
-      return(!ArraySetAsSeries(array, true));
-   return(false);
+bool BoolInArray(bool haystack[], bool needle) {
+   return(SearchBoolArray(haystack, needle) > -1);
 }
 
 
 /**
- * Ob die Indizierung der internen Implementierung des angegebenen Integer-Arrays umgekehrt ist oder nicht.
+ * Prüft, ob ein Integer in einem Array enthalten ist.
  *
- * @param  int array[] - Integer-Array
+ * @param  int haystack[] - zu durchsuchendes Array
+ * @param  int needle     - zu suchender Wert
  *
  * @return bool
  */
-bool IsReverseIndexedIntArray(int array[]) {
-   if (ArraySetAsSeries(array, false))
-      return(!ArraySetAsSeries(array, true));
-   return(false);
+bool IntInArray(int haystack[], int needle) {
+   return(SearchIntArray(haystack, needle) > -1);
 }
 
 
 /**
- * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
+ * Prüft, ob ein Double in einem Array enthalten ist.
  *
- * @param  double array[] - Double-Array
+ * @param  double haystack[] - zu durchsuchendes Array
+ * @param  double needle     - zu suchender Wert
  *
  * @return bool
  */
-bool IsReverseIndexedDoubleArray(double array[]) {
-   if (ArraySetAsSeries(array, false))
-      return(!ArraySetAsSeries(array, true));
-   return(false);
+bool DoubleInArray(double haystack[], double needle) {
+   return(SearchDoubleArray(haystack, needle) > -1);
 }
 
 
 /**
- * Ob die Indizierung der internen Implementierung des angegebenen String-Arrays umgekehrt ist oder nicht.
+ * Prüft, ob ein String in einem Array enthalten ist.
  *
- * @param  string array[] - String-Array
+ * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
  *
  * @return bool
  */
-bool IsReverseIndexedStringArray(string array[]) {
-   if (ArraySetAsSeries(array, false))
-      return(!ArraySetAsSeries(array, true));
-   return(false);
+bool StringInArray(string haystack[], string needle) {
+   return(SearchStringArray(haystack, needle) > -1);
+}
+
+
+/**
+ * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  bool haystack[] - zu durchsuchendes Array
+ * @param  bool needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchBoolArray(bool haystack[], bool needle) {
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("SearchBoolArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  int haystack[] - zu durchsuchendes Array
+ * @param  int needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchIntArray(int haystack[], int needle) {
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("SearchIntArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  double haystack[] - zu durchsuchendes Array
+ * @param  double needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchDoubleArray(double haystack[], double needle) {
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("SearchDoubleArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (EQ(haystack[i], needle))
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück.
+ *
+ * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchStringArray(string haystack[], string needle) {
+   if (ArrayDimension(haystack) > 1)
+      return(_int(-1, catch("SearchStringArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+
+   for (int i=0; i < size; i++) {
+      if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
 }
 
 
@@ -2317,6 +2428,349 @@ bool ReverseStringArray(string array[]) {
    if (ArraySetAsSeries(array, true))
       return(!ArraySetAsSeries(array, false));
    return(true);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen Boolean-Arrays umgekehrt ist oder nicht.
+ *
+ * @param bool array[] - Boolean-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedBoolArray(bool array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen Integer-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  int array[] - Integer-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedIntArray(int array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen Double-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  double array[] - Double-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedDoubleArray(double array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Ob die Indizierung der internen Implementierung des angegebenen String-Arrays umgekehrt ist oder nicht.
+ *
+ * @param  string array[] - String-Array
+ *
+ * @return bool
+ */
+bool IsReverseIndexedStringArray(string array[]) {
+   if (ArraySetAsSeries(array, false))
+      return(!ArraySetAsSeries(array, true));
+   return(false);
+}
+
+
+/**
+ * Vereint die Werte zweier Boolean-Arrays.
+ *
+ * @param  bool array1[] - Boolean-Array
+ * @param  bool array2[] - Boolean-Array
+ * @param  bool merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeBoolArrays(bool array1[], bool array2[], bool merged[]) {
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   bool tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
+ * Vereint die Werte zweier Integer-Arrays.
+ *
+ * @param  int array1[] - Integer-Array
+ * @param  int array2[] - Integer-Array
+ * @param  int merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeIntArrays(int array1[], int array2[], int merged[]) {
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   int tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
+ * Vereint die Werte zweier Double-Arrays.
+ *
+ * @param  double array1[] - Double-Array
+ * @param  double array2[] - Double-Array
+ * @param  double merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeDoubleArrays(double array1[], double array2[], double merged[]) {
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   double tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
+ * Vereint die Werte zweier String-Arrays.
+ *
+ * @param  string array1[] - String-Array
+ * @param  string array2[] - String-Array
+ * @param  string merged[] - resultierendes Array
+ *
+ * @return int - Größe des resultierenden Arrays
+ */
+int MergeStringArrays(string array1[], string array2[], string merged[]) {
+   // Da merged[] Referenz auf array1[] oder array2[] sein kann, arbeiten wir über den Umweg einer Kopie.
+   string tmp[]; ArrayResize(tmp, 0);
+
+   int size1 = ArraySize(array1);
+   if (size1 > 0)
+      ArrayCopy(tmp, array1);
+
+   int size2 = ArraySize(array2);
+   if (size2 > 0)
+      ArrayCopy(tmp, array2, size1);
+
+   int size3 = size1 + size2;
+   if (size3 > 0)
+      ArrayCopy(merged, tmp);
+   ArrayResize(merged, size3);
+
+   ArrayResize(tmp, 0);
+   return(size3);
+}
+
+
+/**
+ * Verbindet die Werte eines Boolean-Arrays unter Verwendung des angegebenen Separators.
+ *
+ * @param  bool   values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string JoinBools(bool values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinBools()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      if (values[i]) strings[i] = "true";
+      else           strings[i] = "false";
+   }
+
+   string result = JoinStrings(strings, separator);
+
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
+
+   return(result);
+}
+
+
+/**
+ * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
+ *
+ * @param  int    values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string JoinInts(int values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinInts()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = values[i];
+   }
+
+   string result = JoinStrings(strings, separator);
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
+   return(result);
+}
+
+
+/**
+ * Verbindet die Werte eines Double-Arrays unter Verwendung des angegebenen Separators.
+ *
+ * @param  double values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string JoinDoubles(double values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinDoubles()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = NumberToStr(values[i], ".1+");
+      if (StringLen(strings[i]) == 0)
+         return("");
+   }
+
+   string result = JoinStrings(strings, separator);
+
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
+
+   return(result);
+}
+
+
+/**
+ * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
+ *
+ * @param  string values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string JoinStrings(string values[], string separator) {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinStrings()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   string result = "";
+
+   int size = ArraySize(values);
+
+   for (int i=1; i < size; i++) {
+      result = StringConcatenate(result, separator, values[i]);
+   }
+
+   if (size > 0)
+      result = StringConcatenate(values[0], result);
+
+   if (IsError(catch("JoinStrings()")))
+      return("");
+   return(result);
+}
+
+
+/**
+ * Addiert die Werte eines Integer-Arrays.
+ *
+ * @param  int values[] - Array mit Ausgangswerten
+ *
+ * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
+ */
+int SumInts(int values[]) {
+   if (ArrayDimension(values) > 1)
+      return(_ZERO(catch("SumInts()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int sum, size=ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      sum += values[i];
+   }
+   return(sum);
+}
+
+
+/**
+ * Addiert die Werte eines Double-Arrays.
+ *
+ * @param  double values[]  - Array mit Ausgangswerten
+ *
+ * @return double - Summe aller Werte oder 0, falls ein Fehler auftrat
+ */
+double SumDoubles(double values[]) {
+   if (ArrayDimension(values) > 1)
+      return(_ZERO(catch("SumDoubles()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   double sum;
+
+   int size = ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      sum += values[i];
+   }
+
+   return(sum);
 }
 
 
@@ -7710,92 +8164,6 @@ int IncreasePeriod(int period = 0) {
 
 
 /**
- * Verbindet die Werte eines Boolean-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  bool   values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinBools(bool values[], string separator) {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinBools()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      if (values[i]) strings[i] = "true";
-      else           strings[i] = "false";
-   }
-
-   string result = JoinStrings(strings, separator);
-
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-
-   return(result);
-}
-
-
-/**
- * Verbindet die Werte eines Double-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  double values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinDoubles(double values[], string separator) {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinDoubles()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = NumberToStr(values[i], ".1+");
-      if (StringLen(strings[i]) == 0)
-         return("");
-   }
-
-   string result = JoinStrings(strings, separator);
-
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-
-   return(result);
-}
-
-
-/**
- * Addiert die Werte eines Double-Arrays.
- *
- * @param  double values[]  - Array mit Ausgangswerten
- *
- * @return double - Summe aller Werte oder 0, falls ein Fehler auftrat
- */
-double SumDoubles(double values[]) {
-   if (ArrayDimension(values) > 1)
-      return(_ZERO(catch("SumDoubles()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   double sum;
-
-   int size = ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      sum += values[i];
-   }
-
-   return(sum);
-}
-
-
-/**
  * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  double values[]
@@ -7931,54 +8299,6 @@ string MoneysToStr(double values[], string separator=", ") {
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
-}
-
-
-/**
- * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  int    values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinInts(int values[], string separator) {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinInts()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = values[i];
-   }
-
-   string result = JoinStrings(strings, separator);
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-   return(result);
-}
-
-
-/**
- * Addiert die Werte eines Integer-Arrays.
- *
- * @param  int values[] - Array mit Ausgangswerten
- *
- * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
- */
-int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1)
-      return(_ZERO(catch("SumInts()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int sum, size=ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      sum += values[i];
-   }
-   return(sum);
 }
 
 
@@ -8156,35 +8476,6 @@ string OperationTypesToStr(int values[], string separator=", ") {
 
 
 /**
- * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
- *
- * @param  string values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinStrings(string values[], string separator) {
-   if (ArrayDimension(values) > 1)
-      return(_empty(catch("JoinStrings()  invalid parameter values, too many dimensions = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string result = "";
-
-   int size = ArraySize(values);
-
-   for (int i=1; i < size; i++) {
-      result = StringConcatenate(result, separator, values[i]);
-   }
-
-   if (size > 0)
-      result = StringConcatenate(values[0], result);
-
-   if (IsError(catch("JoinStrings()")))
-      return("");
-   return(result);
-}
-
-
-/**
  * Konvertiert ein String-Array in einen lesbaren String.
  *
  * @param  string values[]
@@ -8206,146 +8497,6 @@ string StringsToStr(string values[], string separator=", ") {
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{\"", joined, "\"}"));
-}
-
-
-/**
- * Durchsucht ein Boolean-Array nach einem Wert und gibt dessen Index zurück.
- *
- * @param  bool haystack[] - zu durchsuchendes Array
- * @param  bool needle     - zu suchender Wert
- *
- * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
- */
-int SearchBoolArray(bool haystack[], bool needle) {
-   if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("SearchBoolArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(haystack);
-
-   for (int i=0; i < size; i++) {
-      if (haystack[i] == needle)
-         return(i);
-   }
-   return(-1);
-}
-
-
-/**
- * Prüft, ob ein Boolean in einem Array enthalten ist.
- *
- * @param  bool haystack[] - zu durchsuchendes Array
- * @param  bool needle     - zu suchender Wert
- *
- * @return bool
- */
-bool BoolInArray(bool haystack[], bool needle) {
-   return(SearchBoolArray(haystack, needle) > -1);
-}
-
-
-/**
- * Durchsucht ein Integer-Array nach einem Wert und gibt dessen Index zurück.
- *
- * @param  int haystack[] - zu durchsuchendes Array
- * @param  int needle     - zu suchender Wert
- *
- * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
- */
-int SearchIntArray(int haystack[], int needle) {
-   if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("SearchIntArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(haystack);
-
-   for (int i=0; i < size; i++) {
-      if (haystack[i] == needle)
-         return(i);
-   }
-   return(-1);
-}
-
-
-/**
- * Prüft, ob ein Integer in einem Array enthalten ist.
- *
- * @param  int haystack[] - zu durchsuchendes Array
- * @param  int needle     - zu suchender Wert
- *
- * @return bool
- */
-bool IntInArray(int haystack[], int needle) {
-   return(SearchIntArray(haystack, needle) > -1);
-}
-
-
-/**
- * Durchsucht ein Double-Array nach einem Wert und gibt dessen Index zurück.
- *
- * @param  double haystack[] - zu durchsuchendes Array
- * @param  double needle     - zu suchender Wert
- *
- * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
- */
-int SearchDoubleArray(double haystack[], double needle) {
-   if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("SearchDoubleArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(haystack);
-
-   for (int i=0; i < size; i++) {
-      if (EQ(haystack[i], needle))
-         return(i);
-   }
-   return(-1);
-}
-
-
-/**
- * Prüft, ob ein Double in einem Array enthalten ist.
- *
- * @param  double haystack[] - zu durchsuchendes Array
- * @param  double needle     - zu suchender Wert
- *
- * @return bool
- */
-bool DoubleInArray(double haystack[], double needle) {
-   return(SearchDoubleArray(haystack, needle) > -1);
-}
-
-
-/**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück.
- *
- * @param  string haystack[] - zu durchsuchendes Array
- * @param  string needle     - zu suchender Wert
- *
- * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist
- */
-int SearchStringArray(string haystack[], string needle) {
-   if (ArrayDimension(haystack) > 1)
-      return(_int(-1, catch("SearchStringArray()   too many dimensions in parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(haystack);
-
-   for (int i=0; i < size; i++) {
-      if (haystack[i] == needle)
-         return(i);
-   }
-   return(-1);
-}
-
-
-/**
- * Prüft, ob ein String in einem Array enthalten ist.
- *
- * @param  string haystack[] - zu durchsuchendes Array
- * @param  string needle     - zu suchender Wert
- *
- * @return bool
- */
-bool StringInArray(string haystack[], string needle) {
-   return(SearchStringArray(haystack, needle) > -1);
 }
 
 
