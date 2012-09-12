@@ -11188,6 +11188,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
             // Restposition finden
             if (NE(firstLots, secondLots)) {
+               double remainderLots = MathAbs(firstLots - secondLots);
+
                if (smallerByLarger) {                                                     // online
                   // Referenz: remainder.comment = "from #smaller"
                   string strValue = StringConcatenate("from #", smaller);
@@ -11207,7 +11209,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                   if (!OrderSelectByTicket(larger, "OrderCloseByEx(10)", NULL, O_POP))
                      return(_false(oe.setError(oe, last_error)));
                   int      remainderType        = OrderType();
-                  double   remainderLots        = MathAbs(firstLots - secondLots);
+                  //       remainderLots        = ...
                   string   remainderSymbol      = OrderSymbol();
                   datetime remainderOpenTime    = OrderOpenTime();
                   double   remainderOpenprice   = OrderOpenPrice();
