@@ -341,7 +341,7 @@
    string   StringReplace(string object, string search, string replace);
    string   StringSubstrFix(string object, int start, int length);
 
-   int      Explode(string object, string separator, string results[], int limit);
+   int      Explode(string input, string separator, string results[], int limit);
    string   UrlEncode(string value);
 
 

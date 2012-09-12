@@ -5997,59 +5997,59 @@ bool EventListener.ExternalCommand(string commands[], int flags=NULL) {
 /**
  * Zerlegt einen String in Teilstrings.
  *
- * @param  string object    - zu zerlegender String
+ * @param  string input     - zu zerlegender String
  * @param  string separator - Trennstring
  * @param  string results[] - Zielarray für die Teilstrings
  * @param  int    limit     - maximale Anzahl von Teilstrings (default: kein Limit)
  *
  * @return int - Anzahl der Teilstrings oder -1, wennn ein Fehler auftrat
  */
-int Explode(string object, string separator, string &results[], int limit=NULL) {
-   // Der Parameter object *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
-   // vor Modifikation von results[] eine Kopie von object und verwenden diese.
-   string _object = StringConcatenate(object, "");
+int Explode(string input, string separator, string &results[], int limit=NULL) {
+   // Der Parameter input *könnte* ein Element des Ergebnisarrays results[] sein, daher erstellen wir
+   // vor Modifikation von results[] eine Kopie von input und verwenden diese.
+   string _input = StringConcatenate(input, "");
 
-   int lenObject    = StringLen(_object),
+   int lenInput     = StringLen(input),
        lenSeparator = StringLen(separator);
 
-   if (lenObject == 0) {                     // Leerstring
+   if (lenInput == 0) {                      // Leerstring
       ArrayResize(results, 1);
-      results[0] = _object;
+      results[0] = _input;
    }
    else if (StringLen(separator) == 0) {     // NUL-Separator: String in einzelne Zeichen zerlegen
-      if (limit==NULL || limit > lenObject)
-         limit = lenObject;
+      if (limit==NULL || limit > lenInput)
+         limit = lenInput;
       ArrayResize(results, limit);
 
       for (int i=0; i < limit; i++) {
-         results[i] = StringSubstr(_object, i, 1);
+         results[i] = StringSubstr(_input, i, 1);
       }
    }
    else {                                    // String in Substrings zerlegen
       int size, pos;
       i = 0;
 
-      while (i < lenObject) {
+      while (i < lenInput) {
          ArrayResize(results, size+1);
 
-         pos = StringFind(_object, separator, i);
+         pos = StringFind(_input, separator, i);
          if (limit == size+1)
             pos = -1;
          if (pos == -1) {
-            results[size] = StringSubstr(_object, i);
+            results[size] = StringSubstr(_input, i);
             break;
          }
          else if (pos == i) {
             results[size] = "";
          }
          else {
-            results[size] = StringSubstrFix(_object, i, pos-i);
+            results[size] = StringSubstrFix(_input, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
       }
 
-      if (i == lenObject) {                  // bei abschließendem Separator Substrings mit Leerstring beenden
+      if (i == lenInput) {                   // bei abschließendem Separator Substrings mit Leerstring beenden
          ArrayResize(results, size+1);
          results[size] = "";                 // TODO: !!! Wechselwirkung zwischen Limit und Separator am Ende überprüfen
       }
