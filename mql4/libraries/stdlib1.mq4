@@ -1496,14 +1496,14 @@ bool IsTemporaryTradeError(int error) {
    switch (error) {
       // temporary errors
       case ERR_COMMON_ERROR:                 //        2   trade denied                                                       // TODO: Warum ist dies temporär?
-      case ERR_SERVER_BUSY:                  //        4   trade server is busy
+      case ERR_SERVER_BUSY:                  //        4   trade server busy
       case ERR_TRADE_TIMEOUT:                //      128   trade timeout
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
-      case ERR_BROKER_BUSY:                  //      137   broker is busy
+      case ERR_BROKER_BUSY:                  //      137   broker busy
       case ERR_REQUOTE:                      //      138   requote
-      case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context is busy
+      case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context busy
          return(true);
 
       // permanent errors
@@ -9892,7 +9892,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    while (!IsStopped()) {
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
-         Sleep(300);                                                                      // 0.3 Sekunden warten
+         Sleep(200);                                                                      // 0.2 Sekunden warten
       }
       else {
          // OpenPrice <> StopDistance validieren
@@ -9980,6 +9980,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setStopLoss  (oe, stopLoss  );
          oe.setTakeProfit(oe, takeProfit);
 
+         if (error == ERR_TRADE_CONTEXT_BUSY) {
+            if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
+            Sleep(200);                                                                   // 0.2 Sekunden warten
+            continue;
+         }
          if (error == ERR_REQUOTE) {
             requotes++;
             oe.setRequotes(oe, requotes);
@@ -10318,7 +10323,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
-         Sleep(300);                                                                      // 0.3 Sekunden warten
+         Sleep(200);                                                                      // 0.2 Sekunden warten
       }
       else {
          oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
@@ -10351,6 +10356,11 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          }
 
          error = oe.setError(oe, GetLastError());
+         if (error == ERR_TRADE_CONTEXT_BUSY) {
+            if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
+            Sleep(200);                                                                   // 0.2 Sekunden warten
+            continue;
+         }
          if (IsNoError(error))
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
@@ -10880,6 +10890,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
+         Sleep(200);                                                                      // 0.2 Sekunden warten
       }
       else {
          // zu verwendenden Preis bestimmen
@@ -10963,6 +10974,11 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          }
 
          error = GetLastError();
+         if (error == ERR_TRADE_CONTEXT_BUSY) {
+            if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
+            Sleep(200);                                                                   // 0.2 Sekunden warten
+            continue;
+         }
          if (error == ERR_REQUOTE) {
             requotes++;
             oe.setRequotes(oe, requotes);
@@ -10976,7 +10992,6 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             break;
          warn(StringConcatenate("OrderCloseEx(23)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s", ifString(requotes, StringConcatenate(" and ", requotes, " requote", ifString(requotes==1, "", "s")), ""), ", retrying..."), error);
       }
-      Sleep(300);                                                                            // 0.3 Sekunden warten
    }
    return(_false(oe.setError(oe, catch("OrderCloseEx(24)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s"+ ifString(requotes, " and "+ requotes +" requote"+ ifString(requotes==1, "", "s"), ""), error, O_POP))));
 }
@@ -11161,6 +11176,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
+         Sleep(200);                                                                      // 0.2 Sekunden warten
       }
       else {
          oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
@@ -11246,13 +11262,17 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          }
 
          error = GetLastError();
+         if (error == ERR_TRADE_CONTEXT_BUSY) {
+            if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
+            Sleep(200);                                                                   // 0.2 Sekunden warten
+            continue;
+         }
          if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
          warn(StringConcatenate("OrderCloseByEx(14)   temporary trade error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s, retrying..."), error);
       }
-      Sleep(300);                                                                         // 0.3 Sekunden warten
    }
    return(_false(oe.setError(oe, catch("OrderCloseByEx(15)   permanent trade error after "+ DoubleToStr(oe.Duration(oe)/1000.0, 3) +" s", error, O_POP))));
 }
@@ -11918,7 +11938,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
-         Sleep(300);                                                                      // 0.3 Sekunden warten
+         Sleep(200);                                                                      // 0.2 Sekunden warten
       }
       else {
          oe.setBid(oe, MarketInfo(OrderSymbol(), MODE_BID));
@@ -11943,6 +11963,11 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          }
 
          error = GetLastError();
+         if (error == ERR_TRADE_CONTEXT_BUSY) {
+            if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
+            Sleep(200);                                                                   // 0.2 Sekunden warten
+            continue;
+         }
          if (IsNoError(error))
             error = ERR_RUNTIME_ERROR;
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
