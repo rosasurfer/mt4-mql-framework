@@ -478,13 +478,13 @@
 
 
 // MT4 internal messages
-#define MT4_TICK                                2     // künstlicher Tick, führt start() aus
+#define MT4_TICK                                2     // künstlicher Tick: Ausführung von start()
 #define MT4_COMPILE_REQUEST                 12345
 #define MT4_COMPILE_PERMISSION              12346
 #define MT4_COMPILE_FINISHED                12349     // Rescan und Reload modifizierter .ex4-Files
 
 
-// MT4 command ids (menu or accelerator identifier)
+// MT4 command ids (Menüpunkte, Toolbars, Hotkeys)
 #define IDC_EXPERTS_ONOFF                   33020     // Toolbar: Experts on/off                    Ctrl+E
 
 #define IDC_CHART_STEPFORWARD               33197     // Chart: eine Bar vorwärts                      F12
@@ -494,7 +494,7 @@
 #define IDC_TESTER_TICK     IDC_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
 
 
-// MT4 item ids (dialog or control identifier)
+// MT4 item ids (Fenster, Controls)
 #define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked inside the main application window
 #define IDD_UNDOCKED_CONTAINER              59423     // window containing undocked child windows (one per undocked child)
 
