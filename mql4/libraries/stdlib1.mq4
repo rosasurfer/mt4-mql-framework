@@ -9577,37 +9577,37 @@ string NumberToStr(double number, string mask) {
  * MQL structure ORDER_EXECUTION
  *
  * typedef struct _ORDER_EXECUTION {
- *    DWORD nError;              //   4      => oe[ 0]         // Fehlercode
- *    TCHAR cSymbol;             //  16      => oe[ 1]         // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
- *    DWORD nDigits;             //   4      => oe[ 5]         // Digits des Ordersymbols
- *    DWORD nStopDistance;       //   4      => oe[ 6]         // Stop-Distance in Points
- *    DWORD nFreezeDistance;     //   4      => oe[ 7]         // Freeze-Distance in Points
- *    DWORD nBid;                //   4      => oe[ 8]         // Bid-Preis vor Ausführung in Points
- *    DWORD nAsk;                //   4      => oe[ 9]         // Ask-Preis vor Ausführung in Points
- *    DWORD nTicket;             //   4      => oe[10]         // aktuelles Ticket
- *    DWORD nType;               //   4      => oe[11]         // Operation-Type
- *    DWORD nLots;               //   4      => oe[12]         // Ordervolumen in Hundertsteln eines Lots
- *    DWORD nOpenTime;           //   4      => oe[13]         // OrderOpenTime
- *    DWORD nOpenPrice;          //   4      => oe[14]         // OpenPrice in Points
- *    DWORD nStopLoss;           //   4      => oe[15]         // StopLoss-Preis in Points
- *    DWORD nTakeProfit;         //   4      => oe[16]         // TakeProfit-Preis in Points
- *    DWORD nCloseTime;          //   4      => oe[17]         // OrderCloseTime
- *    DWORD nClosePrice;         //   4      => oe[18]         // ClosePrice in Points
- *    DWORD nSwap;               //   4      => oe[19]         // Swap-Betrag in Hundertsteln der Account-Währung
- *    DWORD nCommission;         //   4      => oe[20]         // Commission-Betrag in Hundertsteln der Account-Währung
- *    DWORD nProfit;             //   4      => oe[21]         // Profit in Hundertsteln der Account-Währung
- *    TCHAR cComment;            //  28      => oe[22]         // Orderkommentar, bis zu 27 Zeichen + NUL
- *    DWORD nDuration;           //   4      => oe[29]         // Dauer der Auführung in Millisekunden
- *    DWORD nRequotes;           //   4      => oe[30]         // Anzahl aufgetretener Requotes
- *    DWORD nSlippage;           //   4      => oe[31]         // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
- *    DWORD nRemainingTicket;    //   4      => oe[32]         // zusätzlich erzeugtes, verbleibendes Ticket
- *    DWORD nRemainingLots;      //   4      => oe[33]         // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
+ *    DWORD nError;              //   4      => oe[ 0]      // Fehlercode
+ *    TCHAR cSymbol;             //  16      => oe[ 1]      // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
+ *    DWORD nDigits;             //   4      => oe[ 5]      // Digits des Ordersymbols
+ *    DWORD nStopDistance;       //   4      => oe[ 6]      // Stop-Distance in Points
+ *    DWORD nFreezeDistance;     //   4      => oe[ 7]      // Freeze-Distance in Points
+ *    DWORD nBid;                //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Points
+ *    DWORD nAsk;                //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Points
+ *    DWORD nTicket;             //   4      => oe[10]      // aktuelles Ticket
+ *    DWORD nType;               //   4      => oe[11]      // Operation-Type
+ *    DWORD nLots;               //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
+ *    DWORD nOpenTime;           //   4      => oe[13]      // OrderOpenTime
+ *    DWORD nOpenPrice;          //   4      => oe[14]      // OpenPrice in Points
+ *    DWORD nStopLoss;           //   4      => oe[15]      // StopLoss-Preis in Points
+ *    DWORD nTakeProfit;         //   4      => oe[16]      // TakeProfit-Preis in Points
+ *    DWORD nCloseTime;          //   4      => oe[17]      // OrderCloseTime
+ *    DWORD nClosePrice;         //   4      => oe[18]      // ClosePrice in Points
+ *    DWORD nSwap;               //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nCommission;         //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
+ *    DWORD nProfit;             //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
+ *    TCHAR cComment;            //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + NUL
+ *    DWORD nDuration;           //   4      => oe[29]      // Dauer der Auführung in Millisekunden
+ *    DWORD nRequotes;           //   4      => oe[30]      // Anzahl aufgetretener Requotes
+ *    DWORD nSlippage;           //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    DWORD nRemainingTicket;    //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
+ *    DWORD nRemainingLots;      //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } ORDER_EXECUTION, oe;        // 136 byte = int[34]
  */
 
 // Getter
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 0]);                                                 }
-string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) { /*!!!*/                      return(BufferCharsToStr(oe, 4, 12));                                             }
+string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                              return(BufferCharsToStr(oe, 4, 12));                                             }
 int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 5]);                                                 }
 double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 6]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
 double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 7]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
@@ -9625,7 +9625,7 @@ double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digi
 double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[19]/100.0, 2));                                       }
 double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[20]/100.0, 2));                                       }
 double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[21]/100.0, 2));                                       }
-string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) { /*!!!*/                      return(BufferCharsToStr(oe, 88, 27));                                            }
+string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                              return(BufferCharsToStr(oe, 88, 27));                                            }
 int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[29]);                                                 }
 int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[30]);                                                 }
 double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[31]/MathPow(10, digits<<31>>31), digits<<31>>31));    }
@@ -9633,7 +9633,7 @@ int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {         
 double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[33]/100.0, 2));                                       }
 
 int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 0]);                                              }
-string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) { /*!!!*/                      return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 4, 12));                     }
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                              return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 4, 12));                     }
 int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 5]);                                              }
 double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 6]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
 double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 7]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
@@ -9651,7 +9651,7 @@ double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digi
 double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][19]/100.0, 2));                                    }
 double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][20]/100.0, 2));                                    }
 double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][21]/100.0, 2));                                    }
-string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) { /*!!!*/                      return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 88, 27));                    }
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                              return(BufferCharsToStr(oe, ArrayRange(oe, 1)*i*4 + 88, 27));                    }
 int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][29]);                                              }
 int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][30]);                                              }
 double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][31]/MathPow(10, digits<<31>>31), digits<<31>>31)); }
@@ -9741,8 +9741,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false) {
    int dimensions = ArrayDimension(oe);
 
-   if (dimensions > 2)                                         return(_empty(catch("ORDER_EXECUTION.toStr(1)  invalid parameter oe, too many dimensions ("+ dimensions +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.length) return(_empty(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                          return(_empty(catch("ORDER_EXECUTION.toStr(1)  invalid parameter oe, too many dimensions ("+ dimensions +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_empty(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int    digits, pipDigits;
    string priceFormat, line, lines[]; ArrayResize(lines, 0);
@@ -11394,7 +11394,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (4) Tickets gemeinsam schließen, wenn alle zum selben Symbol gehören
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfTickets); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfTickets); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
@@ -11580,7 +11580,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (4) Gesamtposition glatt stellen
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.length]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
 
    int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);
    if (IsLastError())

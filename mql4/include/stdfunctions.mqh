@@ -411,6 +411,10 @@
 #define FF_FILESONLY                            4
 
 
+// Flag zum Schreiben von Historyfiles
+#define HST_FILL_GAPS                           1
+
+
 // MessageBox() flags
 #define MB_OK                          0x00000000     // buttons
 #define MB_OKCANCEL                    0x00000001
@@ -533,8 +537,9 @@
 
 
 // Struct sizes
+#define HISTORY_HEADER.size                   148
 #define ORDER_EXECUTION.size                  136
-#define ORDER_EXECUTION.length                 34     // Ceil(ORDER_EXECUTION.size/4)
+#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
 
 
 // MQL-Fehlercodes

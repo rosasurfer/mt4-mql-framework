@@ -86,7 +86,7 @@ int onStart() {
       int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
-         /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.length]; ArrayResize(oes, ArraySize(tickets)); InitializeBuffer(oes, ORDER_EXECUTION.size);
+         /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(tickets)); InitializeBuffer(oes, ORDER_EXECUTION.size);
          if (!OrderMultiClose(tickets, 0.1, Orange, oeFlags, oes))
             return(SetLastError(stdlib_PeekLastError()));
          ArrayResize(oes, 0);
