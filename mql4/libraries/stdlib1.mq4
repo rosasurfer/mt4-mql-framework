@@ -5443,9 +5443,9 @@ string DwordToHexStr(int dword) {
    string result, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
 
    for (int i=0; i < 8; i++) {
-      char   = chars[dword & 0x0F];                // dword%16
+      char   = chars[dword & 0x0F];                // dword % 16
       result = StringConcatenate(char, result);
-      dword >>= 4;                                 // dword/16
+      dword >>= 4;                                 // dword / 16
    }
    return(result);
 }
@@ -5456,6 +5456,29 @@ string DwordToHexStr(int dword) {
  */
 string IntToHexStr(int integer) {
    return(DwordToHexStr(integer));
+}
+
+
+/**
+ * Gibt die binäre Repräsentation einer Ganzzahl zurück.
+ *
+ * @param  int integer - Ganzzahl
+ *
+ * @return string - binärer Wert
+ *
+ * Beispiel: IntegerToBinaryStr(109) => "1101101"
+ */
+string IntegerToBinaryStr(int integer) {
+   if (integer == 0)
+      return("0");
+
+   string result;
+
+   while (integer != 0) {
+      result = StringConcatenate(integer & 0x01, result);
+      integer >>= 1;
+   }
+   return(result);
 }
 
 

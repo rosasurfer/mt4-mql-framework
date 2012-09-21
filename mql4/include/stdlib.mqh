@@ -431,6 +431,9 @@
    // toString-Funktionen
    string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);  // MetaQuotes-Alias
+
+   string   IntegerToBinaryStr(int integer);
+
    string   IntegerToHexStr(int integer);
    string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                 // Alias
    string   WordToHexStr(int word);

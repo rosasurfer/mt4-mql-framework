@@ -4,20 +4,20 @@
 
 // Special constants
 #define NULL                     0
-#define INT_MIN         0x80000000        // kleinster Integer-Value: -2147483648
-#define INT_MAX         0x7FFFFFFF        // größter Integer-Value:    2147483647
+#define INT_MIN         0x80000000           // kleinster Integer-Value: -2147483648
+#define INT_MAX         0x7FFFFFFF           // größter Integer-Value:    2147483647
 #define EMPTY                   -1
-#define EMPTY_VALUE        INT_MAX        // empty custom indicator value
-#define CLR_NONE                -1        // no color
+#define EMPTY_VALUE        INT_MAX           // empty custom indicator value
+#define CLR_NONE                -1           // no color
 #define WHOLE_ARRAY              0
 #define MAX_STRING_LITERAL       "..............................................................................................................................................................................................................................................................."
-#define NL                       "\n"     // new line, MQL: 0x0D0A
+#define NL                       "\n"        // new line, MQL: 0x0D0A
 #define TAB                      "\t"
 
 
 // Special chars
-#define PLACEHOLDER_ZERO_CHAR    '…'      // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR     '•'      // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
+#define PLACEHOLDER_ZERO_CHAR    '…'         // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
+#define PLACEHOLDER_CTL_CHAR     '•'         // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
 
 // Mathematische Konstanten
@@ -52,19 +52,19 @@
 #define TIME_DATE                1
 #define TIME_MINUTES             2
 #define TIME_SECONDS             4
-#define TIME_FULL                7        // TIME_DATE | TIME_MINUTES | TIME_SECONDS
+#define TIME_FULL                7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
 // Timeframe-Identifier, siehe Period()
-#define PERIOD_M1                1        // 1 minute
-#define PERIOD_M5                5        // 5 minutes
-#define PERIOD_M15              15        // 15 minutes
-#define PERIOD_M30              30        // 30 minutes
-#define PERIOD_H1               60        // 1 hour
-#define PERIOD_H4              240        // 4 hours
-#define PERIOD_D1             1440        // daily
-#define PERIOD_W1            10080        // weekly
-#define PERIOD_MN1           43200        // monthly
+#define PERIOD_M1                1           // 1 minute
+#define PERIOD_M5                5           // 5 minutes
+#define PERIOD_M15              15           // 15 minutes
+#define PERIOD_M30              30           // 30 minutes
+#define PERIOD_H1               60           // 1 hour
+#define PERIOD_H4              240           // 4 hours
+#define PERIOD_D1             1440           // daily
+#define PERIOD_W1            10080           // weekly
+#define PERIOD_MN1           43200           // monthly
 
 
 // Object property ids, siehe ObjectSet()
@@ -128,16 +128,17 @@
 
 
 // Object visibility flags, siehe ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
-#define OBJ_PERIOD_M1       0x0001        // object is shown on 1-minute charts
-#define OBJ_PERIOD_M5       0x0002        // object is shown on 5-minute charts
-#define OBJ_PERIOD_M15      0x0004        // object is shown on 15-minute charts
-#define OBJ_PERIOD_M30      0x0008        // object is shown on 30-minute charts
-#define OBJ_PERIOD_H1       0x0010        // object is shown on 1-hour charts
-#define OBJ_PERIOD_H4       0x0020        // object is shown on 4-hour charts
-#define OBJ_PERIOD_D1       0x0040        // object is shown on daily charts
-#define OBJ_PERIOD_W1       0x0080        // object is shown on weekly charts
-#define OBJ_PERIOD_MN1      0x0100        // object is shown on monthly charts
-#define OBJ_ALL_PERIODS     0x01FF        // object is shown on all timeframes
+#define OBJ_PERIOD_M1       0x0001           // object is shown on 1-minute charts
+#define OBJ_PERIOD_M5       0x0002           // object is shown on 5-minute charts
+#define OBJ_PERIOD_M15      0x0004           // object is shown on 15-minute charts
+#define OBJ_PERIOD_M30      0x0008           // object is shown on 30-minute charts
+#define OBJ_PERIOD_H1       0x0010           // object is shown on 1-hour charts
+#define OBJ_PERIOD_H4       0x0020           // object is shown on 4-hour charts
+#define OBJ_PERIOD_D1       0x0040           // object is shown on daily charts
+#define OBJ_PERIOD_W1       0x0080           // object is shown on weekly charts
+#define OBJ_PERIOD_MN1      0x0100           // object is shown on monthly charts
+#define OBJ_PERIODS_ALL     0x01FF           // object is shown on all timeframes: OBJ_PERIOD_M1 | OBJ_PERIOD_M5 | OBJ_PERIOD_M15 | OBJ_PERIOD_M30 | OBJ_PERIOD_H1 |
+#define OBJ_ALL_PERIODS     OBJ_ALL_PERIODS  //                                    OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()
@@ -150,32 +151,34 @@
 #define F_PERIOD_D1         OBJ_PERIOD_D1
 #define F_PERIOD_W1         OBJ_PERIOD_W1
 #define F_PERIOD_MN1        OBJ_PERIOD_MN1
+#define F_PERIODS_ALL       OBJ_PERIODS_ALL  // F_PERIOD_M1 | F_PERIOD_M5 | F_PERIOD_M15 | F_PERIOD_M30 | F_PERIOD_H1 | F_PERIOD_H4 | F_PERIOD_D1 | F_PERIOD_W1 | F_PERIOD_MN1
+#define F_ALL_PERIODS       F_PERIODS_ALL
 
 
 // Operation-Types, siehe OrderType()
-#define OP_UNDEFINED            -1        // custom: Default-Wert für nicht initialisierte Variable
+#define OP_UNDEFINED            -1           // custom: Default-Wert für nicht initialisierte Variable
 
-#define OP_BUY                   0        // long position
+#define OP_BUY                   0           // long position
 #define OP_LONG             OP_BUY
-#define OP_SELL                  1        // short position
+#define OP_SELL                  1           // short position
 #define OP_SHORT           OP_SELL
-#define OP_BUYLIMIT              2        // buy limit order
-#define OP_SELLLIMIT             3        // sell limit order
-#define OP_BUYSTOP               4        // stop buy order
-#define OP_SELLSTOP              5        // stop sell order
-#define OP_BALANCE               6        // account debit or credit transaction
-#define OP_CREDIT                7        // margin credit facility (no transaction)
+#define OP_BUYLIMIT              2           // buy limit order
+#define OP_SELLLIMIT             3           // sell limit order
+#define OP_BUYSTOP               4           // stop buy order
+#define OP_SELLSTOP              5           // stop sell order
+#define OP_BALANCE               6           // account debit or credit transaction
+#define OP_CREDIT                7           // margin credit facility (no transaction)
 
-#define OP_TRANSFER              8        // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
-#define OP_VENDOR                9        // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
+#define OP_TRANSFER              8           // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
+#define OP_VENDOR                9           // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
-#define OFLAG_CURRENTSYMBOL      1        // order of current symbol (active chart)
-#define OFLAG_BUY                2        // long order
-#define OFLAG_SELL               4        // short order
-#define OFLAG_MARKETORDER        8        // market order
-#define OFLAG_PENDINGORDER      16        // pending order (Limit- oder Stop-Order)
+#define OFLAG_CURRENTSYMBOL      1           // order of current symbol (active chart)
+#define OFLAG_BUY                2           // long order
+#define OFLAG_SELL               4           // short order
+#define OFLAG_MARKETORDER        8           // market order
+#define OFLAG_PENDINGORDER      16           // pending order (Limit- oder Stop-Order)
 
 
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
@@ -184,66 +187,66 @@
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
-#define MODE_OPEN                0        // open price
-#define MODE_LOW                 1        // low price
-#define MODE_HIGH                2        // high price
-#define MODE_CLOSE               3        // close price
-#define MODE_VOLUME              4        // volume
-#define MODE_TIME                5        // bar open time
+#define MODE_OPEN                0           // open price
+#define MODE_LOW                 1           // low price
+#define MODE_HIGH                2           // high price
+#define MODE_CLOSE               3           // close price
+#define MODE_VOLUME              4           // volume
+#define MODE_TIME                5           // bar open time
 
 
 // MA method identifiers, siehe iMA()
-#define MODE_SMA                 0        // simple moving average
-#define MODE_EMA                 1        // exponential moving average
-#define MODE_SMMA                2        // smoothed moving average
-#define MODE_LWMA                3        // linear weighted moving average
-#define MODE_ALMA                4        // Arnaud Legoux moving average
+#define MODE_SMA                 0           // simple moving average
+#define MODE_EMA                 1           // exponential moving average
+#define MODE_SMMA                2           // smoothed moving average
+#define MODE_LWMA                3           // linear weighted moving average
+#define MODE_ALMA                4           // Arnaud Legoux moving average
 
 
 // Indicator line identifiers used in iMACD(), iRVI() and iStochastic()
-#define MODE_MAIN                0        // base indicator line
-#define MODE_SIGNAL              1        // signal line
+#define MODE_MAIN                0           // base indicator line
+#define MODE_SIGNAL              1           // signal line
 
 
 // Indicator line identifiers used in iADX()
-#define MODE_MAIN                0        // base indicator line
-#define MODE_PLUSDI              1        // +DI indicator line
-#define MODE_MINUSDI             2        // -DI indicator line
+#define MODE_MAIN                0           // base indicator line
+#define MODE_PLUSDI              1           // +DI indicator line
+#define MODE_MINUSDI             2           // -DI indicator line
 
 
 // Indicator line identifiers used in iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals() and iGator()
-#define MODE_UPPER               1        // upper line
-#define MODE_LOWER               2        // lower line
+#define MODE_UPPER               1           // upper line
+#define MODE_LOWER               2           // lower line
 
 #define B_LOWER                  0
 #define B_UPPER                  1
 
 
 // Sorting modes, siehe ArraySort()
-#define MODE_ASCEND              1        // aufsteigend
-#define MODE_DESCEND             2        // absteigend
+#define MODE_ASCEND              1           // aufsteigend
+#define MODE_DESCEND             2           // absteigend
 
 
 // Price identifiers, siehe iMA()
-#define PRICE_CLOSE              0        // close price
-#define PRICE_OPEN               1        // open price
-#define PRICE_HIGH               2        // high price
-#define PRICE_LOW                3        // low price
-#define PRICE_MEDIAN             4        // median price: (high+low)/2
-#define PRICE_TYPICAL            5        // typical price: (high+low+close)/3
-#define PRICE_WEIGHTED           6        // weighted close price: (high+low+close+close)/4
+#define PRICE_CLOSE              0           // close price
+#define PRICE_OPEN               1           // open price
+#define PRICE_HIGH               2           // high price
+#define PRICE_LOW                3           // low price
+#define PRICE_MEDIAN             4           // median price: (high+low)/2
+#define PRICE_TYPICAL            5           // typical price: (high+low+close)/3
+#define PRICE_WEIGHTED           6           // weighted close price: (high+low+close+close)/4
 
 #define PRICE_BID                7
 #define PRICE_ASK                8
 
 
 // Rates array identifier, siehe ArrayCopyRates()
-#define RATE_TIME                0        // bar open time
-#define RATE_OPEN                1        // open price
-#define RATE_LOW                 2        // low price
-#define RATE_HIGH                3        // high price
-#define RATE_CLOSE               4        // close price
-#define RATE_VOLUME              5        // volume
+#define RATE_TIME                0           // bar open time
+#define RATE_OPEN                1           // open price
+#define RATE_LOW                 2           // low price
+#define RATE_HIGH                3           // high price
+#define RATE_CLOSE               4           // close price
+#define RATE_VOLUME              5           // volume
 
 
 // Event-Identifier siehe event()
@@ -254,10 +257,10 @@
 #define EVENT_POSITION_OPEN      0x0010
 #define EVENT_POSITION_CLOSE     0x0020
 #define EVENT_ACCOUNT_CHANGE     0x0040
-#define EVENT_ACCOUNT_PAYMENT    0x0080   // Ein- oder Auszahlung
-#define EVENT_CHART_CMD          0x0100   // Chart-Command             (aktueller Chart)
-#define EVENT_INTERNAL_CMD       0x0200   // terminal-internes Command (globale Variablen)
-#define EVENT_EXTERNAL_CMD       0x0400   // externes Command          (QuickChannel)
+#define EVENT_ACCOUNT_PAYMENT    0x0080      // Ein- oder Auszahlung
+#define EVENT_CHART_CMD          0x0100      // Chart-Command             (aktueller Chart)
+#define EVENT_INTERNAL_CMD       0x0200      // terminal-internes Command (globale Variablen)
+#define EVENT_EXTERNAL_CMD       0x0400      // externes Command          (QuickChannel)
 
 
 // Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
@@ -301,14 +304,14 @@
 #define MCM_CFD                  1
 #define MCM_CFDFUTURES           2
 #define MCM_CFDINDEX             3
-#define MCM_CFDLEVERAGE          4        // erst seit MT5 dokumentiert
+#define MCM_CFDLEVERAGE          4           // erst seit MT5 dokumentiert
 
 
 // Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE)
 #define SCM_POINTS               0
 #define SCM_BASE_CURRENCY        1
 #define SCM_INTEREST             2
-#define SCM_MARGIN_CURRENCY      3        // Deposit-Currency
+#define SCM_MARGIN_CURRENCY      3           // Deposit-Currency
 
 
 // Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
@@ -323,20 +326,20 @@
 
 
 // ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
-#define CORNER_TOP_LEFT          0        // default
+#define CORNER_TOP_LEFT          0           // default
 #define CORNER_TOP_RIGHT         1
 #define CORNER_BOTTOM_LEFT       2
 #define CORNER_BOTTOM_RIGHT      3
 
 
 // UninitializeReason-Codes
-#define REASON_UNDEFINED         0        // no uninitialize reason
-#define REASON_REMOVE            1        // program removed from chart
-#define REASON_RECOMPILE         2        // program recompiled
-#define REASON_CHARTCHANGE       3        // chart symbol or timeframe changed
-#define REASON_CHARTCLOSE        4        // chart closed or template changed
-#define REASON_PARAMETERS        5        // input parameters changed
-#define REASON_ACCOUNT           6        // account changed
+#define REASON_UNDEFINED         0           // no uninitialize reason
+#define REASON_REMOVE            1           // program removed from chart
+#define REASON_RECOMPILE         2           // program recompiled
+#define REASON_CHARTCHANGE       3           // chart symbol or timeframe changed
+#define REASON_CHARTCLOSE        4           // chart closed or template changed
+#define REASON_PARAMETERS        5           // input parameters changed
+#define REASON_ACCOUNT           6           // account changed
 
 
 // Currency-ID's
@@ -346,7 +349,7 @@
 #define CID_EUR                  4
 #define CID_GBP                  5
 #define CID_JPY                  6
-#define CID_USD                  7        // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
+#define CID_USD                  7           // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
 
 #define CID_CNY                  8
 #define CID_CZK                  9
