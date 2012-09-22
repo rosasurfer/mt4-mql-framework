@@ -545,6 +545,7 @@
 
 // Struct sizes
 #define HISTORY_HEADER.size                   148
+#define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
 #define ORDER_EXECUTION.size                  136
 #define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
 

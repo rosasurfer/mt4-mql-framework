@@ -10825,8 +10825,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * @return bool - Erfolgsstatus
  *
  *
- *  NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close vom theoretischen Wert abweichen.
- *  -----
+ * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close vom theoretischen Wert abweichen.
  */
 bool OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]) {
    // -- Beginn Parametervalidierung --
@@ -11078,8 +11077,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @return bool - Erfolgsstatus
  *
  *
- *  NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close aufgeteilt sein und vom theoretischen Wert abweichen.
- *  -----
+ * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close aufgeteilt sein und vom theoretischen Wert abweichen.
  */
 bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
