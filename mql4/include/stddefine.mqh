@@ -405,14 +405,21 @@
 #define C_ZAR                "ZAR"
 
 
+// FileOpen() modes
+#define FILE_READ                1
+#define FILE_WRITE               2
+#define FILE_BIN                 4
+#define FILE_CSV                 8
+
+
 // FindFileNames() flags
-#define FF_SORT                                 1     // Ergebnisse von NTFS-Laufwerken sind immer sortiert
-#define FF_DIRSONLY                             2
-#define FF_FILESONLY                            4
+#define FF_SORT                  1                    // Ergebnisse von NTFS-Laufwerken sind immer sortiert
+#define FF_DIRSONLY              2
+#define FF_FILESONLY             4
 
 
 // Flag zum Schreiben von Historyfiles
-#define HST_FILL_GAPS                           1
+#define HST_FILL_GAPS            1
 
 
 // MessageBox() flags

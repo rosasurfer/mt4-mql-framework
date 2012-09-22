@@ -649,25 +649,21 @@
    int      GetStringAddress(string value);
    string   GetStringValue(int address);
 #import "structs.ex4"
-   int      hh.Version          (/*HISTORY_HEADER*/int hh[]);
-   string   hh.Description      (/*HISTORY_HEADER*/int hh[]);
-   string   hh.Symbol           (/*HISTORY_HEADER*/int hh[]);
-   int      hh.Period           (/*HISTORY_HEADER*/int hh[]);
-   int      hh.Digits           (/*HISTORY_HEADER*/int hh[]);
-   datetime hh.SyncMarker       (/*HISTORY_HEADER*/int hh[]);
-   datetime hh.PrevSyncMarker   (/*HISTORY_HEADER*/int hh[]);
-   bool     hh.Seconds          (/*HISTORY_HEADER*/int hh[]);
-   int      hh.Timezone         (/*HISTORY_HEADER*/int hh[]);
+   int      hh.Version         (/*HISTORY_HEADER*/int hh[]);
+   string   hh.Description     (/*HISTORY_HEADER*/int hh[]);
+   string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);
+   int      hh.Period          (/*HISTORY_HEADER*/int hh[]);
+   int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);
+   datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);
+   datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);
 
-   int      hh.setVersion       (/*HISTORY_HEADER*/int hh[], int      version       );
-   string   hh.setDescription   (/*HISTORY_HEADER*/int hh[], string   description   );
-   string   hh.setSymbol        (/*HISTORY_HEADER*/int hh[], string   symbol        );
-   int      hh.setPeriod        (/*HISTORY_HEADER*/int hh[], int      period        );
-   int      hh.setDigits        (/*HISTORY_HEADER*/int hh[], int      digits        );
-   datetime hh.setSyncMarker    (/*HISTORY_HEADER*/int hh[], datetime syncMarker    );
-   datetime hh.setPrevSyncMarker(/*HISTORY_HEADER*/int hh[], datetime prevSyncMarker);
-   bool     hh.setSeconds       (/*HISTORY_HEADER*/int hh[], bool     seconds       );
-   int      hh.setTimezone      (/*HISTORY_HEADER*/int hh[], int      timezone      );
+   int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );
+   string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);
+   string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );
+   int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );
+   int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );
+   datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
+   datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
 #import
 
 
