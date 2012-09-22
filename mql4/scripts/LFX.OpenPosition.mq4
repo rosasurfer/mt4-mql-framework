@@ -29,7 +29,7 @@
  *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
  *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
-#include <types.mqh>
+#include <stdtypes.mqh>
 #define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];

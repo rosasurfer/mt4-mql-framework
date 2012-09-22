@@ -1,7 +1,7 @@
 /**
  * Zeigt die Eigenschaften eines Instruments an.
  */
-#include <types.mqh>
+#include <stdtypes.mqh>
 #define     __TYPE__   T_INDICATOR
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];

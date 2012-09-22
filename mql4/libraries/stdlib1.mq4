@@ -23,7 +23,7 @@
 #property stacksize  32768
 
 
-#include <types.mqh>
+#include <stdtypes.mqh>
 int         __TYPE__ = T_LIBRARY;
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -1376,9 +1376,9 @@ int SortTicketsChronological(int &tickets[]) {
  *
  * @return int - Fehlerstatus
  */
-int Menu.Experts(bool enable) {
+int Toolbar.Experts(bool enable) {
    if (This.IsTesting())
-      return(debug("Menu.Experts()   skipping in Tester", NO_ERROR));
+      return(debug("Toolbar.Experts()   skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden

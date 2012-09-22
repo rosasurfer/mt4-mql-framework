@@ -30,7 +30,7 @@
 
 
    // Terminal-Interaktionen
-   int      Menu.Experts(bool enable);
+   int      Toolbar.Experts(bool enable);
    int      Chart.Expert.Properties();
    int      Chart.SendTick(bool sound);
    int      Tester.Pause();

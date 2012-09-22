@@ -5,7 +5,7 @@
 #property stacksize  32768
 
 
-#include <types.mqh>
+#include <stdtypes.mqh>
 int         __TYPE__ = T_LIBRARY;
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];

@@ -734,10 +734,10 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsLibrary())
       return(NO_ERROR);                                                          // in Libraries vorerst nichts tun
 
-   __NAME__                       = WindowExpertName();
-     int initFlags                = SumInts(__INIT_FLAGS__);
-   __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
+   __NAME__           = WindowExpertName();
+     int initFlags    = SumInts(__INIT_FLAGS__);
+   __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
+   __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -774,7 +774,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    // (2) User-spezifische Init-Tasks ausführen
    if (_bool(initFlags & INIT_TIMEZONE)) {                                       // @see stdlib_init()
    }
-   if (_bool(initFlags & INIT_TICKVALUE)) {                                      // schlägt fehl, wenn noch kein (alter) Tick vorhanden ist
+   if (_bool(initFlags & INIT_TICKVALUE)) {                                      // schlägt fehl, wenn kein (alter) Tick vorhanden ist
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (tickValue < 0.00000001) {
          debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
@@ -786,10 +786,10 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (3) für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                             // ggf. EA's aktivieren
+   if (IsExpert()) {                                                             // EA's ggf. aktivieren
       int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = Menu.Experts(true);                                             // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+         error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
             return(SetLastError(error));
       }
