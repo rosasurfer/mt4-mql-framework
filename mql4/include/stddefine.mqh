@@ -1317,8 +1317,7 @@ bool IsLastError() {
  * @return int - derselbe Fehlercode (for chaining)
  *
  *
- *  NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
- *  -----
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
@@ -1607,7 +1606,6 @@ bool IsLibrary() {
  *
  *
  * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib_init() zu ermöglichen.
- * -----
  */
 bool Tester.IsLogging() {
    if (!IsExpert())
