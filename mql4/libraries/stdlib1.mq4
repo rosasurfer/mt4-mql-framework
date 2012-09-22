@@ -437,9 +437,9 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Gibt alle noch gehaltenen Locks frei.
+ * Gibt alle noch gehaltenen Locks frei (automatischer Aufruf bei Programmende).
  *
- * @param  bool warn - ob für jedes gehaltene Lock eine Warnung ausgegeben werden soll (default: nein)
+ * @param  bool warn - ob für noch gehaltene Locks eine Warnung ausgegeben werden soll (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
@@ -447,7 +447,7 @@ bool ReleaseLock(string mutexName) {
    int error, size=ArraySize(lock.names);
 
    if (size > 0) {
-      for (int i = size-1; i>=0; i--) {
+      for (int i=size-1; i>=0; i--) {
          if (warn)
             warn(StringConcatenate("ReleaseLocks()   unreleased lock found for mutex \"", lock.names[i], "\""));
 

@@ -649,21 +649,21 @@
    int      GetStringAddress(string value);
    string   GetStringValue(int address);
 #import "structs.ex4"
-   int      hh.Version         (/*HISTORY_HEADER*/int hh[]);
-   string   hh.Description     (/*HISTORY_HEADER*/int hh[]);
-   string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);
-   int      hh.Period          (/*HISTORY_HEADER*/int hh[]);
-   int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);
-   datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);
-   datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);
+   int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
+   string   hh.Description     (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
+   string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
+   int      hh.Period          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
+   int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i);
+   datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
+   datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
 
-   int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );
-   string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);
-   string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );
-   int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );
-   int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );
-   datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
-   datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
+   int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );  int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
+   string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);  string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
+   string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );  string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
+   int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );  int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
+   int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );  int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
+   datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+   datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
 #import
 
 
