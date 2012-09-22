@@ -268,14 +268,15 @@
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
    int      GetPrivateProfileSectionNames(string fileName, string names[]);
-   int      GetPrivateProfileKeys(string lpFileName, string lpSection, string lpKeys[]);
+   int      GetPrivateProfileKeys(string fileName, string section, string keys[]);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
-   int      DeletePrivateProfileKey(string lpFileName, string lpSection, string lpKey);
+   int      DeletePrivateProfileKey(string fileName, string section, string key);
 
 
    // Locks
    bool     AquireLock(string mutexName);
    bool     ReleaseLock(string mutexName);
+   bool     ReleaseLocks(bool warn);
 
 
    // MagicNumbers
@@ -664,6 +665,8 @@
    int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );  int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
    datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
    datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+
+   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
 #import
 
 

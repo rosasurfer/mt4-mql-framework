@@ -1009,6 +1009,8 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
+   CloseFiles(false);
+
    return(last_error);
 }
 

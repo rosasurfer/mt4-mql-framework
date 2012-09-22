@@ -437,13 +437,13 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Gibt alle noch gehaltenen Locks frei (automatischer Aufruf bei Programmende).
+ * Gibt alle noch gehaltenen Locks frei (wird bei Programmende automatisch aufgerufen).
  *
  * @param  bool warn - ob für noch gehaltene Locks eine Warnung ausgegeben werden soll (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
-/*private*/ bool ReleaseLocks(bool warn=false) {
+bool ReleaseLocks(bool warn=false) {
    int error, size=ArraySize(lock.names);
 
    if (size > 0) {
@@ -456,6 +456,18 @@ bool ReleaseLock(string mutexName) {
       }
    }
    return(IsNoError(error));
+}
+
+
+/**
+ * Schließt alle noch offenen Dateien (wird bei Programmende automatisch aufgerufen).
+ *
+ * @param  bool warn - ob für noch offene Dateien eine Warnung ausgegeben werden soll (default: nein)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CloseFiles(bool warn=false) {
+   return(true);
 }
 
 
@@ -3898,7 +3910,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    // Datei öffnen
    hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu .\experts\files
    if (hFile < 0)
-      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\", FILE_CSV|FILE_READ)", GetLastError())));
+      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\")")));
 
 
    // Schnelle Rückkehr bei leerer Datei
@@ -3960,7 +3972,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
                hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
                if (hFileBin < 0) {
                   FileClose(hFile);
-                  return(_int(-1, catch("FileReadLines(3) ->FileOpen(\""+ filename +"\", FILE_BIN|FILE_READ)", GetLastError())));
+                  return(_int(-1, catch("FileReadLines(3) ->FileOpen(\""+ filename +"\")")));
                }
             }
             if (!FileSeek(hFileBin, fPointer+len, SEEK_SET)) {
@@ -6364,14 +6376,17 @@ string GetComputerName() {
    if (StringLen(static.result[0]) > 0)
       return(static.result[0]);
 
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-   int    lpBufferSize[1]; lpBufferSize[0] = bufferSize;
+   int    bufferSize[] = {255};
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
-   if (!GetComputerNameA(buffer[0], lpBufferSize))
+   if (!GetComputerNameA(buffer[0], bufferSize))
       return(_empty(catch("GetComputerName() ->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    static.result[0] = buffer[0];
+
+   ArrayResize(buffer,     0);
+   ArrayResize(bufferSize, 0);
+
    return(static.result[0]);
 }
 
