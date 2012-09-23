@@ -410,6 +410,7 @@
 
    string   AppliedPriceDescription(int appliedPrice);
    string   ErrorDescription(int error);
+   string   FileAccessModeToStr(int mode);
    string   MovingAverageMethodDescription(int method);
    string   OperationTypeDescription(int type);
    string   PeriodDescription(int period);

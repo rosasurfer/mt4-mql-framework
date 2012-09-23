@@ -7647,6 +7647,27 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
+ * Gibt die lesbare Version eines FileAccess-Modes zurück.
+ *
+ * @param  int mode - Kombination verschiedener FileAccess-Modes
+ *
+ * @return string
+ */
+string FileAccessModeToStr(int mode) {
+   string result = "";
+
+   if (_bool(mode & FILE_CSV  )) result = StringConcatenate(result, "|FILE_CSV"  );
+   if (_bool(mode & FILE_BIN  )) result = StringConcatenate(result, "|FILE_BIN"  );
+   if (_bool(mode & FILE_READ )) result = StringConcatenate(result, "|FILE_READ" );
+   if (_bool(mode & FILE_WRITE)) result = StringConcatenate(result, "|FILE_WRITE");
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
  * Gibt die Zeitzone des aktuellen MT-Servers zurück (nach Olson Timezone Database).
  *
  * @return string - Zeitzonen-Identifier oder Leerstring, falls ein Fehler auftrat
@@ -9676,8 +9697,8 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 // Setter
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                    return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
-   if (StringLen(symbol) == 0) return(_empty(catch("oe.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > 12) return(_empty(catch("oe.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (IsError(BufferSetString(oe, 4, symbol))) return("");                                                                                                         return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                   return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = Round(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -9700,7 +9721,7 @@ double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]    = Round(profit * 100);                                      return(profit    ); }
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]   += Round(profit * 100);                                      return(profit    ); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
-   if (StringLen(comment) > 27) return(_empty(catch("oe.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(comment) > 27)                   return(_empty(catch("oe.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, 88, comment))) return("");                                                                                                       return(comment   ); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                 return(milliSec  ); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                 return(requotes  ); }
@@ -9712,8 +9733,8 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][ 0] = error;                                                    return(error     ); }
                                                                                               oe[i][ 0] = error;                                                    return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
-   if (StringLen(symbol) == 0) return(_empty(catch("oes.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (StringLen(symbol) > 12) return(_empty(catch("oes.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 4, symbol))) return("");                                                                                 return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                   return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = Round(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }

@@ -10,6 +10,7 @@
 #define EMPTY_VALUE        INT_MAX           // empty custom indicator value
 #define CLR_NONE                -1           // no color
 #define WHOLE_ARRAY              0
+#define MAX_SYMBOL_LENGTH       12
 #define MAX_STRING_LITERAL       "..............................................................................................................................................................................................................................................................."
 #define NL                       "\n"        // new line, MQL: 0x0D0A
 #define TAB                      "\t"
@@ -1113,9 +1114,9 @@ int log(string message, int error=NO_ERROR) {
 
 
 /**
- * Loggt eine Message in das instanz-eigenes Logfile.
+ * Loggt eine Message in das instanz-eigene Logfile.
  *
- * @param  string message - vollständige, zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
+ * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
  */
