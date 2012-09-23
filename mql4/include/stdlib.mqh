@@ -38,10 +38,14 @@
 
 
    // Arrays
-   int      ArrayPushBool(bool array[], bool value);
-   int      ArrayPushInt(int array[], int value);
-   int      ArrayPushDouble(double array[], double value);
-   int      ArrayPushString(string array[], string value);
+   int      ArrayPushBool       (bool   array[],   bool   value  );
+ //int      ArrayPushBoolArray  (bool   array[][], bool   value[]);
+   int      ArrayPushInt        (int    array[],   int    value  );
+   int      ArrayPushIntArray   (int    array[][], int    value[]);
+   int      ArrayPushDouble     (double array[],   double value  );
+ //int      ArrayPushDoubleArray(double array[][], double value[]);
+   int      ArrayPushString     (string array[],   string value  );
+ //int      ArrayPushStringArray(string array[][], string value[]);
 
    bool     ArrayPopBool(bool array[]);
    int      ArrayPopInt(int array[]);
@@ -63,10 +67,14 @@
    int      ArrayDropDouble(double array[], double value);
    int      ArrayDropString(string array[], string value);
 
-   int      ArraySpliceBools(bool array[], int offset, int length);
-   int      ArraySpliceInts(int array[], int offset, int length);
-   int      ArraySpliceDoubles(double array[], int offset, int length);
-   int      ArraySpliceStrings(string array[], int offset, int length);
+   int      ArraySpliceBools       (bool   array[],   int offset, int length);
+ //int      ArraySpliceBoolArrays  (bool   array[][], int offset, int length);
+   int      ArraySpliceInts        (int    array[],   int offset, int length);
+   int      ArraySpliceIntArrays   (int    array[][], int offset, int length);
+   int      ArraySpliceDoubles     (double array[],   int offset, int length);
+ //int      ArraySpliceDoubleArrays(double array[][], int offset, int length);
+   int      ArraySpliceStrings     (string array[],   int offset, int length);
+ //int      ArraySpliceStringArrays(string array[][], int offset, int length);
 
    int      ArrayInsertBools(bool array[], int offset, bool values[]);
    int      ArrayInsertInts(int array[], int offset, int values[]);
