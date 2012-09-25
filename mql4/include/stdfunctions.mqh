@@ -984,12 +984,12 @@ int deinit() {
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
                                                                                  //
-   if (error != -1) {                                                            // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-      switch (UninitializeReason()) {                                            //   bricht deinit() *nicht* ab.
-         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
-         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      // - Gibt eine der Funktionen -1 zurück, bricht deinit() alle weiteren User-Routinen ab.
+   if (error != -1) {                                                            //
+      switch (UninitializeReason()) {                                            //
+         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
+         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //   das Flag __STATUS__CANCELLED setzt.
          case REASON_REMOVE     : error = onDeinitRemove();          break;      //
-         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
+         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
@@ -1009,8 +1009,6 @@ int deinit() {
    error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
    if (IsError(error))
       SetLastError(error);
-
-   CloseFiles(false);
 
    return(last_error);
 }

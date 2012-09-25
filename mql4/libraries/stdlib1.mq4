@@ -460,14 +460,6 @@ bool ReleaseLocks(bool warn=false) {
 
 
 /**
- *
- */
-bool CloseFiles(bool warn=false) {
-   return(true);
-}
-
-
-/**
  * Hinterlegt in der Message-Queue des aktuellen Charts eine Nachricht zum Aufruf des Input-Dialogs des EA's.
  *
  * @return int - Fehlerstatus
