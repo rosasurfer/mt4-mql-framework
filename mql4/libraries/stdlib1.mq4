@@ -15,7 +15,7 @@
  * |         |         |        |        |        |                 |                       |                2.147.483.647 |                  4.294.967.295 |                |    WPARAM,LPARAM    | color,datetime |
  * |         |         |        |        |        |                 |                       |                              |                                |                | (handles, pointers) |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |  double,string | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
+ * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |     double     | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
  * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  */
@@ -1551,6 +1551,28 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
+ * Weist ein Integer-Array einer Position innerhalb eines zweidimensionalen Arrays zu (enspricht array[i] = value für Arrays von Arrays).
+ *
+ * @param  int array[][] - zu modifizierendes Array ein-dimensionaler Arrays
+ * @param  int i         - Index der zu modifizierenden Position
+ * @param  int value[]   - zuzuweisendes Array (Größe muß zum zu modifizierenden Array passen)
+ *
+ * @return int - Fehlerstatus
+ */
+int ArraySetIntArray(int array[][], int i, int value[]) {
+   if (ArrayDimension(array) != 2) return(catch("ArraySetIntArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(value) != 1) return(catch("ArraySetIntArray(2)  too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS));
+   int dim1 = ArrayRange(array, 0);
+   int dim2 = ArrayRange(array, 1);
+   if (ArraySize(value) != dim2)   return(catch("ArraySetIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (i < 0 || i >= dim1)         return(catch("ArraySetIntArray(4)  illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   CopyMemory(GetBufferAddress(array) + i*dim2*4, GetBufferAddress(value), dim2*4);
+   return(NO_ERROR);
+}
+
+
+/**
  * Fügt ein Element am Ende eines Boolean-Arrays an.
  *
  * @param  bool array[] - Boolean-Array
@@ -1591,7 +1613,7 @@ int ArrayPushInt(int &array[], int value) {
 /**
  * Fügt ein Array am Ende eines zweidimensionalen Integer-Arrays an.
  *
- * @param  int array[][] - zu erweiterndes Array (ein-dimensionaler Arrays)
+ * @param  int array[][] - zu erweiterndes Array ein-dimensionaler Arrays
  * @param  int value[]   - hinzuzufügendes Array (Größe muß zum zu erweiternden Array passen)
  *
  * @return int - neue Größe der ersten Dimension des Arrays oder -1, falls ein Fehler auftrat
@@ -9945,6 +9967,8 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
 
    string output = JoinStrings(lines, NL);
    ArrayResize(lines, 0);
+
+   catch("ORDER_EXECUTION.toStr(3)");
    return(output);
 }
 

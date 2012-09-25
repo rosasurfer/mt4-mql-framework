@@ -38,6 +38,8 @@
 
 
    // Arrays
+   int      ArraySetIntArray(int array[][], int i, int value[]);
+
    int      ArrayPushBool       (bool   array[],   bool   value  );
  //int      ArrayPushBoolArray  (bool   array[][], bool   value[]);
    int      ArrayPushInt        (int    array[],   int    value  );
