@@ -158,7 +158,6 @@
 
 // Operation-Types, siehe OrderType()
 #define OP_UNDEFINED            -1           // custom: Default-Wert für nicht initialisierte Variable
-
 #define OP_BUY                   0           // long position
 #define OP_LONG             OP_BUY
 #define OP_SELL                  1           // short position
@@ -169,7 +168,6 @@
 #define OP_SELLSTOP              5           // stop sell order
 #define OP_BALANCE               6           // account debit or credit transaction
 #define OP_CREDIT                7           // margin credit facility (no transaction)
-
 #define OP_TRANSFER              8           // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
 #define OP_VENDOR                9           // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
 
@@ -187,7 +185,7 @@
 #define O_POP                    2
 
 
-// Series array identifier, siehe ArrayCopySeries(), iLowest() u. iHighest()
+// Series array identifier, siehe ArrayCopySeries(), iLowest(), iHighest()
 #define MODE_OPEN                0           // open price
 #define MODE_LOW                 1           // low price
 #define MODE_HIGH                2           // high price
@@ -219,8 +217,8 @@
 #define MODE_UPPER               1           // upper line
 #define MODE_LOWER               2           // lower line
 
-#define B_LOWER                  0
-#define B_UPPER                  1
+#define B_LOWER                  0           // custom
+#define B_UPPER                  1           // custom
 
 
 // Sorting modes, siehe ArraySort()
@@ -228,7 +226,38 @@
 #define MODE_DESCEND             2           // absteigend
 
 
-// Price identifiers, siehe iMA()
+// Market info identifiers, siehe MarketInfo()
+#define MODE_LOW                 1           // Last bar low price.
+#define MODE_HIGH                2           // Last bar high price.
+#define MODE_TIME                5           // The last incoming tick time.
+#define MODE_BID                 9           // Last incoming bid price. For the current symbol, it is stored in the predefined variable Bid.
+#define MODE_ASK                10           // Last incoming ask price. For the current symbol, it is stored in the predefined variable Ask.
+#define MODE_POINT              11           // Point size in the quote currency. For the current symbol, it is stored in the predefined variable Point.
+#define MODE_DIGITS             12           // Number of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits.
+#define MODE_SPREAD             13           // Spread value in points.
+#define MODE_STOPLEVEL          14           // Stop level in points.
+#define MODE_LOTSIZE            15           // Lot size in the base currency.
+#define MODE_TICKVALUE          16           // Tick value in the deposit currency.
+#define MODE_TICKSIZE           17           // Tick size in points.
+#define MODE_SWAPLONG           18           // Swap of long positions.
+#define MODE_SWAPSHORT          19           // Swap of short positions.
+#define MODE_STARTING           20           // Trading start date (usually used for futures).
+#define MODE_EXPIRATION         21           // Trading expiration date (usually used for futures).
+#define MODE_TRADEALLOWED       22           // Whether trading is allowed for the symbol.
+#define MODE_MINLOT             23           // Minimum permitted lot size.
+#define MODE_LOTSTEP            24           // Step for changing lots.
+#define MODE_MAXLOT             25           // Maximum permitted lot size.
+#define MODE_SWAPTYPE           26           // Swap calculation method: 0 - in points; 1 - in the symbol base currency; 2 - by interest; 3 - in margin currency
+#define MODE_PROFITCALCMODE     27           // Profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
+#define MODE_MARGINCALCMODE     28           // Margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
+#define MODE_MARGININIT         29           // Initial margin requirement calculated for 1 lot.
+#define MODE_MARGINMAINTENANCE  30           // Margin to maintain open positions calculated for 1 lot.
+#define MODE_MARGINHEDGED       31           // Hedged margin calculated for 1 lot.
+#define MODE_MARGINREQUIRED     32           // Margin required to open positions calculated for 1 lot.
+#define MODE_FREEZELEVEL        33           // Order freeze level in points. Within this range an order cannot be modified, cancelled or closed.
+
+
+// Price identifiers, siehe iMA() etc.
 #define PRICE_CLOSE              0           // close price
 #define PRICE_OPEN               1           // open price
 #define PRICE_HIGH               2           // high price
@@ -236,9 +265,8 @@
 #define PRICE_MEDIAN             4           // median price: (high+low)/2
 #define PRICE_TYPICAL            5           // typical price: (high+low+close)/3
 #define PRICE_WEIGHTED           6           // weighted close price: (high+low+close+close)/4
-
-#define PRICE_BID                7
-#define PRICE_ASK                8
+#define PRICE_BID                7           // custom: Bid-Preis
+#define PRICE_ASK                8           // custom: Ask-Preis
 
 
 // Rates array identifier, siehe ArrayCopyRates()
