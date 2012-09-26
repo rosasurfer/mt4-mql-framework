@@ -54,13 +54,13 @@ string legendLabel, indicatorName;
 int onInit() {
    // Konfiguration auswerten
    if (MA.Periods < 2)
-      return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+      return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
 
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
    if (maTimeframe == -1)
-      return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+      return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
 
    string price = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
    if      (price == "O") appliedPrice = PRICE_OPEN;
@@ -71,7 +71,7 @@ int onInit() {
    else if (price == "T") appliedPrice = PRICE_TYPICAL;
    else if (price == "W") appliedPrice = PRICE_WEIGHTED;
    else
-      return(catch("onInit(3)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
+      return(catch("onInit(3)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
    // Buffer zuweisen
    IndicatorBuffers(6);

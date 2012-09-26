@@ -74,7 +74,7 @@ int onInit() {
    configLabel = StringToLower(StringTrim(Per.Symbol.Configuration));
    if (configLabel != "") {
       if (!StringContains(configLabel, "{symbol}"))
-         return(catch("onInit(1)  Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT));
+         return(catch("onInit(1)   Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT));
       configSection  = WindowExpertName();
       configLabel    = StringReplace(configLabel, "{symbol}", StdSymbol());
       externalConfig = true;
@@ -84,7 +84,7 @@ int onInit() {
    if (externalConfig)
       MA.Periods = GetGlobalConfigInt(configSection, configLabel +".MA.Periods", MA.Periods);
    if (MA.Periods < 2)
-      return(catch("onInit(2)  Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(2)   Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
@@ -93,7 +93,7 @@ int onInit() {
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
    if (maTimeframe == -1)
-      return(catch("onInit(3)  Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(3)   Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methoden
    if (externalConfig)
@@ -109,7 +109,7 @@ int onInit() {
    else if (value == "LWMA")   maMethod1 = MODE_LWMA;
    else if (value == "ALMA") { maMethod1 = MODE_ALMA; ALMA = true; }
    else
-      return(catch("onInit(4)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(4)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA-Methode 2
    if (size == 2) {
@@ -120,10 +120,10 @@ int onInit() {
       else if (value == "LWMA")   maMethod2 = MODE_LWMA;
       else if (value == "ALMA") { maMethod2 = MODE_ALMA; ALMA = true; }
       else
-         return(catch("onInit(5)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         return(catch("onInit(5)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    else if (size > 2)
-      return(catch("onInit(6)  Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(6)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // AppliedPrice
    if (externalConfig)
@@ -137,32 +137,32 @@ int onInit() {
    else if (chr == "T") appliedPrice = PRICE_TYPICAL;
    else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
    else
-      return(catch("onInit(7)  Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(7)   Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviations
    if (externalConfig)
       Deviations = GetGlobalConfigString(configSection, configLabel +".Deviations", Deviations);
    size = Explode(Deviations, ",", values, NULL);
    if (size > 2)
-      return(catch("onInit(8)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(8)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
    if (!StringIsNumeric(value))
-      return(catch("onInit(9)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(9)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
    if (deviation1 <= 0)
-      return(catch("onInit(10)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(10)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
          if (!StringIsNumeric(value))
-            return(catch("onInit(11)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(catch("onInit(11)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
          if (deviation2 <= 0)
-            return(catch("onInit(12)  Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(catch("onInit(12)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
@@ -352,8 +352,8 @@ int onTick() {
       ArrayCopy(array1, iMovAvg,     0, 0, startBar+1);
       ArrayCopy(array2, iUpperBand1, 0, 0, startBar+1);
 
-      debug("onTick()  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
-      debug("onTick()  iMovAvg = "+ DoublesToStr(array1, ", "));
+      debug("onTick()   IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
+      debug("onTick()   iMovAvg = "+ DoublesToStr(array1, ", "));
 
       start()  iMovAvg     = {1.61582234, 1.61550427, 1.61522141, 1.61491031, 1.61461975, 1.61433817, 1.61409116, 1.61388254, 1.61369392, 1.61348614, 1.61329017, 1.61313936}
                iUpperBand1 = {302939849.67705119, 302939849.67673314, 302939849.67645031, 302939849.67613918, 302939849.6758486, 302939849.67556703, 302939849.67532003, 302939849.67511141, 302939849.67492276, 302939849.67471498, 302939849.674519, 302939849.6743682}

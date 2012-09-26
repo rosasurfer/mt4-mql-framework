@@ -229,11 +229,11 @@ int DrawGrid() {
  */
 datetime GetFirstWeekdayOfMonth(int year, int month) {
    if (1970 > year || year > 2037) {
-      catch("GetFirstWeekdayOfMonth(1)  invalid parameter year: "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetFirstWeekdayOfMonth(1)   invalid parameter year: "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
    if (1 > month || month > 12) {
-      catch("GetFirstWeekdayOfMonth(2)  invalid parameter month: "+ month, ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetFirstWeekdayOfMonth(2)   invalid parameter month: "+ month, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
 

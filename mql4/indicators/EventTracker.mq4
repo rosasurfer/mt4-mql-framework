@@ -431,8 +431,8 @@ int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double
    if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCBarRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCBarRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCBarRange(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCBarRange(2)   invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (from < to) {
       int tmp = from;
@@ -540,8 +540,8 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
    if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCTimeRange(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCTimeRange(2)   invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (from > to) {
       datetime tmp = from;
@@ -615,7 +615,7 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    if (symbol == "0")                     // NULL ist Integer (0)
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLC(1)  invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLC(1)   invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 

@@ -609,7 +609,7 @@ string __whereamiToStr(int id) {
  */
 int LoadCursorById(int hInstance, int resourceId) {
    if (_bool(resourceId & 0xFFFF0000))                               // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
-      catch("LoadCursorById()  illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be lower then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("LoadCursorById()   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be lower then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE);
 
    int hCursor = LoadCursorW(hInstance, resourceId);
 
@@ -645,7 +645,7 @@ int LoadCursorByName(int hInstance, string cursorName) {
  */
 int GetGMTToFXTOffset(datetime gmtTime) {
    if (gmtTime < 0) {
-      catch("GetGMTToFXTOffset()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetGMTToFXTOffset()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -756,7 +756,7 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
       else                                             offset = -5 * HOURS;
    }
    else {
-      catch("GetServerToGMTOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+      catch("GetServerToGMTOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
@@ -986,8 +986,8 @@ int GetTerminalBuild() {
 int InitializeBuffer(int buffer[], int length) {
    int dimensions = ArrayDimension(buffer);
 
-   if (dimensions > 2) return(catch("InitializeBuffer(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
-   if (length < 0)     return(catch("InitializeBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (dimensions > 2) return(catch("InitializeBuffer(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)     return(catch("InitializeBuffer(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 entspricht length % 4
    else                    length = length >> 2 + 1;
@@ -997,7 +997,7 @@ int InitializeBuffer(int buffer[], int length) {
          ArrayResize(buffer, length);
    }
    else if (ArrayRange(buffer, 1) != length) {                       // Dimension 2: mehrdimensionale Arrays können nicht dynamisch angepaßt werden
-      return(catch("InitializeBuffer(3)  cannot adjust size of dimension 2 at runtime (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeBuffer(3)   cannot adjust size of dimension 2 at runtime (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
    }
 
    ArrayInitialize(buffer, 0);
@@ -1014,8 +1014,8 @@ int InitializeBuffer(int buffer[], int length) {
  * @return int - Fehlerstatus
  */
 int InitializeDoubleBuffer(double buffer[], int size) {
-   if (ArrayDimension(buffer) > 1) return(catch("InitializeDoubleBuffer(1)  too many dimensions of parameter buffer = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
-   if (size < 0)                   return(catch("InitializeDoubleBuffer(2)  invalid parameter size = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArrayDimension(buffer) > 1) return(catch("InitializeDoubleBuffer(1)   too many dimensions of parameter buffer = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (size < 0)                   return(catch("InitializeDoubleBuffer(2)   invalid parameter size = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (ArraySize(buffer) != size)
       ArrayResize(buffer, size);
@@ -1034,8 +1034,8 @@ int InitializeDoubleBuffer(double buffer[], int size) {
  * @return int - Fehlerstatus
  */
 int InitializeStringBuffer(string &buffer[], int length) {
-   if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)  too many dimensions of parameter buffer = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
-   if (length < 0)                 return(catch("InitializeStringBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)   too many dimensions of parameter buffer = "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)                 return(catch("InitializeStringBuffer(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (ArraySize(buffer) == 0)
       ArrayResize(buffer, 1);
@@ -1055,7 +1055,7 @@ int InitializeStringBuffer(string &buffer[], int length) {
  */
 string CreateString(int length) {
    if (length < 0)
-      return(_empty(catch("CreateString()  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("CreateString()   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string newStr = StringConcatenate(MAX_STRING_LITERAL, "");        // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
    int strLen = StringLen(newStr);                                   // Daher wird auch beim Initialisieren StringConcatenate() verwendet (siehe MQL.doc).
@@ -1560,12 +1560,12 @@ bool IsPermanentTradeError(int error) {
  * @return int - Fehlerstatus
  */
 int ArraySetIntArray(int array[][], int i, int value[]) {
-   if (ArrayDimension(array) != 2) return(catch("ArraySetIntArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayDimension(value) != 1) return(catch("ArraySetIntArray(2)  too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(array) != 2) return(catch("ArraySetIntArray(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(value) != 1) return(catch("ArraySetIntArray(2)   too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(catch("ArraySetIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS));
-   if (i < 0 || i >= dim1)         return(catch("ArraySetIntArray(4)  illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(value) != dim2)   return(catch("ArraySetIntArray(3)   array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (i < 0 || i >= dim1)         return(catch("ArraySetIntArray(4)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    CopyMemory(GetBufferAddress(array) + i*dim2*4, GetBufferAddress(value), dim2*4);
    return(NO_ERROR);
@@ -1581,7 +1581,7 @@ int ArraySetIntArray(int array[][], int i, int value[]) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushBool(bool &array[], bool value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushBool()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
@@ -1600,7 +1600,7 @@ int ArrayPushBool(bool &array[], bool value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushInt(int &array[], int value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushInt()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
@@ -1619,11 +1619,11 @@ int ArrayPushInt(int &array[], int value) {
  * @return int - neue Größe der ersten Dimension des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushIntArray(int array[][], int value[]) {
-   if (ArrayDimension(array) != 2) return(_int(-1, catch("ArrayPushIntArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (ArrayDimension(value) != 1) return(_int(-1, catch("ArrayPushIntArray(2)  too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) != 2) return(_int(-1, catch("ArrayPushIntArray(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(value) != 1) return(_int(-1, catch("ArrayPushIntArray(2)   too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS)));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(_int(-1, catch("ArrayPushIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArraySize(value) != dim2)   return(_int(-1, catch("ArrayPushIntArray(3)   array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
 
    ArrayResize(array, dim1+1);
    CopyMemory(GetBufferAddress(array) + dim1*dim2*4, GetBufferAddress(value), dim2*4);
@@ -1640,7 +1640,7 @@ int ArrayPushIntArray(int array[][], int value[]) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushDouble(double &array[], double value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushDouble()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
@@ -1659,7 +1659,7 @@ int ArrayPushDouble(double &array[], double value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushString(string &array[], string value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
 
    ArrayResize(array, size+1);
@@ -1677,7 +1677,7 @@ int ArrayPushString(string &array[], string value) {
  * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
  */
 bool ArrayPopBool(bool array[]) {
-   if (ArrayDimension(array) > 1) return(_false(catch("ArrayPopBool(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_false(catch("ArrayPopBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1698,7 +1698,7 @@ bool ArrayPopBool(bool array[]) {
  * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 int ArrayPopInt(int array[]) {
-   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopInt(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopInt(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1719,7 +1719,7 @@ int ArrayPopInt(int array[]) {
  * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 double ArrayPopDouble(double array[]) {
-   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopDouble(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopDouble(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1740,7 +1740,7 @@ double ArrayPopDouble(double array[]) {
  * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
  */
 string ArrayPopString(string array[]) {
-   if (ArrayDimension(array) > 1) return(_empty(catch("ArrayPopString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_empty(catch("ArrayPopString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1762,7 +1762,7 @@ string ArrayPopString(string array[]) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayUnshiftBool(bool array[], bool value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftBool()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseBoolArray(array);
    int size = ArrayPushBool(array, value);
@@ -1780,7 +1780,7 @@ int ArrayUnshiftBool(bool array[], bool value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayUnshiftInt(int array[], int value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftInt()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseIntArray(array);
    int size = ArrayPushInt(array, value);
@@ -1798,7 +1798,7 @@ int ArrayUnshiftInt(int array[], int value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayUnshiftDouble(double array[], double value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftDouble()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseDoubleArray(array);
    int size = ArrayPushDouble(array, value);
@@ -1816,7 +1816,7 @@ int ArrayUnshiftDouble(double array[], double value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -1833,7 +1833,7 @@ int ArrayUnshiftString(string array[], string value) {
  * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
  */
 bool ArrayShiftBool(bool array[]) {
-   if (ArrayDimension(array) > 1) return(_false(catch("ArrayShiftBool(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_false(catch("ArrayShiftBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1857,7 +1857,7 @@ bool ArrayShiftBool(bool array[]) {
  * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 int ArrayShiftInt(int array[]) {
-   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftInt(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftInt(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1881,7 +1881,7 @@ int ArrayShiftInt(int array[]) {
  * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
  */
 double ArrayShiftDouble(double array[]) {
-   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftDouble(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftDouble(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1905,7 +1905,7 @@ double ArrayShiftDouble(double array[]) {
  * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
  */
 string ArrayShiftString(string array[]) {
-   if (ArrayDimension(array) > 1) return(_empty(catch("ArrayShiftString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_empty(catch("ArrayShiftString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1930,7 +1930,7 @@ string ArrayShiftString(string array[]) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArrayDropBool(bool array[], bool value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropBool()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1957,7 +1957,7 @@ int ArrayDropBool(bool array[], bool value) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArrayDropInt(int array[], int value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropInt()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropInt()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -1984,7 +1984,7 @@ int ArrayDropInt(int array[], int value) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArrayDropDouble(double array[], double value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropDouble()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropDouble()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -2011,7 +2011,7 @@ int ArrayDropDouble(double array[], double value) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArrayDropString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
@@ -2041,7 +2041,7 @@ int ArrayDropString(string array[], string value) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArraySpliceBools(bool array[], int offset, int length) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceBools(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceBools(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
    if (offset < 0)                return(_int(-1, catch("ArraySpliceBools(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (offset > size-1)           return(_int(-1, catch("ArraySpliceBools(3)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2072,7 +2072,7 @@ int ArraySpliceBools(bool array[], int offset, int length) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArraySpliceInts(int array[], int offset, int length) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceInts(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceInts(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
    if (offset < 0)                return(_int(-1, catch("ArraySpliceInts(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (offset > size-1)           return(_int(-1, catch("ArraySpliceInts(3)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2103,7 +2103,7 @@ int ArraySpliceInts(int array[], int offset, int length) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArraySpliceIntArrays(int array[][], int offset, int length) {
-   if (ArrayDimension(array) != 2) return(_int(-1, catch("ArraySpliceIntArrays(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) != 2) return(_int(-1, catch("ArraySpliceIntArrays(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 0);
    if (offset < 0)                 return(_int(-1, catch("ArraySpliceIntArrays(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2135,7 +2135,7 @@ int ArraySpliceIntArrays(int array[][], int offset, int length) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArraySpliceDoubles(double array[], int offset, int length) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceDoubles(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceDoubles(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
    if (offset < 0)                return(_int(-1, catch("ArraySpliceDoubles(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (offset > size-1)           return(_int(-1, catch("ArraySpliceDoubles(3)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2166,7 +2166,7 @@ int ArraySpliceDoubles(double array[], int offset, int length) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArraySpliceStrings(string array[], int offset, int length) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceStrings(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArraySpliceStrings(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
    if (offset < 0)                return(_int(-1, catch("ArraySpliceStrings(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (offset > size-1)           return(_int(-1, catch("ArraySpliceStrings(3)   invalid parameter offset = "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2747,7 +2747,7 @@ int MergeStringArrays(string array1[], string array2[], string merged[]) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinBools(bool values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_empty(catch("JoinBools()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_empty(catch("JoinBools()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2777,7 +2777,7 @@ string JoinBools(bool values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinInts(int values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_empty(catch("JoinInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_empty(catch("JoinInts()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2804,7 +2804,7 @@ string JoinInts(int values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoubles(double values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_empty(catch("JoinDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_empty(catch("JoinDoubles()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2835,7 +2835,7 @@ string JoinDoubles(double values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinStrings(string values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_empty(catch("JoinStrings()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_empty(catch("JoinStrings()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string result = "";
 
@@ -2862,7 +2862,7 @@ string JoinStrings(string values[], string separator) {
  * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
  */
 int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_ZERO(catch("SumInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_ZERO(catch("SumInts()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int sum, size=ArraySize(values);
 
@@ -2881,7 +2881,7 @@ int SumInts(int values[]) {
  * @return double - Summe aller Werte oder 0, falls ein Fehler auftrat
  */
 double SumDoubles(double values[]) {
-   if (ArrayDimension(values) > 1) return(_ZERO(catch("SumDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_ZERO(catch("SumDoubles()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    double sum;
 
@@ -3234,7 +3234,7 @@ string BufferToStr(int buffer[]) {
  */
 /*private*/string BuffersToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersToStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_empty(catch("BuffersToStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToStr(buffer));
@@ -3301,7 +3301,7 @@ string BufferToHexStr(int buffer[]) {
  */
 /*private*/string BuffersToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersToHexStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_empty(catch("BuffersToHexStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToHexStr(buffer));
@@ -3338,8 +3338,8 @@ string BufferToHexStr(int buffer[]) {
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
 
-   if (pos < 0)      return(_int(-1, catch("BufferGetChar(1)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (pos >= chars) return(_int(-1, catch("BufferGetChar(2)  invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (pos < 0)      return(_int(-1, catch("BufferGetChar(1)   invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (pos >= chars) return(_int(-1, catch("BufferGetChar(2)   invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int i = pos >> 2;                      // Index des relevanten Integers des Arrays     // +---+------------+
    int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
@@ -3361,8 +3361,8 @@ int BufferGetChar(int buffer[], int pos) {
  * @return string - ANSI-String
  */
 string BufferCharsToStr(int buffer[], int from, int length) {
-   if (from < 0)                return(_empty(catch("BufferCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)              return(_empty(catch("BufferCharsToStr(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (from < 0)                return(_empty(catch("BufferCharsToStr(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)              return(_empty(catch("BufferCharsToStr(2)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
       return("");
 
@@ -3372,8 +3372,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   if (fromChar >= bufferChars) return(_empty(catch("BufferCharsToStr(3)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (toChar >= bufferChars)   return(_empty(catch("BufferCharsToStr(4)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (fromChar >= bufferChars) return(_empty(catch("BufferCharsToStr(3)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (toChar >= bufferChars)   return(_empty(catch("BufferCharsToStr(4)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
 
    string result = "";
@@ -3410,9 +3410,9 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  */
 /*private*/string BuffersCharsToStr(int buffer[][], int from, int length) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersCharsToStr(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
-   if (from < 0)       return(_empty(catch("BuffersCharsToStr(2)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)     return(_empty(catch("BuffersCharsToStr(3)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2) return(_empty(catch("BuffersCharsToStr(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (from < 0)       return(_empty(catch("BuffersCharsToStr(2)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)     return(_empty(catch("BuffersCharsToStr(3)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
       return("");
 
@@ -3444,10 +3444,10 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
-      return(catch("BufferWCharsToStr(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+length, size=ArraySize(buffer);
    if (to > size)
-      return(catch("BufferWCharsToStr(2)  invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(2)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -3490,9 +3490,9 @@ int BufferSetString(int buffer[], int offset, string value) {
    int chars = ArraySize(buffer) << 2;
    int len   = StringLen(value) + 1;                  // + terminierendes NUL-Zeichen
 
-   if (offset < 0)         return(catch("BufferSetString(1)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (offset >= chars)    return(catch("BufferSetString(2)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (offset+len > chars) return(catch("BufferSetString(3)  buffer overrun for parameters offset="+ offset +" and value=\""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset < 0)         return(catch("BufferSetString(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset >= chars)    return(catch("BufferSetString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset+len > chars) return(catch("BufferSetString(3)   buffer overrun for parameters offset="+ offset +" and value=\""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    CopyMemory(GetBufferAddress(buffer)+offset, GetStringAddress(value), StringLen(value)+1);
    return(NO_ERROR);
@@ -3626,7 +3626,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
-      return(_empty(catch("GetWin32ShortcutTarget(1)  invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetWin32ShortcutTarget(1)   invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
@@ -3653,7 +3653,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    _lclose(hFile);
 
    if (bytes < 24)
-      return(_empty(catch("GetWin32ShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(5)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int integers  = ArraySize(buffer);
    int charsSize = bytes;
@@ -3672,7 +3672,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
    if (chars[0] != 'L')                            // test the magic value
-      return(_empty(catch("GetWin32ShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(6)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    if (chars[ 4] != 0x01 ||                        // test the GUID
        chars[ 5] != 0x14 ||
@@ -3690,7 +3690,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      return(_empty(catch("GetWin32ShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(7)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
    }
 
    // --------------------------------------------------------------------------
@@ -3716,7 +3716,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    bool pointsToFileOrDir  = _bool(dwFlags & 0x00000002);
 
    if (!pointsToFileOrDir) {
-      if (__LOG) log("GetWin32ShortcutTarget(8)  shortcut target is not a file or directory: \""+ lnkFilename +"\"");
+      if (__LOG) log("GetWin32ShortcutTarget(8)   shortcut target is not a file or directory: \""+ lnkFilename +"\"");
       return("");
    }
 
@@ -3727,7 +3727,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2)
-         return(_empty(catch("GetWin32ShortcutTarget(8)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+         return(_empty(catch("GetWin32ShortcutTarget(8)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
       A  = chars[76];               // little endian format
       A |= chars[77] << 8;
    }
@@ -3740,7 +3740,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4)
-      return(_empty(catch("GetWin32ShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(9)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int B  = chars[i];       i++;    // little endian format
        B |= chars[i] <<  8; i++;
@@ -3755,7 +3755,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4)
-      return(_empty(catch("GetWin32ShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(10)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int C  = chars[i];       i++;    // little endian format
        C |= chars[i] <<  8; i++;
@@ -3767,7 +3767,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1)
-      return(_empty(catch("GetWin32ShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(11)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    string target = "";
    for (; i < charsSize; i++) {
@@ -3776,7 +3776,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (StringLen(target) == 0)
-      return(_empty(catch("GetWin32ShortcutTarget(12)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(12)   invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
@@ -3915,7 +3915,7 @@ string GetServerDirectory() {
       return(_empty(catch("GetServerDirectory(4)", error)));
 
    if (StringLen(directory) == 0)
-      return(_empty(catch("GetServerDirectory(5)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetServerDirectory(5)   cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    static.result[0] = directory;
    return(static.result[0]);
@@ -4775,7 +4775,7 @@ private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string s
       return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
-   return(_empty(catch("BoolsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_empty(catch("BoolsToStr()   too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -5081,7 +5081,7 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  */
 datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerPrevSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -5104,7 +5104,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  */
 datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerPrevSessionEndTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerPrevSessionEndTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerPrevSessionStartTime(serverTime);
    if (startTime == -1)
@@ -5123,7 +5123,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_T
  */
 datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetServerToFXTOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
@@ -5131,7 +5131,7 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
 
    datetime fxtTime = serverTime - offset;
    if (fxtTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(2)  illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetServerSessionStartTime(2)   illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
@@ -5142,7 +5142,7 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
    serverTime = fxtTime + offset;
 
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(3)  illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionStartTime(3)   illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(serverTime);
 }
 
@@ -5156,7 +5156,7 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
  */
 datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerSessionStartTime(serverTime);
    if (startTime == -1)
@@ -5175,7 +5175,7 @@ datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZ
  */
 datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerNextSessionStartTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -5198,7 +5198,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  */
 datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerNextSessionEndTime()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerNextSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerNextSessionStartTime(datetime serverTime);
    if (startTime == -1)
@@ -5217,7 +5217,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_T
  */
 datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5240,7 +5240,7 @@ datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTPrevSessionStartTime(gmtTime);
    if (startTime == -1)
@@ -5259,7 +5259,7 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  */
 datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5282,7 +5282,7 @@ datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
  */
 datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5301,7 +5301,7 @@ datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
  */
 datetime GetGMTNextSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionStartTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5324,7 +5324,7 @@ datetime GetGMTNextSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTNextSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionEndTime()  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTNextSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5343,11 +5343,11 @@ datetime GetGMTNextSessionEndTime(datetime gmtTime) {
  */
 datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5355,7 +5355,7 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    return(startTime);
 }
@@ -5370,7 +5370,7 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
  */
 datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTPrevSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5389,11 +5389,11 @@ datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
  */
 datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTSessionStartTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTSessionStartTime(2)  illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5413,7 +5413,7 @@ datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
  */
 datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5432,7 +5432,7 @@ datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
  */
 datetime GetFXTNextSessionStartTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTNextSessionStartTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTNextSessionStartTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
@@ -5454,7 +5454,7 @@ datetime GetFXTNextSessionStartTime(datetime fxtTime) {
  */
 datetime GetFXTNextSessionEndTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTNextSessionEndTime()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTNextSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5625,7 +5625,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_D1 );
       case PERIOD_MN1: return(PERIOD_W1 );
    }
-   return(_ZERO(catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("DecreasePeriod()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5657,7 +5657,7 @@ string DoubleToStrTrim(double value) {
  */
 datetime FXTToGMT(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("FXTToGMT(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("FXTToGMT(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToGMTOffset(fxtTime);
    if (offset == EMPTY_VALUE)
@@ -5680,7 +5680,7 @@ datetime FXTToGMT(datetime fxtTime) {
  */
 datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (fxtTime < 0)
-      return(_int(-1, catch("FXTToServerTime(1)  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
@@ -6411,7 +6411,7 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
        *
        * stdlib: Error: incorrect start position 0 for ArrayCopy function
        * stdlib: Log:   Balance::stdlib::GetBalanceHistory()   delivering 0 balance values for account 0 from cache
-       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)  [4051 - invalid function parameter value]
+       * stdlib: Alert: ERROR:   AUDUSD,M15::Balance::stdlib::GetBalanceHistory(1)   [4051 - invalid function parameter value]
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
@@ -6688,7 +6688,7 @@ bool IsConfigKey(string section, string key) {
  */
 int GetFXTToGMTOffset(datetime fxtTime) {
    if (fxtTime < 0) {
-      catch("GetFXTToGMTOffset()  invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetFXTToGMTOffset()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -6885,7 +6885,7 @@ int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CON
    }
 
    else {
-      catch("GetGMTToServerTimeOffset(2)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
+      catch("GetGMTToServerTimeOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG);
       return(EMPTY_VALUE);
    }
 
@@ -7020,7 +7020,7 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
  */
 string GetDayOfWeek(datetime time, bool longFormat=true) {
    if (time < 0)
-      return(_empty(catch("GetDayOfWeek(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetDayOfWeek(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
@@ -7387,7 +7387,7 @@ string MovingAverageMethodToStr(int method) {
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_empty(catch("MovingAverageMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("MovingAverageMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7406,7 +7406,7 @@ string MovingAverageMethodDescription(int method) {
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   return(_empty(catch("MovingAverageMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("MovingAverageMethodDescription()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7429,7 +7429,7 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   if (__LOG) log("MovingAverageMethodToId()  invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("MovingAverageMethodToId()   invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -7455,7 +7455,7 @@ string MessageBoxCmdToStr(int cmd) {
       case IDTRYAGAIN: return("IDTRYAGAIN");
       case IDCONTINUE: return("IDCONTINUE");
    }
-   return(_empty(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
+   return(_empty(catch("MessageBoxCmdToStr()   unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -7554,7 +7554,7 @@ string OperationTypeToStr(int type) {
       case OP_CREDIT   : return("OP_CREDIT"   );
       case OP_UNDEFINED: return("OP_UNDEFINED");
    }
-   return(_empty(catch("OperationTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("OperationTypeToStr()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7577,7 +7577,7 @@ string OperationTypeDescription(int type) {
       case OP_CREDIT   : return("Credit"    );
       case OP_UNDEFINED: return("undefined" );
    }
-   return(_empty(catch("OperationTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("OperationTypeDescription()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7598,7 +7598,7 @@ string AppliedPriceToStr(int appliedPrice) {
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
    }
-   return(_empty(catch("AppliedPriceToStr()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("AppliedPriceToStr()   invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7619,7 +7619,7 @@ string AppliedPriceDescription(int appliedPrice) {
       case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
    }
-   return(_empty(catch("AppliedPriceDescription()  invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("AppliedPriceDescription()   invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7646,7 +7646,7 @@ int PeriodToId(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   if (__LOG) log("PeriodToId()  invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("PeriodToId()   invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -7673,7 +7673,7 @@ string PeriodToStr(int period=NULL) {
       case PERIOD_W1 : return("PERIOD_W1" );     // 10080  weekly
       case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
    }
-   return(_empty(catch("PeriodToStr()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PeriodToStr()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7699,7 +7699,7 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_W1 : return("W1" );     // 10080  weekly
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
-   return(_empty(catch("PeriodDescription()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PeriodDescription()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7725,7 +7725,7 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_W1 : return(F_PERIOD_W1 );
       case PERIOD_MN1: return(F_PERIOD_MN1);
    }
-   return(_ZERO(catch("PeriodFlag()  invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("PeriodFlag()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7841,7 +7841,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (StringLen(timezone) == 0)
-         return(_empty(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+         return(_empty(catch("GetServerTimezone(1)   missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
 
@@ -7997,7 +7997,7 @@ string UninitializeReasonDescription(int reason) {
       case REASON_CHARTCHANGE: return("chart symbol or timeframe changed");
       case REASON_ACCOUNT    : return("account changed"                  );
    }
-   return(_empty(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("UninitializeReasonDescription()   invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8018,7 +8018,7 @@ string UninitializeReasonToStr(int reason) {
       case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
       case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
    }
-   return(_empty(catch("UninitializeReasonToStr()  invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("UninitializeReasonToStr()   invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8089,7 +8089,7 @@ string GetClassName(int hWnd) {
  */
 datetime GMTToFXT(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GMTToFXT(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GMTToFXT(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetGMTToFXTOffset(gmtTime);
    if (offset == EMPTY_VALUE)
@@ -8112,7 +8112,7 @@ datetime GMTToFXT(datetime gmtTime) {
  */
 datetime GMTToServerTime(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (gmtTime < 0)
-      return(_int(-1, catch("GMTToServerTime(1)  invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -8228,7 +8228,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
       symbol = Symbol();
 
    if (time < 0)
-      return(_int(EMPTY_VALUE, catch("iBarShiftPrevious(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("iBarShiftPrevious(1)   invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Datenreihe holen
    datetime times[];
@@ -8271,7 +8271,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*thr
       symbol = Symbol();
 
    if (time < 0)
-      return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)  invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)   invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
@@ -8327,7 +8327,7 @@ int IncreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_MN1);
       case PERIOD_MN1: return(PERIOD_MN1);
    }
-   return(_ZERO(catch("IncreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("IncreasePeriod()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8396,7 +8396,7 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
       return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
-   return(_empty(catch("DoublesToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_empty(catch("DoublesToStr()   too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -8410,7 +8410,7 @@ private*/string DoublesToStr_intern(double values2[][], double values3[][][], st
  */
 string RatesToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("RatesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("RatesToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -8445,7 +8445,7 @@ string RatesToStr(double values[], string separator=", ") {
  */
 string MoneysToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("MoneysToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("MoneysToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -8537,7 +8537,7 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
       return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
    }
 
-   return(_empty(catch("IntsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_empty(catch("IntsToStr()   too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -8551,7 +8551,7 @@ private*/string IntsToStr_intern(int values2[][], int values3[][][], string sepa
  */
 string TimesToStr(datetime values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("TimesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("TimesToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -8586,7 +8586,7 @@ string TimesToStr(datetime values[], string separator=", ") {
  */
 string CharsToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("CharsToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("CharsToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -8619,7 +8619,7 @@ string CharsToStr(int values[], string separator=", ") {
  */
 string OperationTypesToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("OperationTypesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("OperationTypesToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -8653,7 +8653,7 @@ string OperationTypesToStr(int values[], string separator=", ") {
  */
 string StringsToStr(string values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_empty(catch("StringsToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("StringsToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    if (ArraySize(values) == 0)
       return("{}");
@@ -8742,7 +8742,7 @@ int SendSMS(string receiver, string message) {
  */
 datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (serverTime < 0)
-      return(_int(-1, catch("ServerToFXT()  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -9190,11 +9190,11 @@ color RGB(int red, int green, int blue) {
          if (0 <= blue && blue <= 255) {
             return(red + green<<8 + blue<<16);
          }
-         else catch("RGB(1)  invalid parameter blue: "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("RGB(1)   invalid parameter blue: "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("RGB(2)  invalid parameter green: "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("RGB(2)   invalid parameter green: "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("RGB(3)  invalid parameter red: "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("RGB(3)   invalid parameter red: "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -9330,9 +9330,9 @@ color HSVToRGBColor(double hsv[3]) {
  * @return color - Farbe oder -1, wenn ein Fehler auftrat
  */
 color HSVValuesToRGBColor(double hue, double saturation, double value) {
-   if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)  invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (saturation < 0.0 || saturation > 1.0) return(_int(-1, catch("HSVValuesToRGBColor(2)  invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (value < 0.0 || value > 1.0)           return(_int(-1, catch("HSVValuesToRGBColor(3)  invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)   invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (saturation < 0.0 || saturation > 1.0) return(_int(-1, catch("HSVValuesToRGBColor(2)   invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (value < 0.0 || value > 1.0)           return(_int(-1, catch("HSVValuesToRGBColor(3)   invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double red, green, blue;
 
@@ -9428,13 +9428,13 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 
                return(result);
             }
-            else catch("Color.ModifyHSV(2)  invalid parameter mod_value: "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+            else catch("Color.ModifyHSV(2)   invalid parameter mod_value: "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
          }
-         else catch("Color.ModifyHSV(3)  invalid parameter mod_saturation: "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("Color.ModifyHSV(3)   invalid parameter mod_saturation: "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("Color.ModifyHSV(4)  invalid parameter mod_hue: "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("Color.ModifyHSV(4)   invalid parameter mod_hue: "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("Color.ModifyHSV(5)  invalid parameter rgb: "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("Color.ModifyHSV(5)   invalid parameter rgb: "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -9450,7 +9450,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  */
 string DoubleToStrEx(double value, int digits) {
    if (digits < 0 || digits > 16)
-      return(_empty(catch("DoubleToStrEx()  illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("DoubleToStrEx()   illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    /*
    double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
@@ -9523,7 +9523,7 @@ string DoubleToStrMorePrecision(double value, int precision) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0)
-      return(_empty(catch("StringRepeat()  invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("StringRepeat()   invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (times ==  0)           return("");
    if (StringLen(input) == 0) return("");
@@ -9806,8 +9806,8 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 // Setter
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                    return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
-   if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (IsError(BufferSetString(oe, 4, symbol))) return("");                                                                                                         return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                   return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = Round(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -9830,7 +9830,7 @@ double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]    = Round(profit * 100);                                      return(profit    ); }
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]   += Round(profit * 100);                                      return(profit    ); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
-   if (StringLen(comment) > 27)                   return(_empty(catch("oe.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(comment) > 27)                   return(_empty(catch("oe.setComment()   invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, 88, comment))) return("");                                                                                                       return(comment   ); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                 return(milliSec  ); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                 return(requotes  ); }
@@ -9842,8 +9842,8 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][ 0] = error;                                                    return(error     ); }
                                                                                               oe[i][ 0] = error;                                                    return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
-   if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)  invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 4, symbol))) return("");                                                                                 return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                   return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = Round(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
@@ -9866,7 +9866,7 @@ double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21] = Round(profit * 100);                                      return(profit    ); }
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21]+= Round(profit * 100);                                      return(profit    ); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
-   if (StringLen(comment) > 27) return(_empty(catch("oes.setComment()  invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(comment) > 27) return(_empty(catch("oes.setComment()   invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 88, comment))) return("");                                                                               return(comment   ); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                 return(milliSec  ); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                 return(requotes  ); }
@@ -9886,8 +9886,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false) {
    int dimensions = ArrayDimension(oe);
 
-   if (dimensions > 2)                                          return(_empty(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_empty(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                          return(_empty(catch("ORDER_EXECUTION.toStr(1)   too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_empty(catch("ORDER_EXECUTION.toStr(2)   invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int    digits, pipDigits;
    string priceFormat, line, lines[]; ArrayResize(lines, 0);
@@ -11682,7 +11682,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
@@ -11809,7 +11809,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_ZERO(oes.setError(oes, -1, catch("OrderMultiClose.Flatten(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_ZERO(oes.setError(oes, -1, catch("OrderMultiClose.Flatten(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
 
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
@@ -11964,7 +11964,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 /*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
-      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(1)  invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 

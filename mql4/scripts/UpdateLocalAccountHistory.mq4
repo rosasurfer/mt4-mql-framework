@@ -116,15 +116,15 @@ int onStart() {
          // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("onStart(2)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+            return(catch("onStart(2)   #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
          for (n=0; n < orders; n++)
             if (tickets[n] == ticket)
                break;
-         if (n == orders) return(catch("onStart(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
-         if (i == n     ) return(catch("onStart(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (n == orders) return(catch("onStart(3)   cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (i == n     ) return(catch("onStart(4)   both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          int first  = Min(i, n);
          int second = Max(i, n);
@@ -185,7 +185,7 @@ int onStart() {
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
       if (NE(lastBalance, AccountBalance()))
-         return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+         return(catch("onStart(8)   data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
       MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
@@ -202,7 +202,7 @@ int onStart() {
       lastBalance     = balances[i];
    }
    if (NE(lastBalance, AccountBalance())) {
-      if (__LOG) log("onStart()  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
+      if (__LOG) log("onStart()   balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySound("notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(10)"));
@@ -295,7 +295,7 @@ int onStart() {
  */
 int SortTickets(int sortData[][/*{CloseTime, OpenTime, Ticket}*/]) {
    if (ArrayRange(sortData, 1) != 3)
-      return(catch("SortTickets(1)  invalid parameter sortData["+ ArrayRange(sortData, 0) +"]["+ ArrayRange(sortData, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("SortTickets(1)   invalid parameter sortData["+ ArrayRange(sortData, 0) +"]["+ ArrayRange(sortData, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    int rows = ArrayRange(sortData, 0);
    if (rows < 2)

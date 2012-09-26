@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
 int onStart() {
    int account = AccountNumber();
    if (account == 0) {
-      if (__LOG) log("onStart()  no trade server connection");
+      if (__LOG) log("onStart()   no trade server connection");
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
@@ -59,7 +59,7 @@ int onStart() {
             int lotSize = MarketInfo(OrderSymbol(), MODE_LOTSIZE);
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {
-               if (__LOG) log("onStart()  MarketInfo("+ OrderSymbol() +") - unknown symbol");
+               if (__LOG) log("onStart()   MarketInfo("+ OrderSymbol() +") - unknown symbol");
                PlaySound("notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));

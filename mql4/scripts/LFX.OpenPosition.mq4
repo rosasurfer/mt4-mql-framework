@@ -72,24 +72,24 @@ int onInit() {
    string value = StringToUpper(StringTrim(Currency));
    string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
    if (!StringInArray(currencies, value))
-      return(catch("onInit(1)  Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT));
+      return(catch("onInit(1)   Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT));
    Currency = value;
    // Direction
    value = StringToUpper(StringTrim(Direction));
    if (value == "")
-      return(catch("onInit(2)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
+      return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
    switch (StringGetChar(value, 0)) {
       case 'B':
       case 'L': Direction = "long";  iDirection = OP_BUY;  break;
       case 'S': Direction = "short"; iDirection = OP_SELL; break;
       default:
-         return(catch("onInit(3)  Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
+         return(catch("onInit(3)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT));
    }
    // Units
    if (LT(Units, 0.1) || GT(Units, 1.5))
-      return(catch("onInit(4)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT));
+      return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT));
    if (NE(MathModFix(Units, 0.1), 0))
-      return(catch("onInit(5)  Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT));
+      return(catch("onInit(5)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT));
    Units = NormalizeDouble(Units, 1);
    // -- Ende - Parametervalidierung
 
@@ -97,7 +97,7 @@ int onInit() {
    // Leverage-Konfiguration einlesen
    leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
    if (LT(leverage, 1))
-      return(catch("onInit(6)  Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT));
+      return(catch("onInit(6)   Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT));
 
    return(catch("onInit(7)"));
 }

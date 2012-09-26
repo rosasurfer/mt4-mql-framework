@@ -840,7 +840,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
          ChartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
          ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
          if (LT(ChartInfo.leverage, 1))
-            return(catch("init(3)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+            return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          error = ChartInfo.CreateLabels();
          if (IsError(error))
             return(error);
@@ -1766,7 +1766,7 @@ bool LE(double double1, double double2, int digits=8) {
  */
 bool EQ(double double1, double double2, int digits=8) {
    if (digits < 0 || digits > 8)
-      return(_false(catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_false(catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -1793,7 +1793,7 @@ bool EQ(double double1, double double2, int digits=8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(_false(catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_false(catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
    */
 }
 

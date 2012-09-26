@@ -32,11 +32,11 @@ int onInit() {
    if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
    else if (price == "ask"   ) ChartInfo.appliedPrice = PRICE_ASK;
    else if (price == "median") ChartInfo.appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)  invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    ChartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
    if (LT(ChartInfo.leverage, 1))
-      return(catch("onInit(2)  invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(2)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Label erzeugen
    ChartInfo.CreateLabels();
