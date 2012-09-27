@@ -9724,32 +9724,32 @@ string NumberToStr(double number, string mask) {
  * MQL structure ORDER_EXECUTION
  *
  * typedef struct _ORDER_EXECUTION {
- *    DWORD nError;              //   4      => oe[ 0]      // Fehlercode
- *    TCHAR cSymbol;             //  16      => oe[ 1]      // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
- *    DWORD nDigits;             //   4      => oe[ 5]      // Digits des Ordersymbols
- *    DWORD nStopDistance;       //   4      => oe[ 6]      // Stop-Distance in Points
- *    DWORD nFreezeDistance;     //   4      => oe[ 7]      // Freeze-Distance in Points
- *    DWORD nBid;                //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Points
- *    DWORD nAsk;                //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Points
- *    DWORD nTicket;             //   4      => oe[10]      // aktuelles Ticket
- *    DWORD nType;               //   4      => oe[11]      // Operation-Type
- *    DWORD nLots;               //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
- *    DWORD nOpenTime;           //   4      => oe[13]      // OrderOpenTime
- *    DWORD nOpenPrice;          //   4      => oe[14]      // OpenPrice in Points
- *    DWORD nStopLoss;           //   4      => oe[15]      // StopLoss-Preis in Points
- *    DWORD nTakeProfit;         //   4      => oe[16]      // TakeProfit-Preis in Points
- *    DWORD nCloseTime;          //   4      => oe[17]      // OrderCloseTime
- *    DWORD nClosePrice;         //   4      => oe[18]      // ClosePrice in Points
- *    DWORD nSwap;               //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
- *    DWORD nCommission;         //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
- *    DWORD nProfit;             //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
- *    TCHAR cComment;            //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + NUL
- *    DWORD nDuration;           //   4      => oe[29]      // Dauer der Auführung in Millisekunden
- *    DWORD nRequotes;           //   4      => oe[30]      // Anzahl aufgetretener Requotes
- *    DWORD nSlippage;           //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
- *    DWORD nRemainingTicket;    //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
- *    DWORD nRemainingLots;      //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
- * } ORDER_EXECUTION, oe;        // 136 byte = int[34]
+ *    int  error;             //   4      => oe[ 0]      // Fehlercode
+ *    char symbol[13];        //  16      => oe[ 1]      // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
+ *    int  digits;            //   4      => oe[ 5]      // Digits des Ordersymbols
+ *    int  stopDistance;      //   4      => oe[ 6]      // Stop-Distance in Points
+ *    int  freezeDistance;    //   4      => oe[ 7]      // Freeze-Distance in Points
+ *    int  bid;               //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Points
+ *    int  ask;               //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Points
+ *    int  ticket;            //   4      => oe[10]      // Ticket
+ *    int  type;              //   4      => oe[11]      // Operation-Type
+ *    int  lots;              //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
+ *    int  openTime;          //   4      => oe[13]      // OrderOpenTime
+ *    int  openPrice;         //   4      => oe[14]      // OpenPrice in Points
+ *    int  stopLoss;          //   4      => oe[15]      // StopLoss-Preis in Points
+ *    int  takeProfit;        //   4      => oe[16]      // TakeProfit-Preis in Points
+ *    int  closeTime;         //   4      => oe[17]      // OrderCloseTime
+ *    int  closePrice;        //   4      => oe[18]      // ClosePrice in Points
+ *    int  swap;              //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
+ *    int  commission;        //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
+ *    int  profit;            //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
+ *    char comment[28];       //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + NUL
+ *    int  duration;          //   4      => oe[29]      // Dauer der Auführung in Millisekunden
+ *    int  requotes;          //   4      => oe[30]      // Anzahl aufgetretener Requotes
+ *    int  slippage;          //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    int  remainingTicket;   //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
+ *    int  remainingLots;     //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
+ * } ORDER_EXECUTION, oe;     // 136 byte = int[34]
  */
 
 // Getter
@@ -10064,7 +10064,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    while (true) {
       if (IsStopped()) {
          error = oe.setError(oe, ERR_PROGRAM_STOPPING);
-         return(_int(-1, warn(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermTradeErrorMsg(oe)), error))); // OrderSendEx.HandleError(message, error, false, oeFlags, oe);
+         return(_int(-1, warn("OrderSendEx(14)   "+ OrderSendEx.PermTradeErrorMsg(oe), error))); // OrderSendEx.HandleError(message, error, false, oeFlags, oe);
       }
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
@@ -10180,7 +10180,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
 /**
- * Exception-Handler für in OrderSendEx() aufgetretene Fehler. Je nach den übergebenen Execution-Flags werden die entsprechenden Laufzeitfehler abgefangen.
+ * Exception-Handler für in OrderSendEx() aufgetretene Fehler. Je nach übergebenen Execution-Flags werden die entsprechenden Laufzeitfehler abgefangen.
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
@@ -10196,7 +10196,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (IsNoError(error))
       return(NO_ERROR);
 
-   // (1) bei server-seitigen Fehlern oe.Bid/oe.Ask aktualisieren
+   // (1) bei server-seitigen Preisfehlern aktuelle Preise holen
    if (serverError) {
       switch (error) {
          case ERR_INVALID_PRICE:
