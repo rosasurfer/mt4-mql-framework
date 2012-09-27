@@ -7155,6 +7155,7 @@ string ErrorDescription(int error) {
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                          ); // 5009
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                     ); // 5010
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                         ); // 5011
+      case ERR_PROGRAM_STOPPING           : return("program is stopping"                                           ); // 5012
    }
    return("unknown error");
 }
@@ -7294,6 +7295,7 @@ string ErrorToStr(int error) {
       case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
       case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); // 5010
       case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); // 5011
+      case ERR_PROGRAM_STOPPING           : return("ERR_PROGRAM_STOPPING"           ); // 5012
    }
    return(error);
 }
@@ -10059,7 +10061,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
-   while (!IsStopped()) {
+   while (true) {
+      if (IsStopped()) {
+         error = oe.setError(oe, ERR_PROGRAM_STOPPING);
+         return(_int(-1, warn(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermTradeErrorMsg(oe)), error))); // OrderSendEx.HandleError(message, error, false, oeFlags, oe);
+      }
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
          Sleep(200);                                                                      // 0.2 Sekunden warten
@@ -10078,31 +10084,31 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setOpenPrice(oe, price);
 
          if (type == OP_BUYSTOP) {
-            if (LE(price, ask))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(14)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
-            if (LT(price - stopDistance*pips, ask))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(15)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (LE(price, ask))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(15)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (LT(price - stopDistance*pips, ask))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(16)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
          }
          else if (type == OP_SELLSTOP) {
-            if (GE(price, bid))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(16)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
-            if (GT(price + stopDistance*pips, bid))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(17)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (GE(price, bid))                                  return(_int(-1, OrderSendEx.HandleError("OrderSendEx(17)   illegal "+ OperationTypeDescription(type) +" price "+ NumberToStr(price, priceFormat) +" (market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +")", ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (GT(price + stopDistance*pips, bid))              return(_int(-1, OrderSendEx.HandleError("OrderSendEx(18)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +" too close to market ("+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
          }
 
          // StopLoss <> StopDistance validieren
          if (NE(stopLoss, 0)) {
             if (IsLongTradeOperation(type)) {
-               if (GE(stopLoss, price))                          return(_int(-1, OrderSendEx.HandleError("OrderSendEx(18)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (GE(stopLoss, price))                          return(_int(-1, OrderSendEx.HandleError("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
                if (type == OP_BUY) {
-                  if (GE(stopLoss, bid))                         return(_int(-1, OrderSendEx.HandleError("OrderSendEx(19)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
-                  if (GT(stopLoss, bid - stopDistance*pips))     return(_int(-1, OrderSendEx.HandleError("OrderSendEx(20)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+                  if (GE(stopLoss, bid))                         return(_int(-1, OrderSendEx.HandleError("OrderSendEx(20)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
+                  if (GT(stopLoss, bid - stopDistance*pips))     return(_int(-1, OrderSendEx.HandleError("OrderSendEx(21)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
                }
-               else if (GT(stopLoss, price - stopDistance*pips)) return(_int(-1, OrderSendEx.HandleError("OrderSendEx(21)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+               else if (GT(stopLoss, price - stopDistance*pips)) return(_int(-1, OrderSendEx.HandleError("OrderSendEx(22)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
             }
             else /*short*/ {
-               if (LE(stopLoss, price))                          return(_int(-1, OrderSendEx.HandleError("OrderSendEx(22)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (LE(stopLoss, price))                          return(_int(-1, OrderSendEx.HandleError("OrderSendEx(23)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
                if (type == OP_SELL) {
-                  if (LE(stopLoss, ask))                         return(_int(-1, OrderSendEx.HandleError("OrderSendEx(23)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
-                  if (LT(stopLoss, ask + stopDistance*pips))     return(_int(-1, OrderSendEx.HandleError("OrderSendEx(24)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+                  if (LE(stopLoss, ask))                         return(_int(-1, OrderSendEx.HandleError("OrderSendEx(24)   illegal stoploss "+ NumberToStr(stopLoss, priceFormat) +" for "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat), ERR_INVALID_STOP, false, oeFlags, oe)));
+                  if (LT(stopLoss, ask + stopDistance*pips))     return(_int(-1, OrderSendEx.HandleError("OrderSendEx(25)   "+ OperationTypeDescription(type) +" at market "+ NumberToStr(bid, priceFormat) +"/"+ NumberToStr(ask, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
                }
-               else if (LT(stopLoss, price + stopDistance*pips)) return(_int(-1, OrderSendEx.HandleError("OrderSendEx(25)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
+               else if (LT(stopLoss, price + stopDistance*pips)) return(_int(-1, OrderSendEx.HandleError("OrderSendEx(26)   "+ OperationTypeDescription(type) +" at "+ NumberToStr(price, priceFormat) +", sl="+ NumberToStr(stopLoss, priceFormat) +" too close (stop distance="+ NumberToStr(stopDistance, ".+") +" pip)", ERR_INVALID_STOP, false, oeFlags, oe)));
             }
          }
 
@@ -10114,11 +10120,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          oe.setDuration(oe, GetTickCount()-firstTime1);                                   // Gesamtzeit in Millisekunden
 
          if (ticket > 0) {
-            OrderPush("OrderSendEx(26)");
+            OrderPush("OrderSendEx(27)");
             WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
 
             if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(27)")));
+               return(_int(-1, oe.setError(oe, last_error), OrderPop("OrderSendEx(28)")));
 
             oe.setTicket    (oe, ticket           );
             oe.setOpenTime  (oe, OrderOpenTime()  );
@@ -10138,7 +10144,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             if (!IsTesting())
                PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
-            if (IsError(catch("OrderSendEx(28)", NULL, O_POP)))
+            if (IsError(catch("OrderSendEx(29)", NULL, O_POP)))
                ticket = -1;
             oe.setError(oe, last_error);
             return(ticket);                                                               // regular exit
@@ -10166,15 +10172,15 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
          if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
             break;
-         warn(StringConcatenate("OrderSendEx(29)   ", OrderSendEx.TempTradeErrorMsg(oe)), error);
+         warn(StringConcatenate("OrderSendEx(30)   ", OrderSendEx.TempTradeErrorMsg(oe)), error);
       }
    }
-   return(_int(-1, OrderSendEx.HandleError("OrderSendEx(30)   "+ OrderSendEx.PermTradeErrorMsg(oe), error, true, oeFlags, oe)));
+   return(_int(-1, OrderSendEx.HandleError("OrderSendEx(31)   "+ OrderSendEx.PermTradeErrorMsg(oe), error, true, oeFlags, oe)));
 }
 
 
 /**
- * Exception-Handler für in OrderSendEx() aufgetretene Fehler. Je nach Aufruf wird ein Laufzeitfehler ausgelöst oder der Fehler nur geloggt.
+ * Exception-Handler für in OrderSendEx() aufgetretene Fehler. Je nach den übergebenen Execution-Flags werden die entsprechenden Laufzeitfehler abgefangen.
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
@@ -10190,7 +10196,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (IsNoError(error))
       return(NO_ERROR);
 
-   // (1) bei Server-Fehler ggf. oe.Bid/oe.Ask aktualisieren
+   // (1) bei server-seitigen Fehlern oe.Bid/oe.Ask aktualisieren
    if (serverError) {
       switch (error) {
          case ERR_INVALID_PRICE:
@@ -10204,7 +10210,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       }
    }
 
-   // (2) je nach execution-Flags die gewünschten Laufzeitfehler unterdrücken
+   // (2) die angegebenen Laufzeitfehler abfangen
    if (_bool(oeFlags & OE_CATCH_INVALID_STOP)) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
@@ -10212,7 +10218,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       }
    }
 
-   // (3) für restliche Fehler Laufzeitfehler auslösen
+   // (3) für alle restlichen Fehler Laufzeitfehler auslösen
    return(catch(message, error));
 }
 
@@ -10289,15 +10295,15 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 /*private*/ string OrderSendEx.PermTradeErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    //"permanent trade error while trying to Buy 0.5 GBPUSD at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote"
 
-   int    digits       = oe.Digits(oe);
-   int    pipDigits    = digits & (~1);
-   string priceFormat  = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   int    digits      = oe.Digits(oe);
+   int    pipDigits   = digits & (~1);
+   string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
 
-   string strType      = OperationTypeDescription(oe.Type(oe));
-   string strLots      = NumberToStr(oe.Lots     (oe), ".+"       );
-   string strPrice     = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string strBid       = NumberToStr(oe.Bid      (oe), priceFormat);
-   string strAsk       = NumberToStr(oe.Ask      (oe), priceFormat);
+   string strType     = OperationTypeDescription(oe.Type(oe));
+   string strLots     = NumberToStr(oe.Lots     (oe), ".+"       );
+   string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
+   string strBid      = NumberToStr(oe.Bid      (oe), priceFormat);
+   string strAsk      = NumberToStr(oe.Ask      (oe), priceFormat);
 
    string message = StringConcatenate("permanent trade error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " (market ", strBid, "/", strAsk, ")");
 

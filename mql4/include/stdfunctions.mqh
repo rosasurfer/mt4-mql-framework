@@ -590,7 +590,7 @@
 #define ERR_NO_ERROR                                                  0
 #define NO_ERROR                                           ERR_NO_ERROR
 
-// Trade server errors
+// Trading errors
 #define ERR_NO_RESULT                                                 1    // Tradeserver-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
@@ -672,7 +672,7 @@
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
 #define ERR_HISTORY_UPDATE                                         4066
 #define ERR_HISTORY_WILL_UPDATED                     ERR_HISTORY_UPDATE
-#define ERR_TRADE_ERROR                                            4067    // error in trading function
+#define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_END_OF_FILE                                            4099    // end of file
 #define ERR_SOME_FILE_ERROR                                        4100    // some file error
 #define ERR_WRONG_FILE_NAME                                        4101
@@ -708,6 +708,7 @@
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
 #define ERR_INVALID_COMMAND                                        5010    // invalid or unknow command
 #define ERR_ILLEGAL_STATE                                          5011    // illegal state
+#define ERR_PROGRAM_STOPPING                                       5012    // IsStopping() returned TRUE
 
 
 // Variablen für ChartInfo-Block (siehe unten)
