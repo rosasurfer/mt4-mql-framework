@@ -366,12 +366,12 @@
 
    // s: StopDistance/FreezeDistance integeriert
 
-   // warn(ERR_PROGRAM_STOPPING) integriert:
+   // catch(ERR_PROGRAM_STOPPING) integriert:
    int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
-
-   // warn(ERR_PROGRAM_STOPPING) nicht integriert:
-   bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
+
+   // catch(ERR_PROGRAM_STOPPING) nicht integriert:
+   bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oe[]);
