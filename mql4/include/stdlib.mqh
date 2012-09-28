@@ -2,6 +2,7 @@
  *
  */
 #include <stddefine.mqh>
+#include <structs.mqh>
 
 
 #import "stdlib.ex4"
@@ -365,14 +366,10 @@
    bool     IsPendingTradeOperation(int value);
 
    // s: StopDistance/FreezeDistance integriert
-
-   // catch(ERR_PROGRAM_STOPPING) integriert:
    int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
-
-   // catch(ERR_PROGRAM_STOPPING) nicht integriert:
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oe[]);
    bool     DeletePendingOrders(color markerColor);
@@ -539,76 +536,6 @@
    double   oe.setRemainingLots  (/*ORDER_EXECUTION*/int oe[], double   lots      );  double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
 
 
-   // Win32-Structs Getter und Setter
-   int      pi.hProcess                   (/*PROCESS_INFORMATION*/int pi[]);
-   int      pi.hThread                    (/*PROCESS_INFORMATION*/int pi[]);
-   int      pi.ProcessId                  (/*PROCESS_INFORMATION*/int pi[]);
-   int      pi.ThreadId                   (/*PROCESS_INFORMATION*/int pi[]);
-
-   int      sa.Length                     (/*SECURITY_ATTRIBUTES*/int sa[]);
-   int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/int sa[]);
-   bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/int sa[]);
-
-   int      si.cb                         (/*STARTUPINFO*/int si[]);
-   int      si.Desktop                    (/*STARTUPINFO*/int si[]);
-   int      si.Title                      (/*STARTUPINFO*/int si[]);
-   int      si.X                          (/*STARTUPINFO*/int si[]);
-   int      si.Y                          (/*STARTUPINFO*/int si[]);
-   int      si.XSize                      (/*STARTUPINFO*/int si[]);
-   int      si.YSize                      (/*STARTUPINFO*/int si[]);
-   int      si.XCountChars                (/*STARTUPINFO*/int si[]);
-   int      si.YCountChars                (/*STARTUPINFO*/int si[]);
-   int      si.FillAttribute              (/*STARTUPINFO*/int si[]);
-   int      si.Flags                      (/*STARTUPINFO*/int si[]);
-   string   si.FlagsToStr                 (/*STARTUPINFO*/int si[]);
-   int      si.ShowWindow                 (/*STARTUPINFO*/int si[]);
-   string   si.ShowWindowToStr            (/*STARTUPINFO*/int si[]);
-   int      si.hStdInput                  (/*STARTUPINFO*/int si[]);
-   int      si.hStdOutput                 (/*STARTUPINFO*/int si[]);
-   int      si.hStdError                  (/*STARTUPINFO*/int si[]);
-
-   int      si.setCb                      (/*STARTUPINFO*/int si[], int size   );
-   int      si.setFlags                   (/*STARTUPINFO*/int si[], int flags  );
-   int      si.setShowWindow              (/*STARTUPINFO*/int si[], int cmdShow);
-
-   int      st.Year                       (/*SYSTEMTIME*/int st[]);
-   int      st.Month                      (/*SYSTEMTIME*/int st[]);
-   int      st.DayOfWeek                  (/*SYSTEMTIME*/int st[]);
-   int      st.Day                        (/*SYSTEMTIME*/int st[]);
-   int      st.Hour                       (/*SYSTEMTIME*/int st[]);
-   int      st.Minute                     (/*SYSTEMTIME*/int st[]);
-   int      st.Second                     (/*SYSTEMTIME*/int st[]);
-   int      st.MilliSec                   (/*SYSTEMTIME*/int st[]);
-
-   int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
-   int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
-   int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-
-   int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
-   string   wfd.FileAttributesToStr       (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]);
-   bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]);
-   string   wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
-   string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
-
-
    // Win32-Funktionen
    void     CopyMemory(int destination, int source, int bytes);
    string   GetClassName(int hWnd);
@@ -664,24 +591,6 @@
 #import "sample2.ex4"
    int      GetStringAddress(string value);
    string   GetStringValue(int address);
-#import "structs.ex4"
-   int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
-   string   hh.Description     (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
-   string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
-   int      hh.Period          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
-   int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i);
-   datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
-   datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
-
-   int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );  int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
-   string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);  string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
-   string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );  string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
-   int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );  int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
-   int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );  int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
-   datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
-   datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
-
-   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
 #import
 
 
