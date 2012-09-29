@@ -1166,18 +1166,18 @@ bool logToInstanceLog(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(1) ->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(1)->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(2) ->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(2)->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(3) ->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(3)->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -1470,7 +1470,7 @@ bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool
       OrderPop(location);
 
    int error = GetLastError();
-   return(_false(catch(location +"->OrderSelectByTicket()   ticket = "+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+   return(_false(catch(location +"->OrderSelectByTicket()   ticket=#"+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 
 

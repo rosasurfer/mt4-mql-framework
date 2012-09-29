@@ -192,7 +192,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
 
       if (IsTesting()) {                                                      // nur im Tester
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))                    // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-            return(catch("stdlib_init(3) ->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
+            return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (GetAccountNumber() == 0) {                                       // Accountnummer ermitteln und cachen, da der spätere Aufruf den UI-Thread blockieren *kann*.
             if (last_error == ERR_TERMINAL_NOT_YET_READY)
@@ -555,10 +555,10 @@ int Chart.Expert.Properties() {
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("Chart.Expert.Properties(2) ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.Expert.Properties(2)->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
-      return(catch("Chart.Expert.Properties(3) ->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(NO_ERROR);
 }
@@ -699,7 +699,7 @@ int LoadCursorById(int hInstance, int resourceId) {
    int hCursor = LoadCursorW(hInstance, resourceId);
 
    if (hCursor == 0)
-      catch("LoadCursorById() ->user32::LoadCursorW()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("LoadCursorById()->user32::LoadCursorW()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    return(hCursor);
 }
 
@@ -716,7 +716,7 @@ int LoadCursorByName(int hInstance, string cursorName) {
    int hCursor = LoadCursorA(hInstance, cursorName);
 
    if (hCursor == 0)
-      catch("LoadCursorByName() ->user32::LoadCursorA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("LoadCursorByName()->user32::LoadCursorA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    return(hCursor);
 }
 
@@ -954,7 +954,7 @@ int DeletePrivateProfileKey(string fileName, string section, string key) {
    string sNull;
 
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(catch("DeletePrivateProfileKey() ->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("DeletePrivateProfileKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(NO_ERROR);
 }
@@ -974,16 +974,16 @@ string GetTerminalVersion() {
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
    int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
    if (chars == 0)
-      return(_empty(catch("GetTerminalVersion(1) ->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int iNull[];
    int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
    if (infoSize == 0)
-      return(_empty(catch("GetTerminalVersion(2) ->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(fileName[0], 0, infoSize, infoBuffer))
-      return(_empty(catch("GetTerminalVersion(3) ->version::GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
@@ -997,10 +997,10 @@ string GetTerminalVersion() {
       pos += StringLen(key.ProductVersion);
    }
    else {
-      //debug("GetTerminalVersion() ->GetFileVersionInfoA()   ProductVersion not found");
+      //debug("GetTerminalVersion()->GetFileVersionInfoA()   ProductVersion not found");
       pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
       if (pos == -1) {
-         //debug("GetTerminalVersion() ->GetFileVersionInfoA()   FileVersion not found");
+         //debug("GetTerminalVersion()->GetFileVersionInfoA()   FileVersion not found");
          return(_empty(catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR)));
       }
       pos += StringLen(key.FileVersion);
@@ -1257,7 +1257,7 @@ string GetLocalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_empty(catch("GetLocalConfigPath(1) ->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+            return(_empty(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
@@ -1299,7 +1299,7 @@ string GetGlobalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_empty(catch("GetGlobalConfigPath(1) ->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+            return(_empty(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
@@ -3423,12 +3423,12 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR)
-      return(_empty(catch("GetWin32ShortcutTarget(2) ->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetWin32ShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int iNull[];
    int fileSize = GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
-      catch("GetWin32ShortcutTarget(3) ->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("GetWin32ShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
@@ -3436,7 +3436,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
-      catch("GetWin32ShortcutTarget(4) ->kernel32::_lread(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      catch("GetWin32ShortcutTarget(4)->kernel32::_lread(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
@@ -3598,7 +3598,7 @@ int WM_MT4() {
 
       if (message == 0) {
          message = -1;                                               // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
-         catch("WM_MT4() ->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
+         catch("WM_MT4()->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
       }
    }
 
@@ -3618,7 +3618,7 @@ int WM_MT4() {
 int Chart.SendTick(bool sound=false) {
    int hWnd = WindowHandle(Symbol(), NULL);
    if (hWnd == 0)
-      return(catch("Chart.SendTick() ->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.SendTick()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!This.IsTesting()) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0);
@@ -3666,7 +3666,7 @@ string GetServerDirectory() {
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_empty(catch("GetServerDirectory(1) ->FileOpenHistory(\""+ fileName +"\")")));
+         return(_empty(catch("GetServerDirectory(1)->FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -3685,7 +3685,7 @@ string GetServerDirectory() {
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_empty(catch("GetServerDirectory(2) ->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_empty(catch("GetServerDirectory(2)->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -3778,13 +3778,13 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    /*PROCESS_INFORMATION*/int pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
-      return(catch("WinExecAndWait(1) ->kernel32::CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2) ->kernel32::WaitForSingleObject()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      else if (__LOG)            log("WinExecAndWait() ->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+      else if (__LOG)            log("WinExecAndWait()->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi.hProcess(pi));
@@ -3809,7 +3809,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    // Datei öffnen
    hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu .\experts\files
    if (hFile < 0)
-      return(_int(-1, catch("FileReadLines(1) ->FileOpen(\""+ filename +"\")")));
+      return(_int(-1, catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
 
 
    // Schnelle Rückkehr bei leerer Datei
@@ -3871,13 +3871,13 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
                hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
                if (hFileBin < 0) {
                   FileClose(hFile);
-                  return(_int(-1, catch("FileReadLines(3) ->FileOpen(\""+ filename +"\")")));
+                  return(_int(-1, catch("FileReadLines(3)->FileOpen(\""+ filename +"\")")));
                }
             }
             if (!FileSeek(hFileBin, fPointer+len, SEEK_SET)) {
                FileClose(hFile);
                FileClose(hFileBin);
-               return(_int(-1, catch("FileReadLines(4) ->FileSeek(hFileBin, "+ (fPointer+len) +", SEEK_SET)", GetLastError())));
+               return(_int(-1, catch("FileReadLines(4)->FileSeek(hFileBin, "+ (fPointer+len) +", SEEK_SET)", GetLastError())));
             }
             wasSeparator = (fieldSeparator == FileReadInteger(hFileBin, CHAR_VALUE));
          }
@@ -6030,7 +6030,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
       int error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE)
          return(error);
-      return(catch("GetAccountHistory(3) ->FileOpen(\""+ filename +"\")", error));
+      return(catch("GetAccountHistory(3)->FileOpen(\""+ filename +"\")", error));
    }
 
    string value;
@@ -6146,7 +6146,7 @@ int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. wäh
 
    if (account == 0x4000) {                                          // beim Test ohne Tradeserver-Verbindung
       if (!IsTesting())
-         return(_ZERO(catch("GetAccountNumber(1) ->AccountNumber() got illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+         return(_ZERO(catch("GetAccountNumber(1)->AccountNumber() got illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
@@ -6279,7 +6279,7 @@ string GetComputerName() {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize))
-      return(_empty(catch("GetComputerName() ->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetComputerName()->kernel32::GetComputerNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    static.result[0] = buffer[0];
 
@@ -7866,7 +7866,7 @@ string GetClassName(int hWnd) {
    }
 
    if (chars == 0)
-      return(_empty(catch("GetClassName() ->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetClassName()->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    return(buffer[0]);
 }
@@ -8508,7 +8508,7 @@ int SendSMS(string receiver, string message) {
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendSMS(1) ->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
+      return(catch("SendSMS(1)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
 
    /**
     * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
@@ -10942,7 +10942,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                OrderPush("OrderCloseEx(14)");
                for (int i=OrdersTotal()-1; i >= 0; i--) {
                   if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                   // FALSE: darf im Tester nicht auftreten
-                     catch("OrderCloseEx(15) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
+                     catch("OrderCloseEx(15)->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR);
                      break;
                   }
                   if (OrderTicket() == ticket)        continue;
@@ -11268,7 +11268,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                string   remainderComment     = ifString(GetTerminalBuild() < 416, "partial close", OrderComment());
 
                for (i=OrdersTotal()-1; i >= 0; i--) {
-                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(oe.setError(oe, catch("OrderCloseByEx(12) ->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP))));
+                  if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(_false(oe.setError(oe, catch("OrderCloseByEx(12)->OrderSelect(i="+ i +", SELECT_BY_POS, MODE_TRADES)   unexpectedly returned FALSE", ERR_RUNTIME_ERROR, O_POP))));
                   if (OrderType() == remainderType)
                      if (EQ(OrderLots(), remainderLots))
                         if (OrderSymbol() == remainderSymbol)

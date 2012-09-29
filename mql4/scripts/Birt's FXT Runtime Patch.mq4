@@ -611,7 +611,7 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
    for (int i=from; i <= to; i++) {
       buffer[0] = 0;
       if (!ReadProcessMemory(hProcess, i, buffer, 1, iNull))
-         return(_ZERO(catch("FindMemoryAddress(1) ->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+         return(_ZERO(catch("FindMemoryAddress(1)->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
       if (buffer[0] == pattern[0]) {
          bool found = true;
@@ -619,7 +619,7 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
          for (int n=1; n < patternLength; n++) {
             buffer[0] = 0;
             if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNull))
-               return(_ZERO(catch("FindMemoryAddress(2) ->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+               return(_ZERO(catch("FindMemoryAddress(2)->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
             if (buffer[0] != pattern[n]) {
                found = false;
@@ -658,7 +658,7 @@ bool PatchProcess(int address, int bytes[]) {
    for (int i=0; i < size; i++) {
       buffer[0] = bytes[i];
       if (!WriteProcessMemory(hProcess, address+i, buffer, 1, iNull))
-         return(catch("PatchProcess() ->kernel32::WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)==NO_ERROR);
+         return(catch("PatchProcess()->kernel32::WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)==NO_ERROR);
    }
    return(true);
 }
