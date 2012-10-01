@@ -1089,9 +1089,7 @@ int start.RelaunchInputDialog() {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE:
- * -----
- * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int debug(string message, int error=NO_ERROR) {
    static int static.debugToLog = -1;
@@ -1121,9 +1119,7 @@ int debug(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE:
- * -----
- * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int log(string message, int error=NO_ERROR) {
    if (!__LOG) return(error);
@@ -1196,9 +1192,7 @@ bool logToInstanceLog(string message) {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE:
- * -----
- * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int warn(string message, int error=NO_ERROR) {
    if (IsError(error))
@@ -1256,9 +1250,7 @@ int warn(string message, int error=NO_ERROR) {
  * @return int - der aufgetretene Fehler
  *
  *
- * NOTE:
- * -----
- * Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error == NO_ERROR) error = GetLastError();
@@ -1383,9 +1375,7 @@ int ResetLastError() {
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
- * NOTE:
- * -----
- * @use  HandleEvent(), um für die Prüfung weitere, event-spezifische Parameter anzugeben
+ * NOTE: Benutze HandleEvent(), um für die Prüfung weitere, event-spezifische Parameter anzugeben.
  */
 bool HandleEvents(int events) {
    int status = 0;
@@ -1440,37 +1430,59 @@ int HandleEvent(int event, int criteria=NULL) {
 }
 
 
-int stack.selectedOrders[];                                          // @see OrderPush(), OrderPop()
+int stack.orderSelections[];                                         // @see OrderPush(), OrderPop()
 
 
 /**
- * Selektiert eine Order anhand des Tickets.
+ * Ob das angegebene Ticket existiert und erreichbar ist.
  *
- * @param  int    ticket          - Ticket
- * @param  string location        - Bezeichner für eine evt. Fehlermeldung
- * @param  bool   orderPush       - ob der aktuelle Orderkontext vorm Neuselektieren gespeichert werden soll (default: nein)
- * @param  bool   onErrorOrderPop - ob im Fehlerfall der letzte Orderkontext wiederhergestellt werden soll (default: nein bei orderPush=FALSE, ja bei orderPush=TRUE)
+ * @param  int ticket - Ticket-Nr.
+ *
+ * @return bool
+ *
+ *
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
+ */
+bool IsTicket(int ticket) {
+   OrderPush("IsTicket()");
+
+   bool result = OrderSelect(ticket, SELECT_BY_TICKET);
+
+   GetLastError();
+   OrderPop("IsTicket()");
+
+   return(result);
+}
+
+
+/**
+ * Selektiert ein Ticket.
+ *
+ * @param  int    ticket                  - Ticket-Nr.
+ * @param  string location                - Bezeichner für evt. Fehlermeldung
+ * @param  bool   storeSelection          - ob die aktuelle Selektion gespeichert werden soll (default: nein)
+ * @param  bool   onErrorRestoreSelection - ob im Fehlerfall die letzte Selektion wiederhergestellt werden soll
+ *                                          (default: bei storeSelection=TRUE ja; bei storeSelection=FALSE nein)
  *
  * @return bool - Erfolgsstatus
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ *
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
-bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool onErrorOrderPop=false) {
-   if (orderPush) {
+bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
+   if (storeSelection) {
       OrderPush(location);
-      onErrorOrderPop = true;
+      onErrorRestoreSelection = true;
    }
 
    if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);
+      return(true);                             // Success
 
-   if (onErrorOrderPop)                                              // im Fehlerfall alten Kontext restaurieren und Order-Stack bereinigen
+   if (onErrorRestoreSelection)                 // Fehler
       OrderPop(location);
 
    int error = GetLastError();
-   return(_false(catch(location +"->OrderSelectByTicket()   ticket=#"+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+   return(_false(catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
 }
 
 
@@ -1481,9 +1493,8 @@ bool OrderSelectByTicket(int ticket, string location, bool orderPush=false, bool
  *
  * @return int - Ticket des aktuellen Kontexts oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ *
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
 int OrderPush(string location) {
    int error = GetLastError();
@@ -1496,7 +1507,7 @@ int OrderPush(string location) {
    if (IsError(error)) /*&&*/ if (error != ERR_NO_ORDER_SELECTED)
       return(_ZERO(catch(location +"->OrderPush(2)", error)));
 
-   ArrayPushInt(stack.selectedOrders, ticket);
+   ArrayPushInt(stack.orderSelections, ticket);
    return(ticket);
 }
 
@@ -1508,15 +1519,14 @@ int OrderPush(string location) {
  *
  * @return bool - Erfolgsstatus
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ *
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
  */
 bool OrderPop(string location) {
-   int ticket = ArrayPopInt(stack.selectedOrders);
+   int ticket = ArrayPopInt(stack.orderSelections);
 
    if (ticket > 0)
-      return(OrderSelectByTicket(ticket, StringConcatenate(location, "->OrderPop()")));
+      return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop()")));
 
    if (ticket==0) /*&&*/ if (IsLastError())
       return(false);
@@ -1535,9 +1545,8 @@ bool OrderPop(string location) {
  *
  * @return bool - Erfolgsstatus
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ *
+ * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 bool WaitForTicket(int ticket, bool orderKeep=true) {
    if (ticket <= 0)
@@ -1573,9 +1582,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  *
  * @return double - PipValue oder 0, wenn ein Fehler auftrat
  *
- * NOTE:
- * -----
- * Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ *
+ * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots = 1.0) {
    if (lots     < 0.00000001)  return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -2522,10 +2530,10 @@ void DummyCalls() {
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
-   OrderSelectByTicket(NULL, NULL);
    PipValue();
    ResetLastError();
    Round(NULL);
+   SelectTicket(NULL, NULL);
    SetLastError(NULL);
    Sign(NULL);
    WaitForTicket(NULL);
