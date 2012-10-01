@@ -2522,6 +2522,7 @@ void DummyCalls() {
    IsLastError();
    IsNoError(NULL);
    IsScript();
+   IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
    LT(NULL, NULL);
