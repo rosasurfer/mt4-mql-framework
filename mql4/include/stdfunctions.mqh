@@ -1444,12 +1444,12 @@ int stack.orderSelections[];                                         // @see Ord
  * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool IsTicket(int ticket) {
-   OrderPush("IsTicket()");
+   OrderPush("IsTicket(1)");
 
    bool result = OrderSelect(ticket, SELECT_BY_TICKET);
 
    GetLastError();
-   OrderPop("IsTicket()");
+   OrderPop("IsTicket(2)");
 
    return(result);
 }

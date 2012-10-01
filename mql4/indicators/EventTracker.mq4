@@ -189,7 +189,7 @@ int onPositionOpen(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i], "onPositionOpen(1)"))
+      if (!SelectTicket(tickets[i], "onPositionOpen(1)"))
          return(last_error);
 
       // alle Positionen werden im aktuellen Instrument gehalten
@@ -231,7 +231,7 @@ int onPositionClose(int tickets[]) {
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
-      if (!OrderSelectByTicket(tickets[i], "onPositionClose(1)"))
+      if (!SelectTicket(tickets[i], "onPositionClose(1)"))
          continue;
 
       // alle Positionen wurden im aktuellen Instrument gehalten
@@ -419,11 +419,9 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert, ggf. ERR_HISTORY_UPDATE
  *
- * NOTE:
- * -----
- * Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  *
- * @see iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
+ * NOTE: Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
+ *       @see iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  *
 int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double &results[]) {
    // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen

@@ -63,7 +63,7 @@ int onStart() {
 
    for (i=0, n=0; i < orders; i++) {
       int ticket = sortData[i][2];
-      if (!OrderSelectByTicket(ticket, "onStart(1)"))
+      if (!SelectTicket(ticket, "onStart(1)"))
          return(last_error);
 
       int type = OrderType();                                        // gecancelte Orders und Margin Credits überspringen

@@ -376,7 +376,7 @@
 
    int      OrderPush(string location);
    bool     OrderPop(string location);
-   bool     OrderSelectByTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
+   bool     SelectTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
    bool     WaitForTicket(int ticket, bool orderKeep);
 
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);

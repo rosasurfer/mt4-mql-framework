@@ -1415,7 +1415,7 @@ int SortTicketsChronological(int &tickets[]) {
 
    // Tickets aufsteigend nach OrderOpenTime() sortieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "SortTicketsChronological(2)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "SortTicketsChronological(2)", NULL, O_POP))
          return(last_error);
       data[i][0] = OrderOpenTime();
       data[i][1] = tickets[i];
@@ -3228,9 +3228,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  * @return string - ANSI-String
  *
  *
- *  NOTE:
- *  -----
- *  Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
+ * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
@@ -3938,9 +3936,7 @@ string WaitForSingleObjectValueToStr(int value) {
  * @return string - Standardsymbol oder das aktuelle Symbol, wenn das Standardsymbol unbekannt ist
  *
  *
- *  NOTE:
- *  -----
- *  Alias für GetStandardSymbol(Symbol())
+ * NOTE: Alias für GetStandardSymbol(Symbol())
  */
 string StdSymbol() {
    static string static.lastSymbol[1], static.result[1];
@@ -3972,9 +3968,7 @@ string StdSymbol() {
  * @return string - Standardsymbol oder der übergebene Ausgangswert, wenn das Brokersymbol unbekannt ist
  *
  *
- *  NOTE:
- *  -----
- *  Alias für GetStandardSymbolOrAlt(symbol, symbol)
+ * NOTE: Alias für GetStandardSymbolOrAlt(symbol, symbol)
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0)
@@ -3993,10 +3987,8 @@ string GetStandardSymbol(string symbol) {
  * @return string - Ergebnis
  *
  *
- *  NOTE:
- *  -----
- *  Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die Angabe eines Alternativwertes, läßt jedoch nicht mehr so
- *  einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
+ * NOTE: Im Unterschied zu GetStandardSymbolStrict() erlaubt diese Funktion die Angabe eines Alternativwertes,
+ *       läßt jedoch nicht mehr so einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0)
@@ -4227,9 +4219,7 @@ string GetStandardSymbolStrict(string symbol) {
  * @return string - Kurzname oder der übergebene Ausgangswert, wenn das Symbol unbekannt ist
  *
  *
- *  NOTE:
- *  -----
- *  Alias für GetSymbolNameOrAlt(symbol, symbol)
+ * NOTE: Alias für GetSymbolNameOrAlt(symbol, symbol)
  */
 string GetSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
@@ -4399,9 +4389,7 @@ string GetSymbolNameStrict(string symbol) {
  * @return string - Langname oder der übergebene Ausgangswert, wenn kein Langname gefunden wurde
  *
  *
- *  NOTE:
- *  -----
- *  Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+ * NOTE: Alias für GetLongSymbolNameOrAlt(symbol, symbol)
  */
 string GetLongSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
@@ -5577,10 +5565,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
  *
  * @return bool - Ergebnis
  *
- *  NOTE:
- *  -----
- *  Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
- *  Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel im Sinne dieses Listeners interpretiert.
+ *
+ * NOTE: Während des Terminal-Starts und bei Accountwechseln kann AccountNumber() kurzzeitig 0 zurückgeben.
+ *       Diese start()-Aufrufe des noch nicht vollständig initialisierten Acconts werden nicht als Accountwechsel
+ *       im Sinne dieses Listeners interpretiert.
  */
 bool EventListener.AccountChange(int results[], int flags=NULL) {
    static int accountData[3];                         // {last_account, current_account, current_account_login}
@@ -5828,7 +5816,7 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    else {
       // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
       for (int i=0; i < noOfKnownPositions; i++) {
-         if (!OrderSelectByTicket(knownPositions[i], "EventListener.PositionClose(2)", NULL, O_POP))
+         if (!SelectTicket(knownPositions[i], "EventListener.PositionClose(2)", NULL, O_POP))
             return(false);
 
          if (OrderCloseTime() > 0) {                                    // Position geschlossen, in flags angegebene Orderkriterien prüfen
@@ -6615,9 +6603,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  *
  *
- *  NOTE:
- *  -----
- *  Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
+ * NOTE: Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
  */
 int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
    if (gmtTime < 0) {
@@ -7822,9 +7808,7 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
- *  NOTE:
- *  -----
- *  Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=TRUE benutzen, da UI-Thread-Deadlock
+ * NOTE: Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=TRUE benutzen, da UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
@@ -10128,7 +10112,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
+   if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
       return(false);
 
    bool result = ChartMarker.OrderSent_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderComment());
@@ -10212,9 +10196,9 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderModifyEx(1)", O_PUSH)) return(_false(oe.setError(oe, last_error)));
-   if (!IsTradeOperation(OrderType()))                           return(_false(oe.setError(oe, catch("OrderModifyEx(2)   #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
-   if (OrderCloseTime() != 0)                                    return(_false(oe.setError(oe, catch("OrderModifyEx(3)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderModifyEx(1)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
+   if (!IsTradeOperation(OrderType()))                         return(_false(oe.setError(oe, catch("OrderModifyEx(2)   #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, O_POP))));
+   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderModifyEx(3)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
    int    pipPoints      = Round(MathPow(10, digits<<31>>31));
@@ -10222,35 +10206,35 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double freezeDistance = MarketInfo(OrderSymbol(), MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
-   if (IsError(error))                                           return(_false(oe.setError(oe, catch("OrderModifyEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP))));
+   if (IsError(error))                                         return(_false(oe.setError(oe, catch("OrderModifyEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP))));
    // openPrice
    openPrice = NormalizeDouble(openPrice, digits);
-   if (LE(openPrice, 0))                                         return(_false(oe.setError(oe, catch("OrderModifyEx(5)   illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LE(openPrice, 0))                                       return(_false(oe.setError(oe, catch("OrderModifyEx(5)   illegal parameter openPrice = "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    if (NE(openPrice, OrderOpenPrice())) {
-      if (!IsPendingTradeOperation(OrderType()))                 return(_false(oe.setError(oe, catch("OrderModifyEx(6)   cannot modify open price of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (!IsPendingTradeOperation(OrderType()))               return(_false(oe.setError(oe, catch("OrderModifyEx(6)   cannot modify open price of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
       // TODO: Bid/Ask <=> openPrice prüfen
       // TODO: StopDistance(openPrice) prüfen
    }
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
-   if (LT(stopLoss, 0))                                          return(_false(oe.setError(oe, catch("OrderModifyEx(7)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LT(stopLoss, 0))                                        return(_false(oe.setError(oe, catch("OrderModifyEx(7)   illegal parameter stopLoss = "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    if (NE(stopLoss, OrderStopLoss())) {
       // TODO: Bid/Ask <=> stopLoss prüfen
       // TODO: StopDistance(stopLoss) prüfen
    }
    // takeProfit
    takeProfit = NormalizeDouble(takeProfit, digits);
-   if (LT(takeProfit, 0))                                        return(_false(oe.setError(oe, catch("OrderModifyEx(8)   illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LT(takeProfit, 0))                                      return(_false(oe.setError(oe, catch("OrderModifyEx(8)   illegal parameter takeProfit = "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    if (NE(takeProfit, OrderTakeProfit())) {
       // TODO: Bid/Ask <=> takeProfit prüfen
       // TODO: StopDistance(takeProfit) prüfen
    }
    // expires
-   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())          return(_false(oe.setError(oe, catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())        return(_false(oe.setError(oe, catch("OrderModifyEx(9)   illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    if (expires != OrderExpiration())
-      if (!IsPendingTradeOperation(OrderType()))                 return(_false(oe.setError(oe, catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (!IsPendingTradeOperation(OrderType()))               return(_false(oe.setError(oe, catch("OrderModifyEx(10)   cannot modify expiration of already open position #"+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(oe.setError(oe, catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderModifyEx(11)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oe initialisieren
@@ -10427,7 +10411,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
+   if (!SelectTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
       return(false);
 
    bool result = ChartMarker.OrderModified_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), modifyTime, oldOpenPrice, OrderOpenPrice(), oldStopLoss, OrderStopLoss(), oldTakeprofit, OrderTakeProfit(), OrderComment());
@@ -10552,7 +10536,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
+   if (!SelectTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
       return(false);
 
    bool result = ChartMarker.OrderFilled_B(ticket, pendingType, pendingPrice, digits, markerColor, OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderComment());
@@ -10633,7 +10617,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
+   if (!SelectTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
       return(false);
 
    bool result = ChartMarker.PositionClosed_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
@@ -10720,7 +10704,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(true);
 
-   if (!OrderSelectByTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
+   if (!SelectTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
       return(false);
 
    bool result = ChartMarker.OrderDeleted_B(ticket, digits, markerColor, OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderCloseTime(), OrderClosePrice());
@@ -10812,31 +10796,31 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
 bool OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseEx(1)", O_PUSH)) return(_false(oe.setError(oe, last_error)));
-   if (OrderCloseTime() != 0)                                   return(_false(oe.setError(oe, catch("OrderCloseEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
-   if (OrderType() > OP_SELL)                                   return(_false(oe.setError(oe, catch("OrderCloseEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderCloseEx(1)", O_PUSH))       return(_false(oe.setError(oe, last_error)));
+   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderCloseEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (OrderType() > OP_SELL)                                  return(_false(oe.setError(oe, catch("OrderCloseEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
    // lots
    int    digits   = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double minLot   = MarketInfo(OrderSymbol(), MODE_MINLOT);
    double lotStep  = MarketInfo(OrderSymbol(), MODE_LOTSTEP);
    double openLots = OrderLots();
    int error = GetLastError();
-   if (IsError(error))                                          return(_false(oe.setError(oe, catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP))));
+   if (IsError(error))                                         return(_false(oe.setError(oe, catch("OrderCloseEx(4)   symbol=\""+ OrderSymbol() +"\"", error, O_POP))));
    if (EQ(lots, 0)) {
       lots = openLots;
    }
    else if (NE(lots, openLots)) {
-      if (LT(lots, minLot))                                     return(_false(oe.setError(oe, catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-      if (GT(lots, openLots))                                   return(_false(oe.setError(oe, catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(openLots, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-      if (NE(MathModFix(lots, lotStep), 0))                     return(_false(oe.setError(oe, catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (LT(lots, minLot))                                    return(_false(oe.setError(oe, catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (GT(lots, openLots))                                  return(_false(oe.setError(oe, catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (OpenLots="+ NumberToStr(openLots, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (NE(MathModFix(lots, lotStep), 0))                    return(_false(oe.setError(oe, catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
-   if (LT(price, 0))                                            return(_false(oe.setError(oe, catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LT(price, 0))                                           return(_false(oe.setError(oe, catch("OrderCloseEx(8)   illegal parameter price = "+ NumberToStr(price, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // slippage
-   if (LT(slippage, 0))                                         return(_false(oe.setError(oe, catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LT(slippage, 0))                                        return(_false(oe.setError(oe, catch("OrderCloseEx(9)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')  return(_false(oe.setError(oe, catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderCloseEx(10)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oe initialisieren
@@ -11087,28 +11071,29 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close aufgeteilt sein und vom theoretischen Wert abweichen.
+ * NOTE: Die vom MT4-Server berechneten Werte in oe.Swap, oe.Commission und oe.Profit können bei partiellem Close aufgeteilt sein
+ *       und vom theoretischen Wert abweichen.
  */
 bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(_false(oe.setError(oe, last_error)));
-   if (OrderCloseTime() != 0)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
-   if (OrderType() > OP_SELL)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderCloseByEx(1)", O_PUSH))        return(_false(oe.setError(oe, last_error)));
+   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(2)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (OrderType() > OP_SELL)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(3)   #"+ ticket +" is not an open position", ERR_INVALID_TICKET, O_POP))));
    int      ticketType     = OrderType();
    double   ticketLots     = OrderLots();
    datetime ticketOpenTime = OrderOpenTime();
    string   symbol         = OrderSymbol();
    // opposite
-   if (!OrderSelectByTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(_false(oe.setError(oe, last_error)));
-   if (OrderCloseTime() != 0)                                            return(_false(oe.setError(oe, catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(opposite, "OrderCloseByEx(4)", NULL, O_POP)) return(_false(oe.setError(oe, last_error)));
+   if (OrderCloseTime() != 0)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(5)   opposite #"+ opposite +" is already closed", ERR_INVALID_TICKET, O_POP))));
    int      oppositeType     = OrderType();
    double   oppositeLots     = OrderLots();
    datetime oppositeOpenTime = OrderOpenTime();
-   if (ticketType != oppositeType^1)                                     return(_false(oe.setError(oe, catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
-   if (symbol != OrderSymbol())                                          return(_false(oe.setError(oe, catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
+   if (ticketType != oppositeType^1)                              return(_false(oe.setError(oe, catch("OrderCloseByEx(6)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
+   if (symbol != OrderSymbol())                                   return(_false(oe.setError(oe, catch("OrderCloseByEx(7)   #"+ opposite +" is not opposite to #"+ ticket, ERR_INVALID_TICKET, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')           return(_false(oe.setError(oe, catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')    return(_false(oe.setError(oe, catch("OrderCloseByEx(8)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oe initialisieren
@@ -11256,7 +11241,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
             else /*(largerBySmaller)*/ {                                               // im Tester
                // keine Referenz vorhanden
-               if (!OrderSelectByTicket(larger, "OrderCloseByEx(11)", NULL, O_POP))
+               if (!SelectTicket(larger, "OrderCloseByEx(11)", NULL, O_POP))
                   return(_false(oe.setError(oe, last_error)));
                int      remainderType        = OrderType();
                //       remainderLots        = ...
@@ -11362,13 +11347,11 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- *  NOTE:
- *  -----
- *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice die Werte der glattstellenden Transaktion des jeweiligen Symbols.
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice die Werte der glattstellenden Transaktion des jeweiligen Symbols.
  *
- *  2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen.
- *     Aus weiteren beim Schließen erzeugter Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des jeweiligen
- *     Symbols addiert. Die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert dieses Symbols.
+ *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen.
+ *          Aus weiteren beim Schließen erzeugter Tickets resultierende Beträge werden zum entsprechenden Wert des letzten Tickets des jeweiligen
+ *          Symbols addiert. Die Summe der Einzelwerte aller Tickets eines Symbols entspricht dem tatsächlichen Gesamtwert dieses Symbols.
  */
 bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // (1) Beginn Parametervalidierung --
@@ -11377,7 +11360,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfTickets == 0)                                     return(_false(oes.setError(oes, -1, catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       if (OrderCloseTime() != 0)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(3)   #"+ tickets[i] +" is already closed", ERR_INVALID_TICKET, O_POP))));
       if (OrderType() > OP_SELL)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(4)   #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP))));
@@ -11409,7 +11392,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    int symbols.lastTicket[]; ArrayResize(symbols.lastTicket, 0);
 
    for (i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(9)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(9)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       si = SearchStringArray(symbols, OrderSymbol());
       if (si == -1)
@@ -11435,7 +11418,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (5) oes[] vorbelegen
    for (i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose(12)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose(12)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()                         );
       oes.setDigits    (oes, i, MarketInfo(OrderSymbol(), MODE_DIGITS));
@@ -11552,12 +11535,10 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  * @return bool - Erfolgsstatus: FALSE, wenn mindestens eines der Tickets nicht geschlossen werden konnte oder ein Fehler auftrat
  *
  *
- *  NOTE:
- *  -----
- *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
  *
- *  2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
- *     die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
+ *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
+ *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
 /*private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
@@ -11580,12 +11561,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (2) oes[] vorbelegen
-   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.OneSymbol(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrderMultiClose.OneSymbol(2)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.OneSymbol(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose.OneSymbol(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -11671,20 +11652,18 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  * @return int - ein resultierendes, neues Ticket (falls zutreffend) oder 0, falls ein Fehler auftrat (siehe NOTES)
  *
  *
- *  NOTE:
- *  -----
- *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
- *     War die Gesamtposition bereits ausgeglichen, enthalten sie OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der glattstellenden Transaktion).
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice der Tickets die Werte der glattstellenden Transaktion (bei allen Tickets gleich).
+ *          War die Gesamtposition bereits ausgeglichen, enthalten sie OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der
+ *          glattstellenden Transaktion).
  *
- *  2) Nach Rückkehr enthalten oe.Swap, oe.Commission und oe.Profit *nur dann* einen Wert, wenn das jeweilige Ticket beim Glattstellen zumindest partiell geschlossen wurde.
- *     Diese vom MT4-Server berechneten Werte können vom tatsächlichen Wert abweichen.
+ *       2) Nach Rückkehr enthalten oe.Swap, oe.Commission und oe.Profit *nur dann* einen Wert, wenn das jeweilige Ticket beim Glattstellen zumindest
+ *          partiell geschlossen wurde. Diese vom MT4-Server berechneten Werte können vom tatsächlichen Wert abweichen.
  *
- *  3) Nach Rückkehr enthalten oe.RemainingTicket und oe.RemainingLots *nur dann* einen Wert, wenn das jeweilige Ticket zum Glattstellen verwendet wurde.
- *     Der Wert von oe.RemainingTicket ist -1, wenn das jeweilige Ticket vollständig geschlossen wurde. Der Wert ist ein weiteres, neues Ticket, wenn das jeweilige Ticket
- *     partiell geschlossen wurde. Nur bei einem der übergebenen Tickets sind oe.RemainingTicket und oe.RemainingLots gesetzt.
+ *       3) Nach Rückkehr enthalten oe.RemainingTicket und oe.RemainingLots *nur dann* einen Wert, wenn das jeweilige Ticket zum Glattstellen verwendet wurde.
+ *          Der Wert von oe.RemainingTicket ist -1, wenn das jeweilige Ticket vollständig geschlossen wurde. Der Wert ist ein weiteres, neues Ticket, wenn
+ *          das jeweilige Ticket partiell geschlossen wurde. Nur bei einem der übergebenen Tickets sind oe.RemainingTicket und oe.RemainingLots gesetzt.
  *
- *  4) Der gesetzte Wert oe.RemainingTicket (siehe Punkt 3) entspricht dem Rückgabewert der Funktion.
- *
+ *       4) Der gesetzte Wert oe.RemainingTicket (siehe Punkt 3) entspricht dem Rückgabewert der Funktion.
  */
 /*private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
@@ -11695,14 +11674,14 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.Flatten(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrderMultiClose.Flatten(2)", O_PUSH))
       return(_ZERO(oes.setError(oes, -1, last_error)));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double totalLots, lots[];
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
          return(_ZERO(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -11728,7 +11707,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
       SortTicketsChronological(tickets.copy);
-      if (!OrderSelectByTicket(tickets.copy[sizeOfTickets-1], "OrderMultiClose.Flatten(4)", NULL, O_POP))
+      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "OrderMultiClose.Flatten(4)", NULL, O_POP))
          return(_ZERO(oes.setError(oes, -1, last_error)));
 
       for (i=0; i < sizeOfTickets; i++) {
@@ -11834,13 +11813,11 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  * @return bool - Erfolgsstatus
  *
  *
- *  NOTE:
- *  -----
- *  1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der glattstellenden Transaktion).
- *     Diese Werte sind bei allen Tickets gleich.
+ * NOTE: 1) Nach Rückkehr enthalten oe.CloseTime und oe.ClosePrice OrderOpenTime/OrderOpenPrice des zuletzt geöffneten Tickets (Open-Werte der
+ *          glattstellenden Transaktion). Diese Werte sind bei allen Tickets gleich.
  *
- *  2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
- *     die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
+ *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
+ *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  */
 /*private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    int sizeOfTickets = ArraySize(tickets);
@@ -11850,12 +11827,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (1) oes[] vorbelegen
-   if (!OrderSelectByTicket(tickets[0], "OrderMultiClose.Flattened(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "OrderMultiClose.Flattened(2)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!OrderSelectByTicket(tickets[i], "OrderMultiClose.Flattened(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "OrderMultiClose.Flattened(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -11881,7 +11858,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
 
    SortTicketsChronological(tickets.copy);
-   if (!OrderSelectByTicket(tickets.copy[sizeOfCopy-1], "OrderMultiClose.Flattened(4)", NULL, O_POP)) // das zuletzt geöffnete Ticket
+   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "OrderMultiClose.Flattened(4)", NULL, O_POP))  // das zuletzt geöffnete Ticket
       return(_false(oes.setError(oes, -1, last_error)));
    for (i=0; i < sizeOfTickets; i++) {
       oes.setCloseTime (oes, i, OrderOpenTime() );
@@ -11892,12 +11869,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // (4) Teilpositionen nacheinander auflösen
    while (sizeOfCopy > 0) {
       int opposite, first=tickets.copy[0];
-      if (!OrderSelectByTicket(first, "OrderMultiClose.Flattened(5)", NULL, O_POP))
+      if (!SelectTicket(first, "OrderMultiClose.Flattened(5)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       int firstType = OrderType();
 
       for (i=1; i < sizeOfCopy; i++) {
-         if (!OrderSelectByTicket(tickets.copy[i], "OrderMultiClose.Flattened(6)", NULL, O_POP))
+         if (!SelectTicket(tickets.copy[i], "OrderMultiClose.Flattened(6)", NULL, O_POP))
             return(_false(oes.setError(oes, -1, last_error)));
          if (OrderType() == firstType^1) {
             opposite = tickets.copy[i];                                                   // erste Opposite-Position ermitteln
@@ -11950,11 +11927,11 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // ticket
-   if (!OrderSelectByTicket(ticket, "OrderDeleteEx(1)", O_PUSH)) return(_false(oe.setError(oe, last_error)));
-   if (!IsPendingTradeOperation(OrderType()))                    return(_false(oe.setError(oe, catch("OrderDeleteEx(2)   #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
-   if (OrderCloseTime() != 0)                                    return(_false(oe.setError(oe, catch("OrderDeleteEx(3)   #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
+   if (!SelectTicket(ticket, "OrderDeleteEx(1)", O_PUSH))      return(_false(oe.setError(oe, last_error)));
+   if (!IsPendingTradeOperation(OrderType()))                  return(_false(oe.setError(oe, catch("OrderDeleteEx(2)   #"+ ticket +" is not a pending order", ERR_INVALID_TICKET, O_POP))));
+   if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderDeleteEx(3)   #"+ ticket +" is already deleted", ERR_INVALID_TICKET, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(oe.setError(oe, catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oe.setError(oe, catch("OrderDeleteEx(4)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oe initialisieren
