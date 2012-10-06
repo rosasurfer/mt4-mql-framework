@@ -64,8 +64,8 @@
 #define PERIOD_H1               60           // 1 hour
 #define PERIOD_H4              240           // 4 hours
 #define PERIOD_D1             1440           // daily
-#define PERIOD_W1            10080           // weekly
-#define PERIOD_MN1           43200           // monthly
+#define PERIOD_W1            10080           // weekly  (7 Tage)
+#define PERIOD_MN1           43200           // monthly (30 Tage)
 
 
 // Object property ids, siehe ObjectSet()
