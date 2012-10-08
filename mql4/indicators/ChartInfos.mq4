@@ -10,7 +10,7 @@
  */
 #include <stdtypes.mqh>
 #define     __TYPE__      T_INDICATOR
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
