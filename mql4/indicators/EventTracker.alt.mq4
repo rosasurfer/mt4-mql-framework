@@ -130,10 +130,6 @@ int onInit() {
    // Anzeigeoptionen
    SetIndexLabel(0, NULL);
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);
-
    return(catch("onInit(6)"));
 }
 

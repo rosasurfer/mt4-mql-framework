@@ -31,10 +31,6 @@ int onInit() {
    if (UninitializeReason() == REASON_RECOMPILE)
       ArrayResize(objects, 0);
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);
-
    return(catch("onInit()"));
 }
 

@@ -6,7 +6,7 @@
  * - unten Mitte: Größe einer Handels-Unit und die im Moment gehaltene Position
  *
  *
- * Letzte Version mit Performance-Display: v1.38
+ * letzte Version mit Performance-Display: v1.38
  */
 #include <stdtypes.mqh>
 #define     __TYPE__      T_INDICATOR
@@ -29,21 +29,17 @@ int onInit() {
 
    // Konfiguration auswerten
    string price  = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
-   if      (price == "bid"   ) ChartInfo.appliedPrice = PRICE_BID;
-   else if (price == "ask"   ) ChartInfo.appliedPrice = PRICE_ASK;
-   else if (price == "median") ChartInfo.appliedPrice = PRICE_MEDIAN;
+   if      (price == "bid"   ) chartInfo.appliedPrice = PRICE_BID;
+   else if (price == "ask"   ) chartInfo.appliedPrice = PRICE_ASK;
+   else if (price == "median") chartInfo.appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   ChartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-   if (LT(ChartInfo.leverage, 1))
-      return(catch("onInit(2)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   chartInfo.leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+   if (LT(chartInfo.leverage, 1))
+      return(catch("onInit(2)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Label erzeugen
    ChartInfo.CreateLabels();
-
-   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List"-Window notwendig)
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);
 
    return(catch("onInit(3)"));
 }
@@ -66,10 +62,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (Bid < 0.00000001)                                             // Symbol nicht subscribed (Start, Account- oder Templatewechsel)
-      return(catch("onTick(1)"));
-
-   ChartInfo.positionChecked = false;
+   chartInfo.positionChecked = false;
 
    ChartInfo.UpdatePrice();
    ChartInfo.UpdateSpread();

@@ -32,10 +32,6 @@ int onInit() {
    IndicatorShortName("Balance");
    IndicatorDigits(2);
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);
-
    return(catch("onInit()"));
 }
 

@@ -720,25 +720,25 @@
 
 
 // Variablen für ChartInfo-Block (siehe unten)
-string ChartInfo.instrument,
-       ChartInfo.price,
-       ChartInfo.spread,
-       ChartInfo.unitSize,
-       ChartInfo.position,
-       ChartInfo.time,
-       ChartInfo.freezeLevel,
-       ChartInfo.stopoutLevel;
+string chartInfo.instrument,
+       chartInfo.price,
+       chartInfo.spread,
+       chartInfo.unitSize,
+       chartInfo.position,
+       chartInfo.time,
+       chartInfo.freezeLevel,
+       chartInfo.stopoutLevel;
 
-int    ChartInfo.appliedPrice = PRICE_MEDIAN;                        // Bid | Ask | Median (default)
+int    chartInfo.appliedPrice = PRICE_MEDIAN;                        // Bid | Ask | Median (default)
 
-double ChartInfo.leverage,                                           // Hebel zur UnitSize-Berechnung
-       ChartInfo.longPosition,
-       ChartInfo.shortPosition,
-       ChartInfo.totalPosition;
+double chartInfo.leverage,                                           // Hebel zur UnitSize-Berechnung
+       chartInfo.longPosition,
+       chartInfo.shortPosition,
+       chartInfo.totalPosition;
 
-bool   ChartInfo.positionChecked,
-       ChartInfo.noPosition,
-       ChartInfo.flatPosition;
+bool   chartInfo.positionChecked,
+       chartInfo.noPosition,
+       chartInfo.flatPosition;
 
 
 // globale Variablen, stehen überall zur Verfügung
@@ -778,7 +778,7 @@ string objects[];                                                    // Namen de
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsLibrary())
-      return(NO_ERROR);                                                          // in Libraries vorerst nichts tun
+      return(NO_ERROR);                                                       // in Libraries vorerst nichts tun
    int error;
 
    __NAME__           = WindowExpertName();
@@ -788,7 +788,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
-   if (__WHEREAMI__ == NULL) {                                                   // Aufruf durch Terminal: last_error sichern und zurücksetzen
+   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal: last_error sichern und zurücksetzen
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       last_error   = NO_ERROR;
@@ -807,23 +807,18 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
-   if (__NAME__ == "TestIndicator") {
-      static bool done;
-      if (!done) DebugMarketInfo();
-      done = true;
-   }
    if (IsError(error))
       return(SetLastError(error));
 
 
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {}                                      // Verarbeitung nicht hier, sondern in stdlib_init()
+   if (_bool(initFlags & INIT_TIMEZONE)) {}                                   // Verarbeitung nicht hier, sondern in stdlib_init()
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                       // schlägt fehl, wenn kein Tick vorhanden ist
+   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       error = GetLastError();
-      if (IsError(error)) {                                                      // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                                        // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("init(1)", error));
       }
@@ -832,35 +827,35 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                                        // siehe oben bei MODE_TICKSIZE
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("init(2)", error));
       }
       if (tickValue < 0.00000001) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
    }
 
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                           // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
 
 
    // (4) nur für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                             // EA's ggf. aktivieren
+   if (IsExpert()) {                                                          // EA's ggf. aktivieren
       int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+         error = Toolbar.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
          if (IsError(error))
             return(SetLastError(error));
       }
-                                                                                 // nach Neuladen Orderkontext wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+                                                                              // nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
       int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
       if (IntInArray(reasons2, UninitializeReason()))
          OrderSelect(0, SELECT_BY_TICKET);
 
 
-      if (IsVisualMode()) {                                                      // Im Tester übernimmt der EA die ChartInfo-Anzeige, die hier konfiguriert wird.
-         ChartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
-         ChartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-         if (LT(ChartInfo.leverage, 1))
-            return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ChartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (IsVisualMode()) {                                                   // Im Tester übernimmt der EA die ChartInfo-Anzeige, die hier konfiguriert wird.
+         chartInfo.appliedPrice = PRICE_BID;                                  // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
+         chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+         if (LT(chartInfo.leverage, 1))
+            return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
          error = ChartInfo.CreateLabels();
          if (IsError(error))
             return(error);
@@ -868,33 +863,40 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
 
-   // (5) user-spezifische init()-Routinen aufrufen
-   if (onInit() == -1)                                                           // User-Routinen *können*, müssen aber nicht implementiert werden.
-      return(last_error);                                                        // Preprocessing-Hook
-                                                                                 //
-   switch (UninitializeReason()) {                                               // - Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;           //   bricht init() *nicht* ab.
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;           //
-      case REASON_REMOVE     : error = onInitRemove();          break;           // - Gibt eine der Funktionen -1 zurück, bricht init() ab.
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;           //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;           //
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;           //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;           //
-   }                                                                             //
-   if (error == -1)                                                              //
-      return(last_error);                                                        //
-                                                                                 //
-   afterInit();                                                                  // Postprocessing-Hook
-   if (IsLastError() || __STATUS__CANCELLED)                                     //
-      return(last_error);                                                        //
+   // (5) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
+   if (onInit() == -1)                                                        //
+      return(last_error);                                                     // Preprocessing-Hook
+                                                                              //
+   switch (UninitializeReason()) {                                            // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;        // bricht init() *nicht* ab.
+      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
+      case REASON_REMOVE     : error = onInitRemove();          break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
+      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        //
+      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
+      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
+   }                                                                          //
+   if (error == -1)                                                           //
+      return(last_error);                                                     //
+                                                                              //
+   afterInit();                                                               // Postprocessing-Hook
+   if (IsLastError() || __STATUS__CANCELLED)                                  //
+      return(last_error);                                                     //
 
 
-   // (6) nur EA's: nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken
+   // (6) nur bei EA's: nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken
    if (IsExpert()) {
-      if (!IsTesting())                                                          // nicht bei REASON_CHARTCHANGE
-         if (UninitializeReason() != REASON_CHARTCHANGE)
-            Chart.SendTick(false);                                               // Innerhalb von init() so spät wie möglich, da Ticks aus init() verloren gehen,
-                                                                                 // wenn die entsprechende Message vor Verlassen von init() vom UI-Thread verarbeitet wird.
+      if (!IsTesting())
+         if (UninitializeReason() != REASON_CHARTCHANGE)                      // außer bei REASON_CHARTCHANGE
+            Chart.SendTick(false);                                            // Innerhalb von init() so spät wie möglich, da Ticks aus init() verloren gehen,
+                                                                              // wenn die entsprechende Message vor Verlassen von init() vom UI-Thread verarbeitet wird.
+   }
+
+
+   // (7) nur bei Indikatoren: nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   if (IsIndicator()) {
+      if (UninitializeReason() == REASON_PARAMETERS)
+         Chart.SendTick(false);
    }
 
    catch("init(4)");
@@ -995,14 +997,14 @@ int start() {
    // (7) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
    if (IsVisualMode()) {
       error = NO_ERROR;
-      ChartInfo.positionChecked = false;
+      chartInfo.positionChecked = false;
       error |= ChartInfo.UpdatePrice();
       error |= ChartInfo.UpdateSpread();
       error |= ChartInfo.UpdateUnitSize();
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (error != NO_ERROR)                                                     // NICHT error (ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler)
+      if (error != NO_ERROR)                                                     // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
          return(last_error);
    }
 
@@ -2134,96 +2136,95 @@ int Ceil(double value) {
  */
 int ChartInfo.CreateLabels() {
    // Label definieren
-   ChartInfo.instrument   = "ChartInfo.Instrument";
-   ChartInfo.price        = "ChartInfo.Price";
-   ChartInfo.spread       = "ChartInfo.Spread";
-   ChartInfo.unitSize     = "ChartInfo.UnitSize";
-   ChartInfo.position     = "ChartInfo.Position";
-   ChartInfo.time         = "ChartInfo.Time";
-   ChartInfo.freezeLevel  = "ChartInfo.MarginFreezeLevel";
-   ChartInfo.stopoutLevel = "ChartInfo.MarginStopoutLevel";
+   chartInfo.instrument   = "ChartInfo.Instrument";
+   chartInfo.price        = "ChartInfo.Price";
+   chartInfo.spread       = "ChartInfo.Spread";
+   chartInfo.unitSize     = "ChartInfo.UnitSize";
+   chartInfo.position     = "ChartInfo.Position";
+   chartInfo.time         = "ChartInfo.Time";
+   chartInfo.freezeLevel  = "ChartInfo.MarginFreezeLevel";
+   chartInfo.stopoutLevel = "ChartInfo.MarginStopoutLevel";
 
 
-   // Instrument-Label erzeugen
-   if (ObjectFind(ChartInfo.instrument) == 0)
-      ObjectDelete(ChartInfo.instrument);
-   if (ObjectCreate(ChartInfo.instrument, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(ChartInfo.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(ChartInfo.instrument, OBJPROP_XDISTANCE, 4);
-      ObjectSet(ChartInfo.instrument, OBJPROP_YDISTANCE, 1);
-      ArrayPushString(objects, ChartInfo.instrument);
+   // Instrument-Label
+   if (ObjectFind(chartInfo.instrument) == 0)
+      ObjectDelete(chartInfo.instrument);
+   if (ObjectCreate(chartInfo.instrument, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(chartInfo.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(chartInfo.instrument, OBJPROP_XDISTANCE, 4);
+      ObjectSet(chartInfo.instrument, OBJPROP_YDISTANCE, 1);
+      ArrayPushString(objects, chartInfo.instrument);
    }
    else GetLastError();
-
-   // Die Instrumentanzeige wird sofort und *nur hier* gesetzt.
-   string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-   if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-   else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(ChartInfo.instrument, name, 9, "Tahoma Fett", Black);
-
-
-   // Kurs-Label erzeugen
-   if (ObjectFind(ChartInfo.price) == 0)
-      ObjectDelete(ChartInfo.price);
-   if (ObjectCreate(ChartInfo.price, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(ChartInfo.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(ChartInfo.price, OBJPROP_XDISTANCE, 14);
-      ObjectSet(ChartInfo.price, OBJPROP_YDISTANCE, 15);
-      ObjectSetText(ChartInfo.price, " ", 1);
-      ArrayPushString(objects, ChartInfo.price);
-   }
-   else GetLastError();
+      // Die Instrumentanzeige wird sofort und *nur hier* gesetzt.
+      string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
+      if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+      else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+      ObjectSetText(chartInfo.instrument, name, 9, "Tahoma Fett", Black);
 
 
-   // Spread-Label erzeugen
-   if (ObjectFind(ChartInfo.spread) == 0)
-      ObjectDelete(ChartInfo.spread);
-   if (ObjectCreate(ChartInfo.spread, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(ChartInfo.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(ChartInfo.spread, OBJPROP_XDISTANCE, 33);
-      ObjectSet(ChartInfo.spread, OBJPROP_YDISTANCE, 38);
-      ObjectSetText(ChartInfo.spread, " ", 1);
-      ArrayPushString(objects, ChartInfo.spread);
+   // Kurs-Label
+   if (ObjectFind(chartInfo.price) == 0)
+      ObjectDelete(chartInfo.price);
+   if (ObjectCreate(chartInfo.price, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(chartInfo.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet(chartInfo.price, OBJPROP_XDISTANCE, 14);
+      ObjectSet(chartInfo.price, OBJPROP_YDISTANCE, 15);
+      ObjectSetText(chartInfo.price, " ", 1);
+      ArrayPushString(objects, chartInfo.price);
    }
    else GetLastError();
 
 
-   // UnitSize-Label erzeugen
-   if (ObjectFind(ChartInfo.unitSize) == 0)
-      ObjectDelete(ChartInfo.unitSize);
-   if (ObjectCreate(ChartInfo.unitSize, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(ChartInfo.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-      ObjectSet(ChartInfo.unitSize, OBJPROP_XDISTANCE, 290);
-      ObjectSet(ChartInfo.unitSize, OBJPROP_YDISTANCE, 9);
-      ObjectSetText(ChartInfo.unitSize, " ", 1);
-      ArrayPushString(objects, ChartInfo.unitSize);
+   // Spread-Label
+   if (ObjectFind(chartInfo.spread) == 0)
+      ObjectDelete(chartInfo.spread);
+   if (ObjectCreate(chartInfo.spread, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(chartInfo.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet(chartInfo.spread, OBJPROP_XDISTANCE, 33);
+      ObjectSet(chartInfo.spread, OBJPROP_YDISTANCE, 38);
+      ObjectSetText(chartInfo.spread, " ", 1);
+      ArrayPushString(objects, chartInfo.spread);
    }
    else GetLastError();
 
 
-   // Position-Label erzeugen
-   if (ObjectFind(ChartInfo.position) == 0)
-      ObjectDelete(ChartInfo.position);
-   if (ObjectCreate(ChartInfo.position, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(ChartInfo.position, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-      ObjectSet(ChartInfo.position, OBJPROP_XDISTANCE, 530);
-      ObjectSet(ChartInfo.position, OBJPROP_YDISTANCE, 9);
-      ObjectSetText(ChartInfo.position, " ", 1);
-      ArrayPushString(objects, ChartInfo.position);
+   // UnitSize-Label
+   if (ObjectFind(chartInfo.unitSize) == 0)
+      ObjectDelete(chartInfo.unitSize);
+   if (ObjectCreate(chartInfo.unitSize, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(chartInfo.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
+      ObjectSet(chartInfo.unitSize, OBJPROP_XDISTANCE, 290);
+      ObjectSet(chartInfo.unitSize, OBJPROP_YDISTANCE, 9);
+      ObjectSetText(chartInfo.unitSize, " ", 1);
+      ArrayPushString(objects, chartInfo.unitSize);
    }
    else GetLastError();
 
 
-   // nur im Tester: Time-Label erzeugen
+   // Position-Label
+   if (ObjectFind(chartInfo.position) == 0)
+      ObjectDelete(chartInfo.position);
+   if (ObjectCreate(chartInfo.position, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet(chartInfo.position, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
+      ObjectSet(chartInfo.position, OBJPROP_XDISTANCE, 530);
+      ObjectSet(chartInfo.position, OBJPROP_YDISTANCE, 9);
+      ObjectSetText(chartInfo.position, " ", 1);
+      ArrayPushString(objects, chartInfo.position);
+   }
+   else GetLastError();
+
+
+   // nur im Tester: Time-Label
    if (IsVisualMode()) {
-      if (ObjectFind(ChartInfo.time) == 0)
-         ObjectDelete(ChartInfo.time);
-      if (ObjectCreate(ChartInfo.time, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(ChartInfo.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet(ChartInfo.time, OBJPROP_XDISTANCE, 14);
-         ObjectSet(ChartInfo.time, OBJPROP_YDISTANCE, 14);
-         ObjectSetText(ChartInfo.time, " ", 1);
-         ArrayPushString(objects, ChartInfo.time);
+      if (ObjectFind(chartInfo.time) == 0)
+         ObjectDelete(chartInfo.time);
+      if (ObjectCreate(chartInfo.time, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet(chartInfo.time, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet(chartInfo.time, OBJPROP_XDISTANCE, 14);
+         ObjectSet(chartInfo.time, OBJPROP_YDISTANCE, 14);
+         ObjectSetText(chartInfo.time, " ", 1);
+         ArrayPushString(objects, chartInfo.time);
       }
       else GetLastError();
    }
@@ -2240,16 +2241,21 @@ int ChartInfo.CreateLabels() {
 int ChartInfo.UpdatePrice() {
    static string priceFormat;
    if (StringLen(priceFormat) == 0)
-      priceFormat = StringConcatenate(",,", PriceFormat);
+      PriceFormat = StringConcatenate(",,", PriceFormat);
 
    double price;
-   switch (ChartInfo.appliedPrice) {
-      case PRICE_BID:    price =  Bid;          break;
-      case PRICE_ASK:    price =  Ask;          break;
-      case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
-   }
 
-   ObjectSetText(ChartInfo.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
+   if (Bid < 0.00000001) {                                           // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+      price = Close[0];
+   }
+   else {
+      switch (chartInfo.appliedPrice) {
+         case PRICE_BID   : price =  Bid;          break;
+         case PRICE_ASK   : price =  Ask;          break;
+         case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
+      }
+   }
+   ObjectSetText(chartInfo.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2264,9 +2270,12 @@ int ChartInfo.UpdatePrice() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateSpread() {
+   if (Bid < 0.00000001)                                             // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+      return(NO_ERROR);
+
    string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits<<31>>31);
 
-   ObjectSetText(ChartInfo.spread, strSpread, 9, "Tahoma", SlateGray);
+   ObjectSetText(chartInfo.spread, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2281,6 +2290,9 @@ int ChartInfo.UpdateSpread() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateUnitSize() {
+   if (Bid < 0.00000001)                                             // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+      return(NO_ERROR);
+
    bool   tradeAllowed = IsTesting() || NE(MarketInfo(Symbol(), MODE_TRADEALLOWED), 0);   // MODE_TRADEALLOWED ist im Tester idiotischerweise FALSE
    double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE);
    string strUnitSize  = " ";
@@ -2290,7 +2302,7 @@ int ChartInfo.UpdateUnitSize() {
 
       if (equity > 0.00000001) {                                     // Accountequity wird mit 'leverage' gehebelt
          double lotValue = Bid / TickSize * tickValue;               // Lotvalue in Account-Currency
-         double unitSize = equity / lotValue * ChartInfo.leverage;   // unitSize = equity/lotValue entspricht Hebel von 1
+         double unitSize = equity / lotValue * chartInfo.leverage;   // unitSize = equity/lotValue entspricht Hebel von 1
 
          if      (unitSize <    0.02000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.001) *   0.001, 3);   // 0.007-0.02: Vielfaches von   0.001
          else if (unitSize <    0.04000001) unitSize = NormalizeDouble(MathRound(unitSize/  0.002) *   0.002, 3);   //  0.02-0.04: Vielfaches von   0.002
@@ -2312,7 +2324,7 @@ int ChartInfo.UpdateUnitSize() {
          strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
       }
    }
-   ObjectSetText(ChartInfo.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
+   ObjectSetText(chartInfo.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2327,12 +2339,12 @@ int ChartInfo.UpdateUnitSize() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.CheckPosition() {
-   if (ChartInfo.positionChecked)
+   if (chartInfo.positionChecked)
       return(NO_ERROR);
 
-   ChartInfo.longPosition  = 0;
-   ChartInfo.shortPosition = 0;
-   ChartInfo.totalPosition = 0;
+   chartInfo.longPosition  = 0;
+   chartInfo.shortPosition = 0;
+   chartInfo.totalPosition = 0;
 
    int orders = OrdersTotal();
 
@@ -2341,14 +2353,14 @@ int ChartInfo.CheckPosition() {
          break;
 
       if (OrderSymbol() == Symbol()) {
-         if      (OrderType() == OP_BUY ) ChartInfo.longPosition  += OrderLots();
-         else if (OrderType() == OP_SELL) ChartInfo.shortPosition += OrderLots();
+         if      (OrderType() == OP_BUY ) chartInfo.longPosition  += OrderLots();
+         else if (OrderType() == OP_SELL) chartInfo.shortPosition += OrderLots();
       }
    }
-   ChartInfo.totalPosition   = ChartInfo.longPosition - ChartInfo.shortPosition;
-   ChartInfo.flatPosition    = EQ(ChartInfo.totalPosition, 0);
-   ChartInfo.noPosition      = EQ(ChartInfo.longPosition, 0) && EQ(ChartInfo.shortPosition, 0);
-   ChartInfo.positionChecked = true;
+   chartInfo.totalPosition   = chartInfo.longPosition - chartInfo.shortPosition;
+   chartInfo.flatPosition    = EQ(chartInfo.totalPosition, 0);
+   chartInfo.noPosition      = EQ(chartInfo.longPosition, 0) && EQ(chartInfo.shortPosition, 0);
+   chartInfo.positionChecked = true;
 
    return(catch("ChartInfo.CheckPosition()"));
 }
@@ -2360,16 +2372,16 @@ int ChartInfo.CheckPosition() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdatePosition() {
-   if (!ChartInfo.positionChecked)
+   if (!chartInfo.positionChecked)
       ChartInfo.CheckPosition();
 
    string strPosition;
 
-   if      (ChartInfo.noPosition)   strPosition = " ";
-   else if (ChartInfo.flatPosition) strPosition = StringConcatenate("Position:  ±", NumberToStr(ChartInfo.longPosition, ", .+"), " lot (hedged)");
-   else                             strPosition = StringConcatenate("Position:  " , NumberToStr(ChartInfo.totalPosition, "+, .+"), " lot");
+   if      (chartInfo.noPosition)   strPosition = " ";
+   else if (chartInfo.flatPosition) strPosition = StringConcatenate("Position:  ±", NumberToStr(chartInfo.longPosition, ", .+"), " lot (hedged)");
+   else                             strPosition = StringConcatenate("Position:  " , NumberToStr(chartInfo.totalPosition, "+, .+"), " lot");
 
-   ObjectSetText(ChartInfo.position, strPosition, 9, "Tahoma", SlateGray);
+   ObjectSetText(chartInfo.position, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2396,7 +2408,7 @@ int ChartInfo.UpdateTime() {
           dd   = StringSubstr(date, 8, 2),
           time = TimeToStr(now, TIME_MINUTES|TIME_SECONDS);
 
-   ObjectSetText(ChartInfo.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
+   ObjectSetText(chartInfo.time, StringConcatenate(dd, ".", mm, ".", yyyy, " ", time), 9, "Tahoma", SlateGray);
 
    lastTime = now;
 
@@ -2413,12 +2425,12 @@ int ChartInfo.UpdateTime() {
  * @return int - Fehlerstatus
  */
 int ChartInfo.UpdateMarginLevels() {
-   if (!ChartInfo.positionChecked)
+   if (!chartInfo.positionChecked)
       ChartInfo.CheckPosition();
 
-   if (ChartInfo.flatPosition) {                                              // keine Position im Markt: ggf. vorhandene Marker löschen
-      ObjectDelete(ChartInfo.freezeLevel);
-      ObjectDelete(ChartInfo.stopoutLevel);
+   if (chartInfo.flatPosition) {                                              // keine Position im Markt: ggf. vorhandene Marker löschen
+      ObjectDelete(chartInfo.freezeLevel);
+      ObjectDelete(chartInfo.stopoutLevel);
    }
    else {
       // Kurslevel für Margin-Freeze/-Stopout berechnen und anzeigen
@@ -2429,7 +2441,7 @@ int ChartInfo.UpdateMarginLevels() {
       double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
       double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
       double marginLeverage = Bid / TickSize * tickValue / marginRequired;    // Hebel der real zur Verfügung gestellten Kreditlinie für das Symbol
-             tickValue      = tickValue * MathAbs(ChartInfo.totalPosition);   // TickValue der gesamten Position
+             tickValue      = tickValue * MathAbs(chartInfo.totalPosition);   // TickValue der gesamten Position
 
       int error = GetLastError();
       if (tickValue < 0.00000001)                                             // bei Start oder Accountwechsel
@@ -2446,7 +2458,7 @@ int ChartInfo.UpdateMarginLevels() {
 
       double quoteFreezeLevel, quoteStopoutLevel;
 
-      if (ChartInfo.totalPosition > 0.00000001) {                             // long position
+      if (chartInfo.totalPosition > 0.00000001) {                             // long position
          quoteFreezeLevel  = NormalizeDouble(Bid - quoteFreezeDiff, Digits);
          quoteStopoutLevel = NormalizeDouble(Bid - quoteStopoutDiff, Digits);
       }
@@ -2463,29 +2475,29 @@ int ChartInfo.UpdateMarginLevels() {
 
       // FreezeLevel anzeigen
       if (showFreezeLevel) {
-         if (ObjectFind(ChartInfo.freezeLevel) == -1) {
-            ObjectCreate(ChartInfo.freezeLevel, OBJ_HLINE, 0, 0, 0);
-            ObjectSet(ChartInfo.freezeLevel, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet(ChartInfo.freezeLevel, OBJPROP_COLOR, C'0,201,206');
-            ObjectSet(ChartInfo.freezeLevel, OBJPROP_BACK , true);
-            ObjectSetText(ChartInfo.freezeLevel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
-            ArrayPushString(objects, ChartInfo.freezeLevel);
+         if (ObjectFind(chartInfo.freezeLevel) == -1) {
+            ObjectCreate(chartInfo.freezeLevel, OBJ_HLINE, 0, 0, 0);
+            ObjectSet(chartInfo.freezeLevel, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet(chartInfo.freezeLevel, OBJPROP_COLOR, C'0,201,206');
+            ObjectSet(chartInfo.freezeLevel, OBJPROP_BACK , true);
+            ObjectSetText(chartInfo.freezeLevel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
+            ArrayPushString(objects, chartInfo.freezeLevel);
          }
-         ObjectSet(ChartInfo.freezeLevel, OBJPROP_PRICE1, quoteFreezeLevel);
+         ObjectSet(chartInfo.freezeLevel, OBJPROP_PRICE1, quoteFreezeLevel);
       }
 
       // StopoutLevel anzeigen
-      if (ObjectFind(ChartInfo.stopoutLevel) == -1) {
-         ObjectCreate(ChartInfo.stopoutLevel, OBJ_HLINE, 0, 0, 0);
-         ObjectSet(ChartInfo.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet(ChartInfo.stopoutLevel, OBJPROP_COLOR, OrangeRed);
-         ObjectSet(ChartInfo.stopoutLevel, OBJPROP_BACK , true);
+      if (ObjectFind(chartInfo.stopoutLevel) == -1) {
+         ObjectCreate(chartInfo.stopoutLevel, OBJ_HLINE, 0, 0, 0);
+         ObjectSet(chartInfo.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSet(chartInfo.stopoutLevel, OBJPROP_COLOR, OrangeRed);
+         ObjectSet(chartInfo.stopoutLevel, OBJPROP_BACK , true);
             if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
             else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
-         ObjectSetText(ChartInfo.stopoutLevel, description);
-         ArrayPushString(objects, ChartInfo.stopoutLevel);
+         ObjectSetText(chartInfo.stopoutLevel, description);
+         ArrayPushString(objects, chartInfo.stopoutLevel);
       }
-      ObjectSet(ChartInfo.stopoutLevel, OBJPROP_PRICE1, quoteStopoutLevel);
+      ObjectSet(chartInfo.stopoutLevel, OBJPROP_PRICE1, quoteStopoutLevel);
    }
 
    error = GetLastError();

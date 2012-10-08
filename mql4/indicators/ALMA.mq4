@@ -129,10 +129,6 @@ int onInit() {
       ReverseDoubleArray(wALMA);                               // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
    }
 
-   // nach Parameteränderung nicht auf den nächsten Tick warten (nur im "Indicators List" window notwendig)
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);
-
    return(catch("onInit(4)"));
 }
 
