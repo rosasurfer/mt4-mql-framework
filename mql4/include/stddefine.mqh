@@ -17,7 +17,7 @@
 
 
 // Special chars
-#define PLACEHOLDER_ZERO_CHAR    '…'         // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
+#define PLACEHOLDER_NUL_CHAR     '…'         // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
 #define PLACEHOLDER_CTL_CHAR     '•'         // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
 
@@ -227,34 +227,39 @@
 
 
 // Market info identifiers, siehe MarketInfo()
-#define MODE_LOW                 1           // Last bar low price.
-#define MODE_HIGH                2           // Last bar high price.
-#define MODE_TIME                5           // The last incoming tick time.
-#define MODE_BID                 9           // Last incoming bid price. For the current symbol, it is stored in the predefined variable Bid.
-#define MODE_ASK                10           // Last incoming ask price. For the current symbol, it is stored in the predefined variable Ask.
-#define MODE_POINT              11           // Point size in the quote currency. For the current symbol, it is stored in the predefined variable Point.
-#define MODE_DIGITS             12           // Number of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits.
-#define MODE_SPREAD             13           // Spread value in points.
-#define MODE_STOPLEVEL          14           // Stop level in points.
-#define MODE_LOTSIZE            15           // Lot size in the base currency.
-#define MODE_TICKVALUE          16           // Tick value in the deposit currency.
-#define MODE_TICKSIZE           17           // Tick size in points.
-#define MODE_SWAPLONG           18           // Swap of long positions.
-#define MODE_SWAPSHORT          19           // Swap of short positions.
-#define MODE_STARTING           20           // Trading start date (usually used for futures).
-#define MODE_EXPIRATION         21           // Trading expiration date (usually used for futures).
-#define MODE_TRADEALLOWED       22           // Whether trading is allowed for the symbol.
-#define MODE_MINLOT             23           // Minimum permitted lot size.
-#define MODE_LOTSTEP            24           // Step for changing lots.
-#define MODE_MAXLOT             25           // Maximum permitted lot size.
-#define MODE_SWAPTYPE           26           // Swap calculation method: 0 - in points; 1 - in the symbol base currency; 2 - by interest; 3 - in margin currency
-#define MODE_PROFITCALCMODE     27           // Profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
-#define MODE_MARGINCALCMODE     28           // Margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
-#define MODE_MARGININIT         29           // Initial margin requirement calculated for 1 lot.
-#define MODE_MARGINMAINTENANCE  30           // Margin to maintain open positions calculated for 1 lot.
-#define MODE_MARGINHEDGED       31           // Hedged margin calculated for 1 lot.
-#define MODE_MARGINREQUIRED     32           // Margin required to open positions calculated for 1 lot.
-#define MODE_FREEZELEVEL        33           // Order freeze level in points. Within this range an order cannot be modified, cancelled or closed.
+#define MODE_LOW                 1           // low price of the current day (since midnight server time)
+#define MODE_HIGH                2           // high price of the current day (since midnight server time)
+//                               3           // ???
+//                               4           // ???
+#define MODE_TIME                5           // last tick time
+//                               6           // ???
+//                               7           // ???
+//                               8           // ???
+#define MODE_BID                 9           // last bid price                       (entspricht Bid bzw. Close[0])
+#define MODE_ASK                10           // last ask price                       (entspricht Ask)
+#define MODE_POINT              11           // point size in the quote currency     (entspricht Point)                                               0.0000'1
+#define MODE_DIGITS             12           // number of digits after decimal point (entspricht Digits)
+#define MODE_SPREAD             13           // spread value in points
+#define MODE_STOPLEVEL          14           // stop level in points
+#define MODE_LOTSIZE            15           // unit size of 1 lot                                                                                    100.000
+#define MODE_TICKVALUE          16           // tick value in the deposit currency
+#define MODE_TICKSIZE           17           // tick size in the quote currency                                                                       0.0000'5
+#define MODE_SWAPLONG           18           // swap of long positions
+#define MODE_SWAPSHORT          19           // swap of short positions
+#define MODE_STARTING           20           // contract starting date (usually for futures)
+#define MODE_EXPIRATION         21           // contract expiration date (usually for futures)
+#define MODE_TRADEALLOWED       22           // if trading is allowed for the symbol
+#define MODE_MINLOT             23           // minimum lot size
+#define MODE_LOTSTEP            24           // minimum lot increment size
+#define MODE_MAXLOT             25           // maximum lot size
+#define MODE_SWAPTYPE           26           // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
+#define MODE_PROFITCALCMODE     27           // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
+#define MODE_MARGINCALCMODE     28           // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
+#define MODE_MARGININIT         29           // initial margin requirement for a position of 1 lot
+#define MODE_MARGINMAINTENANCE  30           // margin to maintain an open positions of 1 lot
+#define MODE_MARGINHEDGED       31           // units per side with margin maintenance requirement for a hedged position of 1 lot                     50.000
+#define MODE_MARGINREQUIRED     32           // free margin requirement for a position of 1 lot
+#define MODE_FREEZELEVEL        33           // order freeze level in points
 
 
 // Price identifiers, siehe iMA() etc.
@@ -753,7 +758,7 @@ int    last_error = NO_ERROR;                                        // der letz
 double Pip, Pips;                                                    // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
 int    PipDigits;                                                    // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
 int    PipPoint, PipPoints;                                          // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
-double TickSize;                                                     // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von MODE_POINT)
+double TickSize;                                                     // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string PriceFormat;                                                  // Preisformat des aktuellen Symbols für NumberToStr()
 int    Tick, Ticks;
 int    ValidBars;
@@ -774,6 +779,7 @@ string objects[];                                                    // Namen de
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (IsLibrary())
       return(NO_ERROR);                                                          // in Libraries vorerst nichts tun
+   int error;
 
    __NAME__           = WindowExpertName();
      int initFlags    = SumInts(__INIT_FLAGS__);
@@ -791,46 +797,52 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       __LOG = Tester.IsLogging();
 
 
-   // (1) globale Variablen und stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+   // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    PipDigits   = Digits & (~1);
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-   TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
+   //TickSize  = ...
 
-   if (__NAME__ == "TestIndicator") {
-      debug("init()   Digits="+ Digits);
-   }
 
-   int error = GetLastError();                                                   // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-   if (error == ERR_UNKNOWN_SYMBOL) {                                            // das Symbol kann später evt. noch "auftauchen"
-      debug("init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   }
-   if (IsError(error))        return(catch("init(1)", error));
-   if (TickSize < 0.00000001) return(catch("init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
-
-   // stdlib
+   // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
+   if (__NAME__ == "TestIndicator") {
+      static bool done;
+      if (!done) DebugMarketInfo();
+      done = true;
+   }
    if (IsError(error))
       return(SetLastError(error));
 
 
-   // (2) User-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {                                       // @see stdlib_init()
-   }
-   if (_bool(initFlags & INIT_TICKVALUE)) {                                      // schlägt fehl, wenn kein (alter) Tick vorhanden ist
-      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (tickValue < 0.00000001) {
-         debug("init()   ERR_TERMINAL_NOT_YET_READY (TickValue = "+ NumberToStr(tickValue, ".+") +")");
-         return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+   // (3) user-spezifische Init-Tasks ausführen
+   if (_bool(initFlags & INIT_TIMEZONE)) {}                                      // Verarbeitung nicht hier, sondern in stdlib_init()
+
+   if (_bool(initFlags & INIT_PIPVALUE)) {                                       // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+      error = GetLastError();
+      if (IsError(error)) {                                                      // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                                        // - synthetisches Symbol im Offline-Chart
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+         return(catch("init(1)", error));
       }
-   }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {                            // noch nicht implementiert
+      if (TickSize < 0.00000001) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+
+      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+      error = GetLastError();
+      if (IsError(error)) {
+         if (error == ERR_UNKNOWN_SYMBOL)                                        // siehe oben bei MODE_TICKSIZE
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+         return(catch("init(2)", error));
+      }
+      if (tickValue < 0.00000001) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
    }
 
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                           // noch nicht implementiert
 
-   // (3) für EA's durchzuführende globale Initialisierungen
+
+   // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                             // EA's ggf. aktivieren
       int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
       if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
@@ -856,7 +868,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    }
 
 
-   // (4) User-spezifische init()-Routinen aufrufen
+   // (5) user-spezifische init()-Routinen aufrufen
    if (onInit() == -1)                                                           // User-Routinen *können*, müssen aber nicht implementiert werden.
       return(last_error);                                                        // Preprocessing-Hook
                                                                                  //
@@ -877,12 +889,12 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       return(last_error);                                                        //
 
 
-   // (5) nur EA's: nicht auf den nächsten echten Tick warten, sondern (so spät wie möglich) selbst einen Tick schicken
+   // (6) nur EA's: nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken
    if (IsExpert()) {
-      if (!IsTesting()) {                                                        // nicht bei REASON_CHARTCHANGE
+      if (!IsTesting())                                                          // nicht bei REASON_CHARTCHANGE
          if (UninitializeReason() != REASON_CHARTCHANGE)
-            Chart.SendTick(false);                                               // So spät wie möglich, da Ticks aus init() verloren gehen können, wenn die entsprechende
-      }                                                                          // Message vor Verlassen von init() vom UI-Thread verarbeitet wurde.
+            Chart.SendTick(false);                                               // Innerhalb von init() so spät wie möglich, da Ticks aus init() verloren gehen,
+                                                                                 // wenn die entsprechende Message vor Verlassen von init() vom UI-Thread verarbeitet wird.
    }
 
    catch("init(4)");
@@ -1587,7 +1599,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  *
  * @param  double lots - Lotsize (default: 1 lot)
  *
- * @return double - PipValue oder 0, wenn ein Fehler auftrat
+ * @return double - PipValue oder 0, falls ein Fehler auftrat
  *
  *
  * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.

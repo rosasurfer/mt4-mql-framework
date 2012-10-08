@@ -3,14 +3,14 @@
  *
  * - oben links:  Name des Instruments
  * - oben rechts: aktueller Kurs und Spread
- * - unten Mitte: Größe einer Handels-Unit und im Moment gehaltene Position
+ * - unten Mitte: Größe einer Handels-Unit und die im Moment gehaltene Position
  *
  *
  * Letzte Version mit Performance-Display: v1.38
  */
 #include <stdtypes.mqh>
 #define     __TYPE__      T_INDICATOR
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 

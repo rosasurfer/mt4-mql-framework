@@ -134,16 +134,18 @@ int __DEINIT_FLAGS__[];
  * @param  string name               - Programmname
  * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
+ * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Moduls
  *
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   __TYPE__                      |= type;
-   __NAME__                       = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__                   = whereami;
-   __LOG_INSTANCE_ID              = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE             = initFlags & LOG_PER_INSTANCE;
+   int error;
+
+   __TYPE__          |= type;
+   __NAME__           = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__       = whereami;
+   __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
+   __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
 
    if (__STATUS__CANCELLED) return(NO_ERROR);
 
@@ -159,32 +161,44 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-   TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
-
-   int error = GetLastError();                                                // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
-   if (error == ERR_UNKNOWN_SYMBOL) {                                         // das Symbol kann später evt. noch "auftauchen"
-      debug("stdlib_init()   ERR_TERMINAL_NOT_YET_READY (MarketInfo() => ERR_UNKNOWN_SYMBOL)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   }
-   if (IsError(error))        return(catch("stdlib_init(1)", error));
-   if (TickSize < 0.00000001) return(catch("stdlib_init(2)   TickSize = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
+   //TickSize  = ...
 
 
-   // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn bestimmen und cachen
-   if (GetApplicationWindow() == 0)                                           // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
+   // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn ermitteln und cachen
+   if (!GetApplicationWindow())                                               // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
       return(last_error);                                                     // (z.B. im Tester bei Shutdown).
-   if (GetUIThreadId() == 0)                                                  // GetUIThreadId() ist auf ein gültiges Hauptfenster-Handle angewiesen; siehe GetApplicationWindow()
+   if (!GetUIThreadId())                                                      // GetUIThreadId() ist auf gültiges Hauptfenster-Handle angewiesen
       return(last_error);
 
 
-   // (3) User-spezifische Init-Tasks ausführen
+   // (3) user-spezifische Init-Tasks ausführen
    if (_bool(initFlags & INIT_TIMEZONE)) {                                    // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
+   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+      error = GetLastError();
+      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+         return(catch("stdlib_init(1)", error));
+      }
+      if (TickSize < 0.00000001) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
-   // (4) für EA's durchzuführende globale Initialisierungen
+      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+      error = GetLastError();
+      if (IsError(error)) {
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+         return(catch("stdlib_init(2)", error));
+      }
+      if (tickValue < 0.00000001) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+   }
+
+
+   // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                          // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
       if (IntInArray(reasons, uninitializeReason))
@@ -194,9 +208,9 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))                    // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
             return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
-         if (GetAccountNumber() == 0) {                                       // Accountnummer ermitteln und cachen, da der spätere Aufruf den UI-Thread blockieren *kann*.
-            if (last_error == ERR_TERMINAL_NOT_YET_READY)
-               debug("stdlib_init()   ERR_TERMINAL_NOT_YET_READY (GetAccountNumber() = 0)");
+         if (!GetAccountNumber()) {                                           // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
+            if (last_error == ERR_TERMINAL_NOT_YET_READY)                     // den UI-Thread blockieren würde.
+               debug("stdlib_init()   GetAccountNumber() = 0", last_error);
             return(last_error);
          }
       }
@@ -217,8 +231,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
  */
 int stdlib_start(int tick, int validBars, int changedBars) {
    __WHEREAMI__ = FUNC_START;
-   Tick         = tick;                                              // der konkrete Wert hat keine Bedeutung
-   Ticks        = Tick;
+   Tick         = tick; Ticks = Tick;                                // der konkrete Wert hat keine Bedeutung
    ValidBars    = validBars;
    ChangedBars  = changedBars;
    return(NO_ERROR);
@@ -318,6 +331,7 @@ int DebugMarketInfo() {
    debug("  MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
    debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
 
+   // Erläuterungen zu den Werten in stddefine.mqh
    value = MarketInfo(Symbol(), MODE_LOW              ); error = GetLastError(); debug("  MODE_LOW               = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
    value = MarketInfo(Symbol(), MODE_HIGH             ); error = GetLastError(); debug("  MODE_HIGH              = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
    value = MarketInfo(Symbol(), 3                     ); error = GetLastError(); debug("  3                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
@@ -353,41 +367,6 @@ int DebugMarketInfo() {
    value = MarketInfo(Symbol(), MODE_FREEZELEVEL      ); error = GetLastError(); debug("  MODE_FREEZELEVEL       = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
 
    return(catch("DebugMarketInfo()"));
-   /*
-   MODE_LOW                1  // low price of the current day
-   MODE_HIGH               2  // high price of the current day
-                           3  // ???
-                           4  // ???
-   MODE_TIME               5  // last tick time
-                           6  // ???
-                           7  // ???
-                           8  // ???
-   MODE_BID                9  // last bid price                                                        (entspricht Bid und Close[0])
-   MODE_ASK               10  // last ask price                                                        (entspricht Ask)
-   MODE_POINT             11  // point size in the quote currency                    0.0000'1          (entspricht Point)
-   MODE_DIGITS            12  // number of digits after decimal point                                  (entspricht Digits)
-   MODE_SPREAD            13  // spread value in points
-   MODE_STOPLEVEL         14  // stop level in points
-   MODE_LOTSIZE           15  // unit size of 1 lot                                  100.000
-   MODE_TICKVALUE         16  // tick value in the deposit currency
-   MODE_TICKSIZE          17  // tick size in the quote currency                     0.0000'5
-   MODE_SWAPLONG          18  // swap of long positions
-   MODE_SWAPSHORT         19  // swap of short positions
-   MODE_STARTING          20  // contract starting date (usually for futures)
-   MODE_EXPIRATION        21  // contract expiration date (usually for futures)
-   MODE_TRADEALLOWED      22  // if trading is allowed for the symbol
-   MODE_MINLOT            23  // minimum lot size
-   MODE_LOTSTEP           24  // minimum lot increment size
-   MODE_MAXLOT            25  // maximum lot size
-   MODE_SWAPTYPE          26  // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
-   MODE_PROFITCALCMODE    27  // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
-   MODE_MARGINCALCMODE    28  // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
-   MODE_MARGININIT        29  // initial margin requirement for a position of 1 lot
-   MODE_MARGINMAINTENANCE 30  // margin to maintain an open positions of 1 lot
-   MODE_MARGINHEDGED      31  // units per side with margin maintenance requirement for a hedged position of 1 lot
-   MODE_MARGINREQUIRED    32  // free margin requirement for a position of 1 lot
-   MODE_FREEZELEVEL       33  // order freeze level in points
-   */
 }
 
 
@@ -1073,7 +1052,7 @@ string GetTerminalVersion() {
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
-   string Z                  = CharToStr(PLACEHOLDER_ZERO_CHAR);
+   string Z                  = CharToStr(PLACEHOLDER_NUL_CHAR);
    string C                  = CharToStr(PLACEHOLDER_CTL_CHAR);
    string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
    string key.FileVersion    = StringConcatenate(C,Z,"F",Z,"i",Z,"l",Z,"e",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
@@ -1116,7 +1095,7 @@ string GetTerminalVersion() {
 /**
  * Gibt die Build-Version des Terminals zurück.
  *
- * @return int - Build-Version oder 0, wenn ein Fehler auftrat
+ * @return int - Build-Version oder 0, falls ein Fehler auftrat
  */
 int GetTerminalBuild() {
    static int static.result;                                         // ohne Initializer (@see MQL.doc)
@@ -1845,7 +1824,7 @@ int ArrayPushString(string &array[], string value) {
  *
  * @param  bool array[] - Boolean-Array
  *
- * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
+ * @return bool - das entfernte Element oder FALSE, falls ein Fehler auftrat
  */
 bool ArrayPopBool(bool array[]) {
    if (ArrayDimension(array) > 1) return(_false(catch("ArrayPopBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1866,7 +1845,7 @@ bool ArrayPopBool(bool array[]) {
  *
  * @param  int array[] - Integer-Array
  *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ * @return int - das entfernte Element oder 0, falls ein Fehler auftrat
  */
 int ArrayPopInt(int array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopInt(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1887,7 +1866,7 @@ int ArrayPopInt(int array[]) {
  *
  * @param  int double[] - Double-Array
  *
- * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ * @return double - das entfernte Element oder 0, falls ein Fehler auftrat
  */
 double ArrayPopDouble(double array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayPopDouble(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -1908,7 +1887,7 @@ double ArrayPopDouble(double array[]) {
  *
  * @param  string array[] - String-Array
  *
- * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
+ * @return string - das entfernte Element oder ein Leerstring, falls ein Fehler auftrat
  */
 string ArrayPopString(string array[]) {
    if (ArrayDimension(array) > 1) return(_empty(catch("ArrayPopString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2001,7 +1980,7 @@ int ArrayUnshiftString(string array[], string value) {
  *
  * @param  bool array[] - Boolean-Array
  *
- * @return bool - das entfernte Element oder FALSE, wenn ein Fehler auftrat (@see last_error)
+ * @return bool - das entfernte Element oder FALSE, falls ein Fehler auftrat
  */
 bool ArrayShiftBool(bool array[]) {
    if (ArrayDimension(array) > 1) return(_false(catch("ArrayShiftBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2025,7 +2004,7 @@ bool ArrayShiftBool(bool array[]) {
  *
  * @param  int array[] - Integer-Array
  *
- * @return int - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ * @return int - das entfernte Element oder 0, falls ein Fehler auftrat
  */
 int ArrayShiftInt(int array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftInt(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2049,7 +2028,7 @@ int ArrayShiftInt(int array[]) {
  *
  * @param  double array[] - Double-Array
  *
- * @return double - das entfernte Element oder 0, wenn ein Fehler auftrat (@see last_error)
+ * @return double - das entfernte Element oder 0, falls ein Fehler auftrat
  */
 double ArrayShiftDouble(double array[]) {
    if (ArrayDimension(array) > 1) return(_NULL(catch("ArrayShiftDouble(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2073,7 +2052,7 @@ double ArrayShiftDouble(double array[]) {
  *
  * @param  string array[] - String-Array
  *
- * @return string - das entfernte Element oder ein Leerstring, wenn ein Fehler auftrat (@see last_error)
+ * @return string - das entfernte Element oder ein Leerstring, falls ein Fehler auftrat
  */
 string ArrayShiftString(string array[]) {
    if (ArrayDimension(array) > 1) return(_empty(catch("ArrayShiftString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
@@ -3089,7 +3068,7 @@ string BufferToStr(int buffer[]) {
       for (int b=0; b < 4; b++) {                                                                                    // | b |    byte    | char |
          int char = integer & 0xFF;                                     // ein einzelnes Byte des Integers lesen     // +---+------------+------+
          if (char < 0x20) {                                             // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-            if (char == 0x00) char = PLACEHOLDER_ZERO_CHAR;             // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+            if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;              // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
             else              char = PLACEHOLDER_CTL_CHAR;              // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
          }                                                                                                           // | 3 | 0xFF000000 |   4  |
          result = StringConcatenate(result, CharToStr(char));                                                        // +---+------------+------+
@@ -3126,7 +3105,7 @@ string BufferToStr(int buffer[]) {
          for (int b=0; b < 4; b++) {                                                                                 // | b |    byte    | char |
             int char = integer & 0xFF;                                  // ein einzelnes Byte des Integers lesen     // +---+------------+------+
             if (char < 0x20) {                                          // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-               if (char == 0x00) char = PLACEHOLDER_ZERO_CHAR;          // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+               if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;           // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
                else              char = PLACEHOLDER_CTL_CHAR;           // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
             }                                                                                                        // | 3 | 0xFF000000 |   4  |
             result = StringConcatenate(result, CharToStr(char));                                                     // +---+------------+------+
@@ -3209,7 +3188,7 @@ string BufferToHexStr(int buffer[]) {
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int pos      - Zeichen-Position
  *
- * @return int - Zeichen-Code oder -1, wenn ein Fehler auftrat
+ * @return int - Zeichen-Code oder -1, falls ein Fehler auftrat
  */
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
@@ -8085,7 +8064,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
  * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
- *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
    if (symbol == "0")                                       // NULL ist Integer (0)
@@ -8128,7 +8107,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
  * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
- *               EMPTY_VALUE, wenn ein Fehler aufgetreten ist
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
    if (symbol == "0")                                       // NULL ist Integer (0)
@@ -9044,7 +9023,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
  * @param  int green - Grünanteil (0-255)
  * @param  int blue  - Blauanteil (0-255)
  *
- * @return color - Farbe oder -1, wenn ein Fehler auftrat
+ * @return color - Farbe oder -1, falls ein Fehler auftrat
  *
  * Beispiel: RGB(255, 255, 255) => 0x00FFFFFF (weiß)
  */
@@ -9172,7 +9151,7 @@ int RGBToHSVColor(color rgb, double &hsv[]) {
  *
  * @param  double hsv - HSV-Farbwerte
  *
- * @return color - Farbe oder -1, wenn ein Fehler auftrat
+ * @return color - Farbe oder -1, falls ein Fehler auftrat
  */
 color HSVToRGBColor(double hsv[3]) {
    if (ArrayDimension(hsv) != 1)
@@ -9191,7 +9170,7 @@ color HSVToRGBColor(double hsv[3]) {
  * @param  double saturation - Sättigung  (0.0 - 1.0)
  * @param  double value      - Helligkeit (0.0 - 1.0)
  *
- * @return color - Farbe oder -1, wenn ein Fehler auftrat
+ * @return color - Farbe oder -1, falls ein Fehler auftrat
  */
 color HSVValuesToRGBColor(double hue, double saturation, double value) {
    if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)   invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -9242,7 +9221,7 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
  * @param  double mod_saturation - Änderung der Sättigung in %
  * @param  double mod_value      - Änderung der Helligkeit in %
  *
- * @return color - modifizierte Farbe oder -1, wenn ein Fehler auftrat
+ * @return color - modifizierte Farbe oder -1, falls ein Fehler auftrat
  *
  * Beispiel:
  * ---------
@@ -9928,7 +9907,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
-         Sleep(200);                                                             // 0.2 Sekunden warten
+         Sleep(300);                                                             // 0.3 Sekunden warten
          continue;
       }
 
@@ -10021,7 +10000,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
       if (error == ERR_TRADE_CONTEXT_BUSY) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
-         Sleep(200);                                                             // 0.2 Sekunden warten
+         Sleep(300);                                                             // 0.3 Sekunden warten
          continue;
       }
       if (error == ERR_REQUOTE) {
@@ -10363,7 +10342,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
 
@@ -10399,7 +10378,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       error = oe.setError(oe, GetLastError());
       if (error == ERR_TRADE_CONTEXT_BUSY) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
       if (IsNoError(error))
@@ -10970,7 +10949,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
 
@@ -11055,7 +11034,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
          if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
       if (error == ERR_REQUOTE) {
@@ -11284,7 +11263,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
 
@@ -11373,7 +11352,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
          if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
       if (IsNoError(error))
@@ -12054,7 +12033,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
 
@@ -12082,7 +12061,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
       error = GetLastError();
       if (error == ERR_TRADE_CONTEXT_BUSY) {
          if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
-         Sleep(200);                                                                   // 0.2 Sekunden warten
+         Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
       if (IsNoError(error))
