@@ -396,6 +396,7 @@
    // sonstiges
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
+   double   PipValue(double lots);
    int      SortTicketsChronological(int tickets[]);
 
    string   GetCurrency(int id);

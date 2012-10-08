@@ -177,8 +177,9 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          return(last_error);
    }
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+      /*
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
@@ -195,6 +196,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          return(catch("stdlib_init(2)", error));
       }
       if (tickValue < 0.00000001) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      */
    }
 
 
