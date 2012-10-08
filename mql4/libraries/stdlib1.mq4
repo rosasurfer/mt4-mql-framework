@@ -306,6 +306,92 @@ int stdlib_PeekLastError() {
 
 
 /**
+ * Gibt alle verfügbaren MarketInfo()-Daten aus.
+ *
+ * @return int - Fehlerstatus
+ */
+int DebugMarketInfo() {
+   double value;
+   int    error;
+
+   debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
+   debug("  MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
+   debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
+
+   value = MarketInfo(Symbol(), MODE_LOW              ); error = GetLastError(); debug("  MODE_LOW               = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_HIGH             ); error = GetLastError(); debug("  MODE_HIGH              = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 3                     ); error = GetLastError(); debug("  3                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 4                     ); error = GetLastError(); debug("  4                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TIME             ); error = GetLastError(); debug("  MODE_TIME              = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 6                     ); error = GetLastError(); debug("  6                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 7                     ); error = GetLastError(); debug("  7                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 8                     ); error = GetLastError(); debug("  8                      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_BID              ); error = GetLastError(); debug("  MODE_BID               = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_ASK              ); error = GetLastError(); debug("  MODE_ASK               = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_POINT            ); error = GetLastError(); debug("  MODE_POINT             = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_DIGITS           ); error = GetLastError(); debug("  MODE_DIGITS            = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SPREAD           ); error = GetLastError(); debug("  MODE_SPREAD            = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_STOPLEVEL        ); error = GetLastError(); debug("  MODE_STOPLEVEL         = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_LOTSIZE          ); error = GetLastError(); debug("  MODE_LOTSIZE           = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TICKVALUE        ); error = GetLastError(); debug("  MODE_TICKVALUE         = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TICKSIZE         ); error = GetLastError(); debug("  MODE_TICKSIZE          = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPLONG         ); error = GetLastError(); debug("  MODE_SWAPLONG          = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPSHORT        ); error = GetLastError(); debug("  MODE_SWAPSHORT         = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_STARTING         ); error = GetLastError(); debug("  MODE_STARTING          = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_EXPIRATION       ); error = GetLastError(); debug("  MODE_EXPIRATION        = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TRADEALLOWED     ); error = GetLastError(); debug("  MODE_TRADEALLOWED      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MINLOT           ); error = GetLastError(); debug("  MODE_MINLOT            = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_LOTSTEP          ); error = GetLastError(); debug("  MODE_LOTSTEP           = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MAXLOT           ); error = GetLastError(); debug("  MODE_MAXLOT            = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPTYPE         ); error = GetLastError(); debug("  MODE_SWAPTYPE          = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_PROFITCALCMODE   ); error = GetLastError(); debug("  MODE_PROFITCALCMODE    = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINCALCMODE   ); error = GetLastError(); debug("  MODE_MARGINCALCMODE    = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGININIT       ); error = GetLastError(); debug("  MODE_MARGININIT        = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINMAINTENANCE); error = GetLastError(); debug("  MODE_MARGINMAINTENANCE = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINHEDGED     ); error = GetLastError(); debug("  MODE_MARGINHEDGED      = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINREQUIRED   ); error = GetLastError(); debug("  MODE_MARGINREQUIRED    = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_FREEZELEVEL      ); error = GetLastError(); debug("  MODE_FREEZELEVEL       = "+ NumberToStr(value, ".+") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+
+   return(catch("DebugMarketInfo()"));
+   /*
+   MODE_LOW                1  // low price of the current day
+   MODE_HIGH               2  // high price of the current day
+                           3  // ???
+                           4  // ???
+   MODE_TIME               5  // last tick time
+                           6  // ???
+                           7  // ???
+                           8  // ???
+   MODE_BID                9  // last bid price                                                        (entspricht Bid und Close[0])
+   MODE_ASK               10  // last ask price                                                        (entspricht Ask)
+   MODE_POINT             11  // point size in the quote currency                    0.0000'1          (entspricht Point)
+   MODE_DIGITS            12  // number of digits after decimal point                                  (entspricht Digits)
+   MODE_SPREAD            13  // spread value in points
+   MODE_STOPLEVEL         14  // stop level in points
+   MODE_LOTSIZE           15  // unit size of 1 lot                                  100.000
+   MODE_TICKVALUE         16  // tick value in the deposit currency
+   MODE_TICKSIZE          17  // tick size in the quote currency                     0.0000'5
+   MODE_SWAPLONG          18  // swap of long positions
+   MODE_SWAPSHORT         19  // swap of short positions
+   MODE_STARTING          20  // contract starting date (usually for futures)
+   MODE_EXPIRATION        21  // contract expiration date (usually for futures)
+   MODE_TRADEALLOWED      22  // if trading is allowed for the symbol
+   MODE_MINLOT            23  // minimum lot size
+   MODE_LOTSTEP           24  // minimum lot increment size
+   MODE_MAXLOT            25  // maximum lot size
+   MODE_SWAPTYPE          26  // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
+   MODE_PROFITCALCMODE    27  // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
+   MODE_MARGINCALCMODE    28  // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
+   MODE_MARGININIT        29  // initial margin requirement for a position of 1 lot
+   MODE_MARGINMAINTENANCE 30  // margin to maintain an open positions of 1 lot
+   MODE_MARGINHEDGED      31  // units per side with margin maintenance requirement for a hedged position of 1 lot
+   MODE_MARGINREQUIRED    32  // free margin requirement for a position of 1 lot
+   MODE_FREEZELEVEL       33  // order freeze level in points
+   */
+}
+
+
+/**
  * Kopiert einen Speicherbereich. Die betroffenen Speicherblöcke können sich überlappen.
  *
  * @param  int destination - Zieladresse
@@ -6931,7 +7017,8 @@ string ErrorDescription(int error) {
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                          ); // 5009
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                     ); // 5010
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                         ); // 5011
-      case ERR_PROGRAM_STOPPING           : return("program is stopping"                                           ); // 5012
+      case ERR_EXECUTION_STOPPING         : return("program execution stopping"                                    ); // 5012
+      case ERR_ORDER_CHANGED              : return("order status changed"                                          ); // 5013
    }
    return("unknown error");
 }
@@ -7071,7 +7158,8 @@ string ErrorToStr(int error) {
       case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
       case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); // 5010
       case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); // 5011
-      case ERR_PROGRAM_STOPPING           : return("ERR_PROGRAM_STOPPING"           ); // 5012
+      case ERR_EXECUTION_STOPPING         : return("ERR_EXECUTION_STOPPING"         ); // 5012
+      case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); // 5013
    }
    return(error);
 }
@@ -9836,7 +9924,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermErrorMsg(oe)), ERR_PROGRAM_STOPPING, false, oeFlags, oe)));
+      if (IsStopped()) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe)));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
@@ -10271,7 +10359,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERR_PROGRAM_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
@@ -10878,7 +10966,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", OrderCloseEx.PermErrorMsg(oe)), ERR_PROGRAM_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(11)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", OrderCloseEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(11)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
@@ -11192,7 +11280,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
    // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), ERR_PROGRAM_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
@@ -11962,7 +12050,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", OrderDeleteEx.PermErrorMsg(oe)), ERR_PROGRAM_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(5)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", OrderDeleteEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(5)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");

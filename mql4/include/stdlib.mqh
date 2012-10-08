@@ -29,6 +29,8 @@
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
 
+   int      DebugMarketInfo();
+
 
    // Terminal-Interaktionen
    int      Toolbar.Experts(bool enable);

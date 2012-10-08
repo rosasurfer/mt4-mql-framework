@@ -569,7 +569,9 @@
 
 
 // Order execution flags
-#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP wird nur geloggt, last_error nicht gesetzt
+#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP löst keinen fatalen Fehler aus und kann individuell behandelt werden
+#define OE_CATCH_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED löst keinen fatalen Fehler aus und kann individuell behandelt werden
+#define OE_CATCH_EXECUTION_STOPPING             4     // ERR_EXECUTION_STOPPING löst keinen fatalen Fehler aus und kann individuell behandelt werden
 
 
 // Struct sizes
@@ -708,7 +710,8 @@
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
 #define ERR_INVALID_COMMAND                                        5010    // invalid or unknow command
 #define ERR_ILLEGAL_STATE                                          5011    // illegal state
-#define ERR_PROGRAM_STOPPING                                       5012    // IsStopping() returned TRUE
+#define ERR_EXECUTION_STOPPING                                     5012    // IsStopped() returned TRUE
+#define ERR_ORDER_CHANGED                                          5013    // order status changed
 
 
 // Variablen für ChartInfo-Block (siehe unten)
@@ -794,6 +797,10 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
    TickSize    = MarketInfo(Symbol(), MODE_TICKSIZE);
+
+   if (__NAME__ == "TestIndicator") {
+      debug("init()   Digits="+ Digits);
+   }
 
    int error = GetLastError();                                                   // Symbol nicht subscribed (Start, Account- oder Templatewechsel),
    if (error == ERR_UNKNOWN_SYMBOL) {                                            // das Symbol kann später evt. noch "auftauchen"
