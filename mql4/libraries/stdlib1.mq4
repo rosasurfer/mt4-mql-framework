@@ -338,12 +338,12 @@ int DebugMarketInfo() {
 
    debug("  Pip         = "+ NumberToStr(Pip, PriceFormat));
    debug("  PipDigits   = "+ PipDigits);
-   debug("  Digits      = "+ Digits);
-   debug("  Point       = "+ NumberToStr(Point, PriceFormat));
+   debug("  Digits  (b) = "+ Digits);
+   debug("  Point   (b) = "+ NumberToStr(Point, PriceFormat));
    debug("  PipPoints   = "+ PipPoints);
+   debug("  Bid/Ask (b) = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
+   debug("  Bars    (b) = "+ Bars);
    debug("  PriceFormat = \""+ PriceFormat +"\"");
-   debug("  Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug("  Bars        = "+ Bars);
 
    debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
    debug("  MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
