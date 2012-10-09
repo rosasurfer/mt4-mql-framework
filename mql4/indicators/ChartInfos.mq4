@@ -12,6 +12,7 @@
 #define     __TYPE__      T_INDICATOR
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
+#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 
@@ -70,5 +71,5 @@ int onTick() {
    ChartInfo.UpdatePosition();
    ChartInfo.UpdateMarginLevels();
 
-   return(catch("onTick(2)"));
+   return(catch("onTick()"));
 }

@@ -1,9 +1,7 @@
 /**
- *
+ * NOTE: Diese Headerdatei und die Library sind kompatibel zu den Original-MetaQuotes-Versionen.
  */
-#include <stddefine.mqh>
 #include <structs.mqh>
-
 
 #import "stdlib.ex4"
 
@@ -453,7 +451,7 @@
    string   IntegerToHexStr(int integer);
    string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                 // Alias
    string   WordToHexStr(int word);
-   string   DwordToHexStr(int dword); string IntToHexStr(int integer);                                               // Alias
+   string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);       // Alias + MetaQuotes-Alias
    string   StringToHexStr(string value);
 
    string   BoolsToStr        (bool array[], string separator);

@@ -18,6 +18,9 @@
  * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |     double     | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
  * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
+ *
+ *
+ * NOTE: Diese Library ist kompatibel zur Original-MetaQuotes-Version.
  */
 #property library
 #property stacksize  32768
@@ -5421,6 +5424,14 @@ string DwordToHexStr(int dword) {
  * Alias
  */
 string IntToHexStr(int integer) {
+   return(DwordToHexStr(integer));
+}
+
+
+/**
+ * MetaQuotes-Alias
+ */
+string IntegerToHexString(int integer) {
    return(DwordToHexStr(integer));
 }
 
