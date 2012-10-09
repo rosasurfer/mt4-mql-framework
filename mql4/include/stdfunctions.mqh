@@ -2241,7 +2241,7 @@ int ChartInfo.CreateLabels() {
 int ChartInfo.UpdatePrice() {
    static string priceFormat;
    if (StringLen(priceFormat) == 0)
-      PriceFormat = StringConcatenate(",,", PriceFormat);
+      priceFormat = StringConcatenate(",,", PriceFormat);
 
    double price;
 
@@ -2255,7 +2255,7 @@ int ChartInfo.UpdatePrice() {
          case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
       }
    }
-   ObjectSetText(chartInfo.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
+   ObjectSetText(chartInfo.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
