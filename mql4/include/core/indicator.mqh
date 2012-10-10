@@ -1,7 +1,5 @@
 
-//#ifndef __TYPE__
-   #define __TYPE__ T_INDICATOR
-//#endif
+#define __TYPE__ T_INDICATOR
 
 
 /**
@@ -13,8 +11,6 @@
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   if (IsLibrary())
-      return(NO_ERROR);                                                       // in Libraries vorerst nichts tun
    int error;
 
    __NAME__           = WindowExpertName();
@@ -29,8 +25,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       prev_error   = last_error;
       last_error   = NO_ERROR;
    }
-   if (IsTesting())
-      __LOG = Tester.IsLogging();
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -38,7 +32,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-   //TickSize  = ...
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -73,22 +66,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
 
 
-   // (4) nur für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                          // EA's ggf. aktivieren
-      int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
-      if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = Toolbar.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
-         if (IsError(error))
-            return(SetLastError(error));
-      }
-                                                                              // nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
-      int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
-      if (IntInArray(reasons2, UninitializeReason()))
-         OrderSelect(0, SELECT_BY_TICKET);
-   }
-
-
-   // (5) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                        //
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
@@ -109,28 +87,18 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       return(last_error);                                                     //
 
 
-   // (6) nur bei EA's: nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken
-   if (IsExpert()) {
-      if (!IsTesting())
-         if (UninitializeReason() != REASON_CHARTCHANGE)                      // außer bei REASON_CHARTCHANGE
-            Chart.SendTick(false);                                            // Innerhalb von init() so spät wie möglich, da Ticks aus init() verloren gehen,
-                                                                              // wenn die entsprechende Message vor Verlassen von init() vom UI-Thread verarbeitet wird.
-   }
+   // (5) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   if (UninitializeReason() == REASON_PARAMETERS)
+      Chart.SendTick(false);                                                  // TODO: Existenz des "Indicators List"-Windows ermitteln
 
 
-   // (7) nur bei Indikatoren: nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (IsIndicator()) {
-      if (UninitializeReason() == REASON_PARAMETERS)
-         Chart.SendTick(false);
-   }
-
-   catch("init(4)");
+   catch("init(3)");
    return(last_error);
 }
 
 
 /**
- * Globale start()-Funktion für alle MQL-Programme.
+ * Globale start()-Funktion für Indikatoren.
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
@@ -146,18 +114,6 @@ int start() {
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
-
-   // Time machine bug im Tester abfangen
-   if (IsTesting()) {
-      static datetime lastTime;
-      if (TimeCurrent() < lastTime) {
-         __STATUS__CANCELLED = true;
-         return(catch("start(1)   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
-      }
-      lastTime = TimeCurrent();
-   }
-
-
    int error;
 
    Tick++; Ticks = Tick;
@@ -166,17 +122,17 @@ int start() {
 
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
-      if (IsLastError()) {                                                       // init() ist mit Fehler zurückgekehrt
-         if (IsScript() || last_error!=ERR_TERMINAL_NOT_YET_READY)
+      if (IsLastError()) {
+         if (last_error != ERR_TERMINAL_NOT_YET_READY)                           // init() ist mit Fehler zurückgekehrt
             return(last_error);
          __WHEREAMI__ = FUNC_START;
-         error = init();                                                         // Indikatoren und EA's können init() erneut aufrufen
+         error = init();                                                         // init() erneut aufrufen
          if (IsError(error)) {                                                   // erneuter Fehler
             __WHEREAMI__ = FUNC_INIT;
             return(error);
          }
       }
-      last_error = NO_ERROR;                                                     // init() war (ggf. nach erneutem Aufruf) erfolgreich
+      last_error = NO_ERROR;                                                     // init() war erfolgreich
       ValidBars  = 0;
    }
    else {
@@ -219,34 +175,19 @@ int start() {
       return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (7) neue Main-Funktion aufrufen
-   if (IsScript()) error = onStart();
-   else            error = onTick();
-
-
-   // (8) EA-Fehlerbehandlung
-   if (error != NO_ERROR)
-      if (IsTesting())
-         Tester.Stop();
-
-
-   return(error);
-   DummyCalls();                                                                 // DummyCalls unterdrücken unnütze Compilerwarnungen
+   // (7) Main-Funktion aufrufen
+   return(onTick());
 }
 
 
 /**
- * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
+ * Globale deinit()-Funktion für Indikatoren. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
  * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
  *
  * @return int - Fehlerstatus
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
-
-   if (IsLibrary())                                                              // in Libraries vorerst nichts tun
-      return(NO_ERROR);
-
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
@@ -268,7 +209,7 @@ int deinit() {
 
    // (2) User-spezifische Deinit-Tasks ausführen
    if (error != -1) {
-      // do something...
+      // ...
    }
 
 
@@ -278,6 +219,7 @@ int deinit() {
       SetLastError(error);
 
    return(last_error);
+   DummyCalls();                                                                 // unnütze Compilerwarnungen unterdrücken
 }
 
 

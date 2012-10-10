@@ -328,63 +328,65 @@ int stdlib_PeekLastError() {
 /**
  * Gibt alle verfügbaren Marktdaten des Instruments aus.
  *
+ * @param  string location - Aufruf-Bezeichner
+ *
  * @return int - Fehlerstatus
  */
-int DebugMarketInfo() {
+int DebugMarketInfo(string location) {
    int    error;
    double value;
 
-   debug("  "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
-   debug("  Predefined variables for \""+ Symbol() +"\"");     //  Predefined variables "EURUSD"
-   debug("  "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
+   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
+   debug(location +"   Predefined variables for \""+ Symbol() +"\"");     //  Predefined variables "EURUSD"
+   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
 
-   debug("  Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug("  PipDigits   = "+ PipDigits);
-   debug("  Digits  (b) = "+ Digits);
-   debug("  Point   (b) = "+ NumberToStr(Point, PriceFormat));
-   debug("  PipPoints   = "+ PipPoints);
-   debug("  Bid/Ask (b) = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug("  Bars    (b) = "+ Bars);
-   debug("  PriceFormat = \""+ PriceFormat +"\"");
+   debug(location +"   Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(location +"   PipDigits   = "+ PipDigits);
+   debug(location +"   Digits  (b) = "+ Digits);
+   debug(location +"   Point   (b) = "+ NumberToStr(Point, PriceFormat));
+   debug(location +"   PipPoints   = "+ PipPoints);
+   debug(location +"   Bid/Ask (b) = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
+   debug(location +"   Bars    (b) = "+ Bars);
+   debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
 
-   debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
-   debug("  MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
-   debug("  "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
+   debug(location +"   "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
+   debug(location +"   MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
+   debug(location +"   "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
 
    // Erläuterungen zu den Werten in stddefine.mqh
-   value = MarketInfo(Symbol(), MODE_LOW              ); error = GetLastError(); debug("  MODE_LOW               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_HIGH             ); error = GetLastError(); debug("  MODE_HIGH              = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), 3                     ); error = GetLastError(); debug("  3                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), 4                     ); error = GetLastError(); debug("  4                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TIME             ); error = GetLastError(); debug("  MODE_TIME              = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), 6                     ); error = GetLastError(); debug("  6                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), 7                     ); error = GetLastError(); debug("  7                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), 8                     ); error = GetLastError(); debug("  8                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_BID              ); error = GetLastError(); debug("  MODE_BID               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_ASK              ); error = GetLastError(); debug("  MODE_ASK               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_POINT            ); error = GetLastError(); debug("  MODE_POINT             = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_DIGITS           ); error = GetLastError(); debug("  MODE_DIGITS            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SPREAD           ); error = GetLastError(); debug("  MODE_SPREAD            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_STOPLEVEL        ); error = GetLastError(); debug("  MODE_STOPLEVEL         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_LOTSIZE          ); error = GetLastError(); debug("  MODE_LOTSIZE           = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TICKVALUE        ); error = GetLastError(); debug("  MODE_TICKVALUE         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TICKSIZE         ); error = GetLastError(); debug("  MODE_TICKSIZE          = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPLONG         ); error = GetLastError(); debug("  MODE_SWAPLONG          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPSHORT        ); error = GetLastError(); debug("  MODE_SWAPSHORT         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_STARTING         ); error = GetLastError(); debug("  MODE_STARTING          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_EXPIRATION       ); error = GetLastError(); debug("  MODE_EXPIRATION        = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TRADEALLOWED     ); error = GetLastError(); debug("  MODE_TRADEALLOWED      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MINLOT           ); error = GetLastError(); debug("  MODE_MINLOT            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_LOTSTEP          ); error = GetLastError(); debug("  MODE_LOTSTEP           = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MAXLOT           ); error = GetLastError(); debug("  MODE_MAXLOT            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPTYPE         ); error = GetLastError(); debug("  MODE_SWAPTYPE          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_PROFITCALCMODE   ); error = GetLastError(); debug("  MODE_PROFITCALCMODE    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINCALCMODE   ); error = GetLastError(); debug("  MODE_MARGINCALCMODE    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGININIT       ); error = GetLastError(); debug("  MODE_MARGININIT        = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINMAINTENANCE); error = GetLastError(); debug("  MODE_MARGINMAINTENANCE = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINHEDGED     ); error = GetLastError(); debug("  MODE_MARGINHEDGED      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINREQUIRED   ); error = GetLastError(); debug("  MODE_MARGINREQUIRED    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_FREEZELEVEL      ); error = GetLastError(); debug("  MODE_FREEZELEVEL       = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_HIGH             ); error = GetLastError(); debug(location +"   MODE_HIGH              = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 3                     ); error = GetLastError(); debug(location +"   3                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 4                     ); error = GetLastError(); debug(location +"   4                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TIME             ); error = GetLastError(); debug(location +"   MODE_TIME              = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 6                     ); error = GetLastError(); debug(location +"   6                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 7                     ); error = GetLastError(); debug(location +"   7                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), 8                     ); error = GetLastError(); debug(location +"   8                      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_BID              ); error = GetLastError(); debug(location +"   MODE_BID               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_ASK              ); error = GetLastError(); debug(location +"   MODE_ASK               = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_POINT            ); error = GetLastError(); debug(location +"   MODE_POINT             = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_DIGITS           ); error = GetLastError(); debug(location +"   MODE_DIGITS            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SPREAD           ); error = GetLastError(); debug(location +"   MODE_SPREAD            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_STOPLEVEL        ); error = GetLastError(); debug(location +"   MODE_STOPLEVEL         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_LOTSIZE          ); error = GetLastError(); debug(location +"   MODE_LOTSIZE           = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TICKVALUE        ); error = GetLastError(); debug(location +"   MODE_TICKVALUE         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TICKSIZE         ); error = GetLastError(); debug(location +"   MODE_TICKSIZE          = "+ NumberToStr(value, PriceFormat) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPLONG         ); error = GetLastError(); debug(location +"   MODE_SWAPLONG          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPSHORT        ); error = GetLastError(); debug(location +"   MODE_SWAPSHORT         = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_STARTING         ); error = GetLastError(); debug(location +"   MODE_STARTING          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_EXPIRATION       ); error = GetLastError(); debug(location +"   MODE_EXPIRATION        = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_TRADEALLOWED     ); error = GetLastError(); debug(location +"   MODE_TRADEALLOWED      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MINLOT           ); error = GetLastError(); debug(location +"   MODE_MINLOT            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_LOTSTEP          ); error = GetLastError(); debug(location +"   MODE_LOTSTEP           = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MAXLOT           ); error = GetLastError(); debug(location +"   MODE_MAXLOT            = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_SWAPTYPE         ); error = GetLastError(); debug(location +"   MODE_SWAPTYPE          = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_PROFITCALCMODE   ); error = GetLastError(); debug(location +"   MODE_PROFITCALCMODE    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINCALCMODE   ); error = GetLastError(); debug(location +"   MODE_MARGINCALCMODE    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGININIT       ); error = GetLastError(); debug(location +"   MODE_MARGININIT        = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINMAINTENANCE); error = GetLastError(); debug(location +"   MODE_MARGINMAINTENANCE = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINHEDGED     ); error = GetLastError(); debug(location +"   MODE_MARGINHEDGED      = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_MARGINREQUIRED   ); error = GetLastError(); debug(location +"   MODE_MARGINREQUIRED    = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
+   value = MarketInfo(Symbol(), MODE_FREEZELEVEL      ); error = GetLastError(); debug(location +"   MODE_FREEZELEVEL       = "+ NumberToStr(value, ".+"       ) + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
 
    return(catch("DebugMarketInfo()"));
 }

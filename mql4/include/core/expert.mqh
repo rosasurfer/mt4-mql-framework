@@ -1,7 +1,6 @@
 
-//#ifndef __TYPE__
-   #define __TYPE__ T_EXPERT
-//#endif
+#define __TYPE__ T_EXPERT
+
 #include <ChartInfos/functions.mqh>
 
 
@@ -14,8 +13,6 @@
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   if (IsLibrary())
-      return(NO_ERROR);                                                       // in Libraries vorerst nichts tun
    int error;
 
    __NAME__           = WindowExpertName();
@@ -39,7 +36,6 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
    PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-   //TickSize  = ...
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -74,33 +70,34 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
 
 
-   // (4) nur für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                          // EA's ggf. aktivieren
-      int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
-      if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-         error = Toolbar.Experts(true);                                       // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
-         if (IsError(error))
-            return(SetLastError(error));
-      }
-                                                                              // nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
-      int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
-      if (IntInArray(reasons2, UninitializeReason()))
-         OrderSelect(0, SELECT_BY_TICKET);
-
-
-      if (IsVisualMode()) {                                                   // Im Tester übernimmt der EA die ChartInfo-Anzeige, die hier konfiguriert wird.
-         chartInfo.appliedPrice = PRICE_BID;                                  // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfo-Indikator)
-         chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-         if (LT(chartInfo.leverage, 1))
-            return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-         error = ChartInfo.CreateLabels();
-         if (IsError(error))
-            return(error);
-      }
+   // (4)  EA's ggf. aktivieren
+   int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
+   if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
+      error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+      if (IsError(error))
+         return(SetLastError(error));
    }
 
 
-   // (5) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // (5) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
+   int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
+   if (IntInArray(reasons2, UninitializeReason()))
+      OrderSelect(0, SELECT_BY_TICKET);
+
+
+   // (6) im Tester ChartInfo-Anzeige konfigurieren
+   if (IsVisualMode()) {
+      chartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
+      chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+      if (LT(chartInfo.leverage, 1))
+         return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      error = ChartInfo.CreateLabels();
+      if (IsError(error))
+         return(error);
+   }
+
+
+   // (7) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                        //
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
@@ -121,20 +118,11 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       return(last_error);                                                     //
 
 
-   // (6) nur bei EA's: nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken
-   if (IsExpert()) {
-      if (!IsTesting())
-         if (UninitializeReason() != REASON_CHARTCHANGE)                      // außer bei REASON_CHARTCHANGE
-            Chart.SendTick(false);                                            // Innerhalb von init() so spät wie möglich, da Ticks aus init() verloren gehen,
-                                                                              // wenn die entsprechende Message vor Verlassen von init() vom UI-Thread verarbeitet wird.
-   }
-
-
-   // (7) nur bei Indikatoren: nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (IsIndicator()) {
-      if (UninitializeReason() == REASON_PARAMETERS)
-         Chart.SendTick(false);
-   }
+   // (8) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
+   if (!IsTesting())
+      if (UninitializeReason() != REASON_CHARTCHANGE)
+         Chart.SendTick(false);                                               // Ganz zum Schluß, da Ticks aus init() verloren gehen, wenn die entsprechende Windows-Message
+                                                                              // vor Verlassen von init() vom UI-Thread verarbeitet wird.
 
    catch("init(4)");
    return(last_error);
@@ -142,7 +130,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
 /**
- * Globale start()-Funktion für alle MQL-Programme.
+ * Globale start()-Funktion für Expert Adviser.
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
@@ -159,12 +147,12 @@ int start() {
       return(NO_ERROR);
 
 
-   // Time machine bug im Tester abfangen
+   // im Tester "time machine bug" abfangen
    if (IsTesting()) {
       static datetime lastTime;
       if (TimeCurrent() < lastTime) {
          __STATUS__CANCELLED = true;
-         return(catch("start(1)   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+         return(catch("start()   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
       }
       lastTime = TimeCurrent();
    }
@@ -178,24 +166,24 @@ int start() {
 
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
-      if (IsLastError()) {                                                       // init() ist mit Fehler zurückgekehrt
-         if (IsScript() || last_error!=ERR_TERMINAL_NOT_YET_READY)
+      if (IsLastError()) {
+         if (last_error != ERR_TERMINAL_NOT_YET_READY)                        // init() ist mit Fehler zurückgekehrt
             return(last_error);
          __WHEREAMI__ = FUNC_START;
-         error = init();                                                         // Indikatoren und EA's können init() erneut aufrufen
-         if (IsError(error)) {                                                   // erneuter Fehler
+         error = init();                                                      // init() erneut aufrufen
+         if (IsError(error)) {                                                // erneuter Fehler
             __WHEREAMI__ = FUNC_INIT;
             return(error);
          }
       }
-      last_error = NO_ERROR;                                                     // init() war (ggf. nach erneutem Aufruf) erfolgreich
+      last_error = NO_ERROR;                                                  // init() war erfolgreich
       ValidBars  = 0;
    }
    else {
-      prev_error = last_error;                                                   // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;                                                // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
       if (prev_error == ERR_TERMINAL_NOT_YET_READY)
-         ValidBars = 0;                                                          // falls das Terminal beim vorherigen start()-Aufruf noch nicht bereit war
+         ValidBars = 0;                                                       // falls das Terminal beim vorherigen start()-Aufruf noch nicht bereit war
    }
    __WHEREAMI__ = FUNC_START;
 
@@ -214,24 +202,16 @@ int start() {
    }
 
 
-   /*
-   // (4) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung überprüft werden
-   //     (kann nicht hier, sondern erst in onTick() erfolgen).
-   if (ArraySize(iBuffer) == 0)
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));                          // kann bei Terminal-Start auftreten
-   */
-
-
-   // (5) ChangedBars berechnen
+   // (4) ChangedBars berechnen
    ChangedBars = Bars - ValidBars;
 
 
-   // (6) stdLib benachrichtigen
+   // (5) stdLib benachrichtigen
    if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (7) Im Tester übernimmt der jeweilige EA die Anzeige der Chartinformationen (@see ChartInfo-Indikator)
+   // (6) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
       error = NO_ERROR;
       chartInfo.positionChecked = false;
@@ -241,38 +221,33 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (error != NO_ERROR)                                                     // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
+      if (error != NO_ERROR)                                                  // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
          return(last_error);
    }
 
 
-   // (8) neue Main-Funktion aufrufen
-   if (IsScript()) error = onStart();
-   else            error = onTick();
+   // (8) Main-Funktion aufrufen
+   error = onTick();
 
 
-   // (9) EA-Fehlerbehandlung
+   // (9) Fehlerbehandlung
    if (error != NO_ERROR)
       if (IsTesting())
          Tester.Stop();
 
 
    return(error);
-   DummyCalls();                                                                 // DummyCalls unterdrücken unnütze Compilerwarnungen
 }
 
 
 /**
- * Globale deinit()-Funktion für alle MQL-Programme. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
- * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
+ * Globale deinit()-Funktion für Expert Adviser. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
+ * Es liegt in der Verantwortung des EA's, diesen Status selbst auszuwerten.
  *
  * @return int - Fehlerstatus
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
-
-   if (IsLibrary())                                                              // in Libraries vorerst nichts tun
-      return(NO_ERROR);
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -295,7 +270,7 @@ int deinit() {
 
    // (2) User-spezifische Deinit-Tasks ausführen
    if (error != -1) {
-      // do something...
+      // ...
    }
 
 
@@ -305,6 +280,7 @@ int deinit() {
       SetLastError(error);
 
    return(last_error);
+   DummyCalls();                                                              // unnütze Compilerwarnungen unterdrücken
 }
 
 

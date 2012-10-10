@@ -27,7 +27,7 @@
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
 
-   int      DebugMarketInfo();
+   int      DebugMarketInfo(string location);
 
 
    // Terminal-Interaktionen

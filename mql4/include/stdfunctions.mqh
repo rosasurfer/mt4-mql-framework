@@ -1645,6 +1645,7 @@ void DummyCalls() {
    _true();
    _ZERO();
    Abs(NULL);
+   catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);
    EQ(NULL, NULL);
@@ -1666,6 +1667,7 @@ void DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
+   logToInstanceLog(NULL);
    LT(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);
@@ -1678,6 +1680,8 @@ void DummyCalls() {
    SelectTicket(NULL, NULL);
    SetLastError(NULL);
    Sign(NULL);
+   start.RelaunchInputDialog();
+   Tester.IsLogging();
    WaitForTicket(NULL);
    warn(NULL);
 }
