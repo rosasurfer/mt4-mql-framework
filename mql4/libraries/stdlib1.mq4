@@ -26,13 +26,15 @@
 #property stacksize  32768
 
 
-#include <stdtypes.mqh>
+#include <core.define.mqh>
 int         __TYPE__ = T_LIBRARY;
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
+
+#include <core.library.mqh>
 
 
 #import "stdlib2.ex4"

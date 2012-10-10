@@ -8,13 +8,15 @@
  *
  * letzte Version mit Performance-Display: v1.38
  */
-#include <stdtypes.mqh>
+#include <core.define.mqh>
 #define     __TYPE__      T_INDICATOR
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
 
+#include <core.indicator.mqh>
+#include <ChartInfos/functions.mqh>
 
 #property indicator_chart_window
 
