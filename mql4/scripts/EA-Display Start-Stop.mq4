@@ -3,14 +3,14 @@
  *
  * Schickt dem Expert im aktuellen Chart das Kommando, den Modus der Start/Stop-Anzeige zu wechseln.
  */
-#include <core.define.mqh>
+#include <core/define.mqh>
 #define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
 
-#include <core.script.mqh>
+#include <core/script.mqh>
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 

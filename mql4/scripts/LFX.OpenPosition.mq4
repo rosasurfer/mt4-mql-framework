@@ -29,7 +29,7 @@
  *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
  *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
-#include <core.define.mqh>
+#include <core/define.mqh>
 #define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -37,7 +37,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
-#include <core.script.mqh>
+#include <core/script.mqh>
 
 #property show_inputs
 

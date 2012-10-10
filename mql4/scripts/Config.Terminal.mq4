@@ -1,7 +1,7 @@
 /**
  * Lädt die Konfigurationsdateien der MetaTrader-Instanz in den Editor.
  */
-#include <core.define.mqh>
+#include <core/define.mqh>
 #define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
-#include <core.script.mqh>
+#include <core/script.mqh>
 
 
 /**
