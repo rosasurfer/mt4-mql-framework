@@ -28,6 +28,10 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+   //
+   // Bug: Die Variablen Digits und Point werden in init() beim Öffnen eines neuen Charts und beim Accountwechsel falsch gesetzt.
+   //      Nur ein Reload des Templates oder des Profiles korrigiert die falschen Werte.
+   //
    PipDigits   = Digits & (~1);
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
    Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
