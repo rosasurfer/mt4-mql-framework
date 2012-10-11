@@ -2,10 +2,11 @@
  * Globale init()-Funktion für Libraries.
  *
  * @return int - Fehlerstatus
- */
 int init() {
+   debug("init");
    return(NO_ERROR);
 }
+ */
 
 
 /**
@@ -13,10 +14,10 @@ int init() {
  *
  *
  * @return int - Fehlerstatus
- */
 int start() {
-   catch("start()", ERR_WRONG_JUMP);
+   return(catch("start()", ERR_WRONG_JUMP));
 }
+ */
 
 
 /**
@@ -24,11 +25,11 @@ int start() {
  *
  *
  * @return int - Fehlerstatus
- */
 int deinit() {
-   __WHEREAMI__ = FUNC_DEINIT;
+   debug("deinit()");
    return(NO_ERROR);
 }
+ */
 
 
 /**

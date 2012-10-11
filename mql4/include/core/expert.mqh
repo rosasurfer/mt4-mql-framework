@@ -26,8 +26,8 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
      int initFlags    = SumInts(__INIT_FLAGS__);
    __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
-      if (IsTesting())
-   __LOG = Tester.IsLogging();
+   if (IsTesting())
+      __LOG = Tester.IsLogging();
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -244,6 +244,11 @@ int start() {
  * Es liegt in der Verantwortung des EA's, diesen Status selbst auszuwerten.
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal deinit() nach eigenem Ermessen ab.
+ *       In der Regel wird afterDeinit() schon nicht mehr ausgeführt.
+ *       Workaround: Testperiode auslesen und den Test nach dem letzten Tick per Tester.Stop() beenden.
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -263,6 +268,7 @@ int deinit() {
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
       }                                                                          //
    }                                                                             //
+                                                                                 //
    if (error != -1)                                                              //
       error = afterDeinit();                                                     // Postprocessing-Hook
 
