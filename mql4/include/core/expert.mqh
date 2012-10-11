@@ -13,22 +13,21 @@
  * @return int - Fehlerstatus
  */
 int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   int error;
+   if (__STATUS__CANCELLED)
+      return(NO_ERROR);
+
+   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
+      __WHEREAMI__ = FUNC_INIT;
+      prev_error   = last_error;
+      last_error   = NO_ERROR;
+   }
 
    __NAME__           = WindowExpertName();
      int initFlags    = SumInts(__INIT_FLAGS__);
    __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
-
-   if (__STATUS__CANCELLED) return(NO_ERROR);
-
-   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal: last_error sichern und zurücksetzen
-      __WHEREAMI__ = FUNC_INIT;
-      prev_error   = last_error;
-      last_error   = NO_ERROR;
-   }
-   if (IsTesting())
-      __LOG = Tester.IsLogging();
+      if (IsTesting())
+   __LOG = Tester.IsLogging();
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -39,7 +38,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
@@ -55,7 +54,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("init(1)", error));
       }
-      if (TickSize < 0.00000001) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -64,7 +63,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("init(2)", error));
       }
-      if (tickValue < 0.00000001) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert

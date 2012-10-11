@@ -145,21 +145,19 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
-   int error;
+   if (__STATUS__CANCELLED)
+      return(NO_ERROR);
+
+   prev_error = last_error;
+   last_error = NO_ERROR;
 
    __TYPE__          |= type;
    __NAME__           = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__       = whereami;
    __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
-
-   if (__STATUS__CANCELLED) return(NO_ERROR);
-
-   prev_error = last_error;
-   last_error = NO_ERROR;                                                     // last_error sichern und zurücksetzen
-
-   if (IsTesting())
-      __LOG = Tester.IsLogging();
+      if (IsTesting())
+   __LOG = Tester.IsLogging();
 
 
    // (1) globale Variablen re-initialisieren
@@ -191,7 +189,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib_init(1)", error));
       }
-      if (TickSize < 0.00000001) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -200,7 +198,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib_init(2)", error));
       }
-      if (tickValue < 0.00000001) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
       */
    }
 

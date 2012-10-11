@@ -1158,14 +1158,14 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots = 1.0) {
-   if (lots     < 0.00000001)  return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (TickSize < 0.00000001)  return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
+   if (lots < 0.00000001) return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (TickSize == 0)     return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
 
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
 
    int error = GetLastError();
-   if (IsError(error))         return(_ZERO(catch("PipValue(3)", error)));
-   if (tickValue < 0.00000001) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
+   if (IsError(error)) return(_ZERO(catch("PipValue(3)", error)));
+   if (tickValue == 0) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
 
    return(Pip/TickSize * tickValue * lots);
 }
