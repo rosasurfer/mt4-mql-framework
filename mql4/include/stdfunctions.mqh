@@ -448,6 +448,14 @@
 #define FILE_CSV                 8
 
 
+// Data types, siehe FileRead()/FileWrite()
+#define CHAR_VALUE               1                    // integer: 1 byte
+#define SHORT_VALUE              2                    // integer: 2 bytes
+#define LONG_VALUE               4                    // integer: 4 bytes (default)
+#define FLOAT_VALUE              4                    // float:   4 bytes
+#define DOUBLE_VALUE             8                    // float:   8 bytes (default)
+
+
 // FindFileNames() flags
 #define FF_SORT                  1                    // Ergebnisse von NTFS-Laufwerken sind immer sortiert
 #define FF_DIRSONLY              2
