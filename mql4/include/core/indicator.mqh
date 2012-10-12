@@ -223,7 +223,6 @@ int deinit() {
       SetLastError(error);
 
    return(last_error);
-   DummyCalls();                                                                 // unnütze Compilerwarnungen unterdrücken
 }
 
 

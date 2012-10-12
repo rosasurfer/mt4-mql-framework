@@ -3,7 +3,7 @@
  *
  * @return int - Fehlerstatus
 int init() {
-   debug("init");
+   debug("init()");
    return(NO_ERROR);
 }
  */

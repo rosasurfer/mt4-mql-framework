@@ -240,15 +240,17 @@ int start() {
 
 
 /**
- * Globale deinit()-Funktion für Expert Adviser. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
- * Es liegt in der Verantwortung des EA's, diesen Status selbst auszuwerten.
+ * Globale deinit()-Funktion für Expert Adviser.
  *
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal deinit() nach eigenem Ermessen ab.
- *       In der Regel wird afterDeinit() schon nicht mehr ausgeführt.
- *       Workaround: Testperiode auslesen und den Test nach dem letzten Tick per Tester.Stop() beenden.
+ * NOTE: 1) Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des EA's, diesen Status
+ *          selbst auszuwerten.
+ *
+ *       2) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal deinit() verfrüht ab.
+ *          In der Regel wird afterDeinit() schon nicht mehr ausgeführt.
+ *          TODO: Testperiode auslesen und den Test nach dem letzten Tick per Tester.Stop() beenden
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -284,8 +286,8 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(last_error);
-   DummyCalls();                                                              // unnütze Compilerwarnungen unterdrücken
+   //debug("deinit()   leave");
+   return(last_error);                                                           // wird bei VisualMode=Off u.U. nicht mehr erreicht
 }
 
 

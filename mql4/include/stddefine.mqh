@@ -874,6 +874,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       OrderPop(location);
 
    return(error);
+   DummyCalls();
 }
 
 
@@ -1630,7 +1631,7 @@ int Ceil(double value) {
 
 
 /**
- * Dummy-Calls, unterdrücken unnütze Compilerwarnungen
+ * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    _bool(NULL);
