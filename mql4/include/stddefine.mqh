@@ -582,6 +582,9 @@
 
 
 // Struct sizes
+#define ORDER_EXECUTION.size                  136
+#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
+
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
 
@@ -591,8 +594,13 @@
 #define RATE_INFO.size                   BAR.size
 #define RATE_INFO.intSize             BAR.intSize
 
-#define ORDER_EXECUTION.size                  136
-#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
+
+// History bar ID's
+#define BAR_O                                   0
+#define BAR_L                                   1
+#define BAR_H                                   2
+#define BAR_C                                   3
+#define BAR_V                                   4
 
 
 // globale Variablen, stehen überall zur Verfügung
