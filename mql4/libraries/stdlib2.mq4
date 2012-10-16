@@ -2,8 +2,7 @@
  * NOTE: Libraries use predefined variables of the module that called the library.
  */
 #property library
-#property stacksize  32768
-
+#property stacksize 32768
 
 #include <core/define.mqh>
 int         __TYPE__ = T_LIBRARY;

@@ -24,8 +24,7 @@
  *       2) Libraries use predefined variables of the module that called the library.
  */
 #property library
-#property stacksize  32768
-
+#property stacksize 32768
 
 #include <core/define.mqh>
 int         __TYPE__ = T_LIBRARY;
@@ -180,7 +179,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
          return(last_error);
    }
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
       /*
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
