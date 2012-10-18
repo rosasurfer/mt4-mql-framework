@@ -545,7 +545,8 @@
 // MT4 command ids (Menüpunkte, Toolbars, Hotkeys)
 #define IDC_EXPERTS_ONOFF                   33020     // Toolbar: Experts on/off                    Ctrl+E
 
-#define IDC_CHART_STEPFORWARD               33197     // Chart: eine Bar vorwärts                      F12
+#define IDC_CHART_REFRESH                   33324     // Chart: Refresh
+#define IDC_CHART_STEPFORWARD               33197     //        eine Bar vorwärts                      F12
 #define IDC_CHART_STEPBACKWARD              33198     //        eine Bar rückwärts               Shift+F12
 #define IDC_CHART_EXPERT_PROPERTIES         33048     //        Expert Properties-Dialog                F7
 

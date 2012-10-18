@@ -1,5 +1,5 @@
 /**
- * Schickt einen künstlichen Tick an den aktuellen Chart.
+ * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
  */
 #include <core/define.mqh>
 #define     __TYPE__    T_SCRIPT
@@ -17,7 +17,5 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   return(Chart.SendTick(true));
+   return(Chart.Refresh(false));
 }
-
-

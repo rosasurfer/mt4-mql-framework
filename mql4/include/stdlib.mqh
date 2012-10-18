@@ -33,6 +33,7 @@
    // Terminal-Interaktionen
    int      Toolbar.Experts(bool enable);
    int      Chart.Expert.Properties();
+   int      Chart.Refresh(bool sound);
    int      Chart.SendTick(bool sound);
    int      Tester.Pause();
    int      Tester.Stop();

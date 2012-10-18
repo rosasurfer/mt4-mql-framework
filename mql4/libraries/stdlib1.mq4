@@ -3691,6 +3691,27 @@ int WM_MT4() {
 
 
 /**
+ * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ *
+ * @param  bool sound - ob die Ausführung akustisch bestätigt werden soll oder nicht (default: nein)
+ *
+ * @return int - Fehlerstatus
+ */
+int Chart.Refresh(bool sound=false) {
+   int hWnd = WindowHandle(Symbol(), NULL);
+   if (hWnd == 0)
+      return(catch("Chart.Refresh()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+
+   PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
+
+   if (sound)
+      PlaySound("newalert.wav");
+
+   return(NO_ERROR);
+}
+
+
+/**
  * Schickt einen künstlichen Tick an den aktuellen Chart.
  *
  * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
