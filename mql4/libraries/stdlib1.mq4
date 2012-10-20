@@ -37,101 +37,6 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 
 
-#import "stdlib2.ex4"
-   int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
-#import "sample1.ex4"
-   int    GetBufferAddress(int buffer[]);
-#import "sample2.ex4"
-   int    GetStringAddress(string value);
-   string GetStringValue(int address);
-#import "structs.ex4"
-   // MQL-Structs Getter und Setter
-   //int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
-   //string   hh.Description     (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
-   //string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
-   //int      hh.Period          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
-   //int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i);
-   //datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
-   //datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
-
-   //int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );  int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
-   //string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);  string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
-   //string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );  string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
-   //int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );  int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
-   //int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );  int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
-   //datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
-   //datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
-
-   //string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
-
-
-   // Win32-Structs Getter und Setter
-     int      pi.hProcess                   (/*PROCESS_INFORMATION*/int pi[]);
-     int      pi.hThread                    (/*PROCESS_INFORMATION*/int pi[]);
-   //int      pi.ProcessId                  (/*PROCESS_INFORMATION*/int pi[]);
-   //int      pi.ThreadId                   (/*PROCESS_INFORMATION*/int pi[]);
-
-   //int      sa.Length                     (/*SECURITY_ATTRIBUTES*/int sa[]);
-   //int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/int sa[]);
-   //bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/int sa[]);
-
-     int      si.cb                         (/*STARTUPINFO*/int si[]);          int si.setCb        (/*STARTUPINFO*/int si[], int size   );
-   //int      si.Desktop                    (/*STARTUPINFO*/int si[]);
-   //int      si.Title                      (/*STARTUPINFO*/int si[]);
-   //int      si.X                          (/*STARTUPINFO*/int si[]);
-   //int      si.Y                          (/*STARTUPINFO*/int si[]);
-   //int      si.XSize                      (/*STARTUPINFO*/int si[]);
-   //int      si.YSize                      (/*STARTUPINFO*/int si[]);
-   //int      si.XCountChars                (/*STARTUPINFO*/int si[]);
-   //int      si.YCountChars                (/*STARTUPINFO*/int si[]);
-   //int      si.FillAttribute              (/*STARTUPINFO*/int si[]);
-     int      si.Flags                      (/*STARTUPINFO*/int si[]);          int si.setFlags     (/*STARTUPINFO*/int si[], int flags  );
-   //string   si.FlagsToStr                 (/*STARTUPINFO*/int si[]);
-     int      si.ShowWindow                 (/*STARTUPINFO*/int si[]);          int si.setShowWindow(/*STARTUPINFO*/int si[], int cmdShow);
-   //string   si.ShowWindowToStr            (/*STARTUPINFO*/int si[]);
-   //int      si.hStdInput                  (/*STARTUPINFO*/int si[]);
-   //int      si.hStdOutput                 (/*STARTUPINFO*/int si[]);
-   //int      si.hStdError                  (/*STARTUPINFO*/int si[]);
-
-     int      st.Year                       (/*SYSTEMTIME*/int st[]);
-     int      st.Month                      (/*SYSTEMTIME*/int st[]);
-   //int      st.DayOfWeek                  (/*SYSTEMTIME*/int st[]);
-     int      st.Day                        (/*SYSTEMTIME*/int st[]);
-     int      st.Hour                       (/*SYSTEMTIME*/int st[]);
-     int      st.Minute                     (/*SYSTEMTIME*/int st[]);
-     int      st.Second                     (/*SYSTEMTIME*/int st[]);
-   //int      st.MilliSec                   (/*SYSTEMTIME*/int st[]);
-
-     int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   //string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   //void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
-   //int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   //string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   //void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
-     int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
-
-   //int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]);
-     bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]);
-   //bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]);
-   //string   wfd.FileAttributesToStr       (/*WIN32_FIND_DATA*/int wfd[]);
-     string   wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
-   //string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
-#import
-
-
 /**
  * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des laufenden Programms.
  *
@@ -12235,7 +12140,7 @@ double StaticDouble() {
    staticDouble[0] = staticDouble[0] + 1;
    return(staticDouble[0]);
 }
-*/
+
 // --------------------------------------------------------------------------------------------------------------------------------
 // Tests mit lokalen Arrays
 // @return string
@@ -12264,3 +12169,99 @@ double StaticDouble() {
    return(staticDouble[0]);
 }
 // --------------------------------------------------------------------------------------------------------------------------------
+*/
+
+
+#import "stdlib2.ex4"
+   int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
+#import "sample1.ex4"
+   int    GetBufferAddress(int buffer[]);
+#import "sample2.ex4"
+   int    GetStringAddress(string value);
+   string GetStringValue(int address);
+#import "structs.ex4"
+   // MQL-Structs Getter und Setter
+   //int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
+   //string   hh.Description     (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
+   //string   hh.Symbol          (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
+   //int      hh.Period          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
+   //int      hh.Digits          (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i);
+   //datetime hh.DbVersion       (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
+   //datetime hh.PrevDbVersion   (/*HISTORY_HEADER*/int hh[]);                        datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
+
+   //int      hh.setVersion      (/*HISTORY_HEADER*/int hh[], int      version    );  int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
+   //string   hh.setDescription  (/*HISTORY_HEADER*/int hh[], string   description);  string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
+   //string   hh.setSymbol       (/*HISTORY_HEADER*/int hh[], string   symbol     );  string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
+   //int      hh.setPeriod       (/*HISTORY_HEADER*/int hh[], int      period     );  int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
+   //int      hh.setDigits       (/*HISTORY_HEADER*/int hh[], int      digits     );  int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
+   //datetime hh.setDbVersion    (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+   //datetime hh.setPrevDbVersion(/*HISTORY_HEADER*/int hh[], datetime dbVersion  );  datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+
+   //string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
+
+
+   // Win32-Structs Getter und Setter
+     int      pi.hProcess                   (/*PROCESS_INFORMATION*/int pi[]);
+     int      pi.hThread                    (/*PROCESS_INFORMATION*/int pi[]);
+   //int      pi.ProcessId                  (/*PROCESS_INFORMATION*/int pi[]);
+   //int      pi.ThreadId                   (/*PROCESS_INFORMATION*/int pi[]);
+
+   //int      sa.Length                     (/*SECURITY_ATTRIBUTES*/int sa[]);
+   //int      sa.SecurityDescriptor         (/*SECURITY_ATTRIBUTES*/int sa[]);
+   //bool     sa.InheritHandle              (/*SECURITY_ATTRIBUTES*/int sa[]);
+
+     int      si.cb                         (/*STARTUPINFO*/int si[]);          int si.setCb        (/*STARTUPINFO*/int si[], int size   );
+   //int      si.Desktop                    (/*STARTUPINFO*/int si[]);
+   //int      si.Title                      (/*STARTUPINFO*/int si[]);
+   //int      si.X                          (/*STARTUPINFO*/int si[]);
+   //int      si.Y                          (/*STARTUPINFO*/int si[]);
+   //int      si.XSize                      (/*STARTUPINFO*/int si[]);
+   //int      si.YSize                      (/*STARTUPINFO*/int si[]);
+   //int      si.XCountChars                (/*STARTUPINFO*/int si[]);
+   //int      si.YCountChars                (/*STARTUPINFO*/int si[]);
+   //int      si.FillAttribute              (/*STARTUPINFO*/int si[]);
+     int      si.Flags                      (/*STARTUPINFO*/int si[]);          int si.setFlags     (/*STARTUPINFO*/int si[], int flags  );
+   //string   si.FlagsToStr                 (/*STARTUPINFO*/int si[]);
+     int      si.ShowWindow                 (/*STARTUPINFO*/int si[]);          int si.setShowWindow(/*STARTUPINFO*/int si[], int cmdShow);
+   //string   si.ShowWindowToStr            (/*STARTUPINFO*/int si[]);
+   //int      si.hStdInput                  (/*STARTUPINFO*/int si[]);
+   //int      si.hStdOutput                 (/*STARTUPINFO*/int si[]);
+   //int      si.hStdError                  (/*STARTUPINFO*/int si[]);
+
+     int      st.Year                       (/*SYSTEMTIME*/int st[]);
+     int      st.Month                      (/*SYSTEMTIME*/int st[]);
+   //int      st.DayOfWeek                  (/*SYSTEMTIME*/int st[]);
+     int      st.Day                        (/*SYSTEMTIME*/int st[]);
+     int      st.Hour                       (/*SYSTEMTIME*/int st[]);
+     int      st.Minute                     (/*SYSTEMTIME*/int st[]);
+     int      st.Second                     (/*SYSTEMTIME*/int st[]);
+   //int      st.MilliSec                   (/*SYSTEMTIME*/int st[]);
+
+     int      tzi.Bias                      (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   //string   tzi.StandardName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   //void     tzi.StandardDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
+   //int      tzi.StandardBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   //string   tzi.DaylightName              (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   //void     tzi.DaylightDate              (/*TIME_ZONE_INFORMATION*/int tzi[], /*SYSTEMTIME*/int st[]);
+     int      tzi.DaylightBias              (/*TIME_ZONE_INFORMATION*/int tzi[]);
+
+   //int      wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]);
+     bool     wfd.FileAttribute.Directory   (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Archive     (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Device      (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Normal      (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Temporary   (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.SparseFile  (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.ReparsePoint(/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Compressed  (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]);
+   //bool     wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]);
+   //string   wfd.FileAttributesToStr       (/*WIN32_FIND_DATA*/int wfd[]);
+     string   wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
+   //string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
+#import
