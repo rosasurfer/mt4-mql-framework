@@ -35,6 +35,7 @@
    int      Chart.Expert.Properties();
    int      Chart.Refresh(bool sound);
    int      Chart.SendTick(bool sound);
+   int      MarketWatch.Symbols();
    int      Tester.Pause();
    int      Tester.Stop();
 

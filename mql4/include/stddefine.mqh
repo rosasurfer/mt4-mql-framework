@@ -550,6 +550,8 @@
 #define IDC_CHART_STEPBACKWARD              33198     //        eine Bar rückwärts               Shift+F12
 #define IDC_CHART_EXPERT_PROPERTIES         33048     //        Expert Properties-Dialog                F7
 
+#define IDC_MARKETWATCH_SYMBOLS             33171     // Market Watch: Symbols
+
 #define IDC_TESTER_TICK     IDC_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
 
 

@@ -597,7 +597,11 @@ int Tester.Pause() {
    if (!IsScript())
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
+   int hWnd = GetApplicationWindow();
+   if (hWnd == 0)
+      return(last_error);
+
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
 }
 
@@ -614,7 +618,11 @@ int Tester.Stop() {
    if (!IsScript())
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
-   SendMessageA(GetApplicationWindow(), WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
+   int hWnd = GetApplicationWindow();
+   if (hWnd == 0)
+      return(last_error);
+
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
    return(NO_ERROR);
 }
 
@@ -1469,6 +1477,21 @@ int Toolbar.Experts(bool enable) {
       if (IsExpertEnabled())
          SendMessageA(hWnd, WM_COMMAND, IDC_EXPERTS_ONOFF, 0);
    }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int MarketWatch.Symbols() {
+   int hWnd = GetApplicationWindow();
+   if (hWnd == 0)
+      return(last_error);
+
+   PostMessageA(hWnd, WM_COMMAND, IDC_MARKETWATCH_SYMBOLS, 0);
    return(NO_ERROR);
 }
 
