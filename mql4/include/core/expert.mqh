@@ -248,11 +248,12 @@ int start() {
  * NOTE: 1) Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des EA's, diesen Status
  *          selbst auszuwerten.
  *
- *       2) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende: REASON_UNDEFINED) bricht das Terminal deinit() verfrüht ab.
- *          In der Regel wird afterDeinit() schon nicht mehr ausgeführt.
+ *       2) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
+ *          In der Regel wird afterDeinit() schon nicht mehr ausgeführt. In diesem Fall werden die deinit()-Funktionen von geladenen Libraries auch nicht mehr
+ *          ausgeführt.
  *
  *          TODO:       Testperiode auslesen und Test nach dem letzten Tick per Tester.Stop() beenden
- *          Workaround: StopCondition direkt vors Testende setzen
+ *          Workaround: Testende im EA direkt vors reguläre Testende der Historydatei setzen
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -274,7 +275,7 @@ int deinit() {
    }                                                                             //
                                                                                  //
    if (error != -1)                                                              //
-      error = afterDeinit();                                                     // Postprocessing-Hook (wird bei VisualMode=Off u.U. schon nicht mehr erreicht)
+      error = afterDeinit();                                                     // Postprocessing-Hook
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -288,7 +289,6 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   //debug("deinit()   leave");
    return(last_error);
 }
 

@@ -1,35 +1,16 @@
+
 /**
- * Globale init()-Funktion für Libraries.
+ * Dummy start()-Funktion für Libraries, siehe Bemerkungen bei init()
  *
  * @return int - Fehlerstatus
-int init() {
-   debug("init()");
-   return(NO_ERROR);
-}
+ *
+ *
+ * NOTE: Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
+ *       wenn eine init()-Funktion verwendet wird.
  */
-
-
-/**
- * Globale start()-Funktion für Libraries.
- *
- *
- * @return int - Fehlerstatus
 int start() {
    return(catch("start()", ERR_WRONG_JUMP));
 }
- */
-
-
-/**
- * Globale deinit()-Funktion für Libraries.
- *
- *
- * @return int - Fehlerstatus
-int deinit() {
-   debug("deinit()");
-   return(NO_ERROR);
-}
- */
 
 
 /**

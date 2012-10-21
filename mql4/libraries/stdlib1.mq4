@@ -148,12 +148,16 @@ int stdlib_start(int tick, int validBars, int changedBars) {
 
 
 /**
- * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Programms.
+ * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Moduls.
  *
  * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
  * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
+ *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -163,6 +167,19 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
    if (!ReleaseLocks(true))
       error = last_error;
    return(error);
+}
+
+
+/**
+ * Reguläre Deinitialisierung der Library. Vorsicht: Der Status ist u.U. undefiniert.
+ *
+ * @return int - Fehlerstatus
+ *
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere EA-deinit()-Funktionen
+ *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
+ */
+int deinit() {
+   return(NO_ERROR);
 }
 
 
