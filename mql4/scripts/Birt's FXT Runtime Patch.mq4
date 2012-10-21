@@ -24,15 +24,13 @@ int __DEINIT_FLAGS__[];
 extern bool   Dont.Overwrite.FXT.Files       = true;
 extern string _1____________________________ = "The 2GB limit removal works in Windows 7, Vista and Server 2008 only.";
 extern bool   Remove.2GB.Limit               = false;
-extern string _2____________________________ = "Using the variable spread option requires variable spread FXT files.";
+extern string _2____________________________ = "The variable spread option requires variable spread FXT files.";
 extern bool   Use.Variable.Spread.Files      = false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #define LAST_BUILD_KNOWN   406
-
-int mt4Build;
 
 
 /**
@@ -41,13 +39,13 @@ int mt4Build;
  * @return int - Fehlerstatus
  */
 int onStart() {
-   mt4Build = GetTerminalBuild();
-   if (mt4Build == 0)
+   int version = GetTerminalBuild();
+   if (version == 0)
       return(SetLastError(stdlib_PeekLastError()));
 
-   Print("MT4 build "+ mt4Build +" detected.");
+   Print("MT4 build "+ version +" detected.");
 
-   if (mt4Build > LAST_BUILD_KNOWN) {
+   if (version > LAST_BUILD_KNOWN) {
       Print("The patch you are running was not tested with this build so it may or may not work.");
       Print("Check for a new patch at http://eareview.net/tick-data");
    }
@@ -127,7 +125,7 @@ void Remove2GBLimitPatch() {
       }
    }
 
-   if (mt4Build < 399) {
+   if (GetTerminalBuild() < 399) {
       hModule = LoadLibraryA("msvcrt.dll");
       if (hModule != 0) {
          va__fseeki64 = GetProcAddress(hModule, "_fseeki64");
@@ -216,7 +214,7 @@ void Remove2GBLimitPatch() {
       PatchProcess(new + 30, b);                // fix the returning jump
    }
 
-   else if (mt4Build <= 402) {
+   else if (GetTerminalBuild() <= 402) {
       hModule = LoadLibraryA("msvcrt.dll");
       if (hModule != 0) {
          va__fseeki64 = GetProcAddress(hModule, "_fseeki64");
@@ -307,7 +305,7 @@ void Remove2GBLimitPatch() {
       PatchProcess(new + ArraySize(patch1) - 4, b);      // fix the returning jump
    }
 
-   else { // mt4Build >= 405
+   else {   // GetTerminalBuild() >= 405
       int fseeki64;
 
       hModule = LoadLibraryA("msvcrt.dll");
