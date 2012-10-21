@@ -20,7 +20,7 @@
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
  *
  *
- * NOTE: 1) Diese Library ist kompatibel zur Original-MetaQuotes-Version.
+ * NOTE: 1) Die Library ist kompatibel zur Original-MetaQuotes-Version.
  *       2) Libraries use predefined variables of the module that called the library.
  */
 #property library
@@ -167,19 +167,6 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
    if (!ReleaseLocks(true))
       error = last_error;
    return(error);
-}
-
-
-/**
- * Reguläre Deinitialisierung der Library. Vorsicht: Der Status ist u.U. undefiniert.
- *
- * @return int - Fehlerstatus
- *
- * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere EA-deinit()-Funktionen
- *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
- */
-int deinit() {
-   return(NO_ERROR);
 }
 
 
