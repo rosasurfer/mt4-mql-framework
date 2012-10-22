@@ -35,6 +35,14 @@
 #define ERR_ORDER_LOCKED                                            139
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
 #define ERR_TOO_MANY_REQUESTS                                       141
+// 142   The order has been enqueued. It is not an error but an interaction code between the client terminal and the trade server.
+//       This code can be got rarely, when the disconnection and the reconnection happen during the execution of a trade operation.
+//       This code should be processed in the same way as error 128.
+//
+// 143   The order was accepted by the dealer for execution. It is an interaction code between the client terminal and the trade server.
+//       It can appear for the same reason as code 142. This code should be processed in the same way as error 128.
+//
+// 144   The order was discarded by the client during manual confirmation. It is an interaction code between the client terminal and the trade server.
 #define ERR_TRADE_MODIFY_DENIED                                     145
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147
