@@ -1,5 +1,21 @@
 /**
- * Arnaud Legoux Moving Average
+ * ALMA (Arnaud Legoux Moving Average)
+ *
+ *
+ * In an attempt to create a new kind of moving average with some friends/colleagues (because I was tired of the classical set
+ * of MA's everybody uses for the last 10 years) we've created this new one (ALMA).
+ *
+ * It removes small price fluctuations and enhances the trend by applying a moving average twice, one from left to right and
+ * one from right to left. At the end of this process the phase shift (price lag) commonly associated with moving averages is
+ * significantly reduced.
+ *
+ * Zero-phase digital filtering reduces noise in the signal. Conventional filtering reduces noise in the signal but adds delay.
+ *
+ * The ALMA can give some excellent results if you take the time to tweak the parameters (no need to explain this part, it will
+ * be easy for you to find the right settings in less than an hour).
+ *
+ * Arnaud Legoux
+ *
  *
  * @see  http://www.arnaudlegoux.com/
  */
@@ -23,26 +39,30 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                // averaging period
-extern string MA.Timeframe      = "";                 // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+extern int    MA.Periods        = 200;                               // averaging period
+extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15] etc. ("" = aktueller Timeframe)
 
-extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
-extern double Sigma             = 6.0;
-extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
-extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
+extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
+extern double Sigma             = 6.0;                               // Sigma parameter
+extern double PctReversalFilter = 0.0;                               // minimum percentage MA change to indicate a trend change
+extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;         // Farben hier konfigurieren, damit Code zur Laufzeit Zugriff hat
+extern color  Color.UpTrend     = DodgerBlue;                        // Farben werden hier konfiguriert, damit der Code zur Laufzeit Zugriff hat
 extern color  Color.DownTrend   = Orange;
 extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double iALMA[], iUpTrend[], iDownTrend[];                            // sichtbare Indikatorbuffer
-double iSMA[], iTrend[], iBarDiff[];                                 // nicht sichtbare Buffer
-double wALMA[];                                                      // Gewichtungen der einzelnen Bars des MA
+double iALMA     [];                               // Datenanzeige im "Data Window" (unsichtbarer Buffer, da IndexStyle = DRAW_NONE|CLR_NONE)
+double iUpTrend  [];                               // UpTrend-Linie                 (sichtbarer Buffer)
+double iDownTrend[];                               // DownTrendTrend-Linie          (sichtbarer Buffer)
+
+double wALMA     [];                               // Gewichtungen der einzelnen Bars
+double iALMADiff [];                               // absolute Änderungen von Bar zu Bar (nicht sichtbarer Buffer)
+double iTrend    [];                               // Trendsignalisierung                (nicht sichtbarer Buffer)
 
 int    appliedPrice;
 string legendLabel, indicatorName;
@@ -76,13 +96,12 @@ int onInit() {
       return(catch("onInit(3)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
    // Buffer zuweisen
-   IndicatorBuffers(6);
-   SetIndexBuffer(0, iALMA     );      // nur für DataBox-Anzeige der aktuellen Werte (im Chart unsichtbar)
-   SetIndexBuffer(1, iUpTrend  );
-   SetIndexBuffer(2, iDownTrend);
-   SetIndexBuffer(3, iSMA      );      // SMA-Zwischenspeicher für ALMA-Berechnung
-   SetIndexBuffer(4, iTrend    );      // Trend (-1/+1) für jede einzelne Bar
-   SetIndexBuffer(5, iBarDiff  );      // Änderung des ALMA-Values gegenüber der vorherigen Bar (absolut)
+   IndicatorBuffers(5);
+   SetIndexBuffer(0, iALMA     );                  // Datenanzeige im "Data Window"          (unsichtbar, da IndexStyle = DRAW_NONE|CLR_NONE)
+   SetIndexBuffer(1, iUpTrend  );                  // UpTrend-Linie                          (sichtbar)
+   SetIndexBuffer(2, iDownTrend);                  // DownTrendTrend-Linie                   (sichtbar)
+   SetIndexBuffer(3, iALMADiff );                  // absolute Änderung gegenüber der Vorbar (unsichtbar)
+   SetIndexBuffer(4, iTrend    );                  // Trend (-1/+1) jeder einzelnen Bar      (unsichtbar)
 
    // Anzeigeoptionen
    string strTimeframe="", strAppliedPrice="";
@@ -128,7 +147,7 @@ int onInit() {
       for (i=0; i < MA.Periods; i++) {
          wALMA[i] /= wSum;                                     // Gewichtungen der einzelnen Bars (Summe = 1)
       }
-      ReverseDoubleArray(wALMA);                               // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
+      ReverseDoubleArray(wALMA);                               // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
    }
 
    return(catch("onInit(4)"));
@@ -162,7 +181,6 @@ int onTick() {
       ArrayInitialize(iALMA,      EMPTY_VALUE);
       ArrayInitialize(iUpTrend,   EMPTY_VALUE);
       ArrayInitialize(iDownTrend, EMPTY_VALUE);
-      ArrayInitialize(iSMA,       EMPTY_VALUE);
       ArrayInitialize(iTrend,               0);
       SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
    }
@@ -178,12 +196,12 @@ int onTick() {
    // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
 
 
-   // Laufzeitverteilung:  Schleife          -  5%                                   5%    10%
-   // -------------------  iMA()             - 80%  bei Verwendung von OHLC-Arrays  30% -> 60%
-   //                      Rechenoperationen - 15%                                  15%    30%
+   // Laufzeitverteilung:  Schleife          -  5%                -  5% -> 10%
+   // -------------------  iMA()             - 80%    OHLC-Arrays - 30% -> 60%
+   //                      Rechenoperationen - 15%                - 15% -> 30%
    //
    // Laptop vor Optimierung:
-   // M5 - ALMA(350xM30)::start()   ALMA(2100)    startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
+   // M5 - ALMA(350xM30)::start()   ALMA( 2100)   startBar=1999   loop passes= 4.197.900   time1=203 msec   time2= 3125 msec   time3= 3766 msec
    // M1 - ALMA(350xM30)::start()   ALMA(10500)   startBar=1999   loop passes=20.989.500   time1=953 msec   time2=16094 msec   time3=18969 msec
 
 
@@ -196,33 +214,35 @@ int onTick() {
       // der eigentliche Moving Average
       iALMA[bar] = 0;
       switch (appliedPrice) {
-         case PRICE_CLOSE: for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Close[bar+i]; break;
-         case PRICE_OPEN:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Open [bar+i]; break;
-         case PRICE_HIGH:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * High [bar+i]; break;
-         case PRICE_LOW:   for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * Low  [bar+i]; break;
-         default:
-            for (i=0; i < MA.Periods; i++) {
-               iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
-            }
+         case PRICE_CLOSE: for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
+         case PRICE_OPEN:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
+         case PRICE_HIGH:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         High [bar+i]; break;
+         case PRICE_LOW:   for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
+         default:          for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 
-      // Percentage-Filter für Reversal-Smoothing (verdoppelt Laufzeit und ist unsinnig implementiert)
+      /**
+       * Percentage-Filter für Reversal-Smoothing (verdoppelt die Laufzeit und ist unsinnig implementiert)
+       *
+       * - vergleicht aktuelle Änderung mit MANUELL berechneter StdDev
+       * - glättet nicht nur Reversal, sondern auch normalen Trend
+       */
       if (PctReversalFilter > 0) {
-         iBarDiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);               // ALMA-Änderung gegenüber der vorherigen Bar
+         iALMADiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);              // ALMA-Änderung gegenüber der vorherigen Bar
 
          double sumDel = 0;
          for (int j=0; j < MA.Periods; j++) {
-            sumDel += iBarDiff[bar+j];
+            sumDel += iALMADiff[bar+j];
          }
-         double avgDel = sumDel/MA.Periods;                                // durchschnittliche ALMA-Änderung von Bar zu Bar
+         double avgDel = sumDel/MA.Periods;                                // durchschnittliche absolute ALMA-Änderung von Bar zu Bar
 
          double sumPow = 0;
          for (j=0; j < MA.Periods; j++) {
-            sumPow += MathPow(iBarDiff[bar+j] - avgDel, 2);
+            sumPow += MathPow(iALMADiff[bar+j] - avgDel, 2);
          }
          double filter = PctReversalFilter * MathSqrt(sumPow/MA.Periods);  // PctReversalFilter * stdDev
 
-         if (iBarDiff[bar] < filter)
+         if (iALMADiff[bar] < filter)
             iALMA[bar] = iALMA[bar+1];
       }
 
