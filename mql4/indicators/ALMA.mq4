@@ -39,30 +39,30 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                               // averaging period
-extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15] etc. ("" = aktueller Timeframe)
+extern int    MA.Periods        = 200;                // averaging period
+extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc. ("" = aktueller Timeframe)
 
-extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
-extern double Sigma             = 6.0;                               // Sigma parameter
-extern double PctReversalFilter = 0.0;                               // minimum percentage MA change to indicate a trend change
-extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
+extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
+extern double Sigma             = 6.0;                // Sigma parameter
+extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
+extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;                        // Farben werden hier konfiguriert, damit der Code zur Laufzeit Zugriff hat
+extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, damit der Code zur Laufzeit Zugriff hat
 extern color  Color.DownTrend   = Orange;
 extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double iALMA     [];                               // Datenanzeige im "Data Window" (unsichtbarer Buffer, da IndexStyle = DRAW_NONE|CLR_NONE)
-double iUpTrend  [];                               // UpTrend-Linie                 (sichtbarer Buffer)
-double iDownTrend[];                               // DownTrendTrend-Linie          (sichtbarer Buffer)
+double iALMA     [];                                  // Datenanzeige im "Data Window" (unsichtbarer Buffer, da IndexStyle = DRAW_NONE|CLR_NONE)
+double iUpTrend  [];                                  // UpTrend-Linie                 (sichtbarer Buffer)
+double iDownTrend[];                                  // DownTrendTrend-Linie          (sichtbarer Buffer)
 
-double wALMA     [];                               // Gewichtungen der einzelnen Bars
-double iALMADiff [];                               // absolute Änderungen von Bar zu Bar (nicht sichtbarer Buffer)
-double iTrend    [];                               // Trendsignalisierung                (nicht sichtbarer Buffer)
+double wALMA     [];                                  // Gewichtungen der einzelnen Bars
+double iALMADiff [];                                  // absolute Änderungen von Bar zu Bar (nicht sichtbarer Buffer)
+double iTrend    [];                                  // Trendsignalisierung                (nicht sichtbarer Buffer)
 
 int    appliedPrice;
 string legendLabel, indicatorName;
@@ -97,11 +97,11 @@ int onInit() {
 
    // Buffer zuweisen
    IndicatorBuffers(5);
-   SetIndexBuffer(0, iALMA     );                  // Datenanzeige im "Data Window"          (unsichtbar, da IndexStyle = DRAW_NONE|CLR_NONE)
-   SetIndexBuffer(1, iUpTrend  );                  // UpTrend-Linie                          (sichtbar)
-   SetIndexBuffer(2, iDownTrend);                  // DownTrendTrend-Linie                   (sichtbar)
-   SetIndexBuffer(3, iALMADiff );                  // absolute Änderung gegenüber der Vorbar (unsichtbar)
-   SetIndexBuffer(4, iTrend    );                  // Trend (-1/+1) jeder einzelnen Bar      (unsichtbar)
+   SetIndexBuffer(0, iALMA     );                     // Datenanzeige im "Data Window"          (unsichtbar, da IndexStyle = DRAW_NONE|CLR_NONE)
+   SetIndexBuffer(1, iUpTrend  );                     // UpTrend-Linie                          (sichtbar)
+   SetIndexBuffer(2, iDownTrend);                     // DownTrendTrend-Linie                   (sichtbar)
+   SetIndexBuffer(3, iALMADiff );                     // absolute Änderung gegenüber der Vorbar (unsichtbar)
+   SetIndexBuffer(4, iTrend    );                     // Trend (+1/-1) jeder einzelnen Bar      (unsichtbar)
 
    // Anzeigeoptionen
    string strTimeframe="", strAppliedPrice="";
@@ -213,7 +213,7 @@ int onTick() {
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       iALMA[bar] = 0;
-      switch (appliedPrice) {
+      switch (appliedPrice) {                                              // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
          case PRICE_CLOSE: for (int i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
          case PRICE_OPEN:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
          case PRICE_HIGH:  for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         High [bar+i]; break;
@@ -222,19 +222,20 @@ int onTick() {
       }
 
       /**
-       * Percentage-Filter für Reversal-Smoothing (verdoppelt die Laufzeit und ist unsinnig implementiert)
+       * Percentage-Filter für Reversal-Smoothing (NICHT verwenden!!!)
        *
+       * - verdoppelt durch verschachtelte Schleifen die Laufzeit
        * - vergleicht aktuelle Änderung mit MANUELL berechneter StdDev
        * - glättet nicht nur Reversal, sondern auch normalen Trend
        */
       if (PctReversalFilter > 0) {
-         iALMADiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);              // ALMA-Änderung gegenüber der vorherigen Bar
+         iALMADiff[bar] = MathAbs(iALMA[bar] - iALMA[bar+1]);              // absolute Änderung von Bar zu Bar
 
          double sumDel = 0;
          for (int j=0; j < MA.Periods; j++) {
             sumDel += iALMADiff[bar+j];
          }
-         double avgDel = sumDel/MA.Periods;                                // durchschnittliche absolute ALMA-Änderung von Bar zu Bar
+         double avgDel = sumDel/MA.Periods;                                // durchschnittliche absolute Änderung von Bar zu Bar
 
          double sumPow = 0;
          for (j=0; j < MA.Periods; j++) {
@@ -267,7 +268,7 @@ int onTick() {
       }
    }
 
-   // Trendanzeige aktualisieren
+   // bei Trendwechsel Farbe der Legende aktualisieren
    if (iTrend[0] != lastTrend) {
       if      (iTrend[0] > 0) color fontColor = Color.UpTrend;
       else if (iTrend[0] < 0)       fontColor = Color.DownTrend;
@@ -279,7 +280,7 @@ int onTick() {
    }
    lastTrend = iTrend[0];
 
-   // Wertanzeige aktualisieren
+   // ggf. angezeigten Wert aktualisieren
    double normalizedValue = NormalizeDouble(iALMA[0], Digits);
    if (NE(normalizedValue, lastValue)) {
       ObjectSetText(legendLabel,
