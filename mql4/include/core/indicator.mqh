@@ -75,9 +75,9 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
    switch (UninitializeReason()) {                                            // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;        // bricht init() *nicht* ab.
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;        // bricht init() *nicht* ab (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
       case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
-      case REASON_REMOVE     : error = onInitRemove();          break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
+      case REASON_REMOVE     : error = onInitRemove();          break;        // Gibt eine der Funktionen -1 zurück, bricht init() sofort ab.
       case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
       case REASON_PARAMETERS : error = onInitParameterChange(); break;        //
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
