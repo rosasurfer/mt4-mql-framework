@@ -173,29 +173,27 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
 // Laufzeitfunktionen
 int onInit()                  { return(NO_ERROR); }
 int onInitUndefined()         { return(NO_ERROR); }
-int onInitChartClose()        { if (IsIndicator()) warn("onInitChartClose()"); return(NO_ERROR); }    // mal sehen, wann hier jemand reintappt
-int onInitRecompile()         { return(NO_ERROR); }
-int onInitRemove()            { if (IsIndicator()) warn("onInitRemove()");     return(NO_ERROR); }    // mal sehen, wann hier jemand reintappt
 int onInitParameterChange()   { return(NO_ERROR); }
 int onInitChartChange()       { return(NO_ERROR); }
-int onInitAccountChange()     {
-   if (IsExpert()) return(catch("onInitAccountChange()", ERR_RUNTIME_ERROR));
-   if (IsIndicator())      warn("onInitAccountChange()");                                             // mal sehen, wann hier jemand reintappt
-   return(NO_ERROR);
-}
+int onInitAccountChange()     { if (IsExpert()) return(catch("onInitAccountChange()", ERR_RUNTIME_ERROR));     // mal sehen, wann hier jemand reintappt
+                                if (IsIndicator())      warn("onInitAccountChange()");   return(NO_ERROR); }   // ...
+int onInitChartClose()        { if (IsIndicator())      warn("onInitChartClose()");      return(NO_ERROR); }   // ...
+int onInitRemove()            { if (IsIndicator())      warn("onInitRemove()");          return(NO_ERROR); }   // ...
+int onInitRecompile()         { return(NO_ERROR); }
 int afterInit()               { return(NO_ERROR); }
 
 int onStart()                 { return(NO_ERROR); }
 int onTick()                  { return(NO_ERROR); }
 
 int onDeinit()                { return(NO_ERROR); }
-int onDeinitUndefined()       { return(NO_ERROR); }
-int onDeinitChartClose()      { return(NO_ERROR); }
-int onDeinitRemove()          { return(NO_ERROR); }
-int onDeinitRecompile()       { return(NO_ERROR); }
+int onDeinitUndefined()       { if (IsIndicator())      warn("onDeinitUndefined()");     return(NO_ERROR); }   // ...
 int onDeinitParameterChange() { return(NO_ERROR); }
 int onDeinitChartChange()     { return(NO_ERROR); }
-int onDeinitAccountChange()   { if (IsExpert()) return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR)); return(NO_ERROR); }
+int onDeinitAccountChange()   { if (IsExpert()) return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
+                                if (IsIndicator())      warn("onDeinitAccountChange()"); return(NO_ERROR); }   // ...
+int onDeinitChartClose()      { if (IsIndicator())      warn("onDeinitChartClose()");    return(NO_ERROR); }   // ...
+int onDeinitRemove()          { return(NO_ERROR); }
+int onDeinitRecompile()       { return(NO_ERROR); }
 int afterDeinit()             { return(NO_ERROR); }
 
 
