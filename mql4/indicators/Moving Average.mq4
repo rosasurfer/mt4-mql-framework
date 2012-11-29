@@ -7,6 +7,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 #include <core/indicator.mqh>
 
@@ -24,11 +25,11 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                // averaging period
-extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc. ("" = aktueller Timeframe)
-
+extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string MA.Method         = "SMA";              // averaging method
+extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA";
 extern string AppliedPrice      = "Close";            // price used for MA calculation
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
 extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
 
 extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
@@ -38,24 +39,106 @@ extern color  Color.Reversal    = Yellow;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double bufferMA         [];                           // Datenanzeige im "Data Window" (unsichtbar)
-double bufferTrendSignal[];                           // Trendsignalisierung: +1/-1    (unsichtbar)
-double bufferUpTrend    [];                           // UpTrend-Linie                 (sichtbar)
-double bufferDownTrend  [];                           // DownTrendTrend-Linie          (sichtbar)
+double bufferMA       [];                             // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+double bufferTrend    [];                             // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
+double bufferUpTrend  [];                             // UpTrend-Linie                               (sichtbar)
+double bufferDownTrend[];                             // DownTrendTrend-Linie                        (sichtbar)
+
+int    ma.periods;
+int    ma.method;
+int    appliedPrice;
+string legendLabel, indicatorName;
 
 
 /**
- * Kein UninitializeReason gesetzt: altes oder neues Chartfenster, Template mit Indikator, kein Input-Dialog
+ * Initialisierung
  *
  * @return int - Fehlerstatus
  */
-int onInitUndefined() {
-   return(NO_ERROR);
+int onInit() {
+   // -- Beginn Validierung ----------------------------------------
+   // Periodenanzahl
+   if (MA.Periods < 2)
+      return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   ma.periods = MA.Periods;
+
+   // Timeframe
+   MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
+   if (MA.Timeframe == "") int ma.timeframe = Period();
+   else                        ma.timeframe = PeriodToId(MA.Timeframe);
+   if (ma.timeframe == -1)
+      return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+
+   // Periodenanzahl auf aktuellen Timeframe umrechnen
+   if (ma.timeframe == Period()) {
+      ma.periods = MA.Periods;
+   }
+   else {
+      double minutes = ma.timeframe * MA.Periods;     // Timeframe * Anzahl Bars = Range in Minuten
+      ma.periods = Round(minutes/Period());
+   }
+
+   // MA-Methode
+   MA.Method = StringToUpper(StringTrim(MA.Method));
+   if      (MA.Method == "SMA" ) ma.method = MODE_SMA;
+   else if (MA.Method == "EMA" ) ma.method = MODE_EMA;
+   else if (MA.Method == "SMMA") ma.method = MODE_SMMA;
+   else if (MA.Method == "LWMA") ma.method = MODE_LWMA;
+   else
+      return(catch("onInit(3)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
+
+   // AppliedPrice
+   string char = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
+   if      (char == "O") appliedPrice = PRICE_OPEN;
+   else if (char == "H") appliedPrice = PRICE_HIGH;
+   else if (char == "L") appliedPrice = PRICE_LOW;
+   else if (char == "C") appliedPrice = PRICE_CLOSE;
+   else if (char == "M") appliedPrice = PRICE_MEDIAN;
+   else if (char == "T") appliedPrice = PRICE_TYPICAL;
+   else if (char == "W") appliedPrice = PRICE_WEIGHTED;
+   else
+      return(catch("onInit(4)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
+   // -- Ende Validierung ------------------------------------------
+
+   // Buffer zuweisen
+   SetIndexBuffer(0, bufferMA       );                // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+   SetIndexBuffer(1, bufferTrend    );                // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
+   SetIndexBuffer(2, bufferUpTrend  );                // UpTrend-Linie                               (sichtbar)
+   SetIndexBuffer(3, bufferDownTrend);                // DownTrendTrend-Linie                        (sichtbar)
+
+   // Anzeigeoptionen
+   string strTimeframe, strAppliedPrice;
+   if (MA.Timeframe != "")          strTimeframe    = StringConcatenate("x", MA.Timeframe);
+   if (appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(appliedPrice));
+   indicatorName = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
+
+   IndicatorShortName(indicatorName);
+   SetIndexLabel(0, indicatorName);
+   SetIndexLabel(1, NULL);
+   SetIndexLabel(2, NULL);
+   SetIndexLabel(3, NULL);
+   IndicatorDigits(Digits);
+
+   // Legende
+   legendLabel = CreateLegendLabel(indicatorName);
+   ArrayPushString(objects, legendLabel);
+
+   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
+
+   // Zeichenoptionen
+   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   SetIndexDrawBegin(0, startDraw);
+   SetIndexDrawBegin(1, startDraw);
+   SetIndexDrawBegin(2, startDraw);
+   SetIndexDrawBegin(3, startDraw);
+   SetIndicatorStyles();                              // Workaround um diverse Terminalbugs (siehe dort)
+
+   return(catch("onInit(5)"));
 }
 
 
 /**
- * Parameter-Wechsel: altes Chartfenster, alter oder neuer Indikator, Input-Dialog
+ * nur extern: erste Parameter-Eingabe oder Parameter-Wechsel, neuer oder vorhandener Indikator (auch im Tester bei ViualMode=On), Input-Dialog
  *
  * @return int - Fehlerstatus
  */
@@ -65,7 +148,7 @@ int onInitParameterChange() {
 
 
 /**
- * Symbol- oder Timeframe-Wechsel: altes Chartfenster, alter Indikator, kein Input-Dialog
+ * nur extern: Symbol- oder Timeframe-Wechsel, vorhandener Indikator, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  */
@@ -75,7 +158,20 @@ int onInitChartChange() {
 
 
 /**
- * Recompilation: altes Chartfenster, alter Indikator, kein Input-Dialog
+ * Kein UninitializeReason.
+ *
+ * extern: neuer Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * intern: bei erstem Aufruf, nach EA::ParameterChange, nach EA::ChartChange
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: vorhandener Indikator, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  */
@@ -93,5 +189,146 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   return(catch("onTick()"));
+   // Abschluß der Buffer-Initialisierung überprüfen
+   if (ArraySize(bufferMA) == 0)                                     // kann bei Terminal-Start auftreten
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   if (ValidBars == 0) {
+      ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferTrend,               0);
+      ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
+      ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
+      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
+   }
+
+   if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+      return(NO_ERROR);
+
+   // Startbar ermitteln
+   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+      ChangedBars = Max.Values;
+   int startBar = Min(ChangedBars-1, Bars-MA.Periods);
+
+   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
+
+   static double lastTrend, lastValue;
+
+
+   // Schleife über alle zu berechnenden Bars
+   for (int bar=startBar; bar >= 0; bar--) {
+      // der eigentliche Moving Average
+      bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
+
+      // Trend coloring
+      if      (bufferMA[bar  ]-bufferMA[bar+1] > 0) bufferTrend[bar] =  1;
+      else if (bufferMA[bar+1]-bufferMA[bar  ] > 0) bufferTrend[bar] = -1;
+      else                                          bufferTrend[bar] = bufferTrend[bar+1];
+
+      if (bufferTrend[bar] > 0) {
+         bufferUpTrend[bar] = bufferMA[bar];
+         if (bufferTrend[bar+1] <= 0)
+            bufferUpTrend[bar+1] = bufferMA[bar+1];
+      }
+      else if (bufferTrend[bar] < 0) {
+         bufferDownTrend[bar] = bufferMA[bar];
+         if (bufferTrend[bar+1] >= 0)
+            bufferDownTrend[bar+1] = bufferMA[bar+1];
+      }
+      else {
+         bufferUpTrend  [bar] = bufferMA[bar];
+         bufferDownTrend[bar] = bufferMA[bar];
+      }
+   }
+
+   // bei Trendwechsel Farbe der Legende aktualisieren
+   if (NE(bufferTrend[0], lastTrend)) {
+      if      (bufferTrend[0] > 0) color fontColor = Color.UpTrend;
+      else if (bufferTrend[0] < 0)       fontColor = Color.DownTrend;
+      else                               fontColor = Color.Reversal;
+      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", fontColor);
+      int error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
+         return(catch("onTick(1)", error));
+   }
+   lastTrend = bufferTrend[0];
+
+   // ggf. angezeigten Wert aktualisieren
+   double value = NormalizeDouble(bufferMA[0], Digits);
+   if (NE(value, lastValue)) {
+      ObjectSetText(legendLabel,
+                    StringConcatenate(indicatorName, "    ", NumberToStr(value, PriceFormat)),
+                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
+   }
+   lastValue = value;
+
+   return(catch("onTick(2)"));
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   RemoveChartObjects(objects);
+   RepositionLegend();
+   return(catch("onDeinit()"));
+}
+
+
+/**
+ * nur extern: Parameteränderung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Symbol- oder Timeframewechsel
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * extern: Indikator von Hand entfernt oder Chart geschlossen
+ * intern: bei EA::ChartChange, bei EA::ChartClose
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Recompilation
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRecompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Indikator-Styles setzen. Workaround um die Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
+ * in der Regel in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
+ */
+void SetIndicatorStyles() {
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(3, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
 }
