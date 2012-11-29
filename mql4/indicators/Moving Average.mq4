@@ -13,11 +13,12 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-#property indicator_buffers 3
+#property indicator_buffers 4
 
-#property indicator_width1  2
-#property indicator_width2  2
+#property indicator_width1  0
+#property indicator_width2  0
 #property indicator_width3  2
+#property indicator_width4  2
 
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
@@ -30,16 +31,17 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern double PctReversalFilter = 0.0;                // minimum percentage MA change to indicate a trend change
 extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, damit der Code zur Laufzeit Zugriff hat
+extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
 extern color  Color.DownTrend   = Orange;
 extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double bufferMA       [];                             // Datenanzeige im "Data Window" (unsichtbar: IndexStyle = DRAW_NONE|CLR_NONE)
-double bufferUpTrend  [];                             // UpTrend-Linie                 (sichtbar)
-double bufferDownTrend[];                             // DownTrendTrend-Linie          (sichtbar)
+double bufferMA         [];                           // Datenanzeige im "Data Window" (unsichtbar)
+double bufferTrendSignal[];                           // Trendsignalisierung: +1/-1    (unsichtbar)
+double bufferUpTrend    [];                           // UpTrend-Linie                 (sichtbar)
+double bufferDownTrend  [];                           // DownTrendTrend-Linie          (sichtbar)
 
 
 /**
