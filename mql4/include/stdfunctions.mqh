@@ -223,6 +223,17 @@
 #define B_UPPER                  1           // custom
 
 
+// Indicator buffer identifiers used in iCustom()
+#define BUFFER_0                 0
+#define BUFFER_1                 1
+#define BUFFER_2                 2
+#define BUFFER_3                 3
+#define BUFFER_4                 4
+#define BUFFER_5                 5
+#define BUFFER_6                 6
+#define BUFFER_7                 7
+
+
 // Sorting modes, siehe ArraySort()
 #define MODE_ASCEND              1           // aufsteigend
 #define MODE_DESCEND             2           // absteigend
