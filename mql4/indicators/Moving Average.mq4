@@ -132,8 +132,100 @@ int onInit() {
    SetIndexDrawBegin(3, startDraw);
    SetIndicatorStyles();                              // Workaround um diverse Terminalbugs (siehe dort)
 
+   debug("onInit()");
    return(catch("onInit(5)"));
 }
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int onTick() {
+   // Abschluß der Buffer-Initialisierung überprüfen
+   if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+
+   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   if (ValidBars == 0) {
+      ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferTrend,               0);
+      ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
+      ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
+      SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+   }
+
+   if (MA.Periods < 2)                                                  // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+      return(NO_ERROR);
+
+   // Startbar ermitteln
+   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+      ChangedBars = Max.Values;
+   int startBar = Min(ChangedBars-1, Bars-MA.Periods);                  // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet
+                                                                        //       werden kann (startDraw = 0)
+
+   static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks (nicht der letzten Bar)
+
+
+   // (1) Schleife über alle zu berechnenden Bars
+   for (int bar=startBar; bar >= 0; bar--) {
+      // der eigentliche Moving Average
+      bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
+
+      // Trend coloring
+      if (bufferMA[bar] > bufferMA[bar+1]) {                            // "Per Definition" gibt es keine Reversals und keinen ReversalFilter mehr.
+         bufferTrend  [bar] = 1;                                        // Für Smoothing ist statt dessen ein höherer Timeframe zu verwenden (was exakter
+         bufferUpTrend[bar] = bufferMA[bar];                            // und effektiver ist).
+         if (bufferTrend[bar+1] < 0)
+            bufferUpTrend[bar+1] = bufferMA[bar+1];
+      }
+      else {
+         bufferTrend    [bar] = -1;
+         bufferDownTrend[bar] = bufferMA[bar];
+         if (bufferTrend[bar+1] > 0)
+            bufferDownTrend[bar+1] = bufferMA[bar+1];
+      }
+   }
+   debug("onTick()   value="+ NumberToStr(bufferMA[0], ".+") +"   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
+
+
+   // (2) bei Trendwechsel Farbe der Legende aktualisieren
+   if (NE(bufferTrend[0], lastTrend)) {
+      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
+      int error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
+         return(catch("onTick(1)", error));
+   }
+   lastTrend = bufferTrend[0];
+
+
+   // (3) bei Wertänderung angezeigten Wert aktualisieren
+   double value = NormalizeDouble(bufferMA[0], Digits);
+   if (NE(value, lastValue)) {
+      ObjectSetText(legendLabel,
+                    StringConcatenate(indicatorName, "    ", NumberToStr(value, PriceFormat)),
+                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
+   }
+   lastValue = value;
+
+   return(catch("onTick(2)"));
+}
+
+
+/**
+ * Indikator-Styles setzen. Workaround um die Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
+ * in der Regel in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
+ */
+void SetIndicatorStyles() {
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(3, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -179,84 +271,7 @@ int onInitRecompile() {
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------
-
-
-/**
- * Main-Funktion
- *
- * @return int - Fehlerstatus
- */
-int onTick() {
-   // Abschluß der Buffer-Initialisierung überprüfen
-   if (ArraySize(bufferMA) == 0)                                     // kann bei Terminal-Start auftreten
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
-   if (ValidBars == 0) {
-      ArrayInitialize(bufferMA,        EMPTY_VALUE);
-      ArrayInitialize(bufferTrend,               0);
-      ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
-      ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      SetIndicatorStyles();                                          // Workaround um diverse Terminalbugs (siehe dort)
-   }
-
-   if (MA.Periods < 2)                                               // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
-      return(NO_ERROR);
-
-   // Startbar ermitteln
-   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
-      ChangedBars = Max.Values;
-   int startBar = Min(ChangedBars-1, Bars-MA.Periods);
-
-   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
-
-   static double lastTrend, lastValue;
-
-
-   // Schleife über alle zu berechnenden Bars
-   for (int bar=startBar; bar >= 0; bar--) {
-      // der eigentliche Moving Average
-      bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
-
-      // Trend coloring                                              // "Per Definition" gibt es keine Reversals und keinen ReversalFilter mehr.
-      if (bufferMA[bar] > bufferMA[bar+1]) {                         // Für Smoothing ist statt dessen ein höherer Timeframe zu verwenden (was exakter
-         bufferTrend  [bar] = 1;                                     // und effektiver ist).
-         bufferUpTrend[bar] = bufferMA[bar];
-         if (bufferTrend[bar+1] < 0)
-            bufferUpTrend[bar+1] = bufferMA[bar+1];
-      }
-      else {
-         bufferTrend    [bar] = -1;
-         bufferDownTrend[bar] = bufferMA[bar];
-         if (bufferTrend[bar+1] > 0)
-            bufferDownTrend[bar+1] = bufferMA[bar+1];
-      }
-   }
-
-   // bei Trendwechsel Farbe der Legende aktualisieren
-   if (NE(bufferTrend[0], lastTrend)) {
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
-      int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("onTick(1)", error));
-   }
-   lastTrend = bufferTrend[0];
-
-   // bei Wertänderung angezeigten Wert aktualisieren
-   double value = NormalizeDouble(bufferMA[0], Digits);
-   if (NE(value, lastValue)) {
-      ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorName, "    ", NumberToStr(value, PriceFormat)),
-                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
-   }
-   lastValue = value;
-
-   return(catch("onTick(2)"));
-}
-
-
-// --------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -312,13 +327,4 @@ int onDeinitRecompile() {
 }
 
 
-/**
- * Indikator-Styles setzen. Workaround um die Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
- * in der Regel in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
- */
-void SetIndicatorStyles() {
-   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(3, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-}
+// ------------------------------------------------------------------------------------------------------------------------------------------------
