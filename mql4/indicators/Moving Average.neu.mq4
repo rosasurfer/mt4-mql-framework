@@ -34,7 +34,6 @@ extern int    Max.Values        = 2000;               // maximum number of indic
 
 extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
 extern color  Color.DownTrend   = Orange;
-extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,40 +219,31 @@ int onTick() {
       // der eigentliche Moving Average
       bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
 
-      // Trend coloring
-      if      (bufferMA[bar  ]-bufferMA[bar+1] > 0) bufferTrend[bar] =  1;
-      else if (bufferMA[bar+1]-bufferMA[bar  ] > 0) bufferTrend[bar] = -1;
-      else                                          bufferTrend[bar] = bufferTrend[bar+1];
-
-      if (bufferTrend[bar] > 0) {
+      // Trend coloring                                              // "Per Definition" gibt es keine Reversals und keinen ReversalFilter mehr.
+      if (bufferMA[bar] > bufferMA[bar+1]) {                         // Für Smoothing ist statt dessen ein höherer Timeframe zu verwenden (was exakter
+         bufferTrend  [bar] = 1;                                     // und effektiver ist).
          bufferUpTrend[bar] = bufferMA[bar];
-         if (bufferTrend[bar+1] <= 0)
+         if (bufferTrend[bar+1] < 0)
             bufferUpTrend[bar+1] = bufferMA[bar+1];
       }
-      else if (bufferTrend[bar] < 0) {
-         bufferDownTrend[bar] = bufferMA[bar];
-         if (bufferTrend[bar+1] >= 0)
-            bufferDownTrend[bar+1] = bufferMA[bar+1];
-      }
       else {
-         bufferUpTrend  [bar] = bufferMA[bar];
+         bufferTrend    [bar] = -1;
          bufferDownTrend[bar] = bufferMA[bar];
+         if (bufferTrend[bar+1] > 0)
+            bufferDownTrend[bar+1] = bufferMA[bar+1];
       }
    }
 
    // bei Trendwechsel Farbe der Legende aktualisieren
    if (NE(bufferTrend[0], lastTrend)) {
-      if      (bufferTrend[0] > 0) color fontColor = Color.UpTrend;
-      else if (bufferTrend[0] < 0)       fontColor = Color.DownTrend;
-      else                               fontColor = Color.Reversal;
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", fontColor);
+      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)    // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(1)", error));
    }
    lastTrend = bufferTrend[0];
 
-   // ggf. angezeigten Wert aktualisieren
+   // bei Wertänderung angezeigten Wert aktualisieren
    double value = NormalizeDouble(bufferMA[0], Digits);
    if (NE(value, lastValue)) {
       ObjectSetText(legendLabel,
