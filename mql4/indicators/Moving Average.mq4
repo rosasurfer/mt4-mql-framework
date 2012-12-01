@@ -35,6 +35,10 @@ extern int    Max.Values        = 2000;               // maximum number of indic
 extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
 extern color  Color.DownTrend   = Orange;
 
+extern string ___________________________;
+extern bool   __iCustom__;
+extern string __LOGFILE__;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -132,7 +136,6 @@ int onInit() {
    SetIndexDrawBegin(3, startDraw);
    SetIndicatorStyles();                              // Workaround um diverse Terminalbugs (siehe dort)
 
-   debug("onInit()");
    return(catch("onInit(5)"));
 }
 
@@ -187,7 +190,8 @@ int onTick() {
             bufferDownTrend[bar+1] = bufferMA[bar+1];
       }
    }
-   debug("onTick()   value="+ NumberToStr(bufferMA[0], ".+") +"   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
+
+   debug("onTick()   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
 
    // (2) bei Trendwechsel Farbe der Legende aktualisieren
@@ -229,52 +233,6 @@ void SetIndicatorStyles() {
 
 
 /**
- * nur extern: erste Parameter-Eingabe oder Parameter-Wechsel, neuer oder vorhandener Indikator (auch im Tester bei ViualMode=On), Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: Symbol- oder Timeframe-Wechsel, vorhandener Indikator, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitChartChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Kein UninitializeReason.
- *
- * extern: neuer Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * intern: bei erstem Aufruf, nach EA::ParameterChange, nach EA::ChartChange
- *
- * @return int - Fehlerstatus
- */
-int onInitUndefined() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: vorhandener Indikator, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRecompile() {
-   return(NO_ERROR);
-}
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
@@ -284,47 +242,3 @@ int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit()"));
 }
-
-
-/**
- * nur extern: Parameteränderung
- *
- * @return int - Fehlerstatus
- */
-int onDeinitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: Symbol- oder Timeframewechsel
- *
- * @return int - Fehlerstatus
- */
-int onDeinitChartChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * extern: Indikator von Hand entfernt oder Chart geschlossen
- * intern: bei EA::ChartChange, bei EA::ChartClose
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: Recompilation
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRecompile() {
-   return(NO_ERROR);
-}
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------

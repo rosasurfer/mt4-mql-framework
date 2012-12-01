@@ -264,3 +264,136 @@ bool IsScript() {
 bool IsLibrary() {
    return(false);
 }
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Initialisierung Preprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int onInit() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt.
+ *
+ * extern: wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * intern: in allen init()-Fällen,                                                                   kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: vorhandener Indikator, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRecompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Initialisierung Postprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int afterInit() {
+   return(NO_ERROR);
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Deinitialisierung Preprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinit() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Parameteränderung
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Symbol- oder Timeframewechsel
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * extern: Indikator von Hand entfernt oder Chart geschlossen
+ * intern: in allen deinit()-Fällen
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Recompilation
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRecompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialisierung Postprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int afterDeinit() {
+   return(NO_ERROR);
+}
+*/
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
