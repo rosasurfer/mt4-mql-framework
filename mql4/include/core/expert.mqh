@@ -100,14 +100,14 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (onInit() == -1)                                                        //
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
-   switch (UninitializeReason()) {                                            // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;        // bricht init() *nicht* ab.
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
-      case REASON_REMOVE     : error = onInitRemove();          break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        //
+   switch (UninitializeReason()) {                                            //
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_REMOVE     : error = onInitRemove();          break;        // bricht init() *nicht* ab.
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
+      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
+      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
+      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
    }                                                                          //
    if (error == -1)                                                           //
       return(last_error);                                                     //
@@ -264,13 +264,13 @@ int deinit() {
                                                                                  //
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
-         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
-         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //   das Flag __STATUS__CANCELLED setzt.
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
-         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
-         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
+         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS__CANCELLED setzt.
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
-         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
+         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
+         case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
+         case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
+         case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
    }                                                                             //
                                                                                  //
