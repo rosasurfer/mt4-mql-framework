@@ -59,6 +59,8 @@ string legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int onInit() {
+   debug("onInit()");
+
    // -- Beginn Validierung ----------------------------------------
    // Periodenanzahl
    if (MA.Periods < 2)
@@ -191,7 +193,7 @@ int onTick() {
       }
    }
 
-   debug("onTick()   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
+   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
 
    // (2) bei Trendwechsel Farbe der Legende aktualisieren

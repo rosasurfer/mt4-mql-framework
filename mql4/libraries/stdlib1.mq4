@@ -3898,7 +3898,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
          //debug("FileReadLines()   new line "+ i +",   "+ StringLen(value) +" chars,   fPointer="+ FileTell(hFile));
       }
       else {
-         // bei langen Zeilen prüfen, ob das letzte Zeichen ein Separator war (FileReadString() liest max. 4095 Zeichen)
+         // FileReadString() liest max. 4095 Zeichen: bei langen Zeilen prüfen, ob das letzte Zeichen ein Separator war
          len = StringLen(lines[i-1]);
          if (len < 4095) {
             wasSeparator = true;
@@ -6929,7 +6929,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                              ); // 4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                                ); // 4052
       case ERR_SOME_ARRAY_ERROR           : return("array error"                                                   ); // 4053 some array error
-      case ERR_INCORRECT_SERIESARRAY_USING: return("incorrect series array using"                                  ); // 4054
+      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("accessed timeframe not available"                              ); // 4054 accessed timeframe not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                        ); // 4055 custom indicator error
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                           ); // 4056 incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                             ); // 4057
@@ -7070,7 +7070,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); // 4051
       case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); // 4052
       case ERR_SOME_ARRAY_ERROR           : return("ERR_SOME_ARRAY_ERROR"           ); // 4053
-      case ERR_INCORRECT_SERIESARRAY_USING: return("ERR_INCORRECT_SERIESARRAY_USING"); // 4054
+      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("ERR_TIMEFRAME_NOT_AVAILABLE"    ); // 4054
       case ERR_CUSTOM_INDICATOR_ERROR     : return("ERR_CUSTOM_INDICATOR_ERROR"     ); // 4055
       case ERR_INCOMPATIBLE_ARRAYS        : return("ERR_INCOMPATIBLE_ARRAYS"        ); // 4056
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("ERR_GLOBAL_VARIABLES_PROCESSING"); // 4057
