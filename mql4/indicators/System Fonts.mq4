@@ -12,7 +12,6 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-
 string text            = "jagt im komplett verwahrl. Taxi 1234,567,890.50 | ";
 //string text            = "WDRW-MB-4692: USD 4.95 buy limit | ";
 

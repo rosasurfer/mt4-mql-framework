@@ -26,17 +26,6 @@ int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
 
-#include <core/indicator.mqh>
-
-#property indicator_chart_window
-
-#property indicator_buffers 3
-
-#property indicator_width1  2
-#property indicator_width2  2
-#property indicator_width3  2
-
-
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                // averaging period
@@ -55,6 +44,15 @@ extern color  Color.Reversal    = Yellow;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <core/indicator.mqh>
+
+#property indicator_chart_window
+
+#property indicator_buffers 3
+
+#property indicator_width1  2
+#property indicator_width2  2
+#property indicator_width3  2
 
 double iALMA     [];                                  // Datenanzeige im "Data Window" (unsichtbarer Buffer, da IndexStyle = DRAW_NONE|CLR_NONE)
 double iUpTrend  [];                                  // UpTrend-Linie                 (sichtbarer Buffer)

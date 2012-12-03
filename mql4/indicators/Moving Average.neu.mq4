@@ -1,6 +1,14 @@
 /**
  * Multi-Color/Multi-Timeframe Moving Average
  */
+#include <core/define.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+#include <stddefine.mqh>
+#include <stdlib.mqh>
+#include <win32api.mqh>
+
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                // averaging period
@@ -14,18 +22,8 @@ extern int    Max.Values        = 2000;               // maximum number of indic
 extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
 extern color  Color.DownTrend   = Orange;
 
-extern string ___________________________;
-extern int    __iCustom__;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
-#include <stdlib.mqh>
-#include <win32api.mqh>
 #include <core/indicator.mqh>
 
 #property indicator_chart_window
@@ -207,17 +205,9 @@ int onTick() {
    }
    lastValue = value;
 
-   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar +"   ic="+ (__iCustom__!=0));
+   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar +"   ic="+ (__iCustom_DO_NOT_MODIFY__!=0));
 
-
-   catch("onTick(2)");
-
-   if (IsLastError()) /*&&*/ if (__iCustom__!=0) {
-      /*ICUSTOM*/int ic[]; InitializeICustom(ic, __iCustom__);
-      ic[IC_LAST_ERROR] = last_error;
-      CopyMemory(ic[IC_PTR], GetBufferAddress(ic), ICUSTOM.size);
-   }
-   return(last_error);
+   return(catch("onTick(2)"));
 }
 
 

@@ -1,5 +1,12 @@
-
+/**
+ * NOTE: Für Wertzuweisungen an last_error muß in Indikatoren immer SetLastError() verwendet werden, wenn der Fehler
+ *       bei Indikatoraufruf via iCustom() an den Aufrufer weitergereicht werden soll.
+ */
 #define __TYPE__ T_INDICATOR
+
+
+extern string ___________________________;
+extern int    __iCustom_DO_NOT_MODIFY__;
 
 
 /**
@@ -106,7 +113,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_YET_READY zurück,
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERR_TERMINAL_NOT_YET_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
@@ -128,12 +135,11 @@ int start() {
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
          if (last_error != ERR_TERMINAL_NOT_YET_READY)                           // init() ist mit Fehler zurückgekehrt
-            return(last_error);
+            return(SetLastError(last_error));
          __WHEREAMI__ = FUNC_START;
-         error = init();                                                         // init() erneut aufrufen
-         if (IsError(error)) {                                                   // erneuter Fehler
-            __WHEREAMI__ = FUNC_INIT;
-            return(error);
+         if (IsError(init())) {                                                  // init() erneut aufrufen (kann Neuaufruf an __WHEREAMI__ erkennen)
+            __WHEREAMI__ = FUNC_INIT;                                            // erneuter Fehler, __WHEREAMI__ restaurieren und Abbruch
+            return(SetLastError(last_error));
          }
       }
       last_error = NO_ERROR;                                                     // init() war erfolgreich
@@ -151,7 +157,7 @@ int start() {
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      return(start.RelaunchInputDialog());
+      return(start.RelaunchInputDialog());                                       // [ic.]SetLastError() unnötig, da in iCustom() kein __STATUS__RELAUNCH_INPUT
    }
 
 
@@ -227,7 +233,7 @@ int deinit() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Expert Adviser ist.
+ * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
  *
  * @return bool
  */
@@ -237,7 +243,7 @@ bool IsExpert() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Indikator ist.
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
  *
  * @return bool
  */
@@ -247,7 +253,7 @@ bool IsIndicator() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Script ist.
+ * Ob das aktuell ausgeführte Programm ein Script ist.
  *
  * @return bool
  */
@@ -257,12 +263,41 @@ bool IsScript() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm eine Library ist.
+ * Ob das aktuell ausgeführte Modul eine Library ist.
  *
  * @return bool
  */
 bool IsLibrary() {
    return(false);
+}
+
+
+/**
+ * Setzt den internen Fehlercode des Indikators. Bei Indikatoraufruf mit iCustom() wird der Fehler zusätzlich an den Aufrufer weitergereicht.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return int - derselbe Fehlercode (for chaining)
+ *
+ *
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ */
+int SetLastError(int error, int param=NULL) {
+   last_error = error;
+
+   if (__iCustom_DO_NOT_MODIFY__ != 0) {                             // Fehler an Aufrufer weiterreichen
+      /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom_DO_NOT_MODIFY__);
+
+      if (IsError(error)) {
+         __iCustom_DO_NOT_MODIFY__ = NULL;
+         last_error = error;
+      }
+      else {
+         ic[IC_LAST_ERROR] = last_error;
+         CopyMemory(ic[IC_PTR], GetBufferAddress(ic), ICUSTOM.size);
+      }
+   }
+   return(last_error);
 }
 
 

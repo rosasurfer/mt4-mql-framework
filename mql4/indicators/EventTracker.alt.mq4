@@ -8,11 +8,6 @@ int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
 
-#include <core/indicator.mqh>
-
-#property indicator_chart_window
-
-
 ////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) //////////////////////////////////////////////////
 
 bool   Sound.Alerts                 = true;
@@ -35,6 +30,9 @@ bool   PivotLevels.PreviousDayRange = false;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <core/indicator.mqh>
+
+#property indicator_chart_window
 
 string symbolName;
 int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;

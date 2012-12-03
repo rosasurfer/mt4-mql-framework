@@ -698,7 +698,7 @@ int start.RelaunchInputDialog() {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int debug(string message, int error=NO_ERROR) {
    static int debugToLog = -1;
@@ -728,7 +728,7 @@ int debug(string message, int error=NO_ERROR) {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int log(string message, int error=NO_ERROR) {
    if (!__LOG) return(error);
@@ -801,7 +801,7 @@ bool logToInstanceLog(string message) {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int warn(string message, int error=NO_ERROR) {
    if (IsError(error))
@@ -859,7 +859,7 @@ int warn(string message, int error=NO_ERROR) {
  * @return int - der aufgetretene Fehler
  *
  *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das tatsächlich laufende Script als Auslöser angezeigt.
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error == NO_ERROR) error = GetLastError();
@@ -868,7 +868,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error != NO_ERROR) {
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
-
       // (1) Programmnamen umschreiben
       string name = __NAME__;
       if (__LOG_INSTANCE_ID) {
@@ -876,7 +875,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
          else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
       }
-
 
       // (2) Logging
       bool logged, alerted;
@@ -887,7 +885,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          alerted = true;
       }
       message = StringConcatenate(name, "::", message);
-
 
       // (3) Anzeige
       if (IsTesting()) {
@@ -904,7 +901,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          // außerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
-      last_error = error;
+      SetLastError(error);
    }
 
    if (orderPop)
@@ -940,7 +937,7 @@ bool IsNoError(int value) {
 
 
 /**
- * Ob der interne Fehler-Code des aktuellen Scripts gesetzt ist.
+ * Ob der interne Fehler-Code des aktuellen Moduls gesetzt ist.
  *
  * @return bool
  */
@@ -950,29 +947,13 @@ bool IsLastError() {
 
 
 /**
- * Setzt den internen Fehlercode des aktuellen Scripts.
- *
- * @param  int error - Fehlercode
- *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
- */
-int SetLastError(int error, int param=NULL) {
-   last_error = error;
-   return(error);
-}
-
-
-/**
- * Setzt den internen Fehlercode des aktuellen Programms zurück.
+ * Setzt den internen Fehlercode des aktuellen Moduls zurück.
  *
  * @return int - der vorm Zurücksetzen gesetzte Fehlercode
  */
 int ResetLastError() {
    int error = last_error;
-   last_error = NO_ERROR;
+   SetLastError(NO_ERROR);
    return(error);
 }
 

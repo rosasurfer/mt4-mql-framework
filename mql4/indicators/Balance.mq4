@@ -50,14 +50,14 @@ int onTick() {
 
    // Alle Werte komplett ...
    if (ValidBars == 0) {
-      ArrayInitialize(iBalance, EMPTY_VALUE);      // vor Neuberechnung alte Werte zurücksetzen
-      last_error = iAccountBalanceSeries(AccountNumber(), iBalance);
+      ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen
+      if (IsError(iAccountBalanceSeries(AccountNumber(), iBalance)))
+         return(SetLastError(stdlib_PeekLastError()));
    }
-   else {                                          // ... oder nur die fehlenden Werte berechnen
+   else {                                                            // ... oder nur die fehlenden Werte berechnen
       for (int bar=ChangedBars-1; bar >= 0; bar--) {
-         last_error = iAccountBalance(AccountNumber(), iBalance, bar);
-         if (last_error != NO_ERROR)
-            break;
+         if (IsError(iAccountBalance(AccountNumber(), iBalance, bar)))
+            return(SetLastError(stdlib_PeekLastError()));
       }
    }
 

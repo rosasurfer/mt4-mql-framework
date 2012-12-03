@@ -42,7 +42,7 @@ int deinit() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Expert Adviser ist.
+ * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
  *
  * @return bool
  */
@@ -54,7 +54,7 @@ bool IsExpert() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Indikator ist.
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
  *
  * @return bool
  */
@@ -66,7 +66,7 @@ bool IsIndicator() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm ein Script ist.
+ * Ob das aktuell ausgeführte Programm ein Script ist.
  *
  * @return bool
  */
@@ -78,10 +78,26 @@ bool IsScript() {
 
 
 /**
- * Ob das aktuelle ausgeführte Programm eine Library ist.
+ * Ob das aktuell ausgeführte Modul eine Library ist.
  *
  * @return bool
  */
 bool IsLibrary() {
    return(true);
+}
+
+
+/**
+ * Setzt den internen Fehlercode des Moduls.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return int - derselbe Fehlercode (for chaining)
+ *
+ *
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ */
+int SetLastError(int error, int param=NULL) {
+   last_error = error;
+   return(error);
 }

@@ -223,9 +223,6 @@
    bool     IsError(int value);
    bool     IsNoError(int value);
    bool     IsErrorCode(int value);
-   bool     IsLastError();
-   int      SetLastError(int error);
-   int      ResetLastError();
    int      stdlib_GetLastError();
    int      stdlib_PeekLastError();
 

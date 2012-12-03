@@ -26,13 +26,6 @@ int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
 
-#include <core/indicator.mqh>
-
-#property indicator_chart_window
-
-#property indicator_buffers 7
-
-
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                         // Anzahl der zu verwendenden Perioden
@@ -44,11 +37,16 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern string Deviations        = "2.0";                       // ein oder zwei Multiplikatoren für die Std.-Abweichung
 extern int    Max.Values        = 5000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
-extern string ___________________________;
+extern string __________________________;
 extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <core/indicator.mqh>
+
+#property indicator_chart_window
+
+#property indicator_buffers 7
 
 double iUpperBand1  [], iLowerBand1  [];                    // sichtbare Indikatorbuffer: erstes Band
 double iUpperBand2  [], iLowerBand2  [];                    //                            zweites Band als Histogramm
