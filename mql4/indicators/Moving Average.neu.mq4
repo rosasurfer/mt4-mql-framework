@@ -1,27 +1,6 @@
 /**
  * Multi-Color/Multi-Timeframe Moving Average
  */
-#include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
-int   __INIT_FLAGS__[];
-int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
-#include <stdlib.mqh>
-#include <win32api.mqh>
-
-#include <core/indicator.mqh>
-
-
-#property indicator_chart_window
-
-#property indicator_buffers 4
-
-#property indicator_width1  0
-#property indicator_width2  0
-#property indicator_width3  2
-#property indicator_width4  2
-
-
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                // averaging period
@@ -36,10 +15,27 @@ extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konf
 extern color  Color.DownTrend   = Orange;
 
 extern string ___________________________;
-extern bool   __iCustom__;
-extern string __LOGFILE__;
+extern int    __iCustom__;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/define.mqh>
+#define     __TYPE__   T_INDICATOR
+int   __INIT_FLAGS__[];
+int __DEINIT_FLAGS__[];
+#include <stddefine.mqh>
+#include <stdlib.mqh>
+#include <win32api.mqh>
+#include <core/indicator.mqh>
+
+#property indicator_chart_window
+
+#property indicator_buffers 4
+
+#property indicator_width1  0
+#property indicator_width2  0
+#property indicator_width3  2
+#property indicator_width4  2
 
 
 double bufferMA       [];                             // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
@@ -59,8 +55,6 @@ string legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   debug("onInit()");
-
    // -- Beginn Validierung ----------------------------------------
    // Periodenanzahl
    if (MA.Periods < 2)
@@ -168,7 +162,7 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-MA.Periods);                  // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet
-                                                                        //       werden kann (startDraw = 0)
+                                                                        //       werden kann (startDraw < 0)
 
    static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks (nicht der letzten Bar)
 
@@ -193,8 +187,6 @@ int onTick() {
       }
    }
 
-   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
-
 
    // (2) bei Trendwechsel Farbe der Legende aktualisieren
    if (NE(bufferTrend[0], lastTrend)) {
@@ -215,7 +207,17 @@ int onTick() {
    }
    lastValue = value;
 
-   return(catch("onTick(2)"));
+   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar +"   ic="+ (__iCustom__!=0));
+
+
+   catch("onTick(2)");
+
+   if (IsLastError()) /*&&*/ if (__iCustom__!=0) {
+      /*ICUSTOM*/int ic[]; InitializeICustom(ic, __iCustom__);
+      ic[IC_LAST_ERROR] = last_error;
+      CopyMemory(ic[IC_PTR], GetBufferAddress(ic), ICUSTOM.size);
+   }
+   return(last_error);
 }
 
 

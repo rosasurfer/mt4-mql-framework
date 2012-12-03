@@ -14,8 +14,8 @@
 #define WHOLE_ARRAY              0
 #define MAX_SYMBOL_LENGTH       12
 #define MAX_STRING_LITERAL       "..............................................................................................................................................................................................................................................................."
-#define NL                       "\n"        // new line, MQL: 0x0D0A
-#define TAB                      "\t"
+#define NL                       "\n"        // new line, MQL schreibt 0x0D0A
+#define TAB                      "\t"        // tab
 
 
 // Special chars
@@ -232,6 +232,11 @@
 #define BUFFER_5                 5
 #define BUFFER_6                 6
 #define BUFFER_7                 7
+
+
+// Indicator shared memory identifiers, siehe iCustom()
+#define IC_PTR                   0
+#define IC_LAST_ERROR            1
 
 
 // Sorting modes, siehe ArraySort()
@@ -604,17 +609,19 @@
 
 
 // Struct sizes
-#define ORDER_EXECUTION.size                  136
-#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
+#define BAR.size                               44
+#define BAR.intSize                            11     // ceil(BAR.size/4)
+#define RATE_INFO.size                   BAR.size
+#define RATE_INFO.intSize             BAR.intSize
 
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
 
-#define BAR.size                               44
-#define BAR.intSize                            11     // ceil(BAR.size/4)
+#define ICUSTOM.size                            8
+#define ICUSTOM.intSize                         2     // ceil(ICUSTOM.size/4)
 
-#define RATE_INFO.size                   BAR.size
-#define RATE_INFO.intSize             BAR.intSize
+#define ORDER_EXECUTION.size                  136
+#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
 
 
 // History bar ID's

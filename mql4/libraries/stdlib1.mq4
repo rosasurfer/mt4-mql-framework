@@ -300,6 +300,144 @@ int DebugMarketInfo(string location) {
 }
 
 
+/*
+MarketInfo()-Fehler im Tester
+=============================
+
+// EA im Tester
+M15::TestExpert::stdlib::onTick()       ---------------------------------
+M15::TestExpert::stdlib::onTick()       Predefined variables for "EURUSD"
+M15::TestExpert::stdlib::onTick()       ---------------------------------
+M15::TestExpert::stdlib::onTick()       Pip         = 0.0001'0
+M15::TestExpert::stdlib::onTick()       PipDigits   = 4
+M15::TestExpert::stdlib::onTick()       Digits  (b) = 5
+M15::TestExpert::stdlib::onTick()       Point   (b) = 0.0000'1
+M15::TestExpert::stdlib::onTick()       PipPoints   = 10
+M15::TestExpert::stdlib::onTick()       Bid/Ask (b) = 1.2711'2/1.2713'1
+M15::TestExpert::stdlib::onTick()       Bars    (b) = 1001
+M15::TestExpert::stdlib::onTick()       PriceFormat = ".4'"
+M15::TestExpert::stdlib::onTick()       -------------------------
+M15::TestExpert::stdlib::onTick()       MarketInfo() for "EURUSD"
+M15::TestExpert::stdlib::onTick()       -------------------------
+M15::TestExpert::stdlib::onTick()       MODE_LOW               = 0.0000'0                 // falsch: nicht modelliert
+M15::TestExpert::stdlib::onTick()       MODE_HIGH              = 0.0000'0                 // falsch: nicht modelliert
+M15::TestExpert::stdlib::onTick()       MODE_TIME              = '2012.11.12 00:00:00'
+M15::TestExpert::stdlib::onTick()       MODE_BID               = 1.2711'2
+M15::TestExpert::stdlib::onTick()       MODE_ASK               = 1.2713'1
+M15::TestExpert::stdlib::onTick()       MODE_POINT             = 0.0000'1
+M15::TestExpert::stdlib::onTick()       MODE_DIGITS            = 5
+M15::TestExpert::stdlib::onTick()       MODE_SPREAD            = 19
+M15::TestExpert::stdlib::onTick()       MODE_STOPLEVEL         = 20
+M15::TestExpert::stdlib::onTick()       MODE_LOTSIZE           = 100000
+M15::TestExpert::stdlib::onTick()       MODE_TICKVALUE         = 1
+M15::TestExpert::stdlib::onTick()       MODE_TICKSIZE          = 0.0000'1
+M15::TestExpert::stdlib::onTick()       MODE_SWAPLONG          = -1.3
+M15::TestExpert::stdlib::onTick()       MODE_SWAPSHORT         = 0.5
+M15::TestExpert::stdlib::onTick()       MODE_STARTING          = 0
+M15::TestExpert::stdlib::onTick()       MODE_EXPIRATION        = 0
+M15::TestExpert::stdlib::onTick()       MODE_TRADEALLOWED      = 0                        // falsch modelliert
+M15::TestExpert::stdlib::onTick()       MODE_MINLOT            = 0.01
+M15::TestExpert::stdlib::onTick()       MODE_LOTSTEP           = 0.01
+M15::TestExpert::stdlib::onTick()       MODE_MAXLOT            = 2
+M15::TestExpert::stdlib::onTick()       MODE_SWAPTYPE          = 0
+M15::TestExpert::stdlib::onTick()       MODE_PROFITCALCMODE    = 0
+M15::TestExpert::stdlib::onTick()       MODE_MARGINCALCMODE    = 0
+M15::TestExpert::stdlib::onTick()       MODE_MARGININIT        = 0
+M15::TestExpert::stdlib::onTick()       MODE_MARGINMAINTENANCE = 0
+M15::TestExpert::stdlib::onTick()       MODE_MARGINHEDGED      = 50000
+M15::TestExpert::stdlib::onTick()       MODE_MARGINREQUIRED    = 254.25
+M15::TestExpert::stdlib::onTick()       MODE_FREEZELEVEL       = 0
+
+// Indikator im Tester, via iCustom()
+H1::Moving Average::stdlib::onTick()    ---------------------------------
+H1::Moving Average::stdlib::onTick()    Predefined variables for "EURUSD"
+H1::Moving Average::stdlib::onTick()    ---------------------------------
+H1::Moving Average::stdlib::onTick()    Pip         = 0.0001'0
+H1::Moving Average::stdlib::onTick()    PipDigits   = 4
+H1::Moving Average::stdlib::onTick()    Digits  (b) = 5
+H1::Moving Average::stdlib::onTick()    Point   (b) = 0.0000'1
+H1::Moving Average::stdlib::onTick()    PipPoints   = 10
+H1::Moving Average::stdlib::onTick()    Bid/Ask (b) = 1.2711'2/1.2713'1
+H1::Moving Average::stdlib::onTick()    Bars    (b) = 1001
+H1::Moving Average::stdlib::onTick()    PriceFormat = ".4'"
+H1::Moving Average::stdlib::onTick()    -------------------------
+H1::Moving Average::stdlib::onTick()    MarketInfo() for "EURUSD"
+H1::Moving Average::stdlib::onTick()    -------------------------
+H1::Moving Average::stdlib::onTick()    MODE_LOW               = 0.0000'0                 // falsch übernommen
+H1::Moving Average::stdlib::onTick()    MODE_HIGH              = 0.0000'0                 // falsch übernommen
+H1::Moving Average::stdlib::onTick()    MODE_TIME              = '2012.11.12 00:00:00'
+H1::Moving Average::stdlib::onTick()    MODE_BID               = 1.2711'2
+H1::Moving Average::stdlib::onTick()    MODE_ASK               = 1.2713'1
+H1::Moving Average::stdlib::onTick()    MODE_POINT             = 0.0000'1
+H1::Moving Average::stdlib::onTick()    MODE_DIGITS            = 5
+H1::Moving Average::stdlib::onTick()    MODE_SPREAD            = 0                        // völlig falsch
+H1::Moving Average::stdlib::onTick()    MODE_STOPLEVEL         = 20
+H1::Moving Average::stdlib::onTick()    MODE_LOTSIZE           = 100000
+H1::Moving Average::stdlib::onTick()    MODE_TICKVALUE         = 1
+H1::Moving Average::stdlib::onTick()    MODE_TICKSIZE          = 0.0000'1
+H1::Moving Average::stdlib::onTick()    MODE_SWAPLONG          = -1.3
+H1::Moving Average::stdlib::onTick()    MODE_SWAPSHORT         = 0.5
+H1::Moving Average::stdlib::onTick()    MODE_STARTING          = 0
+H1::Moving Average::stdlib::onTick()    MODE_EXPIRATION        = 0
+H1::Moving Average::stdlib::onTick()    MODE_TRADEALLOWED      = 1
+H1::Moving Average::stdlib::onTick()    MODE_MINLOT            = 0.01
+H1::Moving Average::stdlib::onTick()    MODE_LOTSTEP           = 0.01
+H1::Moving Average::stdlib::onTick()    MODE_MAXLOT            = 2
+H1::Moving Average::stdlib::onTick()    MODE_SWAPTYPE          = 0
+H1::Moving Average::stdlib::onTick()    MODE_PROFITCALCMODE    = 0
+H1::Moving Average::stdlib::onTick()    MODE_MARGINCALCMODE    = 0
+H1::Moving Average::stdlib::onTick()    MODE_MARGININIT        = 0
+H1::Moving Average::stdlib::onTick()    MODE_MARGINMAINTENANCE = 0
+H1::Moving Average::stdlib::onTick()    MODE_MARGINHEDGED      = 50000
+H1::Moving Average::stdlib::onTick()    MODE_MARGINREQUIRED    = 259.73                   // falsch: online
+H1::Moving Average::stdlib::onTick()    MODE_FREEZELEVEL       = 0
+
+// Indikator im Tester, standalone
+M15::Moving Average::stdlib::onTick()   ---------------------------------
+M15::Moving Average::stdlib::onTick()   Predefined variables for "EURUSD"
+M15::Moving Average::stdlib::onTick()   ---------------------------------
+M15::Moving Average::stdlib::onTick()   Pip         = 0.0001'0
+M15::Moving Average::stdlib::onTick()   PipDigits   = 4
+M15::Moving Average::stdlib::onTick()   Digits  (b) = 5
+M15::Moving Average::stdlib::onTick()   Point   (b) = 0.0000'1
+M15::Moving Average::stdlib::onTick()   PipPoints   = 10
+M15::Moving Average::stdlib::onTick()   Bid/Ask (b) = 1.2983'9/1.2986'7                   // falsch: online
+M15::Moving Average::stdlib::onTick()   Bars    (b) = 1001
+M15::Moving Average::stdlib::onTick()   PriceFormat = ".4'"
+M15::Moving Average::stdlib::onTick()   -------------------------
+M15::Moving Average::stdlib::onTick()   MarketInfo() for "EURUSD"
+M15::Moving Average::stdlib::onTick()   -------------------------
+M15::Moving Average::stdlib::onTick()   MODE_LOW               = 1.2967'6                 // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_HIGH              = 1.3027'3                 // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_TIME              = '2012.11.30 23:59:52'    // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_BID               = 1.2983'9                 // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_ASK               = 1.2986'7                 // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_POINT             = 0.0000'1
+M15::Moving Average::stdlib::onTick()   MODE_DIGITS            = 5
+M15::Moving Average::stdlib::onTick()   MODE_SPREAD            = 28                       // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_STOPLEVEL         = 20
+M15::Moving Average::stdlib::onTick()   MODE_LOTSIZE           = 100000
+M15::Moving Average::stdlib::onTick()   MODE_TICKVALUE         = 1
+M15::Moving Average::stdlib::onTick()   MODE_TICKSIZE          = 0.0000'1
+M15::Moving Average::stdlib::onTick()   MODE_SWAPLONG          = -1.3
+M15::Moving Average::stdlib::onTick()   MODE_SWAPSHORT         = 0.5
+M15::Moving Average::stdlib::onTick()   MODE_STARTING          = 0
+M15::Moving Average::stdlib::onTick()   MODE_EXPIRATION        = 0
+M15::Moving Average::stdlib::onTick()   MODE_TRADEALLOWED      = 1
+M15::Moving Average::stdlib::onTick()   MODE_MINLOT            = 0.01
+M15::Moving Average::stdlib::onTick()   MODE_LOTSTEP           = 0.01
+M15::Moving Average::stdlib::onTick()   MODE_MAXLOT            = 2
+M15::Moving Average::stdlib::onTick()   MODE_SWAPTYPE          = 0
+M15::Moving Average::stdlib::onTick()   MODE_PROFITCALCMODE    = 0
+M15::Moving Average::stdlib::onTick()   MODE_MARGINCALCMODE    = 0
+M15::Moving Average::stdlib::onTick()   MODE_MARGININIT        = 0
+M15::Moving Average::stdlib::onTick()   MODE_MARGINMAINTENANCE = 0
+M15::Moving Average::stdlib::onTick()   MODE_MARGINHEDGED      = 50000
+M15::Moving Average::stdlib::onTick()   MODE_MARGINREQUIRED    = 259.73                   // falsch: online
+M15::Moving Average::stdlib::onTick()   MODE_FREEZELEVEL       = 0
+*/
+
+
 /**
  * Kopiert einen Speicherbereich. Die betroffenen Speicherblöcke können sich überlappen.
  *
@@ -697,7 +835,7 @@ string __whereamiToStr(int id) {
  */
 int LoadCursorById(int hInstance, int resourceId) {
    if (_bool(resourceId & 0xFFFF0000))                               // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
-      catch("LoadCursorById()   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be lower then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      return(_NULL(catch("LoadCursorById()   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be smaller then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int hCursor = LoadCursorW(hInstance, resourceId);
 
@@ -1131,6 +1269,37 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
+}
+
+
+/**
+ * Initialisiert einen Shared-Buffer zur Verwendung mit iCustom().
+ *
+ * @param  int ic[] - das für den Buffer zu verwendende Integer-Array
+ * @param  int ptr  - Zeiger auf Initialisierungsdaten (default: keine)
+ *
+ * @return int - Fehlerstatus
+ */
+int InitializeICustom(int &ic[], int ptr=NULL) {
+   if (ArrayDimension(ic) != 1)                return(catch("InitializeICustom(1)   too many dimensions of parameter ic = "+ ArrayDimension(ic), ERR_INCOMPATIBLE_ARRAYS));
+   if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeICustom(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (ArraySize(ic) != ICUSTOM.intSize)
+      ArrayResize(ic, ICUSTOM.intSize);
+
+   if (ptr == NULL) {
+      ArrayInitialize(ic, 0);
+      ic[IC_PTR] = GetBufferAddress(ic);
+   }
+   else {
+      CopyMemory(GetBufferAddress(ic), ptr, ICUSTOM.size);
+
+      // primitive Speichervalidierung, es gilt: PTR==*PTR (Der Wert des Zeigers ist an der Adresse selbst gespeichert.)
+      if (ic[IC_PTR] != ptr)
+         return(catch("InitializeICustom(3)   invalid ICUSTOM data found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
+   }
+
+   return(catch("InitializeICustom(4)"));
 }
 
 
