@@ -120,8 +120,6 @@ int onInit() {
    legendLabel = CreateLegendLabel(indicatorName);
    ArrayPushString(objects, legendLabel);
 
-   // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet werden kann (startDraw = 0)
-
    // Zeichenoptionen
    int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
@@ -144,7 +142,7 @@ int onTick() {
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
 
-   // vor Neuberechnung alle Indikatorwerte zurücksetzen
+   // vor kompletter Neuberechnung alle Buffer zurücksetzen
    if (ValidBars == 0) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
@@ -153,19 +151,19 @@ int onTick() {
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
-   if (MA.Periods < 2)                                                  // Abbruch bei MA.Periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
+   if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
-   // Startbar ermitteln
+
+   // (1) Startbar für Neuberechnung ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
-   int startBar = Min(ChangedBars-1, Bars-MA.Periods);                  // TODO: Meldung ausgeben, wenn Indikator wegen zu weniger Bars nicht berechnet
-                                                                        //       werden kann (startDraw < 0)
+   int startBar = Min(ChangedBars-1, Bars-ma.periods);
 
-   static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks (nicht der letzten Bar)
+   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
 
-   // (1) Schleife über alle zu berechnenden Bars
+   // (2) Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
@@ -184,19 +182,24 @@ int onTick() {
             bufferDownTrend[bar+1] = bufferMA[bar+1];
       }
    }
+   if (startBar < 0)                                                    // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
+      SetLastError(ERR_HISTORY_INSUFFICIENT);
 
 
-   // (2) bei Trendwechsel Farbe der Legende aktualisieren
+   static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
+
+
+   // (3.1) Legende aktualisieren: Farbe bei Trendwechsel
    if (NE(bufferTrend[0], lastTrend)) {
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(1)", error));
    }
    lastTrend = bufferTrend[0];
 
 
-   // (3) bei Wertänderung angezeigten Wert aktualisieren
+   // (3.2) Legende aktualisieren: angezeigten Wert
    double value = NormalizeDouble(bufferMA[0], Digits);
    if (NE(value, lastValue)) {
       ObjectSetText(legendLabel,
@@ -204,8 +207,6 @@ int onTick() {
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastValue = value;
-
-   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar +"   ic="+ (__iCustom_DO_NOT_MODIFY__!=0));
 
    return(catch("onTick(2)"));
 }

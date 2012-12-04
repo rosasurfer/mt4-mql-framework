@@ -37,7 +37,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    //
    // Bug: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-   //      Nur ein Reload des Templates oder des Profiles korrigiert die falschen Werte.
+   //      Nur ein Reload des Templates korrigiert die falschen Werte.
    //
    PipDigits   = Digits & (~1);
    PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
@@ -131,7 +131,7 @@ int start() {
    ValidBars = IndicatorCounted();
 
 
-   // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
+   // (1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
          if (last_error != ERR_TERMINAL_NOT_YET_READY)                           // init() ist mit Fehler zurückgekehrt
@@ -145,23 +145,33 @@ int start() {
       last_error = NO_ERROR;                                                     // init() war erfolgreich
       ValidBars  = 0;
    }
+
+
+   // (2) Aufruf nach Tick
    else {
-      prev_error = last_error;                                                   // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;
       last_error = NO_ERROR;
-      if (prev_error == ERR_TERMINAL_NOT_YET_READY)
-         ValidBars = 0;                                                          // falls das Terminal beim vorherigen start()-Aufruf noch nicht bereit war
+
+      if      (prev_error == ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_UPDATE        ) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
+      if      (__STATUS__HISTORY_UPDATE                ) ValidBars = 0;          // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS__HISTORY_INSUFFICIENT          ) ValidBars = 0;
    }
-   __WHEREAMI__ = FUNC_START;
+
+   __WHEREAMI__                   = FUNC_START;
+   __STATUS__HISTORY_UPDATE       = false;
+   __STATUS__HISTORY_INSUFFICIENT = false;
 
 
-   // (2) bei Bedarf Input-Dialog aufrufen
+   // (3) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      return(start.RelaunchInputDialog());                                       // [ic.]SetLastError() unnötig, da in iCustom() kein __STATUS__RELAUNCH_INPUT
+      return(start.RelaunchInputDialog());
    }
 
 
-   // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
+   // (4) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
       debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
@@ -169,24 +179,29 @@ int start() {
 
 
    /*
-   // (4) Werden in Indikatoren Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung überprüft werden
-   //     (kann nicht hier, sondern erst in onTick() erfolgen).
-   if (ArraySize(iBuffer) == 0)
+   // (5) Werden Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung überprüft werden.
+   //     Da die Namen unbekannt sind, kann dies erst in onTick() erfolgen.
+   if (ArraySize(buffer) == 0)
       return(SetLastError(ERR_TERMINAL_NOT_YET_READY));                          // kann bei Terminal-Start auftreten
    */
 
 
-   // (5) ChangedBars berechnen
+   // (6) ChangedBars berechnen
    ChangedBars = Bars - ValidBars;
 
 
-   // (6) stdLib benachrichtigen
+   // (7) stdLib benachrichtigen
    if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (7) Main-Funktion aufrufen
-   return(onTick());
+   // (8) Main-Funktion aufrufen
+   onTick();
+
+   if      (last_error == ERR_HISTORY_UPDATE      ) __STATUS__HISTORY_UPDATE       = true;
+   else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS__HISTORY_INSUFFICIENT = true;
+
+   return(last_error);
 }
 
 

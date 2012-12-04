@@ -39,10 +39,11 @@
 //       This code can be got rarely, when the disconnection and the reconnection happen during the execution of a trade operation.
 //       This code should be processed in the same way as error 128.
 //
-// 143   The order was accepted by the dealer for execution. It is an interaction code between the client terminal and the trade server.
+// 143   The order was accepted by the broker for execution. It is an interaction code between the client terminal and the trade server.
 //       It can appear for the same reason as code 142. This code should be processed in the same way as error 128.
 //
-// 144   The order was discarded by the client during manual confirmation. It is an interaction code between the client terminal and the trade server.
+// 144   The order was discarded by the broker during manual confirmation. It is an interaction code between the client terminal and
+//       the trade server.
 #define ERR_TRADE_MODIFY_DENIED                                     145
 #define ERR_TRADE_CONTEXT_BUSY                                      146
 #define ERR_TRADE_EXPIRATION_DENIED                                 147
@@ -84,7 +85,7 @@
 #define ERR_STRING_FUNCTION_INTERNAL                               4052
 #define ERR_SOME_ARRAY_ERROR                                       4053    // some array error
 #define ERR_TIMEFRAME_NOT_AVAILABLE                                4054    // accessed timeframe not available
-#define ERR_INCORRECT_SERIESARRAY_USING   ERR_TIMEFRAME_NOT_AVAILABLE
+#define ERR_INCORRECT_SERIESARRAY_USING     ERR_TIMEFRAME_NOT_AVAILABLE
 #define ERR_CUSTOM_INDICATOR_ERROR                                 4055    // custom indicator error
 #define ERR_INCOMPATIBLE_ARRAYS                                    4056    // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057
@@ -137,3 +138,4 @@
 #define ERR_ILLEGAL_STATE                                          5011    // illegal state
 #define ERR_EXECUTION_STOPPING                                     5012    // IsStopped() returned TRUE
 #define ERR_ORDER_CHANGED                                          5013    // order status changed
+#define ERR_HISTORY_INSUFFICIENT                                   5014    // history insufficient for calculation

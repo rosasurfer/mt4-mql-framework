@@ -4,6 +4,34 @@
 #include <stderror.mqh>
 
 
+// globale Variablen, stehen überall zur Verfügung
+string __NAME__;                                                     // Name des aktuellen MQL-Programms
+int    __WHEREAMI__;                                                 // ID der aktuell ausgeführten MQL-Basisfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+bool   __LOG = true;                                                 // ob das Logging aktiviert ist (ggf. im Tester)
+bool   __LOG_INSTANCE_ID;                                            // ob die Instanz-ID des Programms mitgeloggt wird
+bool   __LOG_PER_INSTANCE;                                           // ob ein instanz-eigenes Logfile benutzt wird
+bool   __STATUS__INVALID_INPUT;                                      // ungültige Parametereingabe im Input-Dialog
+bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, Input-Dialog neu zu laden
+bool   __STATUS__CANCELLED;                                          // Ausführung durch Benutzer abgebrochen
+bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
+bool   __STATUS__HISTORY_INSUFFICIENT;                               // History war nicht ausreichend
+
+int    prev_error = NO_ERROR;                                        // der letzte Fehler des vorherigen start()-Aufrufs
+int    last_error = NO_ERROR;                                        // der letzte Fehler des aktuellen start()-Aufrufs
+
+double Pip, Pips;                                                    // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
+int    PipDigits;                                                    // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
+int    PipPoint, PipPoints;                                          // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
+double TickSize;                                                     // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
+string PriceFormat;                                                  // Preisformat des aktuellen Symbols für NumberToStr()
+int    Tick, Ticks;
+int    ValidBars;
+int    ChangedBars;
+
+
+string objects[];                                                    // Namen der Objekte, die mit Beenden des Programms automatisch entfernt werden
+
+
 // Special constants
 #define NULL                     0
 #define INT_MIN         0x80000000           // kleinster Integer-Value: -2147483648
@@ -630,33 +658,6 @@
 #define BAR_H                                   2
 #define BAR_C                                   3
 #define BAR_V                                   4
-
-
-// globale Variablen, stehen überall zur Verfügung
-string __NAME__;                                                     // Name des aktuellen MQL-Programms
-int    __WHEREAMI__;                                                 // ID der vom Terminal momentan ausgeführten Basisfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool   __LOG = true;
-bool   __LOG_INSTANCE_ID;
-bool   __LOG_PER_INSTANCE;
-bool   __STATUS__HISTORY_UPDATE;                                     // History-Update wurde getriggert
-bool   __STATUS__INVALID_INPUT;                                      // ungültige Parametereingabe im Input-Dialog
-bool   __STATUS__RELAUNCH_INPUT;                                     // Anforderung, den Input-Dialog zu laden
-bool   __STATUS__CANCELLED;                                          // Programmausführung durch Benutzer-Dialog abgebrochen
-
-int    prev_error = NO_ERROR;                                        // der letzte Fehler des vorherigen start()-Aufrufs
-int    last_error = NO_ERROR;                                        // der letzte Fehler des aktuellen start()-Aufrufs
-
-double Pip, Pips;                                                    // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
-int    PipDigits;                                                    // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
-int    PipPoint, PipPoints;                                          // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
-double TickSize;                                                     // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
-string PriceFormat;                                                  // Preisformat des aktuellen Symbols für NumberToStr()
-int    Tick, Ticks;
-int    ValidBars;
-int    ChangedBars;
-
-
-string objects[];                                                    // Namen der Objekte, die mit Beenden des Programms automatisch entfernt werden
 
 
 /**
