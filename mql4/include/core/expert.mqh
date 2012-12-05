@@ -151,7 +151,7 @@ int start() {
       static datetime lastTime;
       if (TimeCurrent() < lastTime) {
          __STATUS__CANCELLED = true;
-         return(catch("start()   Time is running backward here:   current tick='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'   last tick='"+ TimeToStr(lastTime, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+         return(catch("start()   Time is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'", ERR_RUNTIME_ERROR));
       }
       lastTime = TimeCurrent();
    }
@@ -160,7 +160,8 @@ int start() {
    int error;
 
    Tick++; Ticks = Tick;
-   ValidBars = IndicatorCounted();
+   ValidBars   = -1;
+   ChangedBars = -1;
 
 
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
@@ -176,13 +177,10 @@ int start() {
          }
       }
       last_error = NO_ERROR;                                                  // init() war erfolgreich
-      ValidBars  = 0;
    }
    else {
       prev_error = last_error;                                                // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
-      if (prev_error == ERR_TERMINAL_NOT_YET_READY)
-         ValidBars = 0;                                                       // falls das Terminal beim vorherigen start()-Aufruf noch nicht bereit war
    }
    __WHEREAMI__ = FUNC_START;
 
@@ -201,16 +199,12 @@ int start() {
    }
 
 
-   // (4) ChangedBars berechnen
-   ChangedBars = Bars - ValidBars;
-
-
-   // (5) stdLib benachrichtigen
+   // (4) stdLib benachrichtigen
    if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (6) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
+   // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
       error = NO_ERROR;
       chartInfo.positionChecked = false;
@@ -225,17 +219,14 @@ int start() {
    }
 
 
-   // (8) Main-Funktion aufrufen
-   error = onTick();
+   // (6) Main-Funktion aufrufen und auswerten
+   onTick();
 
-
-   // (9) Fehlerbehandlung
-   if (error != NO_ERROR)
+   if (last_error != NO_ERROR)
       if (IsTesting())
          Tester.Stop();
 
-
-   return(error);
+   return(last_error);
 }
 
 

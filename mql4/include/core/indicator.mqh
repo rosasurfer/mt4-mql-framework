@@ -131,7 +131,7 @@ int start() {
    ValidBars = IndicatorCounted();
 
 
-   // (1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
+   // (1.1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
          if (last_error != ERR_TERMINAL_NOT_YET_READY)                           // init() ist mit Fehler zurückgekehrt
@@ -145,9 +145,7 @@ int start() {
       last_error = NO_ERROR;                                                     // init() war erfolgreich
       ValidBars  = 0;
    }
-
-
-   // (2) Aufruf nach Tick
+   // (1.2) Aufruf nach Tick
    else {
       prev_error = last_error;
       last_error = NO_ERROR;
@@ -159,43 +157,41 @@ int start() {
       if      (__STATUS__HISTORY_INSUFFICIENT          ) ValidBars = 0;
    }
 
+
+   // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
+   if (Bars == 0) {
+      debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+   }
+
+   /*
+   // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
+   if (ArraySize(buffer) == 0)
+      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));                          // kann bei Terminal-Start auftreten
+   */
+
    __WHEREAMI__                   = FUNC_START;
    __STATUS__HISTORY_UPDATE       = false;
    __STATUS__HISTORY_INSUFFICIENT = false;
 
 
-   // (3) bei Bedarf Input-Dialog aufrufen
+   // (4) ChangedBars berechnen
+   ChangedBars = Bars - ValidBars;
+
+
+   // (5) stdLib benachrichtigen
+   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
+      return(SetLastError(stdlib_PeekLastError()));
+
+
+   // (6) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
       return(start.RelaunchInputDialog());
    }
 
 
-   // (4) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (Bars == 0) {
-      debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
-   }
-
-
-   /*
-   // (5) Werden Zeichenpuffer verwendet (indicator_buffers > 0), muß deren Initialisierung überprüft werden.
-   //     Da die Namen unbekannt sind, kann dies erst in onTick() erfolgen.
-   if (ArraySize(buffer) == 0)
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));                          // kann bei Terminal-Start auftreten
-   */
-
-
-   // (6) ChangedBars berechnen
-   ChangedBars = Bars - ValidBars;
-
-
-   // (7) stdLib benachrichtigen
-   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError()));
-
-
-   // (8) Main-Funktion aufrufen
+   // (7) Main-Funktion aufrufen und auswerten
    onTick();
 
    if      (last_error == ERR_HISTORY_UPDATE      ) __STATUS__HISTORY_UPDATE       = true;

@@ -87,36 +87,32 @@ int init() {
  *       3) In Scripten ist ERR_TERMINAL_NOT_YET_READY ein fataler Fehler.
  */
 int start() {
-   if (__STATUS__CANCELLED || IsLastError())
+   if (__STATUS__CANCELLED || IsLastError())                                  // init()-Fehler abfangen
       return(last_error);
 
    Tick++; Ticks = Tick;
-   ValidBars = IndicatorCounted();
+   ValidBars   = -1;
+   ChangedBars = -1;
 
 
-   // (1) Prüfen, ob wir aus init() kommen
-   if (__WHEREAMI__ == FUNC_INIT)                                             // init() war immer erfolgreich
-      ValidBars = 0;
+   // (1) init() war immer erfolgreich
    __WHEREAMI__ = FUNC_START;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0)                                                             // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start()   Bars = 0", ERR_TERMINAL_NOT_YET_READY));
+      return(catch("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)", ERR_TERMINAL_NOT_YET_READY));
 
 
-   // (3) ChangedBars berechnen
-   ChangedBars = Bars - ValidBars;
+   // (3) stdLib benachrichtigen
+   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
+      return(SetLastError(stdlib_PeekLastError()));
 
 
-   // (4) stdLib benachrichtigen
-   int error = stdlib_start(Tick, ValidBars, ChangedBars);
-   if (IsError(error))
-      return(SetLastError(error));
+   // (4) Main-Funktion aufrufen
+   onStart();
 
-
-   // (7) Main-Funktion aufrufen
-   return(onStart());
+   return(last_error);
 }
 
 
