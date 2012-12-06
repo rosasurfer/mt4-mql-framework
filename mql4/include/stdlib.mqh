@@ -227,7 +227,7 @@
    int      stdlib_PeekLastError();
 
 
-   // Eventlistener, können bei Verwendung im Programm überschrieben werden
+   // Eventlistener, *können* im Programm durch effektivere Versionen überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -241,7 +241,7 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // abstrakte Eventhandler, müssen bei Verwendung im Programm implementiert werden
+   // abstrakte Eventhandler, *müssen* bei Verwendung des jeweiligen Eventlisteners im Programm implementiert werden
    int      onBarOpen        (int    data[]);
    int      onAccountChange  (int    data[]);
    int      onAccountPayment (int    data[]);
@@ -576,7 +576,7 @@
 
    // erweiterte stdlib Basisfunktionen
    int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
-   int      stdlib_start(int tick, int validBars, int changedBars);
+   int      stdlib_start(int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 
 

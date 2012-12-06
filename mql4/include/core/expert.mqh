@@ -160,8 +160,10 @@ int start() {
    int error;
 
    Tick++; Ticks = Tick;
-   ValidBars   = -1;
-   ChangedBars = -1;
+   Tick.prevTime = Tick.Time;
+   Tick.Time     = TimeCurrent();                                             // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
+   ValidBars     = -1;
+   ChangedBars   = -1;
 
 
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
@@ -200,7 +202,7 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
+   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 

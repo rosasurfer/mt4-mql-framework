@@ -132,17 +132,36 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
  * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks kann die Library später erkennen,
  * ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
  *
- * @param  int tick        - Tickzähler (synchronisiert den Tickzähler des aufrufenden Programms mit dem der Library)
- * @param  int validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
- * @param  int changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
+ * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
+ * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
+ * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
+ * @param  int      changedBars - Anzahl der seit dem letzten Tick geänderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
  *
  * @return int - Fehlerstatus
  */
-int stdlib_start(int tick, int validBars, int changedBars) {
+int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
    __WHEREAMI__ = FUNC_START;
-   Tick         = tick; Ticks = Tick;                                // der konkrete Wert hat keine Bedeutung
-   ValidBars    = validBars;
-   ChangedBars  = changedBars;
+
+   if (Tick != tick) {
+      // (1) erster Aufruf bei erstem Tick ...
+      // vorher: Tick.prevTime = 0;                danach: Tick.prevTime = 0;
+      //         Tick.Time     = 0;                        Tick.Time     = time[0];
+      // --------------------------------------------------------------------------
+      // (2) ... oder erster Aufruf bei weiterem Tick
+      // vorher: Tick.prevTime = time[2]|0;        danach: Tick.prevTime = time[1];
+      //         Tick.Time     = time[1];                  Tick.Time     = time[0];
+
+      Tick.prevTime = Tick.Time;
+      Tick.Time     = tickTime;                                      // TODO: sicherstellen, daß Tick/Tick.Time/Tick.prevTime in allen Szenarien statisch sind
+   }
+   else {
+      // (3) erneuter Aufruf während desselben Ticks (alles unverändert)
+   }
+
+   Tick        = tick; Ticks = Tick;                                 // der konkrete Wert hat keine Bedeutung
+   ValidBars   = validBars;
+   ChangedBars = changedBars;
+
    return(NO_ERROR);
 }
 
@@ -157,7 +176,7 @@ int stdlib_start(int tick, int validBars, int changedBars) {
  *
  *
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
- *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
+ *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -5691,7 +5710,7 @@ datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*
 /**
  * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt.
  *
- * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (es sind mehrere möglich)
  * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: aktuelle Chartperiode)
  *
  * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
@@ -5723,6 +5742,9 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          else {
             lastResult = false;
          }
+      }
+      else {
+         lastResult = IsTesting();                                   // nur für EA's: Testbeginn ist BarOpen
       }
       lastOpenTime = Time[0];
       lastTick     = Tick;
@@ -5769,7 +5791,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int error = GetLastError();
    if (IsError(error))
       return(_false(catch("EventListener.BarOpen()", error)));
-   return(ArraySize(results) != 0);
+   return(ArraySize(results));                                       // (bool) int
 }
 
 

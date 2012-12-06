@@ -6,7 +6,7 @@
 
 
 extern string ___________________________;
-extern int    __iCustom_DO_NOT_MODIFY__;
+extern int    __iCustom__;
 
 
 /**
@@ -128,7 +128,9 @@ int start() {
    int error;
 
    Tick++; Ticks = Tick;
-   ValidBars = IndicatorCounted();
+   Tick.prevTime = Tick.Time;
+   Tick.Time     = TimeCurrent();                                                // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
+   ValidBars     = IndicatorCounted();
 
 
    // (1.1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
@@ -180,7 +182,7 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
+   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 
@@ -296,12 +298,12 @@ bool IsLibrary() {
 int SetLastError(int error, int param=NULL) {
    last_error = error;
 
-   if (__iCustom_DO_NOT_MODIFY__ != 0) {                             // Fehler an Aufrufer weiterreichen
-      /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom_DO_NOT_MODIFY__);
+   if (__iCustom__ != 0) {                                           // Fehler an Aufrufer weiterreichen
+      /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom__);
 
       if (IsError(error)) {
-         __iCustom_DO_NOT_MODIFY__ = NULL;
-         last_error = error;
+         __iCustom__ = NULL;
+         last_error  = error;
       }
       else {
          ic[IC_LAST_ERROR] = last_error;

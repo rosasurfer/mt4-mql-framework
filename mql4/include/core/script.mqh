@@ -91,8 +91,10 @@ int start() {
       return(last_error);
 
    Tick++; Ticks = Tick;
-   ValidBars   = -1;
-   ChangedBars = -1;
+   Tick.prevTime = Tick.Time;
+   Tick.Time     = TimeCurrent();
+   ValidBars     = -1;
+   ChangedBars   = -1;
 
 
    // (1) init() war immer erfolgreich
@@ -105,7 +107,7 @@ int start() {
 
 
    // (3) stdLib benachrichtigen
-   if (stdlib_start(Tick, ValidBars, ChangedBars) != NO_ERROR)
+   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_PeekLastError()));
 
 
