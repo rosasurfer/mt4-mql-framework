@@ -4981,7 +4981,7 @@ string StringRight(string value, int n) {
  *
  * @return string
  */
-string StringSubstrFix(string object, int start, int length=EMPTY_VALUE) {
+string StringSubstrFix(string object, int start, int length=INT_MAX) {
    if (length == 0)
       return("");
 
@@ -9608,7 +9608,7 @@ string NumberToStr(double number, string mask) {
    if (number == EMPTY_VALUE)
       number = 0;
 
-   // === Beginn Maske parsen ===
+   // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
 
    // zu allererst Separatorenformat erkennen
@@ -9620,7 +9620,7 @@ string NumberToStr(double number, string mask) {
       }
       int sepPos = StringFind(mask, ",");
    bool separators = (sepPos  > -1);
-      if (separators) if (sepPos+1 < maskLen) {
+      if (separators) /*&&*/ if (sepPos+1 < maskLen) {
          sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
          mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
       }
@@ -9640,7 +9640,7 @@ string NumberToStr(double number, string mask) {
    bool nDigit;
    for (int i=0; i < dotPos; i++) {
       char = StringGetChar(mask, i);
-      if ('0' <= char) if (char <= '9') {    // (0 <= char && char <= 9)
+      if ('0' <= char) /*&&*/ if (char <= '9') {
          nLeft = 10*nLeft + char-'0';
          nDigit = true;
       }
@@ -9653,7 +9653,7 @@ string NumberToStr(double number, string mask) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
          char = StringGetChar(mask, i);
-         if ('0' <= char && char <= '9') {   // (0 <= char && char <= 9)
+         if ('0' <= char && char <= '9') {
             nRight = 10*nRight + char-'0';
             nDigit = true;
          }
@@ -9681,16 +9681,16 @@ string NumberToStr(double number, string mask) {
    }
    else if (number > 0) {
       int pos = StringFind(mask, "+");
-      if (-1 < pos) if (pos < dotPos)        // (-1 < pos && pos < dotPos)
+      if (-1 < pos) /*&&*/ if (pos < dotPos)
          leadSign = "+";
    }
 
    // übrige Modifier
    bool round = (StringFind(mask, "R")  > -1);
-   //
-   // === Ende Maske parsen ===
+   // --- Ende Maske parsen ---------------------------
 
-   // === Beginn Wertverarbeitung ===
+
+   // --- Beginn Wertverarbeitung ---------------------
    // runden
    if (round)
       number = MathRoundFix(number, nRight);
