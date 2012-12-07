@@ -161,7 +161,7 @@ int onTick() {
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
 
 
-   debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
+   //debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
 
    // (2) Bars neuberechnen
