@@ -160,6 +160,7 @@ int onTick() {
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
 
+
    debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
 

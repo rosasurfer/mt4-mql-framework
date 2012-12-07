@@ -401,5 +401,5 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 
    if (IsError(catch("EventListener.BarOpen()")))
       return(false);
-   return(ArraySize(results));                                    // (bool) int
+   return(ArraySize(results));                                       // (bool) int
 }

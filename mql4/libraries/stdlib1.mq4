@@ -61,7 +61,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
       if (IsTesting())
-   __LOG = Tester.IsLogging();
+   __LOG = Tester.IsLogging();                                                // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
 
 
    // (1) globale Variablen re-initialisieren
@@ -479,14 +479,23 @@ bool IndicatorIsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("IndicatorIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
+   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
+   if (resolved)
       return(result);
 
-   if (IsIndicator())
-      result = GetCurrentThreadId() != GetUIThreadId();
+   if (IsIndicator()) {
+      if (IsTesting()) {                                             // Indikator läuft in EA::iCustom() im Tester
+         result = true;
+      }
+      else if (GetCurrentThreadId() != GetUIThreadId()) {            // Indikator läuft im Testchart
+         result = true;
+      }
+      else {
+         result = false;                                             // Indikator läuft im Hauptchart
+      }                                                              // TODO: !!! Falsch für init()/deinit() im Testchart
+   }
 
-   done = true;
+   resolved = true;
    return(result);
 }
 
@@ -500,8 +509,8 @@ bool ScriptIsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("ScriptIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
+   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
+   if (resolved)
       return(result);
 
    if (IsScript()) {
@@ -511,7 +520,7 @@ bool ScriptIsTesting() {
       result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
    }
 
-   done = true;
+   resolved = true;
    return(result);
 }
 
@@ -525,15 +534,15 @@ bool This.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool result, done;                                         // ohne Initializer (@see MQL.doc)
-   if (done)
+   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
+   if (resolved)
       return(result);
 
    if      (   IsExpert()) result =          IsTesting();
    else if (IsIndicator()) result = IndicatorIsTesting();
    else                    result =    ScriptIsTesting();
 
-   done = true;
+   resolved = true;
    return(result);
 }
 
@@ -623,9 +632,9 @@ bool AquireLock(string mutexName) {
       }
 
       //debug("AquireLock()   couldn't get lock for mutex \""+ mutexName +"\", retrying...");
-      if      (IsScript())                 Sleep(100);
-      else if (IsExpert() && !IsTesting()) Sleep(100);
-      else                                 SleepEx(100, true);       // Expert im Tester oder Indicator
+
+      if (IsTesting() || IsIndicator()) SleepEx(100, true);          // Expert oder Indicator im Tester
+      else                              Sleep(100);
    }
 
    return(_false(catch("AquireLock(7)", ERR_WRONG_JUMP)));
@@ -716,7 +725,7 @@ int Chart.Expert.Properties() {
 
 
 /**
- * Ob der Tester momentan im Pause-Modus läuft. Der Aufruf ist nur im Tester möglich.
+ * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
  *
  * @return bool
  */
@@ -726,18 +735,14 @@ bool Tester.IsPaused() {
    bool testerStopped;
    int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
 
-   if (IsExpert()) {
-      if (!IsVisualMode())
-         return(false);
-      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;
-   }
-   else if (IsIndicator()) {
-      // visualMode = true;
-      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;                                    // Indicator::deinit() wird zeitgleich zu EA:deinit() ausgeführt,
-   }                                                                                               // der EA stoppt(e) also auch
-   else /*_Script_*/ {
+   if (IsScript()) {
       // visualMode = true;
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
+   }
+   else {
+      if (!IsVisualMode())                                                                         // EA/Indikator aus iCustom()
+         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA:deinit() ausgeführt,
+      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;                                    // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -7876,7 +7881,7 @@ string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
 
 
 /**
- * Gibt das Handle des MetaTrader-Hauptfensters zurück.
+ * Gibt das Handle des Terminal-Hauptfensters zurück.
  *
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */

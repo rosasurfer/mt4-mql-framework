@@ -677,7 +677,8 @@ int start.RelaunchInputDialog() {
          error = Chart.Expert.Properties();
    }
    else if (IsIndicator()) {
-      //error = Chart.Indicator.Properties();                      // TODO: implementieren
+      //if (!IsTesting())
+      //   error = Chart.Indicator.Properties();                     // TODO: implementieren
    }
 
    if (IsError(error))
@@ -900,7 +901,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
       }
       else if (!alerted) {
-         // auﬂerhalb des Testers
+         // EA auﬂerhalb des Testers, Script/Indikator im oder auﬂerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
       SetLastError(error);
