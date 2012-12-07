@@ -148,12 +148,13 @@ int start() {
 
    // im Tester "time machine bug" abfangen
    if (IsTesting()) {
-      static datetime lastTime;
-      if (TimeCurrent() < lastTime) {
+      static datetime time, lastTime;
+      time = TimeCurrent();
+      if (time < lastTime) {
          __STATUS__CANCELLED = true;
-         return(catch("start()   Time is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(TimeCurrent(), TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+         return(catch("start()   Time is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
       }
-      lastTime = TimeCurrent();
+      lastTime = time;
    }
 
 
@@ -161,7 +162,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = TimeCurrent();                                             // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                           // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
    ValidBars     = -1;
    ChangedBars   = -1;
 
@@ -339,4 +340,54 @@ bool IsLibrary() {
 int SetLastError(int error, int param=NULL) {
    last_error = error;
    return(error);
+}
+
+
+/**
+ * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt.
+ *
+ * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (es sind mehrere möglich)
+ * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
+ *
+ * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
+ */
+bool EventListener.BarOpen(int results[], int flags=NULL) {
+   if (ArraySize(results) != 0)
+      ArrayResize(results, 0);
+
+   if (flags == NULL)
+      flags = PeriodFlag(Period());
+
+   // (1) erster Aufruf bei erstem Tick ...
+   //     Tick.prevTime = 0;
+   //     Tick.Time     = time[0];
+   // --------------------------------------------
+   // (2) ... oder erster Aufruf bei weiterem Tick
+   //     Tick.prevTime = time[1];
+   //     Tick.Time     = time[0];
+
+   int periods    [] = {  PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1}, sizeOfPeriods=8;
+   int periodFlags[] = {F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1};  // PERIOD_MN1 kann ignoriert werden
+   datetime bar.openTimes[129], bar.closeTimes[129];                                                                                // F_PERIOD_W1 = 128 (Maximum)
+
+   for (int pFlag, i=0; i < sizeOfPeriods; i++) {
+      pFlag = periodFlags[i];
+      if (flags & pFlag != 0) {
+         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen und vorherigen Tick auswerten
+         if (Tick.Time >= bar.closeTimes[pFlag]) {
+            bar.openTimes [pFlag] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
+            bar.closeTimes[pFlag] = bar.openTimes[pFlag] +  (periods[i]*MINUTES);
+            if (Tick.prevTime < bar.openTimes[pFlag]) {
+               if (Tick.prevTime != 0) {
+                  ArrayPushInt(results, periods[i]);
+                  //debug("EventListener.BarOpen()   event("+ PeriodToStr(periods[i]) +")=1   tick="+ TimeToStr(Tick.Time, TIME_FULL));
+               }
+            }
+         }
+      }
+   }
+
+   if (IsError(catch("EventListener.BarOpen()")))
+      return(false);
+   return(ArraySize(results));                                    // (bool) int
 }

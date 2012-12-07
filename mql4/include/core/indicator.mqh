@@ -129,7 +129,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = TimeCurrent();                                                // TODO: sicherstellen, daﬂ Tick/Tick.Time in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                              // TODO: sicherstellen, daﬂ Tick/Tick.Time in allen Szenarien statisch sind
    ValidBars     = IndicatorCounted();
 
 

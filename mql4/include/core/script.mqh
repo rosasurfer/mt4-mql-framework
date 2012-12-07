@@ -92,7 +92,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = TimeCurrent();
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
    ChangedBars   = -1;
 

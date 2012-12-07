@@ -150,12 +150,11 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
       // (2) ... oder erster Aufruf bei weiterem Tick
       // vorher: Tick.prevTime = time[2]|0;        danach: Tick.prevTime = time[1];
       //         Tick.Time     = time[1];                  Tick.Time     = time[0];
-
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;                                      // TODO: sicherstellen, daﬂ Tick/Tick.Time/Tick.prevTime in allen Szenarien statisch sind
    }
    else {
-      // (3) erneuter Aufruf w‰hrend desselben Ticks (alles unver‰ndert)
+      // (3) erneuter Aufruf w‰hrend desselben Ticks (alles bleibt unver‰ndert)
    }
 
    Tick        = tick; Ticks = Tick;                                 // der konkrete Wert hat keine Bedeutung
@@ -5778,14 +5777,14 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 
    // TODO: verbleibende Timeframe-Flags verarbeiten
    /*
-   if (flags & F_PERIOD_M5  != 0) ArrayPushInt(results, F_PERIOD_M5 );
-   if (flags & F_PERIOD_M15 != 0) ArrayPushInt(results, F_PERIOD_M15);
-   if (flags & F_PERIOD_M30 != 0) ArrayPushInt(results, F_PERIOD_M30);
-   if (flags & F_PERIOD_H1  != 0) ArrayPushInt(results, F_PERIOD_H1 );
-   if (flags & F_PERIOD_H4  != 0) ArrayPushInt(results, F_PERIOD_H4 );
-   if (flags & F_PERIOD_D1  != 0) ArrayPushInt(results, F_PERIOD_D1 );
-   if (flags & F_PERIOD_W1  != 0) ArrayPushInt(results, F_PERIOD_W1 );
-   if (flags & F_PERIOD_MN1 != 0) ArrayPushInt(results, F_PERIOD_MN1);
+   if (flags & F_PERIOD_M5  != 0) ArrayPushInt(results, PERIOD_M5 );
+   if (flags & F_PERIOD_M15 != 0) ArrayPushInt(results, PERIOD_M15);
+   if (flags & F_PERIOD_M30 != 0) ArrayPushInt(results, PERIOD_M30);
+   if (flags & F_PERIOD_H1  != 0) ArrayPushInt(results, PERIOD_H1 );
+   if (flags & F_PERIOD_H4  != 0) ArrayPushInt(results, PERIOD_H4 );
+   if (flags & F_PERIOD_D1  != 0) ArrayPushInt(results, PERIOD_D1 );
+   if (flags & F_PERIOD_W1  != 0) ArrayPushInt(results, PERIOD_W1 );
+   if (flags & F_PERIOD_MN1 != 0) ArrayPushInt(results, PERIOD_MN1);
    */
 
    int error = GetLastError();
@@ -6704,7 +6703,7 @@ bool IsConfigKey(string section, string key) {
  */
 int GetFXTToGMTOffset(datetime fxtTime) {
    if (fxtTime < 0) {
-      catch("GetFXTToGMTOffset()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetFXTToGMTOffset()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
