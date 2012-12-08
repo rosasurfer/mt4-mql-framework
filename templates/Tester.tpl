@@ -8740,18 +8740,5 @@ value_0=1.680000
 </object>
 </indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=Moving Average.extern
-flags=339
-window_num=0
-<inputs>
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-
 </window>
 </chart>

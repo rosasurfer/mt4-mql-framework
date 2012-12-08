@@ -7,19 +7,18 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                                  // averaging period
-extern string MA.Timeframe      = "";                                   // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
-extern string MA.Method         = "SMA";                                // averaging method
+extern int    MA.Periods        = 200;                            // averaging period
+extern string MA.Timeframe      = "";                             // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string MA.Method         = "SMA";                          // averaging method
 extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA";
-extern string AppliedPrice      = "Close";                              // price used for MA calculation
+extern string AppliedPrice      = "Close";                        // price used for MA calculation
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern int    Max.Values        = 2000;                                 // maximum number of indicator values to display: -1 = all
+extern int    Max.Values        = 2000;                           // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;                           // Farben werden hier konfiguriert, um vom Code geändert werden zu können
+extern color  Color.UpTrend     = DodgerBlue;                     // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend   = Orange;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,10 +35,10 @@ extern color  Color.DownTrend   = Orange;
 #property indicator_width4  2
 
 
-double bufferMA       [];                                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                                               // Trend: +1/-1                                (im Chart unsichtbar)
-double bufferUpTrend  [];                                               // UpTrend-Linie                               (sichtbar)
-double bufferDownTrend[];                                               // DownTrendTrend-Linie                        (sichtbar)
+double bufferMA       [];                                         // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+double bufferTrend    [];                                         // Trend: +1/-1                                (im Chart unsichtbar)
+double bufferUpTrend  [];                                         // UpTrend-Linie                               (sichtbar)
+double bufferDownTrend[];                                         // DownTrendTrend-Linie                        (sichtbar)
 
 int    ma.periods;
 int    ma.method;
@@ -53,36 +52,24 @@ string legendLabel, indicatorName;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // -- Beginn Validierung ----------------------------------------
-   // Periodenanzahl
-   if (MA.Periods < 2)
-      return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   // (1) Validierung
+   // MA.Periods
+   if (MA.Periods < 2)     return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    ma.periods = MA.Periods;
 
-   // Timeframe
+   // MA.Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int ma.timeframe = Period();
    else                        ma.timeframe = PeriodToId(MA.Timeframe);
-   if (ma.timeframe == -1)
-      return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+   if (ma.timeframe == -1) return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
 
-   // Periodenanzahl auf aktuellen Timeframe umrechnen
-   if (ma.timeframe == Period()) {
-      ma.periods = MA.Periods;
-   }
-   else {
-      double minutes = ma.timeframe * MA.Periods;                       // Timeframe * Anzahl Bars = Range in Minuten
-      ma.periods = Round(minutes/Period());
-   }
-
-   // MA-Methode
+   // MA.Method
    MA.Method = StringToUpper(StringTrim(MA.Method));
    if      (MA.Method == "SMA" ) ma.method = MODE_SMA;
    else if (MA.Method == "EMA" ) ma.method = MODE_EMA;
    else if (MA.Method == "SMMA") ma.method = MODE_SMMA;
    else if (MA.Method == "LWMA") ma.method = MODE_LWMA;
-   else
-      return(catch("onInit(3)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
+   else                    return(catch("onInit(3)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
 
    // AppliedPrice
    string char = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
@@ -93,17 +80,26 @@ int onInit() {
    else if (char == "M") appliedPrice = PRICE_MEDIAN;
    else if (char == "T") appliedPrice = PRICE_TYPICAL;
    else if (char == "W") appliedPrice = PRICE_WEIGHTED;
-   else
-      return(catch("onInit(4)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
-   // -- Ende Validierung ------------------------------------------
+   else                    return(catch("onInit(4)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
-   // Buffer zuweisen
-   SetIndexBuffer(0, bufferMA       );                                  // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-   SetIndexBuffer(1, bufferTrend    );                                  // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
-   SetIndexBuffer(2, bufferUpTrend  );                                  // UpTrend-Linie                               (sichtbar)
-   SetIndexBuffer(3, bufferDownTrend);                                  // DownTrendTrend-Linie                        (sichtbar)
 
-   // Anzeigeoptionen
+   // (2) Periodenanzahl auf aktuellen Timeframe umrechnen
+   if (ma.timeframe == Period()) {
+      ma.periods = MA.Periods;
+   }
+   else {
+      double minutes = ma.timeframe * MA.Periods;                    // Timeframe * Anzahl Bars = Range in Minuten
+      ma.periods = Round(minutes/Period());
+   }
+
+
+   // (3.1) Bufferverwaltung
+   SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+   SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
+   SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie                               (sichtbar)
+   SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
+
+   // (3.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
    if (MA.Timeframe != "")          strTimeframe    = StringConcatenate("x", MA.Timeframe);
    if (appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(appliedPrice));
@@ -116,19 +112,34 @@ int onInit() {
    SetIndexLabel(3, NULL);
    IndicatorDigits(Digits);
 
-   // Legende
-   legendLabel = CreateLegendLabel(indicatorName);
-   ArrayPushString(objects, legendLabel);
-
-   // Zeichenoptionen
-   int startDraw = Max(MA.Periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   // (3.3) Zeichenoptionen
+   int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
    SetIndexDrawBegin(3, startDraw);
-   SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
+
+   // (3.4) Styles
+   SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
+
+
+   // (4) Chart-Legende erzeugen
+   legendLabel = CreateLegendLabel(indicatorName);
+   ArrayPushString(objects, legendLabel);
 
    return(catch("onInit(5)"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   RemoveChartObjects(objects);
+   RepositionLegend();
+   return(catch("onDeinit()"));
 }
 
 
@@ -168,7 +179,7 @@ int onTick() {
       // der eigentliche Moving Average
       bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
 
-      // Trend coloring (Reversal-Glättung um 1 Point durch Normalisierung)
+      // Trend coloring (minimalste Reversal-Glättung um 1 Point durch Normalisierung)
       curValue  = NormalizeDouble(bufferMA[bar  ], Digits);
       prevValue = NormalizeDouble(bufferMA[bar+1], Digits);
 
@@ -220,21 +231,20 @@ int onTick() {
    lastTrend = bufferTrend[0];
 
 
-   // (3.2) Legende aktualisieren: angezeigten Wert
-   double value = NormalizeDouble(bufferMA[0], Digits);
-   if (NE(value, lastValue)) {
+   // (3.2) Wert in Legende aktualisieren
+   if (NE(curValue, lastValue)) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorName, "    ", NumberToStr(value, PriceFormat)),
+                    StringConcatenate(indicatorName, "    ", NumberToStr(curValue, PriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
-   lastValue = value;
+   lastValue = curValue;
 
    return(catch("onTick(2)"));
 }
 
 
 /**
- * Indikator-Styles setzen. Workaround um die Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
+ * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
  * in der Regel in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
@@ -242,19 +252,4 @@ void SetIndicatorStyles() {
    SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(3, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-}
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   RemoveChartObjects(objects);
-   RepositionLegend();
-   return(catch("onDeinit()"));
 }
