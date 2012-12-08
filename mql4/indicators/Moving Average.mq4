@@ -11,15 +11,15 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                // averaging period
-extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
-extern string MA.Method         = "SMA";              // averaging method
+extern int    MA.Periods        = 200;                                  // averaging period
+extern string MA.Timeframe      = "";                                   // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string MA.Method         = "SMA";                                // averaging method
 extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA";
-extern string AppliedPrice      = "Close";            // price used for MA calculation
+extern string AppliedPrice      = "Close";                              // price used for MA calculation
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
+extern int    Max.Values        = 2000;                                 // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;         // Farben werden hier konfiguriert, um vom Code geändert werden zu können
+extern color  Color.UpTrend     = DodgerBlue;                           // Farben werden hier konfiguriert, um vom Code geändert werden zu können
 extern color  Color.DownTrend   = Orange;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,10 +36,10 @@ extern color  Color.DownTrend   = Orange;
 #property indicator_width4  2
 
 
-double bufferMA       [];                             // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                             // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
-double bufferUpTrend  [];                             // UpTrend-Linie                               (sichtbar)
-double bufferDownTrend[];                             // DownTrendTrend-Linie                        (sichtbar)
+double bufferMA       [];                                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+double bufferTrend    [];                                               // Trend: +1/-1                                (im Chart unsichtbar)
+double bufferUpTrend  [];                                               // UpTrend-Linie                               (sichtbar)
+double bufferDownTrend[];                                               // DownTrendTrend-Linie                        (sichtbar)
 
 int    ma.periods;
 int    ma.method;
@@ -71,7 +71,7 @@ int onInit() {
       ma.periods = MA.Periods;
    }
    else {
-      double minutes = ma.timeframe * MA.Periods;     // Timeframe * Anzahl Bars = Range in Minuten
+      double minutes = ma.timeframe * MA.Periods;                       // Timeframe * Anzahl Bars = Range in Minuten
       ma.periods = Round(minutes/Period());
    }
 
@@ -98,10 +98,10 @@ int onInit() {
    // -- Ende Validierung ------------------------------------------
 
    // Buffer zuweisen
-   SetIndexBuffer(0, bufferMA       );                // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-   SetIndexBuffer(1, bufferTrend    );                // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
-   SetIndexBuffer(2, bufferUpTrend  );                // UpTrend-Linie                               (sichtbar)
-   SetIndexBuffer(3, bufferDownTrend);                // DownTrendTrend-Linie                        (sichtbar)
+   SetIndexBuffer(0, bufferMA       );                                  // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+   SetIndexBuffer(1, bufferTrend    );                                  // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
+   SetIndexBuffer(2, bufferUpTrend  );                                  // UpTrend-Linie                               (sichtbar)
+   SetIndexBuffer(3, bufferDownTrend);                                  // DownTrendTrend-Linie                        (sichtbar)
 
    // Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -126,7 +126,7 @@ int onInit() {
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
    SetIndexDrawBegin(3, startDraw);
-   SetIndicatorStyles();                              // Workaround um diverse Terminalbugs (siehe dort)
+   SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
 
    return(catch("onInit(5)"));
 }
@@ -159,8 +159,6 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
-
-   //debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
    double curValue, prevValue;
 
