@@ -218,6 +218,7 @@ int onTick() {
          case PRICE_LOW:   for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
          default:          for (    i=0; i < MA.Periods; i++) iALMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
+      iALMA[bar] = NormalizeDouble(iALMA[bar], Digits);
 
       /**
        * Percentage-Filter für Reversal-Smoothing (NICHT verwenden!!!)

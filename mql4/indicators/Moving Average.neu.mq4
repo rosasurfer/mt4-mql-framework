@@ -160,27 +160,49 @@ int onTick() {
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
 
-
    //debug("onTick()   Bars="+ Bars +"   ChangedBars="+ ChangedBars +"   startBar="+ startBar);
 
+   double curValue, prevValue;
 
-   // (2) Bars neuberechnen
+
+   // (2) geänderte Bars (neu-)berechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
 
-      // Trend coloring
-      if (bufferMA[bar] > bufferMA[bar+1]) {                            // "Per Definition" gibt es keine Reversals und keinen ReversalFilter mehr.
-         bufferTrend  [bar] = 1;                                        // Für Smoothing ist statt dessen ein höherer Timeframe zu verwenden (was exakter
-         bufferUpTrend[bar] = bufferMA[bar];                            // und effektiver ist).
-         if (bufferTrend[bar+1] < 0)
-            bufferUpTrend[bar+1] = bufferMA[bar+1];
+      // Trend coloring (Reversal-Glättung um 1 Point durch Normalisierung)
+      curValue  = NormalizeDouble(bufferMA[bar  ], Digits);
+      prevValue = NormalizeDouble(bufferMA[bar+1], Digits);
+
+      if (curValue > prevValue) {
+         bufferTrend    [bar] = 1;
+         bufferUpTrend  [bar] = bufferMA[bar];
+         bufferDownTrend[bar] = EMPTY_VALUE;
+
+         if (bufferTrend[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
+         else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
       }
-      else {
+      else if (curValue < prevValue) {
          bufferTrend    [bar] = -1;
+         bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
-         if (bufferTrend[bar+1] > 0)
-            bufferDownTrend[bar+1] = bufferMA[bar+1];
+
+         if (bufferTrend[bar+1] > 0) bufferDownTrend[bar+1] = bufferMA[bar+1];
+         else                        bufferUpTrend  [bar+1] = EMPTY_VALUE;
+      }
+      else /*(curValue == prevValue)*/ {
+         bufferTrend[bar] = bufferTrend[bar+1];
+
+         if (bufferTrend[bar] > 0) {
+            bufferUpTrend  [bar  ] = bufferMA[bar];
+            bufferDownTrend[bar  ] = EMPTY_VALUE;
+            bufferDownTrend[bar+1] = EMPTY_VALUE;
+         }
+         else {
+            bufferUpTrend  [bar  ] = EMPTY_VALUE;
+            bufferDownTrend[bar  ] = bufferMA[bar];
+            bufferUpTrend  [bar+1] = EMPTY_VALUE;
+         }
       }
    }
    if (startBar < 0)                                                    // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
