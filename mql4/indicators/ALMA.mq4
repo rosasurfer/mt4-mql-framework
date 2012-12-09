@@ -28,7 +28,7 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                // averaging period
+extern string MA.Periods        = "200";              // averaging period
 extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
 extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
@@ -73,15 +73,40 @@ double wALMA[];                                       // Gewichtungen der einzel
  */
 int onInit() {
    // (1) Validierung
-   // MA.Periods
-   if (MA.Periods < 2)     return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
-   ma.periods = MA.Periods;
-
-   // MA.Timeframe
+   // MA.Timeframe (zuerst, da Gültigkeit von MA.Periods davon abhängt)
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int ma.timeframe = Period();
    else                        ma.timeframe = PeriodToId(MA.Timeframe);
-   if (ma.timeframe == -1) return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+   if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+
+   // MA.Periods
+   string strValue = StringTrim(MA.Periods);
+   if (!StringIsNumeric(strValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   double dValue = StrToDouble(strValue);
+   if (LT(dValue, 2))                  return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (NE(MathModFix(dValue, 0.5), 0)) return(catch("onInit(4)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   strValue = NumberToStr(dValue, ".+");
+   if (StringEndsWith(strValue, ".5")) {                             // gebrochene Perioden in ganze Bars umrechnen
+      switch (ma.timeframe) {
+         case PERIOD_M1 :
+         case PERIOD_M5 :
+         case PERIOD_M15:
+         case PERIOD_MN1:              return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+         case PERIOD_M30: { ma.periods = Round(dValue* 2); ma.timeframe = PERIOD_M15; break; }
+         case PERIOD_H1 : { ma.periods = Round(dValue* 2); ma.timeframe = PERIOD_M30; break; }
+         case PERIOD_H4 : { ma.periods = Round(dValue* 4); ma.timeframe = PERIOD_H1;  break; }
+         case PERIOD_D1 : { ma.periods = Round(dValue* 6); ma.timeframe = PERIOD_H4;  break; }
+         case PERIOD_W1 : { ma.periods = Round(dValue*30); ma.timeframe = PERIOD_H4;  break; }
+      }
+   }
+   else {
+      ma.periods = Round(dValue);
+   }
+   if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
+      double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
+      ma.periods = Round(minutes/Period());
+   }
+   MA.Periods = strValue;
 
    // AppliedPrice
    string char = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
@@ -95,24 +120,14 @@ int onInit() {
    else                    return(catch("onInit(3)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
 
-   // (2) Periodenanzahl auf aktuellen Timeframe umrechnen
-   if (ma.timeframe == Period()) {
-      ma.periods = MA.Periods;
-   }
-   else {
-      double minutes = ma.timeframe * MA.Periods;                    // Timeframe * Anzahl Bars = Range in Minuten
-      ma.periods = Round(minutes/Period());
-   }
-
-
-   // (3.1) Bufferverwaltung
+   // (2.1) Bufferverwaltung
    SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
    SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
    SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie                               (sichtbar)
    SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
 
 
-   // (3.2) Anzeigeoptionen
+   // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
    if (MA.Timeframe != "")          strTimeframe    = StringConcatenate("x", MA.Timeframe);
    if (appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(appliedPrice));
@@ -125,23 +140,23 @@ int onInit() {
    SetIndexLabel(3, NULL);
    IndicatorDigits(Digits);
 
-   // (3.3) Zeichenoptionen
+   // (2.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
    SetIndexDrawBegin(0, startDraw);
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
    SetIndexDrawBegin(3, startDraw);
 
-   // (3.4) Styles
+   // (2.4) Styles
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
 
 
-   // (4) Chart-Legende erzeugen
+   // (3) Chart-Legende erzeugen
    legendLabel = CreateLegendLabel(indicatorName);
    ArrayPushString(objects, legendLabel);
 
 
-   // (5) ALMA-Gewichtungen der einzelnen Bars berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
+   // (4) ALMA-Gewichtungen der einzelnen Bars berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
    if (ma.periods > 1) {                                             // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
       int    m = Round(GaussianOffset * (ma.periods-1));
