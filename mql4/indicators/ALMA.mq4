@@ -141,7 +141,7 @@ int onInit() {
    ArrayPushString(objects, legendLabel);
 
 
-   // (5) ALMA-Gewichtungen der einzelnen Bars berechnen
+   // (5) ALMA-Gewichtungen der einzelnen Bars berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
    if (ma.periods > 1) {                                             // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
       int    m = Round(GaussianOffset * (ma.periods-1));
