@@ -27,7 +27,6 @@
 #property stacksize 32768
 
 #include <core/define.mqh>
-int         __TYPE__ = T_LIBRARY;
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
@@ -43,12 +42,13 @@ int __DEINIT_FLAGS__[];
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
  * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  int    _iCustom           - Zeiger auf ICUSTOM-Struktur, falls das laufende Programm ein via iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Moduls
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
@@ -58,6 +58,7 @@ int stdlib_init(int type, string name, int whereami, int initFlags, int uninitia
    __TYPE__          |= type;
    __NAME__           = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__       = whereami;
+   __iCustom__        = _iCustom;
    __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
    __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
       if (IsTesting())

@@ -20,7 +20,6 @@
  * - Es gilt: 1.65 * stdDev(PRICE_CLOSE) entspricht ca. 1.4 * stdDev(PRICE_HIGH|PRICE_LOW) (Übereinstimmung von 90-95%)
  */
 #include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

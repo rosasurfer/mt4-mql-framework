@@ -9,7 +9,6 @@
  * letzte Version mit Performance-Display: v1.38
  */
 #include <core/define.mqh>
-#define     __TYPE__      T_INDICATOR
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

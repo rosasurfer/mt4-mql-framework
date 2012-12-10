@@ -2,7 +2,6 @@
  * Zeigt die Eigenschaften eines Instruments an.
  */
 #include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

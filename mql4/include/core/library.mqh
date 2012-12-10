@@ -1,4 +1,8 @@
 
+int __TYPE__    = T_LIBRARY;
+int __iCustom__ = NULL;
+
+
 /**
  * Initialisierung der Library.
  *
@@ -62,6 +66,20 @@ bool IsIndicator() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("IsIndicator()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_INDICATOR);
+}
+
+
+/**
+ * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ *
+ * @return bool
+ */
+bool IndicatorIsICustom() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("IndicatorIsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+   if (IsIndicator())
+      return(__iCustom__);
+   return(false);
 }
 
 

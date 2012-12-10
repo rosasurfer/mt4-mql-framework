@@ -2,7 +2,6 @@
  * Berechnet die Kurse der momentan verfügbaren LiteForex-Indizes und zeigt sie an.
  */
 #include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

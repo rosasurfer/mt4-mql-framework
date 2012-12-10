@@ -253,14 +253,22 @@ string   objects[];                                                  // Namen de
 
 
 // Indicator buffer identifiers used in iCustom()
-#define BUFFER_0                 0
-#define BUFFER_1                 1
-#define BUFFER_2                 2
-#define BUFFER_3                 3
-#define BUFFER_4                 4
-#define BUFFER_5                 5
-#define BUFFER_6                 6
-#define BUFFER_7                 7
+#define BUFFER_INDEX_0           0
+#define BUFFER_INDEX_1           1
+#define BUFFER_INDEX_2           2
+#define BUFFER_INDEX_3           3
+#define BUFFER_INDEX_4           4
+#define BUFFER_INDEX_5           5
+#define BUFFER_INDEX_6           6
+#define BUFFER_INDEX_7           7
+#define BUFFER_1    BUFFER_INDEX_0
+#define BUFFER_2    BUFFER_INDEX_1
+#define BUFFER_3    BUFFER_INDEX_2
+#define BUFFER_4    BUFFER_INDEX_3
+#define BUFFER_5    BUFFER_INDEX_4
+#define BUFFER_6    BUFFER_INDEX_5
+#define BUFFER_7    BUFFER_INDEX_6
+#define BUFFER_8    BUFFER_INDEX_7
 
 
 // Indicator shared memory identifiers, siehe iCustom()
@@ -904,7 +912,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          // EA auﬂerhalb des Testers, Script/Indikator im oder auﬂerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
-      SetLastError(error);
+      SetLastError(error);                                                                               // reicht bei iCustom(Indicator) den Fehler zus‰tzlich weiter
    }
 
    if (orderPop)
@@ -1680,6 +1688,7 @@ void DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   IndicatorIsICustom();
    IsError(NULL);
    IsExpert();
    IsIndicator();

@@ -2,7 +2,6 @@
  * Multi-Color/Multi-Timeframe Moving Average
  */
 #include <core/define.mqh>
-#define     __TYPE__   T_INDICATOR
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
@@ -72,16 +71,19 @@ int onInit() {
          case PERIOD_M5 :
          case PERIOD_M15:
          case PERIOD_MN1:              return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
-         case PERIOD_M30: { ma.periods = Round(dValue* 2); ma.timeframe = PERIOD_M15; break; }
-         case PERIOD_H1 : { ma.periods = Round(dValue* 2); ma.timeframe = PERIOD_M30; break; }
-         case PERIOD_H4 : { ma.periods = Round(dValue* 4); ma.timeframe = PERIOD_H1;  break; }
-         case PERIOD_D1 : { ma.periods = Round(dValue* 6); ma.timeframe = PERIOD_H4;  break; }
-         case PERIOD_W1 : { ma.periods = Round(dValue*30); ma.timeframe = PERIOD_H4;  break; }
+         case PERIOD_M30: { dValue *=  2; ma.timeframe = PERIOD_M15; break; }
+         case PERIOD_H1 : { dValue *=  2; ma.timeframe = PERIOD_M30; break; }
+         case PERIOD_H4 : { dValue *=  4; ma.timeframe = PERIOD_H1;  break; }
+         case PERIOD_D1 : { dValue *=  6; ma.timeframe = PERIOD_H4;  break; }
+         case PERIOD_W1 : { dValue *= 30; ma.timeframe = PERIOD_H4;  break; }
       }
    }
-   else {
-      ma.periods = Round(dValue);
+   switch (ma.timeframe) {                                           // Timeframes > H1 auf H1 umrechnen
+      case PERIOD_H4:    { dValue *=   4; ma.timeframe = PERIOD_H1;  break; }
+      case PERIOD_D1:    { dValue *=  24; ma.timeframe = PERIOD_H1;  break; }
+      case PERIOD_W1:    { dValue *= 120; ma.timeframe = PERIOD_H1;  break; }
    }
+   ma.periods = Round(dValue);
    if (ma.periods < 2)                 return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
       double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
@@ -230,8 +232,12 @@ int onTick() {
          }
       }
    }
-   if (startBar < 0)                                                    // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
+   if (startBar < 0) {                                                  // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
+      if (IndicatorIsICustom())
+         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);
+   }
+
 
 
    static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
@@ -242,7 +248,7 @@ int onTick() {
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("onTick(1)", error));
+         return(catch("onTick(2)", error));
    }
    lastTrend = bufferTrend[0];
 
@@ -255,7 +261,7 @@ int onTick() {
    }
    lastValue = curValue;
 
-   return(catch("onTick(2)"));
+   return(catch("onTick(3)"));
 }
 
 

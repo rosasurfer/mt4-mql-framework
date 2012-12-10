@@ -46,7 +46,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
@@ -266,6 +266,16 @@ bool IsIndicator() {
 
 
 /**
+ * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ *
+ * @return bool
+ */
+bool IndicatorIsICustom() {
+   return(__iCustom__);
+}
+
+
+/**
  * Ob das aktuell ausgeführte Programm ein Script ist.
  *
  * @return bool
@@ -286,7 +296,7 @@ bool IsLibrary() {
 
 
 /**
- * Setzt den internen Fehlercode des Indikators. Bei Indikatoraufruf mit iCustom() wird der Fehler zusätzlich an den Aufrufer weitergereicht.
+ * Setzt den internen Fehlercode des Indikators. Bei Indikatoraufruf aus iCustom() wird der Fehler zusätzlich an den Aufrufer weitergereicht.
  *
  * @param  int error - Fehlercode
  *
@@ -298,7 +308,7 @@ bool IsLibrary() {
 int SetLastError(int error, int param=NULL) {
    last_error = error;
 
-   if (__iCustom__ != 0) {                                           // Fehler an Aufrufer weiterreichen
+   if (IndicatorIsICustom()) {                                                // Fehler an Aufrufer weiterreichen
       /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom__);
 
       if (IsError(error)) {

@@ -9,6 +9,7 @@
    bool     IsExpert();
    bool     IsIndicator();
    bool     IsScript();
+   bool     IndicatorIsICustom();
    bool     IndicatorIsTesting();
    bool     ScriptIsTesting();
    bool     This.IsTesting();                                        // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
@@ -575,7 +576,7 @@
 
 
    // erweiterte stdlib Basisfunktionen
-   int      stdlib_init(int type, string name, int whereami, int initFlags, int uninitializeReason);
+   int      stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 

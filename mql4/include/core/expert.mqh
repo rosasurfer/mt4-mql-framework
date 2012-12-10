@@ -1,5 +1,6 @@
 
-#define __TYPE__ T_EXPERT
+#define __TYPE__    T_EXPERT
+#define __iCustom__ NULL
 
 #include <ChartInfos/functions.mqh>
 
@@ -38,7 +39,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
@@ -303,6 +304,16 @@ bool IsExpert() {
  * @return bool
  */
 bool IsIndicator() {
+   return(false);
+}
+
+
+/**
+ * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ *
+ * @return bool
+ */
+bool IndicatorIsICustom() {
    return(false);
 }
 

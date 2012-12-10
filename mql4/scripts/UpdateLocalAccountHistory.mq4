@@ -2,7 +2,6 @@
  * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung und Rückzug von zusätzlichen Margin Credits werden nicht mitgespeichert.
  */
 #include <core/define.mqh>
-#define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

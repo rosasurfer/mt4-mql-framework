@@ -2,7 +2,6 @@
  * Schlieﬂt die angegebenen LFX-Positionen.
  */
 #include <core/define.mqh>
-#define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>

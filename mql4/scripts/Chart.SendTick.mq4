@@ -2,7 +2,6 @@
  * Schickt einen künstlichen Tick an den aktuellen Chart.
  */
 #include <core/define.mqh>
-#define     __TYPE__    T_SCRIPT
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
