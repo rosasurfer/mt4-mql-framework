@@ -350,7 +350,7 @@ int SetLastError(int error, int param=NULL) {
  * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (mehrere sind möglich)
  * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
  *
- * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
+ * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (ArraySize(results) != 0)
