@@ -131,7 +131,7 @@ int onInit() {
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
    SetIndexLabel(3, NULL);
-   IndicatorDigits(Digits);
+   IndicatorDigits(PipDigits+1);
 
    // (2.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
