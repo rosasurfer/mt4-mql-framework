@@ -270,7 +270,7 @@ bool IsIndicator() {
  *
  * @return bool
  */
-bool IndicatorIsICustom() {
+bool Indicator.IsICustom() {
    return(__iCustom__);
 }
 
@@ -308,7 +308,7 @@ bool IsLibrary() {
 int SetLastError(int error, int param=NULL) {
    last_error = error;
 
-   if (IndicatorIsICustom()) {                                                // Fehler an Aufrufer weiterreichen
+   if (Indicator.IsICustom()) {                                               // Fehler an Aufrufer weiterreichen
       /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom__);
 
       if (IsError(error)) {

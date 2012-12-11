@@ -476,9 +476,9 @@ void CopyMemory(int destination, int source, int bytes) {
  *
  * @return bool
  */
-bool IndicatorIsTesting() {
+bool Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IndicatorIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Indicator.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
    if (resolved)
@@ -506,9 +506,9 @@ bool IndicatorIsTesting() {
  *
  * @return bool
  */
-bool ScriptIsTesting() {
+bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("ScriptIsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Script.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
    if (resolved)
@@ -539,9 +539,9 @@ bool This.IsTesting() {
    if (resolved)
       return(result);
 
-   if      (   IsExpert()) result =          IsTesting();
-   else if (IsIndicator()) result = IndicatorIsTesting();
-   else                    result =    ScriptIsTesting();
+   if      (   IsExpert()) result =           IsTesting();
+   else if (IsIndicator()) result = Indicator.IsTesting();
+   else                    result =    Script.IsTesting();
 
    resolved = true;
    return(result);
@@ -9611,9 +9611,6 @@ double MathRoundFix(double number, int decimals) {
  * @return string - formatierter Wert oder Leerstring, falls ein Fehler auftrat
  */
 string NumberToStr(double number, string mask) {
-   if (number == EMPTY_VALUE)
-      number = 0;
-
    // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
 

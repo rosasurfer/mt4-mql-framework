@@ -1688,7 +1688,7 @@ void DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   IndicatorIsICustom();
+   Indicator.IsICustom();
    IsError(NULL);
    IsExpert();
    IsIndicator();

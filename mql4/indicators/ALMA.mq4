@@ -104,7 +104,7 @@ int onInit() {
       case PERIOD_W1:    { dValue *= 120; ma.timeframe = PERIOD_H1;  break; }
    }
    ma.periods = Round(dValue);
-   if (ma.periods < 2)                 return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
       double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
       ma.periods = Round(minutes/Period());
@@ -120,7 +120,7 @@ int onInit() {
    else if (char == "M") appliedPrice = PRICE_MEDIAN;
    else if (char == "T") appliedPrice = PRICE_TYPICAL;
    else if (char == "W") appliedPrice = PRICE_WEIGHTED;
-   else                    return(catch("onInit(3)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
+   else                                return(catch("onInit(7)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
 
 
    // (2.1) Bufferverwaltung
@@ -128,7 +128,6 @@ int onInit() {
    SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
    SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie                               (sichtbar)
    SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
-
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -175,7 +174,7 @@ int onInit() {
       ReverseDoubleArray(wALMA);                                     // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
    }
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -246,9 +245,9 @@ int onTick() {
          default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 
-      // Trend coloring (minimalste Reversal-Glättung um 1 Point durch Normalisierung)
-      curValue  = NormalizeDouble(bufferMA[bar  ], Digits);
-      prevValue = NormalizeDouble(bufferMA[bar+1], Digits);
+      // Trend coloring (minimalste Reversal-Glättung um 0.1 pip durch Normalisierung)
+      curValue  = NormalizeDouble(bufferMA[bar  ], PipDigits+1);
+      prevValue = NormalizeDouble(bufferMA[bar+1], PipDigits+1);
 
       if (curValue > prevValue) {
          bufferTrend    [bar] = 1;
@@ -282,11 +281,10 @@ int onTick() {
       }
    }
    if (startBar < 0) {                                                  // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
-      if (IndicatorIsICustom())
+      if (Indicator.IsICustom())
          return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);
    }
-
 
    static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
 

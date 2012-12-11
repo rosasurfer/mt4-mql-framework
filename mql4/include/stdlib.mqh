@@ -9,10 +9,10 @@
    bool     IsExpert();
    bool     IsIndicator();
    bool     IsScript();
-   bool     IndicatorIsICustom();
-   bool     IndicatorIsTesting();
-   bool     ScriptIsTesting();
-   bool     This.IsTesting();                                        // kurz für: IsTesting() || IndicatorIsTesting() || ScriptIsTesting()
+   bool     Indicator.IsICustom();
+   bool     Indicator.IsTesting();
+   bool     Script.IsTesting();
+   bool     This.IsTesting();                                        // kurz für: IsTesting() || Indicator.IsTesting() || Script.IsTesting()
    int      InstanceId(int id);
 
    string   GetTerminalVersion();

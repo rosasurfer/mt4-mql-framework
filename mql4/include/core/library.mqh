@@ -74,9 +74,9 @@ bool IsIndicator() {
  *
  * @return bool
  */
-bool IndicatorIsICustom() {
+bool Indicator.IsICustom() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IndicatorIsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    if (IsIndicator())
       return(__iCustom__);
    return(false);

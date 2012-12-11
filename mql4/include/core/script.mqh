@@ -189,7 +189,7 @@ bool IsIndicator() {
  *
  * @return bool
  */
-bool IndicatorIsICustom() {
+bool Indicator.IsICustom() {
    return(false);
 }
 
