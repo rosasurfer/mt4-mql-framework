@@ -39,10 +39,11 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
    // Bug: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
    //      Nur ein Reload des Templates korrigiert die falschen Werte.
    //
-   PipDigits   = Digits & (~1);
-   PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
-   Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
-   PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = Round(MathPow(10, Digits<<31>>31));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)

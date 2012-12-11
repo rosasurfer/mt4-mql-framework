@@ -20,8 +20,6 @@ string currency;                                                     // LFX-Währ
  * @return int - Fehlerstatus
  */
 int onInit() {
-   PriceFormat = "."+ PipDigits +"'";                                // immer Subpip-PriceFormat
-
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
       MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __NAME__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
@@ -239,8 +237,8 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_RAY  , false);
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
-      ObjectSet(name, OBJPROP_BACK , true);                                                                                            // immer Subpips verwenden
-      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, Digits|1), PriceFormat)));
+      ObjectSet(name, OBJPROP_BACK , true);
+      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
    }
    else GetLastError();
 

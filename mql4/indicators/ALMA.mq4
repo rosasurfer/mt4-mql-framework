@@ -140,7 +140,7 @@ int onInit() {
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
    SetIndexLabel(3, NULL);
-   IndicatorDigits(PipDigits+1);
+   IndicatorDigits(SubPipDigits);
 
    // (2.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
@@ -246,8 +246,8 @@ int onTick() {
       }
 
       // Trend coloring (minimalste Reversal-Glättung um 0.1 pip durch Normalisierung)
-      curValue  = NormalizeDouble(bufferMA[bar  ], PipDigits+1);
-      prevValue = NormalizeDouble(bufferMA[bar+1], PipDigits+1);
+      curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
+      prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
       if (curValue > prevValue) {
          bufferTrend    [bar] = 1;
@@ -302,7 +302,7 @@ int onTick() {
    // (3.2) Wert in Legende aktualisieren
    if (NE(curValue, lastValue)) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorName, "    ", NumberToStr(curValue, PriceFormat)),
+                    StringConcatenate(indicatorName, "    ", NumberToStr(curValue, SubPipPriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastValue = curValue;

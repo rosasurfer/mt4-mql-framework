@@ -17,10 +17,10 @@ bool     __STATUS__HISTORY_UPDATE;                                   // History-
 bool     __STATUS__HISTORY_INSUFFICIENT;                             // History war nicht ausreichend
 
 double   Pip, Pips;                                                  // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = PipSize)
-int      PipDigits;                                                  // Digits eines Pips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
+int      PipDigits, SubPipDigits;                                    // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
 int      PipPoint, PipPoints;                                        // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
 double   TickSize;                                                   // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
-string   PriceFormat;                                                // Preisformat des aktuellen Symbols für NumberToStr()
+string   PriceFormat, PipPriceFormat, SubPipPriceFormat;             // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick, Ticks;
 datetime Tick.Time;
 datetime Tick.prevTime;

@@ -66,11 +66,11 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
 
 
    // (1) globale Variablen re-initialisieren
-   PipDigits   = Digits & (~1);
-   PipPoints   = Round(MathPow(10, Digits<<31>>31));                   PipPoint = PipPoints;
-   Pip         = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips     = Pip;
-   PriceFormat = StringConcatenate(".", PipDigits, ifString(Digits==PipDigits, "", "'"));
-
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = Round(MathPow(10, Digits<<31>>31));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
    // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn ermitteln und cachen
    if (!GetApplicationWindow())                                               // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
