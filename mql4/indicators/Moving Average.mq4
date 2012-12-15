@@ -26,18 +26,20 @@ extern color  Color.DownTrend   = Orange;
 
 #property indicator_chart_window
 
-#property indicator_buffers 4
+#property indicator_buffers 5
 
 #property indicator_width1  0
 #property indicator_width2  0
 #property indicator_width3  2
 #property indicator_width4  2
+#property indicator_width5  2
 
 
 double bufferMA       [];                                            // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
 double bufferTrend    [];                                            // Trend: +1/-1                                (im Chart unsichtbar)
-double bufferUpTrend  [];                                            // UpTrend-Linie                               (sichtbar)
-double bufferDownTrend[];                                            // DownTrendTrend-Linie                        (sichtbar)
+double bufferUpTrend  [];                                            // UpTrend-Linie 1                             (sichtbar)
+double bufferDownTrend[];                                            // DownTrend-Linie                             (sichtbar, überlagert UpTrend)
+double bufferUpTrend2 [];                                            // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend)
 
 int    ma.periods;
 int    ma.method;
@@ -117,8 +119,9 @@ int onInit() {
    // (2.1) Bufferverwaltung
    SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
    SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
-   SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie                               (sichtbar)
+   SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie 1                             (sichtbar)
    SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
+   SetIndexBuffer(4, bufferUpTrend2 );                               // UpTrend-Linie 2                             (sichtbar)
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -131,6 +134,7 @@ int onInit() {
    SetIndexLabel(1, NULL);
    SetIndexLabel(2, NULL);
    SetIndexLabel(3, NULL);
+   SetIndexLabel(4, NULL);
    IndicatorDigits(SubPipDigits);
 
    // (2.3) Zeichenoptionen
@@ -139,6 +143,7 @@ int onInit() {
    SetIndexDrawBegin(1, startDraw);
    SetIndexDrawBegin(2, startDraw);
    SetIndexDrawBegin(3, startDraw);
+   SetIndexDrawBegin(4, startDraw);
 
    // (2.4) Styles
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
@@ -196,6 +201,7 @@ int onTick() {
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
+      ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -245,8 +251,16 @@ int onTick() {
          bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
 
-         if (bufferTrend[bar+1] > 0) bufferDownTrend[bar+1] = bufferMA[bar+1];
-         else                        bufferUpTrend  [bar+1] = EMPTY_VALUE;
+         if (bufferTrend[bar+1] > 0) {                               // wenn vorher Up-Trend...
+            bufferDownTrend[bar+1] = bufferMA[bar+1];
+            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {   // ...und Up-Trend nur eine Bar lang war
+               bufferUpTrend2[bar+2] = bufferMA[bar+2];
+               bufferUpTrend2[bar+1] = bufferMA[bar+1];
+            }
+         }
+         else {
+            bufferUpTrend[bar+1] = EMPTY_VALUE;
+         }
       }
       else /*(curValue == prevValue)*/ {
          bufferTrend[bar] = bufferTrend[bar+1];
@@ -303,4 +317,5 @@ void SetIndicatorStyles() {
    SetIndexStyle(1, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
    SetIndexStyle(2, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(3, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
+   SetIndexStyle(4, DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
 }
