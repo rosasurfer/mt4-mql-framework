@@ -701,7 +701,7 @@ bool ReleaseLocks(bool warn=false) {
             error = last_error;
       }
    }
-   return(IsNoError(error));
+   return(!error);
 }
 
 
@@ -10424,7 +10424,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
          ObjectDelete(label3);
    }
 
-   return(IsNoError(catch("ChartMarker.OrderSent_B()")));
+   return(!catch("ChartMarker.OrderSent_B()"));
 }
 
 
@@ -10509,7 +10509,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    if (EQ(openPrice, origOpenPrice)) /*&&*/ if (EQ(stopLoss, origStopLoss)) /*&&*/ if (EQ(takeProfit, origTakeProfit)) {
       warn(StringConcatenate("OrderModifyEx(12)   nothing to modify for #", ticket));
-      return(IsNoError(oe.setError(oe, catch("OrderModifyEx(13)", NULL, O_POP))));
+      return(!oe.setError(oe, catch("OrderModifyEx(13)", NULL, O_POP)));
    }
 
    int  startTime = GetTickCount();
@@ -10552,7 +10552,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          if (!IsTesting())
             PlaySound("RFQ.wav");
 
-         return(IsNoError(oe.setError(oe, catch("OrderModifyEx(15)", NULL, O_POP))));  // regular exit
+         return(!oe.setError(oe, catch("OrderModifyEx(15)", NULL, O_POP)));            // regular exit
       }
 
       error = oe.setError(oe, GetLastError());
@@ -10763,7 +10763,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
          ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
    }
 
-   return(IsNoError(catch("ChartMarker.OrderModified_B()")));
+   return(!catch("ChartMarker.OrderModified_B()"));
 }
 
 
@@ -10848,7 +10848,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
       }
    }
 
-   return(IsNoError(catch("ChartMarker.OrderFilled_B()")));
+   return(!catch("ChartMarker.OrderFilled_B()"));
 }
 
 
@@ -10933,7 +10933,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
       }
    }
 
-   return(IsNoError(catch("ChartMarker.PositionClosed_B()")));
+   return(!catch("ChartMarker.PositionClosed_B()"));
 }
 
 
@@ -11022,7 +11022,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
       }
    }
 
-   return(IsNoError(catch("ChartMarker.OrderDeleted_B()")));
+   return(!catch("ChartMarker.OrderDeleted_B()"));
 }
 
 
@@ -11208,7 +11208,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          if (!IsTesting())
             PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
-         return(IsNoError(oe.setError(oe, catch("OrderCloseEx(22)", NULL, O_POP))));   // regular exit
+         return(!oe.setError(oe, catch("OrderCloseEx(22)", NULL, O_POP)));             // regular exit
       }
 
       error = GetLastError();
@@ -11526,7 +11526,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          if (!IsTesting())
             PlaySound("OrderOk.wav");
 
-         return(IsNoError(oe.setError(oe, catch("OrderCloseByEx(14)", NULL, O_POP)))); // regular exit
+         return(!oe.setError(oe, catch("OrderCloseByEx(14)", NULL, O_POP)));           // regular exit
       }
 
       error = GetLastError();
@@ -11768,7 +11768,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
 
    ArrayResize(oes2, 0);
-   return(IsNoError(oes.setError(oes, -1, catch("OrderMultiClose(14)"))));
+   return(!oes.setError(oes, -1, catch("OrderMultiClose(14)")));
 }
 
 
@@ -11885,7 +11885,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
 
    ArrayResize(oes2, 0);
-   return(IsNoError(oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(6)", NULL, O_POP))));
+   return(!oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(6)", NULL, O_POP)));
 }
 
 
@@ -12159,7 +12159,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
 
    ArrayResize(oe, 0);
-   return(IsNoError(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(9)", NULL, O_POP))));
+   return(!oes.setError(oes, -1, catch("OrderMultiClose.Flattened(9)", NULL, O_POP)));
 }
 
 
@@ -12235,7 +12235,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          if (!IsTesting())
             PlaySound("OrderOk.wav");
 
-         return(IsNoError(oe.setError(oe, catch("OrderDeleteEx(7)", NULL, O_POP))));   // regular exit
+         return(!oe.setError(oe, catch("OrderDeleteEx(7)", NULL, O_POP)));             // regular exit
       }
 
       error = GetLastError();

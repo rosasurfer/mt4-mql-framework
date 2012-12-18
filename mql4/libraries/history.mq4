@@ -190,7 +190,7 @@ bool History.ReadBar(int hFile, int bar, datetime &time[], double &data[]) {
    //int digits = History.FileDigits(hFile);
    //debug("History.ReadBar()   bar="+ bar +"  time="+ TimeToStr(time[0], TIME_FULL) +"   O="+ DoubleToStr(data[BAR_O], digits) +"  H="+ DoubleToStr(data[BAR_H], digits) +"  L="+ DoubleToStr(data[BAR_L], digits) +"  C="+ DoubleToStr(data[BAR_C], digits) +"  V="+ Round(data[BAR_V]));
 
-   return(IsNoError(last_error|catch("History.ReadBar(6)")));
+   return(!last_error|catch("History.ReadBar(6)"));
 }
 
 
@@ -326,7 +326,7 @@ bool History.WriteBar(int hFile, int bar, datetime time, double data[], int flag
                                      hst.fileBarData[hFile][BAR_C] = data[BAR_C];
                                      hst.fileBarData[hFile][BAR_V] = data[BAR_V];
 
-   return(IsNoError(last_error|catch("History.WriteBar(8)")));
+   return(!last_error|catch("History.WriteBar(8)"));
 }
 
 
@@ -362,7 +362,7 @@ bool History.WriteCachedBar(int hFile) {
    FileWriteDouble (hFile, hst.fileBarData[hFile][BAR_C]);
    FileWriteDouble (hFile, hst.fileBarData[hFile][BAR_V]);
 
-   return(IsNoError(last_error|catch("History.WriteCachedBar(6)")));
+   return(!last_error|catch("History.WriteCachedBar(6)"));
 }
 
 
@@ -375,7 +375,7 @@ bool History.WriteCachedBar(int hFile) {
  * @return bool - Erfolgsstatus
  */
 bool History.MoveBars(int hFile, int startOffset, int destOffset) {
-   return(IsNoError(last_error|catch("History.MoveBars()", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(!last_error|catch("History.MoveBars()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -850,5 +850,5 @@ bool CloseFiles(bool warn=false) {
             error = last_error;
       }
    }
-   return(IsNoError(error));
+   return(!error);
 }

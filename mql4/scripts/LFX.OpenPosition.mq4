@@ -286,7 +286,7 @@ bool ReadOpenPositions() {
          ArrayPushInt   (positions.counter , LFX.Counter (OrderMagicNumber()));
       }
    }
-   return(IsNoError(catch("ReadOpenPositions()")));
+   return(!catch("ReadOpenPositions()"));
 }
 
 
