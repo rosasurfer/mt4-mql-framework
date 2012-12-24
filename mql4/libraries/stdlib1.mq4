@@ -1019,7 +1019,7 @@ int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
  *
  * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
  *
- * @param string soundfile
+ * @param  string soundfile
  *
  * @return int - Fehlerstatus
  */
@@ -1040,9 +1040,9 @@ int ForceSound(string soundfile) {
  *
  * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
  *
- * @param string caption
- * @param string message
- * @param int    flags
+ * @param  string caption
+ * @param  string message
+ * @param  int    flags
  *
  * @return int - Tastencode
  */
@@ -2841,7 +2841,7 @@ bool ReverseStringArray(string array[]) {
 /**
  * Ob die Indizierung der internen Implementierung des angegebenen Boolean-Arrays umgekehrt ist oder nicht.
  *
- * @param bool array[] - Boolean-Array
+ * @param  bool array[] - Boolean-Array
  *
  * @return bool
  */
@@ -9469,8 +9469,8 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 /**
  * Konvertiert einen Double in einen String mit bis zu 16 Nachkommastellen.
  *
- * @param double value  - zu konvertierender Wert
- * @param int    digits - Anzahl von Nachkommastellen
+ * @param  double value  - zu konvertierender Wert
+ * @param  int    digits - Anzahl von Nachkommastellen
  *
  * @return string
  */

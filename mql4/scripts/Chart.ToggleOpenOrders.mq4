@@ -220,11 +220,11 @@ string ReadAccountId() {
 /**
  * Zeichnet für die angegebenen Daten einen Position-Marker in den Chart.
  *
- * @param string   label
- * @param datetime openTime
- * @param int      type
- * @param double   lots
- * @param double   openPrice
+ * @param  string   label
+ * @param  datetime openTime
+ * @param  int      type
+ * @param  double   lots
+ * @param  double   openPrice
  *
  * @return int - Fehlerstatus
  */

@@ -173,7 +173,7 @@ int onTick() {
 /**
  * Handler für PositionOpen-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
  *
- * @param int tickets[] - Tickets der neuen Positionen
+ * @param  int tickets[] - Tickets der neuen Positionen
  *
  * @return int - Fehlerstatus
  */
@@ -215,7 +215,7 @@ int onPositionOpen(int tickets[]) {
 /**
  * Handler für PositionClose-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
  *
- * @param int tickets[] - Tickets der geschlossenen Positionen
+ * @param  int tickets[] - Tickets der geschlossenen Positionen
  *
  * @return int - Fehlerstatus
  */
