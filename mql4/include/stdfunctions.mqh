@@ -992,19 +992,15 @@ int ResetLastError() {
 
 
 /**
- * Setzt den internen Fehlercode und den DISABLED-Status des Moduls. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Setzt den den DISABLED-Status des Moduls. Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
- * @param  int error - Fehlercode
+ * @param  int param - beliebiger Parameter
  *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ * @return int - derselbe Parameter (for chaining)
  */
-int SetStatusDisabled(int error, int param=NULL) {
+int SetStatusDisabled(int param=NULL) {
    __STATUS__DISABLED = true;
-   return(SetLastError(error));
+   return(param);
 }
 
 
@@ -1749,7 +1745,7 @@ void DummyCalls() {
    Round(NULL);
    SelectTicket(NULL, NULL);
    SetLastError(NULL);
-   SetStatusDisabled(NULL);
+   SetStatusDisabled();
    Sign(NULL);
    start.RelaunchInputDialog();
    Tester.IsLogging();

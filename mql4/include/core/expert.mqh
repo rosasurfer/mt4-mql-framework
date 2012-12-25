@@ -239,8 +239,11 @@ int start() {
    if (IsTesting()) {
       static datetime time, lastTime;
       time = TimeCurrent();
-      if (time < lastTime)
-         return(SetStatusDisabled(catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR)));
+      if (time < lastTime) {
+         SetStatusDisabled(catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+         ShowStatus();
+         return(last_error);
+      }
       lastTime = time;
    }
 
@@ -258,11 +261,14 @@ int start() {
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
          if (last_error != ERR_TERMINAL_NOT_YET_READY)                        // init() ist mit hartem Fehler zurückgekehrt
-            return(SetStatusDisabled(last_error));
+            SetStatusDisabled();
+            ShowStatus();
+            return(last_error);
 
          __WHEREAMI__ = FUNC_START;
          if (IsError(init())) {                                               // init() erneut aufrufen
             __WHEREAMI__ = FUNC_INIT;                                         // erneuter Fehler: hart oder weich
+            ShowStatus();
             return(last_error);
          }
       }
@@ -279,7 +285,8 @@ int start() {
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
       if (IsError(start.RelaunchInputDialog()))
-         SetStatusDisabled(last_error);
+         SetStatusDisabled();
+      ShowStatus();
       return(last_error);
    }
 
@@ -287,7 +294,9 @@ int start() {
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
       debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+      SetLastError(ERR_TERMINAL_NOT_YET_READY);
+      ShowStatus();
+      return(last_error);
    }
 
 
@@ -295,7 +304,8 @@ int start() {
    if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       SetLastError(stdlib_PeekLastError());
       if (last_error != ERR_TERMINAL_NOT_YET_READY)
-         SetStatusDisabled(last_error);
+         SetStatusDisabled();
+      ShowStatus();
       return(last_error);
    }
 
@@ -312,7 +322,8 @@ int start() {
       error |= ChartInfo.UpdateMarginLevels();
       if (error != NO_ERROR) {                                                // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
          if (last_error != ERR_TERMINAL_NOT_YET_READY)
-            SetStatusDisabled(last_error);
+            SetStatusDisabled();
+         ShowStatus();
          return(last_error);
       }
    }
@@ -325,8 +336,9 @@ int start() {
    if (last_error != NO_ERROR) {
       if (IsTesting())
          Tester.Stop();
-      SetStatusDisabled(last_error);
+      SetStatusDisabled();
    }
+   ShowStatus();
    return(last_error);
 }
 
@@ -353,6 +365,8 @@ int deinit() {
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
+   if (error > 0)                                                                //
+      SetLastError(error);                                                       //
                                                                                  //
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
@@ -364,10 +378,15 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
+      if (error > 0)                                                             //
+         SetLastError(error);                                                    //
    }                                                                             //
                                                                                  //
-   if (error != -1)                                                              //
+   if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
+      if (error > 0)                                                             //
+         SetLastError(error);                                                    //
+   }
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -378,9 +397,12 @@ int deinit() {
 
    // (3) stdlib deinitialisieren
    error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
-   if (IsError(error))
+   if (error > 0)
       SetLastError(error);
 
+
+   if (IsLastError())
+      SetStatusDisabled();
    return(last_error);
 }
 
