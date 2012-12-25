@@ -2,7 +2,7 @@
  * MQL-Fehlercodes
  *
  *
- * NOTE: Diese Headerdatei ist kompatibel zur Original-MetaQuotes-Version.
+ * NOTE: Dieser Datei ist kompatibel zur Original-MetaQuotes-Version.
  */
 
 #define ERR_NO_ERROR                                                  0

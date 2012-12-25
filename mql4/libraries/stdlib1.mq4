@@ -47,7 +47,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERR_TERMINAL_NOT_YET_READY
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
@@ -189,30 +189,32 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
 
 
 // Laufzeitfunktionen
-int onInit()                  { return(NO_ERROR); }
-int onInitParameterChange()   { return(NO_ERROR); }
-int onInitRemove()            { if (IsIndicator())      warn("onInitRemove()");          return(NO_ERROR); }   // mal sehen, wann hier jemand reintappt
-int onInitChartChange()       { return(NO_ERROR); }
-int onInitAccountChange()     { if (IsExpert()) return(catch("onInitAccountChange()", ERR_RUNTIME_ERROR));     // ...
-                                if (IsIndicator())      warn("onInitAccountChange()");   return(NO_ERROR); }   // ...
-int onInitChartClose()        { if (IsIndicator())      warn("onInitChartClose()");      return(NO_ERROR); }   // ...
-int onInitUndefined()         { return(NO_ERROR); }
-int onInitRecompile()         { return(NO_ERROR); }
-int afterInit()               { return(NO_ERROR); }
+int onInit()                  {                                                           return(NO_ERROR); }
+int onInitParameterChange()   {                                                           return(NO_ERROR); }
+int onInitRemove()            { if (IsIndicator())      warn("onInitRemove()");           return(NO_ERROR); }     // mal sehen, wann hier jemand reintappt
+int onInitChartChange()       {                                                           return(NO_ERROR); }
+int onInitAccountChange()     { if (IsExpert()) return(catch("onInitAccountChange()",   ERR_RUNTIME_ERROR));      // ...
+                                if (IsIndicator())      warn("onInitAccountChange()");    return(NO_ERROR); }     // ...
+int onInitChartClose()        { if (IsIndicator())      warn("onInitChartClose()");       return(NO_ERROR); }     // ...
+int onInitUndefined()         {                                                           return(NO_ERROR); }
+int onInitRecompile()         {                                                           return(NO_ERROR); }
+int afterInit()               {                                                           return(NO_ERROR); }
 
-int onStart()                 { return(NO_ERROR); }
-int onTick()                  { return(NO_ERROR); }
+int onStart()                 {                                                           return(NO_ERROR); }
+int onTick()                  {                                                           return(NO_ERROR); }
 
-int onDeinit()                { return(NO_ERROR); }
-int onDeinitParameterChange() { return(NO_ERROR); }
-int onDeinitRemove()          { return(NO_ERROR); }
-int onDeinitChartChange()     { return(NO_ERROR); }
-int onDeinitAccountChange()   { if (IsExpert()) return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
-                                if (IsIndicator())      warn("onDeinitAccountChange()"); return(NO_ERROR); }   // ...
-int onDeinitChartClose()      { if (IsIndicator())      warn("onDeinitChartClose()");    return(NO_ERROR); }   // ...
-int onDeinitUndefined()       { if (IsIndicator())      warn("onDeinitUndefined()");     return(NO_ERROR); }   // ...
-int onDeinitRecompile()       { return(NO_ERROR); }
-int afterDeinit()             { return(NO_ERROR); }
+int ShowStatus()              { if (IsExpert())  debug("ShowStatus()   not implemented"); return(NO_ERROR); }
+
+int onDeinit()                {                                                           return(NO_ERROR); }
+int onDeinitParameterChange() {                                                           return(NO_ERROR); }
+int onDeinitRemove()          {                                                           return(NO_ERROR); }
+int onDeinitChartChange()     {                                                           return(NO_ERROR); }
+int onDeinitAccountChange()   { if (IsExpert()) return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));      // ...
+                                if (IsIndicator())      warn("onDeinitAccountChange()");  return(NO_ERROR); }     // ...
+int onDeinitChartClose()      { if (IsIndicator())      warn("onDeinitChartClose()");     return(NO_ERROR); }     // ...
+int onDeinitUndefined()       { if (IsIndicator())      warn("onDeinitUndefined()");      return(NO_ERROR); }     // ...
+int onDeinitRecompile()       {                                                           return(NO_ERROR); }
+int afterDeinit()             {                                                           return(NO_ERROR); }
 
 
 // abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
@@ -916,7 +918,7 @@ int GetGMTToFXTOffset(datetime gmtTime) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetServerToFXTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+int GetServerToFXTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
       catch("GetServerToFXTOffset()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -954,7 +956,7 @@ int GetServerToFXTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONF
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetServerToGMTOffset(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+int GetServerToGMTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
       catch("GetServerToGMTOffset(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -5088,7 +5090,7 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime GetServerPrevSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5111,7 +5113,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime GetServerPrevSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerPrevSessionEndTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5130,7 +5132,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) /*throws ERR_INVALID_T
  *
  * @return datetime - Startzeit oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
+datetime GetServerSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5163,7 +5165,7 @@ datetime GetServerSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIM
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED*/ {
+datetime GetServerSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5182,7 +5184,7 @@ datetime GetServerSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZ
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime GetServerNextSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5205,7 +5207,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) /*throws ERR_INVALID
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionEndTime(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime GetServerNextSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerNextSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5266,7 +5268,7 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
+datetime GetGMTSessionStartTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5289,7 +5291,7 @@ datetime GetGMTSessionStartTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGMTSessionEndTime(datetime gmtTime) /*throws ERR_MARKET_CLOSED*/ {
+datetime GetGMTSessionEndTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5396,7 +5398,7 @@ datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
+datetime GetFXTSessionStartTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
       return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5420,7 +5422,7 @@ datetime GetFXTSessionStartTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetFXTSessionEndTime(datetime fxtTime) /*throws ERR_MARKET_CLOSED*/ {
+datetime GetFXTSessionEndTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
       return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5695,7 +5697,7 @@ datetime FXTToGMT(datetime fxtTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime FXTToServerTime(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime FXTToServerTime(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0)
       return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -6367,7 +6369,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() /*throws ERR_TERMINAL_NOT_YET_READY*/ {       // evt. während des Terminal-Starts
+int GetAccountNumber() { //throws ERR_TERMINAL_NOT_YET_READY         // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6730,7 +6732,7 @@ int GetFXTToGMTOffset(datetime fxtTime) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetFXTToServerTimeOffset(datetime fxtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+int GetFXTToServerTimeOffset(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0) {
       catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -6847,7 +6849,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  *
  * NOTE: Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
  */
-int GetGMTToServerTimeOffset(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+int GetGMTToServerTimeOffset(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0) {
       catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -7810,7 +7812,7 @@ string FileAccessModeToStr(int mode) {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetServerTimezone() /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+string GetServerTimezone() { //throws ERR_INVALID_TIMEZONE_CONFIG
    /*
    Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart mit den alten Bars.
@@ -8135,7 +8137,7 @@ datetime GMTToFXT(datetime gmtTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GMTToServerTime(datetime gmtTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime GMTToServerTime(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0)
       return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -8248,7 +8250,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERR_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8291,7 +8293,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) /
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) /*throws ERR_HISTORY_UPDATE*/ {
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERR_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8765,7 +8767,7 @@ int SendSMS(string receiver, string message) {
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime ServerToFXT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -8792,7 +8794,7 @@ datetime ServerToFXT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToGMT(datetime serverTime) /*throws ERR_INVALID_TIMEZONE_CONFIG*/ {
+datetime ServerToGMT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 

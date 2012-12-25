@@ -13,7 +13,7 @@
  *
  * @return int - Fehlerstatus
  */
-int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int init() { //throws ERR_TERMINAL_NOT_YET_READY
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
@@ -229,18 +229,18 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS__CANCELLED)
+   if (__STATUS__DISABLED || __STATUS__CANCELLED) {
+      ShowStatus();
       return(NO_ERROR);
+   }
 
 
-   // im Tester "time machine bug" abfangen
+   // "Time machine"-Bug im Tester abfangen
    if (IsTesting()) {
       static datetime time, lastTime;
       time = TimeCurrent();
-      if (time < lastTime) {
-         __STATUS__CANCELLED = true;
-         return(catch("start()   Time is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
-      }
+      if (time < lastTime)
+         return(SetStatusDisabled(catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR)));
       lastTime = time;
    }
 
@@ -257,13 +257,13 @@ int start() {
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERR_TERMINAL_NOT_YET_READY)                        // init() ist mit Fehler zurückgekehrt
-            return(last_error);
+         if (last_error != ERR_TERMINAL_NOT_YET_READY)                        // init() ist mit hartem Fehler zurückgekehrt
+            return(SetStatusDisabled(last_error));
+
          __WHEREAMI__ = FUNC_START;
-         error = init();                                                      // init() erneut aufrufen
-         if (IsError(error)) {                                                // erneuter Fehler
-            __WHEREAMI__ = FUNC_INIT;
-            return(error);
+         if (IsError(init())) {                                               // init() erneut aufrufen
+            __WHEREAMI__ = FUNC_INIT;                                         // erneuter Fehler: hart oder weich
+            return(last_error);
          }
       }
       last_error = NO_ERROR;                                                  // init() war erfolgreich
@@ -278,7 +278,9 @@ int start() {
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      return(start.RelaunchInputDialog());
+      if (IsError(start.RelaunchInputDialog()))
+         SetStatusDisabled(last_error);
+      return(last_error);
    }
 
 
@@ -290,8 +292,12 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError()));
+   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      SetLastError(stdlib_PeekLastError());
+      if (last_error != ERR_TERMINAL_NOT_YET_READY)
+         SetStatusDisabled(last_error);
+      return(last_error);
+   }
 
 
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
@@ -304,18 +310,23 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (error != NO_ERROR)                                                  // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
+      if (error != NO_ERROR) {                                                // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
+         if (last_error != ERR_TERMINAL_NOT_YET_READY)
+            SetStatusDisabled(last_error);
          return(last_error);
+      }
    }
 
 
    // (6) Main-Funktion aufrufen und auswerten
    onTick();
 
-   if (last_error != NO_ERROR)
+
+   if (last_error != NO_ERROR) {
       if (IsTesting())
          Tester.Stop();
-
+      SetStatusDisabled(last_error);
+   }
    return(last_error);
 }
 

@@ -14,8 +14,8 @@ bool     __STATUS__INVALID_INPUT;                           // ungültige Paramet
 bool     __STATUS__RELAUNCH_INPUT;                          // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS__HISTORY_UPDATE;                          // History-Update wurde getriggert
 bool     __STATUS__HISTORY_INSUFFICIENT;                    // History war nicht ausreichend
-bool     __STATUS__CANCELLED;                               // Ausführung durch Benutzer abgebrochen       (externe Ursache)
-bool     __STATUS__DISABLED;                                // Ausführung wegen Laufzeitfehler deaktiviert (interne Ursache)
+bool     __STATUS__CANCELLED;                               // Ausführung durch Benutzer abgebrochen            (externe Ursache)
+bool     __STATUS__DISABLED;                                // Ausführung wegen "RuntimeException" "angehalten" (interne Ursache)
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -992,6 +992,23 @@ int ResetLastError() {
 
 
 /**
+ * Setzt den internen Fehlercode und den DISABLED-Status des Moduls. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  int error - Fehlercode
+ *
+ * @return int - derselbe Fehlercode (for chaining)
+ *
+ *
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
+ */
+int SetStatusDisabled(int error, int param=NULL) {
+   __STATUS__DISABLED = true;
+   return(SetLastError(error));
+}
+
+
+/**
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft bei Zutreffen deren Eventhandler auf.
  *
  * @param  int events - Event-Flags
@@ -1732,6 +1749,7 @@ void DummyCalls() {
    Round(NULL);
    SelectTicket(NULL, NULL);
    SetLastError(NULL);
+   SetStatusDisabled(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
    Tester.IsLogging();
