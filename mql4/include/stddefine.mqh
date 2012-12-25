@@ -935,6 +935,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
       SetLastError(error);                                                                               // reicht bei iCustom(Indicator) den Fehler zusätzlich weiter
+      __STATUS__DISABLED = true;
    }
 
    if (orderPop)

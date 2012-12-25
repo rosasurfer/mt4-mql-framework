@@ -31,13 +31,14 @@ int onStart() {
       // (2) für Command unzutreffende Sequenzen herausfiltern
       for (int i=sizeOfIds-1; i >= 0; i--) {
          switch (status[i]) {
-            case STATUS_WAITING    :                                             // STATUS_UNINITIALIZED:   // entfernen
-            case STATUS_STARTING   :                                             // STATUS_WAITING      :   // ok
-            case STATUS_PROGRESSING:                                             // STATUS_STARTING     :   // ok
-            case STATUS_STOPPING   :                                             // STATUS_PROGRESSING  :   // ok
-            case STATUS_STOPPED    :                                             // STATUS_STOPPING     :   // ok
-               continue;                                                         // STATUS_STOPPED      :   // ok
-            default:                                                             // STATUS_DISABLED     :   // entfernen
+          //case STATUS_UNINITIALIZED:    //
+            case STATUS_WAITING      :    // ok
+            case STATUS_STARTING     :    // ok
+            case STATUS_PROGRESSING  :    // ok
+            case STATUS_STOPPING     :    // ok
+            case STATUS_STOPPED      :    // ok
+               continue;
+            default:
                ArraySpliceStrings(ids, i, 1);
                ArraySpliceInts(status, i, 1);
                sizeOfIds--;

@@ -14,7 +14,7 @@
  * @return int - Fehlerstatus
  */
 int init() { //throws ERR_TERMINAL_NOT_YET_READY
-   if (__STATUS__CANCELLED)
+   if (__STATUS__CANCELLED || __STATUS__DISABLED)
       return(NO_ERROR);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
@@ -41,8 +41,11 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
-   if (IsError(error))
+   if (IsError(error)) {
+      if (error != ERR_TERMINAL_NOT_YET_READY)
+         SetStatusDisabled();
       return(SetLastError(error));
+   }
 
 
    // (3) user-spezifische Init-Tasks ausführen
@@ -76,7 +79,7 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
       if (IsError(error))
-         return(SetLastError(error));
+         return(SetStatusDisabled(SetLastError(error)));
    }
 
 
@@ -92,9 +95,8 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
       chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
       if (LT(chartInfo.leverage, 1))
          return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-      error = ChartInfo.CreateLabels();
-      if (IsError(error))
-         return(error);
+      if (IsError(ChartInfo.CreateLabels()))
+         return(last_error);
    }
 
 
@@ -115,7 +117,7 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
       return(last_error);                                                     //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   if (IsLastError() || __STATUS__CANCELLED)                                  //
+   if (__STATUS__CANCELLED || __STATUS__DISABLED)                             //
       return(last_error);                                                     //
 
 
@@ -229,7 +231,7 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS__DISABLED || __STATUS__CANCELLED) {
+   if (__STATUS__CANCELLED || __STATUS__DISABLED) {
       ShowStatus();
       return(NO_ERROR);
    }
@@ -240,7 +242,7 @@ int start() {
       static datetime time, lastTime;
       time = TimeCurrent();
       if (time < lastTime) {
-         SetStatusDisabled(catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR));
+         catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR);
          ShowStatus();
          return(last_error);
       }
@@ -260,14 +262,13 @@ int start() {
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERR_TERMINAL_NOT_YET_READY)                        // init() ist mit hartem Fehler zurückgekehrt
-            SetStatusDisabled();
+         if (last_error != ERR_TERMINAL_NOT_YET_READY) {                      // init() ist mit hartem Fehler zurückgekehrt
             ShowStatus();
             return(last_error);
-
+         }
          __WHEREAMI__ = FUNC_START;
          if (IsError(init())) {                                               // init() erneut aufrufen
-            __WHEREAMI__ = FUNC_INIT;                                         // erneuter Fehler: hart oder weich
+            __WHEREAMI__ = FUNC_INIT;                                         // erneuter Fehler (hart oder weich)
             ShowStatus();
             return(last_error);
          }
@@ -284,8 +285,7 @@ int start() {
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS__RELAUNCH_INPUT) {
       __STATUS__RELAUNCH_INPUT = false;
-      if (IsError(start.RelaunchInputDialog()))
-         SetStatusDisabled();
+      start.RelaunchInputDialog();
       ShowStatus();
       return(last_error);
    }
@@ -293,8 +293,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
-      debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      SetLastError(ERR_TERMINAL_NOT_YET_READY);
+      SetLastError(ERR_TERMINAL_NOT_YET_READY, debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)"));
       ShowStatus();
       return(last_error);
    }
@@ -321,8 +320,6 @@ int start() {
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
       if (error != NO_ERROR) {                                                // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
-         if (last_error != ERR_TERMINAL_NOT_YET_READY)
-            SetStatusDisabled();
          ShowStatus();
          return(last_error);
       }
@@ -365,8 +362,6 @@ int deinit() {
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
-   if (error > 0)                                                                //
-      SetLastError(error);                                                       //
                                                                                  //
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
@@ -378,15 +373,10 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
-      if (error > 0)                                                             //
-         SetLastError(error);                                                    //
    }                                                                             //
                                                                                  //
-   if (error != -1) {                                                            //
+   if (error != -1)                                                              //
       error = afterDeinit();                                                     // Postprocessing-Hook
-      if (error > 0)                                                             //
-         SetLastError(error);                                                    //
-   }
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
@@ -397,7 +387,7 @@ int deinit() {
 
    // (3) stdlib deinitialisieren
    error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
-   if (error > 0)
+   if (IsError(error))
       SetLastError(error);
 
 
