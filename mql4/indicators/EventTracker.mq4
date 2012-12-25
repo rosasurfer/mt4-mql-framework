@@ -1,10 +1,9 @@
 /**
  * Überwacht ein Instrument auf verschiedene Signale und benachrichtigt akustisch und/oder per SMS.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 ////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) //////////////////////////////////////////////////

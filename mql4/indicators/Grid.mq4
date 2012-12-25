@@ -1,10 +1,9 @@
 /**
  * Chart-Grid. Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen Session.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////

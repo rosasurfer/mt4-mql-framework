@@ -8,10 +8,9 @@
  *
  * letzte Version mit Performance-Display: v1.38
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 #include <core/indicator.mqh>

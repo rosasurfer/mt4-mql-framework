@@ -19,10 +19,9 @@
  * - stdDev(PRICE_HIGH|PRICE_LOW) wäre die technisch exakter Methode, müßte aber für jede Bar manuell implementiert werden und ist am langsamsten.
  * - Es gilt: 1.65 * stdDev(PRICE_CLOSE) entspricht ca. 1.4 * stdDev(PRICE_HIGH|PRICE_LOW) (Übereinstimmung von 90-95%)
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////

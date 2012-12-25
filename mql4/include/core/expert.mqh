@@ -130,6 +130,91 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
 }
 
 
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Nach Parameteränderung
+ *
+ *  - altes Chartfenster, alter EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Symbol- oder Timeframe-Wechsel
+ *
+ * - altes Chartfenster, alter EA, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Accountwechsel (wann ???)                                    // TODO: Umstände ungeklärt
+ *
+ * - wird in stdlib abgefangen (ERR_RUNTIME_ERROR)
+ *
+ * @return int - Fehlerstatus
+int onInitAccountChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Altes Chartfenster mit neu geladenem Template
+ *
+ * - neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitChartClose() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt
+ *
+ * - nach Terminal-Neustart:    neues Chartfenster, vorheriger EA, kein Input-Dialog
+ * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Recompilation
+ *
+ * - altes Chartfenster, vorheriger EA, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+int onInitRecompile() {
+   return(NO_ERROR);
+}
+ */
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 /**
  * Globale start()-Funktion für Expert Adviser.
  *

@@ -3,10 +3,9 @@
  *
  * Schickt dem Expert im aktuellen Chart das Kommando, den Orderanzeige-Modus zu wechseln.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 #include <core/script.mqh>

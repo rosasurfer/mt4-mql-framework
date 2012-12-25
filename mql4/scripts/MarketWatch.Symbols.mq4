@@ -1,10 +1,9 @@
 /**
  * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 #include <core/script.mqh>

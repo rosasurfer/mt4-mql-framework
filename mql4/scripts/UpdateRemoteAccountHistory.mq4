@@ -2,10 +2,9 @@
  * Aktualisiert die entfernte Server-Accounthistory. Außer gestrichenen Pending-Orders werden alle Daten übertragen.
  * Die Auswertung und Zuordnung erfolgt auf dem Server.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 
 #include <core/script.mqh>

@@ -6,10 +6,9 @@
  * @author  Cristi Dumitrescu <birt@eareview.net>
  * @see     http://eareview.net/tickdata
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 #include <win32api.mqh>
 

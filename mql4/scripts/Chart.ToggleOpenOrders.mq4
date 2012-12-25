@@ -1,10 +1,9 @@
 /**
  * Blendet die aktuell offenen Positionen ein oder aus.
  */
-#include <core/define.mqh>
+#include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stddefine.mqh>
 #include <stdlib.mqh>
 #include <win32api.mqh>
 
