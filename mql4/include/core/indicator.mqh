@@ -17,7 +17,7 @@ extern int    __iCustom__;
  *
  * @return int - Fehlerstatus
  */
-int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
+int init() { //throws ERR_TERMINAL_NOT_READY
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
@@ -60,19 +60,19 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
-      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
-      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
@@ -114,7 +114,7 @@ int init() { /*throws ERR_TERMINAL_NOT_YET_READY*/
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERR_TERMINAL_NOT_YET_READY zurück,
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERR_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
@@ -137,7 +137,7 @@ int start() {
    // (1.1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERR_TERMINAL_NOT_YET_READY)                           // init() ist mit Fehler zurückgekehrt
+         if (last_error != ERR_TERMINAL_NOT_READY)                               // init() ist mit Fehler zurückgekehrt
             return(SetLastError(last_error));
          __WHEREAMI__ = FUNC_START;
          if (IsError(init())) {                                                  // init() erneut aufrufen (kann Neuaufruf an __WHEREAMI__ erkennen)
@@ -153,24 +153,24 @@ int start() {
       prev_error = last_error;
       last_error = NO_ERROR;
 
-      if      (prev_error == ERR_TERMINAL_NOT_YET_READY) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_UPDATE        ) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
-      if      (__STATUS__HISTORY_UPDATE                ) ValidBars = 0;          // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
-      if      (__STATUS__HISTORY_INSUFFICIENT          ) ValidBars = 0;
+      if      (prev_error == ERR_TERMINAL_NOT_READY  ) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_UPDATE      ) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT) ValidBars = 0;
+      if      (__STATUS__HISTORY_UPDATE              ) ValidBars = 0;            // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS__HISTORY_INSUFFICIENT        ) ValidBars = 0;
    }
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
-      debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)");
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));
+      debug("start()   ERR_TERMINAL_NOT_READY (Bars = 0)");
+      return(SetLastError(ERR_TERMINAL_NOT_READY));
    }
 
    /*
    // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
    if (ArraySize(buffer) == 0)
-      return(SetLastError(ERR_TERMINAL_NOT_YET_READY));                          // kann bei Terminal-Start auftreten
+      return(SetLastError(ERR_TERMINAL_NOT_READY));                           // kann bei Terminal-Start auftreten
    */
 
    __WHEREAMI__                   = FUNC_START;
@@ -272,7 +272,7 @@ bool IsIndicator() {
  * @return bool
  */
 bool Indicator.IsICustom() {
-   return(__iCustom__);
+   return(__iCustom__);          // (bool)int
 }
 
 
@@ -309,12 +309,25 @@ bool IsLibrary() {
 int SetLastError(int error, int param=NULL) {
    last_error = error;
 
-   if (Indicator.IsICustom()) {                                               // Fehler an Aufrufer weiterreichen
+   switch (error) {
+      case NO_ERROR                 : break;
+      case STATUS_HISTORY_UPDATE    : break;
+      case STATUS_TERMINAL_NOT_READY: break;
+      case STATUS_CANCELLED_BY_USER : break;
+      case STATUS_EXECUTION_STOPPING: break;
+      case STATUS_ORDER_CHANGED     : break;
+
+      default:
+         __STATUS_ERROR = true;
+   }
+
+   // bei iCustom() Fehler an Aufrufer weiterreichen
+   if (Indicator.IsICustom()) {
       /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom__);
 
       if (IsError(error)) {
          __iCustom__ = NULL;
-         last_error  = error;
+         SetLastError(error);
       }
       else {
          ic[IC_LAST_ERROR] = last_error;
