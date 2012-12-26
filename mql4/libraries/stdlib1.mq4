@@ -47,7 +47,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERR_TERMINAL_NOT_YET_READY
+int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERR_TERMINAL_NOT_READY
    if (__STATUS__CANCELLED)
       return(NO_ERROR);
 
@@ -90,19 +90,19 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(1)", error));
       }
-      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(2)", error));
       }
-      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
       */
    }
 
@@ -118,9 +118,8 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
             return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                           // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERR_TERMINAL_NOT_YET_READY)                     // den UI-Thread blockieren würde.
-               debug("stdlib_init()   GetAccountNumber() = 0", last_error);
-            return(last_error);
+            if (last_error == ERR_TERMINAL_NOT_READY)                         // den UI-Thread blockieren würde.
+               return(debug("stdlib_init()   GetAccountNumber() = 0", last_error));
          }
       }
    }
@@ -6369,7 +6368,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { //throws ERR_TERMINAL_NOT_YET_READY         // evt. während des Terminal-Starts
+int GetAccountNumber() { //throws ERR_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6385,7 +6384,7 @@ int GetAccountNumber() { //throws ERR_TERMINAL_NOT_YET_READY         // evt. wäh
    if (account == 0) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
       if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
-         return(_ZERO(SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+         return(_ZERO(SetLastError(ERR_TERMINAL_NOT_READY)));
 
       int pos = StringFind(title, ":");
       if (pos < 1)
@@ -7170,7 +7169,7 @@ string ErrorDescription(int error) {
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                  ); // 5001
       case ERR_INVALID_INPUT              : return("invalid input parameter value"                             ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                     ); // 5003
-      case ERR_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    ); // 5004
+      case ERR_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); // 5007
@@ -7312,7 +7311,7 @@ string ErrorToStr(int error) {
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("ERR_FUNCTION_NOT_IMPLEMENTED"   ); // 5001
       case ERR_INVALID_INPUT              : return("ERR_INVALID_INPUT"              ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
-      case ERR_TERMINAL_NOT_YET_READY     : return("ERR_TERMINAL_NOT_YET_READY"     ); // 5004
+      case ERR_TERMINAL_NOT_READY         : return("ERR_TERMINAL_NOT_READY"         ); // 5004
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
