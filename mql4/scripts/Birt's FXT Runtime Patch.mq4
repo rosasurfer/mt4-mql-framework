@@ -39,7 +39,7 @@ extern bool   Use.Variable.Spread.Files      = false;
 int onStart() {
    int version = GetTerminalBuild();
    if (version == 0)
-      return(SetLastError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_GetLastError()));
 
    Print("MT4 build "+ version +" detected.");
 

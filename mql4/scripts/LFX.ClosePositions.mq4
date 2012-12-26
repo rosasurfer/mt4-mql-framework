@@ -88,7 +88,7 @@ int onStart() {
          int oeFlags = NULL;
          /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(tickets)); InitializeBuffer(oes, ORDER_EXECUTION.size);
          if (!OrderMultiClose(tickets, 0.1, Orange, oeFlags, oes))
-            return(SetLastError(stdlib_PeekLastError()));
+            return(SetLastError(stdlib_GetLastError()));
          ArrayResize(oes, 0);
 
          // TODO: erzielten ClosePrice() berechnen und ausgeben

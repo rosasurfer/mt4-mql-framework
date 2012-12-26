@@ -12,13 +12,13 @@ extern int    __iCustom__;
 /**
  * Globale init()-Funktion für Indikatoren.
  *
- * Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
+ * Ist das Flag __STATUS_CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
  * der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
  * @return int - Fehlerstatus
  */
 int init() { //throws ERR_TERMINAL_NOT_READY
-   if (__STATUS__CANCELLED)
+   if (__STATUS_CANCELLED)
       return(NO_ERROR);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
@@ -83,7 +83,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
    switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS_CANCELLED,
       case REASON_REMOVE     : error = onInitRemove();          break;        // bricht init() *nicht* ab (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
@@ -95,7 +95,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       return(last_error);                                                     //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   if (IsLastError() || __STATUS__CANCELLED)                                  //
+   if (IsLastError() || __STATUS_CANCELLED)                                  //
       return(last_error);                                                     //
 
 
@@ -112,7 +112,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
 /**
  * Globale start()-Funktion für Indikatoren.
  *
- * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
+ * - Ist das Flag __STATUS_CANCELLED gesetzt, bricht start() ab.
  *
  * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERR_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
@@ -123,7 +123,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS__CANCELLED)
+   if (__STATUS_CANCELLED)
       return(NO_ERROR);
 
    int error;
@@ -156,8 +156,8 @@ int start() {
       if      (prev_error == ERR_TERMINAL_NOT_READY  ) ValidBars = 0;
       else if (prev_error == ERR_HISTORY_UPDATE      ) ValidBars = 0;
       else if (prev_error == ERR_HISTORY_INSUFFICIENT) ValidBars = 0;
-      if      (__STATUS__HISTORY_UPDATE              ) ValidBars = 0;            // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
-      if      (__STATUS__HISTORY_INSUFFICIENT        ) ValidBars = 0;
+      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;            // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_INSUFFICIENT         ) ValidBars = 0;
    }
 
 
@@ -173,9 +173,9 @@ int start() {
       return(SetLastError(ERR_TERMINAL_NOT_READY));                           // kann bei Terminal-Start auftreten
    */
 
-   __WHEREAMI__                   = FUNC_START;
-   __STATUS__HISTORY_UPDATE       = false;
-   __STATUS__HISTORY_INSUFFICIENT = false;
+   __WHEREAMI__                  = FUNC_START;
+   __STATUS_HISTORY_UPDATE       = false;
+   __STATUS_HISTORY_INSUFFICIENT = false;
 
 
    // (4) ChangedBars berechnen
@@ -184,12 +184,12 @@ int start() {
 
    // (5) stdLib benachrichtigen
    if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_GetLastError()));
 
 
    // (6) bei Bedarf Input-Dialog aufrufen
-   if (__STATUS__RELAUNCH_INPUT) {
-      __STATUS__RELAUNCH_INPUT = false;
+   if (__STATUS_RELAUNCH_INPUT) {
+      __STATUS_RELAUNCH_INPUT = false;
       return(start.RelaunchInputDialog());
    }
 
@@ -197,15 +197,15 @@ int start() {
    // (7) Main-Funktion aufrufen und auswerten
    onTick();
 
-   if      (last_error == ERR_HISTORY_UPDATE      ) __STATUS__HISTORY_UPDATE       = true;
-   else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS__HISTORY_INSUFFICIENT = true;
+   if      (last_error == ERR_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
+   else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
 
    return(last_error);
 }
 
 
 /**
- * Globale deinit()-Funktion für Indikatoren. Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab.
+ * Globale deinit()-Funktion für Indikatoren. Ist das Flag __STATUS_CANCELLED gesetzt, bricht deinit() *nicht* ab.
  * Es liegt in der Verantwortung des Users, diesen Status selbst auszuwerten.
  *
  * @return int - Fehlerstatus
@@ -219,7 +219,7 @@ int deinit() {
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS__CANCELLED setzt.
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS_CANCELLED setzt.
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //

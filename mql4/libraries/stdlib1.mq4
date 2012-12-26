@@ -48,7 +48,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERR_TERMINAL_NOT_READY
-   if (__STATUS__CANCELLED)
+   if (__STATUS_CANCELLED)
       return(NO_ERROR);
 
    prev_error = last_error;
@@ -236,18 +236,6 @@ int afterDeinit()             {                                                 
  * @return int - Fehlerstatus
  */
 int stdlib_GetLastError() {
-   int error = last_error;
-   last_error = NO_ERROR;
-   return(error);
-}
-
-
-/**
- * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode *nicht* zurück.
- *
- * @return int - Fehlerstatus
- */
-int stdlib_PeekLastError() {
    return(last_error);
 }
 

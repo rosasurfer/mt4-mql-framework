@@ -147,7 +147,7 @@ int DrawGrid() {
       else {                                                         // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
          bar = iBarShiftNext(NULL, 0, separatorTime);                // ERR_HISTORY_UPDATE ???
          if (bar == EMPTY_VALUE) {
-            if (SetLastError(stdlib_PeekLastError()) != ERR_HISTORY_UPDATE)
+            if (SetLastError(stdlib_GetLastError()) != ERR_HISTORY_UPDATE)
                catch("DrawGrid(1)", last_error);
             return(last_error);
          }

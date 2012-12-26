@@ -25,7 +25,7 @@ double iBalance[];
 int onInit() {
    // ERR_TERMINAL_NOT_READY abfangen
    if (!GetAccountNumber())
-      return(SetLastError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_GetLastError()));
 
    SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");
@@ -50,12 +50,12 @@ int onTick() {
    if (ValidBars == 0) {
       ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen
       if (IsError(iAccountBalanceSeries(AccountNumber(), iBalance)))
-         return(SetLastError(stdlib_PeekLastError()));
+         return(SetLastError(stdlib_GetLastError()));
    }
    else {                                                            // ... oder nur die fehlenden Werte berechnen
       for (int bar=ChangedBars-1; bar >= 0; bar--) {
          if (IsError(iAccountBalance(AccountNumber(), iBalance, bar)))
-            return(SetLastError(stdlib_PeekLastError()));
+            return(SetLastError(stdlib_GetLastError()));
       }
    }
 

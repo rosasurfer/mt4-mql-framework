@@ -8,13 +8,13 @@
 /**
  * Globale init()-Funktion für Expert Adviser.
  *
- * Ist das Flag __STATUS__CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
+ * Ist das Flag __STATUS_CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
  * der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
  * @return int - Fehlerstatus
  */
 int init() { //throws ERR_TERMINAL_NOT_READY
-   if (__STATUS__CANCELLED || __STATUS__ERROR)
+   if (__STATUS_CANCELLED || __STATUS_ERROR)
       return(NO_ERROR);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
@@ -53,19 +53,19 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
-      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
-      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_YET_READY)));
+      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
@@ -102,7 +102,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
    switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS_CANCELLED,
       case REASON_REMOVE     : error = onInitRemove();          break;        // bricht init() *nicht* ab.
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
@@ -114,7 +114,7 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       return(last_error);                                                     //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   if (__STATUS__CANCELLED || __STATUS__ERROR)                                //
+   if (__STATUS_CANCELLED || __STATUS_ERROR)                                  //
       return(last_error);                                                     //
 
 
@@ -217,7 +217,7 @@ int onInitRecompile() {
 /**
  * Globale start()-Funktion für Expert Adviser.
  *
- * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
+ * - Ist das Flag __STATUS_CANCELLED gesetzt, bricht start() ab.
  *
  * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
@@ -228,7 +228,7 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS__CANCELLED || __STATUS__ERROR) {
+   if (__STATUS_CANCELLED || __STATUS_ERROR) {
       ShowStatus();
       return(NO_ERROR);
    }
@@ -259,7 +259,7 @@ int start() {
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERR_TERMINAL_NOT_YET_READY) {                      // init() ist mit hartem Fehler zurückgekehrt
+         if (last_error != ERR_TERMINAL_NOT_READY) {                          // init() ist mit hartem Fehler zurückgekehrt
             ShowStatus();
             return(last_error);
          }
@@ -280,8 +280,8 @@ int start() {
 
 
    // (2) bei Bedarf Input-Dialog aufrufen
-   if (__STATUS__RELAUNCH_INPUT) {
-      __STATUS__RELAUNCH_INPUT = false;
+   if (__STATUS_RELAUNCH_INPUT) {
+      __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
       ShowStatus();
       return(last_error);
@@ -290,7 +290,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
-      SetLastError(debug("start()   Bars = 0", ERR_TERMINAL_NOT_YET_READY));
+      SetLastError(debug("start()   Bars = 0", ERR_TERMINAL_NOT_READY));
       ShowStatus();
       return(last_error);
    }
@@ -298,7 +298,7 @@ int start() {
 
    // (4) stdLib benachrichtigen
    if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      SetLastError(stdlib_PeekLastError());
+      SetLastError(stdlib_GetLastError());
       ShowStatus();
       return(last_error);
    }
@@ -339,7 +339,7 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des EA's, diesen Status
+ * NOTE: 1) Ist das Flag __STATUS_CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des EA's, diesen Status
  *          selbst auszuwerten.
  *
  *       2) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
@@ -359,7 +359,7 @@ int deinit() {
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS__CANCELLED setzt.
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS_CANCELLED setzt.
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //

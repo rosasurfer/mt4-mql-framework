@@ -9,7 +9,7 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   if (__STATUS__CANCELLED)
+   if (__STATUS_CANCELLED)
       return(NO_ERROR);
 
    __WHEREAMI__       = FUNC_INIT;
@@ -54,7 +54,7 @@ int init() {
       return(last_error);                                                     // Preprocessing-Hook
                                                                               //
    switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS__CANCELLED,
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS_CANCELLED,
       case REASON_REMOVE     : error = onInitRemove();          break;        // bricht init() *nicht* ab.
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
@@ -66,7 +66,7 @@ int init() {
       return(last_error);                                                     //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   if (IsLastError() || __STATUS__CANCELLED)                                  //
+   if (IsLastError() || __STATUS_CANCELLED)                                   //
       return(last_error);                                                     //
 
 
@@ -81,11 +81,11 @@ int init() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
+ * NOTE: 1) Ist das Flag __STATUS_CANCELLED gesetzt, bricht start() ab.
  *       2) Ist die Variable last_error gesetzt oder kehrte init() mit einem Fehler zurück, bricht start() ab.
  */
 int start() {
-   if (__STATUS__CANCELLED || IsLastError())                                  // init()-Fehler abfangen
+   if (__STATUS_CANCELLED || IsLastError())                                   // init()-Fehler abfangen
       return(last_error);
 
    Tick++; Ticks = Tick;
@@ -106,7 +106,7 @@ int start() {
 
    // (3) stdLib benachrichtigen
    if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_PeekLastError()));
+      return(SetLastError(stdlib_GetLastError()));
 
 
    // (4) Main-Funktion aufrufen
@@ -122,7 +122,7 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Ist das Flag __STATUS__CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des Scripts,
+ * NOTE: Ist das Flag __STATUS_CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des Scripts,
  *       diesen Status selbst auszuwerten.
  */
 int deinit() {
@@ -134,7 +134,7 @@ int deinit() {
    if (error != -1) {                                                         //
       switch (UninitializeReason()) {                                         //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;   // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
-         case REASON_REMOVE     : error = onDeinitRemove();          break;   //   das Flag __STATUS__CANCELLED setzt.
+         case REASON_REMOVE     : error = onDeinitRemove();          break;   //   das Flag __STATUS_CANCELLED setzt.
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;   //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;   // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;   //

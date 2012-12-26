@@ -226,7 +226,6 @@
    bool     IsNoError(int value);
    bool     IsErrorCode(int value);
    int      stdlib_GetLastError();
-   int      stdlib_PeekLastError();
 
 
    // Eventlistener, *können* im Programm durch effektivere Versionen überschrieben werden
