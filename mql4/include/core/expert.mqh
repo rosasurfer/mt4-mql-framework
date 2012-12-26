@@ -13,8 +13,8 @@
  *
  * @return int - Fehlerstatus
  */
-int init() { //throws ERR_TERMINAL_NOT_YET_READY
-   if (__STATUS__CANCELLED || __STATUS__DISABLED)
+int init() { //throws ERR_TERMINAL_NOT_READY
+   if (__STATUS__CANCELLED || __STATUS__ERROR)
       return(NO_ERROR);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
@@ -41,11 +41,8 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
-   if (IsError(error)) {
-      if (error != ERR_TERMINAL_NOT_YET_READY)
-         SetStatusDisabled();
+   if (IsError(error))
       return(SetLastError(error));
-   }
 
 
    // (3) user-spezifische Init-Tasks ausführen
@@ -79,7 +76,7 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
       if (IsError(error))
-         return(SetStatusDisabled(SetLastError(error)));
+         return(SetLastError(error));
    }
 
 
@@ -117,7 +114,7 @@ int init() { //throws ERR_TERMINAL_NOT_YET_READY
       return(last_error);                                                     //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   if (__STATUS__CANCELLED || __STATUS__DISABLED)                             //
+   if (__STATUS__CANCELLED || __STATUS__ERROR)                                //
       return(last_error);                                                     //
 
 
@@ -222,7 +219,7 @@ int onInitRecompile() {
  *
  * - Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_YET_READY zurück,
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
@@ -231,7 +228,7 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS__CANCELLED || __STATUS__DISABLED) {
+   if (__STATUS__CANCELLED || __STATUS__ERROR) {
       ShowStatus();
       return(NO_ERROR);
    }
@@ -273,7 +270,7 @@ int start() {
             return(last_error);
          }
       }
-      last_error = NO_ERROR;                                                  // init() war erfolgreich
+      last_error                   = NO_ERROR;                                // init() war erfolgreich
    }
    else {
       prev_error = last_error;                                                // weiterer Tick: last_error sichern und zurücksetzen
@@ -293,7 +290,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
-      SetLastError(ERR_TERMINAL_NOT_YET_READY, debug("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)"));
+      SetLastError(debug("start()   Bars = 0", ERR_TERMINAL_NOT_YET_READY));
       ShowStatus();
       return(last_error);
    }
@@ -302,8 +299,6 @@ int start() {
    // (4) stdLib benachrichtigen
    if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       SetLastError(stdlib_PeekLastError());
-      if (last_error != ERR_TERMINAL_NOT_YET_READY)
-         SetStatusDisabled();
       ShowStatus();
       return(last_error);
    }
@@ -330,11 +325,9 @@ int start() {
    onTick();
 
 
-   if (last_error != NO_ERROR) {
+   if (last_error != NO_ERROR)
       if (IsTesting())
          Tester.Stop();
-      SetStatusDisabled();
-   }
    ShowStatus();
    return(last_error);
 }
@@ -390,9 +383,6 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-
-   if (IsLastError())
-      SetStatusDisabled();
    return(last_error);
 }
 
@@ -459,6 +449,18 @@ bool IsLibrary() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
+
+   switch (error) {
+      case NO_ERROR                 : break;
+      case STATUS_HISTORY_UPDATE    : break;
+      case STATUS_TERMINAL_NOT_READY: break;
+      case STATUS_CANCELLED_BY_USER : break;
+      case STATUS_EXECUTION_STOPPING: break;
+      case STATUS_ORDER_CHANGED     : break;
+
+      default:
+         __STATUS_ERROR = true;
+   }
    return(error);
 }
 

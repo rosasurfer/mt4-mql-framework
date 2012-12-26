@@ -10,12 +10,13 @@ int      __WHEREAMI__;                                      // ID der aktuell au
 bool     __LOG = true;                                      // ob das Logging aktiviert ist (default: ja; im Tester ggf. nein)
 bool     __LOG_INSTANCE_ID;                                 // ob die Instanz-ID des Programms mitgeloggt wird
 bool     __LOG_PER_INSTANCE;                                // ob ein instanz-eigenes Logfile benutzt wird
-bool     __STATUS__INVALID_INPUT;                           // ungültige Parametereingabe im Input-Dialog
-bool     __STATUS__RELAUNCH_INPUT;                          // Anforderung, Input-Dialog erneut zu laden
+bool     __STATUS__TERMINAL_NOT_READY;                      // Status-Äquivalent für ERR_TERMINAL_NOT_READY, jedoch kein Fehler
 bool     __STATUS__HISTORY_UPDATE;                          // History-Update wurde getriggert
-bool     __STATUS__HISTORY_INSUFFICIENT;                    // History war nicht ausreichend
-bool     __STATUS__CANCELLED;                               // Ausführung durch Benutzer abgebrochen            (externe Ursache)
-bool     __STATUS__DISABLED;                                // Ausführung wegen "RuntimeException" "angehalten" (interne Ursache)
+bool     __STATUS__HISTORY_INSUFFICIENT;                    // History ist nicht ausreichend
+bool     __STATUS__RELAUNCH_INPUT;                          // Anforderung, Input-Dialog erneut zu laden
+bool     __STATUS__INVALID_INPUT;                           // ungültige Parametereingabe im Input-Dialog
+bool     __STATUS__CANCELLED;                               // Ausführung durch Benutzer abgebrochen       (externe Ursache)
+bool     __STATUS__ERROR;                                   // Ausführung durch Laufzeitfehler abgebrochen (interne Ursache)
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -28,8 +29,8 @@ datetime Tick.prevTime;
 int      ValidBars;
 int      ChangedBars;
 
-int      prev_error = NO_ERROR;                             // der letzte Fehler des vorherigen start()-Aufrufs
-int      last_error = NO_ERROR;                             // der letzte Fehler des aktuellen start()-Aufrufs
+int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
+int      last_error;                                        // der letzte Fehler des aktuellen start()-Aufrufs
 
 string   objects[];                                         // Namen der Objekte, die mit Beenden des Programms automatisch entfernt werden
 
@@ -934,8 +935,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          // EA außerhalb des Testers, Script/Indikator im oder außerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
-      SetLastError(error);                                                                               // reicht bei iCustom(Indicator) den Fehler zusätzlich weiter
-      __STATUS__DISABLED = true;
+      SetLastError(error);                                                                               // je nach Programmtyp unterschiedlich Implementierung
    }
 
    if (orderPop)
@@ -989,19 +989,6 @@ int ResetLastError() {
    int error = last_error;
    SetLastError(NO_ERROR);
    return(error);
-}
-
-
-/**
- * Setzt den den DISABLED-Status des Moduls. Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
- *
- * @param  int param - beliebiger Parameter
- *
- * @return int - derselbe Parameter (for chaining)
- */
-int SetStatusDisabled(int param=NULL) {
-   __STATUS__DISABLED = true;
-   return(param);
 }
 
 
@@ -1746,7 +1733,6 @@ void DummyCalls() {
    Round(NULL);
    SelectTicket(NULL, NULL);
    SetLastError(NULL);
-   SetStatusDisabled();
    Sign(NULL);
    start.RelaunchInputDialog();
    Tester.IsLogging();
