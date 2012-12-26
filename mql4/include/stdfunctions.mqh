@@ -193,7 +193,7 @@ string   objects[];                                         // Namen der Objekte
 #define OBJ_PERIOD_W1          0x0080           // object is shown on weekly charts
 #define OBJ_PERIOD_MN1         0x0100           // object is shown on monthly charts
 #define OBJ_PERIODS_ALL        0x01FF           // object is shown on all timeframes: OBJ_PERIOD_M1 | OBJ_PERIOD_M5 | OBJ_PERIOD_M15 | OBJ_PERIOD_M30 | OBJ_PERIOD_H1 |
-#define OBJ_ALL_PERIODS        OBJ_ALL_PERIODS  //                                    OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
+#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  //                                    OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()

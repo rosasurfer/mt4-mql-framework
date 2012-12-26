@@ -96,36 +96,38 @@ int init() { //throws ERS_TERMINAL_NOT_READY
          return(last_error);
    }
 
-
-   // (7) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onInit() == -1)                                                        //
-      return(last_error);                                                     // Preprocessing-Hook
+                                                                              // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // (7) user-spezifische init()-Routinen aufrufen                           //
+   onInit();                                                                  // Preprocessing-Hook
                                                                               //
-   switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück oder setzt das Flag __STATUS_CANCELLED,
-      case REASON_REMOVE     : error = onInitRemove();          break;        // bricht init() *nicht* ab.
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
+   if (!__STATUS_CANCELLED && !__STATUS_ERROR) {                              //
+      switch (UninitializeReason()) {                                         //
+         case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
+         case REASON_REMOVE     : error = onInitRemove();          break;     //
+         case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
+         case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
+         case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
+         case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
+         case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
+      }                                                                       //
    }                                                                          //
-   if (error == -1)                                                           //
-      return(last_error);                                                     //
                                                                               //
-   afterInit();                                                               // Postprocessing-Hook
-   if (__STATUS_CANCELLED || __STATUS_ERROR)                                  //
-      return(last_error);                                                     //
+   afterInit();                                                               // Postprocessing-Hook wird immer ausgeführt (auch bei __STATUS_CANCELLED oder __STATUS_ERROR)
+   ShowStatus();                                                              //
+
+   if (__STATUS_CANCELLED || __STATUS_ERROR)
+      return(last_error);
 
 
    // (8) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
-   if (!IsTesting())
-      if (UninitializeReason() != REASON_CHARTCHANGE)
-         Chart.SendTick(false);                                               // Ganz zum Schluß, da Ticks aus init() verloren gehen, wenn die entsprechende Windows-Message
-                                                                              // vor Verlassen von init() vom UI-Thread verarbeitet wird.
-
-   catch("init(4)");
-   return(last_error);
+   if (!IsTesting()) {
+      if (UninitializeReason() != REASON_CHARTCHANGE) {                       // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
+         error = Chart.SendTick(false);                                       // vor Verlassen von init() verarbeitet wird.
+         if (IsError(error))
+            SetLastError(error);
+      }
+   }
+   return(catch("init(4)")|last_error);
 }
 
 

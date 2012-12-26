@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string MA.Periods        = "200";                             // averaging period
-extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
 extern string MA.Method         = "SMA";                             // averaging method
 extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice      = "Close";                           // price used for MA calculation
