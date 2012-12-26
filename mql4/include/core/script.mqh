@@ -7,9 +7,6 @@
  * Globale init()-Funktion für Scripte.
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: In Scripten ist ERR_TERMINAL_NOT_YET_READY ein fataler Fehler.
  */
 int init() {
    if (__STATUS__CANCELLED)
@@ -86,7 +83,6 @@ int init() {
  *
  * NOTE: 1) Ist das Flag __STATUS__CANCELLED gesetzt, bricht start() ab.
  *       2) Ist die Variable last_error gesetzt oder kehrte init() mit einem Fehler zurück, bricht start() ab.
- *       3) In Scripten ist ERR_TERMINAL_NOT_YET_READY ein fataler Fehler.
  */
 int start() {
    if (__STATUS__CANCELLED || IsLastError())                                  // init()-Fehler abfangen
@@ -105,7 +101,7 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0)                                                             // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start()   ERR_TERMINAL_NOT_YET_READY (Bars = 0)", ERR_TERMINAL_NOT_YET_READY));
+      return(catch("start()   ERR_TERMINAL_NOT_READY (Bars = 0)", ERR_TERMINAL_NOT_READY));
 
 
    // (3) stdLib benachrichtigen
@@ -216,7 +212,7 @@ bool IsLibrary() {
 
 
 /**
- * Setzt den internen Fehlercode des Moduls.
+ * Setzt den internen Fehlercode des Scriptes.
  *
  * @param  int error - Fehlercode
  *
@@ -227,5 +223,17 @@ bool IsLibrary() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
+
+   switch (error) {
+      case NO_ERROR                 : break;
+      case STATUS_HISTORY_UPDATE    : break;
+    //case STATUS_TERMINAL_NOT_READY: break;    // In Scripten ist STATUS_TERMINAL_NOT_READY Fehler
+      case STATUS_CANCELLED_BY_USER : break;
+      case STATUS_EXECUTION_STOPPING: break;
+      case STATUS_ORDER_CHANGED     : break;
+
+      default:
+         __STATUS_ERROR = true;
+   }
    return(error);
 }
