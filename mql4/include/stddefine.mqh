@@ -10,13 +10,13 @@ int      __WHEREAMI__;                                      // ID der aktuell au
 bool     __LOG = true;                                      // ob das Logging aktiviert ist (default: ja; im Tester ggf. nein)
 bool     __LOG_INSTANCE_ID;                                 // ob die Instanz-ID des Programms mitgeloggt wird
 bool     __LOG_PER_INSTANCE;                                // ob ein instanz-eigenes Logfile benutzt wird
-bool     __STATUS_TERMINAL_NOT_READY;                       // Status-Äquivalent für ERS_TERMINAL_NOT_READY, kein Fehler
+bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
-bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist nicht ausreichend
+bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
-bool     __STATUS_CANCELLED;                                // Ausführung durch Benutzer abgebrochen       (externe Ursache)
-bool     __STATUS_ERROR;                                    // Ausführung durch Laufzeitfehler abgebrochen (interne Ursache)
+bool     __STATUS_CANCELLED;                                // Ausführung durch Benutzereingabe abgebrochen (externe Ursache)
+bool     __STATUS_ERROR;                                    // Ausführung durch Programmfehler abgebrochen  (interne Ursache: unbehandelter Fehler)
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
