@@ -13,7 +13,7 @@
  *
  * @return int - Fehlerstatus
  */
-int init() { //throws ERR_TERMINAL_NOT_READY
+int init() { //throws ERS_TERMINAL_NOT_READY
    if (__STATUS_CANCELLED || __STATUS_ERROR)
       return(NO_ERROR);
 
@@ -53,19 +53,19 @@ int init() { //throws ERR_TERMINAL_NOT_READY
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
-      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
+      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
-      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
+      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
@@ -219,7 +219,7 @@ int onInitRecompile() {
  *
  * - Ist das Flag __STATUS_CANCELLED gesetzt, bricht start() ab.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERR_TERMINAL_NOT_READY zurück,
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
@@ -259,7 +259,7 @@ int start() {
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERR_TERMINAL_NOT_READY) {                          // init() ist mit hartem Fehler zurückgekehrt
+         if (last_error != ERS_TERMINAL_NOT_READY) {                          // init() ist mit hartem Fehler zurückgekehrt
             ShowStatus();
             return(last_error);
          }
@@ -290,7 +290,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0) {
-      SetLastError(debug("start()   Bars = 0", ERR_TERMINAL_NOT_READY));
+      SetLastError(debug("start()   Bars = 0", ERS_TERMINAL_NOT_READY));
       ShowStatus();
       return(last_error);
    }
@@ -451,12 +451,11 @@ int SetLastError(int error, int param=NULL) {
    last_error = error;
 
    switch (error) {
-      case NO_ERROR                 : break;
-      case STATUS_HISTORY_UPDATE    : break;
-      case STATUS_TERMINAL_NOT_READY: break;
-      case STATUS_CANCELLED_BY_USER : break;
-      case STATUS_EXECUTION_STOPPING: break;
-      case STATUS_ORDER_CHANGED     : break;
+      case NO_ERROR              : break;
+      case ERS_HISTORY_UPDATE    : break;
+      case ERS_TERMINAL_NOT_READY: break;
+      case ERS_CANCELLED_BY_USER : break;
+      case ERS_EXECUTION_STOPPING: break;
 
       default:
          __STATUS_ERROR = true;

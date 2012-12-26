@@ -51,7 +51,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERR_HISTORY_UPDATE) {
+   if (prev_error == ERS_HISTORY_UPDATE) {
       ValidBars   = 0;
       ChangedBars = Bars - ValidBars;
    }
@@ -138,16 +138,16 @@ int DrawGrid() {
       dow           = TimeDayOfWeek(time);
 
       // Bar und Chart-Time des Separators ermitteln
-      if (Time[0] < separatorTime) {                                 // keine entsprechende Bar: aktuelle Session oder noch laufendes ERR_HISTORY_UPDATE
+      if (Time[0] < separatorTime) {                                 // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
          bar = -1;
          chartTime = separatorTime;                                  // ursprüngliche Zeit verwenden
          if (dow == MONDAY)
             chartTime -= 2*DAYS;                                     // bei zukünftigen Separatoren Wochenenden von Hand "kollabieren" TODO: Bug bei Periode > H4
       }
       else {                                                         // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
-         bar = iBarShiftNext(NULL, 0, separatorTime);                // ERR_HISTORY_UPDATE ???
+         bar = iBarShiftNext(NULL, 0, separatorTime);                // ERS_HISTORY_UPDATE ???
          if (bar == EMPTY_VALUE) {
-            if (SetLastError(stdlib_GetLastError()) != ERR_HISTORY_UPDATE)
+            if (SetLastError(stdlib_GetLastError()) != ERS_HISTORY_UPDATE)
                catch("DrawGrid(1)", last_error);
             return(last_error);
          }
@@ -158,7 +158,7 @@ int DrawGrid() {
       label = TimeToStr(time);
       label = StringConcatenate(GetDayOfWeek(time, false), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
 
-      if (lastChartTime == chartTime)                                // Bars der vorherigen Periode fehlen (noch laufendes ERR_HISTORY_UPDATE oder Kurslücke)
+      if (lastChartTime == chartTime)                                // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
          ObjectDelete(lastLabel);                                    // Separator für die fehlende Periode wieder löschen
 
       // Separator zeichnen

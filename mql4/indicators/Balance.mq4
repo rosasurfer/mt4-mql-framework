@@ -23,7 +23,7 @@ double iBalance[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // ERR_TERMINAL_NOT_READY abfangen
+   // ERS_TERMINAL_NOT_READY abfangen
    if (!GetAccountNumber())
       return(SetLastError(stdlib_GetLastError()));
 
@@ -44,7 +44,7 @@ int onInit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iBalance) == 0)                                     // kann bei Terminal-Start auftreten
-      return(SetLastError(ERR_TERMINAL_NOT_READY));
+      return(SetLastError(ERS_TERMINAL_NOT_READY));
 
    // Alle Werte komplett ...
    if (ValidBars == 0) {

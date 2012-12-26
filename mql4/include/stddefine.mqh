@@ -10,7 +10,7 @@ int      __WHEREAMI__;                                      // ID der aktuell au
 bool     __LOG = true;                                      // ob das Logging aktiviert ist (default: ja; im Tester ggf. nein)
 bool     __LOG_INSTANCE_ID;                                 // ob die Instanz-ID des Programms mitgeloggt wird
 bool     __LOG_PER_INSTANCE;                                // ob ein instanz-eigenes Logfile benutzt wird
-bool     __STATUS_TERMINAL_NOT_READY;                       // Status-Äquivalent für ERR_TERMINAL_NOT_READY, jedoch kein Fehler
+bool     __STATUS_TERMINAL_NOT_READY;                       // Status-Äquivalent für ERS_TERMINAL_NOT_READY, kein Fehler
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
@@ -662,10 +662,10 @@ string   objects[];                                         // Namen der Objekte
 #define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
-// Order execution flags
-#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP löst keinen fatalen Fehler aus und kann individuell behandelt werden
-#define OE_CATCH_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED löst keinen fatalen Fehler aus und kann individuell behandelt werden
-#define OE_CATCH_EXECUTION_STOPPING             4     // ERR_EXECUTION_STOPPING löst keinen fatalen Fehler aus und kann individuell behandelt werden
+// Order execution flags                              // korrespondierende Fehler können individuell behandelt werden
+#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP
+#define OE_CATCH_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED
+#define OE_CATCH_EXECUTION_STOPPING             4     // ERS_EXECUTION_STOPPING (Status)
 
 
 // Struct sizes

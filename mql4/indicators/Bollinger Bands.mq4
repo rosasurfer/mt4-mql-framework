@@ -286,7 +286,7 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iUpperBand1) == 0)                                  // kann bei Terminal-Start auftreten
-      return(SetLastError(ERR_TERMINAL_NOT_READY));
+      return(SetLastError(ERS_TERMINAL_NOT_READY));
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (ValidBars == 0) {

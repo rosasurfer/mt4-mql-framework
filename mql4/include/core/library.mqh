@@ -117,6 +117,6 @@ bool IsLibrary() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
-   // STATUS_ERROR wird nicht gesetzt (ist Status des Hauptprogramms, nicht der Library)
+   // __STATUS_ERROR wird nicht gesetzt (ist Eigenschaft des Hauptprogramms)
    return(error);
 }

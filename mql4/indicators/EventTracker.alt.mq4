@@ -138,7 +138,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERR_HISTORY_UPDATE)
+   if (prev_error == ERS_HISTORY_UPDATE)
       ValidBars = 0;
 
    // unvollständige Accountinitialisierung abfangen (bei Start und Accountwechseln mit schnellen Prozessoren)
@@ -293,7 +293,7 @@ int CheckBollingerBands() {
 
 
 /**
- * @return int - Fehlerstatus (ggf. ERR_HISTORY_UPDATE)
+ * @return int - Fehlerstatus (ggf. ERS_HISTORY_UPDATE)
  *
 int CheckPivotLevels() {
    if (!Track.PivotLevels)
@@ -355,8 +355,8 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
 
    // Ausgangspunkt ist die Startbar der aktuellen Session
    datetime startTime = iTime(symbol, period, 0);
-   if (GetLastError() == ERR_HISTORY_UPDATE)
-      return(SetLastError(ERR_HISTORY_UPDATE));
+   if (GetLastError() == ERS_HISTORY_UPDATE)
+      return(SetLastError(ERS_HISTORY_UPDATE));
 
    startTime = GetServerSessionStartTime_old(startTime);
    if (startTime == -1)                                                 // Wochenend-Candles
@@ -411,14 +411,14 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
  * @param  int    from      - Offset der Startbar
  * @param  int    to        - Offset der Endbar
  *
- * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert, ggf. ERR_HISTORY_UPDATE
+ * @return int - Fehlerstatus: ERR_NO_RESULT, wenn die angegebene Range nicht existiert, ggf. ERS_HISTORY_UPDATE
  *
  *
  * NOTE: Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
  *       @see iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
  *
 int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double &results[]) {
-   // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
+   // TODO: um ERS_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
    if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
@@ -434,9 +434,10 @@ int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double
 
    int bars = iBars(symbol, period);
 
-   int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
+   int error = GetLastError();                  // ERS_HISTORY_UPDATE ???
    if (error != NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE) catch("iOHLCBarRange(3)", error);
+      if (error != ERS_HISTORY_UPDATE)
+         catch("iOHLCBarRange(3)", error);
       return(error);
    }
 
@@ -478,21 +479,21 @@ int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double
  * @param  datetime time      - Zeitpunkt
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den Zeitpunkt keine Kurse existieren,
- *                             ggf. ERR_HISTORY_UPDATE
+ *                             ggf. ERS_HISTORY_UPDATE
  *
 int iOHLCTime(double &results[], string symbol/*=NULL, int timeframe/*=0, datetime time) {
 
    // TODO: Parameter bool exact=TRUE implementieren
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+   // TODO: möglichst aktuellen Chart benutzen, um ERS_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
 
    int bar = iBarShift(symbol, timeframe, time, true);
 
-   int error = GetLastError();                  // ERR_HISTORY_UPDATE ???
+   int error = GetLastError();                  // ERS_HISTORY_UPDATE ???
    if (error != NO_ERROR) {
-      if (error != ERR_HISTORY_UPDATE) catch("iOHLCTime(1)", error);
+      if (error != ERS_HISTORY_UPDATE) catch("iOHLCTime(1)", error);
       return(error);
    }
 
@@ -522,12 +523,12 @@ int iOHLCTime(double &results[], string symbol/*=NULL, int timeframe/*=0, dateti
  * @param  datetime to        - Ende des Zeitraumes
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn im Zeitraum keine Kurse existieren,
- *                             ggf. ERR_HISTORY_UPDATE
+ *                             ggf. ERS_HISTORY_UPDATE
  *
 int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datetime to) {
 
    // TODO: Parameter bool exact=TRUE implementieren
-   // TODO: möglichst aktuellen Chart benutzen, um ERR_HISTORY_UPDATE zu vermeiden
+   // TODO: möglichst aktuellen Chart benutzen, um ERS_HISTORY_UPDATE zu vermeiden
 
    if (symbol == "0")                           // NULL ist Integer (0)
       symbol = Symbol();
@@ -561,7 +562,7 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
 
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
-   if (fromBar == EMPTY_VALUE)                  // ERR_HISTORY_UPDATE ???
+   if (fromBar == EMPTY_VALUE)                  // ERS_HISTORY_UPDATE ???
       return(stdlib_GetLastError());
 
    int toBar = iBarShiftPrevious(symbol, period, to-1);
@@ -601,7 +602,7 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
  * @param  int    bar        - Bar-Offset
  * @param  double results[4] - Ergebnisarray {Open, Low, High, Close}
  *
- * @return int - Fehlerstatus; ERR_NO_RESULT, wenn die angegebene Bar nicht existiert (ggf. ERR_HISTORY_UPDATE)
+ * @return int - Fehlerstatus; ERR_NO_RESULT, wenn die angegebene Bar nicht existiert (ggf. ERS_HISTORY_UPDATE)
  *
 int iOHLC(string symbol, int period, int bar, double &results[]) {
    if (symbol == "0")                     // NULL ist Integer (0)
@@ -611,7 +612,7 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 
-   // TODO: um ERR_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
+   // TODO: um ERS_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
    // Scheint für Bars größer als ChartBars Nonsense zurückzugeben
 
@@ -626,7 +627,7 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
       if (EQ(results[MODE_CLOSE], 0))
          error = ERR_NO_RESULT;
    }
-   else if (error != ERR_HISTORY_UPDATE) {
+   else if (error != ERS_HISTORY_UPDATE) {
       catch("iOHLCBar(2)", error);
    }
    return(error);

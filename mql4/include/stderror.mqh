@@ -98,9 +98,8 @@
 #define ERR_INTEGER_PARAMETER_EXPECTED                             4063
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
-#define ERR_HISTORY_UPDATE                                         4066    // history update
-#define ERR_HISTORY_WILL_UPDATED                     ERR_HISTORY_UPDATE
-#define STATUS_HISTORY_UPDATE                        ERR_HISTORY_UPDATE                                              // Status, kein Fehler
+#define ERS_HISTORY_UPDATE                                         4066    // history update                         // Status
+#define ERR_HISTORY_WILL_UPDATED                     ERS_HISTORY_UPDATE
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_END_OF_FILE                                            4099    // end of file
 #define ERR_SOME_FILE_ERROR                                        4100    // some file error
@@ -129,18 +128,14 @@
 #define ERR_FUNCTION_NOT_IMPLEMENTED                               5001    // function not implemented
 #define ERR_INVALID_INPUT                                          5002    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                              5003    // invalid configuration parameter
-#define ERR_TERMINAL_NOT_READY                                     5004    // terminal not yet ready                 // in Scripten Fehler, ansonsten Status
-#define STATUS_TERMINAL_NOT_READY                ERR_TERMINAL_NOT_READY
+#define ERS_TERMINAL_NOT_READY                                     5004    // terminal not yet ready                 // in Scripten Fehler, sonst Status
 #define ERR_INVALID_TIMEZONE_CONFIG                                5005    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                    5006    // invalid market data
 #define ERR_FILE_NOT_FOUND                                         5007    // file not found
-#define ERR_CANCELLED_BY_USER                                      5008    // execution cancelled by user
-#define STATUS_CANCELLED_BY_USER                  ERR_CANCELLED_BY_USER                                              // Status, kein Fehler
+#define ERS_CANCELLED_BY_USER                                      5008    // execution cancelled by user            // Status
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
 #define ERR_INVALID_COMMAND                                        5010    // invalid or unknown command
 #define ERR_ILLEGAL_STATE                                          5011    // illegal state
-#define ERR_EXECUTION_STOPPING                                     5012    // IsStopped() returned TRUE
-#define STATUS_EXECUTION_STOPPING                ERR_EXECUTION_STOPPING                                              // Status, kein Fehler
+#define ERS_EXECUTION_STOPPING                                     5012    // IsStopped() returned TRUE              // Status
 #define ERR_ORDER_CHANGED                                          5013    // order status changed
-#define STATUS_ORDER_CHANGED                          ERR_ORDER_CHANGED                                              // Status, kein Fehler
 #define ERR_HISTORY_INSUFFICIENT                                   5014    // history insufficient for calculation

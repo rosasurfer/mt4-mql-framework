@@ -59,7 +59,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERR_HISTORY_UPDATE)
+   if (prev_error == ERS_HISTORY_UPDATE)
       ValidBars = 0;
 
    UpdateInfos();
@@ -288,7 +288,7 @@ int UpdateInfos() {
    }
 
    int error = GetLastError();
-   if (error==ERR_HISTORY_UPDATE)
+   if (error == ERS_HISTORY_UPDATE)
       return(SetLastError(error));
    if (error!=NO_ERROR && error!=ERR_UNKNOWN_SYMBOL)
       return(catch("UpdateInfos(1)", error));

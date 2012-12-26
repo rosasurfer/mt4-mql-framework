@@ -47,7 +47,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERR_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERS_TERMINAL_NOT_READY
    if (__STATUS_CANCELLED)
       return(NO_ERROR);
 
@@ -90,19 +90,19 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(1)", error));
       }
-      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
+      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERR_TERMINAL_NOT_READY)));
+            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(2)", error));
       }
-      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERR_TERMINAL_NOT_READY)));
+      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
       */
    }
 
@@ -118,7 +118,7 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
             return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                           // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERR_TERMINAL_NOT_READY)                         // den UI-Thread blockieren würde.
+            if (last_error == ERS_TERMINAL_NOT_READY)                         // den UI-Thread blockieren würde.
                return(debug("stdlib_init()   GetAccountNumber() = 0", last_error));
          }
       }
@@ -6356,7 +6356,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { //throws ERR_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
+int GetAccountNumber() { //throws ERS_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6372,7 +6372,7 @@ int GetAccountNumber() { //throws ERR_TERMINAL_NOT_READY             // evt. wäh
    if (account == 0) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
       if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
-         return(_ZERO(SetLastError(ERR_TERMINAL_NOT_READY)));
+         return(_ZERO(SetLastError(ERS_TERMINAL_NOT_READY)));
 
       int pos = StringFind(title, ":");
       if (pos < 1)
@@ -7128,7 +7128,7 @@ string ErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                 ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                  ); // 4065
-      case ERR_HISTORY_UPDATE             : return("requested history in update state"                         ); // 4066 history in update state
+      case ERS_HISTORY_UPDATE             : return("requested history in update state"                         ); // 4066 history in update state - Status
       case ERR_TRADE_ERROR                : return("error in trading function"                                 ); // 4067 error in trading function
       case ERR_END_OF_FILE                : return("end of file"                                               ); // 4099 end of file
       case ERR_SOME_FILE_ERROR            : return("undefined file error"                                      ); // 4100 undefined file error
@@ -7157,15 +7157,15 @@ string ErrorDescription(int error) {
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                  ); // 5001
       case ERR_INVALID_INPUT              : return("invalid input parameter value"                             ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                     ); // 5003
-      case ERR_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004
+      case ERS_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); // 5006
       case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); // 5007
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         ); // 5008
+      case ERS_CANCELLED_BY_USER          : return("cancelled by user"                                         ); // 5008 Status
       case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      ); // 5009
       case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 ); // 5010
       case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     ); // 5011
-      case ERR_EXECUTION_STOPPING         : return("program execution stopping"                                ); // 5012
+      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                ); // 5012 Status
       case ERR_ORDER_CHANGED              : return("order status changed"                                      ); // 5013
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      ); // 5014
    }
@@ -7270,7 +7270,7 @@ string ErrorToStr(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("ERR_INTEGER_PARAMETER_EXPECTED" ); // 4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("ERR_DOUBLE_PARAMETER_EXPECTED"  ); // 4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("ERR_ARRAY_AS_PARAMETER_EXPECTED"); // 4065
-      case ERR_HISTORY_UPDATE             : return("ERR_HISTORY_UPDATE"             ); // 4066
+      case ERS_HISTORY_UPDATE             : return("ERS_HISTORY_UPDATE"             ); // 4066 Status
       case ERR_TRADE_ERROR                : return("ERR_TRADE_ERROR"                ); // 4067
       case ERR_END_OF_FILE                : return("ERR_END_OF_FILE"                ); // 4099
       case ERR_SOME_FILE_ERROR            : return("ERR_SOME_FILE_ERROR"            ); // 4100
@@ -7299,15 +7299,15 @@ string ErrorToStr(int error) {
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("ERR_FUNCTION_NOT_IMPLEMENTED"   ); // 5001
       case ERR_INVALID_INPUT              : return("ERR_INVALID_INPUT"              ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
-      case ERR_TERMINAL_NOT_READY         : return("ERR_TERMINAL_NOT_READY"         ); // 5004
+      case ERS_TERMINAL_NOT_READY         : return("ERS_TERMINAL_NOT_READY"         ); // 5004 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); // 5006
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); // 5007
-      case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); // 5008
+      case ERS_CANCELLED_BY_USER          : return("ERS_CANCELLED_BY_USER"          ); // 5008 Status
       case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); // 5009
       case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); // 5010
       case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); // 5011
-      case ERR_EXECUTION_STOPPING         : return("ERR_EXECUTION_STOPPING"         ); // 5012
+      case ERS_EXECUTION_STOPPING         : return("ERS_EXECUTION_STOPPING"         ); // 5012 Status
       case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); // 5013
       case ERR_HISTORY_INSUFFICIENT       : return("ERR_HISTORY_INSUFFICIENT"       ); // 5014
    }
@@ -8158,15 +8158,12 @@ datetime GMTToServerTime(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFI
  * @return int - Fehlerstatus
  */
 int iAccountBalance(int account, double buffer[], int bar) {
-
    // TODO: Berechnung einzelner Bar implementieren (zur Zeit wird der Indikator hier noch komplett neuberechnet)
 
-   if (iAccountBalanceSeries(account, buffer) == ERR_HISTORY_UPDATE) {
-      catch("iAccountBalance(1)");
-      return(SetLastError(ERR_HISTORY_UPDATE));
-   }
+   if (iAccountBalanceSeries(account, buffer) == ERS_HISTORY_UPDATE)
+      return(SetLastError(ERS_HISTORY_UPDATE));
 
-   return(catch("iAccountBalance(2)"));
+   return(catch("iAccountBalance()"));
 }
 
 
@@ -8198,7 +8195,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
    for (int i=0; i < historySize; i++) {
       // Barindex des Zeitpunkts berechnen
       bar = iBarShiftNext(NULL, 0, times[i]);
-      if (bar == EMPTY_VALUE)                                        // ERR_HISTORY_UPDATE ?
+      if (bar == EMPTY_VALUE)                                        // ERS_HISTORY_UPDATE ?
          return(last_error);
       if (bar == -1)                                                 // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
@@ -8237,7 +8234,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERR_HISTORY_UPDATE
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERS_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8247,7 +8244,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    // Datenreihe holen
    datetime times[];
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
-   int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
+   int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
 
    if (error == NO_ERROR) {
       // Bars überprüfen
@@ -8256,13 +8253,13 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
       }
       else {
          bar   = iBarShift(symbol, period, time);
-         error = GetLastError();                            // ERR_HISTORY_UPDATE ???
+         error = GetLastError();                            // ERS_HISTORY_UPDATE ???
       }
    }
 
    if (IsError(error)) {
       last_error = error;
-      if (error != ERR_HISTORY_UPDATE)
+      if (error != ERS_HISTORY_UPDATE)
          catch("iBarShiftPrevious(2)", error);
       return(EMPTY_VALUE);
    }
@@ -8280,7 +8277,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERR_HISTORY_UPDATE
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERS_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8288,13 +8285,13 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
       return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)   invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int bar   = iBarShift(symbol, period, time, true);
-   int error = GetLastError();                              // ERR_HISTORY_UPDATE ???
+   int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
 
    if (error==NO_ERROR) /*&&*/ if (bar==-1) {               // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
-      error = GetLastError();                               // ERR_HISTORY_UPDATE ???
+      error = GetLastError();                               // ERS_HISTORY_UPDATE ???
 
       if (error == NO_ERROR) {
          // Bars überprüfen
@@ -8303,7 +8300,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
 
          else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
             bar   = iBarShift(symbol, period, time) - 1;
-            error = GetLastError();                         // ERR_HISTORY_UPDATE ???
+            error = GetLastError();                         // ERS_HISTORY_UPDATE ???
          }
          //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für den Chart, bar bleibt -1
       }
@@ -8311,7 +8308,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
 
    if (IsError(error)) {
       last_error = error;
-      if (error != ERR_HISTORY_UPDATE)
+      if (error != ERS_HISTORY_UPDATE)
          catch("iBarShiftNext(2)", error);
       return(EMPTY_VALUE);
    }
@@ -10071,7 +10068,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe)));
+      if (IsStopped()) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe)));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx()   trade context busy, retrying...");
@@ -10506,7 +10503,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx()   trade context busy, retrying...");
@@ -11113,7 +11110,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", OrderCloseEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(11)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", OrderCloseEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(11)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx()   trade context busy, retrying...");
@@ -11427,7 +11424,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
    // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(9)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseByEx()   trade context busy, retrying...");
@@ -12197,7 +12194,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", OrderDeleteEx.PermErrorMsg(oe)), ERR_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(5)")));
+      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(5)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderDeleteEx()   trade context busy, retrying...");
