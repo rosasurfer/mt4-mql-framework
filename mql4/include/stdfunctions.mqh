@@ -304,6 +304,11 @@ string   objects[];                                         // Namen der Objekte
 #define MODE_DESCEND                2           // absteigend
 
 
+// Trend identifier, siehe IsTrendChange()
+#define MODE_UPTREND                1
+#define MODE_DOWNTREND              2
+
+
 // Market info identifiers, siehe MarketInfo()
 #define MODE_LOW                    1           // low price of the current day (since midnight server time)
 #define MODE_HIGH                   2           // high price of the current day (since midnight server time)
@@ -942,7 +947,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       OrderPop(location);
 
    return(error);
-   DummyCalls();
+   __DummyCalls();
 }
 
 
@@ -1685,7 +1690,7 @@ int Ceil(double value) {
 /**
  * Unterdrückt unnütze Compilerwarnungen.
  */
-void DummyCalls() {
+void __DummyCalls() {
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -1701,6 +1706,7 @@ void DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);
+   DummyCalls();                    // Library-Stub, kann lokal implementiert werden
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);

@@ -216,20 +216,6 @@ int onDeinitRecompile()       {                                                 
 int afterDeinit()             {                                                              return(NO_ERROR); }
 
 
-// abstrakte Eventhandler (müssen bei Verwendung implementiert werden)
-/*abstract*/ int onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
-
-
 /**
  * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode zurück.
  *
@@ -12382,6 +12368,20 @@ double StaticDouble() {
 }
 // --------------------------------------------------------------------------------------------------------------------------------
 */
+
+// "abstrakte" Funktionen (müssen bei Verwendung im Programm implementiert werden)
+/*abstract*/ int  onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_FUNCTION_NOT_IMPLEMENTED)); }
 
 
 #import "stdlib2.ex4"

@@ -228,7 +228,7 @@
    int      stdlib_GetLastError();
 
 
-   // Eventlistener, *können* im Programm durch effektivere Versionen überschrieben werden
+   // Event-Listener: *KÖNNEN* im Programm durch alternative Versionen überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -242,18 +242,18 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // abstrakte Eventhandler, *müssen* bei Verwendung des jeweiligen Eventlisteners im Programm implementiert werden
-   int      onBarOpen        (int    data[]);
-   int      onAccountChange  (int    data[]);
-   int      onAccountPayment (int    data[]);
-   int      onOrderPlace     (int    data[]);
-   int      onOrderChange    (int    data[]);
-   int      onOrderCancel    (int    data[]);
-   int      onPositionOpen   (int    data[]);
-   int      onPositionClose  (int    data[]);
-   int      onChartCommand   (string data[]);
-   int      onInternalCommand(string data[]);
-   int      onExternalCommand(string data[]);
+   // "abstrakte" Event-Handler: *MÜSSEN* bei Verwendung im Programm implementiert werden
+   /*abstract*/ int onBarOpen        (int    data[]);
+   /*abstract*/ int onAccountChange  (int    data[]);
+   /*abstract*/ int onAccountPayment (int    data[]);
+   /*abstract*/ int onOrderPlace     (int    data[]);
+   /*abstract*/ int onOrderChange    (int    data[]);
+   /*abstract*/ int onOrderCancel    (int    data[]);
+   /*abstract*/ int onPositionOpen   (int    data[]);
+   /*abstract*/ int onPositionClose  (int    data[]);
+   /*abstract*/ int onChartCommand   (string data[]);
+   /*abstract*/ int onInternalCommand(string data[]);
+   /*abstract*/ int onExternalCommand(string data[]);
 
 
    // Farben
@@ -579,6 +579,10 @@
    int      stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason);
    int      stdlib_start(int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
+
+
+   // "abstrakte" Funktionen: müssen bei Verwendung im Programm implementiert werden
+   /*abstract*/ void DummyCalls();
 
 
    // Tests

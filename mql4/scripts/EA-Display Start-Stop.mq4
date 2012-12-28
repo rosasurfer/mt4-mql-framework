@@ -78,3 +78,11 @@ int onStart() {
    }
    return(last_error);
 }
+
+
+/**
+ * Unterdrückt unnütze Compilerwarnungen.
+ */
+void DummyCalls() {
+   IsTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+}

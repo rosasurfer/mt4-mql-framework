@@ -53,7 +53,7 @@ extern color  Color.DownTrend   = Orange;
 
 
 double bufferMA       [];                             // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                             // Trend: +1/-1                                (im Chart unsichtbar)
+double bufferTrend    [];                             // Trend:  +/-                                 (im Chart unsichtbar)
 double bufferUpTrend  [];                             // UpTrend-Linie 1                             (sichtbar)
 double bufferDownTrend[];                             // DownTrend-Linie                             (sichtbar, überlagert UpTrend)
 double bufferUpTrend2 [];                             // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend)
@@ -126,7 +126,7 @@ int onInit() {
 
    // (2.1) Bufferverwaltung
    SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-   SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +1/-1                  (im Chart unsichtbar)
+   SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +/-                    (im Chart unsichtbar)
    SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie 1                             (sichtbar)
    SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
    SetIndexBuffer(4, bufferUpTrend2 );                               // UpTrend-Linie 2                             (sichtbar)
@@ -255,7 +255,7 @@ int onTick() {
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
       if (curValue > prevValue) {
-         bufferTrend    [bar] = 1;
+         bufferTrend    [bar] = 2;                                   // nicht 1, um Genauigkeitsfehler beim Casten zu (int) zu vermeiden.
          bufferUpTrend  [bar] = bufferMA[bar];
          bufferDownTrend[bar] = EMPTY_VALUE;
 
@@ -263,7 +263,7 @@ int onTick() {
          else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
       }
       else if (curValue < prevValue) {
-         bufferTrend    [bar] = -1;
+         bufferTrend    [bar] = -2;                                  // nicht -1, um Genauigkeitsfehler beim Casten zu (int) zu vermeiden.
          bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
 
