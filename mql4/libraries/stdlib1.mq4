@@ -190,9 +190,9 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
 // Laufzeitfunktionen
 int onInit()                  {                                                              return(NO_ERROR); }
 int onInitParameterChange()   {                                                              return(NO_ERROR); }
-int onInitRemove()            { if (IsIndicator())      warn("onInitRemove()");              return(NO_ERROR); }     // mal sehen, wann hier jemand reintappt
+int onInitRemove()            {                                                              return(NO_ERROR); }
 int onInitChartChange()       {                                                              return(NO_ERROR); }
-int onInitAccountChange()     { if (IsExpert()) return(catch("onInitAccountChange()",      ERR_RUNTIME_ERROR));      // ...
+int onInitAccountChange()     { if (IsExpert()) return(catch("onInitAccountChange()",      ERR_RUNTIME_ERROR));      // mal sehen, wann hier jemand reintappt
                                 if (IsIndicator())      warn("onInitAccountChange()");       return(NO_ERROR); }     // ...
 int onInitChartClose()        { if (IsIndicator())      warn("onInitChartClose()");          return(NO_ERROR); }     // ...
 int onInitUndefined()         {                                                              return(NO_ERROR); }

@@ -109,6 +109,66 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 }
 
 
+// ------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * nur extern: erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt.
+ *
+ * extern: wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * intern: in allen init()-Fällen außer im Tester nach Test-Restart bei VisualMode=Off,              kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * nur extern: vorhandener Indikator, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRecompile() {
+   return(NO_ERROR);
+}
+*/
+
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 /**
  * Globale start()-Funktion für Indikatoren.
  *

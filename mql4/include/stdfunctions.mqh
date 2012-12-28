@@ -304,7 +304,7 @@ string   objects[];                                         // Namen der Objekte
 #define MODE_DESCEND                2           // absteigend
 
 
-// Trend identifier, siehe IsTrendChange()
+// Trend identifier, siehe CheckTrendChange()
 #define MODE_UPTREND                1
 #define MODE_DOWNTREND              2
 
