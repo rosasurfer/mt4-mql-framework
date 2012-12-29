@@ -87,4 +87,5 @@ void DummyCalls() {
    int iNull;
    CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
    CreateSequenceId();
+   IsSequenceStatus(iNull);
 }
