@@ -241,7 +241,7 @@ int start() {
       static datetime time, lastTime;
       time = TimeCurrent();
       if (time < lastTime) {
-         catch("start()   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR);
+         catch("start(1)   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR);
          ShowStatus();
          return(last_error);
       }
@@ -253,7 +253,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                           // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                  // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
    ValidBars     = -1;
    ChangedBars   = -1;
 
@@ -261,21 +261,21 @@ int start() {
    // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_READY) {                          // init() ist mit hartem Fehler zurückgekehrt
+         if (last_error != ERS_TERMINAL_NOT_READY) {                 // init() ist mit hartem Fehler zurückgekehrt
             ShowStatus();
             return(last_error);
          }
          __WHEREAMI__ = FUNC_START;
-         if (IsError(init())) {                                               // init() erneut aufrufen
-            __WHEREAMI__ = FUNC_INIT;                                         // erneuter Fehler (hart oder weich)
+         if (IsError(init())) {                                      // init() erneut aufrufen
+            __WHEREAMI__ = FUNC_INIT;                                // erneuter Fehler (hart oder weich)
             ShowStatus();
             return(last_error);
          }
       }
-      last_error                   = NO_ERROR;                                // init() war erfolgreich
+      last_error = NO_ERROR;                                         // init() war erfolgreich
    }
    else {
-      prev_error = last_error;                                                // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;                                       // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
    }
    __WHEREAMI__ = FUNC_START;
@@ -316,7 +316,7 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (error != NO_ERROR) {                                                // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
+      if (error != NO_ERROR) {                                       // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
          ShowStatus();
          return(last_error);
       }
@@ -326,10 +326,16 @@ int start() {
    // (6) Main-Funktion aufrufen und auswerten
    onTick();
 
+   error = GetLastError();
+   if (error != NO_ERROR)
+      catch("start(2)", error);
 
-   if (last_error != NO_ERROR)
-      if (IsTesting())
-         Tester.Stop();
+
+   // (7) Tester nach Fehler anhalten
+   if (last_error!=NO_ERROR) /*&&*/ if (IsTesting())
+      Tester.Stop();
+
+
    ShowStatus();
    return(last_error);
 }

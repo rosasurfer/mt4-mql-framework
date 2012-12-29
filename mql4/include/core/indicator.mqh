@@ -255,6 +255,10 @@ int start() {
    // (7) Main-Funktion aufrufen und auswerten
    onTick();
 
+   error = GetLastError();
+   if (error != NO_ERROR)
+      catch("start()", error);
+
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
 

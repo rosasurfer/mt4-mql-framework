@@ -101,7 +101,7 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (Bars == 0)                                                             // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start()   Bars = 0", ERS_TERMINAL_NOT_READY));
+      return(catch("start(1)   Bars = 0", ERS_TERMINAL_NOT_READY));
 
 
    // (3) stdLib benachrichtigen
@@ -111,6 +111,10 @@ int start() {
 
    // (4) Main-Funktion aufrufen
    onStart();
+
+   int error = GetLastError();
+   if (error != NO_ERROR)
+      catch("start(1)", error);
 
    return(last_error);
 }
