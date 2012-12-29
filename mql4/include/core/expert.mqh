@@ -8,14 +8,14 @@
 /**
  * Globale init()-Funktion für Expert Adviser.
  *
- * Ist das Flag __STATUS_CANCELLED gesetzt, bricht init() ab.  Nur bei Aufruf durch das Terminal wird
- * der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
+ * Nur bei Aufruf durch das Terminal wird der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung
+ * zurückgesetzt.
  *
  * @return int - Fehlerstatus
  */
 int init() { //throws ERS_TERMINAL_NOT_READY
-   if (__STATUS_CANCELLED || __STATUS_ERROR)
-      return(NO_ERROR);
+   if (__STATUS_ERROR)
+      return(last_error);
 
    if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
       __WHEREAMI__ = FUNC_INIT;
@@ -100,7 +100,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    // (7) user-spezifische init()-Routinen aufrufen                           //
    onInit();                                                                  // Preprocessing-Hook
                                                                               //
-   if (!__STATUS_CANCELLED && !__STATUS_ERROR) {                              //
+   if (!__STATUS_ERROR) {                                                     //
       switch (UninitializeReason()) {                                         //
          case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
          case REASON_REMOVE     : error = onInitRemove();          break;     //
@@ -112,10 +112,10 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       }                                                                       //
    }                                                                          //
                                                                               //
-   afterInit();                                                               // Postprocessing-Hook wird immer ausgeführt (auch bei __STATUS_CANCELLED oder __STATUS_ERROR)
+   afterInit();                                                               // Postprocessing-Hook wird immer ausgeführt (auch bei __STATUS_ERROR)
    ShowStatus();                                                              //
 
-   if (__STATUS_CANCELLED || __STATUS_ERROR)
+   if (__STATUS_ERROR)
       return(last_error);
 
 
@@ -219,8 +219,6 @@ int onInitRecompile() {
 /**
  * Globale start()-Funktion für Expert Adviser.
  *
- * - Ist das Flag __STATUS_CANCELLED gesetzt, bricht start() ab.
- *
  * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
@@ -230,9 +228,9 @@ int onInitRecompile() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS_CANCELLED || __STATUS_ERROR) {
+   if (__STATUS_ERROR) {
       ShowStatus();
-      return(NO_ERROR);
+      return(last_error);
    }
 
 
@@ -347,15 +345,12 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Ist das Flag __STATUS_CANCELLED gesetzt, bricht deinit() *nicht* ab. Es liegt in der Verantwortung des EA's, diesen Status
- *          selbst auszuwerten.
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
+ *       In der Regel wird afterDeinit() schon nicht mehr ausgeführt. In diesem Fall werden die deinit()-Funktionen von geladenen Libraries auch nicht mehr
+ *       ausgeführt.
  *
- *       2) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
- *          In der Regel wird afterDeinit() schon nicht mehr ausgeführt. In diesem Fall werden die deinit()-Funktionen von geladenen Libraries auch nicht mehr
- *          ausgeführt.
- *
- *          TODO:       Testperiode auslesen und Test nach dem letzten Tick per Tester.Stop() beenden
- *          Workaround: Testende im EA direkt vors reguläre Testende der Historydatei setzen
+ *       TODO:       Testperiode auslesen und Test nach dem letzten Tick per Tester.Stop() beenden
+ *       Workaround: Testende im EA direkt vors reguläre Testende der Historydatei setzen
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
@@ -366,8 +361,8 @@ int deinit() {
                                                                                  //
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
-         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt oder
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //   das Flag __STATUS_CANCELLED setzt.
+         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt.
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
@@ -462,7 +457,6 @@ int SetLastError(int error, int param=NULL) {
       case NO_ERROR              : break;
       case ERS_HISTORY_UPDATE    : break;
       case ERS_TERMINAL_NOT_READY: break;
-      case ERS_CANCELLED_BY_USER : break;
       case ERS_EXECUTION_STOPPING: break;
 
       default:

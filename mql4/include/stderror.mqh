@@ -132,7 +132,7 @@
 #define ERR_INVALID_TIMEZONE_CONFIG                                5005    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                    5006    // invalid market data
 #define ERR_FILE_NOT_FOUND                                         5007    // file not found
-#define ERS_CANCELLED_BY_USER                                      5008    // execution cancelled by user            // Status
+#define ERR_CANCELLED_BY_USER                                      5008    // execution cancelled by user
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed
 #define ERR_INVALID_COMMAND                                        5010    // invalid or unknown command
 #define ERR_ILLEGAL_STATE                                          5011    // illegal state

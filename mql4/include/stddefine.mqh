@@ -15,8 +15,7 @@ bool     __STATUS_HISTORY_UPDATE;                           // History-Update wu
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
-bool     __STATUS_CANCELLED;                                // Ausführung durch Benutzereingabe abgebrochen (externe Ursache)
-bool     __STATUS_ERROR;                                    // Ausführung durch Programmfehler abgebrochen  (interne Ursache: unbehandelter Fehler)
+bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -703,8 +702,8 @@ string   objects[];                                         // Namen der Objekte
  * @return int - Fehlerstatus
  */
 int start.RelaunchInputDialog() {
-   if (__STATUS_CANCELLED)
-      return(NO_ERROR);
+   if (__STATUS_ERROR)
+      return(last_error);
 
    int error;
 
@@ -1150,7 +1149,7 @@ int OrderPush(string location) {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool OrderPop(string location) {
    int ticket = ArrayPopInt(stack.orderSelections);
