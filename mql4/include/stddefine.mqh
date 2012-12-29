@@ -900,8 +900,8 @@ int warn(string message, int error=NO_ERROR) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   if (error == NO_ERROR) error = GetLastError();
-   else                           GetLastError();                    // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
+   if (!error) error = GetLastError();
+   else                GetLastError();                               // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
@@ -959,18 +959,6 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  */
 bool IsError(int value) {
    return(value != NO_ERROR);
-}
-
-
-/**
- * Ob der angegebene Wert keinen Fehler darstellt.
- *
- * @param  int value
- *
- * @return bool
- */
-bool IsNoError(int value) {
-   return(value == NO_ERROR);
 }
 
 
@@ -1157,7 +1145,7 @@ bool OrderPop(string location) {
    if (ticket > 0)
       return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop()")));
 
-   if (ticket==0) /*&&*/ if (IsLastError())
+   if (!ticket) /*&&*/ if (IsLastError())    // nicht __STATUS_ERROR (Datei wird in Libraries eingebunden)
       return(false);
 
    OrderSelect(0, SELECT_BY_TICKET);
@@ -1182,8 +1170,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
       return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (orderKeep) {
-      if (OrderPush("WaitForTicket(2)") == 0)
-         return(!IsLastError());
+      if (!OrderPush("WaitForTicket(2)"))
+         return(!last_error);
    }
 
    int i, delay=100;                                                 // je 0.1 Sekunden warten
@@ -1216,13 +1204,13 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  */
 double PipValue(double lots = 1.0) {
    if (lots < 0.00000001) return(_ZERO(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (TickSize == 0)     return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
+   if (!TickSize)         return(_ZERO(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
 
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
 
    int error = GetLastError();
-   if (IsError(error)) return(_ZERO(catch("PipValue(3)", error)));
-   if (tickValue == 0) return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
+   if (IsError(error))    return(_ZERO(catch("PipValue(3)", error)));
+   if (!tickValue)        return(_ZERO(catch("PipValue(4)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
 
    return(Pip/TickSize * tickValue * lots);
 }
@@ -1721,7 +1709,6 @@ void __DummyCalls() {
    IsExpert();
    IsIndicator();
    IsLastError();
-   IsNoError(NULL);
    IsScript();
    IsTicket(NULL);
    LE(NULL, NULL);

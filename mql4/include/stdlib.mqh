@@ -223,7 +223,6 @@
 
    // Error-Handling
    bool     IsError(int value);
-   bool     IsNoError(int value);
    bool     IsErrorCode(int value);
    int      stdlib_GetLastError();
 

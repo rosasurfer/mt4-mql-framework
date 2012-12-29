@@ -352,9 +352,9 @@ int GetPositionCounter() {
 int GetInstance() {
    static int id;
 
-   if (id == 0) {
+   if (!id) {
       MathSrand(GetTickCount());
-      while (id == 0) {
+      while (!id) {
          id = MathRand();
          while (id > 511) {
             id >>= 1;

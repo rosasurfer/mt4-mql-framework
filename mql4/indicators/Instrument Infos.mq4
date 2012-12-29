@@ -208,7 +208,7 @@ int UpdateInfos() {
    int    stopoutLevel      = AccountStopoutLevel();                    ObjectSetText(names[STOPOUT_LEVEL   ], StringConcatenate("Account stopout level: ", NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+"), ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), Font.Size, Font.Name, Font.Color);
 
    int error = GetLastError();
-   if (error==NO_ERROR || error==ERR_OBJECT_DOES_NOT_EXIST)
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
    return(catch("UpdateInfos()", error));
 }

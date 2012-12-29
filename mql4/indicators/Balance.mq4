@@ -47,7 +47,7 @@ int onTick() {
       return(SetLastError(ERS_TERMINAL_NOT_READY));
 
    // Alle Werte komplett ...
-   if (ValidBars == 0) {
+   if (!ValidBars) {
       ArrayInitialize(iBalance, EMPTY_VALUE);                        // vor Neuberechnung alte Werte zurücksetzen
       if (IsError(iAccountBalanceSeries(AccountNumber(), iBalance)))
          return(SetLastError(stdlib_GetLastError()));

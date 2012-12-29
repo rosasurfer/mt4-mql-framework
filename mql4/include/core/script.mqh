@@ -39,11 +39,11 @@ int init() {
    if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       if (IsError(catch("init(1)"))) return(last_error);
-      if (TickSize == 0)             return(catch("init(2)   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
+      if (!TickSize)                 return(catch("init(2)   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (IsError(catch("init(3)"))) return(last_error);
-      if (tickValue == 0)            return(catch("init(4)   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA));
+      if (!tickValue)                return(catch("init(4)   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
@@ -95,7 +95,7 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (Bars == 0)                                                             // TODO: kann Bars bei Scripten 0 sein???
+   if (!Bars)                                                                 // TODO: kann Bars bei Scripten 0 sein???
       return(catch("start(1)   Bars = 0", ERS_TERMINAL_NOT_READY));
 
 

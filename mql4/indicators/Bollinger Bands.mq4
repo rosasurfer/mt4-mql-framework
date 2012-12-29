@@ -289,7 +289,7 @@ int onTick() {
       return(SetLastError(ERS_TERMINAL_NOT_READY));
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
-   if (ValidBars == 0) {
+   if (!ValidBars) {
       ArrayInitialize(iUpperBand1,   EMPTY_VALUE);
       ArrayInitialize(iLowerBand1,   EMPTY_VALUE);
       ArrayInitialize(iUpperBand2,   EMPTY_VALUE);
@@ -373,7 +373,7 @@ void SetIndicatorStyles() {
    }
    else {
       static color histogramColor;
-      if (histogramColor == 0) {
+      if (!histogramColor) {
          double hsv[3]; RGBToHSVColor(Color.Bands, hsv);
          hsv[2] *= 4;                                    // Helligkeit des Histogramms erhöhen
          if (hsv[2] > 1) {

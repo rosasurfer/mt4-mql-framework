@@ -56,7 +56,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
-      if (TickSize == 0) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -65,7 +65,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
-      if (tickValue == 0) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
@@ -289,7 +289,7 @@ int start() {
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (Bars == 0) {
+   if (!Bars) {
       SetLastError(debug("start()   Bars = 0", ERS_TERMINAL_NOT_READY));
       ShowStatus();
       return(last_error);
@@ -508,7 +508,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
             //if (Tick.prevTime != 0) ArrayPushInt(results, periods[i]);
             //else if (IsTesting())   ArrayPushInt(results, periods[i]);
 
-            if (Tick.prevTime == 0) {
+            if (!Tick.prevTime) {
                if (IsTesting()) {                                    // nur im Tester ist der 1. Tick BarOpen-Event
                   ArrayPushInt(results, periods[i]);                 // TODO: !!! nicht für alle Timeframes !!!
                   //debug("EventListener.BarOpen()   event("+ PeriodToStr(periods[i]) +")=1   tick="+ TimeToStr(Tick.Time, TIME_FULL) +"   tick="+ Tick);

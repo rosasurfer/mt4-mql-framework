@@ -195,7 +195,7 @@ int onTick() {
       return(SetLastError(ERS_TERMINAL_NOT_READY));
 
    // vor kompletter Neuberechnung alle Buffer zurücksetzen
-   if (ValidBars == 0) {
+   if (!ValidBars) {
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);

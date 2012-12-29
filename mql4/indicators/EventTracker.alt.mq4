@@ -142,7 +142,7 @@ int onTick() {
       ValidBars = 0;
 
    // unvollständige Accountinitialisierung abfangen (bei Start und Accountwechseln mit schnellen Prozessoren)
-   if (AccountNumber() == 0)
+   if (!AccountNumber())
       return(SetLastError(ERR_NO_CONNECTION));
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
@@ -623,7 +623,7 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
 
    int error = GetLastError();
 
-   if (error == NO_ERROR) {
+   if (!error) {
       if (EQ(results[MODE_CLOSE], 0))
          error = ERR_NO_RESULT;
    }

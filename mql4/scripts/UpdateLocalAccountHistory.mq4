@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    int account = AccountNumber();
-   if (account == 0) {
+   if (!account) {
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_NO_CONNECTION));
@@ -162,7 +162,7 @@ int onStart() {
       lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
       //debug("onStart()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
-   if (orders == 0) {
+   if (!orders) {
       if (NE(lastBalance, AccountBalance())) {
          PlaySound("notify.wav");
          MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
@@ -248,7 +248,7 @@ int onStart() {
 
    // (8) Orderdaten schreiben
    for (i=iFirstTicketToSave; i < orders; i++) {
-      if (tickets[i] == 0)                                              // verworfene Hedge-Orders überspringen
+      if (!tickets[i])                                               // verworfene Hedge-Orders überspringen
          continue;
 
       string strType         = OperationTypeDescription(types[i]);
@@ -262,8 +262,8 @@ int onStart() {
       string strStopLoss     = ifString(EQ(stopLosses [i], 0), "", NumberToStr(stopLosses [i], ".2+"));
       string strTakeProfit   = ifString(EQ(takeProfits[i], 0), "", NumberToStr(takeProfits[i], ".2+"));
 
-      string strExpTime      = ifString(expirationTimes[i]==0, "", TimeToStr(expirationTimes[i], TIME_FULL));
-      string strExpTimestamp = ifString(expirationTimes[i]==0, "", expirationTimes[i]);
+      string strExpTime      = ifString(!expirationTimes[i], "", TimeToStr(expirationTimes[i], TIME_FULL));
+      string strExpTimestamp = ifString(!expirationTimes[i], "", expirationTimes[i]);
 
       string strCommission   = DoubleToStr(commissions [i], 2);
       string strSwap         = DoubleToStr(swaps       [i], 2);
@@ -271,7 +271,7 @@ int onStart() {
       string strGrossProfit  = DoubleToStr(grossProfits[i], 2);
       string strBalance      = DoubleToStr(balances    [i], 2);
 
-      string strMagicNumber  = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
+      string strMagicNumber  = ifString(!magicNumbers[i], "", magicNumbers[i]);
 
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
          catch("onStart(16)->FileWrite()");

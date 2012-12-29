@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    int account = AccountNumber();
-   if (account == 0) {
+   if (!account) {
       if (__LOG) log("onStart()   no trade server connection");
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
@@ -142,14 +142,14 @@ int onStart() {
       string strOpenTime    = TimeToStr(openTimes [i], TIME_FULL);
       string strCloseTime   = TimeToStr(closeTimes[i], TIME_FULL);
 
-      string strOpenPrice   = ifString(openPrices [i]==0, "", NumberToStr(openPrices [i], ".2+"));
-      string strClosePrice  = ifString(closePrices[i]==0, "", NumberToStr(closePrices[i], ".2+"));
+      string strOpenPrice   = ifString(!openPrices [i], "", NumberToStr(openPrices [i], ".2+"));
+      string strClosePrice  = ifString(!closePrices[i], "", NumberToStr(closePrices[i], ".2+"));
 
       string strCommission  = DoubleToStr(commissions[i], 2);
       string strSwap        = DoubleToStr(swaps      [i], 2);
       string strProfit      = DoubleToStr(profits    [i], 2);
 
-      string strMagicNumber = ifString(magicNumbers[i]==0, "", magicNumbers[i]);
+      string strMagicNumber = ifString(!magicNumbers[i], "", magicNumbers[i]);
 
       if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],units[i],symbols[i],strOpenPrice,strCloseTime,closeTimes[i],strClosePrice,strCommission,strSwap,strProfit,strMagicNumber,comments[i]) < 0) {
          catch("onStart(7)->FileWrite()");
@@ -171,7 +171,7 @@ int onStart() {
 
    if (result >= ERR_RUNTIME_ERROR) {        // bei Fehler Rückkehr
       error = catch("onStart(9)");
-      if (IsNoError(error))
+      if (!error)
          error = ERR_RUNTIME_ERROR;
       return(SetLastError(error));
    }
@@ -233,7 +233,7 @@ int UploadDataFile(string filename, string &lpErrorMsg) {
 
    // Serverantwort auswerten
    int errorCode, lines = ArraySize(response);
-   if (lines == 0) {
+   if (!lines) {
       errorCode  = 500;
       lpErrorMsg = "Server error, try again later.";
    }

@@ -90,7 +90,7 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(1)", error));
       }
-      if (TickSize == 0) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("stdlib_init()   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -99,7 +99,7 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(2)", error));
       }
-      if (tickValue == 0) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
       */
    }
 
@@ -579,16 +579,14 @@ bool AquireLock(string mutexName) {
 
       // create the mutex if it doesn't exist
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
-         if (GlobalVariableSet(globalVarName, 0) == 0) {
+         if (!GlobalVariableSet(globalVarName, 0)) {
             error = GetLastError();
-            if (IsNoError(error))
-               error = ERR_RUNTIME_ERROR;
-            return(_false(catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", error)));
+            return(!catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
          continue;
       }
       else if (IsError(error)) {
-         return(_false(catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error)));
+         return(!catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error));
       }
 
       if (IsStopped())
@@ -598,7 +596,7 @@ bool AquireLock(string mutexName) {
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(_false(catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR)));
+            return(!catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR));
          warn(StringConcatenate("AquireLock(6)   couldn't get lock for mutex \"", mutexName, "\" after ", DoubleToStr(duration/1000.0, 3), " sec., retrying..."));
          seconds++;
       }
@@ -609,7 +607,7 @@ bool AquireLock(string mutexName) {
       else                              Sleep(100);
    }
 
-   return(_false(catch("AquireLock(7)", ERR_WRONG_JUMP)));
+   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));
 }
 
 
@@ -623,12 +621,12 @@ bool AquireLock(string mutexName) {
  */
 bool ReleaseLock(string mutexName) {
    if (StringLen(mutexName) == 0)
-      return(_false(catch("ReleaseLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("ReleaseLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // check, if we indeed own that lock
    int i = SearchStringArray(lock.names, mutexName);
    if (i == -1)
-      return(_false(catch("ReleaseLock(2)   do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR)));
+      return(!catch("ReleaseLock(2)   do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR));
 
    // we do, decrease the counter
    lock.counters[i]--;
@@ -642,11 +640,9 @@ bool ReleaseLock(string mutexName) {
       if (This.IsTesting())
          globalVarName = StringConcatenate("tester.", mutexName);
 
-      if (GlobalVariableSet(globalVarName, 0) == 0) {
+      if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
-         if (IsNoError(error))
-            error = ERR_RUNTIME_ERROR;
-         return(_false(catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", error)));
+         return(!catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
       }
    }
    return(true);
@@ -686,7 +682,7 @@ int Chart.Expert.Properties() {
       return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = WindowHandle(Symbol(), NULL);
-   if (hWnd == 0)
+   if (!hWnd)
       return(catch("Chart.Expert.Properties(2)->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
@@ -737,7 +733,7 @@ int Tester.Pause() {
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetApplicationWindow();
-   if (hWnd == 0)
+   if (!hWnd)
       return(last_error);
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
@@ -758,7 +754,7 @@ int Tester.Stop() {
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetApplicationWindow();
-   if (hWnd == 0)
+   if (!hWnd)
       return(last_error);
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
@@ -833,8 +829,7 @@ int LoadCursorById(int hInstance, int resourceId) {
       return(_NULL(catch("LoadCursorById()   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be smaller then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int hCursor = LoadCursorW(hInstance, resourceId);
-
-   if (hCursor == 0)
+   if (!hCursor)
       catch("LoadCursorById()->user32::LoadCursorW()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    return(hCursor);
 }
@@ -850,8 +845,7 @@ int LoadCursorById(int hInstance, int resourceId) {
  */
 int LoadCursorByName(int hInstance, string cursorName) {
    int hCursor = LoadCursorA(hInstance, cursorName);
-
-   if (hCursor == 0)
+   if (!hCursor)
       catch("LoadCursorByName()->user32::LoadCursorA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    return(hCursor);
 }
@@ -1054,8 +1048,8 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    }
 
    int length;
-   if (chars == 0) length = ArrayResize(names, 0);                   // keine Sections gefunden (File nicht gefunden oder leer)
-   else            length = ExplodeStrings(buffer, names);
+   if (!chars) length = ArrayResize(names, 0);                       // keine Sections gefunden (File nicht gefunden oder leer)
+   else        length = ExplodeStrings(buffer, names);
 
    if (IsError(catch("GetPrivateProfileSectionNames")))
       return(-1);
@@ -1109,12 +1103,12 @@ string GetTerminalVersion() {
    int    bufferSize = MAX_PATH;
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
    int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
-   if (chars == 0)
+   if (!chars)
       return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int iNull[];
    int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
-   if (infoSize == 0)
+   if (!infoSize)
       return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
@@ -1636,7 +1630,7 @@ int Toolbar.Experts(bool enable) {
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
 
    int hWnd = GetApplicationWindow();
-   if (hWnd == 0)
+   if (!hWnd)
       return(last_error);
 
    if (enable) {
@@ -1658,7 +1652,7 @@ int Toolbar.Experts(bool enable) {
  */
 int MarketWatch.Symbols() {
    int hWnd = GetApplicationWindow();
-   if (hWnd == 0)
+   if (!hWnd)
       return(last_error);
 
    PostMessageA(hWnd, WM_COMMAND, IDC_MARKETWATCH_SYMBOLS, 0);
@@ -3771,20 +3765,20 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
 int WM_MT4() {
-   static int message;                                               // ohne Initializer (@see MQL.doc)
+   static int static.mid;                                            // ohne Initializer (@see MQL.doc)
 
-   if (message == 0) {
-      message = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+   if (!static.mid) {
+      static.mid = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
-      if (message == 0) {
-         message = -1;                                               // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
+      if (!static.mid) {
+         static.mid = -1;                                            // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
          catch("WM_MT4()->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
       }
    }
 
-   if (message == -1)
+   if (static.mid == -1)
       return(0);
-   return(message);
+   return(static.mid);
 }
 
 
@@ -3797,7 +3791,7 @@ int WM_MT4() {
  */
 int Chart.Refresh(bool sound=false) {
    int hWnd = WindowHandle(Symbol(), NULL);
-   if (hWnd == 0)
+   if (!hWnd)
       return(catch("Chart.Refresh()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
@@ -3818,7 +3812,7 @@ int Chart.Refresh(bool sound=false) {
  */
 int Chart.SendTick(bool sound=false) {
    int hWnd = WindowHandle(Symbol(), NULL);
-   if (hWnd == 0)
+   if (!hWnd)
       return(catch("Chart.SendTick()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!This.IsTesting()) {
@@ -3850,7 +3844,7 @@ string GetServerDirectory() {
    static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+   if (!ValidBars) /*&&*/ if (Tick != lastTick)
       static.result[0] = "";
    lastTick = Tick;
 
@@ -4068,7 +4062,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
             wasSeparator = true;
          }
          else {
-            if (hFileBin == 0) {
+            if (!hFileBin) {
                hFileBin = FileOpen(filename, FILE_BIN|FILE_READ);
                if (hFileBin < 0) {
                   FileClose(hFile);
@@ -5600,7 +5594,7 @@ string IntegerToBinaryStr(int integer) {
  * @return int - nächstkleinere Periode oder der ursprüngliche Wert, wenn keine kleinere Periode existiert
  */
 int DecreasePeriod(int period = 0) {
-   if (period == 0)
+   if (!period)
       period = Period();
 
    switch (period) {
@@ -5735,7 +5729,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 
       // PERIODFLAG_M1
       if (flags & F_PERIOD_M1 != 0) {
-         if (lastTick == 0) {
+         if (!lastTick) {
             lastTick   = tick;
             lastMinute = TimeMinute(tick);
             //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: '", TimeToStr(lastTick, TIME_FULL), "' (", lastMinute, ")");
@@ -5791,7 +5785,7 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
    int  account = AccountNumber();
 
    if (account != 0) {                                // AccountNumber() == 0 ignorieren
-      if (accountData[1] == 0) {                      // 1. Lib-Aufruf
+      if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
          accountData[2] = GMTToServerTime(TimeGMT());
@@ -5887,7 +5881,7 @@ bool EventListener.OrderCancel(int results[], int flags=NULL) {
 bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
-   if (account == 0)
+   if (!account)
       return(false);
 
    // Ergebnisarray sicherheitshalber zurücksetzen
@@ -5899,7 +5893,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    static int      knownPendings  [][2];                                                  // die bekannten pending Orders und ihr Typ
    static int      knownPositions [];                                                     // die bekannten Positionen
 
-   if (accountNumber[0] == 0) {                                                           // 1. Aufruf
+   if (!accountNumber[0]) {                                                               // 1. Aufruf
       accountNumber[0]   = account;
       accountInitTime[0] = TimeGMT();
       //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
@@ -6005,7 +5999,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
 bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    // ohne Verbindung zum Tradeserver sofortige Rückkehr
    int account = AccountNumber();
-   if (account == 0)
+   if (!account)
       return(false);
 
    OrderPush("EventListener.PositionClose(1)");
@@ -6018,7 +6012,7 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    static int knownPositions[];                                         // bekannte Positionen
           int noOfKnownPositions = ArraySize(knownPositions);
 
-   if (accountNumber[0] == 0) {
+   if (!accountNumber[0]) {
       accountNumber[0] = account;
       //debug("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
    }
@@ -6301,7 +6295,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    }
 
    // Hier hat entweder ein Formatfehler ERR_RUNTIME_ERROR (bereits gemeldet) oder das Dateiende END_OF_FILE ausgelöst.
-   if (error == NO_ERROR) {
+   if (!error) {
       error = GetLastError();
       if (error == ERR_END_OF_FILE) {
          error = NO_ERROR;
@@ -6352,7 +6346,7 @@ int GetAccountNumber() { //throws ERS_TERMINAL_NOT_READY             // evt. wäh
       account = 0;
    }
 
-   if (account == 0) {
+   if (!account) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
       if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
          return(_ZERO(SetLastError(ERS_TERMINAL_NOT_READY)));
@@ -7792,7 +7786,7 @@ string GetServerTimezone() { //throws ERR_INVALID_TIMEZONE_CONFIG
    static int    lastTick;                                           // Erkennung von Mehrfachaufrufen während desselben Ticks
 
    // (1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (ValidBars == 0) /*&&*/ if (Tick != lastTick)
+   if (!ValidBars) /*&&*/ if (Tick != lastTick)
       static.timezone[0] = "";
    lastTick = Tick;
 
@@ -7888,7 +7882,7 @@ int GetApplicationWindow() {
          break;
       hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
    }
-   if (hWndNext == 0) {
+   if (!hWndNext) {
       catch("GetApplicationWindow(2)   cannot find application main window", ERR_RUNTIME_ERROR);
       hWnd = 0;
    }
@@ -7916,10 +7910,10 @@ int GetTesterWindow() {
 
    // (1) Zunächst den im Hauptfenster angedockten Tester suchen
    int hWndMain = GetApplicationWindow();
-   if (hWndMain == 0)
+   if (!hWndMain)
       return(0);
    int hWnd = GetDlgItem(hWndMain, IDD_DOCKABLES_CONTAINER);               // Container für im Hauptfenster angedockte Fenster
-   if (hWnd == 0)
+   if (!hWnd)
       return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window of docked child windows")));
    hWndTester = GetDlgItem(hWnd, IDD_TESTER);
    if (hWndTester != 0)
@@ -7934,10 +7928,10 @@ int GetTesterWindow() {
       if (processId[0] == me) {
          if (StringStartsWith(GetWindowText(hNext), "Tester")) {
             hWnd = GetDlgItem(hNext, IDD_UNDOCKED_CONTAINER);              // Container für nicht angedockten Tester
-            if (hWnd == 0)
+            if (!hWnd)
                return(_NULL(catch("GetTesterWindow(2)   cannot find children of top-level Tester window")));
             hWndTester = GetDlgItem(hWnd, IDD_TESTER);
-            if (hWndTester == 0)
+            if (!hWndTester)
                return(_NULL(catch("GetTesterWindow(3)   cannot find sub-children of top-level Tester window")));
             break;
          }
@@ -7947,7 +7941,7 @@ int GetTesterWindow() {
 
 
    // (3) bei ausbleibenden Erfolg Umgebung prüfen und nur ggf. Exception werfen (das Tester-Fenster könnte noch nicht existieren)
-   if (hWndTester == 0) {
+   if (!hWndTester) {
       if (This.IsTesting())
          return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
 
@@ -7969,7 +7963,7 @@ int GetUIThreadId() {
       return(threadId);
 
    int hWnd = GetApplicationWindow();
-   if (hWnd == 0)
+   if (!hWnd)
       return(0);
 
    int iNull[];
@@ -8043,7 +8037,7 @@ string GetWindowText(int hWnd) {
       chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
    }
 
-   if (chars == 0) {
+   if (!chars) {
       // GetLastWin32Error() prüfen, hWnd könnte ungültig sein
    }
 
@@ -8070,7 +8064,7 @@ string GetClassName(int hWnd) {
       chars = GetClassNameA(hWnd, buffer[0], bufferSize);
    }
 
-   if (chars == 0)
+   if (!chars)
       return(_empty(catch("GetClassName()->user32::GetClassNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
    return(buffer[0]);
@@ -8229,7 +8223,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
    int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
 
-   if (error == NO_ERROR) {
+   if (!error) {
       // Bars überprüfen
       if (time < times[bars-1]) {
          int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
@@ -8270,13 +8264,13 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
 
-   if (error==NO_ERROR) /*&&*/ if (bar==-1) {               // falls die Bar nicht existiert und auch kein Update läuft
+   if (!error) /*&&*/ if (bar==-1) {                        // falls die Bar nicht existiert und auch kein Update läuft
       // Datenreihe holen
       datetime times[];
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
       error = GetLastError();                               // ERS_HISTORY_UPDATE ???
 
-      if (error == NO_ERROR) {
+      if (!error) {
          // Bars überprüfen
          if (time < times[bars-1])                          // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
             bar = bars-1;
@@ -8307,7 +8301,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
  * @return int - Nächstgrößere Periode oder der ursprüngliche Wert, wenn keine größere Periode existiert.
  */
 int IncreasePeriod(int period = 0) {
-   if (period == 0)
+   if (!period)
       period = Period();
 
    switch (period) {
@@ -9268,7 +9262,7 @@ int RGBToHSVColor(color rgb, double &hsv[]) {
 
    double hue, sat, val=dMax;
 
-   if (iDelta == 0) {
+   if (!iDelta) {
       hue = 0;
       sat = 0;
    }
@@ -9888,7 +9882,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
       digits      = oe.Digits(oe);
       pipDigits   = digits & (~1);
       priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-      line        = StringConcatenate("{error="          ,       ifString(IsNoError(oe.Error          (oe)), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
+      line        = StringConcatenate("{error="          ,                ifString(!oe.Error          (oe), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
                                      ", symbol=\""       ,                          oe.Symbol         (oe), "\"",
                                      ", digits="         ,                          oe.Digits         (oe),
                                      ", stopDistance="   ,              NumberToStr(oe.StopDistance   (oe), ".+"),
@@ -9925,7 +9919,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
          digits      = oes.Digits(oe, i);
          pipDigits   = digits & (~1);
          priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-         line        = StringConcatenate("[", i, "]={error="          ,       ifString(IsNoError(oes.Error          (oe, i)), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
+         line        = StringConcatenate("[", i, "]={error="          ,                ifString(!oes.Error          (oe, i), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
                                                   ", symbol=\""       ,                          oes.Symbol         (oe, i), "\"",
                                                   ", digits="         ,                          oes.Digits         (oe, i),
                                                   ", stopDistance="   ,              DoubleToStr(oes.StopDistance   (oe, i), 1),
@@ -10062,7 +10056,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       // OpenPrice <> StopDistance validieren
       double bid = MarketInfo(symbol, MODE_BID);
       double ask = MarketInfo(symbol, MODE_ASK);
-      if (time1 == 0) {
+      if (!time1) {
          oe.setBid(oe, bid);
          oe.setAsk(oe, ask);
       }
@@ -10158,7 +10152,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             break;
          continue;                                                               // nach ERR_REQUOTE Order sofort wiederholen
       }
-      if (IsNoError(error))
+      if (!error)
          error = oe.setError(oe, ERR_RUNTIME_ERROR);
       if (!IsTemporaryTradeError(error))                                         // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
@@ -10182,7 +10176,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 /*private*/int Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    oe.setError(oe, error);
 
-   if (IsNoError(error))
+   if (!error)
       return(NO_ERROR);
 
    // (1) bei server-seitigen Preisfehlern aktuelle Preise holen
@@ -10529,7 +10523,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
-      if (IsNoError(error))
+      if (!error)
          error = oe.setError(oe, ERR_RUNTIME_ERROR);
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
@@ -11107,7 +11101,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       if      (OrderType() == OP_BUY ) price = bid;
       else if (OrderType() == OP_SELL) price = ask;
       price = NormalizeDouble(price, digits);
-      if (time1 == 0)
+      if (!time1)
          firstPrice = price;                                                           // OrderPrice der ersten Ausführung merken
 
       time1   = GetTickCount();
@@ -11155,17 +11149,17 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                   break;
                }
                OrderPop("OrderCloseEx(16)");
-               if (remainder == 0) {
+               if (!remainder) {
                   if (IsLastError())                           return(_false(oe.setError(oe, last_error), OrderPop("OrderCloseEx(17)")));
                                                                return(_false(oe.setError(oe, catch("OrderCloseEx(18)   cannot find remaining position of partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots)", ERR_RUNTIME_ERROR, O_POP))));
                }
             }
-            if (remainder == 0) {
+            if (!remainder) {
                if (!StringIStartsWith(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(19)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue = StringRight(OrderComment(), -4);
                if (!StringIsDigit(strValue))                   return(_false(oe.setError(oe, catch("OrderCloseEx(20)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                remainder = StrToInteger(strValue);
-               if (remainder == 0)                             return(_false(oe.setError(oe, catch("OrderCloseEx(21)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (!remainder)                                 return(_false(oe.setError(oe, catch("OrderCloseEx(21)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
             }
             WaitForTicket(remainder, true);
             oe.setRemainingTicket(oe, remainder);
@@ -11192,7 +11186,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             break;
          continue;                                                                     // nach ERR_REQUOTE Order schnellstmöglich wiederholen
       }
-      if (IsNoError(error))
+      if (!error)
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
@@ -11452,7 +11446,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                   remainder = OrderTicket();
                   break;
                }
-               if (remainder == 0)
+               if (!remainder)
                   return(_false(oe.setError(oe, catch("OrderCloseByEx(10)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, O_POP))));
             }
 
@@ -11483,7 +11477,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
                                           break;
                                        }
                }
-               if (remainder == 0)
+               if (!remainder)
                   return(_false(oe.setError(oe, catch("OrderCloseByEx(13)   cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = larger) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = smaller)", ERR_RUNTIME_ERROR, O_POP))));
             }
             oe.setRemainingTicket(oe, remainder    );
@@ -11503,7 +11497,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
-      if (IsNoError(error))
+      if (!error)
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
@@ -11683,7 +11677,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          oes.setSlippage  (oes, pos, oes.Slippage  (oes2, i));
       }
       for (i=0; i < sizeOfGroup; i++) {
-         if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
+         if (!newTicket) {                                                 // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
             if (oes.RemainingTicket(oes2, i) == -1)
                break;
          }
@@ -11820,7 +11814,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
    }
    for (i=0; i < sizeOfTickets; i++) {
-      if (newTicket == 0) {                                             // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
+      if (!newTicket) {                                                 // kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
          if (oes.RemainingTicket(oes2, i) == -1)
             break;
       }
@@ -11952,7 +11946,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             break;
          }
       }
-      if (closeTicket == 0) {
+      if (!closeTicket) {
          for (i=0; i < sizeOfTickets; i++) {                                           // danach partiell schließbares Ticket suchen
             if (totalPosition == OP_LONG) {
                if (GT(lots[i], totalLots)) {
@@ -11989,8 +11983,8 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
                oes.setSwap      (oes, i, oe.Swap      (oe));
                oes.setCommission(oes, i, oe.Commission(oe));
                oes.setProfit    (oes, i, oe.Profit    (oe));
-               if (newTicket == 0) { oes.setRemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
-               else                { oes.setRemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
+               if (!newTicket) { oes.setRemainingTicket(oes, i, -1       );                                                     }  // Ticket vollständig geschlossen
+               else            { oes.setRemainingTicket(oes, i, newTicket); oes.setRemainingLots(oes, i, oe.RemainingLots(oe)); }  // Ticket partiell geschlossen
             }
          }
       }
@@ -12098,7 +12092,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             break;
          }
       }
-      if (opposite == 0)
+      if (!opposite)
          return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(7)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
 
@@ -12212,7 +12206,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          Sleep(300);                                                                   // 0.3 Sekunden warten
          continue;
       }
-      if (IsNoError(error))
+      if (!error)
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;

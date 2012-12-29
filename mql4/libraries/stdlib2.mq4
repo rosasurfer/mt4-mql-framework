@@ -44,8 +44,8 @@ int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
 
    int length;
 
-   if (chars == 0) length = ArrayResize(keys, 0);                    // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
-   else            length = ExplodeStrings(buffer, keys);
+   if (!chars) length = ArrayResize(keys, 0);                        // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
+   else        length = ExplodeStrings(buffer, keys);
 
    if (catch("GetPrivateProfileKeys.2()") != NO_ERROR)
       return(-1);
