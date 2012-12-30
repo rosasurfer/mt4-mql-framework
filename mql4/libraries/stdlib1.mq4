@@ -3096,22 +3096,57 @@ string JoinDoubles(double values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinStrings(string values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_empty(catch("JoinStrings()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("JoinStrings(1)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
-   string result = "";
+   string value, result="";
+   int    error, size=ArraySize(values);
 
-   int size = ArraySize(values);
+   for (int i=0; i < size; i++) {
+      value = values[i];                                             // NPE provozieren
 
-   for (int i=1; i < size; i++) {
-      result = StringConcatenate(result, separator, values[i]);
+      error = GetLastError();
+      if (!error) {
+         result = StringConcatenate(result, value, separator);
+         continue;
+      }
+      if (error != ERR_NOT_INITIALIZED_ARRAYSTRING)
+         return(_empty(catch("JoinStrings(2)", error)));
+
+      result = StringConcatenate(result, "NULL", separator);         // NULL
    }
-
    if (size > 0)
-      result = StringConcatenate(values[0], result);
+      result = StringLeft(result, -StringLen(separator));
 
-   if (IsError(catch("JoinStrings()")))
-      return("");
    return(result);
+}
+
+
+/**
+ * Faßt jeden Wert eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Werte (NULL-Pointer) bleiben unverändert.
+ *
+ * @param  string values[]
+ *
+ * @return int - Fehlerstatus
+ */
+int DoubleQuoteStrings(string &values[]) {
+   if (ArrayDimension(values) > 1)
+      return(catch("DoubleQuoteStrings(1)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+
+   string value;
+   int error, size=ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      value = values[i];                                             // NPE provozieren
+      error = GetLastError();
+      if (!error) {
+         values[i] = StringConcatenate("\"", values[i], "\"");
+         continue;
+      }
+      if (error != ERR_NOT_INITIALIZED_ARRAYSTRING)                  // NULL-Werte bleiben unverändert
+         return(catch("DoubleQuoteStrings(2)", error));
+   }
+   return(0);
 }
 
 
@@ -4694,14 +4729,14 @@ string BoolToStr(bool value) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string BoolsToStr(bool values[][], string separator=", ") {
-   return(BoolsToStr_intern(values, values, separator));
+   return(__BoolsToStr(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string BoolsToStr_intern(bool values2[][], bool values3[][][], string separator) {
+private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -8328,14 +8363,14 @@ int IncreasePeriod(int period = 0) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string DoublesToStr(double values[][], string separator=", ") {
-   return(DoublesToStr_intern(values, values, separator));
+   return(__DoublesToStr(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string DoublesToStr_intern(double values2[][], double values3[][][], string separator) {
+private*/string __DoublesToStr(double values2[][], double values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -8467,14 +8502,14 @@ string MoneysToStr(double values[], string separator=", ") {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string IntsToStr(int values[][], string separator=", ") {
-   return(IntsToStr_intern(values, values, separator));
+   return(__IntsToStr(values, values, separator));
 }
 
 
 /**
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
-private*/string IntsToStr_intern(int values2[][], int values3[][][], string separator) {
+private*/string __IntsToStr(int values2[][], int values3[][][], string separator) {
    if (separator == "0")   // NULL
       separator = ", ";
 
@@ -8649,10 +8684,13 @@ string StringsToStr(string values[], string separator=", ") {
    if (separator == "0")   // NULL
       separator = ", ";
 
-   string joined = JoinStrings(values, StringConcatenate("\"", separator, "\""));
-   if (StringLen(joined) == 0)
-      return("");
-   return(StringConcatenate("{\"", joined, "\"}"));
+   string copy[]; ArrayCopy(copy, values);
+   DoubleQuoteStrings(copy);
+
+   string result = StringConcatenate("{", JoinStrings(copy, separator), "}");
+
+   ArrayResize(copy, 0);
+   return(result);
 }
 
 

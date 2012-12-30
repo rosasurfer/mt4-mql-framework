@@ -117,6 +117,7 @@
    string   JoinInts(int array[], string separator);
    string   JoinDoubles(double array[], string separator);
    string   JoinStrings(string array[], string separator);
+   int      DoubleQuoteStrings(string array[]);
 
    int      SumInts(int array[]);
    double   SumDoubles(double array[]);
