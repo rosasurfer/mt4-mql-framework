@@ -769,13 +769,14 @@ int debug(string message, int error=NO_ERROR) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int log(string message, int error=NO_ERROR) {
-   if (!__LOG) return(error);
+   if (!__LOG)
+      return(error);
 
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    if (__LOG_PER_INSTANCE)
-      if (logToInstanceLog(StringConcatenate(__NAME__, "::", message)))    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (log.instance(StringConcatenate(__NAME__, "::", message)))  // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
          return(error);
 
    string name = __NAME__;
@@ -784,7 +785,7 @@ int log(string message, int error=NO_ERROR) {
       if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
       else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
    }
-   Print(StringConcatenate(name, "::", message));                          // ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", message));                    // ggf. mit Instanz-ID
 
    return(error);
 }
@@ -797,7 +798,7 @@ int log(string message, int error=NO_ERROR) {
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
  */
-bool logToInstanceLog(string message) {
+bool log.instance(string message) {
    bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
    int id = InstanceId(NULL);
    if (id == NULL)
@@ -809,18 +810,18 @@ bool logToInstanceLog(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(1)->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("log.instance(1)->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(2)->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("log.instance(2)->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_PER_INSTANCE = false; catch("logToInstanceLog(3)->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_PER_INSTANCE = false; catch("log.instance(3)->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -855,18 +856,18 @@ int warn(string message, int error=NO_ERROR) {
    }
 
 
-   // (2) Logging
+   // (2) Warnung loggen
    bool logged, alerted;
    if (__LOG_PER_INSTANCE)
-      logged = logToInstanceLog(StringConcatenate("WARN: ", __NAME__, "::", message));                // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      logged = log.instance(StringConcatenate("WARN: ", __NAME__, "::", message));                    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);           // loggt automatisch, ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);           // loggt automatisch, mit Instanz-ID
       alerted = true;
    }
    message = StringConcatenate(name, "::", message);
 
 
-   // (3) Anzeige
+   // (3) Warnung anzeigen
    if (IsTesting()) {
       // im Tester: weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
@@ -914,17 +915,19 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
       }
 
-      // (2) Logging
+
+      // (2) Fehler loggen
       bool logged, alerted;
       if (__LOG_PER_INSTANCE)
-         logged = logToInstanceLog(StringConcatenate("ERROR: ", __NAME__, "::", message));               // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         logged = log.instance(StringConcatenate("ERROR: ", __NAME__, "::", message));                   // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);          // loggt automatisch, ggf. mit Instanz-ID
          alerted = true;
       }
       message = StringConcatenate(name, "::", message);
 
-      // (3) Anzeige
+
+      // (3) Fehler anzeigen
       if (IsTesting()) {
          // im Tester: weder Alert() noch MessageBox() können verwendet werden
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
@@ -1713,7 +1716,7 @@ void __DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
-   logToInstanceLog(NULL);
+   log.instance(NULL);
    LT(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);

@@ -581,12 +581,12 @@ bool AquireLock(string mutexName) {
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
          if (!GlobalVariableSet(globalVarName, 0)) {
             error = GetLastError();
-            return(!catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(_false(catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error))));
          }
          continue;
       }
       else if (IsError(error)) {
-         return(!catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error));
+         return(_false(catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error)));
       }
 
       if (IsStopped())
@@ -596,7 +596,7 @@ bool AquireLock(string mutexName) {
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR));
+            return(_false(catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR)));
          warn(StringConcatenate("AquireLock(6)   couldn't get lock for mutex \"", mutexName, "\" after ", DoubleToStr(duration/1000.0, 3), " sec., retrying..."));
          seconds++;
       }
@@ -642,7 +642,7 @@ bool ReleaseLock(string mutexName) {
 
       if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
-         return(!catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+         return(_false(catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error))));
       }
    }
    return(true);
@@ -12300,65 +12300,6 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    return(true);
 }
 
-
-/*
-// --------------------------------------------------------------------------------------------------------------------------------
-// Tests mit globalen Arrays
-// @return string
-string staticString[1];
-string StaticString() {
-   if (StringLen(staticString[0]) == 0) staticString[0] = "s0";
-   else                                 staticString[0] = StringConcatenate("s", StrToInteger(StringRight(staticString[0], -1))+1);
-   return(staticString[0]);
-}
-// @return bool
-bool staticBool[1];
-bool StaticBool() {
-   staticBool[0] = !staticBool[0];
-   return(staticBool[0]);
-}
-// @return int
-int staticInt[1];
-int StaticInt() {
-   staticInt[0] = staticInt[0] + 1;
-   return(staticInt[0]);
-}
-// @return double
-double staticDouble[1];
-double StaticDouble() {
-   staticDouble[0] = staticDouble[0] + 1;
-   return(staticDouble[0]);
-}
-
-// --------------------------------------------------------------------------------------------------------------------------------
-// Tests mit lokalen Arrays
-// @return string
-string StaticString() {
-   static string staticString[1];
-   if (StringLen(staticString[0]) == 0) staticString[0] = "s0";
-   else                                 staticString[0] = StringConcatenate("s", StrToInteger(StringRight(staticString[0], -1))+1);
-   return(staticString[0]);
-}
-// @return bool
-bool StaticBool() {
-   static bool staticBool[1];
-   staticBool[0] = !staticBool[0];
-   return(staticBool[0]);
-}
-// @return int
-int StaticInt() {
-   static int staticInt[1];
-   staticInt[0] = staticInt[0] + 1;
-   return(staticInt[0]);
-}
-// @return double
-double StaticDouble() {
-   static double staticDouble[1];
-   staticDouble[0] = staticDouble[0] + 1;
-   return(staticDouble[0]);
-}
-// --------------------------------------------------------------------------------------------------------------------------------
-*/
 
 // "abstrakte" Funktionen (müssen bei Verwendung im Programm implementiert werden)
 /*abstract*/ int  onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
