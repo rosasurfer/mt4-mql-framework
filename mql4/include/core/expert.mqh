@@ -23,10 +23,9 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       last_error   = NO_ERROR;
    }
 
-   __NAME__           = WindowExpertName();
-     int initFlags    = SumInts(__INIT_FLAGS__);
-   __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
+   __NAME__        = WindowExpertName();
+     int initFlags = SumInts(__INIT_FLAGS__);
+   __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
    if (IsTesting())
       __LOG = Tester.IsLogging();
 

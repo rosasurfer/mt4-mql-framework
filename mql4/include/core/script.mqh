@@ -12,11 +12,10 @@ int init() {
    if (__STATUS_ERROR)
       return(last_error);
 
-   __WHEREAMI__       = FUNC_INIT;
-   __NAME__           = WindowExpertName();
-     int initFlags    = SumInts(__INIT_FLAGS__);
-   __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
+   __WHEREAMI__    = FUNC_INIT;
+   __NAME__        = WindowExpertName();
+     int initFlags = SumInts(__INIT_FLAGS__);
+   __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
 
 
    // (1) globale Variablen initialisieren

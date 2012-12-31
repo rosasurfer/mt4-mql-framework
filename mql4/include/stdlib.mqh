@@ -13,7 +13,8 @@
    bool     Indicator.IsTesting();
    bool     Script.IsTesting();
    bool     This.IsTesting();                                        // kurz für: IsTesting() || Indicator.IsTesting() || Script.IsTesting()
-   int      InstanceId(int id);
+   int      GetInstanceId();
+   int      SetInstanceId(int id);
    int      ShowStatus();                                            // für EA's
 
    string   GetTerminalVersion();

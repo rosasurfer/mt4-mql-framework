@@ -8,8 +8,7 @@
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     __LOG = true;                                      // ob das Logging aktiviert ist (default: ja; im Tester ggf. nein)
-bool     __LOG_INSTANCE_ID;                                 // ob die Instanz-ID des Programms mitgeloggt wird
-bool     __LOG_PER_INSTANCE;                                // ob ein instanz-eigenes Logfile benutzt wird
+bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
@@ -117,8 +116,7 @@ string   objects[];                                         // Namen der Objekte
 #define INIT_TIMEZONE               1           // stellt eine korrekte Timezone-Konfiguration sicher
 #define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE    4           //
-#define LOG_INSTANCE_ID             8           // versieht alle Logmessages mit der jeweiligen Instanz-ID
-#define LOG_PER_INSTANCE           16           // erzeugt für jede Instanz ein separates Logfile
+#define LOG_CUSTOM                  8           // das Programm verwendet ein eigenes Logfile
 
 
 // Object property ids, siehe ObjectSet()
@@ -775,32 +773,33 @@ int log(string message, int error=NO_ERROR) {
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   if (__LOG_PER_INSTANCE)
-      if (log.instance(StringConcatenate(__NAME__, "::", message)))  // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+   if (__LOG_CUSTOM)
+      if (log.custom(StringConcatenate(__NAME__, "::", message)))    // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
          return(error);
 
-   string name = __NAME__;
-   if (__LOG_INSTANCE_ID) {
+   string name    = __NAME__;
+   int instanceId = GetInstanceId();
+   if (instanceId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
    }
-   Print(StringConcatenate(name, "::", message));                    // ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
 
    return(error);
 }
 
 
 /**
- * Loggt eine Message in das instanz-eigene Logfile.
+ * Loggt eine Message in das Instanz-eigene Logfile.
  *
  * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
  *
- * @return bool - Erfolgsstatus: u.a. FALSE, wenn das instanz-eigene Logfile (noch) nicht definiert ist
+ * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
  */
-bool log.instance(string message) {
-   bool old.LOG_PER_INSTANCE = __LOG_PER_INSTANCE;
-   int id = InstanceId(NULL);
+bool log.custom(string message) {
+   bool old.LOG_CUSTOM = __LOG_CUSTOM;
+   int id = GetInstanceId();
    if (id == NULL)
       return(false);
 
@@ -810,18 +809,18 @@ bool log.instance(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_PER_INSTANCE = false; catch("log.instance(1)->FileOpen(\""+ fileName +"\")"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_CUSTOM = false; catch("log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_PER_INSTANCE = false; catch("log.instance(2)->FileSeek()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_CUSTOM = false; catch("log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_PER_INSTANCE = false; catch("log.instance(3)->FileWrite()"); __LOG_PER_INSTANCE = old.LOG_PER_INSTANCE;
+      __LOG_CUSTOM = false; catch("log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -847,21 +846,22 @@ int warn(string message, int error=NO_ERROR) {
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
 
-   // (1) Programmnamen ggf. um Instanz-ID erweitern
-   string name = __NAME__;
-   if (__LOG_INSTANCE_ID) {
+   // (1) Programmnamen um Instanz-ID erweitern
+   string name    = __NAME__;
+   int instanceId = GetInstanceId();
+   if (instanceId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
    }
 
 
    // (2) Warnung loggen
    bool logged, alerted;
-   if (__LOG_PER_INSTANCE)
-      logged = log.instance(StringConcatenate("WARN: ", __NAME__, "::", message));                    // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+   if (__LOG_CUSTOM)
+      logged = log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);           // loggt automatisch, mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);  // global Log: ggf. mit Instanz-ID
       alerted = true;
    }
    message = StringConcatenate(name, "::", message);
@@ -871,8 +871,8 @@ int warn(string message, int error=NO_ERROR) {
    if (IsTesting()) {
       // im Tester: weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-      pos = StringFind(message, ") ");                                                                // Message am ersten Leerzeichen nach der ersten
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                                // schließenden Klammer umbrechen
+      pos = StringFind(message, ") ");
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
       ForceSound("alert.wav");
@@ -907,21 +907,22 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (error != NO_ERROR) {
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
-      // (1) Programmnamen umschreiben
-      string name = __NAME__;
-      if (__LOG_INSTANCE_ID) {
+      // (1) Programmnamen um Instanz-ID erweitern
+      string name    = __NAME__;
+      int instanceId = GetInstanceId();
+      if (instanceId != 0) {
          int pos = StringFind(name, "::");
-         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", InstanceId(NULL), ")");
-         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", InstanceId(NULL), ")", StringRight(__NAME__, -pos));
+         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
+         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
       }
 
 
       // (2) Fehler loggen
       bool logged, alerted;
-      if (__LOG_PER_INSTANCE)
-         logged = log.instance(StringConcatenate("ERROR: ", __NAME__, "::", message));                   // ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (__LOG_CUSTOM)
+         logged = log.custom(StringConcatenate("ERROR: ", __NAME__, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);          // loggt automatisch, ggf. mit Instanz-ID
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message); // global Log: ggf. mit Instanz-ID
          alerted = true;
       }
       message = StringConcatenate(name, "::", message);
@@ -931,8 +932,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       if (IsTesting()) {
          // im Tester: weder Alert() noch MessageBox() können verwendet werden
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-         pos = StringFind(message, ") ");                                                                // Message am ersten Leerzeichen nach der ersten
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);                               // schließenden Klammer umbrechen
+         pos = StringFind(message, ") ");
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);                      // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
 
          ForceSound("alert.wav");
@@ -942,7 +943,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          // EA außerhalb des Testers, Script/Indikator im oder außerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
       }
-      SetLastError(error);                                                                               // je nach Programmtyp unterschiedlich Implementierung
+      SetLastError(error);                                                                      // je nach Programmtyp unterschiedlich Implementierung
    }
 
    if (orderPop)
@@ -1716,7 +1717,7 @@ void __DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
-   log.instance(NULL);
+   log.custom(NULL);
    LT(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);

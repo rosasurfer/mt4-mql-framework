@@ -41,7 +41,7 @@ int __DEINIT_FLAGS__[];
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
  * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  int    _iCustom           - Zeiger auf ICUSTOM-Struktur, falls das laufende Programm ein via iCustom() ausgeführter Indikator ist
+ * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Moduls
  *
@@ -51,12 +51,11 @@ int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__          |= type;
-   __NAME__           = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__       = whereami;
-   __iCustom__        = _iCustom;
-   __LOG_INSTANCE_ID  = initFlags & LOG_INSTANCE_ID;
-   __LOG_PER_INSTANCE = initFlags & LOG_PER_INSTANCE;
+   __TYPE__    |= type;
+   __NAME__     = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__ = whereami;
+   __LOG_CUSTOM = initFlags & LOG_CUSTOM;
+   __iCustom__  = _iCustom;                                                   // (int)lpICUSTOM
       if (IsTesting())
    __LOG = Tester.IsLogging();                                                // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
 
@@ -481,7 +480,7 @@ bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("Script.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
+   static bool resolved=false, result=false;
    if (resolved)
       return(result);
 
@@ -519,18 +518,29 @@ bool This.IsTesting() {
 }
 
 
+int costum.log.id = 0;
+
+
 /**
- * Setzt bzw. gibt die aktuelle Instanz-ID zurück.
+ * Gibt die aktuelle Instanz-ID zurück.
  *
- * @param  int id - neue Instanz-ID
- *
- * @return int - Instanz-ID
+ * @return int - ID
  */
-int InstanceId(int id) {
-   static int static.result;                                         // ohne Initializer (@see MQL.doc)
-   if (id != NULL)
-      static.result = id;
-   return(static.result);
+int GetInstanceId() {
+   return(costum.log.id);
+}
+
+
+/**
+ * Setzt die Instanz-ID.
+ *
+ * @param  int id - Instanz-ID
+ *
+ * @return int - dieselbe ID (for chaining)
+ */
+int SetInstanceId(int id) {
+   costum.log.id = id;
+   return(id);
 }
 
 
