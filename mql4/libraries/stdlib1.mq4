@@ -518,29 +518,34 @@ bool This.IsTesting() {
 }
 
 
-int costum.log.id = 0;
+int    costum.log.id   = 0;         // static: EA ok, Indikator ?
+string costum.log.file = "";        // static: EA ok, Indikator ?
 
 
 /**
- * Gibt die aktuelle Instanz-ID zurück.
+ * Setzt das zu verwendende Custom-Log.
  *
- * @return int - ID
+ * @param  int    id   - Log-ID (ähnlich einer Instanz-ID)
+ * @param  string file - Name des Logfiles relativ zu ".../experts/files/"
+ *
+ * @return int - dieselbe ID (for chaining)
  */
-int GetInstanceId() {
-   return(costum.log.id);
+int SetCustomLog(int id, string file) {
+   if (file == "0")                       // NULL
+      file = "";
+   costum.log.id   = id;
+   costum.log.file = file;
+   return(id);
 }
 
 
 /**
- * Setzt die Instanz-ID.
+ * Gibt die ID des Custom-Logs zurück.
  *
- * @param  int id - Instanz-ID
- *
- * @return int - dieselbe ID (for chaining)
+ * @return int - ID
  */
-int SetInstanceId(int id) {
-   costum.log.id = id;
-   return(id);
+int GetCustomLogID() {
+   return(costum.log.id);
 }
 
 

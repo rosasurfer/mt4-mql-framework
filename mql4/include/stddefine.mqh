@@ -777,12 +777,12 @@ int log(string message, int error=NO_ERROR) {
       if (log.custom(StringConcatenate(__NAME__, "::", message)))    // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
          return(error);
 
-   string name    = __NAME__;
-   int instanceId = GetInstanceId();
-   if (instanceId != 0) {
+   string name  = __NAME__;
+   int    logId = GetCustomLogID();
+   if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
    }
    Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
 
@@ -799,13 +799,13 @@ int log(string message, int error=NO_ERROR) {
  */
 bool log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
-   int id = GetInstanceId();
-   if (id == NULL)
+   int logId = GetCustomLogID();
+   if (logId == NULL)
       return(false);
 
    message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringRightPad(PeriodDescription(NULL), 3, " "), "  ", message);
 
-   string fileName = StringConcatenate(id, ".log");
+   string fileName = StringConcatenate(logId, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
@@ -847,12 +847,12 @@ int warn(string message, int error=NO_ERROR) {
 
 
    // (1) Programmnamen um Instanz-ID erweitern
-   string name    = __NAME__;
-   int instanceId = GetInstanceId();
-   if (instanceId != 0) {
+   string name  = __NAME__;
+   int    logId = GetCustomLogID();
+   if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
    }
 
 
@@ -908,12 +908,12 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
       // (1) Programmnamen um Instanz-ID erweitern
-      string name    = __NAME__;
-      int instanceId = GetInstanceId();
-      if (instanceId != 0) {
+      string name  = __NAME__;
+      int    logId = GetCustomLogID();
+      if (logId != 0) {
          int pos = StringFind(name, "::");
-         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", instanceId, ")");
-         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", instanceId, ")", StringRight(__NAME__, -pos));
+         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
+         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
       }
 
 

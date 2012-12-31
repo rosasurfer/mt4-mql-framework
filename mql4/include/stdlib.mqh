@@ -13,9 +13,11 @@
    bool     Indicator.IsTesting();
    bool     Script.IsTesting();
    bool     This.IsTesting();                                        // kurz für: IsTesting() || Indicator.IsTesting() || Script.IsTesting()
-   int      GetInstanceId();
-   int      SetInstanceId(int id);
    int      ShowStatus();                                            // für EA's
+
+   int      SetCustomLog(int id, string file);
+   int      GetCustomLogID();
+   string   GetCustomLogFile(int id);
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
