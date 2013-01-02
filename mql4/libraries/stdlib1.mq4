@@ -526,7 +526,7 @@ string costum.log.file = "";        // static: EA ok, Indikator ?
  * Setzt das zu verwendende Custom-Log.
  *
  * @param  int    id   - Log-ID (ähnlich einer Instanz-ID)
- * @param  string file - Name des Logfiles relativ zu ".../experts/files/"
+ * @param  string file - Name des Logfiles relativ zu ".\files\"
  *
  * @return int - dieselbe ID (for chaining)
  */
@@ -4042,7 +4042,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 /**
  * Liest eine Datei zeilenweise (ohne Zeilenende-Zeichen) in ein Array ein.
  *
- * @param  string filename       - Dateiname mit zu "..\files\" relativer Pfadangabe
+ * @param  string filename       - Dateiname mit zu ".\files\" relativer Pfadangabe
  * @param  string result[]       - Array zur Aufnahme der einzelnen Zeilen
  * @param  bool   skipEmptyLines - ob leere Zeilen übersprungen werden sollen (default: nein)
  *
@@ -4052,7 +4052,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    int hFile, hFileBin, fieldSeparator='\t';
 
    // Datei öffnen
-   hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu .\experts\files
+   hFile = FileOpen(filename, FILE_CSV|FILE_READ, fieldSeparator);         // erwartet Pfadangabe relativ zu ".\files\"
    if (hFile < 0)
       return(_int(-1, catch("FileReadLines(1)->FileOpen(\""+ filename +"\")")));
 

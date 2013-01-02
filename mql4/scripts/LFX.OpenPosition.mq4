@@ -243,7 +243,7 @@ int onStart() {
    if (__LOG) log("onStart()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position in "experts\files\SIG\remote_positions.ini" eintragen
+   // (9) Position in ".\experts\files\SIG\remote_positions.ini" eintragen
    string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = Currency +"."+ counter;
