@@ -3581,7 +3581,7 @@ int ExplodeStringsA(int buffer[], string results[]) {
  *
  */
 int ExplodeStringsW(int buffer[], string results[]) {
-   return(catch("ExplodeStringsW()   function not implemented", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("ExplodeStringsW()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
