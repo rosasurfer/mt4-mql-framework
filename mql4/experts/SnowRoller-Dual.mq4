@@ -1,85 +1,18 @@
 /**
- *  SnowRoller - Pyramiding Trade Manager
- *  -------------------------------------
- *
- *
- *  TODO:
- *  -----
- *  - bidirektionales Grid vervollständigen: Anzeige, Start/Stopdaten                                 *
- *  - zum Testen Endlos-Strategy implementieren                                                       *
- *  - Equity-Charts: paralleles Schreiben mehrerer Timeframes                                         *
- *  - Equity-Charts: Schreiben aus Online-Chart                                                       *
- *  - Laufzeitumgebung auf Server einrichten                                                          *
- *
- *  - Abbruch wegen geändertem Ticketstatus abfangen                                                  *
- *  - Abbruch wegen IsStopped()=TRUE abfangen                                                         *
- *
- *  - PendingOrders nicht per Tick trailen                                                            *
- *  - Möglichkeit, WeekendStop zu aktivieren/deaktivieren                                             *
- *  - BE-Anzeige reparieren                                                                           *
- *  - BE-Anzeige laufender Sequenzen bis zum aktuellen Moment                                         *
- *  - onBarOpen(PERIOD_M1) für Breakeven-Indikator implementieren                                     *
- *  - EventListener.BarOpen() muß Event auch erkennen, wenn er nicht bei jedem Tick aufgerufen wird   *
- *
- *  - Bug: ChartMarker bei Stopouts
- *  - Bug: Crash, wenn Statusdatei der geladenen Testsequenz gelöscht wird
- *  - Logging aller MessageBoxen
- *  - Bestätigungsprompt des Traderequests beim ersten Tick auslagern
- *
- *  - Build 419 silently crashes (1 mal)
- *  - Alpari: wiederholte Trade-Timeouts von exakt 200 sec. (Socket-Timeout???)
- *  - Alpari: StopOrder-Slippage EUR/USD bis 4.1 pip, GBP/AUD bis 6 pip, GBP/JPY bis 21.4 pip
- *  - FxPro: zu viele Traderequests in zu kurzer Zeit => ERR_TRADE_TIMEOUT
- *
- *
- *  Übersicht der Aktionen und Statuswechsel:
- *  +-------------------+----------------------+---------------------+------------+---------------+----------------------+
- *  | Aktion            |        Status        |       Events        | Positionen |  BE-Berechn.  |      Erkennung       |
- *  +-------------------+----------------------+---------------------+------------+---------------+----------------------+
- *  | EA.init()         | STATUS_UNINITIALIZED |                     |            |               |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | EA.start()        | STATUS_WAITING       |                     |            |               |                      |
- *  +-------------------+----------------------+---------------------+------------+---------------+----------------------+
- *  | StartSequence()   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     0      |       -       |                      | sequenceStartTime = Wechsel zu STATUS_PROGRESSING
- *  |                   |                      |                     |            |               |                      |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |       -       |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | OrderFilled       | STATUS_PROGRESSING   | EV_POSITION_OPEN    |    1..n    |  ja (Beginn)  | maxLong-maxShort > 0 |
- *  |                   |                      |                     |            |               |                      |
- *  | OrderStoppedOut   | STATUS_PROGRESSING   | EV_POSITION_STOPOUT |    n..0    |      ja       |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |      ja       |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | StopSequence()    | STATUS_STOPPING      |                     |     n      | nein (Redraw) | STATUS_STOPPING      |
- *  | PositionClose     | STATUS_STOPPING      | EV_POSITION_CLOSE   |    n..0    |       Redraw  | PositionClose        |
- *  |                   | STATUS_STOPPED       | EV_SEQUENCE_STOP    |     0      |  Ende Redraw  | STATUS_STOPPED       | sequenceStopTime = Wechsel zu STATUS_STOPPED
- *  +-------------------+----------------------+---------------------+------------+---------------+----------------------+
- *  | ResumeSequence()  | STATUS_STARTING      |                     |     0      |       -       |                      | Gridbasis ungültig
- *  | Gridbase-Änderung | STATUS_STARTING      | EV_GRIDBASE_CHANGE  |     0      |       -       |                      |
- *  | PositionOpen      | STATUS_STARTING      | EV_POSITION_OPEN    |    0..n    |               |                      |
- *  |                   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     n      |  ja (Beginn)  | STATUS_PROGRESSING   | sequenceStartTime = Wechsel zu STATUS_PROGRESSING
- *  |                   |                      |                     |            |               |                      |
- *  | OrderFilled       | STATUS_PROGRESSING   | EV_POSITION_OPEN    |    1..n    |      ja       |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | OrderStoppedOut   | STATUS_PROGRESSING   | EV_POSITION_STOPOUT |    n..0    |      ja       |                      |
- *  |                   |                      |                     |            |               |                      |
- *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |      ja       |                      |
- *  | ...               |                      |                     |            |               |                      |
- *  +-------------------+----------------------+---------------------+------------+---------------+----------------------+
+ * SnowRoller-Strategy (2-Sequence-SnowRoller: maximal eine jeweils unabhängige Sequence je Richtung)
  */
 #property stacksize 32768
 
-#include <core/define.mqh>
-#define     __TYPE__      T_EXPERT
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, LOG_INSTANCE_ID, LOG_PER_INSTANCE};
-int __DEINIT_FLAGS__[];
 #include <stddefine.mqh>
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, LOG_CUSTOM};
+int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <history.mqh>
 #include <win32api.mqh>
 
 #include <core/expert.mqh>
 #include <SnowRoller/define.mqh>
+#include <SnowRoller/functions.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////

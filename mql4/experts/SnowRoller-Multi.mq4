@@ -1,5 +1,6 @@
 /**
- * SnowRoller-Strategy (Multi-Sequence-SnowRoller)
+ * SnowRoller-Strategy (Multi-Sequence-SnowRoller: beliebig viele jeweils unabhängige Sequencen je Richtung)
+ *
  *
  *  TODO:
  *  -----
@@ -24,7 +25,7 @@ int __DEINIT_FLAGS__[];
 
 extern            int    GridSize        = 20;
 extern            double LotSize         = 0.1;
-extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";    // @trend(ALMA:3.5xD1)
+extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
