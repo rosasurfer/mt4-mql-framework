@@ -35,7 +35,7 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern string Deviations        = "2.0";                       // ein oder zwei Multiplikatoren für die Std.-Abweichung
 extern int    Max.Values        = 5000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
-extern string __________________________;
+extern string _____________________________;
 extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
