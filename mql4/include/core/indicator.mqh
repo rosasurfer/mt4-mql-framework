@@ -5,7 +5,7 @@
 #define __TYPE__ T_INDICATOR
 
 
-extern string ___________________________;
+extern string ____________________________;
 extern int    __iCustom__;
 
 
