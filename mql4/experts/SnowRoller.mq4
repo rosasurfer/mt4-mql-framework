@@ -16,6 +16,7 @@
  *  - Statusanzeige: Risikokennziffer zum Verlustpotential des Levels integrieren
  *  - PendingOrders nicht per Tick trailen
  *  - Möglichkeit, WeekendStop zu (de-)aktivieren
+ *  - WochenendStop auf Feiertage ausweiten (Feiertagskalender implementieren)
  *
  *  - Validierung refaktorieren
  *  - Statusanzeige dynamisch an Zeilen anpassen
