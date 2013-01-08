@@ -2461,7 +2461,7 @@ int CreateMagicNumber(int level) {
 int ShowStatus() {
    if (IsTesting()) /*&&*/ if (!IsVisualMode()) {
       if (__STATUS_ERROR)
-         if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, " [", ErrorDescription(last_error), "]"));
+         if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, "  [", ErrorDescription(last_error), "]"));
       return(NO_ERROR);
    }
 
@@ -2471,8 +2471,8 @@ int ShowStatus() {
       str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT), "]");
    }
    else if (__STATUS_ERROR) {
-      str.error = StringConcatenate("  ", Sequence.ID, " disabled  [", ErrorDescription(last_error), "]");
-      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, " [", ErrorDescription(last_error), "]"));
+      str.error = StringConcatenate("  [", ErrorDescription(last_error), "]");
+      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, str.error));
    }
 
    switch (status) {
@@ -2501,7 +2501,7 @@ int ShowStatus() {
       WindowRedraw();
 
 
-   // für Fernbedienung Status im Chart speichern (versteckt)
+   // für Fernbedienung: versteckten Status im Chart speichern
    string label = "SnowRoller.status";
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
@@ -2513,7 +2513,7 @@ int ShowStatus() {
 
 
    if (IsError(catch("ShowStatus(3)"))) {
-      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, " (EA_DISABLED)"));
+      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, "  [", ErrorDescription(last_error), "]"));
       return(last_error);
    }
    return(NO_ERROR);
