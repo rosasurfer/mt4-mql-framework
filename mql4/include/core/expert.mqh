@@ -139,6 +139,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
  *  - altes Chartfenster, alter EA, Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitParameterChange() {
    return(NO_ERROR);
 }
@@ -150,6 +151,7 @@ int onInitParameterChange() {
  * - altes Chartfenster, neuer EA, Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitRemove() {
    return(NO_ERROR);
 }
@@ -161,6 +163,7 @@ int onInitRemove() {
  * - altes Chartfenster, alter EA, kein Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitChartChange() {
    return(NO_ERROR);
 }
@@ -172,6 +175,7 @@ int onInitChartChange() {
  * - wird in stdlib abgefangen (ERR_RUNTIME_ERROR)
  *
  * @return int - Fehlerstatus
+ *
 int onInitAccountChange() {
    return(NO_ERROR);
 }
@@ -183,6 +187,7 @@ int onInitAccountChange() {
  * - neuer EA, Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitChartClose() {
    return(NO_ERROR);
 }
@@ -195,6 +200,7 @@ int onInitChartClose() {
  * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitUndefined() {
    return(NO_ERROR);
 }
@@ -206,6 +212,7 @@ int onInitUndefined() {
  * - altes Chartfenster, vorheriger EA, kein Input-Dialog
  *
  * @return int - Fehlerstatus
+ *
 int onInitRecompile() {
    return(NO_ERROR);
 }
