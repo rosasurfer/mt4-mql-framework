@@ -859,21 +859,23 @@ int warn(string message, int error=NO_ERROR) {
    // (2) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      logged = logged || log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);  // global Log: ggf. mit Instanz-ID
-      alerted = true;
+      logged  = true;
+      alerted = alerted || !IsExpert() || !IsTesting();
    }
    message = StringConcatenate(name, "::", message);
 
 
    // (3) Warnung anzeigen
    if (IsTesting()) {
-      // im Tester: weder Alert() noch MessageBox() können verwendet werden
+      // weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
+      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+                     message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
 
       ForceSound("alert.wav");
       ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
@@ -881,6 +883,7 @@ int warn(string message, int error=NO_ERROR) {
    else if (!alerted) {
       // außerhalb des Testers
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+      alerted = true;
    }
 
    return(error);
@@ -920,28 +923,33 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // (2) Fehler loggen
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = log.custom(StringConcatenate("ERROR: ", __NAME__, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         logged = logged || log.custom(StringConcatenate("ERROR: ", __NAME__, "::", message));  // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message); // global Log: ggf. mit Instanz-ID
-         alerted = true;
+         logged  = true;
+         alerted = alerted || !IsExpert() || !IsTesting();
       }
       message = StringConcatenate(name, "::", message);
 
 
       // (3) Fehler anzeigen
       if (IsTesting()) {
-         // im Tester: weder Alert() noch MessageBox() können verwendet werden
+         // weder Alert() noch MessageBox() können verwendet werden
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);                      // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-         else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), "\n\n", StringTrimLeft(StringRight(message, -pos-2)));
+         else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+                        message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
 
          ForceSound("alert.wav");
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+         alerted = true;
       }
       else if (!alerted) {
          // EA außerhalb des Testers, Script/Indikator im oder außerhalb des Testers
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+         alerted = true;
       }
       SetLastError(error);                                                                      // je nach Programmtyp unterschiedlich Implementierung
    }
