@@ -375,7 +375,7 @@
    bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
    bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oe[]);
+   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);
    bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);
@@ -476,7 +476,7 @@
    string   MovingAverageMethodToStr(int method);
    string   NumberToStr(double number, string format);
    string   OperationTypeToStr(int type);
-   string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput);
+   string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false);
    string   PeriodFlagToStr(int flag);
    string   PeriodToStr(int period);
    string   ShellExecuteErrorToStr(int error);
