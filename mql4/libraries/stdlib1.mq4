@@ -11942,7 +11942,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       return(_ZERO(oes.setError(oes, -1, last_error)));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
-   double totalLots, lots[];
+   double totalLots, lots[]; ArrayResize(lots, 0);
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
@@ -12059,6 +12059,8 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       }
       ArrayResize(oe, 0);
    }
+
+   ArrayResize(lots, 0);
 
    if (IsError(catch("OrderMultiClose.Flatten(7)")))
       return(_ZERO(oes.setError(oes, -1, last_error)));
