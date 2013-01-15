@@ -60,7 +60,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects(objects);
+   RemoveChartObjects();
    return(catch("onDeinit()"));
 }
 
@@ -96,7 +96,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
       ObjectSet(label, OBJPROP_YDISTANCE, 134);
       ObjectSetText(label, "g", 174, "Webdings", Background.Color);
-      ArrayPushString(objects, label);
+      PushChartObject(label);
    }
    else GetLastError();
 
@@ -109,7 +109,7 @@ int CreateLabels() {
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
       ObjectSet(label, OBJPROP_YDISTANCE, 269);
       ObjectSetText(label, "g", 174, "Webdings", Background.Color);
-      ArrayPushString(objects, label);
+      PushChartObject(label);
    }
    else GetLastError();
 
@@ -127,7 +127,7 @@ int CreateLabels() {
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", Font.Size, Font.Name);
-         ArrayPushString(objects, label);
+         PushChartObject(label);
          names[i] = label;
       }
       else GetLastError();

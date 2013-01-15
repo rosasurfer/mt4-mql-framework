@@ -30,8 +30,6 @@ int      ChangedBars;
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler des aktuellen start()-Aufrufs
 
-string   objects[];                                         // Namen der Objekte, die mit Beenden des Programms automatisch entfernt werden
-
 
 // Special constants
 #define NULL                        0

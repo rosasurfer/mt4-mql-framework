@@ -434,7 +434,8 @@
 
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
-   int      RemoveChartObjects(string objects[]);
+   int      PushChartObject(string label);
+   int      RemoveChartObjects();
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);

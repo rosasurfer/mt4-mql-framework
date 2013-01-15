@@ -52,7 +52,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects(objects);
+   RemoveChartObjects();
    return(catch("onDeinit()"));
 }
 
