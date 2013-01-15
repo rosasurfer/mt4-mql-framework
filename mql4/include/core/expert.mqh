@@ -139,98 +139,6 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-/**
- * Nach Parameteränderung
- *
- *  - altes Chartfenster, alter EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Symbol- oder Timeframe-Wechsel
- *
- * - altes Chartfenster, alter EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitChartChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Accountwechsel (wann ???)                                    // TODO: Umstände ungeklärt
- *
- * - wird in stdlib abgefangen (ERR_RUNTIME_ERROR)
- *
- * @return int - Fehlerstatus
- *
-int onInitAccountChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Altes Chartfenster mit neu geladenem Template
- *
- * - neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitChartClose() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Kein UninitializeReason gesetzt
- *
- * - nach Terminal-Neustart:    neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitUndefined() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Recompilation
- *
- * - altes Chartfenster, vorheriger EA, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRecompile() {
-   return(NO_ERROR);
-}
- */
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 /**
  * Globale start()-Funktion für Expert Adviser.
  *
@@ -501,41 +409,42 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (flags == NULL)
       flags = PeriodFlag(Period());
 
-   // (1) Aufruf bei erstem Tick             // (2) oder Aufruf bei weiterem Tick
-   //     Tick.prevTime = 0;                 //     Tick.prevTime = time[1];
-   //     Tick.Time     = time[0];           //     Tick.Time     = time[0];
+   /*
+   +--------------------------+--------------------------+
+   | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
+   +--------------------------+--------------------------+
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; | time[] ist Pseudovariable (existiert nicht)
+   | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
+   +--------------------------+--------------------------+
+   */
 
    static int sizeOfPeriods, periods    []={  PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1},
                              periodFlags[]={F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1};
    static datetime bar.openTimes[], bar.closeTimes[];
    if (sizeOfPeriods == 0) {                                         // TODO: Listener für PERIOD_MN1 implementieren
       sizeOfPeriods = ArraySize(periods);
-      ArrayResize(bar.openTimes,  F_PERIOD_W1+1);
-      ArrayResize(bar.closeTimes, F_PERIOD_W1+1);
+      ArrayResize(bar.openTimes,  F_PERIOD_W1+1);                    // Für schnelleren Zugriff benutzen wir die zu testenden Flags als Array-Index.
+      ArrayResize(bar.closeTimes, F_PERIOD_W1+1);                    // Der verschwendete Speicher (F_PERIOD_W1+1=129) ist den Geschwindigkeitsgewinn wert.
    }
 
-   for (int pFlag, i=0; i < sizeOfPeriods; i++) {
-      pFlag = periodFlags[i];
-      if (flags & pFlag != 0) {
-         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[pFlag]) {
-            bar.openTimes [pFlag] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
-            bar.closeTimes[pFlag] = bar.openTimes[pFlag] +  (periods[i]*MINUTES);
-         }
-         // vorherigen Tick auswerten
-         if (Tick.prevTime < bar.openTimes[pFlag]) {
-            //if (Tick.prevTime != 0) ArrayPushInt(results, periods[i]);
-            //else if (IsTesting())   ArrayPushInt(results, periods[i]);
+   for (int flag, i=0; i < sizeOfPeriods; i++) {
+      flag = periodFlags[i];                                         // flag: zu testendes Flag
 
+      if (flags & flag != 0) {
+         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
+         if (Tick.Time >= bar.closeTimes[flag]) {
+            bar.openTimes [flag] = Tick.Time - Tick.Time%(periods[i]*MINUTES);
+            bar.closeTimes[flag] = bar.openTimes[flag] + (periods[i]*MINUTES);
+         }
+
+         // vorherigen Tick auswerten
+         if (Tick.prevTime < bar.openTimes[flag]) {
             if (!Tick.prevTime) {
-               if (IsTesting()) {                                    // nur im Tester ist der 1. Tick BarOpen-Event
+               if (IsTesting())                                      // im Tester ist der 1. Tick BarOpen-Event
                   ArrayPushInt(results, periods[i]);                 // TODO: !!! nicht für alle Timeframes !!!
-                  //debug("EventListener.BarOpen()   event("+ PeriodToStr(periods[i]) +")=1   tick="+ TimeToStr(Tick.Time, TIME_FULL) +"   tick="+ Tick);
-               }
             }
             else {
                ArrayPushInt(results, periods[i]);
-               //debug("EventListener.BarOpen()   event("+ PeriodToStr(periods[i]) +")=1   tick="+ TimeToStr(Tick.Time, TIME_FULL));
             }
          }
       }
@@ -545,3 +454,107 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
       return(false);
    return(ArraySize(results));                                       // (bool) int
 }
+
+
+// -- init()-Templates ------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Nach Parameteränderung
+ *
+ *  - altes Chartfenster, alter EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Symbol- oder Timeframe-Wechsel
+ *
+ * - altes Chartfenster, alter EA, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Accountwechsel (wann ???)                                    // TODO: Umstände ungeklärt
+ *
+ * - wird in stdlib abgefangen (ERR_RUNTIME_ERROR)
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitAccountChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Altes Chartfenster mit neu geladenem Template
+ *
+ * - neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitChartClose() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt
+ *
+ * - nach Terminal-Neustart:    neues Chartfenster, vorheriger EA, kein Input-Dialog
+ * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Recompilation
+ *
+ * - altes Chartfenster, vorheriger EA, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRecompile() {
+   return(NO_ERROR);
+}
+ */
+
+
+// -- deinit()-Templates ----------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ *
+int onDeinit() {
+   double test.duration = (Test.stopMillis-Test.startMillis)/1000.0;    // Sekunden
+   double test.days     = (Test.toDate-Test.fromDate) * 1.0 /DAYS;      // Testzeitraum in Tagen
+   //debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
+   return(last_error);
+}
+ */
+
