@@ -86,6 +86,8 @@ int onStart() {
 void DummyCalls() {
    int iNull;
    CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
+   ConfirmTick1Trade(NULL, NULL);
+   CreateEventId();
    CreateSequenceId();
-   IsSequenceStatus(iNull);
+   IsSequenceStatus(NULL);
 }
