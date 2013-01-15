@@ -5,6 +5,11 @@
 #include <ChartInfos/functions.mqh>
 
 
+// Teststatistiken
+datetime Test.fromDate,    Test.toDate;
+int      Test.startMillis, Test.stopMillis;                          // in Millisekunden
+
+
 /**
  * Globale init()-Funktion für Expert Adviser.
  *
@@ -17,7 +22,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    if (__STATUS_ERROR)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
+   if (__WHEREAMI__ == NULL) {                                       // Aufruf durch Terminal
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       last_error   = NO_ERROR;
@@ -45,13 +50,13 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {}                                   // Verarbeitung nicht hier, sondern in stdlib_init()
+   if (_bool(initFlags & INIT_TIMEZONE)) {}                          // Verarbeitung nicht hier, sondern in stdlib_init()
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
+   if (_bool(initFlags & INIT_PIPVALUE)) {                           // schlägt fehl, wenn kein Tick vorhanden ist
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       error = GetLastError();
-      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
@@ -60,20 +65,20 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
+         if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // noch nicht implementiert
 
 
    // (4)  EA's ggf. aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+      error = Toolbar.Experts(true);                                 // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -87,7 +92,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
    // (6) im Tester ChartInfo-Anzeige konfigurieren
    if (IsVisualMode()) {
-      chartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
+      chartInfo.appliedPrice = PRICE_BID;                            // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
       chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
       if (LT(chartInfo.leverage, 1))
          return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
@@ -125,6 +130,10 @@ int init() { //throws ERS_TERMINAL_NOT_READY
          if (IsError(error))
             SetLastError(error);
       }
+   }
+   else {
+      Test.fromDate    = TimeCurrent();
+      Test.startMillis = GetTickCount();
    }
    return(catch("init(4)")|last_error);
 }
@@ -352,14 +361,18 @@ int start() {
  *
  *
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
- *       In der Regel wird afterDeinit() schon nicht mehr ausgeführt. In diesem Fall werden die deinit()-Funktionen von geladenen Libraries auch nicht mehr
- *       ausgeführt.
+ *       afterDeinit() und stdlib_deinit() werden u.U. schon nicht mehr ausgeführt.
  *
- *       TODO:       Testperiode auslesen und Test nach dem letzten Tick per Tester.Stop() beenden
- *       Workaround: Testende im EA direkt vors reguläre Testende der Historydatei setzen
+ *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per Tester.Stop() beenden.
+ *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
    __WHEREAMI__ = FUNC_DEINIT;
+
+   if (IsTesting()) {
+      Test.toDate     = TimeCurrent();
+      Test.stopMillis = GetTickCount();
+   }
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
