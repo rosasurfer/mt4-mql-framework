@@ -218,7 +218,7 @@ int onInit() {
 
    // Legende
    string legendLabel = CreateLegendLabel(indicatorLongName);
-   ArrayPushString(objects, legendLabel);
+   PushChartObject(legendLabel);
    ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
@@ -272,7 +272,7 @@ int onDeinit() {
 
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
 
-   RemoveChartObjects(objects);
+   RemoveChartObjects();
    RepositionLegend();
    return(catch("onDeinit()"));
 }

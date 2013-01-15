@@ -25,11 +25,6 @@ extern color Grid.Color = LightGray;
 int onInit() {
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
-   // nach Recompilation statische Arrays zurücksetzen
-   if (UninitializeReason() == REASON_RECOMPILE)
-      ArrayResize(objects, 0);
-
    return(catch("onInit()"));
 }
 
@@ -40,7 +35,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects(objects);
+   RemoveChartObjects();
    return(catch("onDeinit()"));
 }
 
@@ -180,7 +175,7 @@ int DrawGrid() {
          ObjectSet(label, OBJPROP_STYLE, sepStyle);
          ObjectSet(label, OBJPROP_COLOR, sepColor);
          ObjectSet(label, OBJPROP_BACK , true  );
-         ArrayPushString(objects, label);
+         PushChartObject(label);
       }
       else GetLastError();
       lastChartTime = chartTime;

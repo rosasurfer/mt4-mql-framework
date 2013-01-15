@@ -8709,27 +8709,41 @@ string StringsToStr(string values[], string separator=", ") {
 }
 
 
+string chart.objects[];
+
+
 /**
- * Entfernt die angegebenen Objekte aus dem aktuellen Chart.
+ * Fügt ein Object-Label zu den bei Programmende automatisch zu entfernenden Chartobjekten hinzu.
  *
- * @param  string objects[] - Array mit Objektlabels
+ * @param  string label - Object-Label
+ *
+ * @return int - Anzahl der gespeicherten Label oder -1, falls ein Fehler auftrat
+ */
+int PushChartObject(string label) {
+   return(ArrayPushString(chart.objects, label));
+}
+
+
+/**
+ * Entfernt alle bei Programmende automatisch zu entfernenden Chartobjekte aus dem Chart.
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects(string objects[]) {
-   int size = ArraySize(objects);
+int RemoveChartObjects() {
+   int size = ArraySize(chart.objects);
    if (size == 0)
       return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(objects[i]);
+      ObjectDelete(chart.objects[i]);
    }
-   ArrayResize(objects, 0);
+   ArrayResize(chart.objects, 0);
 
    int error = GetLastError();
-   if (error == ERR_OBJECT_DOES_NOT_EXIST)
-      return(NO_ERROR);
-   return(catch("RemoveChartObjects()", error));
+   if (IsError(error)) /*&&*/ if (error != ERR_OBJECT_DOES_NOT_EXIST)
+      return(catch("RemoveChartObjects()", error));
+
+   return(NO_ERROR);
 }
 
 
