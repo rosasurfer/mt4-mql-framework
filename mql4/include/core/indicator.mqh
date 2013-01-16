@@ -30,6 +30,8 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    __NAME__        = WindowExpertName();
      int initFlags = SumInts(__INIT_FLAGS__);
    __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
+   IsChart         = !IsTesting() || IsVisualMode();                          // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
+ //IsOfflineChart  = IsChart && ???                                           //       in Indicator::init() IsChart=On signalisiert.
 
 
 
@@ -46,7 +48,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 

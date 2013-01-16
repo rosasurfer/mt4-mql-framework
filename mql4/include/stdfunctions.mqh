@@ -15,6 +15,8 @@ bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder 
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
+bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
+bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)

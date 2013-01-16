@@ -33,6 +33,8 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
    if (IsTesting())
       __LOG = Tester.IsLogging();
+   IsChart         = !IsTesting() || IsVisualMode();
+ //IsOfflineChart  = IsChart && ???
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -44,7 +46,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
