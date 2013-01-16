@@ -208,7 +208,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(NO_ERROR);
 
  //int x[]={0,  89, 145}, y=22, fontSize=67;                         // eine Zeile für Start/StopCondition

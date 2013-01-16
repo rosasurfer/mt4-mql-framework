@@ -964,9 +964,9 @@ bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStop
       //if (recalcBreakeven) {
       //   Grid.CalculateBreakeven();
       //}
-      //else if (grid.maxLevel != 0) {                                           // nur ab dem ersten ausgeführten Trade
-      //   if      (  !IsTesting()) HandleEvent(EVENT_BAR_OPEN, F_PERIOD_M1);    // jede Minute
-      //   else if (IsVisualMode()) HandleEvent(EVENT_BAR_OPEN);                 // nur onBarOpen
+      //else if (IsChart) /*&&*/ if (grid.maxLevel != 0) {                 // ab dem ersten ausgeführten Trade
+      //   if (IsTesting()) HandleEvent(EVENT_BAR_OPEN);                   // nur aktuelle Periode
+      //   else             HandleEvent(EVENT_BAR_OPEN, F_PERIOD_M1);      // jede Minute
       //}
    }
 
@@ -1156,7 +1156,7 @@ double UpdateStatus.CalculateStopPrice() {
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string commands[], int flags=NULL) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(false);
 
    if (ArraySize(commands) > 0)
@@ -2459,7 +2459,7 @@ int CreateMagicNumber(int level) {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode()) {
+   if (!IsChart) {
       if (__STATUS_ERROR)
          if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, "  [", ErrorDescription(last_error), "]"));
       return(NO_ERROR);
@@ -2524,7 +2524,7 @@ int ShowStatus() {
  * ShowStatus(): Aktualisiert alle in ShowStatus() verwendeten String-Repräsentationen.
  */
 void SS.All() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    SS.SequenceId();
@@ -2555,7 +2555,7 @@ void SS.SequenceId() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.base.
  */
 void SS.Grid.Base() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    if (ArraySize(grid.base.event) > 0)
@@ -2567,7 +2567,7 @@ void SS.Grid.Base() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.direction.
  */
 void SS.Grid.Direction() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
    str.grid.direction = StringConcatenate("  (", StringToLower(directionDescr[grid.direction]), ")");
 }
@@ -2577,7 +2577,7 @@ void SS.Grid.Direction() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - grid.commission, 2), "/stop");
@@ -2588,7 +2588,7 @@ void SS.LotSize() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von start/stopConditions.
  */
 void SS.StartStopConditions() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.startConditions = "";
@@ -2603,7 +2603,7 @@ void SS.StartStopConditions() {
  * ShowStatus(): Aktualisiert die String-Repräsentationen von grid.stops und grid.stopsPL.
  */
 void SS.Grid.Stops() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.grid.stops = StringConcatenate(grid.stops, " stop", ifString(grid.stops==1, "", "s"));
@@ -2618,7 +2618,7 @@ void SS.Grid.Stops() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.totalPL.
  */
 void SS.Grid.TotalPL() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    if (grid.maxLevel == 0) str.grid.totalPL = "-";                   // Anzeige wird nicht vor der ersten offenen Position gesetzt
@@ -2630,7 +2630,7 @@ void SS.Grid.TotalPL() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.maxProfit.
  */
 void SS.Grid.MaxProfit() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.grid.maxProfit = NumberToStr(grid.maxProfit, "+.2");
@@ -2642,7 +2642,7 @@ void SS.Grid.MaxProfit() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.maxDrawdown.
  */
 void SS.Grid.MaxDrawdown() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.grid.maxDrawdown = NumberToStr(grid.maxDrawdown, "+.2");
@@ -2654,7 +2654,7 @@ void SS.Grid.MaxDrawdown() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.valueAtRisk.
  */
 void SS.Grid.ValueAtRisk() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    str.grid.valueAtRisk = NumberToStr(grid.valueAtRisk, "+.2");
@@ -2666,7 +2666,7 @@ void SS.Grid.ValueAtRisk() {
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
 void SS.Grid.ProfitLossStatistics() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
@@ -2684,9 +2684,9 @@ void SS.Grid.ProfitLossStatistics() {
  * @return bool - Erfolgsstatus
  */
 bool Grid.CalculateBreakeven(datetime time=0, int i=-1) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode()) return(true);
+   if (!IsChart)           return(true);
    int sizeOfTickets = ArraySize(orders.ticket);
-   if (i >= sizeOfTickets)                      return(_false(catch("Grid.CalculateBreakeven(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (i >= sizeOfTickets) return(_false(catch("Grid.CalculateBreakeven(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // vorläufig deaktiviert
    return(true);
@@ -2763,7 +2763,7 @@ bool Grid.DrawBreakeven(datetime time=NULL, int timeStatus=NULL) {
    // vorläufig deaktiviert
    return(true);
 
-   //if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   //if (!IsChart)
    //   return(true);
    //if (EQ(grid.breakevenLong, 0))                                                // ohne initialisiertes Breakeven sofortige Rückkehr
    //   return(true);
@@ -2849,7 +2849,7 @@ void RecolorBreakeven() {
    // vorläufig deaktiviert
    return;
 
-   //if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   //if (!IsChart)
    //   return;
 
    //if (ObjectsTotal(OBJ_TREND) > 0) {
@@ -5600,7 +5600,7 @@ double CalculateAverageOpenPrice(int level, bool checkOpenPositions, datetime ti
  * Zeichnet die Start-/Stop-Marker der Sequenz neu.
  */
 void RedrawStartStop() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    static color last.MarkerColor = DodgerBlue;
@@ -5674,7 +5674,7 @@ void RedrawStartStop() {
  * Zeichnet die ChartMarker aller Orders neu.
  */
 void RedrawOrders() {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return;
 
    bool wasPending, isPending, closedPosition;
@@ -5855,8 +5855,8 @@ int CountClosedPositions() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int i) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode()) return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket))  return(_false(catch("ChartMarker.OrderSent()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart)                               return(true);
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.OrderSent()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5890,8 +5890,8 @@ bool ChartMarker.OrderSent(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int i) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode()) return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket))  return(_false(catch("ChartMarker.OrderFilled()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart)                               return(true);
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.OrderFilled()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5918,8 +5918,8 @@ bool ChartMarker.OrderFilled(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode()) return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket))  return(_false(catch("ChartMarker.PositionClosed()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart)                               return(true);
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.PositionClosed()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL

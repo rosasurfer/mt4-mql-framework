@@ -233,7 +233,7 @@ bool StartSequence(int hSeq) {
  */
 void RedrawStartStop(int hSeq) {
    if (__STATUS_ERROR)                             return;
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())    return;
+   if (!IsChart)                                   return;
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    return(_NULL(catch("RedrawStartStop(2)", ERR_FUNCTION_NOT_IMPLEMENTED)));

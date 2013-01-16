@@ -41,23 +41,27 @@ int __DEINIT_FLAGS__[];
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
  * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  bool   isChart            - Callermodule-Variable IsChart
+ * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
  * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Moduls
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, int _iCustom, int initFlags, int uninitializeReason) { //throws ERS_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason) { //throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__    |= type;
-   __NAME__     = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__ = whereami;
-   __LOG_CUSTOM = initFlags & LOG_CUSTOM;
-   __iCustom__  = _iCustom;                                                   // (int)lpICUSTOM
+   __TYPE__      |= type;
+   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__   = whereami;
+   __LOG_CUSTOM   = initFlags & LOG_CUSTOM;
+   __iCustom__    = _iCustom;                                                 // (int)lpICUSTOM
       if (IsTesting())
-   __LOG = Tester.IsLogging();                                                // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
+   __LOG          = Tester.IsLogging();                                       // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
+   IsChart        = isChart;
+   IsOfflineChart = isOfflineChart;
 
 
    // (1) globale Variablen re-initialisieren
@@ -719,7 +723,7 @@ bool Tester.IsPaused() {
    int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
 
    if (IsScript()) {
-      // visualMode = true;
+      // VisualMode = true;
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
@@ -6398,7 +6402,7 @@ int GetAccountNumber() { //throws ERS_TERMINAL_NOT_READY             // evt. wäh
 
    if (!account) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
-      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=true benutzen => UI-Thread-Deadlock
+      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
          return(_ZERO(SetLastError(ERS_TERMINAL_NOT_READY)));
 
       int pos = StringFind(title, ":");
@@ -7909,7 +7913,7 @@ int GetApplicationWindow() {
    string terminalClassName = "MetaQuotes::MetaTrader::4.00";
 
    // WindowHandle()
-   if (!IsTesting() || IsVisualMode()) {
+   if (IsChart) {
       hWnd = WindowHandle(Symbol(), NULL);                           // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
@@ -8073,7 +8077,7 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
- * NOTE: Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=TRUE benutzen, da UI-Thread-Deadlock.
+ * NOTE: Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=On benutzen, da UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
@@ -10387,7 +10391,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
@@ -10420,7 +10424,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
@@ -10686,7 +10690,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @see ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
@@ -10723,7 +10727,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @see ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    bool openModified = NE(openPrice,  oldOpenPrice );
@@ -10811,7 +10815,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  * @see ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
@@ -10843,7 +10847,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  * @see ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
@@ -10892,7 +10896,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
@@ -10922,7 +10926,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
@@ -10979,7 +10983,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  * @see ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
@@ -11011,7 +11015,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  * @see ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+   if (!IsChart)
       return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};

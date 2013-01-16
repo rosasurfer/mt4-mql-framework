@@ -16,6 +16,8 @@ int init() {
    __NAME__        = WindowExpertName();
      int initFlags = SumInts(__INIT_FLAGS__);
    __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
+   IsChart         = true;
+ //IsOfflineChart  = IsChart && ???
 
 
    // (1) globale Variablen initialisieren
@@ -27,7 +29,7 @@ int init() {
 
 
    // (2) stdlib initialisieren
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, __iCustom__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, initFlags, UninitializeReason());
    if (IsError(error))
       return(SetLastError(error));
 
