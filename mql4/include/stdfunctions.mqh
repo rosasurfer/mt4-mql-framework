@@ -634,8 +634,9 @@ int      last_error;                                        // der letzte Fehler
 
 
 // MT4 item ids (Fenster, Controls)
-#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked inside the main application window
-#define IDD_UNDOCKED_CONTAINER              59423     // window containing undocked child windows (one per undocked child)
+#define IDD_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
+#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked *inside* the main application window
+#define IDD_UNDOCKED_CONTAINER              59423     // window containing undocked/floating child windows (one per undocked/floating child; multiple windows)
 
 #define IDD_MARKETWATCH                        80     // Market Watch
 #define IDD_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols

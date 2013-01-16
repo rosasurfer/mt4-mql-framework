@@ -75,8 +75,7 @@ int onTick() {
       return(SetLastError(prev_error));
 
    UpdateInfos();
-
-   return(catch("onTick()"));
+   return(last_error);
 }
 
 

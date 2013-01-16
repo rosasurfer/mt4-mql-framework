@@ -108,7 +108,7 @@ int onStart() {
       MessageBox("No matching positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("onStart()"));
+   return(last_error);
 }
 
 

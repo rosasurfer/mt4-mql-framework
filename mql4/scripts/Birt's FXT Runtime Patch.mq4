@@ -52,7 +52,7 @@ int onStart() {
    if (Remove.2GB.Limit)          Remove2GBLimitPatch();
    if (Use.Variable.Spread.Files) VariableSpreadPatch();
 
-   return(catch("onStart()"));
+   return(last_error);
 }
 
 

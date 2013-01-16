@@ -303,7 +303,7 @@ int onTick() {
    }
    lastValue = curValue;
 
-   return(catch("onTick(3)"));
+   return(last_error);
 }
 
 

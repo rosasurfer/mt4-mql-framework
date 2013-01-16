@@ -354,7 +354,7 @@ int onTick() {
       */
    }
 
-   return(catch("onTick()"));
+   return(last_error);
 }
 
 

@@ -150,7 +150,7 @@ int onTick() {
    EventListener.AccountChange(loginData, 0);                  // Der Eventlistener schreibt unabhängig vom Egebnis immer die aktuellen Accountdaten ins Array.
    if (TimeCurrent() < loginData[2]) {
       //debug("onTick()   old tick=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\"   login=\""+ TimeToStr(loginData[2], TIME_FULL) +"\"");
-      return(catch("onTick(1)"));
+      return(catch("onTick()"));
    }
 
    // Positionen
@@ -165,7 +165,7 @@ int onTick() {
          return(last_error);
    }
 
-   return(catch("onTick(2)"));
+   return(last_error);
 }
 
 

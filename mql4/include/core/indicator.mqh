@@ -111,66 +111,6 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 }
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-/**
- * nur extern: erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitChartChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Kein UninitializeReason gesetzt.
- *
- * extern: wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * intern: in allen init()-Fällen außer im Tester nach Test-Restart bei VisualMode=Off,              kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitUndefined() {
-   return(NO_ERROR);
-}
-
-
-/**
- * nur extern: vorhandener Indikator, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRecompile() {
-   return(NO_ERROR);
-}
-*/
-
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 /**
  * Globale start()-Funktion für Indikatoren.
  *
@@ -190,22 +130,57 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                              // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: sicherstellen, daß Tick/Tick.Time in allen Szenarien statisch sind
    ValidBars     = IndicatorCounted();
+
+   if (!Tick.Time) {
+      error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL)           // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
+         return(catch("start(1)", error));                                 // nicht sicher detektiert werden kann
+   }
+
+
+   /*
+   if (StringStartsWith(Symbol(), "_")) {
+      error = GetLastError(); if (error != ERR_UNKNOWN_SYMBOL) catch("start(0.1)", error);
+
+      int hWndChart = WindowHandle(Symbol(), NULL);                        // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
+
+      debug("start()   Tick="+ Tick +"   hWndChart="+ hWndChart);
+
+      if (!hWndChart) {
+         int hWndMain, hWndMDI, hWndNext;
+
+         hWndMain = GetApplicationWindow();
+         if (hWndMain > 0)
+            hWndMDI = GetDlgItem(hWndMain, IDD_MDI_CLIENT);
+         debug("start()   hWndMain="+ hWndMain +"   hWndMDI="+ hWndMDI);
+
+
+         if (hWndMDI > 0) {
+            hWndNext = GetWindow(hWndMDI, GW_CHILD);
+            while (hWndNext != 0) {
+               debug("start()   hWndNext="+ hWndNext +"   title=\""+ GetWindowText(hWndNext) +"\"");
+               hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
+            }
+         }
+      }
+   }
+   */
 
 
    // (1.1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_READY)                               // init() ist mit Fehler zurückgekehrt
+         if (last_error != ERS_TERMINAL_NOT_READY)                         // init() ist mit Fehler zurückgekehrt
             return(SetLastError(last_error));
          __WHEREAMI__ = FUNC_START;
-         if (IsError(init())) {                                                  // init() erneut aufrufen (kann Neuaufruf an __WHEREAMI__ erkennen)
-            __WHEREAMI__ = FUNC_INIT;                                            // erneuter Fehler, __WHEREAMI__ restaurieren und Abbruch
+         if (IsError(init())) {                                            // init() erneut aufrufen (kann Neuaufruf an __WHEREAMI__ erkennen)
+            __WHEREAMI__ = FUNC_INIT;                                      // erneuter Fehler, __WHEREAMI__ restaurieren und Abbruch
             return(SetLastError(last_error));
          }
       }
-      last_error = NO_ERROR;                                                     // init() war erfolgreich
+      last_error = NO_ERROR;                                               // init() war erfolgreich
       ValidBars  = 0;
    }
    // (1.2) Aufruf nach Tick
@@ -216,7 +191,7 @@ int start() {
       if      (prev_error == ERS_TERMINAL_NOT_READY  ) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE      ) ValidBars = 0;
       else if (prev_error == ERR_HISTORY_INSUFFICIENT) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;            // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;      // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
       if      (__STATUS_HISTORY_INSUFFICIENT         ) ValidBars = 0;
    }
 
@@ -228,7 +203,7 @@ int start() {
    /*
    // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
    if (ArraySize(buffer) == 0)
-      return(SetLastError(ERS_TERMINAL_NOT_READY));                           // kann bei Terminal-Start auftreten
+      return(SetLastError(ERS_TERMINAL_NOT_READY));                        // kann bei Terminal-Start auftreten
    */
 
    __WHEREAMI__                  = FUNC_START;
@@ -257,7 +232,7 @@ int start() {
 
    error = GetLastError();
    if (error != NO_ERROR)
-      catch("start()", error);
+      catch("start(2)", error);
 
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;
@@ -397,7 +372,7 @@ int SetLastError(int error, int param=NULL) {
 }
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------
+// -- init()-Templates ------------------------------------------------------------------------------------------------------------------------------
 
 
 /**
@@ -416,6 +391,16 @@ int onInit() {
  * @return int - Fehlerstatus
  *
 int onInitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
    return(NO_ERROR);
 }
 
@@ -463,7 +448,7 @@ int afterInit() {
 }
 
 
-// ------------------------------------------------------------------------------------------------------------------------------------------------
+// -- deinit()-Templates ----------------------------------------------------------------------------------------------------------------------------
 
 
 /**

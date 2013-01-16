@@ -283,7 +283,7 @@ int onStart() {
 
    PlaySound("ding.wav");
    MessageBox("History successfully updated.", __NAME__, MB_ICONINFORMATION|MB_OK);
-   return(catch("onStart(17)"));
+   return(last_error);
 }
 
 
