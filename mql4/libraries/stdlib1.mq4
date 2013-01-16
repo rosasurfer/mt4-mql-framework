@@ -7914,7 +7914,7 @@ int GetApplicationWindow() {
 
    // WindowHandle()
    if (IsChart) {
-      hWnd = WindowHandle(Symbol(), NULL);                           // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
+      hWnd = WindowHandle(Symbol(), NULL);                           // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Terminalstart, im Tester)
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
          if (GetClassName(hWnd) != terminalClassName) {

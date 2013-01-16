@@ -141,5 +141,5 @@ int onStart() {
       MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 
-   return(catch("onStart()"));
+   return(last_error);
 }

@@ -84,14 +84,15 @@ bool History.AddTick(int hFile, datetime time, double value, int flags=NULL) {
 
 /**
  * Findet den Offset der Bar innerhalb der angegebenen Historydatei, die den angegebenen Zeitpunkt abdeckt und signalisiert, ob an diesem
- * Offset bereits eine Bar in der Zeitreihe existiert. Eine Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine
- * Kurslücke enthält oder wenn der Zeitpunkt außerhalb des von der Zeitreihe abgedeckten Datenbereichs liegt.
+ * Offset eine Bar in der Zeitreihe existiert. Eine Bar existiert z.B. nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke enthält
+ * oder wenn der Zeitpunkt außerhalb des von der Zeitreihe abgedeckten Datenbereichs liegt.
  *
  * @param  int      hFile          - Dateihandle der Historydatei
  * @param  datetime time           - Zeitpunkt
- * @param  bool    &lpBarExists[1] - Variable, die anzeigt, ob die Bar am zurückgegebenen Offset existiert oder nicht
- *                                   lpBarExists[0]=TRUE:  zum Aktualisieren der Zeitreihe ist History.UpdateBar() zu verwenden
- *                                   lpBarExists[0]=FALSE: zum Aktualisieren der Zeitreihe ist History.InsertBar() zu verwenden
+ * @param  bool    &lpBarExists[1] - Zeiger auf Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert oder nicht
+ *                                   TRUE:  zum Aktualisieren der Bar muß History.UpdateBar() verwendet werden
+ *                                   FALSE: zum Aktualisieren der Bar muß History.InsertBar() verwendet werden
+ *                                   (die Variable ist als Array implementiert, um die Zeigerübergabe an eine Library zu ermöglichen)
  *
  * @return int - Bar-Offset oder -1, falls ein Fehler auftrat
  */

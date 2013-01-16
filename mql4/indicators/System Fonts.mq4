@@ -33,16 +33,6 @@ int onInit() {
 
 
 /**
- * Main-Funktion
- *
- * @return int - Fehlerstatus
- */
-int onTick() {
-   return(catch("onTick()"));
-}
-
-
-/**
  *
  */
 int CreateLabels() {

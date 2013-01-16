@@ -201,7 +201,8 @@ int onStart() {
    ArrayResize(profits,      0);
    ArrayResize(magicNumbers, 0);
    ArrayResize(comments,     0);
-   return(catch("onStart(10)"));
+
+   return(last_error);
 }
 
 

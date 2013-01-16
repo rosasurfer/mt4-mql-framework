@@ -63,8 +63,7 @@ int onTick() {
       ValidBars = 0;
 
    UpdateInfos();
-
-   return(catch("onTick()"));
+   return(last_error);
 }
 
 

@@ -84,11 +84,20 @@ int start() {
    if (__STATUS_ERROR)                                                        // init()-Fehler abfangen
       return(last_error);
 
+   int error;
+
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
    ChangedBars   = -1;
+
+
+   if (!Tick.Time) {
+      error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL)              // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
+         return(catch("start(1)", error));                                    // nicht sicher detektiert werden kann
+   }
 
 
    // (1) init() war immer erfolgreich
@@ -97,7 +106,7 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)                                                                 // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start(1)   Bars = 0", ERS_TERMINAL_NOT_READY));
+      return(catch("start(2)   Bars = 0", ERS_TERMINAL_NOT_READY));
 
 
    // (3) stdLib benachrichtigen
@@ -108,9 +117,9 @@ int start() {
    // (4) Main-Funktion aufrufen
    onStart();
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error != NO_ERROR)
-      catch("start(1)", error);
+      catch("start(3)", error);
 
    return(last_error);
 }

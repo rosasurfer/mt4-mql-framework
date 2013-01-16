@@ -16,5 +16,5 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    DebugMarketInfo("onStart()");
-   return(catch("onStart()"));
+   return(last_error);
 }

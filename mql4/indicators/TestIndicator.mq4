@@ -35,5 +35,5 @@ int onTick() {
       DebugMarketInfo("onTick()");
       done = true;
    }
-   return(catch("onTick()"));
+   return(last_error);
 }

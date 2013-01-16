@@ -57,7 +57,7 @@ int onTick() {
    if (!ValidBars)
       DrawGrid();
 
-   return(catch("onTick()"));
+   return(last_error);
 }
 
 

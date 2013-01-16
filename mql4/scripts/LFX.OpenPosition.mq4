@@ -252,7 +252,7 @@ int onStart() {
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
-   return(catch("onStart(9)"));
+   return(last_error);
 }
 
 

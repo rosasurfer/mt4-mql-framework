@@ -173,7 +173,7 @@ int onStart() {
    // 5) aktuellen Status im Chart speichern
    SaveAccountId(account);
 
-   return(catch("onStart(13)"));
+   return(last_error);
 }
 
 
