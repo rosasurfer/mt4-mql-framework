@@ -6135,8 +6135,7 @@ bool RecordEquity(bool collectTicks) {
    }
 
    // (2) Daten zusammenstellen
-   datetime time  = MarketInfo(Symbol(), MODE_TIME);
-   double   value = sequenceStartEquity + grid.totalPL;
+   double value = sequenceStartEquity + grid.totalPL;
 
 
    static datetime barTime, nextBarTime, period;
@@ -6147,8 +6146,8 @@ bool RecordEquity(bool collectTicks) {
 
    // (3) Ticks sammeln: nur komplette Bars schreiben
    if (collectTicks) {
-      if (time >= nextBarTime) {
-         bar = History.FindBar(hFile, time, barExists);                       // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
+      if (Tick.Time >= nextBarTime) {
+         bar = History.FindBar(hFile, Tick.Time, barExists);                  // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
                                                                               // letzte Bar für FindBar() nicht sichtbar ist
          if (!nextBarTime) {
             if (barExists[0]) {                                               // erste Initialisierung
@@ -6177,7 +6176,7 @@ bool RecordEquity(bool collectTicks) {
             data[BAR_C] = value;
             data[BAR_V] = 1;
          }
-         barTime     = time - time % period;
+         barTime     = Tick.Time - Tick.Time%period;
          nextBarTime = barTime + period;
       }
       else {
@@ -6192,13 +6191,13 @@ bool RecordEquity(bool collectTicks) {
 
    // (4) Ticks nicht sammeln: keine ungeschriebenen Ticks => nur den aktuellen Tick schreiben
    if (!barTime)
-      return(History.AddTick(hFile, time, value, NULL));
+      return(History.AddTick(hFile, Tick.Time, value, NULL));
 
 
    // (5) ungeschriebene und aktuellen Tick schreiben
    bar = History.FindBar(hFile, barTime, barExists);
 
-   if (time-time%period == barTime) {                                      // aktueller Tick gehört zur ungeschriebenen Bar und wird integriert
+   if (Tick.Time - Tick.Time%period == barTime) {                          // aktueller Tick gehört zur ungeschriebenen Bar und wird integriert
       data[BAR_H] = MathMax(data[BAR_H], value);                           // Open bleibt unverändert
       data[BAR_L] = MathMin(data[BAR_L], value);
       data[BAR_C] = value;
@@ -6207,7 +6206,7 @@ bool RecordEquity(bool collectTicks) {
          return(false);
    }
    else if (History.WriteBar(hFile, bar, barTime, data, HST_FILL_GAPS)) {  // ungeschriebene Bar und aktueller Tick werden getrennt geschrieben
-      if (!History.AddTick(hFile, time, value, NULL)) return(false);
+      if (!History.AddTick(hFile, Tick.Time, value, NULL)) return(false);
    }
    else return(false);
 
