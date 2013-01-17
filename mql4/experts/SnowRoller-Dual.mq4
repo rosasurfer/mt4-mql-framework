@@ -6415,6 +6415,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int afterDeinit() {
-   CloseFiles(false);
+   History.CloseFiles(false);
    return(NO_ERROR);
 }
