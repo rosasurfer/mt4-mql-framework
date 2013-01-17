@@ -1,11 +1,11 @@
 /**
- *
+ * Funktionen zum Verwalten und Bearbeiten von Historydateien (im "history"-Verzeichnis).
  */
 #import "history.ex4"
 
    int      History.OpenFile(string symbol, string description, int digits, int period, int mode);
    bool     History.CloseFile(int hFile);
-   bool     CloseFiles(bool warn);
+   bool     History.CloseFiles(bool warn);
 
    string   History.FileName         (int hFile);
    bool     History.FileRead         (int hFile);
@@ -24,10 +24,10 @@
    int      History.FilePrevDbVersion(int hFile);
 
    int      History.FindBar       (int hFile, datetime time, bool lpBarExists[]);
-   bool     History.ReadBar       (int hFile, int bar, datetime time[], double data[]);
-   bool     History.InsertBar     (int hFile, int bar, datetime time, double data[], int flags);
-   bool     History.UpdateBar     (int hFile, int bar, double value);
-   bool     History.WriteBar      (int hFile, int bar, datetime time, double data[], int flags);
+   bool     History.ReadBar       (int hFile, int offset, datetime time[], double data[]);
+   bool     History.InsertBar     (int hFile, int offset, datetime time, double data[], int flags);
+   bool     History.UpdateBar     (int hFile, int offset, double value);
+   bool     History.WriteBar      (int hFile, int offset, datetime time, double data[], int flags);
    bool     History.WriteCachedBar(int hFile);
    bool     History.MoveBars      (int hFile, int startOffset, int destOffset);
    bool     History.AddTick       (int hFile, datetime time, double value, int flags);
