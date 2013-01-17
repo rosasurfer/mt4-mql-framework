@@ -553,9 +553,9 @@ int onInitRecompile() {
 /**
  *
 int onDeinit() {
-   double test.duration = (Test.stopMillis-Test.startMillis)/1000.0;    // Sekunden
-   double test.days     = (Test.toDate-Test.fromDate) * 1.0 /DAYS;      // Testzeitraum in Tagen
-   //debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
+   double test.duration = (Test.stopMillis-Test.startMillis)/1000.0;
+   double test.days     = (Test.toDate-Test.fromDate) * 1.0 /DAYS;
+   debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
    return(last_error);
 }
  */
