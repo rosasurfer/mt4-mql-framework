@@ -434,6 +434,7 @@
 
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
+   bool     ObjectDeleteSilent(string label, string location);
    int      PushChartObject(string label);
    int      RemoveChartObjects();
 

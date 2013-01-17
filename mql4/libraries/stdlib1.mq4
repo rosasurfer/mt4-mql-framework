@@ -8739,15 +8739,29 @@ int RemoveChartObjects() {
       return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      ObjectDelete(chart.objects[i]);
+      ObjectDeleteSilent(chart.objects[i], "RemoveChartObjects()");
    }
    ArrayResize(chart.objects, 0);
+   return(last_error);
+}
 
-   int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error != ERR_OBJECT_DOES_NOT_EXIST)
-      return(catch("RemoveChartObjects()", error));
 
-   return(NO_ERROR);
+/**
+ * Löscht ein Chartobjekt, ohne einen Fehler zu melden, falls das Objekt nicht gefunden wurde.
+ *
+ * @param  strin  label    - Object-Label
+ * @param  string location - Bezeichner für evt. Fehlermeldung
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ObjectDeleteSilent(string label, string location) {
+   if (ObjectFind(label) == -1)
+      return(true);
+
+   if (ObjectDelete(label))
+      return(true);
+
+   return(_false(catch("ObjectDeleteSilent()->"+ location)));
 }
 
 
