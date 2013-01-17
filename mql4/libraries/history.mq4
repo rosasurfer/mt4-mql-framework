@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 
 
 // Daten der Historydatei
-int      hst.hFile      [];                           // Dateihandle: = Arrayindex, wenn Datei offen; kleiner 0, wenn Datei geschlossen
+int      hst.hFile      [];                           // Dateihandle = Arrayindex, wenn Datei offen; kleiner 0, wenn Datei geschlossen
 string   hst.fileName   [];                           // Dateiname
 bool     hst.fileRead   [];                           // ob das Handle Lese-Zugriff erlaubt
 bool     hst.fileWrite  [];                           // ob das Handle Schreib-Zugriff erlaubt
