@@ -31,14 +31,13 @@ int init() {
    // (2) stdlib initialisieren
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error));                                                        // #define INIT_TIMEZONE
-                                                                                          // #define INIT_PIPVALUE
-                                                                                          // #define INIT_BARS_ON_HIST_UPDATE
-                                                                                          // #define INIT_CUSTOMLOG
-                                                                                          // #define INIT_HSTLIB
-   // (3) user-spezifische Init-Tasks ausführen (in stdlib: INIT_TIMEZONE, INIT_HSTLIB)
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {                                  // schlägt fehl, wenn kein Tick vorhanden ist
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
+                                                                              // #define INIT_PIPVALUE
+                                                                              // #define INIT_BARS_ON_HIST_UPDATE
+                                                                              // #define INIT_CUSTOMLOG
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(1)"))) return(last_error);
       if (!TickSize)                 return(catch("init(2)   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
 
@@ -48,6 +47,12 @@ int init() {
    }
 
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
+
+   if (_bool(__InitFlags & INIT_HSTLIB)) {
+      error = hstlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+      if (IsError(error))
+         return(SetLastError(error));
+   }
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.

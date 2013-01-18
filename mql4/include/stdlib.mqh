@@ -580,9 +580,9 @@
    int      afterDeinit();
 
 
-   // erweiterte stdlib Basisfunktionen
-   int      stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
-   int      stdlib_start(int tick, datetime tickTime, int validBars, int changedBars);
+   // erweiterte Root-Funktionen
+   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
+   int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 
 

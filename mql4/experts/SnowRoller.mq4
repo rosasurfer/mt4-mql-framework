@@ -6148,7 +6148,9 @@ bool RecordEquity(bool collectTicks) {
    if (collectTicks) {
       if (Tick.Time >= nextBarTime) {
          bar = History.FindBar(hFile, Tick.Time, barExists);                  // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
-                                                                              // letzte Bar für FindBar() nicht sichtbar ist
+         if (bar < 0)                                                         // letzte Bar für FindBar() nicht sichtbar ist
+            return(_false(SetLastError(hstlib_GetLastError())));
+
          if (!nextBarTime) {
             if (barExists[0]) {                                               // erste Initialisierung
                if (!History.ReadBar(hFile, bar, iNull, data))                 // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
@@ -6196,6 +6198,8 @@ bool RecordEquity(bool collectTicks) {
 
    // (5) ungeschriebene und aktuellen Tick schreiben
    bar = History.FindBar(hFile, barTime, barExists);
+   if (bar < 0)
+      return(_false(SetLastError(hstlib_GetLastError())));
 
    if (Tick.Time - Tick.Time%period == barTime) {                          // aktueller Tick gehört zur ungeschriebenen Bar und wird integriert
       data[BAR_H] = MathMax(data[BAR_H], value);                           // Open bleibt unverändert
