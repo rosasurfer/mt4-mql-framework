@@ -15,6 +15,8 @@ bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder 
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
+int      __InitFlags;
+int      __DeinitFlags;
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
 bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
 
@@ -116,7 +118,8 @@ int      last_error;                                        // der letzte Fehler
 #define INIT_TIMEZONE               1           // stellt eine korrekte Timezone-Konfiguration sicher
 #define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE    4           //
-#define LOG_CUSTOM                  8           // das Programm verwendet ein eigenes Logfile
+#define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
+#define INIT_HSTLIB                16           // initialisiert die History-Library (hstLib)
 
 
 // Object property ids, siehe ObjectSet()
@@ -910,6 +913,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
    if (error != NO_ERROR) {
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
+
 
       // (1) Programmnamen um Instanz-ID erweitern
       string name  = __NAME__;

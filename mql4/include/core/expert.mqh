@@ -28,13 +28,13 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       last_error   = NO_ERROR;
    }
 
-   __NAME__        = WindowExpertName();
-     int initFlags = SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
+   __NAME__       = WindowExpertName();
+   __InitFlags    = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die hstLib immer initialisiert
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
    if (IsTesting())
       __LOG = Tester.IsLogging();
-   IsChart         = !IsTesting() || IsVisualMode();
- //IsOfflineChart  = IsChart && ???
+   IsChart        = !IsTesting() || IsVisualMode();
+ //IsOfflineChart = IsChart && ???
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -46,15 +46,15 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error));
-
-
-   // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {}                          // Verarbeitung nicht hier, sondern in stdlib_init()
-
-   if (_bool(initFlags & INIT_PIPVALUE)) {                           // schlägt fehl, wenn kein Tick vorhanden ist
+      return(SetLastError(error));                                                        // #define INIT_TIMEZONE
+                                                                                          // #define INIT_PIPVALUE
+                                                                                          // #define INIT_BARS_ON_HIST_UPDATE
+                                                                                          // #define INIT_CUSTOMLOG
+                                                                                          // #define INIT_HSTLIB
+   // (3) user-spezifische Init-Tasks ausführen (in stdlib: INIT_TIMEZONE, INIT_HSTLIB)
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {                         // schlägt fehl, wenn kein Tick vorhanden ist
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -74,7 +74,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}               // noch nicht implementiert
+   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}             // noch nicht implementiert
 
 
    // (4)  EA's ggf. aktivieren
@@ -277,7 +277,8 @@ int start() {
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
-   __WHEREAMI__ = FUNC_DEINIT;
+   __WHEREAMI__  = FUNC_DEINIT;
+   __DeinitFlags = SumInts(__DEINIT_FLAGS__);
 
    if (IsTesting()) {
       Test.toDate     = TimeCurrent();
@@ -311,7 +312,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
+   error = stdlib_deinit(__DeinitFlags, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 

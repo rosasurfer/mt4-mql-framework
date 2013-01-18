@@ -3,7 +3,7 @@
  */
 #import "history.ex4"
 
-   int      History.OpenFile(string symbol, string description, int digits, int period, int mode);
+   int      History.OpenFile(string symbol, string description, int digits, int timeframe, int mode);
    bool     History.CloseFile(int hFile);
    bool     History.CloseFiles(bool warn);
 

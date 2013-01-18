@@ -36,16 +36,16 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des laufenden Programms.
+ * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
  *
  * @param  int    type               - Programmtyp
  * @param  string name               - Programmname
- * @param  int    whereami           - ID der vom Terminal ausgeführten Basis-Function: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  bool   isChart            - Callermodule-Variable IsChart
  * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
  * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Moduls
+ * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
  *
  * @return int - Fehlerstatus
  */
@@ -56,8 +56,9 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    __TYPE__      |= type;
    __NAME__       = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__   = whereami;
-   __LOG_CUSTOM   = initFlags & LOG_CUSTOM;
-   __iCustom__    = _iCustom;                                                 // (int)lpICUSTOM
+   __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                             // (bool) int
+   __iCustom__    = _iCustom;                                                 // (int) lpICUSTOM
       if (IsTesting())
    __LOG          = Tester.IsLogging();                                       // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
    IsChart        = isChart;
@@ -71,20 +72,23 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   // (2) Interne Variablen, die später u.U. nicht mehr ermittelbar sind, zu Beginn ermitteln und cachen
+   // (2) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln und damit cachen.
    if (!GetApplicationWindow())                                               // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
       return(last_error);                                                     // (z.B. im Tester bei Shutdown).
    if (!GetUIThreadId())                                                      // GetUIThreadId() ist auf gültiges Hauptfenster-Handle angewiesen
       return(last_error);
-
-
+                                                                              // #define INIT_TIMEZONE
+                                                                              // #define INIT_PIPVALUE
+                                                                              // #define INIT_BARS_ON_HIST_UPDATE
+                                                                              // #define INIT_CUSTOMLOG
+                                                                              // #define INIT_HSTLIB
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {                                    // Zeitzonen-Konfiguration überprüfen
+   if (_bool(__InitFlags & INIT_TIMEZONE)) {                                  // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {                                  // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
       /*
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -104,6 +108,12 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
       }
       if (!tickValue) return(debug("stdlib_init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
       */
+   }
+
+   if (_bool(__InitFlags & INIT_HSTLIB)) {                                    // hstLib initialisieren
+      int error = hstlib_init(type, name, whereami, isChart, isOfflineChart, _iCustom, initFlags, uninitializeReason);
+      if (IsError(error))
+         return(SetLastError(error));
    }
 
 
@@ -165,10 +175,10 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
 
 
 /**
- * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des laufenden Moduls.
+ * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des Hauptprogramms.
  *
  * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
- * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
+ * @param  int uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
  *
  * @return int - Fehlerstatus
  *
@@ -177,9 +187,16 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__ = FUNC_DEINIT;
+   __WHEREAMI__  = FUNC_DEINIT;
+   __DeinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
 
    int error = NO_ERROR;
+
+   if (_bool(__InitFlags & INIT_HSTLIB)) {                           // hstLib deinitialisieren, wenn sie in init() initialisiert wurde
+      error = hstlib_deinit(deinitFlags, uninitializeReason);
+      if (IsError(error))
+         SetLastError(error);
+   }
 
    if (!ReleaseLocks(true))
       error = last_error;
@@ -12403,6 +12420,9 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 /*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_FUNCTION_NOT_IMPLEMENTED)); }
 
 
+#import "history.ex4"
+   int    hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
+   int    hstlib_deinit(int deinitFlags, int uninitializeReason);
 #import "stdlib2.ex4"
    int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
 #import "sample1.ex4"

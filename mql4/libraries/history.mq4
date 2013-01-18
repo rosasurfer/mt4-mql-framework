@@ -1,5 +1,5 @@
 /**
- * Funktionen zum Verwalten und Bearbeiten von Historydateien (im "history"-Verzeichnis).
+ * Funktionen zum Verwalten und Bearbeiten von Historydateien (Kursreihen im "history"-Verzeichnis).
  *
  *
  * NOTE: Libraries use predefined variables of the module that called the library.
@@ -13,6 +13,66 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 #include <core/library.mqh>
+
+
+/**
+ * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
+ *
+ * @param  int    type               - Programmtyp
+ * @param  string name               - Programmname
+ * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  bool   isChart            - Callermodule-Variable IsChart
+ * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
+ * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
+ * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ *
+ * @return int - Fehlerstatus
+ */
+int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason) {
+   prev_error = last_error;
+   last_error = NO_ERROR;
+
+   __TYPE__      |= type;
+   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__   = whereami;
+   __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                       // (bool) int
+   __iCustom__    = _iCustom;                                           // (int) lpICUSTOM
+      if (IsTesting())
+   __LOG          = Tester.IsLogging();                                 // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
+   IsChart        = isChart;
+   IsOfflineChart = isOfflineChart;
+
+
+   // globale Variablen re-initialisieren
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = Round(MathPow(10, Digits<<31>>31));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+   return(catch("hstlib_init()"));
+}
+
+
+/**
+ * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des Hauptprogramms.
+ *
+ * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
+ * @param  int uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ *
+ * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
+ *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
+ */
+int hstlib_deinit(int deinitFlags, int uninitializeReason) {
+   __WHEREAMI__  = FUNC_DEINIT;
+   __DeinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
+   return(NO_ERROR);
+}
 
 
 // Daten der Historydatei
@@ -396,7 +456,7 @@ bool History.MoveBars(int hFile, int startOffset, int destOffset) {
  * @param  string symbol      - Symbol des Instruments
  * @param  string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
  * @param  int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
- * @param  int    period      - Timeframe der Zeitreihe
+ * @param  int    timeframe   - Timeframe der Zeitreihe
  * @param  int    mode        - Access-Mode: FILE_READ | FILE_WRITE
  *
  * @return int - Dateihandle
@@ -405,13 +465,13 @@ bool History.MoveBars(int hFile, int startOffset, int destOffset) {
  * NOTE: Das zurückgegebene Handle darf nicht modul-übergreifend verwendet werden. Mit den MQL-Dateifunktionen können je Modul maximal 32 Dateien
  *       gleichzeitig offen gehalten werden.
  */
-int History.OpenFile(string symbol, string description, int digits, int period, int mode) {
+int History.OpenFile(string symbol, string description, int digits, int timeframe, int mode) {
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_ZERO(catch("History.OpenFile(1)   illegal parameter symbol = "+ symbol +" (length="+ StringLen(symbol) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (digits <  0)                                                return(_ZERO(catch("History.OpenFile(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (period <= 0)                                                return(_ZERO(catch("History.OpenFile(3)   illegal parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (timeframe <= 0)                                             return(_ZERO(catch("History.OpenFile(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (_bool(mode & FILE_CSV) || !(mode & (FILE_READ|FILE_WRITE))) return(_ZERO(catch("History.OpenFile(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   string fileName = StringConcatenate(symbol, period, ".hst");
+   string fileName = StringConcatenate(symbol, timeframe, ".hst");
    mode |= FILE_BIN;
    int hFile = FileOpenHistory(fileName, mode);
    if (hFile < 0)
@@ -431,7 +491,7 @@ int History.OpenFile(string symbol, string description, int digits, int period, 
       hh.setVersion      (hh, 400        );
       hh.setDescription  (hh, description);
       hh.setSymbol       (hh, symbol     );
-      hh.setPeriod       (hh, period     );
+      hh.setPeriod       (hh, timeframe  );
       hh.setDigits       (hh, digits     );
       hh.setDbVersion    (hh, now        );                          // wird beim nächsten Online-Refresh mit Server-DbVersion überschrieben
       hh.setPrevDbVersion(hh, now        );                          // derselbe Wert, wird beim nächsten Online-Refresh *nicht* überschrieben
