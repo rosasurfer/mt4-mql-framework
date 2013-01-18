@@ -12,12 +12,12 @@ int init() {
    if (__STATUS_ERROR)
       return(last_error);
 
-   __WHEREAMI__    = FUNC_INIT;
-   __NAME__        = WindowExpertName();
-     int initFlags = SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM    = initFlags & LOG_CUSTOM;
-   IsChart         = true;
- //IsOfflineChart  = IsChart && ???
+   __WHEREAMI__   = FUNC_INIT;
+   __NAME__       = WindowExpertName();
+   __InitFlags    = SumInts(__INIT_FLAGS__);
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
+   IsChart        = true;
+ //IsOfflineChart = IsChart && ???
 
 
    // (1) globale Variablen initialisieren
@@ -29,15 +29,15 @@ int init() {
 
 
    // (2) stdlib initialisieren
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, initFlags, UninitializeReason());
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error));
-
-
-   // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {}                                   // Verarbeitung nicht hier, sondern in stdlib_init()
-
-   if (_bool(initFlags & INIT_PIPVALUE)) {                                    // schlägt fehl, wenn kein Tick vorhanden ist
+      return(SetLastError(error));                                                        // #define INIT_TIMEZONE
+                                                                                          // #define INIT_PIPVALUE
+                                                                                          // #define INIT_BARS_ON_HIST_UPDATE
+                                                                                          // #define INIT_CUSTOMLOG
+                                                                                          // #define INIT_HSTLIB
+   // (3) user-spezifische Init-Tasks ausführen (in stdlib: INIT_TIMEZONE, INIT_HSTLIB)
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {                                  // schlägt fehl, wenn kein Tick vorhanden ist
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       if (IsError(catch("init(1)"))) return(last_error);
       if (!TickSize)                 return(catch("init(2)   MarketInfo(TICKSIZE) = "+ NumberToStr(TickSize, ".+"), ERR_INVALID_MARKET_DATA));
@@ -47,7 +47,7 @@ int init() {
       if (!tickValue)                return(catch("init(4)   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA));
    }
 
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
+   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -131,7 +131,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ = FUNC_DEINIT;
+   __WHEREAMI__  = FUNC_DEINIT;
+   __DeinitFlags = SumInts(__DEINIT_FLAGS__);
 
    // (1) User-spezifische deinit()-Routinen aufrufen                         // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                    // Preprocessing-Hook
@@ -158,7 +159,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(SumInts(__DEINIT_FLAGS__), UninitializeReason());
+   error = stdlib_deinit(__DeinitFlags, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 

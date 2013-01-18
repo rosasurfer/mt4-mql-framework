@@ -21,7 +21,7 @@ int init() {
  *
  *
  * NOTE: Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
- *       wenn die init()-Funktion implementiert wird.
+ *       *wenn* die init()-Funktion implementiert wird.
  */
 int start() {
    return(catch("start()", ERR_WRONG_JUMP));
@@ -78,7 +78,7 @@ bool Indicator.IsICustom() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    if (IsIndicator())
-      return(__iCustom__);                // (bool)int
+      return(__iCustom__);                // (bool) int
    return(false);
 }
 
@@ -117,6 +117,6 @@ bool IsLibrary() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
-   // __STATUS_ERROR wird nicht gesetzt (ist Eigenschaft des Hauptprogramms)
+   // __STATUS_ERROR wird in Libraries nicht gesetzt (ist Eigenschaft des Hauptprogramms)
    return(error);
 }

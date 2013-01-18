@@ -70,7 +70,7 @@
 #property stacksize 32768
 
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, LOG_CUSTOM};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <history.mqh>
