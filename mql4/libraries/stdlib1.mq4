@@ -110,12 +110,6 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
       */
    }
 
-   if (_bool(__InitFlags & INIT_HSTLIB)) {                                    // hstLib initialisieren
-      int error = hstlib_init(type, name, whereami, isChart, isOfflineChart, _iCustom, initFlags, uninitializeReason);
-      if (IsError(error))
-         return(SetLastError(error));
-   }
-
 
    // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                          // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
@@ -192,12 +186,6 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
 
    int error = NO_ERROR;
 
-   if (_bool(__InitFlags & INIT_HSTLIB)) {                           // hstLib deinitialisieren, wenn sie in init() initialisiert wurde
-      error = hstlib_deinit(deinitFlags, uninitializeReason);
-      if (IsError(error))
-         SetLastError(error);
-   }
-
    if (!ReleaseLocks(true))
       error = last_error;
    return(error);
@@ -234,7 +222,7 @@ int afterDeinit()             {                                                 
 
 
 /**
- * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den internen Fehlercode zurück.
+ * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den Fehlercode nicht zurück.
  *
  * @return int - Fehlerstatus
  */
@@ -1012,53 +1000,6 @@ int GetServerToGMTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CO
    }
 
    return(offset);
-}
-
-
-/**
- * Dropin-Ersatz für PlaySound()
- *
- * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
- *
- * @param  string soundfile
- *
- * @return int - Fehlerstatus
- */
-int ForceSound(string soundfile) {
-   if (!IsTesting()) {
-      PlaySound(soundfile);
-   }
-   else {
-      soundfile = StringConcatenate(TerminalPath(), "\\sounds\\", soundfile);
-      PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
-   }
-   return(NO_ERROR);
-}
-
-
-/**
- * Dropin-Ersatz für MessageBox()
- *
- * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
- *
- * @param  string caption
- * @param  string message
- * @param  int    flags
- *
- * @return int - Tastencode
- */
-int ForceMessageBox(string caption, string message, int flags=MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(NULL));
-
-   if (!StringContains(caption, prefix))
-      caption = StringConcatenate(prefix, " - ", caption);
-
-   int button;
-
-   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
-   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
-
-   return(button);
 }
 
 
@@ -12420,9 +12361,6 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 /*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_FUNCTION_NOT_IMPLEMENTED)); }
 
 
-#import "history.ex4"
-   int    hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
-   int    hstlib_deinit(int deinitFlags, int uninitializeReason);
 #import "stdlib2.ex4"
    int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
 #import "sample1.ex4"

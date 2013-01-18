@@ -48,17 +48,16 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
    if (IsError(error))
-      return(SetLastError(error));                                                        // #define INIT_TIMEZONE
-                                                                                          // #define INIT_PIPVALUE
-                                                                                          // #define INIT_BARS_ON_HIST_UPDATE
-                                                                                          // #define INIT_CUSTOMLOG
-                                                                                          // #define INIT_HSTLIB
-   // (3) user-spezifische Init-Tasks ausführen (in stdlib: INIT_TIMEZONE, INIT_HSTLIB)
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {                         // schlägt fehl, wenn kein Tick vorhanden ist
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
+                                                                              // #define INIT_PIPVALUE
+                                                                              // #define INIT_BARS_ON_HIST_UPDATE
+                                                                              // #define INIT_CUSTOMLOG
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
-      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
@@ -67,20 +66,26 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
+         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}             // noch nicht implementiert
+   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
+
+   if (_bool(__InitFlags & INIT_HSTLIB)) {
+      error = hstlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+      if (IsError(error))
+         return(SetLastError(error));
+   }
 
 
    // (4)  EA's ggf. aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                 // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
+      error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -94,7 +99,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
    // (6) im Tester ChartInfo-Anzeige konfigurieren
    if (IsVisualMode()) {
-      chartInfo.appliedPrice = PRICE_BID;                            // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
+      chartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
       chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
       if (LT(chartInfo.leverage, 1))
          return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfo.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));

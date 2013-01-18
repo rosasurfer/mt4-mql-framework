@@ -751,145 +751,13 @@ int debug(string message, int error=NO_ERROR) {
       return(error);
    }
 
+   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
+      __NAME__ = WindowExpertName();
+
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __NAME__, "::", message));
-   return(error);
-}
-
-
-/**
- * Loggt eine Message.
- *
- * @param  string message - Message
- * @param  int    error   - Fehlercode
- *
- * @return int - derselbe Fehlercode
- *
- *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
- */
-int log(string message, int error=NO_ERROR) {
-   if (!__LOG)
-      return(error);
-
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
-   if (__LOG_CUSTOM)
-      if (log.custom(StringConcatenate(__NAME__, "::", message)))    // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
-         return(error);
-
-   string name  = __NAME__;
-   int    logId = GetCustomLogID();
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
-   }
-   Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
-
-   return(error);
-}
-
-
-/**
- * Loggt eine Message in das Instanz-eigene Logfile.
- *
- * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
- *
- * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
- */
-bool log.custom(string message) {
-   bool old.LOG_CUSTOM = __LOG_CUSTOM;
-   int logId = GetCustomLogID();
-   if (logId == NULL)
-      return(false);
-
-   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringRightPad(PeriodDescription(NULL), 3, " "), "  ", message);
-
-   string fileName = StringConcatenate(logId, ".log");
-
-   int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
-   if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
-      return(false);
-   }
-
-   if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
-      FileClose(hFile);
-      return(_false(GetLastError()));
-   }
-
-   if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
-      FileClose(hFile);
-      return(_false(GetLastError()));
-   }
-
-   FileClose(hFile);
-   return(true);
-}
-
-
-/**
- * Gibt optisch und akustisch eine Warnung aus.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
- *
- * @return int - derselbe Fehlercode
- *
- *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
- */
-int warn(string message, int error=NO_ERROR) {
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
-
-
-   // (1) Programmnamen um Instanz-ID erweitern
-   string name  = __NAME__;
-   int    logId = GetCustomLogID();
-   if (logId != 0) {
-      int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
-   }
-
-
-   // (2) Warnung loggen
-   bool logged, alerted;
-   if (__LOG_CUSTOM)
-      logged = logged || log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
-   if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);  // global Log: ggf. mit Instanz-ID
-      logged  = true;
-      alerted = alerted || !IsExpert() || !IsTesting();
-   }
-   message = StringConcatenate(name, "::", message);
-
-
-   // (3) Warnung anzeigen
-   if (IsTesting()) {
-      // weder Alert() noch MessageBox() können verwendet werden
-      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
-      pos = StringFind(message, ") ");
-      if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
-      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
-                     message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
-
-      ForceSound("alert.wav");
-      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
-   }
-   else if (!alerted) {
-      // außerhalb des Testers
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
-      alerted = true;
-   }
-
    return(error);
 }
 
@@ -912,6 +780,9 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                GetLastError();                               // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
+      if (StringLen(__NAME__) == 0)                                  // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
+         __NAME__ = WindowExpertName();
+
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
 
@@ -964,6 +835,210 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
    return(error);
    __DummyCalls();
+}
+
+
+/**
+ * Gibt optisch und akustisch eine Warnung aus.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ *
+ *
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
+ */
+int warn(string message, int error=NO_ERROR) {
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
+      __NAME__ = WindowExpertName();
+
+
+   // (1) Programmnamen um Instanz-ID erweitern
+   string name  = __NAME__;
+   int    logId = GetCustomLogID();
+   if (logId != 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
+   }
+
+
+   // (2) Warnung loggen
+   bool logged, alerted;
+   if (__LOG_CUSTOM)
+      logged = logged || log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+   if (!logged) {
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);  // global Log: ggf. mit Instanz-ID
+      logged  = true;
+      alerted = alerted || !IsExpert() || !IsTesting();
+   }
+   message = StringConcatenate(name, "::", message);
+
+
+   // (3) Warnung anzeigen
+   if (IsTesting()) {
+      // weder Alert() noch MessageBox() können verwendet werden
+      string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
+      pos = StringFind(message, ") ");
+      if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
+      else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
+                     message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
+
+      ForceSound("alert.wav");
+      ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
+   }
+   else if (!alerted) {
+      // außerhalb des Testers
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
+      alerted = true;
+   }
+
+   return(error);
+}
+
+
+/**
+ * Loggt eine Message.
+ *
+ * @param  string message - Message
+ * @param  int    error   - Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ *
+ *
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
+ */
+int log(string message, int error=NO_ERROR) {
+   if (!__LOG)
+      return(error);
+
+   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
+      __NAME__ = WindowExpertName();
+
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+
+   if (__LOG_CUSTOM)
+      if (log.custom(StringConcatenate(__NAME__, "::", message)))    // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         return(error);
+
+   string name  = __NAME__;
+   int    logId = GetCustomLogID();
+   if (logId != 0) {
+      int pos = StringFind(name, "::");
+      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
+      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
+   }
+   Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
+
+   return(error);
+}
+
+
+/**
+ * Loggt eine Message in das Instanz-eigene Logfile.
+ *
+ * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
+ *
+ * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
+ */
+/*private*/bool log.custom(string message) {
+   bool old.LOG_CUSTOM = __LOG_CUSTOM;
+   int logId = GetCustomLogID();
+   if (logId == NULL)
+      return(false);
+
+   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringRightPad(PeriodDescription(NULL), 3, " "), "  ", message);
+
+   string fileName = StringConcatenate(logId, ".log");
+
+   int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
+   if (hFile < 0) {
+      __LOG_CUSTOM = false; catch("log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      return(false);
+   }
+
+   if (!FileSeek(hFile, 0, SEEK_END)) {
+      __LOG_CUSTOM = false; catch("log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      FileClose(hFile);
+      return(_false(GetLastError()));
+   }
+
+   if (FileWrite(hFile, message) < 0) {
+      __LOG_CUSTOM = false; catch("log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      FileClose(hFile);
+      return(_false(GetLastError()));
+   }
+
+   FileClose(hFile);
+   return(true);
+}
+
+
+#import "user32.dll"
+   int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+#import "winmm.dll"
+   bool PlaySoundA(string lpSound, int hMod, int fSound);
+#import
+
+#define SND_ASYNC           0x01       // play asynchronously
+#define SND_FILENAME  0x00020000       // parameter is a file name
+
+
+/**
+ * Dropin-Ersatz für PlaySound()
+ *
+ * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
+ *
+ * @param  string soundfile
+ *
+ * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Global definiert, da vom Errorhandling referenziert.
+ */
+int ForceSound(string soundfile) {
+   if (!IsTesting()) {
+      PlaySound(soundfile);
+   }
+   else {
+      soundfile = StringConcatenate(TerminalPath(), "\\sounds\\", soundfile);
+      PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Dropin-Ersatz für MessageBox()
+ *
+ * Zeigt eine MessageBox an, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester oder in Indikatoren) nicht unterstützt wird.
+ *
+ * @param  string caption
+ * @param  string message
+ * @param  int    flags
+ *
+ * @return int - Tastencode
+ *
+ *
+ * NOTE: Global definiert, da vom Errorhandling referenziert.
+ */
+int ForceMessageBox(string caption, string message, int flags=MB_OK) {
+   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(NULL));
+
+   if (!StringContains(caption, prefix))
+      caption = StringConcatenate(prefix, " - ", caption);
+
+   int button;
+
+   if (!IsTesting() && !IsIndicator()) button = MessageBox(message, caption, flags);
+   else                                button = MessageBoxA(NULL, message, caption, flags);  // TODO: hWndOwner fixen
+
+   return(button);
 }
 
 
@@ -1689,6 +1764,13 @@ int Floor(double value) {
 int Ceil(double value) {
    return(Round(MathCeil(value)));
 }
+
+
+// Ist das Flag INIT_HSTLIB gesetzt, werden die Root-Funktionen der History benötigt.
+#import "history.ex4"
+   int hstlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
+   int hstlib_deinit(int deinitFlags, int uninitializeReason);
+#import
 
 
 /**

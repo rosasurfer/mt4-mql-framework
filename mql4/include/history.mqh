@@ -1,5 +1,5 @@
 /**
- * Funktionen zum Verwalten und Bearbeiten von Historydateien (im "history"-Verzeichnis).
+ * Funktionen zum Verwalten und Bearbeiten von Historydateien (Kursreihen im "history"-Verzeichnis).
  */
 #import "history.ex4"
 
@@ -31,5 +31,12 @@
    bool     History.WriteCachedBar(int hFile);
    bool     History.MoveBars      (int hFile, int startOffset, int destOffset);
    bool     History.AddTick       (int hFile, datetime time, double value, int flags);
+
+   int      hstlib_GetLastError();
+
+
+   // erweiterte Root-Funktionen
+   int      hstlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
+   int      hstlib_deinit(int deinitFlags, int uninitializeReason);
 
 #import

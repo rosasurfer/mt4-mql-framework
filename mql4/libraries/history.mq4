@@ -16,16 +16,16 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
+ * Initialisierung
  *
- * @param  int    type               - Programmtyp
- * @param  string name               - Programmname
+ * @param  int    type               - Typ des aufrufenden Programms
+ * @param  string name               - Name des aufrufenden Programms
  * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  bool   isChart            - Callermodule-Variable IsChart
- * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
+ * @param  bool   isChart            - Hauptprogramm-Variable IsChart
+ * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
  * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
@@ -57,10 +57,10 @@ int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
 
 
 /**
- * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des Hauptprogramms.
+ * Deinitialisierung
  *
  * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
- * @param  int uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  *
@@ -72,6 +72,16 @@ int hstlib_deinit(int deinitFlags, int uninitializeReason) {
    __WHEREAMI__  = FUNC_DEINIT;
    __DeinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
    return(NO_ERROR);
+}
+
+
+/**
+ * Gibt den letzten in der Library aufgetretenen Fehler zurück. Der Aufruf dieser Funktion setzt den Fehlercode nicht zurück.
+ *
+ * @return int - Fehlerstatus
+ */
+int hstlib_GetLastError() {
+   return(last_error);
 }
 
 
