@@ -436,7 +436,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    }
 
    for (int flag, i=0; i < sizeOfPeriods; i++) {
-      flag = periodFlags[i];                                         // flag: zu testendes Flag
+      flag = periodFlags[i];                                         // zu testendes Flag
 
       if (flags & flag != 0) {
          // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
@@ -565,4 +565,3 @@ int onDeinit() {
    return(last_error);
 }
  */
-
