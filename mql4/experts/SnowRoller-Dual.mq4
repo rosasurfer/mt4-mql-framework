@@ -6312,7 +6312,7 @@ bool RecordEquity(bool collectTicks) {
    if (!hFile) {
       string symbol      = StringConcatenate(ifString(IsTesting(), "_", ""), "SR", sequenceId);
       string description = StringConcatenate("Equity SR.", sequenceId);
-      hFile = History.OpenFile(symbol, description, digits, PERIOD_M15, FILE_READ|FILE_WRITE);
+      hFile = HistoryFile.Open(symbol, description, digits, PERIOD_M15, FILE_READ|FILE_WRITE);
       if (hFile <= 0)
          return(false);
    }

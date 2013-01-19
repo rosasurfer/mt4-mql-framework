@@ -3,10 +3,8 @@
  */
 #import "history.ex4"
 
-   int      History.OpenFile(string symbol, string description, int digits, int timeframe, int mode);
-   bool     History.CloseFile(int hFile);
-   bool     History.CloseFiles(bool warn);
-
+   int      HistoryFile.Open          (string symbol, string description, int digits, int timeframe, int mode);
+   bool     HistoryFile.Close         (int hFile);
    int      HistoryFile.FindBar       (int hFile, datetime time, bool lpBarExists[]);
    bool     HistoryFile.ReadBar       (int hFile, int offset, datetime time[], double data[]);
    bool     HistoryFile.InsertBar     (int hFile, int offset, datetime time, double data[], int flags);
@@ -15,6 +13,8 @@
    bool     HistoryFile.WriteCachedBar(int hFile);
    bool     HistoryFile.MoveBars      (int hFile, int startOffset, int destOffset);
    bool     HistoryFile.AddTick       (int hFile, datetime time, double value, int flags);
+
+   bool     History.CloseFiles(bool warn);
 
    string   hf.Name         (int hFile);
    bool     hf.Read         (int hFile);
