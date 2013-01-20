@@ -260,8 +260,8 @@ int onChartCommand(string commands[]) {
       switch (status) {
          case STATUS_WAITING    :
          case STATUS_PROGRESSING:
-            int iNull[];
-            if (UpdateStatus(iNull, iNull))
+            int iNulls[];
+            if (UpdateStatus(iNulls, iNulls))
                StopSequence();
             ShowStatus();
       }
@@ -558,11 +558,11 @@ bool StopSequence() {
 
 
    // (7) Daten aktualisieren und speichern
-   int iNull[];
-   if (!UpdateStatus(iNull, iNull)) return(false);
+   int iNulls[];
+   if (!UpdateStatus(iNulls, iNulls)) return(false);
    sequenceStop.profit[n] = grid.totalPL;
-   if (  !SaveStatus())             return(false);
-   if (!RecordEquity(false))        return(false);
+   if (  !SaveStatus())               return(false);
+   if (!RecordEquity(false))          return(false);
    RedrawStartStop();
 
 
@@ -738,8 +738,8 @@ bool ResumeSequence() {
 
 
    // (7) Status aktualisieren und speichern
-   int iNull[], last.grid.level.L=grid.level.L, last.grid.level.S=grid.level.S;
-   if (!UpdateStatus(iNull, iNull))                                           // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
+   int iNulls[], last.grid.level.L=grid.level.L, last.grid.level.S=grid.level.S;
+   if (!UpdateStatus(iNulls, iNulls))                                         // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                          // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
    if      (grid.level.L != last.grid.level.L) UpdatePendingOrders();         // nochmal aktualisiert werden.
    else if (grid.level.S != last.grid.level.S) UpdatePendingOrders();
@@ -1760,9 +1760,9 @@ bool ProcessClientStops(int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   int iNull[];
-   if (!UpdateStatus(iNull, iNull)) return(false);
-   if (  !SaveStatus())             return(false);
+   int iNulls[];
+   if (!UpdateStatus(iNulls, iNulls)) return(false);
+   if (  !SaveStatus())               return(false);
 
    return(IsNoError(last_error|catch("ProcessClientStops(12)")));
 }
@@ -6160,8 +6160,6 @@ int ResizeArrays(int size, bool reset=false) {
    return(size);
 
    // Compilerwarnungen unterdrücken
-   int    iNull;
-   double dNull, dNulls[];
    BreakevenEventToStr(NULL);
    CalculateAverageOpenPrice(NULL, NULL, NULL, NULL, dNull);
    DistanceToProfit(NULL);
@@ -6322,21 +6320,21 @@ bool RecordEquity(bool collectTicks) {
 
 
    static datetime barTime, nextBarTime, period;
-   bool   barExists [1];
-   int    bar, iNull[1];
+   bool   barExists  [1];
+   int    bar, iNulls[1];
    double data[5];
 
 
    // (3) Ticks sammeln: nur komplette Bars schreiben
    if (collectTicks) {
       if (Tick.Time >= nextBarTime) {
-         bar = HistoryFile.FindBar(hFile, Tick.Time, barExists);                  // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
+         bar = HistoryFile.FindBar(hFile, Tick.Time, barExists);              // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
          if (bar < 0)                                                         // letzte Bar für FindBar() nicht sichtbar ist
             return(_false(SetLastError(hstlib_GetLastError())));
 
          if (!nextBarTime) {
             if (barExists[0]) {                                               // erste Initialisierung
-               if (!HistoryFile.ReadBar(hFile, bar, iNull, data))                 // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
+               if (!HistoryFile.ReadBar(hFile, bar, iNulls, data))            // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
                   return(false);
                data[BAR_H] = MathMax(data[BAR_H], value);                     // Open bleibt unverändert
                data[BAR_L] = MathMin(data[BAR_L], value);

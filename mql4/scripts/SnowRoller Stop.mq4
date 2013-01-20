@@ -93,7 +93,6 @@ int onStart() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   int iNull;
    CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
    ConfirmTick1Trade(NULL, NULL);
    CreateEventId();

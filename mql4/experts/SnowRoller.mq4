@@ -339,9 +339,8 @@ int onChartCommand(string commands[]) {
       switch (status) {
          case STATUS_WAITING    :
          case STATUS_PROGRESSING:
-            bool bNull;
-            int  iNull[];
-            if (UpdateStatus(bNull, bNull, iNull))
+            int iNulls[];
+            if (UpdateStatus(bNull, bNull, iNulls))
                StopSequence();
       }
       return(last_error);
@@ -416,7 +415,6 @@ bool StartSequence() {
 
    // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
    if (grid.level != 0) {
-      datetime iNull;
       if (!UpdateOpenPositions(iNull, startPrice))
          return(false);
       sequenceStart.price[ArraySize(sequenceStart.price)-1] = startPrice;
@@ -577,12 +575,11 @@ bool StopSequence() {
 
 
    // (7) Daten aktualisieren und speichern
-   bool bNull;
-   int  iNull[];
-   if (!UpdateStatus(bNull, bNull, iNull)) return(false);
+   int iNulls[];
+   if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
    sequenceStop.profit[n] = grid.totalPL;
-   if (  !SaveStatus())                    return(false);
-   if (!RecordEquity(false))               return(false);
+   if (  !SaveStatus())                     return(false);
+   if (!RecordEquity(false))                return(false);
    RedrawStartStop();
 
 
@@ -724,9 +721,9 @@ bool ResumeSequence() {
 
 
    // (7) Status aktualisieren und speichern
-   bool levelChanged, bNull;
-   int iNull[];
-   if (!UpdateStatus(levelChanged, bNull, iNull))                    // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
+   bool levelChanged;
+   int iNulls[];
+   if (!UpdateStatus(levelChanged, bNull, iNulls))                   // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                 // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
    if (levelChanged)                                                 // nochmal aktualisiert werden.
       UpdatePendingOrders();
@@ -1233,8 +1230,8 @@ bool IsStartSignal() {
 
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
-         int iNull[];
-         if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+         int iNulls[];
+         if (EventListener.BarOpen(iNulls, start.trend.timeframeFlag)) {
             int    timeframe   = start.trend.timeframe;
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -1435,8 +1432,8 @@ bool IsStopSignal(bool checkWeekendStop=true) {
 
       // -- stop.trend: bei Trendwechsel in die angegebene Richtung erfüllt -----------------------------------------------
       if (stop.trend.condition) {
-         int iNull[];
-         if (EventListener.BarOpen(iNull, stop.trend.timeframeFlag)) {
+         int iNulls[];
+         if (EventListener.BarOpen(iNulls, stop.trend.timeframeFlag)) {
             int    timeframe   = stop.trend.timeframe;
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
@@ -1693,10 +1690,9 @@ bool ProcessClientStops(int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   bool bNull;
-   int  iNull[];
-   if (!UpdateStatus(bNull, bNull, iNull)) return(false);
-   if (  !SaveStatus())                    return(false);
+   int iNulls[];
+   if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
+   if (  !SaveStatus())                     return(false);
 
    return(!last_error|catch("ProcessClientStops(12)"));
 }
@@ -6139,21 +6135,21 @@ bool RecordEquity(bool collectTicks) {
 
 
    static datetime barTime, nextBarTime, period;
-   bool   barExists [1];
-   int    bar, iNull[1];
+   bool   barExists  [1];
+   int    bar, iNulls[1];
    double data[5];
 
 
    // (3) Ticks sammeln: nur komplette Bars schreiben
    if (collectTicks) {
       if (Tick.Time >= nextBarTime) {
-         bar = HistoryFile.FindBar(hFile, Tick.Time, barExists);                  // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
+         bar = HistoryFile.FindBar(hFile, Tick.Time, barExists);              // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
          if (bar < 0)                                                         // letzte Bar für FindBar() nicht sichtbar ist
             return(_false(SetLastError(hstlib_GetLastError())));
 
          if (!nextBarTime) {
             if (barExists[0]) {                                               // erste Initialisierung
-               if (!HistoryFile.ReadBar(hFile, bar, iNull, data))                 // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
+               if (!HistoryFile.ReadBar(hFile, bar, iNulls, data))            // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
                   return(false);
                data[BAR_H] = MathMax(data[BAR_H], value);                     // Open bleibt unverändert
                data[BAR_L] = MathMin(data[BAR_L], value);
@@ -6224,9 +6220,6 @@ bool RecordEquity(bool collectTicks) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   int    iNull, iNulls[];
-   double dNull, dNulls[];
-   string sNull, sNulls[];
    BreakevenEventToStr(NULL);
    CalculateAverageOpenPrice(NULL, NULL, NULL, NULL, dNull);
    CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);

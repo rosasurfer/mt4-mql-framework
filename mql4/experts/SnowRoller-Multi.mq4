@@ -199,7 +199,6 @@ bool StartSequence(int hSeq) {
 
    // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
    if (grid.level[hSeq] != 0) {
-      datetime iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
       return(_false(catch("StartSequence(4.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
@@ -427,8 +426,8 @@ bool IsStartSignal(int &lpSignal) {
 
    // -- start.trend: bei Trendwechsel erfüllt -----------------------------------------------------------------------
    if (start.trend.condition) {
-      int iNull[];
-      if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+      int iNulls[];
+      if (EventListener.BarOpen(iNulls, start.trend.timeframeFlag)) {
 
          int    timeframe   = start.trend.timeframe;
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
@@ -764,8 +763,6 @@ int ClearStickyStatus() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   string sNulls[];
-   int    iNulls[];
    FindChartSequences(sNulls, iNulls);
    IsSequenceStatus(NULL);
 }

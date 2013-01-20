@@ -426,27 +426,25 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    +--------------------------+--------------------------+
    */
 
-   static int sizeOfPeriods, periods    []={  PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1},
-                             periodFlags[]={F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1};
+   static int sizeOfPeriods, periods    []={  PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
+                             periodFlags[]={F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
    static datetime bar.openTimes[], bar.closeTimes[];
    if (sizeOfPeriods == 0) {                                         // TODO: Listener für PERIOD_MN1 implementieren
       sizeOfPeriods = ArraySize(periods);
-      ArrayResize(bar.openTimes,  F_PERIOD_W1+1);                    // Für schnelleren Zugriff benutzen wir die zu testenden Flags als Array-Index.
-      ArrayResize(bar.closeTimes, F_PERIOD_W1+1);                    // Der verschwendete Speicher (F_PERIOD_W1+1=129) ist den Geschwindigkeitsgewinn wert.
+      ArrayResize(bar.openTimes,  sizeOfPeriods);
+      ArrayResize(bar.closeTimes, sizeOfPeriods);
    }
 
-   for (int flag, i=0; i < sizeOfPeriods; i++) {
-      flag = periodFlags[i];                                         // zu testendes Flag
-
-      if (flags & flag != 0) {
+   for (int i=0; i < sizeOfPeriods; i++) {
+      if (flags & periodFlags[i] != 0) {
          // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[flag]) {
-            bar.openTimes [flag] = Tick.Time - Tick.Time%(periods[i]*MINUTES);
-            bar.closeTimes[flag] = bar.openTimes[flag] + (periods[i]*MINUTES);
+         if (Tick.Time >= bar.closeTimes[i]) {
+            bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
+            bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
          }
 
-         // vorherigen Tick auswerten
-         if (Tick.prevTime < bar.openTimes[flag]) {
+         // Event anhand des vorherigen Ticks bestimmen
+         if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
                if (IsTesting())                                      // im Tester ist der 1. Tick BarOpen-Event
                   ArrayPushInt(results, periods[i]);                 // TODO: !!! nicht für alle Timeframes !!!
@@ -457,9 +455,6 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          }
       }
    }
-
-   if (IsError(catch("EventListener.BarOpen()")))
-      return(false);
    return(ArraySize(results));                                       // (bool) int
 }
 
