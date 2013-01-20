@@ -48,6 +48,11 @@ int      last_error;                                        // der letzte Fehler
 #define NL                          "\n"        // new line, MQL schreibt 0x0D0A
 #define TAB                         "\t"        // tab
 
+bool    bNull, bNulls[];
+int     iNull, iNulls[];
+double  dNull, dNulls[];
+string  sNull, sNulls[];
+
 
 // Special chars
 #define PLACEHOLDER_NUL_CHAR        '…'         // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
@@ -183,31 +188,31 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Object visibility flags, siehe ObjectSet(label, OBJPROP_TIMEFRAMES, ...)
-#define OBJ_PERIOD_M1          0x0001           // object is shown on 1-minute charts
-#define OBJ_PERIOD_M5          0x0002           // object is shown on 5-minute charts
-#define OBJ_PERIOD_M15         0x0004           // object is shown on 15-minute charts
-#define OBJ_PERIOD_M30         0x0008           // object is shown on 30-minute charts
-#define OBJ_PERIOD_H1          0x0010           // object is shown on 1-hour charts
-#define OBJ_PERIOD_H4          0x0020           // object is shown on 4-hour charts
-#define OBJ_PERIOD_D1          0x0040           // object is shown on daily charts
-#define OBJ_PERIOD_W1          0x0080           // object is shown on weekly charts
-#define OBJ_PERIOD_MN1         0x0100           // object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // object is shown on all timeframes: OBJ_PERIOD_M1 | OBJ_PERIOD_M5 | OBJ_PERIOD_M15 | OBJ_PERIOD_M30 | OBJ_PERIOD_H1 |
-#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  //                                    OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
+#define OBJ_PERIOD_M1          0x0001           //   1: object is shown on 1-minute charts
+#define OBJ_PERIOD_M5          0x0002           //   2: object is shown on 5-minute charts
+#define OBJ_PERIOD_M15         0x0004           //   4: object is shown on 15-minute charts
+#define OBJ_PERIOD_M30         0x0008           //   8: object is shown on 30-minute charts
+#define OBJ_PERIOD_H1          0x0010           //  16: object is shown on 1-hour charts
+#define OBJ_PERIOD_H4          0x0020           //  32: object is shown on 4-hour charts
+#define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
+#define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
+#define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: OBJ_PERIOD_M1 | OBJ_PERIOD_M5 | OBJ_PERIOD_M15 | OBJ_PERIOD_M30 | OBJ_PERIOD_H1 |
+#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  //                                         OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()
-#define F_PERIOD_M1            OBJ_PERIOD_M1
-#define F_PERIOD_M5            OBJ_PERIOD_M5
-#define F_PERIOD_M15           OBJ_PERIOD_M15
-#define F_PERIOD_M30           OBJ_PERIOD_M30
-#define F_PERIOD_H1            OBJ_PERIOD_H1
-#define F_PERIOD_H4            OBJ_PERIOD_H4
-#define F_PERIOD_D1            OBJ_PERIOD_D1
-#define F_PERIOD_W1            OBJ_PERIOD_W1
-#define F_PERIOD_MN1           OBJ_PERIOD_MN1
-#define F_PERIODS_ALL          OBJ_PERIODS_ALL  // F_PERIOD_M1 | F_PERIOD_M5 | F_PERIOD_M15 | F_PERIOD_M30 | F_PERIOD_H1 | F_PERIOD_H4 | F_PERIOD_D1 | F_PERIOD_W1 | F_PERIOD_MN1
-#define F_ALL_PERIODS          F_PERIODS_ALL
+#define F_PERIOD_M1            OBJ_PERIOD_M1    //   1
+#define F_PERIOD_M5            OBJ_PERIOD_M5    //   2
+#define F_PERIOD_M15           OBJ_PERIOD_M15   //   4
+#define F_PERIOD_M30           OBJ_PERIOD_M30   //   8
+#define F_PERIOD_H1            OBJ_PERIOD_H1    //  16
+#define F_PERIOD_H4            OBJ_PERIOD_H4    //  32
+#define F_PERIOD_D1            OBJ_PERIOD_D1    //  64
+#define F_PERIOD_W1            OBJ_PERIOD_W1    // 128
+#define F_PERIOD_MN1           OBJ_PERIOD_MN1   // 256
+#define F_PERIODS_ALL          OBJ_PERIODS_ALL  // 511: F_PERIOD_M1 | F_PERIOD_M5 | F_PERIOD_M15 | F_PERIOD_M30 | F_PERIOD_H1 | F_PERIOD_H4 | F_PERIOD_D1 | F_PERIOD_W1 | F_PERIOD_MN1
+#define F_ALL_PERIODS          F_PERIODS_ALL    //
 
 
 // Operation-Types, siehe OrderType()

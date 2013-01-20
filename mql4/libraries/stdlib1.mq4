@@ -1058,11 +1058,8 @@ int GetPrivateProfileKeys(string fileName, string section, string keys[]) {
  * @return int - Fehlerstatus
  */
 int DeletePrivateProfileKey(string fileName, string section, string key) {
-   string sNull;
-
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
       return(catch("DeletePrivateProfileKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-
    return(NO_ERROR);
 }
 
@@ -1083,8 +1080,7 @@ string GetTerminalVersion() {
    if (!chars)
       return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   int iNull[];
-   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
+   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNulls);
    if (!infoSize)
       return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
@@ -3611,8 +3607,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    if (hFile == HFILE_ERROR)
       return(_empty(catch("GetWin32ShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   int iNull[];
-   int fileSize = GetFileSize(hFile, iNull);
+   int fileSize = GetFileSize(hFile, iNulls);
    if (fileSize == 0xFFFFFFFF) {
       catch("GetWin32ShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
@@ -3974,9 +3969,6 @@ string ShortAccountCompany() {
  * @return int - Fehlerstatus
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
-   string sNull;
-   int    iNull[];
-
    /*STARTUPINFO*/int si[]; InitializeBuffer(si, STARTUPINFO.size);
       si.setCb        (si, STARTUPINFO.size);
       si.setFlags     (si, STARTF_USESHOWWINDOW);
@@ -3984,14 +3976,14 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
 
    /*PROCESS_INFORMATION*/int pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
 
-   if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
+   if (!CreateProcessA(sNull, cmdLine, iNulls, iNulls, false, 0, iNulls, sNull, si, pi))
       return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      else if (__LOG)            log("WinExecAndWait()->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
+      else if (__LOG)              log("WinExecAndWait()->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
    CloseHandle(pi.hProcess(pi));
@@ -7978,8 +7970,7 @@ int GetUIThreadId() {
    if (!hWnd)
       return(0);
 
-   int iNull[];
-   threadId = GetWindowThreadProcessId(hWnd, iNull);
+   threadId = GetWindowThreadProcessId(hWnd, iNulls);
 
    return(threadId);
 }

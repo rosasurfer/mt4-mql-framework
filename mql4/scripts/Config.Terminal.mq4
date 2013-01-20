@@ -21,8 +21,6 @@ int onStart() {
    files[0] = GetGlobalConfigPath();
    files[1] = GetLocalConfigPath();
 
-   string sNull;
-
    for (int i=0; i < 2; i++) {
       int hInstance = ShellExecuteA(NULL, "open", files[i], sNull, sNull, SW_SHOWNORMAL);
       if (hInstance < 33)
