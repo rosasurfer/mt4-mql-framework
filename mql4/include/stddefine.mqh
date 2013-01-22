@@ -549,7 +549,8 @@ string  sNull, sNulls[];
 
 
 // Flag zum Schreiben von Historyfiles
-#define HST_FILL_GAPS               1
+#define HST_CACHE_TICKS             1
+#define HST_FILL_GAPS               2
 
 
 // MessageBox() flags
