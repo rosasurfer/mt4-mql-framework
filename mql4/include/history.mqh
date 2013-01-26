@@ -3,16 +3,17 @@
  */
 #import "history.ex4"
 
-   int      HistoryFile.Open          (string symbol, string description, int digits, int timeframe, int mode);
-   bool     HistoryFile.Close         (int hFile);
-   int      HistoryFile.FindBar       (int hFile, datetime time, bool lpBarExists[]);
-   bool     HistoryFile.ReadBar       (int hFile, int offset, datetime time[], double data[]);
-   bool     HistoryFile.InsertBar     (int hFile, int offset, datetime time, double data[], int flags);
-   bool     HistoryFile.UpdateBar     (int hFile, int offset, double value);
-   bool     HistoryFile.WriteBar      (int hFile, int offset, datetime time, double data[], int flags);
-   bool     HistoryFile.WriteCachedBar(int hFile);
-   bool     HistoryFile.MoveBars      (int hFile, int startOffset, int destOffset);
-   bool     HistoryFile.AddTick       (int hFile, datetime time, double value, int flags);
+   int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
+   bool     HistoryFile.Close          (int hFile);
+   int      HistoryFile.FindBar        (int hFile, datetime time, bool lpBarExists[]);
+   bool     HistoryFile.ReadBar        (int hFile, int offset, datetime time[], double data[]);
+   bool     HistoryFile.InsertBar      (int hFile, int offset, datetime time, double data[], int flags=NULL);
+   bool     HistoryFile.UpdateBar      (int hFile, int offset, double value);
+   bool     HistoryFile.WriteBar       (int hFile, int offset, datetime time, double data[], int flags=NULL);
+   bool     HistoryFile.WriteCurrentBar(int hFile, int flags=NULL);
+   bool     HistoryFile.WriteTickBar   (int hFile, int flags=NULL);
+   bool     HistoryFile.MoveBars       (int hFile, int startOffset, int destOffset);
+   bool     HistoryFile.AddTick        (int hFile, datetime time, double value, int flags=NULL);
 
    bool     History.CloseFiles(bool warn);
 
