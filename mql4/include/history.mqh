@@ -3,6 +3,12 @@
  */
 #import "history.ex4"
 
+   int      CreateHistory(string symbol, string description, int digits);
+   int      FindHistory(string symbol);
+   bool     ResetHistory(int hHst);
+   bool     History.AddTick(int hHst, datetime time, double value, bool flags=NULL);
+   bool     History.CloseFiles(bool warn);
+
    int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
    bool     HistoryFile.Close          (int hFile);
    int      HistoryFile.FindBar        (int hFile, datetime time, bool lpBarExists[]);
@@ -14,8 +20,6 @@
    bool     HistoryFile.WriteTickBar   (int hFile, int flags=NULL);
    bool     HistoryFile.MoveBars       (int hFile, int startOffset, int destOffset);
    bool     HistoryFile.AddTick        (int hFile, datetime time, double value, int flags=NULL);
-
-   bool     History.CloseFiles(bool warn);
 
    string   hf.Name         (int hFile);
    bool     hf.Read         (int hFile);

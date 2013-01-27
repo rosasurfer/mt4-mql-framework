@@ -85,7 +85,7 @@ int hstlib_GetLastError() {
 }
 
 
-// Daten einzelner HistoryFiles
+// Daten einzelner HistoryFiles ----------------------------------------------------------------------------------------------------------------------------
 int      hf.hFile     [];                          // Dateihandle: Arrayindex, wenn Datei offen; kleiner/gleich 0, wenn geschlossen/ungültig
 int      hf.hFile.valid = -1;                      // das zuletzt benutzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hf.name      [];                          // Dateiname
@@ -116,6 +116,123 @@ datetime hf.tickBar.openTime        [];            //
 datetime hf.tickBar.closeTime       [];            //
 datetime hf.tickBar.nextCloseTime   [];            //
 double   hf.tickBar.data            [][5];         // RateInfos (OHLCV)
+
+
+// Daten einzelner History-Sets ----------------------------------------------------------------------------------------------------------------------------
+int    h.hHst       [];                            // History-Handle: Arrayindex, wenn Handle gültig; kleiner/gleich 0, wenn Handle geschlossen/ungültig
+int    h.hHst.valid = -1;                          // das zuletzt benutzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
+string h.symbol     [];                            // Symbol
+string h.description[];                            // Symbolbeschreibung
+int    h.digits     [];                            // Symboldigits
+int    h.hFile      [][9];                         // HistoryFile-Handles des Sets je Timeframe
+int    h.periods    [] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
+
+
+/**
+ * Erzeugt für das angegebene Symbol eine neue History und gibt deren Handle zurück. Existiert für das angegebene Symbol bereits eine History,
+ * wird sie gelöscht. Offene History-Handles für dasselbe Symbol werden geschlossen.
+ *
+ * @param  string symbol      - Symbol
+ * @param  string description - Beschreibung des Symbols
+ * @param  int    digits      - Digits der Datenreihe
+ *
+ * @return int - History-Handle oder 0, falls ein Fehler auftrat
+ */
+int CreateHistory(string symbol, string description, int digits) {
+   int size = Max(ArraySize(h.hHst), 1);                             // ersten Index überspringen (0 ist kein gültiges Handle)
+   h.ResizeArrays(size+1);
+
+   // (1) neuen History-Datensatz erstellen
+   h.hHst       [size] = size;
+   h.symbol     [size] = symbol;
+   h.description[size] = description;
+   h.digits     [size] = digits;
+
+   int sizeOfPeriods = ArraySize(h.periods);
+
+   for (int i=0; i < sizeOfPeriods; i++) {
+      int hFile = HistoryFile.Open(symbol, description, digits, h.periods[i], FILE_READ|FILE_WRITE);
+      if (hFile <= 0)
+         return(_ZERO(h.ResizeArrays(size)));                        // interne Arrays auf Ausgangsgröße zurücksetzen
+      h.hFile[size][i] = hFile;
+   }
+
+   // (2) offene History-Handles desselben Symbols schließen
+   for (i=size-1; i > 0; i--) {                                      // erstes (ungültiges) und letztes (gerade erzeugtes) Handle überspringen
+      if (h.symbol[i] == symbol) {
+         if (h.hHst[i] > 0)
+            h.hHst[i] = -1;
+      }
+   }
+
+   h.hHst.valid = size;
+   return(size);
+}
+
+
+/**
+ * Sucht die History des angegebenen Symbols und gibt ein Handle für sie zurück.
+ *
+ * @param  string symbol - Symbol
+ *
+ * @return int - History-Handle oder 0, falls keine History gefunden wurde oder ein Fehler auftrat
+ */
+int FindHistory(string symbol) {
+   int size = ArraySize(h.hHst);
+
+   // Schleife, da es mehrere Handles je Symbol, jedoch nur ein offenes (das letzte) geben kann
+   for (int i=size-1; i > 0; i--) {                                  // auf Index 0 kann kein gültiges Handle liegen
+      if (h.symbol[i] == symbol) {
+         if (h.hHst[i] > 0)
+            return(h.hHst[i]);
+      }
+   }
+   return(0);
+}
+
+
+/**
+ * Setzt die angegebene History zurück. Alle gespeicherten Kursreihen werden gelöscht.
+ *
+ * @param  int hHst - History-Handle
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ResetHistory(int hHst) {
+   return(!catch("ResetHistory()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Fügt der History eines Symbols einen Tick hinzu. Der Tick wird in allen Timeframes als letzter Tick (Close) der entsprechenden Bars gespeichert.
+ *
+ * @param  int      hHst  - History-Handle des Symbols; @see GetHistory()
+ * @param  datetime time  - Zeitpunkt des Ticks
+ * @param  double   value - Datenwert
+ * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                          HST_CACHE_TICKS: speichert aufeinanderfolgende Ticks zwischen und schreibt die Daten beim jeweils nächsten BarOpen-Event
+ *                          HST_FILL_GAPS:   füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool History.AddTick(int hHst, datetime time, double value, bool flags=NULL) {
+   // Validierung
+   if (hHst <= 0)                    return(_false(catch("History.AddTick(1)   invalid parameter hHst = "+ hHst, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hHst != h.hHst.valid) {
+      if (hHst >= ArraySize(h.hHst)) return(_false(catch("History.AddTick(2)   invalid parameter hHst = "+ hHst, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (h.hHst[hHst] == 0)         return(_false(catch("History.AddTick(3)   invalid parameter hHst = "+ hHst +" (unknown handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (h.hHst[hHst] <  0)         return(_false(catch("History.AddTick(4)   invalid parameter hHst = "+ hHst +" (closed handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      h.hHst.valid = hHst;
+   }
+   if (time <= 0)                    return(_false(catch("History.AddTick(5)   invalid parameter time = "+ time, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Dateihandles bis D1 (=> 7) holen und Tick jeweils hinzufügen
+   for (int i=0; i < 7; i++) {
+      if (!HistoryFile.AddTick(h.hFile[hHst][i], time, value, flags))
+         return(false);
+   }
+   return(true);
+}
 
 
 /**
@@ -790,6 +907,25 @@ bool HistoryFile.Close(int hFile) {
       hf.tickBar.offset   [i] = -1;
    }
 
+   return(size);
+}
+
+
+/**
+ * Setzt die Größe der internen History-Datenarrays auf den angegebenen Wert.
+ *
+ * @param  int size - neue Größe
+ *
+ * @return int - neue Größe der Arrays
+ */
+/*private*/ int h.ResizeArrays(int size) {
+   if (size != ArraySize(h.hHst)) {
+      ArrayResize(h.hHst,        size);
+      ArrayResize(h.symbol,      size);
+      ArrayResize(h.description, size);
+      ArrayResize(h.digits,      size);
+      ArrayResize(h.hFile,       size);
+   }
    return(size);
 }
 
