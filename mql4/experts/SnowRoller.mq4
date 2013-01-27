@@ -83,8 +83,8 @@ int __DEINIT_FLAGS__[];
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
 
-extern /*sticky*/ string Sequence.ID             = "";               // ************
-extern            string GridDirection           = "Long | Short";   // Long + Short
+extern /*sticky*/ string Sequence.ID             = "";
+extern            string GridDirection           = "Long | Short";
 extern            int    GridSize                = 20;
 extern            double LotSize                 = 0.1;
 extern            string StartConditions         = "";               // @trend(ALMA:7xD1) || @[bid|ask|price](double) && @time(datetime) && @level(int)
@@ -100,9 +100,9 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 
 
 string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
-string   last.Sequence.StatusLocation = "";                          // mit den Default-Werten überschrieben. Um dies zu verhindern und um neue mit vorherigen Werten
-string   last.GridDirection           = "";                          // vergleichen zu können, werden sie in deinit() in diesen Variablen zwischengespeichert und in
-int      last.GridSize;                                              // init() wieder daraus restauriert.
+string   last.Sequence.StatusLocation = "";                          // mit den Default-Werten überschrieben. Um dies zu verhindern und um geänderte Parameter mit
+string   last.GridDirection           = "";                          // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
+int      last.GridSize;                                              // in init() daraus restauriert.
 double   last.LotSize;
 string   last.StartConditions         = "";
 string   last.StopConditions          = "";

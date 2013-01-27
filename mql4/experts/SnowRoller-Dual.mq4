@@ -7,7 +7,6 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <history.mqh>
 #include <win32api.mqh>
 
 #include <core/expert.mqh>
@@ -26,10 +25,8 @@ extern            string StopConditions          = "";               // @bid(dou
 extern /*sticky*/ color  Breakeven.Color         = Blue;
 extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterverzeichnis
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-       /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben
-       /*sticky*/ int    orderDisplayMode        = ODM_NONE;         // dort Terminal-Restart, Profile-Wechsel oder Recompilation.
+       /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
+       /*sticky*/ int    orderDisplayMode        = ODM_NONE;         // Terminal-Restart, Profilwechsel und Recompilation.
        /*sticky*/ int    breakeven.Width         = 0;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
