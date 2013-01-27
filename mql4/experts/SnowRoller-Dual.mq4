@@ -214,12 +214,7 @@ int onTick() {
       }
    }
 
-   // (5) Equity-Kurve aufzeichnen (erst nach allen Orderfunktionen, ab dem ersten ausgeführten Trade)
-   if (status==STATUS_PROGRESSING) /*&&*/ if (grid.maxLevel.L-grid.maxLevel.S != 0) {
-      RecordEquity(true);
-   }
-
-   // (6) Status anzeigen
+   // (5) Status anzeigen
    ShowStatus();
 
    last.grid.level.L = grid.level.L;
@@ -562,7 +557,6 @@ bool StopSequence() {
    if (!UpdateStatus(iNulls, iNulls)) return(false);
    sequenceStop.profit[n] = grid.totalPL;
    if (  !SaveStatus())               return(false);
-   if (!RecordEquity(false))          return(false);
    RedrawStartStop();
 
 
@@ -6274,149 +6268,10 @@ string GridDirectionToStr(int direction) {
 }
 
 
-static int ticks;
-static int time1;
-
-
-/**
- * Zeichnet die Equity-Kurve der Sequenz auf.
- *
- * @param  bool collectTicks - TRUE:  nur komplette Bars werden geschrieben (Ticks einer Bar werden gesammelt und zwischengespeichert)
- *                             FALSE: jeder einzelne Tick wird geschrieben
- *
- * @return bool - Erfolgsstatus
- */
-bool RecordEquity(bool collectTicks) {
-   /* Speedtest EUR/USD 04.10.2012, M15, long, GridSize 18
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   |                                     |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Laptop v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
-   | Laptop v225 - Schreiben jedes Ticks |  6.426 t/sec |           |              |             |             |              |              |              |
-   | Laptop v419 - Schreiben jedes Ticks |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | Laptop v419 - mit Tick-Collector    |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   */
-   if (!IsTesting())
-      return(true);
-
-   if (!ticks)
-      time1 = GetTickCount();
-   ticks++;
-
-
-   // (1) Filehandle holen
-   static int hFile, hFileM1, hFileM5, hFileM15, hFileM30, hFileH1, hFileH4, hFileD1, digits=2;
-   if (!hFile) {
-      string symbol      = StringConcatenate(ifString(IsTesting(), "_", ""), "SR", sequenceId);
-      string description = StringConcatenate("Equity SR.", sequenceId);
-      hFile = HistoryFile.Open(symbol, description, digits, PERIOD_M15, FILE_READ|FILE_WRITE);
-      if (hFile <= 0)
-         return(false);
-   }
-
-   // (2) Daten zusammenstellen
-   double value = sequenceStartEquity + grid.totalPL;
-
-
-   static datetime barTime, nextBarTime, period;
-   bool   barExists  [1];
-   int    bar, iNulls[1];
-   double data[5];
-
-
-   // (3) Ticks sammeln: nur komplette Bars schreiben
-   if (collectTicks) {
-      if (Tick.Time >= nextBarTime) {
-         bar = HistoryFile.FindBar(hFile, Tick.Time, barExists);              // bei bereits gesammelten Ticks (nextBarTime != 0) immer 1 zu klein, da die noch ungeschriebene
-         if (bar < 0)                                                         // letzte Bar für FindBar() nicht sichtbar ist
-            return(_false(SetLastError(hstlib_GetLastError())));
-
-         if (!nextBarTime) {
-            if (barExists[0]) {                                               // erste Initialisierung
-               if (!HistoryFile.ReadBar(hFile, bar, iNulls, data))            // ggf. vorhandene Bar einlesen (von vorherigem Abbruch)
-                  return(false);
-               data[BAR_H] = MathMax(data[BAR_H], value);                     // Open bleibt unverändert
-               data[BAR_L] = MathMin(data[BAR_L], value);
-               data[BAR_C] = value;
-               data[BAR_V]++;
-            }
-            else {
-               data[BAR_O] = value;
-               data[BAR_H] = value;
-               data[BAR_L] = value;
-               data[BAR_C] = value;
-               data[BAR_V] = 1;
-            }
-            period = hf.Period(hFile)*MINUTES;
-         }
-         else {                                                               // letzte Bar komplett, muß an den Offset 'bar' geschrieben werden (nicht bar-1),
-            if (!HistoryFile.WriteBar(hFile, bar, barTime, data, HST_FILL_GAPS))  // da die ungeschriebene letzte Bar für FindBar() nicht sichtbar ist
-               return(false);
-            data[BAR_O] = value;                                              // Re-Initialisierung
-            data[BAR_H] = value;
-            data[BAR_L] = value;
-            data[BAR_C] = value;
-            data[BAR_V] = 1;
-         }
-         barTime     = Tick.Time - Tick.Time%period;
-         nextBarTime = barTime + period;
-      }
-      else {
-         data[BAR_H] = MathMax(data[BAR_H], value);                           // Open bleibt unverändert
-         data[BAR_L] = MathMin(data[BAR_L], value);
-         data[BAR_C] = value;
-         data[BAR_V]++;
-      }
-      return(true);
-   }
-
-
-   // (4) Ticks nicht sammeln: keine ungeschriebenen Ticks => nur den aktuellen Tick schreiben
-   if (!barTime)
-      return(HistoryFile.AddTick(hFile, Tick.Time, value, NULL));
-
-
-   // (5) ungeschriebene und aktuellen Tick schreiben
-   bar = HistoryFile.FindBar(hFile, barTime, barExists);
-   if (bar < 0)
-      return(_false(SetLastError(hstlib_GetLastError())));
-
-   if (Tick.Time - Tick.Time%period == barTime) {                          // aktueller Tick gehört zur ungeschriebenen Bar und wird integriert
-      data[BAR_H] = MathMax(data[BAR_H], value);                           // Open bleibt unverändert
-      data[BAR_L] = MathMin(data[BAR_L], value);
-      data[BAR_C] = value;
-      data[BAR_V]++;
-      if (!HistoryFile.WriteBar(hFile, bar, barTime, data, HST_FILL_GAPS))
-         return(false);
-   }
-   else if (HistoryFile.WriteBar(hFile, bar, barTime, data, HST_FILL_GAPS)) {  // ungeschriebene Bar und aktueller Tick werden getrennt geschrieben
-      if (!HistoryFile.AddTick(hFile, Tick.Time, value, NULL)) return(false);
-   }
-   else return(false);
-
-   barTime     = 0;                                                        // für Wechsel von collectTicks (TRUE|FALSE) immer zurücksetzen
-   nextBarTime = 0;
-   return(true);
-}
-
-
-/**
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   if (time1 != 0) {
-      double secs = (GetTickCount()-time1)/1000.0;
-      debug("onDeinit()   writing of "+ ticks +" ticks took "+ DoubleToStr(secs, 3) +" secs ("+ Round(ticks/secs) +" ticks/sec)");
-   }
-   return(NO_ERROR);
-}
-
-
 /**
  * @return int - Fehlerstatus
  */
 int afterDeinit() {
-   History.CloseFiles(false);
+   //History.CloseFiles(false);
    return(NO_ERROR);
 }
