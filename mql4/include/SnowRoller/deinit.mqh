@@ -26,8 +26,6 @@ int onDeinitParameterChange() {
 int onDeinitRemove() {
    // Der Status kann sich seit dem letzten Tick geändert haben.
    if (!IsTest()) /*&&*/ if (status==STATUS_WAITING || status==STATUS_STARTING || status==STATUS_PROGRESSING || status==STATUS_STOPPING) {
-      bool bNull;
-      int  iNulls[];
       UpdateStatus(bNull, bNull, iNulls);
       SaveStatus();
    }
@@ -82,8 +80,6 @@ int onDeinitChartClose() {
 
    // (2) Nicht im Tester:  Der Status kann sich seit dem letzten Tick geändert haben.
    if (!IsTest()) /*&&*/ if (status==STATUS_WAITING || status==STATUS_STARTING || status==STATUS_PROGRESSING || status==STATUS_STOPPING) {
-      bool bNull;
-      int  iNulls[];
       UpdateStatus(bNull, bNull, iNulls);
       SaveStatus();
    }
@@ -103,8 +99,6 @@ int onDeinitUndefined() {
          return(onDeinitChartClose());                               // entspricht gewaltsamen Ende
 
       if (status==STATUS_WAITING || status==STATUS_PROGRESSING) {
-         bool bNull;
-         int  iNulls[];
          if (UpdateStatus(bNull, bNull, iNulls))
             StopSequence();                                          // ruft intern SaveStatus() auf
          ShowStatus();

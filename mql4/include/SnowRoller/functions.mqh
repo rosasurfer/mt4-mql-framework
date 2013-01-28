@@ -113,7 +113,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
       return(_false(catch("CheckTrendChange(1)   illegal parameter lag = "+ lag, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    lpSignal = 0;
-
+                                                                                 // +-----+------+
    int error, /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);  // | lag | bars |
    ic[IC_LAST_ERROR] = NO_ERROR;                                                 // +-----+------+
                                                                                  // |  0  |   4  | Erkennung onBarOpen der neuen Bar (neuer Trend 1 Periode lang, frühester Zeitpunkt)

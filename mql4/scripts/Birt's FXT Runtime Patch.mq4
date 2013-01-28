@@ -111,6 +111,8 @@ void DontOverwriteFXTPatch() {
  *
  */
 void Remove2GBLimitPatch() {
+   int iNull[];
+
    int va__allmul, va__fseeki64;    // virtual function addresses
 
    int hModule = LoadLibraryA("ntdll.dll");
@@ -164,7 +166,7 @@ void Remove2GBLimitPatch() {
       int byte[] = { 0xe9 };
       PatchProcess(patchaddr, byte);
 
-      int new = VirtualAlloc(iNulls, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      int new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       int offset = new - calcbase;
       int b[4];
@@ -255,7 +257,7 @@ void Remove2GBLimitPatch() {
       byte[0] = 0xe9;
       PatchProcess(patchaddr, byte);
 
-      new = VirtualAlloc(iNulls, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2GB limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
@@ -380,7 +382,7 @@ void Remove2GBLimitPatch() {
       int bytes[] = { 0x53, 0xe9 };
       PatchProcess(patchaddr, bytes);
 
-      new = VirtualAlloc(iNulls, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+      new = VirtualAlloc(iNull, 256, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
       Print("Patch address found: 0x" + IntToHexStr(patcharea) + ". 2gb limit removal patch is being installed at 0x" + IntToHexStr(new) + ".");
       offset = new - calcbase;
       StoreDword(offset, b);
@@ -604,10 +606,11 @@ void VariableSpreadPatch() {
 int FindMemoryAddress(int from, int to, int pattern[]) {
    int buffer[1], hProcess=GetCurrentProcess();
    int patternLength = ArraySize(pattern);
+   int iNull[];
 
    for (int i=from; i <= to; i++) {
       buffer[0] = 0;
-      if (!ReadProcessMemory(hProcess, i, buffer, 1, iNulls))
+      if (!ReadProcessMemory(hProcess, i, buffer, 1, iNull))
          return(_ZERO(catch("FindMemoryAddress(1)->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
       if (buffer[0] == pattern[0]) {
@@ -615,7 +618,7 @@ int FindMemoryAddress(int from, int to, int pattern[]) {
 
          for (int n=1; n < patternLength; n++) {
             buffer[0] = 0;
-            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNulls))
+            if (!ReadProcessMemory(hProcess, i+n, buffer, 1, iNull))
                return(_ZERO(catch("FindMemoryAddress(2)->kernel32::ReadProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
             if (buffer[0] != pattern[n]) {
@@ -650,11 +653,11 @@ void StoreDword(int addr, int &bytes[]) {
 bool PatchProcess(int address, int bytes[]) {
    int size     = ArraySize(bytes);
    int hProcess = GetCurrentProcess();
-   int buffer[1];
+   int iNull[], buffer[1];
 
    for (int i=0; i < size; i++) {
       buffer[0] = bytes[i];
-      if (!WriteProcessMemory(hProcess, address+i, buffer, 1, iNulls))
+      if (!WriteProcessMemory(hProcess, address+i, buffer, 1, iNull))
          return(_false(catch("PatchProcess()->kernel32::WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
    }
    return(true);

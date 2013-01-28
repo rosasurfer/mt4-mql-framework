@@ -339,7 +339,6 @@ int onChartCommand(string commands[]) {
       switch (status) {
          case STATUS_WAITING    :
          case STATUS_PROGRESSING:
-            int iNulls[];
             if (UpdateStatus(bNull, bNull, iNulls))
                StopSequence();
       }
@@ -575,7 +574,6 @@ bool StopSequence() {
 
 
    // (7) Daten aktualisieren und speichern
-   int iNulls[];
    if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
    sequenceStop.profit[n] = grid.totalPL;
    if (  !SaveStatus())                     return(false);
@@ -722,7 +720,6 @@ bool ResumeSequence() {
 
    // (7) Status aktualisieren und speichern
    bool levelChanged;
-   int iNulls[];
    if (!UpdateStatus(levelChanged, bNull, iNulls))                   // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                 // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
    if (levelChanged)                                                 // nochmal aktualisiert werden.
@@ -1230,8 +1227,8 @@ bool IsStartSignal() {
 
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
-         int iNulls[];
-         if (EventListener.BarOpen(iNulls, start.trend.timeframeFlag)) {
+         int iNull[];
+         if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
             int    timeframe   = start.trend.timeframe;
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -1432,8 +1429,8 @@ bool IsStopSignal(bool checkWeekendStop=true) {
 
       // -- stop.trend: bei Trendwechsel in die angegebene Richtung erfüllt -----------------------------------------------
       if (stop.trend.condition) {
-         int iNulls[];
-         if (EventListener.BarOpen(iNulls, stop.trend.timeframeFlag)) {
+         int iNull[];
+         if (EventListener.BarOpen(iNull, stop.trend.timeframeFlag)) {
             int    timeframe   = stop.trend.timeframe;
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
@@ -1690,7 +1687,6 @@ bool ProcessClientStops(int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   int iNulls[];
    if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
    if (  !SaveStatus())                     return(false);
 

@@ -262,7 +262,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
 
    bool   barExists[1], bHST_CACHE_TICKS=flags & HST_CACHE_TICKS, bHST_FILL_GAPS=flags & HST_FILL_GAPS;
-   int    offset;
+   int    offset, iNull[];
    double data[5];
 
 
@@ -277,7 +277,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
          if (hf.tickBar.openTime[hFile] == 0) {
             // (1.1.1) Queue leer
             if (barExists[0]) {                                               // Bar-Initialisierung
-               if (!HistoryFile.ReadBar(hFile, offset, iNulls, data))         // vorhandene Bar in Queue einlesen (als Ausgangsbasis)
+               if (!HistoryFile.ReadBar(hFile, offset, iNull, data))          // vorhandene Bar in Queue einlesen (als Ausgangsbasis)
                   return(false);
                hf.tickBar.data[hFile][BAR_O] =         data[BAR_O];           // Tick hinzufügen
                hf.tickBar.data[hFile][BAR_H] = MathMax(data[BAR_H], value);
@@ -503,9 +503,9 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 
    // (1) Bar ggf. neu in den Cache einlesen...
    if (offset != hf.currentBar.offset[hFile]) {
-      int    iNulls[1];
-      double dNulls[5];
-      if (!HistoryFile.ReadBar(hFile, offset, iNulls, dNulls))
+      int    time[1];
+      double data[5];
+      if (!HistoryFile.ReadBar(hFile, offset, time, data))
          return(false);
    }
 

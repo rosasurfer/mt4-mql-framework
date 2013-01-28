@@ -1074,13 +1074,13 @@ string GetTerminalVersion() {
    if (StringLen(static.result[0]) > 0)
       return(static.result[0]);
 
-   int    bufferSize = MAX_PATH;
+   int    iNull[], bufferSize=MAX_PATH;
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
    int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
    if (!chars)
       return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNulls);
+   int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
    if (!infoSize)
       return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
@@ -3607,7 +3607,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    if (hFile == HFILE_ERROR)
       return(_empty(catch("GetWin32ShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   int fileSize = GetFileSize(hFile, iNulls);
+   int iNull[], fileSize=GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
       catch("GetWin32ShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
       _lclose(hFile);
@@ -3974,9 +3974,9 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
 
-   /*PROCESS_INFORMATION*/int pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
+   int iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
 
-   if (!CreateProcessA(sNull, cmdLine, iNulls, iNulls, false, 0, iNulls, sNull, si, pi))
+   if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
       return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
@@ -7966,11 +7966,11 @@ int GetUIThreadId() {
    if (threadId != 0)
       return(threadId);
 
-   int hWnd = GetApplicationWindow();
+   int iNull[], hWnd=GetApplicationWindow();
    if (!hWnd)
       return(0);
 
-   threadId = GetWindowThreadProcessId(hWnd, iNulls);
+   threadId = GetWindowThreadProcessId(hWnd, iNull);
 
    return(threadId);
 }
