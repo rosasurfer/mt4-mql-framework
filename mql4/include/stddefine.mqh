@@ -37,16 +37,16 @@ int      last_error;                                        // der letzte Fehler
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000           // kleinster Integer-Value: -2147483648
-#define INT_MAX            0x7FFFFFFF           // größter Integer-Value:    2147483647
+#define INT_MIN            0x80000000                       // kleinster Integer-Value: -2147483648
+#define INT_MAX            0x7FFFFFFF                       // größter Integer-Value:    2147483647
 #define EMPTY                      -1
-#define EMPTY_VALUE           INT_MAX           // empty custom indicator value
-#define CLR_NONE                   -1           // no color
+#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value
+#define CLR_NONE                   -1                       // no color
 #define WHOLE_ARRAY                 0
 #define MAX_SYMBOL_LENGTH          12
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
-#define NL                          "\n"        // new line, MQL schreibt 0x0D0A
-#define TAB                         "\t"        // tab
+#define NL                          "\n"                    // new line, MQL schreibt 0x0D0A
+#define TAB                         "\t"                    // tab
 
 bool    bNull, bNulls[];
 int     iNull, iNulls[];
@@ -55,8 +55,8 @@ string  sNull, sNulls[];
 
 
 // Special chars
-#define PLACEHOLDER_NUL_CHAR        '…'         // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR        '•'         // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
+#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
+#define PLACEHOLDER_CTL_CHAR        '•'                     // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
 
 // Mathematische Konstanten
@@ -113,7 +113,7 @@ string  sNull, sNulls[];
 #define T_LIBRARY                   8
 
 
-// MQL Root-Funktions-ID's (siehe __WHEREAMI__)
+// MQL Root-Funktion-ID's (siehe __WHEREAMI__)
 #define FUNC_INIT                   1
 #define FUNC_START                  2
 #define FUNC_DEINIT                 3
@@ -426,7 +426,7 @@ string  sNull, sNulls[];
 #define MCM_CFD                     1
 #define MCM_CFDFUTURES              2
 #define MCM_CFDINDEX                3
-#define MCM_CFDLEVERAGE             4           // erst seit MT5 dokumentiert
+#define MCM_CFDLEVERAGE             4           // erst seit MQLv5 dokumentiert
 
 
 // Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE)
@@ -1209,7 +1209,7 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
  * @return int - Ticket des aktuellen Kontexts oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Programm benutzt werden können.
+ * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 int OrderPush(string location) {
    int error = GetLastError();
