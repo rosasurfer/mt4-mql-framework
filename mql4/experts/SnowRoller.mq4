@@ -281,27 +281,27 @@ int onTick() {
    HandleEvent(EVENT_CHART_CMD);
 
 
-   bool gridLevelChanged, gridBaseChanged;
-   int  triggeredStops[];
+   bool blChanged;                                                   // Gridbase or Gridlevel changed
+   int  stops[];                                                     // getriggerte client-side Stops
 
 
    // (2) Sequenz wartet entweder auf Startsignal...
    if (status == STATUS_WAITING) {
-      if (IsStartSignal())                        StartSequence();
+      if (IsStartSignal())         StartSequence();
    }
 
    // (3) ...oder auf ResumeSignal...
    else if (status == STATUS_STOPPED) {
-      if  (IsResumeSignal())                      ResumeSequence();
+      if  (IsResumeSignal())       ResumeSequence();
       else return(last_error);
    }
 
    // (4) ...oder läuft
-   else if (UpdateStatus(gridLevelChanged, gridBaseChanged, triggeredStops)) {
-      if (IsStopSignal())                         StopSequence();
+   else if (UpdateStatus(blChanged, stops)) {
+      if (IsStopSignal())          StopSequence();
       else {
-         if (ArraySize(triggeredStops) > 0)       ProcessClientStops(triggeredStops);
-         if (gridLevelChanged || gridBaseChanged) UpdatePendingOrders();
+         if (ArraySize(stops) > 0) ProcessClientStops(stops);
+         if (blChanged)            UpdatePendingOrders();
       }
    }
 
@@ -339,7 +339,7 @@ int onChartCommand(string commands[]) {
       switch (status) {
          case STATUS_WAITING    :
          case STATUS_PROGRESSING:
-            if (UpdateStatus(bNull, bNull, iNulls))
+            if (UpdateStatus(bNull, iNulls))
                StopSequence();
       }
       return(last_error);
@@ -574,10 +574,10 @@ bool StopSequence() {
 
 
    // (7) Daten aktualisieren und speichern
-   if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
+   if (!UpdateStatus(bNull, iNulls)) return(false);
    sequenceStop.profit[n] = grid.totalPL;
-   if (  !SaveStatus())                     return(false);
-   if (!RecordEquity(NULL))                 return(false);
+   if (  !SaveStatus())              return(false);
+   if (!RecordEquity(NULL))          return(false);
    RedrawStartStop();
 
 
@@ -719,10 +719,10 @@ bool ResumeSequence() {
 
 
    // (7) Status aktualisieren und speichern
-   bool levelChanged;
-   if (!UpdateStatus(levelChanged, bNull, iNulls))                   // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
+   bool blChanged;
+   if (!UpdateStatus(blChanged, iNulls))                             // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                 // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
-   if (levelChanged)                                                 // nochmal aktualisiert werden.
+   if (blChanged)                                                    // nochmal aktualisiert werden.
       UpdatePendingOrders();
    if (!SaveStatus())
       return(false);
@@ -751,18 +751,15 @@ bool ResumeSequence() {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  bool lpLevelChange    - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich der Gridlevel der Sequenz geändert hat
- * @param  bool lpGridBaseChange - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich die Gridbasis der Sequenz geändert hat
+ * @param  bool lpChange         - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich die Gridbasis oder der Gridlevel der Sequenz geändert haben
  * @param  int  triggeredStops[] - Array, das nach Rückkehr die Array-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStops[]) {
+bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
    if (__STATUS_ERROR)                    return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateStatus(1)", ERR_ILLEGAL_STATE)));
 
-   lpLevelChange    = false;
-   lpGridBaseChange = false;
    ArrayResize(triggeredStops, 0);
 
    if (status == STATUS_WAITING)
@@ -803,7 +800,7 @@ bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStop
             grid.openRisk    = NormalizeDouble(grid.openRisk - orders.openRisk[i], 2);
             grid.valueAtRisk = NormalizeDouble(grid.openRisk + grid.stopsPL, 2); SS.Grid.ValueAtRisk();
             recalcBreakeven  = true;
-            lpLevelChange    = true;
+            lpChange         = true;
             continue;
          }
 
@@ -830,7 +827,7 @@ bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStop
                grid.openRisk        = NormalizeDouble(grid.openRisk    + orders.openRisk[i], 2);
                grid.valueAtRisk     = NormalizeDouble(grid.valueAtRisk + orders.openRisk[i], 2); SS.Grid.ValueAtRisk();  // valueAtRisk = stopsPL + openRisk
                recalcBreakeven      = true;
-               lpLevelChange        = true;
+               lpChange             = true;
                updateStatusLocation = updateStatusLocation || !grid.maxLevel;
             }
          }
@@ -881,7 +878,7 @@ bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStop
                grid.openRisk    = NormalizeDouble(grid.openRisk - orders.openRisk[i], 2);
                grid.valueAtRisk = NormalizeDouble(grid.openRisk + grid.stopsPL, 2); SS.Grid.ValueAtRisk();
                recalcBreakeven  = true;
-               lpLevelChange    = true;
+               lpChange         = true;
             }
             else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
                close[0] = OrderCloseTime();
@@ -948,8 +945,8 @@ bool UpdateStatus(bool &lpLevelChange, bool &lpGridBaseChange, int triggeredStop
 
          if (NE(grid.base, last.grid.base)) {
             Grid.BaseChange(TimeCurrent(), grid.base);
-            recalcBreakeven  = true;
-            lpGridBaseChange = true;
+            recalcBreakeven = true;
+            lpChange        = true;
          }
       }
 
@@ -1687,8 +1684,8 @@ bool ProcessClientStops(int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   if (!UpdateStatus(bNull, bNull, iNulls)) return(false);
-   if (  !SaveStatus())                     return(false);
+   if (!UpdateStatus(bNull, iNulls)) return(false);
+   if (  !SaveStatus())              return(false);
 
    return(!last_error|catch("ProcessClientStops(12)"));
 }

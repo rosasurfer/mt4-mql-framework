@@ -1,5 +1,5 @@
-/**
- * SnowRoller-Strategy (Multi-Sequence-SnowRoller: beliebig viele jeweils unabhängige Sequencen je Richtung)
+ m /**
+ * SnowRoller-Strategy: beliebig viele jeweils unabhängige Sequencen je Richtung
  *
  *
  *  TODO:
@@ -13,8 +13,6 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-//#include <history.mqh>
-//#include <win32api.mqh>
 
 #include <core/expert.mqh>
 #include <SnowRoller/define.mqh>
