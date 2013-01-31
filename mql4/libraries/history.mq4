@@ -1271,3 +1271,50 @@ bool History.CloseFiles(bool warn=false) {
    }
    return(!error);
 }
+
+
+/**
+ * Wird nur im Tester und in library::init() aufgerufen.
+ */
+void Tester.ResetGlobalArrays() {
+   if (IsTesting()) {
+      // Daten einzelner HistoryFiles
+      ArrayResize(hf.hFile                   , 0);
+      ArrayResize(hf.name                    , 0);
+      ArrayResize(hf.read                    , 0);
+      ArrayResize(hf.write                   , 0);
+      ArrayResize(hf.size                    , 0);
+
+      ArrayResize(hf.header                  , 0);
+      ArrayResize(hf.symbol                  , 0);
+      ArrayResize(hf.period                  , 0);
+      ArrayResize(hf.periodSecs              , 0);
+      ArrayResize(hf.digits                  , 0);
+
+      ArrayResize(hf.bars                    , 0);
+      ArrayResize(hf.from                    , 0);
+      ArrayResize(hf.to                      , 0);
+
+      // Cache der aktuellen Bar
+      ArrayResize(hf.currentBar.offset       , 0);
+      ArrayResize(hf.currentBar.openTime     , 0);
+      ArrayResize(hf.currentBar.closeTime    , 0);
+      ArrayResize(hf.currentBar.nextCloseTime, 0);
+      ArrayResize(hf.currentBar.data         , 0);
+
+      // Ticks einer ungespeicherten Bar
+      ArrayResize(hf.tickBar.offset          , 0);
+      ArrayResize(hf.tickBar.openTime        , 0);
+      ArrayResize(hf.tickBar.closeTime       , 0);
+      ArrayResize(hf.tickBar.nextCloseTime   , 0);
+      ArrayResize(hf.tickBar.data            , 0);
+
+      // Daten einzelner History-Sets
+      ArrayResize(h.hHst                     , 0);
+      ArrayResize(h.symbol                   , 0);
+      ArrayResize(h.description              , 0);
+      ArrayResize(h.digits                   , 0);
+      ArrayResize(h.hFile                    , 0);
+    //ArrayResize(h.periods...                           // hat Initializer und wird nicht modifiziert
+   }
+}
