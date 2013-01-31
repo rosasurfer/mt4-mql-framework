@@ -8,10 +8,12 @@ int __iCustom__ = NULL;
  *
  * @return int - Fehlerstatus
  *
+ */
 int init() {
+   // Im Tester globale Arrays zurücksetzen (zur Zeit kein besserer Workaround).
+   Tester.ResetGlobalArrays();
    return(NO_ERROR);
 }
-*/
 
 
 /**
