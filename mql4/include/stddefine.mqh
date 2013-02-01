@@ -309,7 +309,7 @@ string  sNull, sNulls[];
 #define MODE_DESCEND                2           // absteigend
 
 
-// Trend identifier, siehe CheckTrendChange()
+// Trend direction flags, siehe CheckTrendChange()
 #define MODE_UPTREND                1
 #define MODE_DOWNTREND              2
 
