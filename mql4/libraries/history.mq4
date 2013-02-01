@@ -1274,10 +1274,12 @@ bool History.CloseFiles(bool warn=false) {
 
 
 /**
- * Wird nur im Tester und in library::init() aufgerufen.
+ * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
  */
 void Tester.ResetGlobalArrays() {
    if (IsTesting()) {
+      ArrayResize(stack.orderSelections      , 0);
+
       // Daten einzelner HistoryFiles
       ArrayResize(hf.hFile                   , 0);
       ArrayResize(hf.name                    , 0);

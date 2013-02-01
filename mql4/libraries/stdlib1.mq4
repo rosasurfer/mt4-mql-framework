@@ -12445,3 +12445,15 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
      string   wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
    //string   wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
 #import
+
+
+/**
+ * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
+ */
+void Tester.ResetGlobalArrays() {
+   if (IsTesting()) {
+      ArrayResize(stack.orderSelections, 0);
+      ArrayResize(lock.names           , 0);
+      ArrayResize(lock.counters        , 0);
+   }
+}
