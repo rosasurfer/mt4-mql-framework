@@ -5,9 +5,9 @@
 #define SID_MAX                 16383                                // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
 
 
-// Grid-Directions
-#define D_LONG                      1
-#define D_SHORT                     2
+// Griddirection-Flags
+#define D_LONG           MODE_UPTREND                                // 1
+#define D_SHORT        MODE_DOWNTREND                                // 2
 string  directionDescr[] = {"undefined", "Long", "Short"};
 
 

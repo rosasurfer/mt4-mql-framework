@@ -97,9 +97,9 @@ bool IsValidSequenceStatus(int value) {
  * @param  string maTimeframe - Indikator-Parameter
  * @param  string maMethod    - Indikator-Parameter
  * @param  int    lag         - Trigger-Verzögerung, größer oder gleich 0
- * @param  int    directions  - Kombination von Trend-Identifiern:
- *                              MODE_UPTREND   - ein Wechsel zum Up-Trend soll signalisiert werden
- *                              MODE_DOWNTREND - ein Wechsel zum Down-Trend soll signalisiert werden
+ * @param  int    directions  - Kombination von Trend-Flags:
+ *                              MODE_UPTREND   - ein Wechsel zum Up-Trend wird signalisiert
+ *                              MODE_DOWNTREND - ein Wechsel zum Down-Trend wird signalisiert
  * @param  int    lpSignal    - Zeiger auf Variable zur Signalaufnahme (+: Wechsel zum Up-Trend, -: Wechsel zum Down-Trend)
  *
  * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)
@@ -164,13 +164,13 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
             }
             // Trendwechsel in Bar 1 (nach Berücksichtigung von lag)
             if (trend < 0) {
-               if (_bool(directions & MODE_UPTREND)) {
+               if (directions & MODE_UPTREND != 0) {
                   lpSignal = 1;
                   //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change up");
                }
             }
             else {
-               if (_bool(directions & MODE_DOWNTREND)) {
+               if (directions & MODE_DOWNTREND != 0) {
                   lpSignal = -1;
                   //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change down");
                }

@@ -28,7 +28,7 @@ double   last.LotSize;                                                  // mit d
 string   last.StartConditions = "";                                     // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
 string   last.StopConditions  = "";                                     // in init() daraus restauriert.
 
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------
 bool     start.trend.condition;
 string   start.trend.condition.txt;
 double   start.trend.periods;
@@ -36,90 +36,90 @@ int      start.trend.timeframe, start.trend.timeframeFlag;              // maxim
 string   start.trend.method;
 int      start.trend.lag;
 
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------
 bool     stop.profitAbs.condition;
 string   stop.profitAbs.condition.txt;
 double   stop.profitAbs.value;
 
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------
 datetime weekend.stop.condition   = D'1970.01.01 23:05';                // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
 datetime weekend.stop.time;
 
 datetime weekend.resume.condition = D'1970.01.01 01:10';                // spätester ResumeSequence()-Zeitpunkt nach Wochenend-Pause (Montags morgen)
 datetime weekend.resume.time;
 
-// -------------------------------------------------------------------
-int      L.sequence.id,                 S.sequence.id;
-bool     L.sequence.test,               S.sequence.test;                // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
-int      L.sequence.status,             S.sequence.status;
-string   L.sequence.status.file[2],     S.sequence.status.file[2];      // [0] => Verzeichnis (relativ zu ".\files\"), [1] => Dateiname
-double   L.sequence.startEquity,        S.sequence.startEquity;         // Equity bei Start der Sequenz
-bool     L.sequence.weStop.active,      S.sequence.weStop.active;       // Weekend-Stop aktiv (unterscheidet zwischen vorübergehend und dauerhaft gestoppten Sequenzen)
-bool     L.sequence.weResume.triggered, S.sequence.weResume.triggered;  // ???
+// ---------------------------------------------------------------
+int      l.sequence.id,                 s.sequence.id;
+bool     l.sequence.test,               s.sequence.test;                // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
+int      l.sequence.status,             s.sequence.status;
+string   l.sequence.status.file[2],     s.sequence.status.file[2];      // [0] => Verzeichnis (relativ zu ".\files\"), [1] => Dateiname
+double   l.sequence.startEquity,        s.sequence.startEquity;         // Equity bei Start der Sequenz
+bool     l.sequence.weStop.active,      s.sequence.weStop.active;       // Weekend-Stop aktiv (unterscheidet zwischen vorübergehend und dauerhaft gestoppten Sequenzen)
+bool     l.sequence.weResume.triggered, s.sequence.weResume.triggered;  // ???
 
-// -------------------------------------------------------------------
-int      L.sequenceStart.event [],      S.sequenceStart.event [];       // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime L.sequenceStart.time  [],      S.sequenceStart.time  [];
-double   L.sequenceStart.price [],      S.sequenceStart.price [];
-double   L.sequenceStart.profit[],      S.sequenceStart.profit[];
+// ---------------------------------------------------------------
+int      l.sequenceStart.event [],      s.sequenceStart.event [];       // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime l.sequenceStart.time  [],      s.sequenceStart.time  [];
+double   l.sequenceStart.price [],      s.sequenceStart.price [];
+double   l.sequenceStart.profit[],      s.sequenceStart.profit[];
 
-int      L.sequenceStop.event  [],      S.sequenceStop.event  [];       // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime L.sequenceStop.time   [],      S.sequenceStop.time   [];
-double   L.sequenceStop.price  [],      S.sequenceStop.price  [];
-double   L.sequenceStop.profit [],      S.sequenceStop.profit [];
+int      l.sequenceStop.event  [],      s.sequenceStop.event  [];       // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime l.sequenceStop.time   [],      s.sequenceStop.time   [];
+double   l.sequenceStop.price  [],      s.sequenceStop.price  [];
+double   l.sequenceStop.profit [],      s.sequenceStop.profit [];
 
-// -------------------------------------------------------------------
-int      L.grid.level,                  S.grid.level;                   // aktueller Grid-Level
-int      L.grid.maxLevel,               S.grid.maxLevel;                // maximal erreichter Grid-Level
-double   L.grid.commission,             S.grid.commission;              // Commission-Betrag je Level
+// ---------------------------------------------------------------
+int      l.grid.level,                  s.grid.level;                   // aktueller Grid-Level
+int      l.grid.maxLevel,               s.grid.maxLevel;                // maximal erreichter Grid-Level
+double   l.grid.commission,             s.grid.commission;              // Commission-Betrag je Level
 
-int      L.grid.base.event[],           S.grid.base.event[];            // Gridbasis-Daten
-datetime L.grid.base.time [],           S.grid.base.time [];
-double   L.grid.base.value[],           S.grid.base.value[];
-double   L.grid.base,                   S.grid.base;                    // aktuelle Gridbasis
+int      l.grid.base.event[],           s.grid.base.event[];            // Gridbasis-Daten
+datetime l.grid.base.time [],           s.grid.base.time [];
+double   l.grid.base.value[],           s.grid.base.value[];
+double   l.grid.base,                   s.grid.base;                    // aktuelle Gridbasis
 
-int      L.grid.stops,                  S.grid.stops;                   // Anzahl der bisher getriggerten Stops
-double   L.grid.stopsPL,                S.grid.stopsPL;                 // kumulierter P/L aller bisher ausgestoppten Positionen
-double   L.grid.closedPL,               S.grid.closedPL;                // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
-double   L.grid.floatingPL,             S.grid.floatingPL;              // kumulierter P/L aller aktuell offenen Positionen
-double   L.grid.totalPL,                S.grid.totalPL;                 // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
-double   L.grid.openRisk,               S.grid.openRisk;                // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
-double   L.grid.valueAtRisk,            S.grid.valueAtRisk;             // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
-double   L.grid.breakeven,              S.grid.breakeven;
+int      l.grid.stops,                  s.grid.stops;                   // Anzahl der bisher getriggerten Stops
+double   l.grid.stopsPL,                s.grid.stopsPL;                 // kumulierter P/L aller bisher ausgestoppten Positionen
+double   l.grid.closedPL,               s.grid.closedPL;                // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
+double   l.grid.floatingPL,             s.grid.floatingPL;              // kumulierter P/L aller aktuell offenen Positionen
+double   l.grid.totalPL,                s.grid.totalPL;                 // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
+double   l.grid.openRisk,               s.grid.openRisk;                // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
+double   l.grid.valueAtRisk,            s.grid.valueAtRisk;             // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
+double   l.grid.breakeven,              s.grid.breakeven;
 
-double   L.grid.maxProfit,              S.grid.maxProfit;               // maximaler bisheriger Gesamt-Profit   (>= 0)
-double   L.grid.maxDrawdown,            S.grid.maxDrawdown;             // maximaler bisheriger Gesamt-Drawdown (<= 0)
+double   l.grid.maxProfit,              s.grid.maxProfit;               // maximaler bisheriger Gesamt-Profit   (>= 0)
+double   l.grid.maxDrawdown,            s.grid.maxDrawdown;             // maximaler bisheriger Gesamt-Drawdown (<= 0)
 
-// -------------------------------------------------------------------
-int      L.orders.ticket        [],     S.orders.ticket        [];
-int      L.orders.level         [],     S.orders.level         [];      // Gridlevel der Order
-double   L.orders.gridBase      [],     S.orders.gridBase      [];      // Gridbasis der Order
+// ---------------------------------------------------------------
+int      l.orders.ticket        [],     s.orders.ticket        [];
+int      l.orders.level         [],     s.orders.level         [];      // Gridlevel der Order
+double   l.orders.gridBase      [],     s.orders.gridBase      [];      // Gridbasis der Order
 
-int      L.orders.pendingType   [],     S.orders.pendingType   [];      // Pending-Orderdaten (falls zutreffend)
-datetime L.orders.pendingTime   [],     S.orders.pendingTime   [];      // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
-double   L.orders.pendingPrice  [],     S.orders.pendingPrice  [];
+int      l.orders.pendingType   [],     s.orders.pendingType   [];      // Pending-Orderdaten (falls zutreffend)
+datetime l.orders.pendingTime   [],     s.orders.pendingTime   [];      // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
+double   l.orders.pendingPrice  [],     s.orders.pendingPrice  [];
 
-int      L.orders.type          [],     S.orders.type          [];
-int      L.orders.openEvent     [],     S.orders.openEvent     [];
-datetime L.orders.openTime      [],     S.orders.openTime      [];
-double   L.orders.openPrice     [],     S.orders.openPrice     [];
-double   L.orders.openRisk      [],     S.orders.openRisk      [];      // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
+int      l.orders.type          [],     s.orders.type          [];
+int      l.orders.openEvent     [],     s.orders.openEvent     [];
+datetime l.orders.openTime      [],     s.orders.openTime      [];
+double   l.orders.openPrice     [],     s.orders.openPrice     [];
+double   l.orders.openRisk      [],     s.orders.openRisk      [];      // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
 
-int      L.orders.closeEvent    [],     S.orders.closeEvent    [];
-datetime L.orders.closeTime     [],     S.orders.closeTime     [];
-double   L.orders.closePrice    [],     S.orders.closePrice    [];
-double   L.orders.stopLoss      [],     S.orders.stopLoss      [];
-bool     L.orders.clientSL      [],     S.orders.clientSL      [];      // client- oder server-seitiger StopLoss
-bool     L.orders.closedBySL    [],     S.orders.closedBySL    [];
+int      l.orders.closeEvent    [],     s.orders.closeEvent    [];
+datetime l.orders.closeTime     [],     s.orders.closeTime     [];
+double   l.orders.closePrice    [],     s.orders.closePrice    [];
+double   l.orders.stopLoss      [],     s.orders.stopLoss      [];
+bool     l.orders.clientSL      [],     s.orders.clientSL      [];      // client- oder server-seitiger StopLoss
+bool     l.orders.closedBySL    [],     s.orders.closedBySL    [];
 
-double   L.orders.swap          [],     S.orders.swap          [];
-double   L.orders.commission    [],     S.orders.commission    [];
-double   L.orders.profit        [],     S.orders.profit        [];
+double   l.orders.swap          [],     s.orders.swap          [];
+double   l.orders.commission    [],     s.orders.commission    [];
+double   l.orders.profit        [],     s.orders.profit        [];
 
-// -------------------------------------------------------------------
-int      L.ignorePendingOrders  [],     S.ignorePendingOrders  [];      // orphaned tickets to ignore
-int      L.ignoreOpenPositions  [],     S.ignoreOpenPositions  [];
-int      L.ignoreClosedPositions[],     S.ignoreClosedPositions[];
+// ---------------------------------------------------------------
+int      l.ignorePendingOrders  [],     s.ignorePendingOrders  [];      // orphaned tickets to ignore
+int      l.ignoreOpenPositions  [],     s.ignoreOpenPositions  [];
+int      l.ignoreClosedPositions[],     s.ignoreClosedPositions[];
 
 
 /**
@@ -128,33 +128,189 @@ int      L.ignoreClosedPositions[],     S.ignoreClosedPositions[];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   Strategy.Long();
-   Strategy.Short();
+   Strategy(D_LONG );
+   Strategy(D_SHORT);
    return(last_error);
 }
 
 
 /**
- * Long
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool Strategy.Long() {
+bool Strategy(int direction) {
    if (__STATUS_ERROR)
       return(false);
-   return(true);
+
+   bool changes;                                                     // Gridbase or Gridlevel changed
+   int  status, stops[];                                             // getriggerte client-side Stops
+
+   if      (direction == D_LONG ) status = l.sequence.status;
+   else if (direction == D_SHORT) status = s.sequence.status;
+   else return(!catch("Strategy()   illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+
+   // (1) Sequenz wartet entweder auf Startsignal, ...
+   if (status == STATUS_WAITING) {
+      if (IsStartSignal(direction))   StartSequence();
+   }
+
+   // (2) ...auf ResumeSignal...
+   else if (status == STATUS_STOPPED) {
+      if  (IsResumeSignal(direction)) ResumeSequence(direction);
+      else return(!IsLastError());
+   }
+
+   // (3) ...oder läuft
+   else if (UpdateStatus(changes, stops)) {
+      if (IsStopSignal(direction))    StopSequence(direction);
+      else {
+         if (ArraySize(stops) > 0)    ProcessClientStops(stops);
+         if (changes)                 UpdatePendingOrders(direction);
+      }
+   }
+   return(!IsLastError());
 }
 
 
 /**
- * Short
+ * Signalgeber für StartSequence().
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool - ob ein Signal aufgetreten ist
+ */
+bool IsStartSignal(int direction) {
+   if (__STATUS_ERROR)
+      return(false);
+
+   int iNull[];
+
+   if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+      int    timeframe   = start.trend.timeframe;
+      string maPeriods   = NumberToStr(start.trend.periods, ".+");
+      string maTimeframe = PeriodDescription(start.trend.timeframe);
+      string maMethod    = start.trend.method;
+      int    lag         = start.trend.lag;
+      int    signal      = 0;
+
+      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal)) {
+         if (signal != 0) {
+            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
+            return(true);
+         }
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Signalgeber für ResumeSequence().
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool
+ */
+bool IsResumeSignal(int direction) {
+   if (__STATUS_ERROR)
+      return(false);
+   return(IsWeekendResumeSignal());
+}
+
+
+/**
+ * Signalgeber für ResumeSequence(). Prüft, ob die Weekend-Resume-Bedingung erfüllt ist.
+ *
+ * @return bool
+ */
+bool IsWeekendResumeSignal() {
+   return(!catch("IsWeekendResumeSignal()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Signalgeber für StopSequence().
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool - ob ein Signal aufgetreten ist
+ */
+bool IsStopSignal(int direction) {
+   return(!catch("IsStopSignal()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Startet eine neue Trade-Sequenz.
  *
  * @return bool - Erfolgsstatus
  */
-bool Strategy.Short() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(true);
+bool StartSequence() {
+   return(!catch("StartSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Schließt alle PendingOrders und offenen Positionen der Sequenz.
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
+ */
+bool StopSequence(int direction) {
+   return(!catch("StopSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Setzt eine gestoppte Sequenz fort.
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ResumeSequence(int direction) {
+   return(!catch("ResumeSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
+ *
+ * @param  bool lpChanges        - Variable, die nach Rückkehr anzeigt, ob sich die Gridbasis oder der Gridlevel der Sequenz geändert haben
+ * @param  int  triggeredStops[] - Array, das nach Rückkehr die Array-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateStatus(bool &lpChanges, int triggeredStops[]) {
+   return(!catch("UpdateStatus()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Ordermanagement getriggerter client-seitiger Stops. Kann eine getriggerte Stop-Order oder ein getriggerter Stop-Loss sein.
+ *
+ * @param  int stops[] - Array-Indizes der Orders mit getriggerten Stops
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ProcessClientStops(int stops[]) {
+   return(!catch("ProcessClientStops()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Aktualisiert vorhandene, setzt fehlende und löscht unnötige PendingOrders.
+ *
+ * @param  int direction - Sequenz-Identifier: D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdatePendingOrders(int direction) {
+   return(!catch("UpdatePendingOrders()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
