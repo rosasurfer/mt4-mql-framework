@@ -314,9 +314,9 @@ M15::TestExpert::stdlib::onTick()       PipPoints   = 10
 M15::TestExpert::stdlib::onTick()       Bid/Ask (b) = 1.2711'2/1.2713'1
 M15::TestExpert::stdlib::onTick()       Bars    (b) = 1001
 M15::TestExpert::stdlib::onTick()       PriceFormat = ".4'"
-M15::TestExpert::stdlib::onTick()       -------------------------
+M15::TestExpert::stdlib::onTick()       ---------------------------------
 M15::TestExpert::stdlib::onTick()       MarketInfo() for "EURUSD"
-M15::TestExpert::stdlib::onTick()       -------------------------
+M15::TestExpert::stdlib::onTick()       ---------------------------------
 M15::TestExpert::stdlib::onTick()       MODE_LOW               = 0.0000'0                 // falsch: nicht modelliert
 M15::TestExpert::stdlib::onTick()       MODE_HIGH              = 0.0000'0                 // falsch: nicht modelliert
 M15::TestExpert::stdlib::onTick()       MODE_TIME              = '2012.11.12 00:00:00'
@@ -358,9 +358,9 @@ H1::Moving Average::stdlib::onTick()    PipPoints   = 10
 H1::Moving Average::stdlib::onTick()    Bid/Ask (b) = 1.2711'2/1.2713'1
 H1::Moving Average::stdlib::onTick()    Bars    (b) = 1001
 H1::Moving Average::stdlib::onTick()    PriceFormat = ".4'"
-H1::Moving Average::stdlib::onTick()    -------------------------
+H1::Moving Average::stdlib::onTick()    ---------------------------------
 H1::Moving Average::stdlib::onTick()    MarketInfo() for "EURUSD"
-H1::Moving Average::stdlib::onTick()    -------------------------
+H1::Moving Average::stdlib::onTick()    ---------------------------------
 H1::Moving Average::stdlib::onTick()    MODE_LOW               = 0.0000'0                 // falsch übernommen
 H1::Moving Average::stdlib::onTick()    MODE_HIGH              = 0.0000'0                 // falsch übernommen
 H1::Moving Average::stdlib::onTick()    MODE_TIME              = '2012.11.12 00:00:00'
@@ -402,9 +402,9 @@ M15::Moving Average::stdlib::onTick()   PipPoints   = 10
 M15::Moving Average::stdlib::onTick()   Bid/Ask (b) = 1.2983'9/1.2986'7                   // falsch: online
 M15::Moving Average::stdlib::onTick()   Bars    (b) = 1001
 M15::Moving Average::stdlib::onTick()   PriceFormat = ".4'"
-M15::Moving Average::stdlib::onTick()   -------------------------
+M15::Moving Average::stdlib::onTick()   ---------------------------------
 M15::Moving Average::stdlib::onTick()   MarketInfo() for "EURUSD"
-M15::Moving Average::stdlib::onTick()   -------------------------
+M15::Moving Average::stdlib::onTick()   ---------------------------------
 M15::Moving Average::stdlib::onTick()   MODE_LOW               = 1.2967'6                 // falsch: online
 M15::Moving Average::stdlib::onTick()   MODE_HIGH              = 1.3027'3                 // falsch: online
 M15::Moving Average::stdlib::onTick()   MODE_TIME              = '2012.11.30 23:59:52'    // falsch: online
