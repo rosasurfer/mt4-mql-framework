@@ -405,7 +405,7 @@ int SetLastError(int error, int param=NULL) {
  * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
  * desselben Ticks wird das Event korrekt erkannt.
  *
- * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int results[] - Array, das nach Rückkehr die IDs der Timeframes enthält, in denen das Event aufgetreten ist (mehrere sind möglich)
  * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
  *
  * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
@@ -435,6 +435,8 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
       ArrayResize(bar.closeTimes, sizeOfPeriods);
    }
 
+   bool isEvent;
+
    for (int i=0; i < sizeOfPeriods; i++) {
       if (flags & periodFlags[i] != 0) {
          // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
@@ -447,15 +449,15 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
                if (IsTesting())                                      // im Tester ist der 1. Tick BarOpen-Event
-                  ArrayPushInt(results, periods[i]);                 // TODO: !!! nicht für alle Timeframes !!!
+                  isEvent = ArrayPushInt(results, periods[i]);       // TODO: !!! nicht für alle Timeframes !!!
             }
             else {
-               ArrayPushInt(results, periods[i]);
+               isEvent = ArrayPushInt(results, periods[i]);
             }
          }
       }
    }
-   return(ArraySize(results));                                       // (bool) int
+   return(isEvent);
 }
 
 
