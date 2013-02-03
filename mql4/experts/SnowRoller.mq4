@@ -6116,21 +6116,22 @@ bool RecordEquity(int flags=NULL) {
       hHst = FindHistory(symbol);
       if (hHst > 0) {
          if (!ResetHistory(hHst))
-            return(false);
-      }
-      else if (__STATUS_ERROR) {
-         return(false);
+            return(!SetLastError(hstlib_GetLastError()));
       }
       else {
-         string description = StringConcatenate("Equity SR.", sequenceId);
-         hHst = CreateHistory(symbol, description, 2);
+         int error = hstlib_GetLastError();
+         if (IsError(error))
+            return(!SetLastError(error));
+         hHst = CreateHistory(symbol, "Equity SR."+ sequenceId, 2);
          if (hHst <= 0)
-            return(false);
+            return(!SetLastError(hstlib_GetLastError()));
       }
    }
-
    double value = sequenceStartEquity + grid.totalPL;
-   return(History.AddTick(hHst, Tick.Time, value, flags));
+
+   if (History.AddTick(hHst, Tick.Time, value, flags))
+      return(true);
+   return(!SetLastError(hstlib_GetLastError()));
 }
 
 
