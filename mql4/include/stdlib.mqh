@@ -13,7 +13,6 @@
    bool     Indicator.IsTesting();
    bool     Script.IsTesting();
    bool     This.IsTesting();                                        // kurz für: IsTesting() || Indicator.IsTesting() || Script.IsTesting()
-   int      ShowStatus();                                            // für EA's
 
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -557,26 +556,27 @@
 
    // Default-Implementierungen der MQL-Basis- und Userfunktionen
    int      onInit();
-   int      onInitUndefined();
-   int      onInitChartClose();
-   int      onInitRemove();
-   int      onInitRecompile();
    int      onInitParameterChange();
    int      onInitChartChange();
    int      onInitAccountChange();
+   int      onInitChartClose();
+   int      onInitRemove();
+   int      onInitUndefined();
+   int      onInitRecompile();
    int      afterInit();
 
    int      onStart();
    int      onTick();
+   int      ShowStatus();                                            // für EA's
 
    int      onDeinit();
-   int      onDeinitUndefined();
-   int      onDeinitChartClose();
-   int      onDeinitRemove();
-   int      onDeinitRecompile();
    int      onDeinitParameterChange();
    int      onDeinitChartChange();
    int      onDeinitAccountChange();
+   int      onDeinitChartClose();
+   int      onDeinitRemove();
+   int      onDeinitUndefined();
+   int      onDeinitRecompile();
    int      afterDeinit();
 
 
