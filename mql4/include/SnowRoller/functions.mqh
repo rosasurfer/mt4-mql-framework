@@ -123,7 +123,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
    int    values = Max(bars+1, 20);                            // +1 wegen fehlendem Trend der ältesten Bar; 20 (größtes lag) zur Reduktion ansonsten ident. Indikator-Instanzen
 
    for (int bar=bars-1; bar>0; bar--) {                        // Bar 0 ist immer unvollständig und wird nicht benötigt
-      // (1) Trend der einzelnen Bar ermitteln
+      // (1) Trend der einzelnen Bars ermitteln
       barTrend = iCustom(NULL, timeframe, "Moving Average",    // (int) double ohne Präzisionsfehler (siehe MA-Implementierung)
                          maPeriods,                            // MA.Periods
                          maTimeframe,                          // MA.Timeframe
@@ -238,4 +238,24 @@ int lastEventId;
 int CreateEventId() {
    lastEventId++;
    return(lastEventId);
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines Status-Codes zurück.
+ *
+ * @param  int status - Status-Code
+ *
+ * @return string
+ */
+string StatusToStr(int status) {
+   switch (status) {
+      case STATUS_UNINITIALIZED: return("STATUS_UNINITIALIZED");
+      case STATUS_WAITING      : return("STATUS_WAITING"      );
+      case STATUS_STARTING     : return("STATUS_STARTING"     );
+      case STATUS_PROGRESSING  : return("STATUS_PROGRESSING"  );
+      case STATUS_STOPPING     : return("STATUS_STOPPING"     );
+      case STATUS_STOPPED      : return("STATUS_STOPPED"      );
+   }
+   return(_empty(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }

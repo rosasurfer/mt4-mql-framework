@@ -114,10 +114,10 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    if (!__STATUS_ERROR) {                                                     //
       switch (UninitializeReason()) {                                         //
          case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
-         case REASON_REMOVE     : error = onInitRemove();          break;     //
          case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
          case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
          case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
+         case REASON_REMOVE     : error = onInitRemove();          break;     //
          case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
          case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
       }                                                                       //
@@ -294,13 +294,13 @@ int deinit() {
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *kˆnnen*, m¸ssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
                                                                                  //
-   if (error != -1) {                                                            //
-      switch (UninitializeReason()) {                                            //
-         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zur¸ckgibt.
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
+   if (error != -1) {                                                            // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zur¸ckgibt.
+      switch (UninitializeReason()) {                                            // - deinit() bricht ab, falls eine der User-Routinen -1 zur¸ckgibt.
+         case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
-         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zur¸ckgibt.
+         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
@@ -465,6 +465,16 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 
 
 /**
+ * Preprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ *
+int onInit() {
+   return(NO_ERROR);
+}
+
+
+/**
  * Nach Parameter‰nderung
  *
  *  - altes Chartfenster, alter EA, Input-Dialog
@@ -472,18 +482,6 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
  * @return int - Fehlerstatus
  *
 int onInitParameterChange() {
-   return(NO_ERROR);
-}
-
-
-/**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA dr¸bergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
    return(NO_ERROR);
 }
 
@@ -501,9 +499,9 @@ int onInitChartChange() {
 
 
 /**
- * Nach Accountwechsel (wann ???)                                    // TODO: Umst‰nde ungekl‰rt
+ * Nach Accountwechsel
  *
- * - wird in stdlib abgefangen (ERR_RUNTIME_ERROR)
+ * TODO: Umst‰nde ungekl‰rt, wird in stdlib mit ERR_RUNTIME_ERROR abgefangen
  *
  * @return int - Fehlerstatus
  *
@@ -525,11 +523,23 @@ int onInitChartClose() {
 
 
 /**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA dr¸bergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
  * Kein UninitializeReason gesetzt
  *
- * - nach Terminal-Neustart:    neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
- * - im Tester:                 neues Chartfenster (wenn VisualMode=On), neuer EA, kein Input-Dialog
+ * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
+ * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
+ * - im Tester:              neues Chartfenster (wenn VisualMode=On), neuer EA, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  *
@@ -548,6 +558,16 @@ int onInitUndefined() {
 int onInitRecompile() {
    return(NO_ERROR);
 }
+
+
+/**
+ * Postprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ *
+int afterInit() {
+   return(NO_ERROR);
+}
  */
 
 
@@ -555,11 +575,101 @@ int onInitRecompile() {
 
 
 /**
+ * Preprocessing-Hook
+ *
+ * @return int - Fehlerstatus
  *
 int onDeinit() {
    double test.duration = (Test.stopMillis-Test.startMillis)/1000.0;
    double test.days     = (Test.toDate-Test.fromDate) * 1.0 /DAYS;
    debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
    return(last_error);
+}
+
+
+/**
+ * Parameter‰nderung
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitParameterChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Symbol- oder Timeframewechsel
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitChartChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Accountwechsel
+ *
+ * TODO: Umst‰nde ungekl‰rt, wird in stdlib mit ERR_RUNTIME_ERROR abgefangen
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitAccountChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Im Tester: - Nach Bet‰tigen des "Stop"-Buttons oder nach Chart->Close. Der "Stop"-Button des Testers kann nach Fehler oder Testabschluﬂ
+ *              vom Code "bet‰tigt" worden sein.
+ *
+ * Online:    - Chart wird geschlossen                  - oder -
+ *            - Template wird neu geladen               - oder -
+ *            - Terminal-Shutdown                       - oder -
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitChartClose() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * TODO: Umst‰nde ungekl‰rt, wird in stdlib mit Warnung signalisiert
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt: nur im Tester nach regul‰rem Ende (Testperiode zu Ende)
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Recompilation
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRecompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Postprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ *
+int afterDeinit() {
+   return(NO_ERROR);
 }
  */

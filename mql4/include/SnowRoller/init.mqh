@@ -45,18 +45,6 @@ int onInitParameterChange() {
 
 
 /**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
  * Nach Symbol- oder Timeframe-Wechsel
  *
  * - altes Chartfenster, alter EA, kein Input-Dialog
@@ -150,10 +138,22 @@ int onInitChartClose() {
 
 
 /**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitRemove() {
+   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
+}
+
+
+/**
  * Kein UninitializeReason gesetzt
  *
- * - nach Terminal-Neustart:    neues Chartfenster, vorheriger EA, kein Input-Dialog
- * - nach File -> New -> Chart: neues Chartfenster, neuer EA, Input-Dialog
+ * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
+ * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
  *
  * @return int - Fehlerstatus
  */

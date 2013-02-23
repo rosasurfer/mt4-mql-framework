@@ -19,21 +19,6 @@ int onDeinitParameterChange() {
 
 
 /**
- * EA von Hand entfernt (Chart -> Expert -> Remove) oder neuer EA drübergeladen
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRemove() {
-   // Der Status kann sich seit dem letzten Tick geändert haben.
-   if (!IsTest()) /*&&*/ if (status==STATUS_WAITING || status==STATUS_STARTING || status==STATUS_PROGRESSING || status==STATUS_STOPPING) {
-      UpdateStatus(bNull, iNulls);
-      SaveStatus();
-   }
-   return(last_error);
-}
-
-
-/**
  * Symbol- oder Timeframewechsel
  *
  * @return int - Fehlerstatus
@@ -45,15 +30,14 @@ int onDeinitChartChange() {
 
 
 /**
- * - Chart geschlossen                       -oder-
- * - Template wird neu geladen               -oder-
- * - Terminal-Shutdown                       -oder-
- * - im Tester nach Betätigen des "Stop"-Buttons oder nach Chart ->Close
+ * Im Tester: - Nach Betätigen des "Stop"-Buttons oder nach Chart->Close. Der "Stop"-Button des Testers kann nach Fehler oder Testabschluß
+ *              vom Code "betätigt" worden sein.
+ *
+ * Online:    - Chart wird geschlossen                  - oder -
+ *            - Template wird neu geladen               - oder -
+ *            - Terminal-Shutdown                       - oder -
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: Der "Stop"-Button des Testers kann vom Code "betätigt" worden sein (nach Fehler oder Testabschluß).
  */
 int onDeinitChartClose() {
    // (1) Im Tester
@@ -78,18 +62,14 @@ int onDeinitChartClose() {
    }
 
 
-   // (2) Nicht im Tester:  Der Status kann sich seit dem letzten Tick geändert haben.
-   if (!IsTest()) /*&&*/ if (status==STATUS_WAITING || status==STATUS_STARTING || status==STATUS_PROGRESSING || status==STATUS_STOPPING) {
-      UpdateStatus(bNull, iNulls);
-      SaveStatus();
-   }
-   StoreStickyStatus();                                              // für Terminal-Restart oder Profile-Wechsel
+   // (2) Nicht im Tester
+   StoreStickyStatus();                                              // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
 
 
 /**
- * Kein UninitializeReason gesetzt: im Tester nach regulärem Ende (Testperiode zu Ende)
+ * Kein UninitializeReason gesetzt: nur im Tester nach regulärem Ende (Testperiode zu Ende)
  *
  * @return int - Fehlerstatus
  */
