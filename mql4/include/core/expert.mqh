@@ -539,7 +539,7 @@ int onInitRemove() {
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
  * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
- * - im Tester:              neues Chartfenster (wenn VisualMode=On), neuer EA, kein Input-Dialog
+ * - im Tester:              neues Chartfenster bei VisualMode=On, neuer EA, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  *
