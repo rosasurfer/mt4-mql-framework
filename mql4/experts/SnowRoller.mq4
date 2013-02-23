@@ -5,9 +5,9 @@
  *
  *  TODO:
  *  -----
- *  - Multi-Position-Management implementieren                                                        *
- *  - Equity-Charts: paralleles Schreiben mehrerer Timeframes, Schreiben aus Online-Chart             *
- *  - Laufzeitumgebung auf Server einrichten                                                          *
+ *  - Multi-Sequenz-Management implementieren                                                   *
+ *  - Equity-Charts: Schreiben aus Online-Chart                                                 *
+ *  - Laufzeitumgebung auf Server einrichten                                                    *
  *
  *  - Sequenz-IDs auf Eindeutigkeit prüfen
  *  - im Tester fortlaufende Sequenz-IDs generieren
@@ -15,8 +15,8 @@
  *  - Abbruch wegen IsStopped()=TRUE abfangen
  *  - Statusanzeige: Risikokennziffer zum Verlustpotential des Levels integrieren
  *  - PendingOrders nicht per Tick trailen
- *  - Möglichkeit, WeekendStop zu (de-)aktivieren
- *  - WochenendStop auf Feiertage ausweiten (Feiertagskalender implementieren)
+ *  - Möglichkeit, Wochenend-Stop zu (de-)aktivieren
+ *  - Wochenend-Stop auf Feiertage ausweiten (Feiertagskalender implementieren)
  *
  *  - Validierung refaktorieren
  *  - Statusanzeige dynamisch an Zeilen anpassen
@@ -281,7 +281,7 @@ int onTick() {
    HandleEvent(EVENT_CHART_CMD);
 
 
-   bool blChanged;                                                   // Gridbase or Gridlevel changed
+   bool changes;                                                     // Gridbase or Gridlevel changed
    int  stops[];                                                     // getriggerte client-side Stops
 
 
@@ -297,11 +297,11 @@ int onTick() {
    }
 
    // (4) ...oder läuft
-   else if (UpdateStatus(blChanged, stops)) {
+   else if (UpdateStatus(changes, stops)) {
       if (IsStopSignal())          StopSequence();
       else {
          if (ArraySize(stops) > 0) ProcessClientStops(stops);
-         if (blChanged)            UpdatePendingOrders();
+         if (changes)              UpdatePendingOrders();
       }
    }
 
@@ -6005,26 +6005,6 @@ int ResizeArrays(int size, bool reset=false) {
       }
    }
    return(size);
-}
-
-
-/**
- * Gibt die lesbare Konstante eines Status-Codes zurück.
- *
- * @param  int status - Status-Code
- *
- * @return string
- */
-string StatusToStr(int status) {
-   switch (status) {
-      case STATUS_UNINITIALIZED: return("STATUS_UNINITIALIZED");
-      case STATUS_WAITING      : return("STATUS_WAITING"      );
-      case STATUS_STARTING     : return("STATUS_STARTING"     );
-      case STATUS_PROGRESSING  : return("STATUS_PROGRESSING"  );
-      case STATUS_STOPPING     : return("STATUS_STOPPING"     );
-      case STATUS_STOPPED      : return("STATUS_STOPPED"      );
-   }
-   return(_empty(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
