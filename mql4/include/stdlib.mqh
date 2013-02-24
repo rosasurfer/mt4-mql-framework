@@ -560,8 +560,8 @@
    int      onInitChartChange();
    int      onInitAccountChange();
    int      onInitChartClose();
-   int      onInitRemove();
    int      onInitUndefined();
+   int      onInitRemove();
    int      onInitRecompile();
    int      afterInit();
 
@@ -574,8 +574,8 @@
    int      onDeinitChartChange();
    int      onDeinitAccountChange();
    int      onDeinitChartClose();
-   int      onDeinitRemove();
    int      onDeinitUndefined();
+   int      onDeinitRemove();
    int      onDeinitRecompile();
    int      afterDeinit();
 
