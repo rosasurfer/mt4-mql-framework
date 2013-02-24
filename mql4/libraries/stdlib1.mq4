@@ -199,9 +199,9 @@ int onInitChartChange()       {                                                 
 int onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()",   ERR_RUNTIME_ERROR));   // mal sehen, wann hier jemand reintappt
                                 if (IsIndicator())                        warn("onInitAccountChange()");    return(NO_ERROR); }  // ...
 int onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()");       return(NO_ERROR); }  // ...
-int onInitRemove()            {                                                                             return(NO_ERROR); }
 int onInitUndefined()         {                                                                             return(NO_ERROR); }
 int onInitRecompile()         {                                                                             return(NO_ERROR); }
+int onInitRemove()            {                                                                             return(NO_ERROR); }
 int afterInit()               {                                                                             return(NO_ERROR); }
 
 int onStart()                 {                                                                             return(NO_ERROR); }
@@ -214,9 +214,9 @@ int onDeinitChartChange()     {                                                 
 int onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
                                 if (IsIndicator())                        warn("onDeinitAccountChange()");  return(NO_ERROR); }  // ...
 int onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()");     return(NO_ERROR); }  // ...
-int onDeinitRemove()          {                                                                             return(NO_ERROR); }
 int onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()",     ERR_RUNTIME_ERROR));
                                 if (IsIndicator())                        warn("onDeinitUndefined()");      return(NO_ERROR); }
+int onDeinitRemove()          {                                                                             return(NO_ERROR); }
 int onDeinitRecompile()       {                                                                             return(NO_ERROR); }
 int afterDeinit()             {                                                                             return(NO_ERROR); }
 
