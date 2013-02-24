@@ -635,7 +635,7 @@ int onDeinitChartClose() {
 
 
 /**
- * TODO: Umstände ungeklärt, wird in stdlib mit Warnung signalisiert
+ * Nur Online: Nach Chart->Expert Advisers->Remove
  *
  * @return int - Fehlerstatus
  *
