@@ -29,8 +29,8 @@ double   last.LotSize;                                                  // mit d
 string   last.StartConditions = "";                                     // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
 string   last.StopConditions  = "";                                     // in init() daraus restauriert.
 
-int      instance.id;                                                   // eine Instanz (mit eigener Statusdatei) verwaltet mehrere eigenständige Sequenzen
-bool     instance.isTest;                                               // ob die Instanz eine Testinstanz ist (im Tester oder im Online-Chart)
+int      instance.id;                                                   // eine Instanz (mit eigener Statusdatei) verwaltet mehrere unabhängige Sequenzen
+bool     instance.isTest;                                               // ob die Instanz eine Testinstanz ist und nur Testsequenzen verwaltet (im Tester oder im Online-Chart)
 
 // ---------------------------------------------------------------
 bool     start.trend.condition;
@@ -53,88 +53,95 @@ datetime weekend.resume.condition = D'1970.01.01 01:10';                // späte
 datetime weekend.resume.time;
 
 // ---------------------------------------------------------------
-int      l.sequence.id,                 s.sequence.id;
-int      l.sequence.status,             s.sequence.status;
-string   l.sequence.status.file[2],     s.sequence.status.file[2];      // [0] => Verzeichnis (relativ zu ".\files\"), [1] => Dateiname
-double   l.sequence.startEquity,        s.sequence.startEquity;         // Equity bei Start der Sequenz
-bool     l.sequence.weStop.active,      s.sequence.weStop.active;       // Weekend-Stop aktiv (unterscheidet zwischen vorübergehend und dauerhaft gestoppten Sequenzen)
-bool     l.sequence.weResume.triggered, s.sequence.weResume.triggered;  // ???
+int      sequence.id           [2];
+bool     sequence.isTest       [2];
+int      sequence.status       [2];
+string   sequence.status.file  [2][2];                                  // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
+
+int      sequence.direction    [2];
+int      sequence.gridSize     [2];
+double   sequence.lotSize      [2];
+double   sequence.commission   [2];                                     // Commission-Betrag je Level
+
+int      sequence.level        [2];                                     // aktueller Grid-Level
+int      sequence.maxLevel     [2];                                     // maximal erreichter Grid-Level
+double   sequence.startEquity  [2];                                     // Equity bei Sequenzstart
+bool     sequence.weStop.active[2];                                     // Weekend-Stop aktiv (unterscheidet vorübergehend und dauerhaft gestoppte Sequenzen)
+
+int      sequence.stops        [2];                                     // Anzahl der bisher getriggerten Stops
+double   sequence.stopsPL      [2];                                     // kumulierter P/L aller bisher ausgestoppten Positionen
+double   sequence.closedPL     [2];                                     // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
+double   sequence.floatingPL   [2];                                     // kumulierter P/L aller aktuell offenen Positionen
+double   sequence.totalPL      [2];                                     // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
+double   sequence.openRisk     [2];                                     // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
+double   sequence.valueAtRisk  [2];                                     // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
+double   sequence.maxProfit    [2];                                     // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
+double   sequence.maxDrawdown  [2];                                     // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
+double   sequence.breakeven    [2];
 
 // ---------------------------------------------------------------
-int      l.sequenceStart.event [],      s.sequenceStart.event [];       // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime l.sequenceStart.time  [],      s.sequenceStart.time  [];
-double   l.sequenceStart.price [],      s.sequenceStart.price [];
-double   l.sequenceStart.profit[],      s.sequenceStart.profit[];
+int      sequence.ss.events    [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size von Start- und Stopdaten (sind jeweils synchron)
+int      sequenceStart.event   [];                                      // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime sequenceStart.time    [];
+double   sequenceStart.price   [];
+double   sequenceStart.profit  [];
 
-int      l.sequenceStop.event  [],      s.sequenceStop.event  [];       // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime l.sequenceStop.time   [],      s.sequenceStop.time   [];
-double   l.sequenceStop.price  [],      s.sequenceStop.price  [];
-double   l.sequenceStop.profit [],      s.sequenceStop.profit [];
-
-// ---------------------------------------------------------------
-int      l.level,                       s.level;                        // aktueller Grid-Level
-int      l.maxLevel,                    s.maxLevel;                     // maximal erreichter Grid-Level
-
-int      l.gridbase.event[],            s.gridbase.event[];             // Gridbasis-Daten
-datetime l.gridbase.time [],            s.gridbase.time [];
-double   l.gridbase.value[],            s.gridbase.value[];
-double   l.gridbase,                    s.gridbase;                     // aktuelle Gridbasis
-
-int      l.stops,                       s.stops;                        // Anzahl der bisher getriggerten Stops
-double   l.stopsPL,                     s.stopsPL;                      // kumulierter P/L aller bisher ausgestoppten Positionen
-double   l.closedPL,                    s.closedPL;                     // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
-double   l.floatingPL,                  s.floatingPL;                   // kumulierter P/L aller aktuell offenen Positionen
-double   l.totalPL,                     s.totalPL;                      // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
-double   l.openRisk,                    s.openRisk;                     // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
-double   l.valueAtRisk,                 s.valueAtRisk;                  // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
-double   l.breakeven,                   s.breakeven;
-
-double   l.maxProfit,                   s.maxProfit;                    // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
-double   l.maxDrawdown,                 s.maxDrawdown;                  // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
+int      sequenceStop.event    [];                                      // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequenceStop.time     [];
+double   sequenceStop.price    [];
+double   sequenceStop.profit   [];
 
 // ---------------------------------------------------------------
-int      l.orders.ticket        [],     s.orders.ticket        [];
-int      l.orders.level         [],     s.orders.level         [];      // Gridlevel der Order
-double   l.orders.gridBase      [],     s.orders.gridBase      [];      // Gridbasis der Order
-
-int      l.orders.pendingType   [],     s.orders.pendingType   [];      // Pending-Orderdaten (falls zutreffend)
-datetime l.orders.pendingTime   [],     s.orders.pendingTime   [];      // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
-double   l.orders.pendingPrice  [],     s.orders.pendingPrice  [];
-
-int      l.orders.type          [],     s.orders.type          [];
-int      l.orders.openEvent     [],     s.orders.openEvent     [];
-datetime l.orders.openTime      [],     s.orders.openTime      [];
-double   l.orders.openPrice     [],     s.orders.openPrice     [];
-double   l.orders.openRisk      [],     s.orders.openRisk      [];      // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
-
-int      l.orders.closeEvent    [],     s.orders.closeEvent    [];
-datetime l.orders.closeTime     [],     s.orders.closeTime     [];
-double   l.orders.closePrice    [],     s.orders.closePrice    [];
-double   l.orders.stopLoss      [],     s.orders.stopLoss      [];
-bool     l.orders.clientSL      [],     s.orders.clientSL      [];      // client- oder server-seitiger StopLoss
-bool     l.orders.closedBySL    [],     s.orders.closedBySL    [];
-
-double   l.orders.swap          [],     s.orders.swap          [];
-double   l.orders.commission    [],     s.orders.commission    [];
-double   l.orders.profit        [],     s.orders.profit        [];
+int      gridbase.events       [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      gridbase.event        [];                                      // Gridbasis-Daten
+datetime gridbase.time         [];
+double   gridbase.value        [];
+double   gridbase              [];                                      // aktuelle Gridbasis
 
 // ---------------------------------------------------------------
-int      l.ignorePendingOrders  [],     s.ignorePendingOrders  [];      // orphaned tickets to ignore
-int      l.ignoreOpenPositions  [],     s.ignoreOpenPositions  [];
-int      l.ignoreClosedPositions[],     s.ignoreClosedPositions[];
+int      orders                [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      orders.ticket         [];
+int      orders.level          [];                                      // Gridlevel der Order
+double   orders.gridBase       [];                                      // Gridbasis der Order
+
+int      orders.pendingType    [];                                      // Pending-Orderdaten (falls zutreffend)
+datetime orders.pendingTime    [];                                      // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
+double   orders.pendingPrice   [];
+
+int      orders.type           [];
+int      orders.openEvent      [];
+datetime orders.openTime       [];
+double   orders.openPrice      [];
+double   orders.openRisk       [];                                      // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
+
+int      orders.closeEvent     [];
+datetime orders.closeTime      [];
+double   orders.closePrice     [];
+double   orders.stopLoss       [];
+bool     orders.clientSL       [];                                      // client- oder server-seitiger StopLoss
+bool     orders.closedBySL     [];
+
+double   orders.swap           [];
+double   orders.commission     [];
+double   orders.profit         [];
 
 // ---------------------------------------------------------------
-double   commission;                                                    // Commission-Betrag je Level
+int      ignores               [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      ignore.pendingOrders  [];                                      // orphaned tickets to ignore
+int      ignore.openPositions  [];
+int      ignore.closedPositions[];
 
 // ---------------------------------------------------------------
-string   str.l.stops,                   str.s.stops;                    // Zwischenspeicher zur schnelleren Abarbeitung von ShowStatus()
-string   str.l.stopsPL,                 str.s.stopsPL;
-string   str.l.totalPL,                 str.s.totalPL;
-string   str.l.plStatistics,            str.s.plStatistics;
+string   str.sequence.stops    [2];                                     // Zwischenspeicher für schnelleres ShowStatus(): je Sequenz
+string   str.sequence.stopsPL  [2];
+string   str.sequence.totalPL  [2];
+string   str.sequence.plStats  [2];
 
-string   str.LotSize;
-string   str.totalPL;
-string   str.plStatistics;
+// ---------------------------------------------------------------
+string   str.instance.lotSize;                                          // Zwischenspeicher für schnelleres ShowStatus(): gesamt
+string   str.instance.totalPL;
+string   str.instance.plStats;
+// ---------------------------------------------------------------
 
 
 #include <SnowRoller/init-dual.mqh>
@@ -166,18 +173,13 @@ bool Strategy(int direction) {
    bool changes;                                                     // Gridbasis- oder -leveländerung
    int  status, stops[];                                             // getriggerte client-seitige Stops
 
-   if      (direction == D_LONG ) status = l.sequence.status;
-   else if (direction == D_SHORT) status = s.sequence.status;
-   else return(!catch("Strategy()   illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE));
-
-
    // (1) Strategie wartet auf Startsignal, ...
-   if (status == STATUS_UNINITIALIZED) {
+   if (sequence.status[direction] == STATUS_UNINITIALIZED) {
       if (IsStartSignal(direction))   StartSequence(direction);
    }
 
    // (2) ... oder auf ResumeSignal ...
-   else if (status == STATUS_STOPPED) {
+   else if (sequence.status[direction] == STATUS_STOPPED) {
       if  (IsResumeSignal(direction)) ResumeSequence(direction);
       else return(!IsLastError());
    }
@@ -209,6 +211,7 @@ bool IsStartSignal(int direction) {
    int iNull[];
 
    if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+      // Startbedingung wird nur bei onBarOpen geprüft, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -216,7 +219,7 @@ bool IsStartSignal(int direction) {
       int    lag         = start.trend.lag;
       int    signal      = 0;
 
-      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal)) {
+      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directionFlags[direction], signal)) {
          if (signal != 0) {
             if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
             return(true);
@@ -271,7 +274,13 @@ bool IsStopSignal(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence(int direction) {
-   return(!catch("StartSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   if (__STATUS_ERROR)                                     return( false);
+   if (sequence.status[direction] != STATUS_UNINITIALIZED) return(_false(catch("StartSequence(1)   cannot start "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
+
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[direction]) +" sequence now?"))
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+   return(!catch("StartSequence(2)", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
@@ -692,43 +701,43 @@ int ShowStatus() {
    if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT), "]");
    else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error       ), "]");
 
-   switch (l.sequence.status) {
+   switch (sequence.status[D_LONG]) {
       case STATUS_UNINITIALIZED:
-      case STATUS_WAITING:       l.msg =                                        " waiting";                                                 break;
-      case STATUS_STARTING:      l.msg = StringConcatenate("  ", l.sequence.id, " starting at level ",    l.level, "  (", l.maxLevel, ")"); break;
-      case STATUS_PROGRESSING:   l.msg = StringConcatenate("  ", l.sequence.id, " progressing at level ", l.level, "  (", l.maxLevel, ")"); break;
-      case STATUS_STOPPING:      l.msg = StringConcatenate("  ", l.sequence.id, " stopping at level ",    l.level, "  (", l.maxLevel, ")"); break;
-      case STATUS_STOPPED:       l.msg = StringConcatenate("  ", l.sequence.id, " stopped at level ",     l.level, "  (", l.maxLevel, ")"); break;
+      case STATUS_WAITING:       l.msg =                                              " waiting";                                                                                  break;
+      case STATUS_STARTING:      l.msg = StringConcatenate("  ", sequence.id[D_LONG], " starting at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_PROGRESSING:   l.msg = StringConcatenate("  ", sequence.id[D_LONG], " progressing at level ",  sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_STOPPING:      l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopping at level ",     sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
+      case STATUS_STOPPED:       l.msg = StringConcatenate("  ", sequence.id[D_LONG], " stopped at level ",      sequence.level[D_LONG],  "  (", sequence.maxLevel[D_LONG],  ")"); break;
       default:
-         return(catch("ShowStatus(1)   illegal long sequence status = "+ l.sequence.status, ERR_RUNTIME_ERROR));
+         return(catch("ShowStatus(1)   illegal long sequence status = "+ sequence.status[D_LONG], ERR_RUNTIME_ERROR));
    }
 
-   switch (s.sequence.status) {
+   switch (sequence.status[D_SHORT]) {
       case STATUS_UNINITIALIZED:
-      case STATUS_WAITING:       s.msg =                                        " waiting";                                                 break;
-      case STATUS_STARTING:      s.msg = StringConcatenate("  ", s.sequence.id, " starting at level ",    s.level, "  (", s.maxLevel, ")"); break;
-      case STATUS_PROGRESSING:   s.msg = StringConcatenate("  ", s.sequence.id, " progressing at level ", s.level, "  (", s.maxLevel, ")"); break;
-      case STATUS_STOPPING:      s.msg = StringConcatenate("  ", s.sequence.id, " stopping at level ",    s.level, "  (", s.maxLevel, ")"); break;
-      case STATUS_STOPPED:       s.msg = StringConcatenate("  ", s.sequence.id, " stopped at level ",     s.level, "  (", s.maxLevel, ")"); break;
+      case STATUS_WAITING:       s.msg =                                               " waiting";                                                                                 break;
+      case STATUS_STARTING:      s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " starting at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_PROGRESSING:   s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " progressing at level ", sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_STOPPING:      s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopping at level ",    sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
+      case STATUS_STOPPED:       s.msg = StringConcatenate("  ", sequence.id[D_SHORT], " stopped at level ",     sequence.level[D_SHORT], "  (", sequence.maxLevel[D_SHORT], ")"); break;
       default:
-         return(catch("ShowStatus(2)   illegal short sequence status = "+ s.sequence.status, ERR_RUNTIME_ERROR));
+         return(catch("ShowStatus(2)   illegal short sequence status = "+ sequence.status[D_SHORT], ERR_RUNTIME_ERROR));
    }
 
-   string msg = StringConcatenate(__NAME__, str.error,                                   NL,
-                                                                                         NL,
-                                  "Grid:           ", GridSize, " pip",                  NL,
-                                  "LotSize:       ",  str.LotSize,                       NL,
-                                  "Start:          ", StartConditions,                   NL,
-                                  "Stop:          ",  StopConditions,                    NL,
-                                  "Profit/Loss:   ",  str.totalPL, str.plStatistics,     NL,
-                                                                                         NL,
-                                  "LONG:       ",     l.msg,                             NL,
-                                  "Stops:         ",  str.l.stops, str.l.stopsPL,        NL,
-                                  "Profit/Loss:   ",  str.l.totalPL, str.l.plStatistics, NL,
-                                                                                         NL,
-                                  "SHORT:     ",      s.msg,                             NL,
-                                  "Stops:         ",  str.s.stops, str.s.stopsPL,        NL,
-                                  "Profit/Loss:   ",  str.s.totalPL, str.s.plStatistics, NL);
+   string msg = StringConcatenate(__NAME__, str.error,                                                              NL,
+                                                                                                                    NL,
+                                  "Grid:           ", GridSize, " pip",                                             NL,
+                                  "LotSize:       ",  str.instance.lotSize,                                         NL,
+                                  "Start:          ", StartConditions,                                              NL,
+                                  "Stop:          ",  StopConditions,                                               NL,
+                                  "Profit/Loss:   ",  str.instance.totalPL, str.instance.plStats,                   NL,
+                                                                                                                    NL,
+                                  "LONG:       ",     l.msg,                                                        NL,
+                                  "Stops:         ",  str.sequence.stops[D_LONG], str.sequence.stopsPL[D_LONG],     NL,
+                                  "Profit/Loss:   ",  str.sequence.totalPL[D_LONG], str.sequence.plStats[D_LONG],   NL,
+                                                                                                                    NL,
+                                  "SHORT:     ",      s.msg,                                                        NL,
+                                  "Stops:         ",  str.sequence.stops[D_SHORT], str.sequence.stopsPL[D_SHORT],   NL,
+                                  "Profit/Loss:   ",  str.sequence.totalPL[D_SHORT], str.sequence.plStats[D_SHORT], NL);
 
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -756,8 +765,7 @@ void SS.InstanceId() {
 void SS.LotSize() {
    if (!IsChart)
       return;
-
-   str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - commission, 2), "/stop");
+   str.instance.lotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize), 2), "/stop");
 }
 
 

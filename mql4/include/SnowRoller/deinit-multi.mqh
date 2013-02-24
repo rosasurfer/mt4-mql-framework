@@ -14,16 +14,6 @@ int onDeinitParameterChange() {
 
 
 /**
- * EA von Hand entfernt (Chart -> Expert -> Remove) oder neuer EA drübergeladen
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRemove() {
-   return(last_error);
-}
-
-
-/**
  * Symbol- oder Timeframewechsel
  *
  * @return int - Fehlerstatus
@@ -69,6 +59,16 @@ int onDeinitUndefined() {
       return(last_error);
    }
    return(catch("onDeinitUndefined()", ERR_RUNTIME_ERROR));          // mal schaun, wer hier wann reintappt
+}
+
+
+/**
+ * EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRemove() {
+   return(last_error);
 }
 
 

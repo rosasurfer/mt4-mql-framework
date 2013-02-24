@@ -90,16 +90,16 @@ bool IsValidSequenceStatus(int value) {
 
 
 /**
- * BarOpen-Eventhandler zur Erkennung von MA-Trendwechseln.
+ * Prüft auf MA-Trendwechsel
  *
  * @param  int    timeframe   - zu verwendender Timeframe
  * @param  string maPeriods   - Indikator-Parameter
  * @param  string maTimeframe - Indikator-Parameter
  * @param  string maMethod    - Indikator-Parameter
- * @param  int    lag         - Trigger-Verzögerung, größer oder gleich 0
+ * @param  int    lag         - Trigger-Verzögerung, größer/gleich 0
  * @param  int    directions  - Kombination von Trend-Flags:
- *                              MODE_UPTREND   - ein Wechsel zum Up-Trend wird signalisiert
- *                              MODE_DOWNTREND - ein Wechsel zum Down-Trend wird signalisiert
+ *                              MODE_UPTREND   - Wechsel zum Up-Trend wird signalisiert
+ *                              MODE_DOWNTREND - Wechsel zum Down-Trend wird signalisiert
  * @param  int    lpSignal    - Zeiger auf Variable zur Signalaufnahme (+: Wechsel zum Up-Trend, -: Wechsel zum Down-Trend)
  *
  * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)

@@ -1,5 +1,5 @@
- m /**
- * SnowRoller-Strategy: beliebig viele jeweils unabhängige Sequencen je Richtung
+/**
+ * SnowRoller-Strategy: mehrere voneinander unabhängige Sequenzen, auch je Richtung
  *
  *
  *  TODO:
@@ -51,7 +51,7 @@ datetime weekend.stop.time;
 int      sequence.id           [];
 bool     sequence.test         [];                                   // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
 int      sequence.status       [];
-string   sequence.status.file  [][2];                                // [0] - Verzeichnis (relativ zu ".\files\"), [1] - Dateiname der Statusdatei
+string   sequence.status.file  [][2];                                // [0] - Verzeichnis relativ zu ".\files\", [1] - Dateiname der Statusdatei
 double   sequence.lotSize      [];
 double   sequence.startEquity  [];                                   // Equity bei Start der Sequenz
 bool     sequence.weStop.active[];                                   // Weekend-Stop aktiv (unterscheidet zwischen vorübergehend und dauerhaft gestoppten Sequenzen)
@@ -158,7 +158,7 @@ bool StartSequence(int hSeq) {
    if (sequence.status[hSeq] != STATUS_WAITING)    return(_false(catch("StartSequence(2)   cannot start "+ statusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
-      return(_false(SetLastError(ERR_CANCELLED_BY_USER), catch("StartSequence(3)")));
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    if (__LOG) log("StartSequence()   starting sequence "+ sequence.id[hSeq]);
    SetCustomLog(sequence.id[hSeq], NULL);                            // TODO: statt Sequenz-ID Log-Handle verwenden
@@ -199,7 +199,7 @@ bool StartSequence(int hSeq) {
    if (grid.level[hSeq] != 0) {
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
-      return(_false(catch("StartSequence(4.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+      return(_false(catch("StartSequence(3.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
       sequenceStart.price[ArraySize(sequenceStart.price)-1] = startPrice;
    }
 
@@ -219,7 +219,7 @@ bool StartSequence(int hSeq) {
 
    RedrawStartStop(hSeq);
    if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(grid.level[hSeq], " and level "+ grid.level[hSeq], "")));
-   return(!last_error|catch("StartSequence(4)"));
+   return(!last_error|catch("StartSequence(3)"));
 }
 
 

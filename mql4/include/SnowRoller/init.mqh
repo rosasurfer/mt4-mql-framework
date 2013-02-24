@@ -136,18 +136,6 @@ int onInitChartClose() {
 
 
 /**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
  * Kein UninitializeReason gesetzt
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
@@ -165,6 +153,18 @@ int onInitUndefined() {
       return(last_error);
 
    return(onInitChartClose());      // nein: neuer EA      -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
+}
+
+
+/**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitRemove() {
+   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
 }
 
 
@@ -202,7 +202,7 @@ int afterInit() {
 
 
 /**
- * Die Statusbox besteht aus 3 nebeneinander angeordneten "Quadraten" (Font "Webdings", Zeichen 'g').
+ * Die Statusbox besteht aus untereinander angeordneten Quadraten (Font "Webdings", Zeichen 'g').
  *
  * @return int - Fehlerstatus
  */
@@ -220,7 +220,7 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(1)"));
-      //PushChartObject(label);
+      PushChartObject(label);
    }
    ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet(label, OBJPROP_XDISTANCE, x[0]);
@@ -233,7 +233,7 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(2)"));
-      //PushChartObject(label);
+      PushChartObject(label);
    }
    ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet(label, OBJPROP_XDISTANCE, x[1]);
@@ -246,7 +246,7 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(3)"));
-      //PushChartObject(label);
+      PushChartObject(label);
    }
    ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet(label, OBJPROP_XDISTANCE, x[2]);

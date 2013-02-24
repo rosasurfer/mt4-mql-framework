@@ -53,18 +53,6 @@ int onInitChartClose() {
 
 
 /**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
  * Kein UninitializeReason gesetzt
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
@@ -82,6 +70,18 @@ int onInitUndefined() {
       return(last_error);
 
    return(onInitChartClose());      // nein: neuer EA      -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
+}
+
+
+/**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitRemove() {
+   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
 }
 
 

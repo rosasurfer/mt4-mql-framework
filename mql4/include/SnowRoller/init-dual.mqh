@@ -49,18 +49,6 @@ int onInitChartClose() {
 
 
 /**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInitRemove() {
-   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
-}
-
-
-/**
  * Kein UninitializeReason gesetzt
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
@@ -82,6 +70,18 @@ int onInitUndefined() {
 
 
 /**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitRemove() {
+   return(onInitChartClose());                                       // Funktionalität entspricht onInitChartClose()
+}
+
+
+/**
  * Nach Recompilation
  *
  * - altes Chartfenster, vorheriger EA, kein Input-Dialog, Statusdaten im Chart
@@ -97,4 +97,44 @@ int onInitRecompile() {
 
    ClearStickyStatus();
    return(last_error);
+}
+
+
+/**
+ * Postprocessing-Hook nach Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int afterInit() {
+   CreateStatusBox();
+   return(last_error);
+}
+
+
+/**
+ * Die Statusbox besteht aus untereinander angeordneten Quadraten (Font "Webdings", Zeichen 'g').
+ *
+ * @return int - Fehlerstatus
+ */
+int CreateStatusBox() {
+   if (!IsChart)
+      return(false);
+
+   int x=0, y[]={33, 66}, fontSize=115, rectangles=ArraySize(y);
+   color  bgColor = C'248,248,248';                                  // entspricht Chart-Background
+   string label;
+
+   for (int i=0; i < rectangles; i++) {
+      label = StringConcatenate(__NAME__, ".statusbox."+ (i+1));
+      if (ObjectFind(label) != 0) {
+         if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
+            return(_false(catch("CreateStatusBox(1)")));
+         PushChartObject(label);
+      }
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label, OBJPROP_XDISTANCE, x   );
+      ObjectSet(label, OBJPROP_YDISTANCE, y[i]);
+      ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
+   }
+   return(!catch("CreateStatusBox(2)"));
 }

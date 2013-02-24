@@ -5,10 +5,11 @@
 #define SID_MAX                 16383                                // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
 
 
-// Griddirection-Flags
-#define D_LONG           MODE_UPTREND                                // 1
-#define D_SHORT        MODE_DOWNTREND                                // 2
-string  directionDescr[] = {"undefined", "Long", "Short"};
+// Griddirection-Types und Flags
+#define D_LONG                OP_LONG                                //  0
+#define D_SHORT              OP_SHORT                                //  1
+int     directionFlags[] = {MODE_UPTREND, MODE_DOWNTREND};           // {1, 2}
+string  directionDescr[] = {"Long"      , "Short"       };
 
 
 // Sequenzstatus-Werte
@@ -40,7 +41,7 @@ string  scpDescr[] = {"Bid", "Ask", "Avg"};
 // Start/StopDisplay-Modes
 #define SDM_NONE                    0                                // - keine Anzeige -
 #define SDM_PRICE    SYMBOL_LEFTPRICE                                // Preismarker
-int startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
+int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 
 
 // OrderDisplay-Flags
@@ -54,7 +55,7 @@ int startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 #define ODM_STOPS                   1                                // Pending,       ClosedBySL
 #define ODM_PYRAMID                 2                                // Pending, Open,             Closed
 #define ODM_ALL                     3                                // Pending, Open, ClosedBySL, Closed
-int orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
+int     orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
 
 // OrderDisplay-Farben
 #define CLR_PENDING                 DeepSkyBlue

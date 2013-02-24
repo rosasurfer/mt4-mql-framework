@@ -379,7 +379,7 @@ bool StartSequence() {
    if (status != STATUS_WAITING) return(_false(catch("StartSequence(1)   cannot start "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new sequence now?"))
-      return(_false(SetLastError(ERR_CANCELLED_BY_USER), catch("StartSequence(2)")));
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
    if (__LOG) log("StartSequence()   starting sequence");
@@ -394,10 +394,10 @@ bool StartSequence() {
    ArrayPushDouble(sequenceStart.price,  startPrice     );
    ArrayPushDouble(sequenceStart.profit, 0              );
 
-   ArrayPushInt   (sequenceStop.event,  0);                          // Größe von sequenceStarts/Stops synchron halten
-   ArrayPushInt   (sequenceStop.time,   0);
-   ArrayPushDouble(sequenceStop.price,  0);
-   ArrayPushDouble(sequenceStop.profit, 0);
+   ArrayPushInt   (sequenceStop.event,   0              );           // Größe von sequenceStarts/Stops synchron halten
+   ArrayPushInt   (sequenceStop.time,    0              );
+   ArrayPushDouble(sequenceStop.price,   0              );
+   ArrayPushDouble(sequenceStop.profit,  0              );
 
    sequenceStartEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
@@ -412,7 +412,7 @@ bool StartSequence() {
    Grid.BaseReset(startTime, gridBase);
 
 
-   // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
+   // (3) ggf. Startpositionen in den Markt legen und SequenceStart-Price aktualisieren
    if (grid.level != 0) {
       if (!UpdateOpenPositions(iNull, startPrice))
          return(false);
@@ -435,7 +435,7 @@ bool StartSequence() {
 
 
    if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(grid.level, " and level "+ grid.level, "")));
-   return(!last_error|catch("StartSequence(3)"));
+   return(!last_error|catch("StartSequence(2)"));
 }
 
 

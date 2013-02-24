@@ -65,6 +65,17 @@ int onDeinitUndefined() {
 
 
 /**
+ * Nur Online: EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRemove() {
+   RemoveChartObjects();
+   return(NO_ERROR);
+}
+
+
+/**
  * Recompilation
  *
  * @return int - Fehlerstatus
