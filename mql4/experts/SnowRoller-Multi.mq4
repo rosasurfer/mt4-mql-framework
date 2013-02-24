@@ -84,8 +84,8 @@ datetime grid.base.time  [];
 double   grid.base.value [];
 
 
-#include <SnowRoller/init.strategy.mqh>
-#include <SnowRoller/deinit.strategy.mqh>
+#include <SnowRoller/init-multi.mqh>
+#include <SnowRoller/deinit-multi.mqh>
 
 
 /**

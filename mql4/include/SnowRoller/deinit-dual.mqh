@@ -9,17 +9,8 @@ int onDeinitParameterChange() {
    last.GridSize        = GridSize;
    last.LotSize         = LotSize;
    last.StartConditions = StringConcatenate(StartConditions, "");    // Pointer-Bug bei String-Inputvariablen (siehe MQL.doc)
+   last.StopConditions  = StringConcatenate(StopConditions,  "");
    return(-1);
-}
-
-
-/**
- * EA von Hand entfernt (Chart -> Expert -> Remove) oder neuer EA drübergeladen
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRemove() {
-   return(last_error);
 }
 
 
@@ -46,13 +37,14 @@ int onDeinitChartChange() {
  */
 int onDeinitChartClose() {
    // (1) Im Tester
-   if (IsTesting())
+   if (IsTesting()) {
       if (!__STATUS_ERROR)
          SetLastError(ERR_CANCELLED_BY_USER);
       return(last_error);
+   }
 
    // (2) Nicht im Tester
-   StoreStickyStatus();                                              // für Terminal-Restart oder Profile-Wechsel
+   StoreStickyStatus();                                              // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
 

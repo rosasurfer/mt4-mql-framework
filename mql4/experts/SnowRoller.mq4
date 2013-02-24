@@ -250,7 +250,7 @@ int      ignoreOpenPositions  [];
 int      ignoreClosedPositions[];
 
 // ---------------------------------
-string   str.LotSize           = "";                                 // Zwischenspeicher für schnellere Abarbeitung von ShowStatus()
+string   str.LotSize           = "";                                 // Zwischenspeicher zur schnelleren Abarbeitung von ShowStatus()
 string   str.startConditions   = "";
 string   str.stopConditions    = "";
 string   str.grid.direction    = "";
@@ -2448,24 +2448,16 @@ int CreateMagicNumber(int level) {
  * @return int - Fehlerstatus
  */
 int ShowStatus() {
-   if (!IsChart) {
-      if (__STATUS_ERROR)
-         if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, "  [", ErrorDescription(last_error), "]"));
+   if (!IsChart)
       return(NO_ERROR);
-   }
 
    string msg, str.error;
 
-   if      (__STATUS_INVALID_INPUT) {
-      str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT), "]");
-   }
-   else if (__STATUS_ERROR) {
-      str.error = StringConcatenate("  [", ErrorDescription(last_error), "]");
-      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, str.error));
-   }
+   if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT), "]");
+   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error       ), "]");
 
    switch (status) {
-      case STATUS_UNINITIALIZED: msg = " not initialized";                                                                                    break;
+      case STATUS_UNINITIALIZED: msg =                                      " not initialized";                                               break;
       case STATUS_WAITING:       msg = StringConcatenate("  ", Sequence.ID, " waiting"                                                     ); break;
       case STATUS_STARTING:      msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    grid.level, "  (", grid.maxLevel, ")"); break;
       case STATUS_PROGRESSING:   msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", grid.level, "  (", grid.maxLevel, ")"); break;
@@ -2484,8 +2476,8 @@ int ShowStatus() {
                            str.startConditions,                                    // enthält bereits NL, wenn gesetzt
                            str.stopConditions);                                    // enthält bereits NL, wenn gesetzt
 
-   // 2 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(StringConcatenate(NL, NL, msg));
+   // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
+   Comment(StringConcatenate(NL, NL, NL, msg));
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
 
@@ -2500,12 +2492,7 @@ int ShowStatus() {
    if (status == STATUS_UNINITIALIZED) ObjectDelete(label);
    else                                ObjectSetText(label, StringConcatenate(Sequence.ID, "|", status), 1);
 
-
-   if (IsError(catch("ShowStatus(3)"))) {
-      if (__LOG) log(StringConcatenate("ShowStatus()   last_error=", last_error, "  [", ErrorDescription(last_error), "]"));
-      return(last_error);
-   }
-   return(NO_ERROR);
+   return(catch("ShowStatus(3)"));
 }
 
 

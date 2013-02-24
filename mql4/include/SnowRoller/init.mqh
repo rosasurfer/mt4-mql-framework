@@ -7,11 +7,9 @@
  * @return int - Fehlerstatus
  */
 int onInitParameterChange() {
-   bool interactive = true;
-
    StoreConfiguration();
 
-   if (!ValidateConfiguration(interactive)) {
+   if (!ValidateConfiguration(true)) {                               // interactive = true
       RestoreConfiguration();
       return(last_error);
    }
@@ -154,11 +152,12 @@ int onInitRemove() {
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
  * - nach File->New->Chart:  neues Chartfenster, neuer EA, Input-Dialog
+ * - im Tester:              neues Chartfenster bei VisualMode=On, neuer EA, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  */
 int onInitUndefined() {
-   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem/neuem EA)
+   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem und neuem EA)
    if (RestoreStickyStatus())
       return(onInitRecompile());    // ja:   vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
 

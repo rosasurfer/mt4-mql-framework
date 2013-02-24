@@ -7,11 +7,9 @@
  * @return int - Fehlerstatus
  */
 int onInitParameterChange() {
-   bool interactive = true;
-
    StoreConfiguration();
 
-   if (!ValidateConfiguration(interactive))
+   if (!ValidateConfiguration(true))                                 // interactive = true
       RestoreConfiguration();
 
    return(last_error);
@@ -45,9 +43,7 @@ int onInitChartChange() {
  */
 int onInitChartClose() {
    bool interactive = true;
-
    ValidateConfiguration(interactive);
-
    return(last_error);
 }
 
