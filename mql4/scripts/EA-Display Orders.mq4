@@ -89,4 +89,5 @@ void DummyCalls() {
    CreateEventId();
    CreateSequenceId();
    IsSequenceStatus(NULL);
+   StatusToStr(NULL);
 }
