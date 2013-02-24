@@ -117,8 +117,8 @@ int init() { //throws ERS_TERMINAL_NOT_READY
          case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
          case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
          case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-         case REASON_REMOVE     : error = onInitRemove();          break;     //
          case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
+         case REASON_REMOVE     : error = onInitRemove();          break;     //
          case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
       }                                                                       //
    }                                                                          //
@@ -300,8 +300,8 @@ int deinit() {
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
    }                                                                             //
@@ -523,18 +523,6 @@ int onInitChartClose() {
 
 
 /**
- * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
- *
- * - altes Chartfenster, neuer EA, Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
  * Kein UninitializeReason gesetzt
  *
  * - nach Terminal-Neustart: neues Chartfenster, vorheriger EA, kein Input-Dialog
@@ -544,6 +532,18 @@ int onInitRemove() {
  * @return int - Fehlerstatus
  *
 int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Vorheriger EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * - altes Chartfenster, neuer EA, Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
    return(NO_ERROR);
 }
 
@@ -635,21 +635,21 @@ int onDeinitChartClose() {
 
 
 /**
- * Nur Online: Nach Chart->Expert Advisers->Remove
- *
- * @return int - Fehlerstatus
- *
-int onDeinitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
  * Kein UninitializeReason gesetzt: nur im Tester nach regulärem Ende (Testperiode zu Ende)
  *
  * @return int - Fehlerstatus
  *
 int onDeinitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nur Online: EA von Hand entfernt (Chart->Expert->Remove) oder neuer EA drübergeladen
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRemove() {
    return(NO_ERROR);
 }
 

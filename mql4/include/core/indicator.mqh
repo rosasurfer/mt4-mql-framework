@@ -90,11 +90,11 @@ int init() { //throws ERS_TERMINAL_NOT_READY
                                                                               //
    switch (UninitializeReason()) {                                            //
       case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück, bricht init() *nicht* ab
-      case REASON_REMOVE     : error = onInitRemove();          break;        // (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
+      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        // (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
       case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
       case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
       case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
+      case REASON_REMOVE     : error = onInitRemove();          break;        //
       case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
    }                                                                          //
    if (error == -1)                                                           // Gibt eine der Funktionen -1 zurück, bricht init() sofort ab.
@@ -261,11 +261,11 @@ int deinit() {
    if (error != -1) {                                                            //
       switch (UninitializeReason()) {                                            //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt.
-         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
-         case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
-         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
+         case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
+         case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
          case REASON_CHARTCLOSE : error = onDeinitChartClose();      break;      //
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
+         case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
       }                                                                          //
    }                                                                             //
@@ -402,16 +402,6 @@ int onInitParameterChange() {
 
 
 /**
- * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
  * nur extern: Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
  *
  * @return int - Fehlerstatus
@@ -430,6 +420,16 @@ int onInitChartChange() {
  * @return int - Fehlerstatus
  *
 int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
    return(NO_ERROR);
 }
 
