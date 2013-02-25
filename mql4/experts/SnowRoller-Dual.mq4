@@ -66,7 +66,7 @@ double   sequence.commission   [2];                                     // Commi
 int      sequence.level        [2];                                     // aktueller Grid-Level
 int      sequence.maxLevel     [2];                                     // maximal erreichter Grid-Level
 double   sequence.startEquity  [2];                                     // Equity bei Sequenzstart
-bool     sequence.weStop.active[2];                                     // Weekend-Stop aktiv (unterscheidet vorübergehend und dauerhaft gestoppte Sequenzen)
+bool     sequence.weStop.active[2];                                     // Weekend-Stop aktiv (unterscheidet vorübergehend von dauerhaft gestoppter Sequenz)
 
 int      sequence.stops        [2];                                     // Anzahl der bisher getriggerten Stops
 double   sequence.stopsPL      [2];                                     // kumulierter P/L aller bisher ausgestoppten Positionen
@@ -80,7 +80,7 @@ double   sequence.maxDrawdown  [2];                                     // maxim
 double   sequence.breakeven    [2];
 
 // ---------------------------------------------------------------
-int      sequence.ss.events    [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size von Start- und Stopdaten (sind jeweils synchron)
+int      sequence.ss.events    [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size von Start- und Stopdaten (sind beide synchron)
 int      sequenceStart.event   [];                                      // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
 datetime sequenceStart.time    [];
 double   sequenceStart.price   [];
@@ -96,7 +96,7 @@ int      gridbase.events       [2][3];                                  // [0]=>
 int      gridbase.event        [];                                      // Gridbasis-Daten
 datetime gridbase.time         [];
 double   gridbase.value        [];
-double   gridbase              [];                                      // aktuelle Gridbasis
+double   gridbase              [2];                                     // aktuelle Gridbasis
 
 // ---------------------------------------------------------------
 int      orders                [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
@@ -132,15 +132,15 @@ int      ignore.openPositions  [];
 int      ignore.closedPositions[];
 
 // ---------------------------------------------------------------
-string   str.sequence.stops    [2];                                     // Zwischenspeicher für schnelleres ShowStatus(): je Sequenz
-string   str.sequence.stopsPL  [2];
-string   str.sequence.totalPL  [2];
-string   str.sequence.plStats  [2];
-
-// ---------------------------------------------------------------
 string   str.instance.lotSize;                                          // Zwischenspeicher für schnelleres ShowStatus(): gesamt
 string   str.instance.totalPL;
 string   str.instance.plStats;
+
+string   str.sequence.id       [2];                                     // Zwischenspeicher für schnelleres ShowStatus(): Sequenz
+string   str.sequence.stops    [2];
+string   str.sequence.stopsPL  [2];
+string   str.sequence.totalPL  [2];
+string   str.sequence.plStats  [2];
 // ---------------------------------------------------------------
 
 
@@ -274,13 +274,150 @@ bool IsStopSignal(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence(int direction) {
-   if (__STATUS_ERROR)                                     return( false);
-   if (sequence.status[direction] != STATUS_UNINITIALIZED) return(_false(catch("StartSequence(1)   cannot start "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
-
+   if (__STATUS_ERROR)           return(false);
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[direction]) +" sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
+   if (!InitSequence(direction)) return(false);
 
-   return(!catch("StartSequence(2)", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(!catch("StartSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Initialisiert eine neue Sequenz. Aufruf nur aus StartSequence().
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool InitSequence(int direction) {
+   if (__STATUS_ERROR)                                     return( false);
+   if (sequence.status[direction] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (!ResetSequence(direction))                          return( false);
+
+   /*
+   // SnowRoller Original
+   int    sequenceId  = CreateSequenceId();
+   bool   isTest      = IsTesting(); SS.SequenceId(direction);
+   int    status      = STATUS_WAITING;
+   InitStatusFile(direction);
+
+
+   // SnowRoller-Multi
+   int    sid      = CreateSequenceId();
+   bool   test     = IsTesting();
+   int    gridSize = GridSize;
+   double lotSize  = LotSize;
+   int    status   = STATUS_WAITING;
+   */
+
+   return(!catch("InitSequence(2)", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Setzt alle Variablen einer Sequenz zurück.
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ResetSequence(int direction) {
+   int from, to, size, iResetValues[]={0,0,0};
+
+   sequence.id           [direction]    = 0;
+   sequence.isTest       [direction]    = false;
+   sequence.status       [direction]    = STATUS_UNINITIALIZED;
+   sequence.status.file  [direction][0] = "";
+   sequence.status.file  [direction][1] = "";
+
+   sequence.direction    [direction]    = 0;
+   sequence.gridSize     [direction]    = 0;
+   sequence.lotSize      [direction]    = 0;
+   sequence.commission   [direction]    = 0;
+
+   sequence.level        [direction]    = 0;
+   sequence.maxLevel     [direction]    = 0;
+   sequence.startEquity  [direction]    = 0;
+   sequence.weStop.active[direction]    = false;
+
+   sequence.stops        [direction]    = 0;
+   sequence.stopsPL      [direction]    = 0;
+   sequence.closedPL     [direction]    = 0;
+   sequence.floatingPL   [direction]    = 0;
+   sequence.totalPL      [direction]    = 0;
+   sequence.openRisk     [direction]    = 0;
+   sequence.valueAtRisk  [direction]    = 0;
+   sequence.maxProfit    [direction]    = 0;
+   sequence.maxDrawdown  [direction]    = 0;
+   sequence.breakeven    [direction]    = 0;
+
+      from = sequence.ss.events[direction][I_FROM];
+      to   = sequence.ss.events[direction][I_TO  ];
+      size = sequence.ss.events[direction][I_SIZE];
+   ArraySetIntArray(sequence.ss.events, direction, iResetValues);
+   //int      sequenceStart.event [];                                // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
+   //datetime sequenceStart.time  [];                                //       der verbleibenden Sequenzen entsprechend justieren.
+   //double   sequenceStart.price [];
+   //double   sequenceStart.profit[];
+   //int      sequenceStop.event  [];
+   //datetime sequenceStop.time   [];
+   //double   sequenceStop.price  [];
+   //double   sequenceStop.profit [];
+
+      from = gridbase.events[direction][I_FROM];
+      to   = gridbase.events[direction][I_TO  ];
+      size = gridbase.events[direction][I_SIZE];
+   ArraySetIntArray(gridbase.events, direction, iResetValues);
+   //int      gridbase.event[];                                      // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
+   //datetime gridbase.time [];                                      //       der verbleibenden Sequenzen entsprechend justieren.
+   //double   gridbase.value[];
+   gridbase              [direction]    = 0;
+
+      from = orders[direction][I_FROM];
+      to   = orders[direction][I_TO  ];
+      size = orders[direction][I_SIZE];
+   ArraySetIntArray(orders, direction, iResetValues);
+   //int      orders.ticket      [];                                 // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
+   //int      orders.level       [];                                 //       der verbleibenden Sequenzen entsprechend justieren.
+   //double   orders.gridBase    [];
+
+   //int      orders.pendingType [];
+   //datetime orders.pendingTime [];
+   //double   orders.pendingPrice[];
+
+   //int      orders.type        [];
+   //int      orders.openEvent   [];
+   //datetime orders.openTime    [];
+   //double   orders.openPrice   [];
+   //double   orders.openRisk    [];
+
+   //int      orders.closeEvent  [];
+   //datetime orders.closeTime   [];
+   //double   orders.closePrice  [];
+   //double   orders.stopLoss    [];
+   //bool     orders.clientSL    [];
+   //bool     orders.closedBySL  [];
+
+   //double   orders.swap        [];
+   //double   orders.commission  [];
+   //double   orders.profit      [];
+
+      from = ignores[direction][I_FROM];
+      to   = ignores[direction][I_TO  ];
+      size = ignores[direction][I_SIZE];
+   ArraySetIntArray(ignores, direction, iResetValues);
+   //int ignore.pendingOrders  [];                                   // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
+   //int ignore.openPositions  [];                                   //       der verbleibenden Sequenzen entsprechend justieren.
+   //int ignore.closedPositions[];
+
+   str.sequence.id       [direction] = "";
+   str.sequence.stops    [direction] = "";
+   str.sequence.stopsPL  [direction] = "";
+   str.sequence.totalPL  [direction] = "";
+   str.sequence.plStats  [direction] = "";
+
+   return(!catch("ResetSequence()"));
 }
 
 

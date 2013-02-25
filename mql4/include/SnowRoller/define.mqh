@@ -31,6 +31,12 @@ string  statusDescr[] = {"not initialized", "waiting", "starting", "progressing"
 #define EV_POSITION_CLOSE           6
 
 
+// Array-Indizes in Multi-Sequenz-Strategien
+#define I_FROM                      0
+#define I_TO                        1
+#define I_SIZE                      2
+
+
 // Start/StopCondition-PriceTypes
 #define SCP_BID                     0
 #define SCP_ASK                     1
