@@ -55,13 +55,11 @@ datetime weekend.resume.time;
 // ---------------------------------------------------------------
 int      sequence.id           [2];
 bool     sequence.isTest       [2];
-int      sequence.status       [2];
-string   sequence.status.file  [2][2];                                  // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
-
 int      sequence.direction    [2];
 int      sequence.gridSize     [2];
 double   sequence.lotSize      [2];
-double   sequence.commission   [2];                                     // Commission-Betrag je Level
+int      sequence.status       [2];
+string   sequence.statusFile   [2][2];                                  // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
 
 int      sequence.level        [2];                                     // aktueller Grid-Level
 int      sequence.maxLevel     [2];                                     // maximal erreichter Grid-Level
@@ -78,6 +76,7 @@ double   sequence.valueAtRisk  [2];                                     // vorra
 double   sequence.maxProfit    [2];                                     // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
 double   sequence.maxDrawdown  [2];                                     // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
 double   sequence.breakeven    [2];
+double   sequence.commission   [2];                                     // aktueller Commission-Betrag je Level
 
 // ---------------------------------------------------------------
 int      sequence.ss.events    [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size von Start- und Stopdaten (sind beide synchron)
@@ -277,7 +276,46 @@ bool StartSequence(int direction) {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
    if (!InitSequence(direction)) return(false);
 
-   return(!catch("StartSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+
+   sequence.status[direction] = STATUS_STARTING;                     // TODO: Logeintrag in globales und Sequenz-Log
+   if (__LOG) log("StartSequence()   starting "+ StringToLower(directionDescr[direction]) +" sequence "+ sequence.id[direction]);
+
+
+   // (1) Startvariablen setzen
+   sequence.startEquity[direction] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+
+   datetime startTime  = TimeCurrent();
+   double   startPrice = ifDouble(direction==D_SHORT, Bid, Ask);
+
+   ArrayPushInt   (sequenceStart.event,  CreateEventId());
+   ArrayPushInt   (sequenceStart.time,   startTime      );
+   ArrayPushDouble(sequenceStart.price,  startPrice     );
+   ArrayPushDouble(sequenceStart.profit, 0              );
+
+   ArrayPushInt   (sequenceStop.event,   0              );           // Größe von sequenceStarts/Stops synchron halten
+   ArrayPushInt   (sequenceStop.time,    0              );
+   ArrayPushDouble(sequenceStop.price,   0              );
+   ArrayPushDouble(sequenceStop.profit,  0              );
+
+
+   // (2) Gridbasis setzen (zeitlich nach sequenceStart.time)
+   GridBase.Reset(direction, startTime, startPrice);
+
+
+   // (3) Stop-Orders in den Markt legen
+   sequence.status[direction] = STATUS_PROGRESSING;
+
+   if (!UpdatePendingOrders(direction))
+      return(false);
+
+
+   // (4) Weekend-Stop aktualisieren
+   UpdateWeekendStop();
+   RedrawStartStop(direction);
+
+
+   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[direction], " and level "+ sequence.level[direction], ""));
+   return(!last_error|catch("StartSequence()"));
 }
 
 
@@ -293,23 +331,19 @@ bool InitSequence(int direction) {
    if (sequence.status[direction] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!ResetSequence(direction))                          return( false);
 
-   /*
-   // SnowRoller Original
-   int    sequenceId  = CreateSequenceId();
-   bool   isTest      = IsTesting(); SS.SequenceId(direction);
-   int    status      = STATUS_WAITING;
-   InitStatusFile(direction);
+   sequence.id       [direction] = CreateSequenceId();
+   sequence.isTest   [direction] = IsTest(); SS.SequenceId(direction);
+   sequence.direction[direction] = direction;
+   sequence.gridSize [direction] = GridSize;
+   sequence.lotSize  [direction] = LotSize;
+   sequence.status   [direction] = STATUS_WAITING;
 
+   if      (IsTesting()) sequence.statusFile[direction][I_DIR ] = "presets\\";
+   else if (IsTest())    sequence.statusFile[direction][I_DIR ] = "presets\\tester\\";
+   else                  sequence.statusFile[direction][I_DIR ] = "presets\\"+ ShortAccountCompany() +"\\";
+                         sequence.statusFile[direction][I_FILE] = StringToLower(StdSymbol()) +".SR."+ sequence.id[direction] +".set";
 
-   // SnowRoller-Multi
-   int    sid      = CreateSequenceId();
-   bool   test     = IsTesting();
-   int    gridSize = GridSize;
-   double lotSize  = LotSize;
-   int    status   = STATUS_WAITING;
-   */
-
-   return(!catch("InitSequence(2)", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(!catch("InitSequence(2)"));
 }
 
 
@@ -323,41 +357,41 @@ bool InitSequence(int direction) {
 bool ResetSequence(int direction) {
    int from, to, size, iResetValues[]={0,0,0};
 
-   sequence.id           [direction]    = 0;
-   sequence.isTest       [direction]    = false;
-   sequence.status       [direction]    = STATUS_UNINITIALIZED;
-   sequence.status.file  [direction][0] = "";
-   sequence.status.file  [direction][1] = "";
+   sequence.id           [direction]         = 0;
+   sequence.isTest       [direction]         = false;
+   sequence.direction    [direction]         = 0;
+   sequence.gridSize     [direction]         = 0;
+   sequence.lotSize      [direction]         = 0;
+   sequence.status       [direction]         = STATUS_UNINITIALIZED;
+   sequence.statusFile   [direction][I_DIR ] = "";
+   sequence.statusFile   [direction][I_FILE] = "";
 
-   sequence.direction    [direction]    = 0;
-   sequence.gridSize     [direction]    = 0;
-   sequence.lotSize      [direction]    = 0;
-   sequence.commission   [direction]    = 0;
+   sequence.level        [direction]         = 0;
+   sequence.maxLevel     [direction]         = 0;
+   sequence.startEquity  [direction]         = 0;
+   sequence.weStop.active[direction]         = false;
 
-   sequence.level        [direction]    = 0;
-   sequence.maxLevel     [direction]    = 0;
-   sequence.startEquity  [direction]    = 0;
-   sequence.weStop.active[direction]    = false;
-
-   sequence.stops        [direction]    = 0;
-   sequence.stopsPL      [direction]    = 0;
-   sequence.closedPL     [direction]    = 0;
-   sequence.floatingPL   [direction]    = 0;
-   sequence.totalPL      [direction]    = 0;
-   sequence.openRisk     [direction]    = 0;
-   sequence.valueAtRisk  [direction]    = 0;
-   sequence.maxProfit    [direction]    = 0;
-   sequence.maxDrawdown  [direction]    = 0;
-   sequence.breakeven    [direction]    = 0;
+   sequence.stops        [direction]         = 0;
+   sequence.stopsPL      [direction]         = 0;
+   sequence.closedPL     [direction]         = 0;
+   sequence.floatingPL   [direction]         = 0;
+   sequence.totalPL      [direction]         = 0;
+   sequence.openRisk     [direction]         = 0;
+   sequence.valueAtRisk  [direction]         = 0;
+   sequence.maxProfit    [direction]         = 0;
+   sequence.maxDrawdown  [direction]         = 0;
+   sequence.breakeven    [direction]         = 0;
+   sequence.commission   [direction]         = 0;
 
       from = sequence.ss.events[direction][I_FROM];
       to   = sequence.ss.events[direction][I_TO  ];
       size = sequence.ss.events[direction][I_SIZE];
    ArraySetIntArray(sequence.ss.events, direction, iResetValues);
-   //int      sequenceStart.event [];                                // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
-   //datetime sequenceStart.time  [];                                //       der verbleibenden Sequenzen entsprechend justieren.
+   //int      sequenceStart.event [];                                // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
+   //datetime sequenceStart.time  [];
    //double   sequenceStart.price [];
    //double   sequenceStart.profit[];
+   //
    //int      sequenceStop.event  [];
    //datetime sequenceStop.time   [];
    //double   sequenceStop.price  [];
@@ -367,17 +401,17 @@ bool ResetSequence(int direction) {
       to   = gridbase.events[direction][I_TO  ];
       size = gridbase.events[direction][I_SIZE];
    ArraySetIntArray(gridbase.events, direction, iResetValues);
-   //int      gridbase.event[];                                      // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
-   //datetime gridbase.time [];                                      //       der verbleibenden Sequenzen entsprechend justieren.
+   //int      gridbase.event[];                                      // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
+   //datetime gridbase.time [];
    //double   gridbase.value[];
-   gridbase              [direction]    = 0;
+   gridbase[direction] = 0;
 
       from = orders[direction][I_FROM];
       to   = orders[direction][I_TO  ];
       size = orders[direction][I_SIZE];
    ArraySetIntArray(orders, direction, iResetValues);
-   //int      orders.ticket      [];                                 // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
-   //int      orders.level       [];                                 //       der verbleibenden Sequenzen entsprechend justieren.
+   //int      orders.ticket      [];                                 // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
+   //int      orders.level       [];
    //double   orders.gridBase    [];
 
    //int      orders.pendingType [];
@@ -405,15 +439,15 @@ bool ResetSequence(int direction) {
       to   = ignores[direction][I_TO  ];
       size = ignores[direction][I_SIZE];
    ArraySetIntArray(ignores, direction, iResetValues);
-   //int ignore.pendingOrders  [];                                   // TODO: Alte Elemente löschen, um Speicherleck zu schließen, und Indizes
-   //int ignore.openPositions  [];                                   //       der verbleibenden Sequenzen entsprechend justieren.
+   //int ignore.pendingOrders  [];                                   // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
+   //int ignore.openPositions  [];
    //int ignore.closedPositions[];
 
-   str.sequence.id       [direction] = "";
-   str.sequence.stops    [direction] = "";
-   str.sequence.stopsPL  [direction] = "";
-   str.sequence.totalPL  [direction] = "";
-   str.sequence.plStats  [direction] = "";
+   str.sequence.id     [direction] = "";
+   str.sequence.stops  [direction] = "";
+   str.sequence.stopsPL[direction] = "";
+   str.sequence.totalPL[direction] = "";
+   str.sequence.plStats[direction] = "";
 
    return(!catch("ResetSequence()"));
 }
@@ -888,7 +922,7 @@ int ShowStatus() {
  */
 void SS.InstanceId() {
    if (IsTesting()) {
-      if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR-Dual.", instance.id)))
+      if (!SetWindowTextA(GetTesterWindow(), "Tester - SR-Dual."+ instance.id))
          catch("SS.InstanceId()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    }
 }
@@ -900,7 +934,19 @@ void SS.InstanceId() {
 void SS.LotSize() {
    if (!IsChart)
       return;
-   str.instance.lotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize), 2), "/stop");
+   str.instance.lotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(GridSize * PipValue(LotSize), 2) +"/stop";
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.id
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ */
+void SS.SequenceId(int direction) {
+   if (!IsChart)
+      return;
+   str.sequence.id[direction] = ifString(sequence.isTest[direction], "T", "") + sequence.id[direction];
 }
 
 

@@ -187,17 +187,17 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
 
 
 /**
- * Generiert eine neue Sequenz-ID. Im Tester werden fortlaufende IDs generiert.
+ * Generiert eine neue Sequenz-ID.
  *
  * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount());
-   int id;
+   int id;                                                     // TODO: Im Tester müssen fortlaufende IDs generiert werden.
    while (id < SID_MIN || id > SID_MAX) {
       id = MathRand();
    }
-   return(id);                                                 // TODO: auf Eindeutigkeit prüfen
+   return(id);                                                 // TODO: ID auf Eindeutigkeit prüfen
 }
 
 

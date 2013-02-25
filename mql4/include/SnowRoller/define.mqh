@@ -36,6 +36,10 @@ string  statusDescr[] = {"not initialized", "waiting", "starting", "progressing"
 #define I_TO                        1
 #define I_SIZE                      2
 
+#define I_DIRECTORY                 0
+#define I_DIR             I_DIRECTORY
+#define I_FILE                      1
+
 
 // Start/StopCondition-PriceTypes
 #define SCP_BID                     0

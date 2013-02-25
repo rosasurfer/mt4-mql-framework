@@ -51,7 +51,7 @@ datetime weekend.stop.time;
 int      sequence.id           [];
 bool     sequence.test         [];                                   // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
 int      sequence.status       [];
-string   sequence.status.file  [][2];                                // [0] - Verzeichnis relativ zu ".\files\", [1] - Dateiname der Statusdatei
+string   sequence.statusFile   [][2];                                // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
 double   sequence.lotSize      [];
 double   sequence.startEquity  [];                                   // Equity bei Start der Sequenz
 bool     sequence.weStop.active[];                                   // Weekend-Stop aktiv (unterscheidet zwischen vorübergehend und dauerhaft gestoppten Sequenzen)
@@ -192,7 +192,7 @@ bool StartSequence(int hSeq) {
       grid.maxLevel[hSeq] = grid.level[hSeq];
       gridBase            = NormalizeDouble(startPrice - grid.level[hSeq]*grid.size[hSeq]*Pips, Digits);
    }
-   Grid.BaseReset(hSeq, startTime, gridBase);
+   GridBase.Reset(hSeq, startTime, gridBase);
 
 
    // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
@@ -310,11 +310,11 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
  *
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
-double Grid.BaseReset(int hSeq, datetime time, double value) {
+double GridBase.Reset(int hSeq, datetime time, double value) {
    if (__STATUS_ERROR)                             return(0);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_ZERO(catch("Grid.BaseReset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_ZERO(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   return(_ZERO(catch("Grid.BaseReset(2)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_ZERO(catch("GridBase.Reset(2)", ERR_FUNCTION_NOT_IMPLEMENTED)));
 }
 
 
@@ -368,11 +368,11 @@ bool InitStatusLocation(int hSeq) {
    if (__STATUS_ERROR)                             return( false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_false(catch("InitStatusLocation(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   if      (IsTesting())         sequence.status.file[hSeq][0] = "presets\\";
-   else if (sequence.test[hSeq]) sequence.status.file[hSeq][0] = "presets\\tester\\";
-   else                          sequence.status.file[hSeq][0] = "presets\\"+ ShortAccountCompany() +"\\";
+   if      (IsTesting())         sequence.statusFile[hSeq][0] = "presets\\";
+   else if (sequence.test[hSeq]) sequence.statusFile[hSeq][0] = "presets\\tester\\";
+   else                          sequence.statusFile[hSeq][0] = "presets\\"+ ShortAccountCompany() +"\\";
 
-   sequence.status.file[hSeq][1] = StringConcatenate(StringToLower(StdSymbol()), ".SR.", sequence.id[hSeq], ".set");
+   sequence.statusFile[hSeq][1] = StringConcatenate(StringToLower(StdSymbol()), ".SR.", sequence.id[hSeq], ".set");
 
    return(!catch("InitStatusLocation(2)"));
 }
@@ -392,7 +392,7 @@ int Strategy.ResizeArrays(int size) {
       ArrayResize(sequence.id,            size);
       ArrayResize(sequence.test,          size);
       ArrayResize(sequence.status,        size);
-      ArrayResize(sequence.status.file,   size);
+      ArrayResize(sequence.statusFile,    size);
       ArrayResize(sequence.lotSize,       size);
       ArrayResize(sequence.startEquity,   size);
       ArrayResize(sequence.ss.events,     size);

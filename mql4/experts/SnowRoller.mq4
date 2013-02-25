@@ -409,7 +409,7 @@ bool StartSequence() {
       grid.maxLevel = start.level.value;
       gridBase      = NormalizeDouble(startPrice - grid.level*GridSize*Pips, Digits);
    }
-   Grid.BaseReset(startTime, gridBase);
+   GridBase.Reset(startTime, gridBase);
 
 
    // (3) ggf. Startpositionen in den Markt legen und SequenceStart-Price aktualisieren
@@ -418,7 +418,6 @@ bool StartSequence() {
          return(false);
       sequenceStart.price[ArraySize(sequenceStart.price)-1] = startPrice;
    }
-
 
    status = STATUS_PROGRESSING;
 
@@ -434,7 +433,7 @@ bool StartSequence() {
    RedrawStartStop();
 
 
-   if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(grid.level, " and level "+ grid.level, "")));
+   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(grid.level, " and level "+ grid.level, ""));
    return(!last_error|catch("StartSequence(2)"));
 }
 
@@ -676,7 +675,7 @@ bool ResumeSequence() {
       startTime     = TimeCurrent();
       startPrice    = ifDouble(grid.direction==D_SHORT, Bid, Ask);
       lastStopPrice = sequenceStop.price[ArraySize(sequenceStop.price)-1];
-      Grid.BaseChange(startTime, grid.base + startPrice - lastStopPrice);
+      GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
    }
    else {
       grid.base = NormalizeDouble(gridBase, Digits);                 // Gridbasis der vorhandenen Positionen übernehmen (sollte schon gesetzt sein, doch wer weiß...)
@@ -944,7 +943,7 @@ bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
          else                          grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(grid.base, last.grid.base)) {
-            Grid.BaseChange(TimeCurrent(), grid.base);
+            GridBase.Change(TimeCurrent(), grid.base);
             recalcBreakeven = true;
             lpChange        = true;
          }
@@ -1819,7 +1818,7 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
  *
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
-double Grid.BaseReset(datetime time, double value) {
+double GridBase.Reset(datetime time, double value) {
    if (__STATUS_ERROR)
       return(0);
 
@@ -1827,7 +1826,7 @@ double Grid.BaseReset(datetime time, double value) {
    ArrayResize(grid.base.time,  0);
    ArrayResize(grid.base.value, 0);
 
-   return(Grid.BaseChange(time, value));
+   return(GridBase.Change(time, value));
 }
 
 
@@ -1839,7 +1838,7 @@ double Grid.BaseReset(datetime time, double value) {
  *
  * @return double - die neue Gridbasis
  */
-double Grid.BaseChange(datetime time, double value) {
+double GridBase.Change(datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
    if (grid.maxLevel == 0) {                                         // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
