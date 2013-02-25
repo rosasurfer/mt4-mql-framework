@@ -1785,23 +1785,23 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
- * Weist ein Integer-Array einer Position innerhalb eines zweidimensionalen Arrays zu (enspricht array[i] = value für Arrays von Arrays).
+ * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (enspricht array[i] = values[] für Arrays von Arrays).
  *
- * @param  int array[][] - zu modifizierendes Array ein-dimensionaler Arrays
- * @param  int i         - Index der zu modifizierenden Position
- * @param  int value[]   - zuzuweisendes Array (Größe muß zum zu modifizierenden Array passen)
+ * @param  int array[][] - zu modifizierendes zwei-dimensionales Arrays
+ * @param  int i         - zu modifizierende Position
+ * @param  int values[]  - zuzuweisendes Array (Größe muß der zweiten Dimension des zu modifizierenden Arrays entsprechen)
  *
  * @return int - Fehlerstatus
  */
-int ArraySetIntArray(int array[][], int i, int value[]) {
-   if (ArrayDimension(array) != 2) return(catch("ArraySetIntArray(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayDimension(value) != 1) return(catch("ArraySetIntArray(2)   too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS));
+int ArraySetIntArray(int array[][], int i, int values[]) {
+   if (ArrayDimension(array) != 2)  return(catch("ArraySetIntArray(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1) return(catch("ArraySetIntArray(2)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(catch("ArraySetIntArray(3)   array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS));
-   if (i < 0 || i >= dim1)         return(catch("ArraySetIntArray(4)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ArraySize(values) != dim2)   return(catch("ArraySetIntArray(3)   array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (i < 0 || i >= dim1)          return(catch("ArraySetIntArray(4)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   CopyMemory(GetBufferAddress(array) + i*dim2*4, GetBufferAddress(value), dim2*4);
+   CopyMemory(GetBufferAddress(array) + i*dim2*4, GetBufferAddress(values), dim2*4);
    return(NO_ERROR);
 }
 
