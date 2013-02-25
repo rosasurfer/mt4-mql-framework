@@ -45,7 +45,7 @@
 
 
    // Arrays
-   int      ArraySetIntArray(int array[][], int i, int value[]);
+   int      ArraySetIntArray(int array[][], int i, int values[]);
 
    int      ArrayPushBool       (bool   array[],   bool   value  );
  //int      ArrayPushBoolArray  (bool   array[][], bool   value[]);
