@@ -191,7 +191,6 @@ bool Strategy(int direction) {
          if (changes)                UpdatePendingOrders(direction);
       }
    }
-
    return(!__STATUS_ERROR);
 }
 
