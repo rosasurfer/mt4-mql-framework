@@ -173,27 +173,26 @@ bool Strategy(int direction) {
    bool changes;                                                     // Gridbasis- oder -leveländerung
    int  status, stops[];                                             // getriggerte client-seitige Stops
 
-   // (1) Strategie wartet auf Startsignal, ...
+   // (1) Strategie wartet auf Startsignal ...
    if (sequence.status[direction] == STATUS_UNINITIALIZED) {
-      if (IsStartSignal(direction))   StartSequence(direction);
+      if (IsStartSignal(direction))  StartSequence(direction);
    }
 
    // (2) ... oder auf ResumeSignal ...
    else if (sequence.status[direction] == STATUS_STOPPED) {
-      if  (IsResumeSignal(direction)) ResumeSequence(direction);
-      else return(!IsLastError());
+      if (IsResumeSignal(direction)) ResumeSequence(direction);
    }
 
-   // (3) ... oder läuft
+   // (3) ... oder läuft.
    else if (UpdateStatus(direction, changes, stops)) {
-      if (IsStopSignal(direction))    StopSequence(direction);
+      if (IsStopSignal(direction))   StopSequence(direction);
       else {
-         if (ArraySize(stops) > 0)    ProcessClientStops(stops);
-         if (changes)                 UpdatePendingOrders(direction);
+         if (ArraySize(stops) > 0)   ProcessClientStops(stops);
+         if (changes)                UpdatePendingOrders(direction);
       }
    }
 
-   return(!IsLastError());
+   return(!__STATUS_ERROR);
 }
 
 
