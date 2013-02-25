@@ -721,7 +721,7 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
 
 /**
  *
- * @param  int hFile - Dateihandle der Historydatei
+ * @param  int hFile       - Dateihandle der Historydatei
  * @param  int startOffset
  * @param  int destOffset
  *
