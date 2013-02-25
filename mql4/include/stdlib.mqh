@@ -47,97 +47,91 @@
    // Arrays
    int      ArraySetIntArray(int array[][], int i, int values[]);
 
-   int      ArrayPushBool       (bool   array[],   bool   value  );
- //int      ArrayPushBoolArray  (bool   array[][], bool   value[]);
-   int      ArrayPushInt        (int    array[],   int    value  );
-   int      ArrayPushIntArray   (int    array[][], int    value[]);
-   int      ArrayPushDouble     (double array[],   double value  );
- //int      ArrayPushDoubleArray(double array[][], double value[]);
-   int      ArrayPushString     (string array[],   string value  );
- //int      ArrayPushStringArray(string array[][], string value[]);
+   int      ArrayPushBool    (bool   array[],   bool   value   );
+   int      ArrayPushInt     (int    array[],   int    value   );
+   int      ArrayPushIntArray(int    array[][], int    values[]);
+   int      ArrayPushDouble  (double array[],   double value   );
+   int      ArrayPushString  (string array[],   string value   );
 
-   bool     ArrayPopBool(bool array[]);
-   int      ArrayPopInt(int array[]);
+   bool     ArrayPopBool  (bool   array[]);
+   int      ArrayPopInt   (int    array[]);
    double   ArrayPopDouble(double array[]);
    string   ArrayPopString(string array[]);
 
-   int      ArrayUnshiftBool(bool array[], bool value);
-   int      ArrayUnshiftInt(int array[], int value);
+   int      ArrayUnshiftBool  (bool   array[], bool   value);
+   int      ArrayUnshiftInt   (int    array[], int    value);
    int      ArrayUnshiftDouble(double array[], double value);
    int      ArrayUnshiftString(string array[], string value);
 
-   bool     ArrayShiftBool(bool array[]);
-   int      ArrayShiftInt(int array[]);
+   bool     ArrayShiftBool  (bool   array[]);
+   int      ArrayShiftInt   (int    array[]);
    double   ArrayShiftDouble(double array[]);
    string   ArrayShiftString(string array[]);
 
-   int      ArrayDropBool(bool array[], bool value);
-   int      ArrayDropInt(int array[], int value);
+   int      ArrayDropBool  (bool   array[], bool   value);
+   int      ArrayDropInt   (int    array[], int    value);
    int      ArrayDropDouble(double array[], double value);
    int      ArrayDropString(string array[], string value);
 
-   int      ArraySpliceBools       (bool   array[],   int offset, int length);
- //int      ArraySpliceBoolArrays  (bool   array[][], int offset, int length);
-   int      ArraySpliceInts        (int    array[],   int offset, int length);
-   int      ArraySpliceIntArrays   (int    array[][], int offset, int length);
-   int      ArraySpliceDoubles     (double array[],   int offset, int length);
- //int      ArraySpliceDoubleArrays(double array[][], int offset, int length);
-   int      ArraySpliceStrings     (string array[],   int offset, int length);
- //int      ArraySpliceStringArrays(string array[][], int offset, int length);
+   int      ArraySpliceBools    (bool   array[],   int offset, int length);
+   int      ArraySpliceInts     (int    array[],   int offset, int length);
+   int      ArraySpliceIntArrays(int    array[][], int offset, int length);
+   int      ArraySpliceDoubles  (double array[],   int offset, int length);
+   int      ArraySpliceStrings  (string array[],   int offset, int length);
 
-   int      ArrayInsertBools(bool array[], int offset, bool values[]);
-   int      ArrayInsertInts(int array[], int offset, int values[]);
+   int      ArrayInsertBools  (bool   array[], int offset, bool   values[]);
+   int      ArrayInsertInts   (int    array[], int offset, int    values[]);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayInsertStrings(string array[], int offset, string values[]);
 
-   bool     BoolInArray(bool haystack[], bool needle);
-   bool     IntInArray(int haystack[], int needle);
+   bool     BoolInArray  (bool   haystack[], bool   needle);
+   bool     IntInArray   (int    haystack[], int    needle);
    bool     DoubleInArray(double haystack[], double needle);
    bool     StringInArray(string haystack[], string needle);
 
-   int      SearchBoolArray(bool haystack[], bool needle);
-   int      SearchIntArray(int haystack[], int needle);
+   int      SearchBoolArray  (bool   haystack[], bool   needle);
+   int      SearchIntArray   (int    haystack[], int    needle);
    int      SearchDoubleArray(double haystack[], double needle);
    int      SearchStringArray(string haystack[], string needle);
 
-   bool     ReverseBoolArray(bool array[]);
-   bool     ReverseIntArray(int array[]);
+   bool     ReverseBoolArray  (bool   array[]);
+   bool     ReverseIntArray   (int    array[]);
    bool     ReverseDoubleArray(double array[]);
    bool     ReverseStringArray(string array[]);
 
-   bool     IsReverseIndexedBoolArray(bool array[]);
-   bool     IsReverseIndexedIntArray(int array[]);
+   bool     IsReverseIndexedBoolArray  (bool   array[]);
+   bool     IsReverseIndexedIntArray   (int    array[]);
    bool     IsReverseIndexedDoubleArray(double array[]);
-   bool     IsReverseIndexedSringArray(string array[]);
+   bool     IsReverseIndexedSringArray (string array[]);
 
-   int      MergeBoolArrays(bool array1[], bool array2[], bool merged[]);
-   int      MergeIntArrays(int array1[], int array2[], int merged[]);
+   int      MergeBoolArrays  (bool   array1[], bool   array2[], bool   merged[]);
+   int      MergeIntArrays   (int    array1[], int    array2[], int    merged[]);
    int      MergeDoubleArrays(double array1[], double array2[], double merged[]);
    int      MergeStringArrays(string array1[], string array2[], string merged[]);
 
-   string   JoinBools(bool array[], string separator);
-   string   JoinInts(int array[], string separator);
+   string   JoinBools  (bool   array[], string separator);
+   string   JoinInts   (int    array[], string separator);
    string   JoinDoubles(double array[], string separator);
    string   JoinStrings(string array[], string separator);
    int      DoubleQuoteStrings(string array[]);
 
-   int      SumInts(int array[]);
+   int      SumInts   (int    array[]);
    double   SumDoubles(double array[]);
 
 
    // Buffer-Funktionen
-   int      InitializeBuffer(int buffer[], int length);
-   int      InitializeDoubleBuffer(double buffer[], int size);
+   int      InitializeBuffer      (int    buffer[], int length);
+   int      InitializeDoubleBuffer(double buffer[], int size  );
    int      InitializeStringBuffer(string buffer[], int length);
-   int      InitializeICustom(int buffer[], int ptr);
+   int      InitializeICustom     (int    buffer[], int ptr   );
 
-   string   BufferToStr(int buffer[]);
+   string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
 
    int      BufferGetChar(int buffer[], int pos);
    //int    BufferSetChar(int buffer[], int pos, int char);
 
-   string   BufferCharsToStr(int buffer[], int from, int length);   //string BufferGetStringA(int buffer[], int from, int length);     // Alias
+   string   BufferCharsToStr (int buffer[], int from, int length);  //string BufferGetStringA(int buffer[], int from, int length);     // Alias
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
 
    int      BufferSetString(int buffer[], int offset, string value);  int BufferSetStringA(int buffer[], int offset, string value);    // Alias
@@ -148,9 +142,9 @@
 
 
    // Conditional Statements
-   bool     ifBool(bool condition, bool bThen, bool bElse);
-   int      ifInt(bool condition, int iThen, int iElse);
-   double   ifDouble(bool condition, double dThen, double dElse);
+   bool     ifBool  (bool condition, bool   bThen,   bool   bElse  );
+   int      ifInt   (bool condition, int    iThen,   int    iElse  );
+   double   ifDouble(bool condition, double dThen,   double dElse  );
    string   ifString(bool condition, string strThen, string strElse);
 
 
@@ -158,22 +152,22 @@
    string   GetLocalConfigPath();
    string   GetGlobalConfigPath();
 
-   bool     IsConfigKey(string section, string key);
-   bool     IsLocalConfigKey(string section, string key);
+   bool     IsConfigKey      (string section, string key);
+   bool     IsLocalConfigKey (string section, string key);
    bool     IsGlobalConfigKey(string section, string key);
 
-   bool     GetConfigBool(string section, string key, bool defaultValue);
-   int      GetConfigInt(string section, string key, int defaultValue);
+   bool     GetConfigBool  (string section, string key, bool   defaultValue);
+   int      GetConfigInt   (string section, string key, int    defaultValue);
    double   GetConfigDouble(string section, string key, double defaultValue);
    string   GetConfigString(string section, string key, string defaultValue);
 
-   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
-   int      GetLocalConfigInt(string section, string key, int defaultValue);
+   bool     GetLocalConfigBool  (string section, string key, bool   defaultValue);
+   int      GetLocalConfigInt   (string section, string key, int    defaultValue);
    double   GetLocalConfigDouble(string section, string key, double defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
 
-   bool     GetGlobalConfigBool(string section, string key, bool defaultValue);
-   int      GetGlobalConfigInt(string section, string key, int defaultValue);
+   bool     GetGlobalConfigBool  (string section, string key, bool   defaultValue);
+   int      GetGlobalConfigInt   (string section, string key, int    defaultValue);
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
 
