@@ -79,9 +79,13 @@
    int      ArraySpliceDoubles  (double array[],   int offset, int length);
    int      ArraySpliceStrings  (string array[],   int offset, int length);
 
+   int      ArrayInsertBool   (bool   array[], int offset, bool   values  );
    int      ArrayInsertBools  (bool   array[], int offset, bool   values[]);
-   int      ArrayInsertInts   (int    array[], int offset, int    values[]);
+   int      ArrayInsertDouble (double array[], int offset, double values  );
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
+   int      ArrayInsertInt    (int    array[], int offset, int    values  );
+   int      ArrayInsertInts   (int    array[], int offset, int    values[]);
+   int      ArrayInsertString (string array[], int offset, string values  );
    int      ArrayInsertStrings(string array[], int offset, string values[]);
 
    bool     BoolInArray  (bool   haystack[], bool   needle);
@@ -142,10 +146,10 @@
 
 
    // Conditional Statements
-   bool     ifBool  (bool condition, bool   bThen,   bool   bElse  );
-   int      ifInt   (bool condition, int    iThen,   int    iElse  );
-   double   ifDouble(bool condition, double dThen,   double dElse  );
-   string   ifString(bool condition, string strThen, string strElse);
+   bool     ifBool  (bool condition, bool   bThen, bool   bElse);
+   int      ifInt   (bool condition, int    iThen, int    iElse);
+   double   ifDouble(bool condition, double dThen, double dElse);
+   string   ifString(bool condition, string sThen, string sElse);
 
 
    // Configuration

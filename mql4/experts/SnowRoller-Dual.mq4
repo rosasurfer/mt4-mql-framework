@@ -325,35 +325,44 @@ int AddStartEvent(int direction, datetime time, double price, double profit) {
    if (__STATUS_ERROR)
       return(0);
 
-   int eventId = CreateEventId();
+   int offset, event=CreateEventId();
 
-   ArrayPushInt   (sequenceStart.event,  eventId);
-   ArrayPushInt   (sequenceStart.time,   time   );
-   ArrayPushDouble(sequenceStart.price,  price  );
-   ArrayPushDouble(sequenceStart.profit, profit );
+   if (sequence.ss.events[direction][I_SIZE] == 0) {
+      offset = ArraySize(sequenceStart.event);
 
-   ArrayPushInt   (sequenceStop.event,   0      );                   // Größe von sequenceStarts/Stops synchron halten
-   ArrayPushInt   (sequenceStop.time,    0      );
-   ArrayPushDouble(sequenceStop.price,   0      );
-   ArrayPushDouble(sequenceStop.profit,  0      );
+      sequence.ss.events[direction][I_FROM] = offset;
+      sequence.ss.events[direction][I_TO  ] = offset;
+      sequence.ss.events[direction][I_SIZE] = 1;
+   }
+   else {
+      // Indizes "hinter" der zu modifizierenden Sequenz liegenden Sequenzen anpassen.
+      int sizeOfSequences = ArrayRange(sequence.ss.events, 0);
+      for (int i=0; i < sizeOfSequences; i++) {
+         if (sequence.ss.events[i][I_FROM] > sequence.ss.events[direction][I_FROM]) {
+            sequence.ss.events[i][I_FROM]++;
+            sequence.ss.events[i][I_TO  ]++;                         // I_SIZE unverändert
+         }
+      }
+      offset = sequence.ss.events[direction][I_TO] + 1;
+
+      sequence.ss.events[direction][I_TO  ]++;                       // I_FROM unverändert
+      sequence.ss.events[direction][I_SIZE]++;
+   }
+
+   // Eventdaten an Offset einfügen
+   ArrayInsertInt   (sequenceStart.event,  offset, event );
+   ArrayInsertInt   (sequenceStart.time,   offset, time  );
+   ArrayInsertDouble(sequenceStart.price,  offset, price );
+   ArrayInsertDouble(sequenceStart.profit, offset, profit);
+
+   ArrayInsertInt   (sequenceStop.event,   offset, 0     );          // Größe von sequenceStarts/Stops synchron halten
+   ArrayInsertInt   (sequenceStop.time,    offset, 0     );
+   ArrayInsertDouble(sequenceStop.price,   offset, 0     );
+   ArrayInsertDouble(sequenceStop.profit,  offset, 0     );
 
    if (!catch("AddStartEvent()"))
-      return(eventId);
+      return(event);
    return(0);
-
-   // ---------------------------------
-   int      sequence.ss.events  [2][3];                              // {I_FROM, I_TO, I_SIZE}
-
-   int      sequenceStart.event [];
-   datetime sequenceStart.time  [];
-   double   sequenceStart.price [];
-   double   sequenceStart.profit[];
-
-   int      sequenceStop.event  [];
-   datetime sequenceStop.time   [];
-   double   sequenceStop.price  [];
-   double   sequenceStop.profit [];
-   // ---------------------------------
 }
 
 
