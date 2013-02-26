@@ -2422,10 +2422,136 @@ int ArraySpliceStrings(string array[], int offset, int length) {
 
 
 /**
+ * Fügt ein Element an der angegebenen Position eines Bool-Arrays ein.
+ *
+ * @param  bool array[] - Bool-Array
+ * @param  int  offset  - Position, an dem das Element eingefügt werden soll
+ * @param  bool value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ */
+int ArrayInsertBool(bool &array[], int offset, bool value) {
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayInsertBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_int(-1, catch("ArrayInsertBool(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_int(-1, catch("ArrayInsertBool(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftBool(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushBool(array, value));
+
+   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+
+   return(size + 1);
+}
+
+
+/**
+ * Fügt ein Element an der angegebenen Position eines Integer-Arrays ein.
+ *
+ * @param  int array[] - Integer-Array
+ * @param  int offset  - Position, an dem das Element eingefügt werden soll
+ * @param  int value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ */
+int ArrayInsertInt(int &array[], int offset, int value) {
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayInsertInt(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_int(-1, catch("ArrayInsertInt(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_int(-1, catch("ArrayInsertInt(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftInt(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushInt(array, value));
+
+   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+
+   return(size + 1);
+}
+
+
+/**
+ * Fügt ein Element an der angegebenen Position eines Double-Arrays ein.
+ *
+ * @param  double array[] - Double-Array
+ * @param  int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  double value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ */
+int ArrayInsertDouble(double &array[], int offset, double value) {
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayInsertDouble(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_int(-1, catch("ArrayInsertDouble(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_int(-1, catch("ArrayInsertDouble(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftDouble(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushDouble(array, value));
+
+   // Einfügen innerhalb des Arrays (ArrayCopy() benutzt bei primitiven Arrays MoveMemory(), wir brauchen nicht mit einer zusätzlichen Kopie arbeiten)
+   ArrayCopy(array, array, offset+1, offset, size-offset);                       // Elemente nach Offset nach hinten schieben
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+
+   return(size + 1);
+}
+
+
+/**
+ * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
+ *
+ * @param  string array[] - String-Array
+ * @param  int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  string value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ */
+int ArrayInsertString(string &array[], int offset, string value) {
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayInsertString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_int(-1, catch("ArrayInsertString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_int(-1, catch("ArrayInsertString(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftString(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushString(array, value));
+
+   // Einfügen innerhalb des Arrays: ArrayCopy() überschreibt bei String-Arrays den sich überlappenden Bereich (wie CopyMemory()), zusätzliche Kopie nötig
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Elemente nach Offset kopieren
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente nach Offset nach hinten schieben (aus Kopie)
+   ArrayResize(tmp, 0);
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   return(size + 1);
+}
+
+
+/**
  * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
  * @param  bool array[]  - Ausgangs-Array
- * @param  int  offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  int  offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  bool values[] - einzufügende Elemente
  *
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
@@ -2462,7 +2588,7 @@ int ArrayInsertBools(bool array[], int offset, bool values[]) {
  * Fügt in ein Integer-Array die Elemente eines anderen Integer-Arrays ein.
  *
  * @param  int array[]  - Ausgangs-Array
- * @param  int offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  int offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  int values[] - einzufügende Elemente
  *
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
@@ -2499,7 +2625,7 @@ int ArrayInsertInts(int array[], int offset, int values[]) {
  * Fügt in ein Double-Array die Elemente eines anderen Double-Arrays ein.
  *
  * @param  double array[]  - Ausgangs-Array
- * @param  int    offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  double values[] - einzufügende Elemente
  *
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
@@ -2536,7 +2662,7 @@ int ArrayInsertDoubles(double array[], int offset, double values[]) {
  * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
  *
  * @param  string array[]  - Ausgangs-Array
- * @param  int    offset   - Offset des Ausgangs-Arrays, an dem die Elemente eingefügt werden sollen
+ * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
  * @param  string values[] - einzufügende Elemente
  *
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
