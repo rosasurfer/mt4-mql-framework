@@ -93,6 +93,7 @@ double   sequenceStop.profit   [];
 
 // ---------------------------------------------------------------
 int      gridbase.events       [2][3];                                  // {I_FROM, I_TO, I_SIZE}
+
 int      gridbase.event        [];                                      // Gridbasis-Daten
 datetime gridbase.time         [];
 double   gridbase.value        [];
@@ -289,14 +290,14 @@ bool StartSequence(int direction) {
    double   startProfit = 0;
    AddStartEvent(direction, startTime, startPrice, startProfit);
 
-   /*
-   // (2) Gridbasis setzen (zeitlich nach sequenceStart.time)
+
+   // (2) Gridbasis setzen (zeitlich nach startTime)
    GridBase.Reset(direction, startTime, startPrice);
 
-
-   // (3) Stop-Orders in den Markt legen
    sequence.status[direction] = STATUS_PROGRESSING;
 
+   /*
+   // (3) Stop-Orders in den Markt legen
    if (!UpdatePendingOrders(direction))
       return(false);
 
@@ -308,6 +309,95 @@ bool StartSequence(int direction) {
 
    if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[direction], " and level "+ sequence.level[direction], ""));
    return(!last_error|catch("StartSequence()"));
+}
+
+
+/**
+ * Löscht alle gespeicherten Änderungen der Gridbasis einer Sequenz und initialisiert sie mit dem angegebenen Wert.
+ *
+ * @param  int      direction - D_LONG | D_SHORT
+ * @param  datetime time      - Zeitpunkt
+ * @param  double   value     - neue Gridbasis
+ *
+ * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
+ */
+double GridBase.Reset(int direction, datetime time, double value) {
+   if (__STATUS_ERROR)
+      return(0);
+
+   int from=gridbase.events[direction][I_FROM], size=gridbase.events[direction][I_SIZE];
+
+   if (size > 0) {
+      for (int i=0; i < 2; i++) {                                    // Indizes "hinter" der zurückzusetzenden Sequenz anpassen
+         if (gridbase.events[i][I_FROM] > from) {
+            gridbase.events[i][I_FROM] -= size;
+            gridbase.events[i][I_TO  ] -= size;                      // I_SIZE unverändert
+         }
+      }
+      gridbase.events[direction][I_FROM] = 0;                        // Indizes der zurückzusetzenden Sequenz anpassen
+      gridbase.events[direction][I_TO  ] = 0;
+      gridbase.events[direction][I_SIZE] = 0;
+
+      ArraySpliceInts   (gridbase.event, from, size);                // Elemente löschen
+      ArraySpliceInts   (gridbase.time,  from, size);
+      ArraySpliceDoubles(gridbase.value, from, size);
+
+      gridbase[direction] = 0;
+   }
+   return(GridBase.Change(direction, time, value));
+}
+
+
+/**
+ * Speichert eine Änderung der Gridbasis einer Sequenz.
+ *
+ * @param  int      direction - D_LONG | D_SHORT
+ * @param  datetime time      - Zeitpunkt der Änderung
+ * @param  double   value     - neue Gridbasis
+ *
+ * @return double - neue Gridbasis (for chaining)
+ */
+double GridBase.Change(int direction, datetime time, double value) {
+   value = NormalizeDouble(value, Digits);
+
+   int from=gridbase.events[direction][I_FROM], to=gridbase.events[direction][I_TO], size=gridbase.events[direction][I_SIZE];
+
+   if (size == 0) {
+      // insert                                                      // Änderung hinten anfügen
+      int newSize = ArrayPushInt   (gridbase.event, CreateEventId());
+                    ArrayPushInt   (gridbase.time,  time           );
+                    ArrayPushDouble(gridbase.value, value          );
+      gridbase.events[direction][I_FROM] = newSize-1;                // Indizes der neuen Sequenz setzen
+      gridbase.events[direction][I_TO  ] = newSize-1;
+      gridbase.events[direction][I_SIZE] = 1;
+   }
+   else {
+      int MM=time/MINUTE, lastMM=gridbase.time[to]/MINUTE;
+      if (sequence.maxLevel[direction]!=0 && MM!=lastMM) {
+         // insert                                                   // Änderung an Offset einfügen
+         ArrayInsertInt   (gridbase.event, to+1, CreateEventId());
+         ArrayInsertInt   (gridbase.time,  to+1, time           );
+         ArrayInsertDouble(gridbase.value, to+1, value          );
+
+         for (int i=0; i < 2; i++) {                                 // Indizes "hinter" der vergrößerten Sequenz anpassen
+            if (gridbase.events[i][I_FROM] > from) {
+               gridbase.events[i][I_FROM]++;
+               gridbase.events[i][I_TO  ]++;                         // I_SIZE unverändert
+            }
+         }
+         gridbase.events[direction][I_TO  ]++;                       // Indizes der vergrößerten Sequenz anpassen
+         gridbase.events[direction][I_SIZE]++;                       // I_FROM unverändert
+      }
+      else {
+         // replace                                                  // noch kein ausgeführter Trade oder mehrere Änderungen je Minute
+         gridbase.event[to] = CreateEventId();
+         gridbase.time [to] = time;
+         gridbase.value[to] = value;                                 // alle Indizes unverändert
+      }
+   }
+
+   gridbase[direction] = value;
+   return(value);
 }
 
 
@@ -335,9 +425,8 @@ int AddStartEvent(int direction, datetime time, double price, double profit) {
       sequence.ss.events[direction][I_SIZE] = 1;
    }
    else {
-      // Indizes "hinter" der zu modifizierenden Sequenz liegenden Sequenzen anpassen.
-      int sizeOfSequences = ArrayRange(sequence.ss.events, 0);
-      for (int i=0; i < sizeOfSequences; i++) {
+      // Indizes "hinter" der zu vergrößernden Sequenz entsprechend anpassen.
+      for (int i=0; i < 2; i++) {
          if (sequence.ss.events[i][I_FROM] > sequence.ss.events[direction][I_FROM]) {
             sequence.ss.events[i][I_FROM]++;
             sequence.ss.events[i][I_TO  ]++;                         // I_SIZE unverändert
@@ -402,7 +491,7 @@ bool InitSequence(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool ResetSequence(int direction) {
-   int from, to, size, iResetValues[]={0,0,0};
+   int from, size;
 
    sequence.id           [direction]         = 0;
    sequence.isTest       [direction]         = false;
@@ -430,65 +519,105 @@ bool ResetSequence(int direction) {
    sequence.breakeven    [direction]         = 0;
    sequence.commission   [direction]         = 0;
 
-      from = sequence.ss.events[direction][I_FROM];
-      to   = sequence.ss.events[direction][I_TO  ];
-      size = sequence.ss.events[direction][I_SIZE];
-   ArraySetIntArray(sequence.ss.events, direction, iResetValues);
-   //int      sequenceStart.event [];                                // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
-   //datetime sequenceStart.time  [];
-   //double   sequenceStart.price [];
-   //double   sequenceStart.profit[];
-   //
-   //int      sequenceStop.event  [];
-   //datetime sequenceStop.time   [];
-   //double   sequenceStop.price  [];
-   //double   sequenceStop.profit [];
+   from = sequence.ss.events[direction][I_FROM];
+   size = sequence.ss.events[direction][I_SIZE];
+   if (size > 0) {
+      ArraySpliceInts   (sequenceStart.event,  from, size);
+      ArraySpliceInts   (sequenceStart.time,   from, size);
+      ArraySpliceDoubles(sequenceStart.price,  from, size);
+      ArraySpliceDoubles(sequenceStart.profit, from, size);
 
-      from = gridbase.events[direction][I_FROM];
-      to   = gridbase.events[direction][I_TO  ];
-      size = gridbase.events[direction][I_SIZE];
-   ArraySetIntArray(gridbase.events, direction, iResetValues);
-   //int      gridbase.event[];                                      // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
-   //datetime gridbase.time [];
-   //double   gridbase.value[];
+      ArraySpliceInts   (sequenceStop.event,  from, size);
+      ArraySpliceInts   (sequenceStop.time,   from, size);
+      ArraySpliceDoubles(sequenceStop.price,  from, size);
+      ArraySpliceDoubles(sequenceStop.profit, from, size);
+
+      for (int i=0; i < 2; i++) {
+         if (sequence.ss.events[i][I_FROM] > from) {
+            sequence.ss.events[i][I_FROM] -= size;
+            sequence.ss.events[i][I_TO  ] -= size;                   // I_SIZE unverändert
+         }
+      }
+      sequence.ss.events[direction][I_FROM] = 0;
+      sequence.ss.events[direction][I_TO  ] = 0;
+      sequence.ss.events[direction][I_SIZE] = 0;
+   }
+
+   from = gridbase.events[direction][I_FROM];
+   size = gridbase.events[direction][I_SIZE];
+   if (size > 0) {
+      ArraySpliceInts   (gridbase.event, from, size);
+      ArraySpliceInts   (gridbase.time,  from, size);
+      ArraySpliceDoubles(gridbase.value, from, size);
+
+      for (i=0; i < 2; i++) {
+         if (gridbase.events[i][I_FROM] > from) {
+            gridbase.events[i][I_FROM] -= size;
+            gridbase.events[i][I_TO  ] -= size;                      // I_SIZE unverändert
+         }
+      }
+      gridbase.events[direction][I_FROM] = 0;
+      gridbase.events[direction][I_TO  ] = 0;
+      gridbase.events[direction][I_SIZE] = 0;
+   }
    gridbase[direction] = 0;
 
-      from = orders[direction][I_FROM];
-      to   = orders[direction][I_TO  ];
-      size = orders[direction][I_SIZE];
-   ArraySetIntArray(orders, direction, iResetValues);
-   //int      orders.ticket      [];                                 // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
-   //int      orders.level       [];
-   //double   orders.gridBase    [];
+   from = orders[direction][I_FROM];
+   size = orders[direction][I_SIZE];
+   if (size > 0) {
+      ArraySpliceInts   (orders.ticket,       from, size);
+      ArraySpliceInts   (orders.level,        from, size);
+      ArraySpliceDoubles(orders.gridBase,     from, size);
 
-   //int      orders.pendingType [];
-   //datetime orders.pendingTime [];
-   //double   orders.pendingPrice[];
+      ArraySpliceInts   (orders.pendingType,  from, size);
+      ArraySpliceInts   (orders.pendingTime,  from, size);
+      ArraySpliceDoubles(orders.pendingPrice, from, size);
 
-   //int      orders.type        [];
-   //int      orders.openEvent   [];
-   //datetime orders.openTime    [];
-   //double   orders.openPrice   [];
-   //double   orders.openRisk    [];
+      ArraySpliceInts   (orders.type,         from, size);
+      ArraySpliceInts   (orders.openEvent,    from, size);
+      ArraySpliceInts   (orders.openTime,     from, size);
+      ArraySpliceDoubles(orders.openPrice,    from, size);
+      ArraySpliceDoubles(orders.openRisk,     from, size);
 
-   //int      orders.closeEvent  [];
-   //datetime orders.closeTime   [];
-   //double   orders.closePrice  [];
-   //double   orders.stopLoss    [];
-   //bool     orders.clientSL    [];
-   //bool     orders.closedBySL  [];
+      ArraySpliceInts   (orders.closeEvent,   from, size);
+      ArraySpliceInts   (orders.closeTime,    from, size);
+      ArraySpliceDoubles(orders.closePrice,   from, size);
+      ArraySpliceDoubles(orders.stopLoss,     from, size);
+      ArraySpliceBools  (orders.clientSL,     from, size);
+      ArraySpliceBools  (orders.closedBySL,   from, size);
 
-   //double   orders.swap        [];
-   //double   orders.commission  [];
-   //double   orders.profit      [];
+      ArraySpliceDoubles(orders.swap,         from, size);
+      ArraySpliceDoubles(orders.commission,   from, size);
+      ArraySpliceDoubles(orders.profit,       from, size);
 
-      from = ignores[direction][I_FROM];
-      to   = ignores[direction][I_TO  ];
-      size = ignores[direction][I_SIZE];
-   ArraySetIntArray(ignores, direction, iResetValues);
-   //int ignore.pendingOrders  [];                                   // TODO: Alte Elemente löschen, um Speicherleck zu schließen.
-   //int ignore.openPositions  [];
-   //int ignore.closedPositions[];
+      for (i=0; i < 2; i++) {
+         if (orders[i][I_FROM] > from) {
+            orders[i][I_FROM] -= size;
+            orders[i][I_TO  ] -= size;                               // I_SIZE unverändert
+         }
+      }
+      orders[direction][I_FROM] = 0;
+      orders[direction][I_TO  ] = 0;
+      orders[direction][I_SIZE] = 0;
+   }
+
+   from = ignores[direction][I_FROM];
+   size = ignores[direction][I_SIZE];
+   if (size > 0) {
+      ArraySpliceInts(ignore.pendingOrders,   from, size);
+      ArraySpliceInts(ignore.openPositions,   from, size);
+      ArraySpliceInts(ignore.closedPositions, from, size);
+
+      for (i=0; i < 2; i++) {
+         if (ignores[i][I_FROM] > from) {
+            ignores[i][I_FROM] -= size;
+            ignores[i][I_TO  ] -= size;                              // I_SIZE unverändert
+         }
+      }
+      ignores[direction][I_FROM] = 0;
+      ignores[direction][I_TO  ] = 0;
+      ignores[direction][I_SIZE] = 0;
+   }
 
    str.sequence.id     [direction] = "";
    str.sequence.stops  [direction] = "";

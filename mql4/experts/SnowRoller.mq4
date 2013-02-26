@@ -772,10 +772,10 @@ bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
 
    // (1) Tickets aktualisieren
    for (int i=0; i < sizeOfTickets; i++) {
-      if (orders.closeTime[i] == 0) {                                            // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
-         wasPending = orders.type[i] == OP_UNDEFINED;
+      if (orders.closeTime[i] == 0) {                                            // Ticket prüfen, wenn es beim letzten Aufruf offen war
+         wasPending = (orders.type[i] == OP_UNDEFINED);
 
-         // (1.1) getriggerte client-seitige PendingOrders
+         // (1.1) client-seitige PendingOrders prüfen
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
                if (__LOG) log(UpdateStatus.StopTriggerMsg(i));
@@ -784,7 +784,7 @@ bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
             continue;
          }
 
-         // (1.2) Pseudo-Tickets werden intern geschlossen
+         // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
             orders.closeTime [i] = TimeCurrent();
@@ -1856,7 +1856,7 @@ double GridBase.Change(datetime time, double value) {
    else {
       int minutes=time/MINUTE, lastMinutes=grid.base.time[size-1]/MINUTE;
       if (minutes == lastMinutes) {
-         grid.base.event[size-1] = CreateEventId();                  // Änderungen der aktuellen Minute werden mit neuem Wert überschrieben
+         grid.base.event[size-1] = CreateEventId();                  // je Minute wird nur die letzte Änderung gespeichert
          grid.base.time [size-1] = time;
          grid.base.value[size-1] = value;
       }
