@@ -79,7 +79,8 @@ double   sequence.breakeven    [2];
 double   sequence.commission   [2];                                     // aktueller Commission-Betrag je Level
 
 // ---------------------------------------------------------------
-int      sequence.ss.events    [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size von Start- und Stopdaten (sind beide synchron)
+int      sequence.ss.events    [2][3];                                  // {I_FROM, I_TO, I_SIZE}: Start- und Stopdaten sind synchron
+
 int      sequenceStart.event   [];                                      // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
 datetime sequenceStart.time    [];
 double   sequenceStart.price   [];
@@ -91,14 +92,14 @@ double   sequenceStop.price    [];
 double   sequenceStop.profit   [];
 
 // ---------------------------------------------------------------
-int      gridbase.events       [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      gridbase.events       [2][3];                                  // {I_FROM, I_TO, I_SIZE}
 int      gridbase.event        [];                                      // Gridbasis-Daten
 datetime gridbase.time         [];
 double   gridbase.value        [];
 double   gridbase              [2];                                     // aktuelle Gridbasis
 
 // ---------------------------------------------------------------
-int      orders                [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      orders                [2][3];                                  // {I_FROM, I_TO, I_SIZE}
 int      orders.ticket         [];
 int      orders.level          [];                                      // Gridlevel der Order
 double   orders.gridBase       [];                                      // Gridbasis der Order
@@ -125,7 +126,7 @@ double   orders.commission     [];
 double   orders.profit         [];
 
 // ---------------------------------------------------------------
-int      ignores               [2][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size
+int      ignores               [2][3];                                  // {I_FROM, I_TO, I_SIZE}
 int      ignore.pendingOrders  [];                                      // orphaned tickets to ignore
 int      ignore.openPositions  [];
 int      ignore.closedPositions[];
@@ -277,27 +278,18 @@ bool StartSequence(int direction) {
    if (!InitSequence(direction)) return(false);
 
 
-   sequence.status[direction] = STATUS_STARTING;                     // TODO: Logeintrag in globales und Sequenz-Log
+   sequence.status[direction] = STATUS_STARTING;                     // TODO: Logeintrag in globalem und Sequenz-Log
    if (__LOG) log("StartSequence()   starting "+ StringToLower(directionDescr[direction]) +" sequence "+ sequence.id[direction]);
 
 
    // (1) Startvariablen setzen
    sequence.startEquity[direction] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   datetime startTime   = TimeCurrent();
+   double   startPrice  = ifDouble(direction==D_SHORT, Bid, Ask);
+   double   startProfit = 0;
+   AddStartEvent(direction, startTime, startPrice, startProfit);
 
-   datetime startTime  = TimeCurrent();
-   double   startPrice = ifDouble(direction==D_SHORT, Bid, Ask);
-
-   ArrayPushInt   (sequenceStart.event,  CreateEventId());
-   ArrayPushInt   (sequenceStart.time,   startTime      );
-   ArrayPushDouble(sequenceStart.price,  startPrice     );
-   ArrayPushDouble(sequenceStart.profit, 0              );
-
-   ArrayPushInt   (sequenceStop.event,   0              );           // Größe von sequenceStarts/Stops synchron halten
-   ArrayPushInt   (sequenceStop.time,    0              );
-   ArrayPushDouble(sequenceStop.price,   0              );
-   ArrayPushDouble(sequenceStop.profit,  0              );
-
-
+   /*
    // (2) Gridbasis setzen (zeitlich nach sequenceStart.time)
    GridBase.Reset(direction, startTime, startPrice);
 
@@ -312,10 +304,56 @@ bool StartSequence(int direction) {
    // (4) Weekend-Stop aktualisieren
    UpdateWeekendStop();
    RedrawStartStop(direction);
-
+   */
 
    if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[direction], " and level "+ sequence.level[direction], ""));
    return(!last_error|catch("StartSequence()"));
+}
+
+
+/**
+ * Fügt den Startdaten einer Sequenz ein Startevent hinzu.
+ *
+ * @param  int      direction - D_LONG | D_SHORT
+ * @param  datetime time      - Start-Time
+ * @param  double   price     - Start-Price
+ * @param  double   profit    - Start-Profit
+ *
+ * @return int - Event-ID oder 0, falls ein Fehler auftrat
+ */
+int AddStartEvent(int direction, datetime time, double price, double profit) {
+   if (__STATUS_ERROR)
+      return(0);
+
+   int eventId = CreateEventId();
+
+   ArrayPushInt   (sequenceStart.event,  eventId);
+   ArrayPushInt   (sequenceStart.time,   time   );
+   ArrayPushDouble(sequenceStart.price,  price  );
+   ArrayPushDouble(sequenceStart.profit, profit );
+
+   ArrayPushInt   (sequenceStop.event,   0      );                   // Größe von sequenceStarts/Stops synchron halten
+   ArrayPushInt   (sequenceStop.time,    0      );
+   ArrayPushDouble(sequenceStop.price,   0      );
+   ArrayPushDouble(sequenceStop.profit,  0      );
+
+   if (!catch("AddStartEvent()"))
+      return(eventId);
+   return(0);
+
+   // ---------------------------------
+   int      sequence.ss.events  [2][3];                              // {I_FROM, I_TO, I_SIZE}
+
+   int      sequenceStart.event [];
+   datetime sequenceStart.time  [];
+   double   sequenceStart.price [];
+   double   sequenceStart.profit[];
+
+   int      sequenceStop.event  [];
+   datetime sequenceStop.time   [];
+   double   sequenceStop.price  [];
+   double   sequenceStop.profit [];
+   // ---------------------------------
 }
 
 
