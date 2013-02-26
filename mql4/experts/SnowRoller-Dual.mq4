@@ -814,8 +814,55 @@ bool UpdatePendingOrders(int direction) {
    if (ordersChanged)                                                            // Status speichern
       if (!SaveStatus())
          return(false);
-
    return(!last_error|catch("UpdatePendingOrders(3)"));
+}
+
+
+/**
+ * Justiert PendingOpenPrice() und StopLoss() der angegebenen Order und aktualisiert die Orderarrays.
+ *
+ * @param  int i - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.TrailPendingOrder(int i) {
+   return(!catch("Grid.TrailPendingOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Streicht die angegebene Order und entfernt sie aus den Orderarrays.
+ *
+ * @param  int i - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.DeleteOrder(int i) {
+   return(!catch("Grid.DeleteOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Legt die angegebene Stop-Order in den Markt und fügt den Orderarrays deren Daten hinzu.
+ *
+ * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
+ * @param  int level - Gridlevel der Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.AddOrder(int type, int level) {
+   return(!catch("Grid.AddOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Speichert den Status der angegeben Sequenz, um später die nahtlose Re-Initialisierung im selben oder einem anderen Terminal
+ * zu ermöglichen.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SaveStatus() {
+   return(!catch("SaveStatus()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
 
