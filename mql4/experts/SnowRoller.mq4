@@ -1726,7 +1726,6 @@ bool UpdatePendingOrders() {
       ordersChanged = true;
    }
 
-
    if (ordersChanged)                                                                        // Status speichern
       if (!SaveStatus())
          return(false);

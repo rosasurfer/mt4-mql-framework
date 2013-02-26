@@ -16,10 +16,13 @@ int __DEINIT_FLAGS__[];
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
 
-extern int    GridSize        = 20;
-extern double LotSize         = 0.1;
-extern string StartConditions = "@trend(ALMA:3.5xD1)";
-extern string StopConditions  = "@profit(500)";
+extern            int    GridSize             = 20;
+extern            double LotSize              = 0.1;
+extern            string StartConditions      = "@trend(ALMA:3.5xD1)";
+extern            string StopConditions       = "@profit(500)";
+
+       /*sticky*/ int    startStopDisplayMode = SDM_PRICE;           // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
+                                                                     // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -293,22 +296,110 @@ bool StartSequence(int direction) {
 
    // (2) Gridbasis setzen (zeitlich nach startTime)
    GridBase.Reset(direction, startTime, startPrice);
-
    sequence.status[direction] = STATUS_PROGRESSING;
 
-   /*
+
    // (3) Stop-Orders in den Markt legen
    if (!UpdatePendingOrders(direction))
       return(false);
 
-
    // (4) Weekend-Stop aktualisieren
-   UpdateWeekendStop();
+   UpdateWeekendStop(direction);
    RedrawStartStop(direction);
-   */
 
    if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[direction], " and level "+ sequence.level[direction], ""));
    return(!last_error|catch("StartSequence()"));
+}
+
+
+/**
+ * Zeichnet die Start-/Stop-Marker der Sequenz neu.
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ */
+void RedrawStartStop(int direction) {
+   if (!IsChart)
+      return;
+
+   static color markerColor = DodgerBlue;
+
+   int from = sequence.ss.events[direction][I_FROM];
+   int to   = sequence.ss.events[direction][I_TO  ];
+   int size = sequence.ss.events[direction][I_SIZE];
+
+   datetime time;
+   double   price;
+   double   profit;
+   string   label;
+
+
+   if (size > 0) {
+      // (1) Start-Marker
+      for (int i=from; i <= to; i++) {
+         time   = sequenceStart.time  [i];
+         price  = sequenceStart.price [i];
+         profit = sequenceStart.profit[i];
+
+         label = StringConcatenate("SR.", sequence.id[direction], ".start.", i-from+1);
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+
+         if (startStopDisplayMode != SDM_NONE) {
+            ObjectCreate (label, OBJ_ARROW, 0, time, price);
+            ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
+            ObjectSet    (label, OBJPROP_BACK,      false               );
+            ObjectSet    (label, OBJPROP_COLOR,     markerColor         );
+            ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
+         }
+      }
+
+      // (2) Stop-Marker
+      for (i=from; i <= to; i++) {
+         time   = sequenceStop.time  [i];
+         price  = sequenceStop.price [i];
+         profit = sequenceStop.profit[i];
+         if (time > 0) {
+            label = StringConcatenate("SR.", sequence.id[direction], ".stop.", i-from+1);
+            if (ObjectFind(label) == 0)
+               ObjectDelete(label);
+
+            if (startStopDisplayMode != SDM_NONE) {
+               ObjectCreate (label, OBJ_ARROW, 0, time, price);
+               ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
+               ObjectSet    (label, OBJPROP_BACK,      false               );
+               ObjectSet    (label, OBJPROP_COLOR,     markerColor         );
+               ObjectSetText(label, StringConcatenate("Profit: ", DoubleToStr(profit, 2)));
+            }
+         }
+      }
+   }
+   catch("RedrawStartStop()");
+}
+
+
+/**
+ * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ */
+void UpdateWeekendStop(int direction) {
+   sequence.weStop.active[direction] = false;
+
+   datetime friday, now=ServerToFXT(TimeCurrent());
+
+   switch (TimeDayOfWeek(now)) {
+      case SUNDAY   : friday = now + 5*DAYS; break;
+      case MONDAY   : friday = now + 4*DAYS; break;
+      case TUESDAY  : friday = now + 3*DAYS; break;
+      case WEDNESDAY: friday = now + 2*DAYS; break;
+      case THURSDAY : friday = now + 1*DAY ; break;
+      case FRIDAY   : friday = now + 0*DAYS; break;
+      case SATURDAY : friday = now + 6*DAYS; break;
+   }
+   weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAY;
+   if (weekend.stop.time < now)
+      weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
+   weekend.stop.time = FXTToServerTime(weekend.stop.time);
 }
 
 
@@ -680,14 +771,51 @@ bool ProcessClientStops(int stops[]) {
 
 
 /**
- * Aktualisiert vorhandene, setzt fehlende und löscht unnötige PendingOrders.
+ * Aktualisiert vorhandene, setzt fehlende und löscht unnötige PendingOrders einer Sequenz.
  *
  * @param  int direction - D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders(int direction) {
-   return(!catch("UpdatePendingOrders()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   if (__STATUS_ERROR)                                   return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting())                return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[direction] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
+
+   int  from = orders[direction][I_FROM];
+   int  size = orders[direction][I_SIZE];
+
+   int  nextLevel = sequence.level[direction] + ifInt(direction==D_LONG, 1, -1);
+   bool nextOrderExists, ordersChanged;
+
+   for (int i=from+size-1; i >= from; i--) {
+      if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0) {     // if (isPending && !isClosed)
+         if (orders.level[i] == nextLevel) {
+            nextOrderExists = true;
+            if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], gridbase[direction] + nextLevel*GridSize*Pips)) {
+               if (!Grid.TrailPendingOrder(i))                                   // Order im ersten Level ggf. trailen
+                  return(false);
+               ordersChanged = true;
+            }
+            continue;
+         }
+         if (!Grid.DeleteOrder(i))                                               // unnötige Pending-Orders löschen
+            return(false);
+         ordersChanged = true;
+      }
+   }
+
+   if (!nextOrderExists) {                                                       // nötige Pending-Order in den Markt legen
+      if (!Grid.AddOrder(ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
+         return(false);
+      ordersChanged = true;
+   }
+
+   if (ordersChanged)                                                            // Status speichern
+      if (!SaveStatus())
+         return(false);
+
+   return(!last_error|catch("UpdatePendingOrders(3)"));
 }
 
 
@@ -949,6 +1077,13 @@ int StoreStickyStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
    ObjectSetText(label, StringConcatenate(ifString(IsTest(), "T", ""), instance.id), 1);
 
+   label = StringConcatenate(__NAME__, ".sticky.startStopDisplayMode");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
+
    label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -988,16 +1123,26 @@ bool RestoreStickyStatus() {
       int iValue = StrToInteger(strValue);
       if (iValue <= 0)
          return(_false(catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-
       instance.id = iValue; SS.InstanceId();
       idFound     = true;
       SetCustomLog(instance.id, NULL);
+
+      label = StringConcatenate(__NAME__, ".sticky.startStopDisplayMode");
+      if (ObjectFind(label) == 0) {
+         strValue = StringTrim(ObjectDescription(label));
+         if (!StringIsInteger(strValue))
+            return(_false(catch("RestoreStickyStatus(3)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         iValue = StrToInteger(strValue);
+         if (!IntInArray(startStopDisplayModes, iValue))
+            return(_false(catch("RestoreStickyStatus(4)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         startStopDisplayMode = iValue;
+      }
 
       label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(3)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreStickyStatus(5)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -1005,13 +1150,13 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(4)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreStickyStatus(6)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(idFound && !(last_error|catch("RestoreStickyStatus(13)")));
+   return(idFound && !(last_error|catch("RestoreStickyStatus(7)")));
 }
 
 
