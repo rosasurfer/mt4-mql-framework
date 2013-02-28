@@ -1881,7 +1881,7 @@ double GridBase.Change(datetime time, double value) {
 bool Grid.AddOrder(int type, int level) {
    if (__STATUS_ERROR)                    return(false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
-   if (status != STATUS_PROGRESSING)      return(!catch("Grid.AddOrder(2)   cannot add order for "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR));
+   if (status != STATUS_PROGRESSING)      return(!catch("Grid.AddOrder(2)   cannot add order to "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1952,27 +1952,27 @@ bool Grid.AddOrder(int type, int level) {
  * @return int - Orderticket (positiver Wert) oder ein anderer Wert, falls ein Fehler auftrat
  *
  *
- *  Return-Codes mit besonderer Bedeutung:
- *  --------------------------------------
+ *  Spezielle Return-Codes:
+ *  -----------------------
  *  -1: der StopPrice verletzt den aktuellen Spread
  *  -2: der StopPrice verletzt die StopDistance des Brokers
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
-   if (__STATUS_ERROR)                                                 return(-1);
-   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_int(-1, catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
-   if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STARTING) return(_int(-1, catch("SubmitStopOrder(2)   cannot submit stop order for "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                                                 return(0);
+   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_ZERO(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
+   if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STARTING) return(_ZERO(catch("SubmitStopOrder(2)   cannot submit stop order for "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUYSTOP) {
-      if (level <= 0) return(_int(-1, catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level <= 0) return(_ZERO(catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
    else if (type == OP_SELLSTOP) {
-      if (level >= 0) return(_int(-1, catch("SubmitStopOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level >= 0) return(_ZERO(catch("SubmitStopOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
-   else               return(_int(-1, catch("SubmitStopOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   else               return(_ZERO(catch("SubmitStopOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double   stopPrice   = grid.base + level*GridSize*Pips;
    double   slippage    = NULL;
-   double   stopLoss    = stopPrice - Sign(level) * GridSize * Pips;
+   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
@@ -2247,7 +2247,7 @@ bool Grid.DeleteOrder(int i) {
 
 
 /**
- * Fügt die angegebenen Daten den Datenarrays des Grids hinzu.
+ * Fügt den Datenarrays der Sequenz die angegebenen Daten hinzu.
  *
  * @param  int      ticket
  * @param  int      level

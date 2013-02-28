@@ -22,130 +22,130 @@ extern            string StartConditions      = "@trend(ALMA:3.5xD1)";
 extern            string StopConditions       = "@profit(500)";
 
        /*sticky*/ int    startStopDisplayMode = SDM_PRICE;           // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
-                                                                     // Terminal-Restart, Profilwechsel und Recompilation.
+       /*sticky*/ int    orderDisplayMode     = ODM_NONE;            // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int      last.GridSize;                                                 // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
-double   last.LotSize;                                                  // mit den Default-Werten überschrieben. Um dies zu verhindern und um geänderte Parameter mit
-string   last.StartConditions = "";                                     // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
-string   last.StopConditions  = "";                                     // in init() daraus restauriert.
+int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
+double   last.LotSize;                                               // mit den Default-Werten überschrieben. Um dies zu verhindern und um geänderte Parameter mit
+string   last.StartConditions = "";                                  // alten Werten vergleichen zu können, werden sie in deinit() in last.* zwischengespeichert und
+string   last.StopConditions  = "";                                  // in init() daraus restauriert.
 
-int      instance.id;                                                   // eine Instanz (mit eigener Statusdatei) verwaltet mehrere unabhängige Sequenzen
-bool     instance.isTest;                                               // ob die Instanz eine Testinstanz ist und nur Testsequenzen verwaltet (im Tester oder im Online-Chart)
+int      instance.id;                                                // eine Instanz (mit eigener Statusdatei) verwaltet mehrere unabhängige Sequenzen
+bool     instance.isTest;                                            // ob die Instanz eine Testinstanz ist und nur Testsequenzen verwaltet (im Tester oder im Online-Chart)
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------
 bool     start.trend.condition;
 string   start.trend.condition.txt;
 double   start.trend.periods;
-int      start.trend.timeframe, start.trend.timeframeFlag;              // maximal PERIOD_H1
+int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
 string   start.trend.method;
 int      start.trend.lag;
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------
 bool     stop.profitAbs.condition;
 string   stop.profitAbs.condition.txt;
 double   stop.profitAbs.value;
 
-// ---------------------------------------------------------------
-datetime weekend.stop.condition   = D'1970.01.01 23:05';                // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
+// -------------------------------------------------------
+datetime weekend.stop.condition   = D'1970.01.01 23:05';             // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
 datetime weekend.stop.time;
 
-datetime weekend.resume.condition = D'1970.01.01 01:10';                // spätester ResumeSequence()-Zeitpunkt nach Wochenend-Pause (Montags morgen)
+datetime weekend.resume.condition = D'1970.01.01 01:10';             // spätester ResumeSequence()-Zeitpunkt nach Wochenend-Pause (Montags morgen)
 datetime weekend.resume.time;
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------
 int      sequence.id           [2];
 bool     sequence.isTest       [2];
 int      sequence.direction    [2];
 int      sequence.gridSize     [2];
 double   sequence.lotSize      [2];
 int      sequence.status       [2];
-string   sequence.statusFile   [2][2];                                  // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
+string   sequence.statusFile   [2][2];                               // [0]=>Verzeichnisname relativ zu ".\files\", [1]=>Dateiname
 
-int      sequence.level        [2];                                     // aktueller Grid-Level
-int      sequence.maxLevel     [2];                                     // maximal erreichter Grid-Level
-double   sequence.startEquity  [2];                                     // Equity bei Sequenzstart
-bool     sequence.weStop.active[2];                                     // Weekend-Stop aktiv (unterscheidet vorübergehend von dauerhaft gestoppter Sequenz)
+int      sequence.level        [2];                                  // aktueller Grid-Level
+int      sequence.maxLevel     [2];                                  // maximal erreichter Grid-Level
+double   sequence.startEquity  [2];                                  // Equity bei Sequenzstart
+bool     sequence.weStop.active[2];                                  // Weekend-Stop aktiv (unterscheidet vorübergehend von dauerhaft gestoppter Sequenz)
 
-int      sequence.stops        [2];                                     // Anzahl der bisher getriggerten Stops
-double   sequence.stopsPL      [2];                                     // kumulierter P/L aller bisher ausgestoppten Positionen
-double   sequence.closedPL     [2];                                     // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
-double   sequence.floatingPL   [2];                                     // kumulierter P/L aller aktuell offenen Positionen
-double   sequence.totalPL      [2];                                     // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
-double   sequence.openRisk     [2];                                     // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
-double   sequence.valueAtRisk  [2];                                     // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
-double   sequence.maxProfit    [2];                                     // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
-double   sequence.maxDrawdown  [2];                                     // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
+int      sequence.stops        [2];                                  // Anzahl der bisher getriggerten Stops
+double   sequence.stopsPL      [2];                                  // kumulierter P/L aller bisher ausgestoppten Positionen
+double   sequence.closedPL     [2];                                  // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
+double   sequence.floatingPL   [2];                                  // kumulierter P/L aller aktuell offenen Positionen
+double   sequence.totalPL      [2];                                  // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
+double   sequence.openRisk     [2];                                  // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
+double   sequence.valueAtRisk  [2];                                  // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
+double   sequence.maxProfit    [2];                                  // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
+double   sequence.maxDrawdown  [2];                                  // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
 double   sequence.breakeven    [2];
-double   sequence.commission   [2];                                     // aktueller Commission-Betrag je Level
+double   sequence.commission   [2];                                  // aktueller Commission-Betrag je Level
 
-// ---------------------------------------------------------------
-int      sequence.ss.events    [2][3];                                  // {I_FROM, I_TO, I_SIZE}: Start- und Stopdaten sind synchron
+// -------------------------------------------------------
+int      sequence.ss.events    [2][3];                               // {I_FROM, I_TO, I_SIZE}: Start- und Stopdaten sind synchron
 
-int      sequenceStart.event   [];                                      // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+int      sequenceStart.event   [];                                   // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
 datetime sequenceStart.time    [];
 double   sequenceStart.price   [];
 double   sequenceStart.profit  [];
 
-int      sequenceStop.event    [];                                      // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+int      sequenceStop.event    [];                                   // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
 datetime sequenceStop.time     [];
 double   sequenceStop.price    [];
 double   sequenceStop.profit   [];
 
-// ---------------------------------------------------------------
-int      gridbase.events       [2][3];                                  // {I_FROM, I_TO, I_SIZE}
+// -------------------------------------------------------
+int      gridbase.events       [2][3];                               // {I_FROM, I_TO, I_SIZE}
 
-int      gridbase.event        [];                                      // Gridbasis-Daten
+int      gridbase.event        [];                                   // Gridbasis-Daten
 datetime gridbase.time         [];
 double   gridbase.value        [];
-double   gridbase              [2];                                     // aktuelle Gridbasis
+double   gridbase              [2];                                  // aktuelle Gridbasis
 
-// ---------------------------------------------------------------
-int      orders                [2][3];                                  // {I_FROM, I_TO, I_SIZE}
+// -------------------------------------------------------
+int      orders                [2][3];                               // {I_FROM, I_TO, I_SIZE}
 int      orders.ticket         [];
-int      orders.level          [];                                      // Gridlevel der Order
-double   orders.gridBase       [];                                      // Gridbasis der Order
+int      orders.level          [];                                   // Gridlevel der Order
+double   orders.gridBase       [];                                   // Gridbasis der Order
 
-int      orders.pendingType    [];                                      // Pending-Orderdaten (falls zutreffend)
-datetime orders.pendingTime    [];                                      // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
+int      orders.pendingType    [];                                   // Pending-Orderdaten (falls zutreffend)
+datetime orders.pendingTime    [];                                   // Zeitpunkt von OrderOpen() bzw. letztem OrderModify()
 double   orders.pendingPrice   [];
 
 int      orders.type           [];
 int      orders.openEvent      [];
 datetime orders.openTime       [];
 double   orders.openPrice      [];
-double   orders.openRisk       [];                                      // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
+double   orders.openRisk       [];                                   // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
 
 int      orders.closeEvent     [];
 datetime orders.closeTime      [];
 double   orders.closePrice     [];
 double   orders.stopLoss       [];
-bool     orders.clientSL       [];                                      // client- oder server-seitiger StopLoss
+bool     orders.clientSL       [];                                   // client- oder server-seitiger StopLoss
 bool     orders.closedBySL     [];
 
 double   orders.swap           [];
 double   orders.commission     [];
 double   orders.profit         [];
 
-// ---------------------------------------------------------------
-int      ignores               [2][3];                                  // {I_FROM, I_TO, I_SIZE}
-int      ignore.pendingOrders  [];                                      // orphaned tickets to ignore
+// -------------------------------------------------------
+int      ignores               [2][3];                               // {I_FROM, I_TO, I_SIZE}
+int      ignore.pendingOrders  [];                                   // orphaned tickets to ignore
 int      ignore.openPositions  [];
 int      ignore.closedPositions[];
 
-// ---------------------------------------------------------------
-string   str.instance.lotSize;                                          // Zwischenspeicher für schnelleres ShowStatus(): gesamt
+// -------------------------------------------------------
+string   str.instance.lotSize;                                       // Zwischenspeicher für schnelleres ShowStatus(): gesamt
 string   str.instance.totalPL;
 string   str.instance.plStats;
 
-string   str.sequence.id       [2];                                     // Zwischenspeicher für schnelleres ShowStatus(): Sequenz
+string   str.sequence.id       [2];                                  // Zwischenspeicher für schnelleres ShowStatus(): Sequenz
 string   str.sequence.stops    [2];
 string   str.sequence.stopsPL  [2];
 string   str.sequence.totalPL  [2];
 string   str.sequence.plStats  [2];
-// ---------------------------------------------------------------
+// -------------------------------------------------------
 
 
 #include <SnowRoller/init-dual.mqh>
@@ -166,11 +166,11 @@ int onTick() {
 
 /**
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool Strategy(int direction) {
+bool Strategy(int hSeq) {
    if (__STATUS_ERROR)
       return(false);
 
@@ -178,21 +178,21 @@ bool Strategy(int direction) {
    int  status, stops[];                                             // getriggerte client-seitige Stops
 
    // (1) Strategie wartet auf Startsignal ...
-   if (sequence.status[direction] == STATUS_UNINITIALIZED) {
-      if (IsStartSignal(direction))  StartSequence(direction);
+   if (sequence.status[hSeq] == STATUS_UNINITIALIZED) {
+      if (IsStartSignal(hSeq))     StartSequence(hSeq);
    }
 
    // (2) ... oder auf ResumeSignal ...
-   else if (sequence.status[direction] == STATUS_STOPPED) {
-      if (IsResumeSignal(direction)) ResumeSequence(direction);
+   else if (sequence.status[hSeq] == STATUS_STOPPED) {
+      if (IsResumeSignal(hSeq))    ResumeSequence(hSeq);
    }
 
    // (3) ... oder läuft.
-   else if (UpdateStatus(direction, changes, stops)) {
-      if (IsStopSignal(direction))   StopSequence(direction);
+   else if (UpdateStatus(hSeq, changes, stops)) {
+      if (IsStopSignal(hSeq))      StopSequence(hSeq);
       else {
-         if (ArraySize(stops) > 0)   ProcessClientStops(stops);
-         if (changes)                UpdatePendingOrders(direction);
+         if (ArraySize(stops) > 0) ProcessClientStops(stops);
+         if (changes)              UpdatePendingOrders(hSeq);
       }
    }
    return(!__STATUS_ERROR);
@@ -202,11 +202,11 @@ bool Strategy(int direction) {
 /**
  * Signalgeber für StartSequence().
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
-bool IsStartSignal(int direction) {
+bool IsStartSignal(int hSeq) {
    if (__STATUS_ERROR)
       return(false);
 
@@ -221,7 +221,7 @@ bool IsStartSignal(int direction) {
       int    lag         = start.trend.lag;
       int    signal      = 0;
 
-      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directionFlags[direction], signal)) {
+      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directionFlags[sequence.direction[hSeq]], signal)) {
          if (signal != 0) {
             if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
             return(true);
@@ -235,11 +235,11 @@ bool IsStartSignal(int direction) {
 /**
  * Signalgeber für ResumeSequence().
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool
  */
-bool IsResumeSignal(int direction) {
+bool IsResumeSignal(int hSeq) {
    if (__STATUS_ERROR)
       return(false);
    return(IsWeekendResumeSignal());
@@ -259,11 +259,11 @@ bool IsWeekendResumeSignal() {
 /**
  * Signalgeber für StopSequence().
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
-bool IsStopSignal(int direction) {
+bool IsStopSignal(int hSeq) {
    return(!catch("IsStopSignal()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
@@ -271,43 +271,44 @@ bool IsStopSignal(int direction) {
 /**
  * Startet eine neue Trade-Sequenz.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool StartSequence(int direction) {
-   if (__STATUS_ERROR)           return(false);
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[direction]) +" sequence now?"))
+bool StartSequence(int hSeq) {
+   if (__STATUS_ERROR)      return(false);
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[sequence.direction[hSeq]]) +" sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
-   if (!InitSequence(direction)) return(false);
+   if (!InitSequence(hSeq)) return(false);
 
 
-   sequence.status[direction] = STATUS_STARTING;                     // TODO: Logeintrag in globalem und Sequenz-Log
-   if (__LOG) log("StartSequence()   starting "+ StringToLower(directionDescr[direction]) +" sequence "+ sequence.id[direction]);
+   sequence.status[hSeq] = STATUS_STARTING;                          // TODO: Logeintrag in globalem und Sequenz-Log
+   if (__LOG) log("StartSequence()   starting "+ StringToLower(directionDescr[sequence.direction[hSeq]]) +" sequence "+ sequence.id[hSeq]);
 
 
    // (1) Startvariablen setzen
-   sequence.startEquity[direction] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   sequence.startEquity[hSeq] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    datetime startTime   = TimeCurrent();
-   double   startPrice  = ifDouble(direction==D_SHORT, Bid, Ask);
+   double   startPrice  = ifDouble(hSeq==D_SHORT, Bid, Ask);
    double   startProfit = 0;
-   AddStartEvent(direction, startTime, startPrice, startProfit);
+   AddStartEvent(hSeq, startTime, startPrice, startProfit);
 
 
    // (2) Gridbasis setzen (zeitlich nach startTime)
-   GridBase.Reset(direction, startTime, startPrice);
-   sequence.status[direction] = STATUS_PROGRESSING;
+   GridBase.Reset(hSeq, startTime, startPrice);
+   sequence.status[hSeq] = STATUS_PROGRESSING;
 
 
    // (3) Stop-Orders in den Markt legen
-   if (!UpdatePendingOrders(direction))
+   if (!UpdatePendingOrders(hSeq))
       return(false);
 
-   // (4) Weekend-Stop aktualisieren
-   UpdateWeekendStop(direction);
-   RedrawStartStop(direction);
 
-   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[direction], " and level "+ sequence.level[direction], ""));
+   // (4) Weekend-Stop aktualisieren
+   UpdateWeekendStop(hSeq);
+   RedrawStartStop(hSeq);
+
+   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
    return(!last_error|catch("StartSequence()"));
 }
 
@@ -315,17 +316,17 @@ bool StartSequence(int direction) {
 /**
  * Zeichnet die Start-/Stop-Marker der Sequenz neu.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void RedrawStartStop(int direction) {
+void RedrawStartStop(int hSeq) {
    if (!IsChart)
       return;
 
    static color markerColor = DodgerBlue;
 
-   int from = sequence.ss.events[direction][I_FROM];
-   int to   = sequence.ss.events[direction][I_TO  ];
-   int size = sequence.ss.events[direction][I_SIZE];
+   int from = sequence.ss.events[hSeq][I_FROM];
+   int to   = sequence.ss.events[hSeq][I_TO  ];
+   int size = sequence.ss.events[hSeq][I_SIZE];
 
    datetime time;
    double   price;
@@ -340,7 +341,7 @@ void RedrawStartStop(int direction) {
          price  = sequenceStart.price [i];
          profit = sequenceStart.profit[i];
 
-         label = StringConcatenate("SR.", sequence.id[direction], ".start.", i-from+1);
+         label = StringConcatenate("SR.", sequence.id[hSeq], ".start.", i-from+1);
          if (ObjectFind(label) == 0)
             ObjectDelete(label);
 
@@ -359,7 +360,7 @@ void RedrawStartStop(int direction) {
          price  = sequenceStop.price [i];
          profit = sequenceStop.profit[i];
          if (time > 0) {
-            label = StringConcatenate("SR.", sequence.id[direction], ".stop.", i-from+1);
+            label = StringConcatenate("SR.", sequence.id[hSeq], ".stop.", i-from+1);
             if (ObjectFind(label) == 0)
                ObjectDelete(label);
 
@@ -380,10 +381,10 @@ void RedrawStartStop(int direction) {
 /**
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void UpdateWeekendStop(int direction) {
-   sequence.weStop.active[direction] = false;
+void UpdateWeekendStop(int hSeq) {
+   sequence.weStop.active[hSeq] = false;
 
    datetime friday, now=ServerToFXT(TimeCurrent());
 
@@ -406,17 +407,17 @@ void UpdateWeekendStop(int direction) {
 /**
  * Löscht alle gespeicherten Änderungen der Gridbasis einer Sequenz und initialisiert sie mit dem angegebenen Wert.
  *
- * @param  int      direction - D_LONG | D_SHORT
- * @param  datetime time      - Zeitpunkt
- * @param  double   value     - neue Gridbasis
+ * @param  int      hSeq  - Sequenz: D_LONG | D_SHORT
+ * @param  datetime time  - Zeitpunkt
+ * @param  double   value - neue Gridbasis
  *
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
-double GridBase.Reset(int direction, datetime time, double value) {
+double GridBase.Reset(int hSeq, datetime time, double value) {
    if (__STATUS_ERROR)
       return(0);
 
-   int from=gridbase.events[direction][I_FROM], size=gridbase.events[direction][I_SIZE];
+   int from=gridbase.events[hSeq][I_FROM], size=gridbase.events[hSeq][I_SIZE];
 
    if (size > 0) {
       for (int i=0; i < 2; i++) {                                    // Indizes "hinter" der zurückzusetzenden Sequenz anpassen
@@ -425,46 +426,46 @@ double GridBase.Reset(int direction, datetime time, double value) {
             gridbase.events[i][I_TO  ] -= size;                      // I_SIZE unverändert
          }
       }
-      gridbase.events[direction][I_FROM] = 0;                        // Indizes der zurückzusetzenden Sequenz anpassen
-      gridbase.events[direction][I_TO  ] = 0;
-      gridbase.events[direction][I_SIZE] = 0;
+      gridbase.events[hSeq][I_FROM] = 0;                             // Indizes der zurückzusetzenden Sequenz anpassen
+      gridbase.events[hSeq][I_TO  ] = 0;
+      gridbase.events[hSeq][I_SIZE] = 0;
 
       ArraySpliceInts   (gridbase.event, from, size);                // Elemente löschen
       ArraySpliceInts   (gridbase.time,  from, size);
       ArraySpliceDoubles(gridbase.value, from, size);
 
-      gridbase[direction] = 0;
+      gridbase[hSeq] = 0;
    }
-   return(GridBase.Change(direction, time, value));
+   return(GridBase.Change(hSeq, time, value));
 }
 
 
 /**
  * Speichert eine Änderung der Gridbasis einer Sequenz.
  *
- * @param  int      direction - D_LONG | D_SHORT
- * @param  datetime time      - Zeitpunkt der Änderung
- * @param  double   value     - neue Gridbasis
+ * @param  int      hSeq  - Sequenz: D_LONG | D_SHORT
+ * @param  datetime time  - Zeitpunkt der Änderung
+ * @param  double   value - neue Gridbasis
  *
  * @return double - neue Gridbasis (for chaining)
  */
-double GridBase.Change(int direction, datetime time, double value) {
+double GridBase.Change(int hSeq, datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
-   int from=gridbase.events[direction][I_FROM], to=gridbase.events[direction][I_TO], size=gridbase.events[direction][I_SIZE];
+   int from=gridbase.events[hSeq][I_FROM], to=gridbase.events[hSeq][I_TO], size=gridbase.events[hSeq][I_SIZE];
 
    if (size == 0) {
       // insert                                                      // Änderung hinten anfügen
       int newSize = ArrayPushInt   (gridbase.event, CreateEventId());
                     ArrayPushInt   (gridbase.time,  time           );
                     ArrayPushDouble(gridbase.value, value          );
-      gridbase.events[direction][I_FROM] = newSize-1;                // Indizes der neuen Sequenz setzen
-      gridbase.events[direction][I_TO  ] = newSize-1;
-      gridbase.events[direction][I_SIZE] = 1;
+      gridbase.events[hSeq][I_FROM] = newSize-1;                     // Indizes der neuen Sequenz setzen
+      gridbase.events[hSeq][I_TO  ] = newSize-1;
+      gridbase.events[hSeq][I_SIZE] = 1;
    }
    else {
       int MM=time/MINUTE, lastMM=gridbase.time[to]/MINUTE;
-      if (sequence.maxLevel[direction]!=0 && MM!=lastMM) {
+      if (sequence.maxLevel[hSeq]!=0 && MM!=lastMM) {
          // insert                                                   // Änderung an Offset einfügen
          ArrayInsertInt   (gridbase.event, to+1, CreateEventId());
          ArrayInsertInt   (gridbase.time,  to+1, time           );
@@ -476,8 +477,8 @@ double GridBase.Change(int direction, datetime time, double value) {
                gridbase.events[i][I_TO  ]++;                         // I_SIZE unverändert
             }
          }
-         gridbase.events[direction][I_TO  ]++;                       // Indizes der vergrößerten Sequenz anpassen
-         gridbase.events[direction][I_SIZE]++;                       // I_FROM unverändert
+         gridbase.events[hSeq][I_TO  ]++;                            // Indizes der vergrößerten Sequenz anpassen
+         gridbase.events[hSeq][I_SIZE]++;                            // I_FROM unverändert
       }
       else {
          // replace                                                  // noch kein ausgeführter Trade oder mehrere Änderungen je Minute
@@ -487,7 +488,7 @@ double GridBase.Change(int direction, datetime time, double value) {
       }
    }
 
-   gridbase[direction] = value;
+   gridbase[hSeq] = value;
    return(value);
 }
 
@@ -495,38 +496,38 @@ double GridBase.Change(int direction, datetime time, double value) {
 /**
  * Fügt den Startdaten einer Sequenz ein Startevent hinzu.
  *
- * @param  int      direction - D_LONG | D_SHORT
- * @param  datetime time      - Start-Time
- * @param  double   price     - Start-Price
- * @param  double   profit    - Start-Profit
+ * @param  int      hSeq   - Sequenz: D_LONG | D_SHORT
+ * @param  datetime time   - Start-Time
+ * @param  double   price  - Start-Price
+ * @param  double   profit - Start-Profit
  *
  * @return int - Event-ID oder 0, falls ein Fehler auftrat
  */
-int AddStartEvent(int direction, datetime time, double price, double profit) {
+int AddStartEvent(int hSeq, datetime time, double price, double profit) {
    if (__STATUS_ERROR)
       return(0);
 
    int offset, event=CreateEventId();
 
-   if (sequence.ss.events[direction][I_SIZE] == 0) {
+   if (sequence.ss.events[hSeq][I_SIZE] == 0) {
       offset = ArraySize(sequenceStart.event);
 
-      sequence.ss.events[direction][I_FROM] = offset;
-      sequence.ss.events[direction][I_TO  ] = offset;
-      sequence.ss.events[direction][I_SIZE] = 1;
+      sequence.ss.events[hSeq][I_FROM] = offset;
+      sequence.ss.events[hSeq][I_TO  ] = offset;
+      sequence.ss.events[hSeq][I_SIZE] = 1;
    }
    else {
       // Indizes "hinter" der zu vergrößernden Sequenz entsprechend anpassen.
       for (int i=0; i < 2; i++) {
-         if (sequence.ss.events[i][I_FROM] > sequence.ss.events[direction][I_FROM]) {
+         if (sequence.ss.events[i][I_FROM] > sequence.ss.events[hSeq][I_FROM]) {
             sequence.ss.events[i][I_FROM]++;
             sequence.ss.events[i][I_TO  ]++;                         // I_SIZE unverändert
          }
       }
-      offset = sequence.ss.events[direction][I_TO] + 1;
+      offset = sequence.ss.events[hSeq][I_TO] + 1;
 
-      sequence.ss.events[direction][I_TO  ]++;                       // I_FROM unverändert
-      sequence.ss.events[direction][I_SIZE]++;
+      sequence.ss.events[hSeq][I_TO  ]++;                            // I_FROM unverändert
+      sequence.ss.events[hSeq][I_SIZE]++;
    }
 
    // Eventdaten an Offset einfügen
@@ -549,26 +550,26 @@ int AddStartEvent(int direction, datetime time, double price, double profit) {
 /**
  * Initialisiert eine neue Sequenz. Aufruf nur aus StartSequence().
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool InitSequence(int direction) {
-   if (__STATUS_ERROR)                                     return( false);
-   if (sequence.status[direction] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!ResetSequence(direction))                          return( false);
+bool InitSequence(int hSeq) {
+   if (__STATUS_ERROR)                                return( false);
+   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (!ResetSequence(hSeq))                          return( false);
 
-   sequence.id       [direction] = CreateSequenceId();
-   sequence.isTest   [direction] = IsTest(); SS.SequenceId(direction);
-   sequence.direction[direction] = direction;
-   sequence.gridSize [direction] = GridSize;
-   sequence.lotSize  [direction] = LotSize;
-   sequence.status   [direction] = STATUS_WAITING;
+   sequence.id       [hSeq] = CreateSequenceId();
+   sequence.isTest   [hSeq] = IsTest(); SS.SequenceId(hSeq);
+   sequence.direction[hSeq] = hSeq;
+   sequence.gridSize [hSeq] = GridSize;
+   sequence.lotSize  [hSeq] = LotSize;
+   sequence.status   [hSeq] = STATUS_WAITING;
 
-   if      (IsTesting()) sequence.statusFile[direction][I_DIR ] = "presets\\";
-   else if (IsTest())    sequence.statusFile[direction][I_DIR ] = "presets\\tester\\";
-   else                  sequence.statusFile[direction][I_DIR ] = "presets\\"+ ShortAccountCompany() +"\\";
-                         sequence.statusFile[direction][I_FILE] = StringToLower(StdSymbol()) +".SR."+ sequence.id[direction] +".set";
+   if      (IsTesting()) sequence.statusFile[hSeq][I_DIR ] = "presets\\";
+   else if (IsTest())    sequence.statusFile[hSeq][I_DIR ] = "presets\\tester\\";
+   else                  sequence.statusFile[hSeq][I_DIR ] = "presets\\"+ ShortAccountCompany() +"\\";
+                         sequence.statusFile[hSeq][I_FILE] = StringToLower(StdSymbol()) +".SR."+ sequence.id[hSeq] +".set";
 
    return(!catch("InitSequence(2)"));
 }
@@ -577,41 +578,41 @@ bool InitSequence(int direction) {
 /**
  * Setzt alle Variablen einer Sequenz zurück.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool ResetSequence(int direction) {
+bool ResetSequence(int hSeq) {
    int from, size;
 
-   sequence.id           [direction]         = 0;
-   sequence.isTest       [direction]         = false;
-   sequence.direction    [direction]         = 0;
-   sequence.gridSize     [direction]         = 0;
-   sequence.lotSize      [direction]         = 0;
-   sequence.status       [direction]         = STATUS_UNINITIALIZED;
-   sequence.statusFile   [direction][I_DIR ] = "";
-   sequence.statusFile   [direction][I_FILE] = "";
+   sequence.id           [hSeq]         = 0;
+   sequence.isTest       [hSeq]         = false;
+   sequence.direction    [hSeq]         = 0;
+   sequence.gridSize     [hSeq]         = 0;
+   sequence.lotSize      [hSeq]         = 0;
+   sequence.status       [hSeq]         = STATUS_UNINITIALIZED;
+   sequence.statusFile   [hSeq][I_DIR ] = "";
+   sequence.statusFile   [hSeq][I_FILE] = "";
 
-   sequence.level        [direction]         = 0;
-   sequence.maxLevel     [direction]         = 0;
-   sequence.startEquity  [direction]         = 0;
-   sequence.weStop.active[direction]         = false;
+   sequence.level        [hSeq]         = 0;
+   sequence.maxLevel     [hSeq]         = 0;
+   sequence.startEquity  [hSeq]         = 0;
+   sequence.weStop.active[hSeq]         = false;
 
-   sequence.stops        [direction]         = 0;
-   sequence.stopsPL      [direction]         = 0;
-   sequence.closedPL     [direction]         = 0;
-   sequence.floatingPL   [direction]         = 0;
-   sequence.totalPL      [direction]         = 0;
-   sequence.openRisk     [direction]         = 0;
-   sequence.valueAtRisk  [direction]         = 0;
-   sequence.maxProfit    [direction]         = 0;
-   sequence.maxDrawdown  [direction]         = 0;
-   sequence.breakeven    [direction]         = 0;
-   sequence.commission   [direction]         = 0;
+   sequence.stops        [hSeq]         = 0;
+   sequence.stopsPL      [hSeq]         = 0;
+   sequence.closedPL     [hSeq]         = 0;
+   sequence.floatingPL   [hSeq]         = 0;
+   sequence.totalPL      [hSeq]         = 0;
+   sequence.openRisk     [hSeq]         = 0;
+   sequence.valueAtRisk  [hSeq]         = 0;
+   sequence.maxProfit    [hSeq]         = 0;
+   sequence.maxDrawdown  [hSeq]         = 0;
+   sequence.breakeven    [hSeq]         = 0;
+   sequence.commission   [hSeq]         = 0;
 
-   from = sequence.ss.events[direction][I_FROM];
-   size = sequence.ss.events[direction][I_SIZE];
+   from = sequence.ss.events[hSeq][I_FROM];
+   size = sequence.ss.events[hSeq][I_SIZE];
    if (size > 0) {
       ArraySpliceInts   (sequenceStart.event,  from, size);
       ArraySpliceInts   (sequenceStart.time,   from, size);
@@ -629,13 +630,13 @@ bool ResetSequence(int direction) {
             sequence.ss.events[i][I_TO  ] -= size;                   // I_SIZE unverändert
          }
       }
-      sequence.ss.events[direction][I_FROM] = 0;
-      sequence.ss.events[direction][I_TO  ] = 0;
-      sequence.ss.events[direction][I_SIZE] = 0;
+      sequence.ss.events[hSeq][I_FROM] = 0;
+      sequence.ss.events[hSeq][I_TO  ] = 0;
+      sequence.ss.events[hSeq][I_SIZE] = 0;
    }
 
-   from = gridbase.events[direction][I_FROM];
-   size = gridbase.events[direction][I_SIZE];
+   from = gridbase.events[hSeq][I_FROM];
+   size = gridbase.events[hSeq][I_SIZE];
    if (size > 0) {
       ArraySpliceInts   (gridbase.event, from, size);
       ArraySpliceInts   (gridbase.time,  from, size);
@@ -647,14 +648,14 @@ bool ResetSequence(int direction) {
             gridbase.events[i][I_TO  ] -= size;                      // I_SIZE unverändert
          }
       }
-      gridbase.events[direction][I_FROM] = 0;
-      gridbase.events[direction][I_TO  ] = 0;
-      gridbase.events[direction][I_SIZE] = 0;
+      gridbase.events[hSeq][I_FROM] = 0;
+      gridbase.events[hSeq][I_TO  ] = 0;
+      gridbase.events[hSeq][I_SIZE] = 0;
    }
-   gridbase[direction] = 0;
+   gridbase[hSeq] = 0;
 
-   from = orders[direction][I_FROM];
-   size = orders[direction][I_SIZE];
+   from = orders[hSeq][I_FROM];
+   size = orders[hSeq][I_SIZE];
    if (size > 0) {
       ArraySpliceInts   (orders.ticket,       from, size);
       ArraySpliceInts   (orders.level,        from, size);
@@ -687,13 +688,13 @@ bool ResetSequence(int direction) {
             orders[i][I_TO  ] -= size;                               // I_SIZE unverändert
          }
       }
-      orders[direction][I_FROM] = 0;
-      orders[direction][I_TO  ] = 0;
-      orders[direction][I_SIZE] = 0;
+      orders[hSeq][I_FROM] = 0;
+      orders[hSeq][I_TO  ] = 0;
+      orders[hSeq][I_SIZE] = 0;
    }
 
-   from = ignores[direction][I_FROM];
-   size = ignores[direction][I_SIZE];
+   from = ignores[hSeq][I_FROM];
+   size = ignores[hSeq][I_SIZE];
    if (size > 0) {
       ArraySpliceInts(ignore.pendingOrders,   from, size);
       ArraySpliceInts(ignore.openPositions,   from, size);
@@ -705,16 +706,16 @@ bool ResetSequence(int direction) {
             ignores[i][I_TO  ] -= size;                              // I_SIZE unverändert
          }
       }
-      ignores[direction][I_FROM] = 0;
-      ignores[direction][I_TO  ] = 0;
-      ignores[direction][I_SIZE] = 0;
+      ignores[hSeq][I_FROM] = 0;
+      ignores[hSeq][I_TO  ] = 0;
+      ignores[hSeq][I_SIZE] = 0;
    }
 
-   str.sequence.id     [direction] = "";
-   str.sequence.stops  [direction] = "";
-   str.sequence.stopsPL[direction] = "";
-   str.sequence.totalPL[direction] = "";
-   str.sequence.plStats[direction] = "";
+   str.sequence.id     [hSeq] = "";
+   str.sequence.stops  [hSeq] = "";
+   str.sequence.stopsPL[hSeq] = "";
+   str.sequence.totalPL[hSeq] = "";
+   str.sequence.plStats[hSeq] = "";
 
    return(!catch("ResetSequence()"));
 }
@@ -723,11 +724,11 @@ bool ResetSequence(int direction) {
 /**
  * Schließt alle PendingOrders und offenen Positionen der Sequenz.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
-bool StopSequence(int direction) {
+bool StopSequence(int hSeq) {
    return(!catch("StopSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
@@ -735,11 +736,11 @@ bool StopSequence(int direction) {
 /**
  * Setzt eine gestoppte Sequenz fort.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool ResumeSequence(int direction) {
+bool ResumeSequence(int hSeq) {
    return(!catch("ResumeSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
@@ -747,13 +748,13 @@ bool ResumeSequence(int direction) {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  int  direction        - D_LONG | D_SHORT
+ * @param  int  hSeq             - Sequenz: D_LONG | D_SHORT
  * @param  bool lpChanges        - Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz geändert haben
  * @param  int  triggeredStops[] - Array, das nach Rückkehr die Array-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateStatus(int direction, bool &lpChanges, int triggeredStops[]) {
+bool UpdateStatus(int hSeq, bool &lpChanges, int triggeredStops[]) {
    return(!catch("UpdateStatus()", ERR_FUNCTION_NOT_IMPLEMENTED));
 }
 
@@ -773,26 +774,26 @@ bool ProcessClientStops(int stops[]) {
 /**
  * Aktualisiert vorhandene, setzt fehlende und löscht unnötige PendingOrders einer Sequenz.
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdatePendingOrders(int direction) {
-   if (__STATUS_ERROR)                                   return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())                return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[direction] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[sequence.status[direction]] +" sequence", ERR_RUNTIME_ERROR)));
+bool UpdatePendingOrders(int hSeq) {
+   if (__STATUS_ERROR)                              return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
-   int  from = orders[direction][I_FROM];
-   int  size = orders[direction][I_SIZE];
+   int from = orders[hSeq][I_FROM];
+   int size = orders[hSeq][I_SIZE];
 
-   int  nextLevel = sequence.level[direction] + ifInt(direction==D_LONG, 1, -1);
+   int  nextLevel = sequence.level[hSeq] + ifInt(hSeq==D_LONG, 1, -1);
    bool nextOrderExists, ordersChanged;
 
    for (int i=from+size-1; i >= from; i--) {
       if (orders.type[i]==OP_UNDEFINED) /*&&*/ if (orders.closeTime[i]==0) {     // if (isPending && !isClosed)
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
-            if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], gridbase[direction] + nextLevel*GridSize*Pips)) {
+            if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], gridbase[hSeq] + nextLevel*GridSize*Pips)) {
                if (!Grid.TrailPendingOrder(i))                                   // Order im ersten Level ggf. trailen
                   return(false);
                ordersChanged = true;
@@ -806,7 +807,7 @@ bool UpdatePendingOrders(int direction) {
    }
 
    if (!nextOrderExists) {                                                       // nötige Pending-Order in den Markt legen
-      if (!Grid.AddOrder(ifInt(direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
+      if (!Grid.AddOrder(hSeq, ifInt(hSeq==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
          return(false);
       ordersChanged = true;
    }
@@ -845,13 +846,239 @@ bool Grid.DeleteOrder(int i) {
 /**
  * Legt die angegebene Stop-Order in den Markt und fügt den Orderarrays deren Daten hinzu.
  *
+ * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
  * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
  * @param  int level - Gridlevel der Order
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.AddOrder(int type, int level) {
-   return(!catch("Grid.AddOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool Grid.AddOrder(int hSeq, int type, int level) {
+   if (__STATUS_ERROR)                              return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddOrder(2)   cannot add order to "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+
+   // (1) Order in den Markt legen
+   /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+   int ticket = SubmitStopOrder(hSeq, type, level, oe);
+
+   double pendingPrice = oe.OpenPrice(oe);
+
+   if (ticket <= 0) {
+      if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
+      if (ticket == 0)                      return(!catch("Grid.AddOrder(3)", oe.Error(oe)));
+
+      // (2) Spread violated
+      if (ticket == -1) {
+         return(!catch("Grid.AddOrder(4)   spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
+      }
+      // (3) StopDistance violated => client-seitige Stop-Verwaltung
+      else if (ticket == -2) {
+         ticket = -1;
+         if (__LOG) log(StringConcatenate("Grid.AddOrder()   client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+      }
+   }
+
+   // (4) Daten speichern
+   //int    ticket       = ...                                          // unverändert
+   //int    level        = ...                                          // unverändert
+   //double gridbase     = ...                                          // unverändert
+
+   int      pendingType  = type;
+   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrent();
+   //double pendingPrice = ...                                          // unverändert
+
+   /*int*/  type         = OP_UNDEFINED;
+   int      openEvent    = NULL;
+   datetime openTime     = NULL;
+   double   openPrice    = NULL;
+   double   openRisk     = NULL;
+
+   int      closeEvent   = NULL;
+   datetime closeTime    = NULL;
+   double   closePrice   = NULL;
+   double   stopLoss     = oe.StopLoss(oe);
+   bool     clientSL     = (ticket <= 0);
+   bool     closedBySL   = false;
+
+   double   swap         = NULL;
+   double   commission   = NULL;
+   double   profit       = NULL;
+
+   ArrayResize(oe, 0);
+
+   if (!Grid.PushData(hSeq, ticket, level, gridbase[hSeq], pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, openRisk, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
+      return(false);
+   return(!last_error|catch("Grid.AddOrder(5)"));
+}
+
+
+/**
+ * Fügt den Datenarrays der Sequenz die angegebenen Daten hinzu.
+ *
+ * @param  int      hSeq         - Sequenz: D_LONG | D_SHORT
+ *
+ * @param  int      ticket
+ * @param  int      level
+ * @param  double   gridbase
+ *
+ * @param  int      pendingType
+ * @param  datetime pendingTime
+ * @param  double   pendingPrice
+ *
+ * @param  int      type
+ * @param  int      openEvent
+ * @param  datetime openTime
+ * @param  double   openPrice
+ * @param  double   openRisk
+ *
+ * @param  int      closeEvent
+ * @param  datetime closeTime
+ * @param  double   closePrice
+ * @param  double   stopLoss
+ * @param  bool     clientSL
+ * @param  bool     closedBySL
+ *
+ * @param  double   swap
+ * @param  double   commission
+ * @param  double   profit
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   return(Grid.SetData(hSeq, -1, ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, openRisk, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit));
+}
+
+
+/**
+ * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
+ *
+ * @param  int      hSeq         - Sequenz: D_LONG | D_SHORT
+ * @param  int      position     - Gridposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
+ *
+ * @param  int      ticket
+ * @param  int      level
+ * @param  double   gridbase
+ *
+ * @param  int      pendingType
+ * @param  datetime pendingTime
+ * @param  double   pendingPrice
+ *
+ * @param  int      type
+ * @param  int      openEvent
+ * @param  datetime openTime
+ * @param  double   openPrice
+ * @param  double   openRisk
+ *
+ * @param  int      closeEvent
+ * @param  datetime closeTime
+ * @param  double   closePrice
+ * @param  double   stopLoss
+ * @param  bool     clientSL
+ * @param  bool     closedBySL
+ *
+ * @param  double   swap
+ * @param  double   commission
+ * @param  double   profit
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.SetData(int hSeq, int position, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   return(!catch("Grid.SetData()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Legt eine Stop-Order in den Markt.
+ *
+ * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
+ * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
+ * @param  int level - Gridlevel der Order
+ * @param  int oe[]  - Ausführungsdetails
+ *
+ * @return int - Orderticket (positiver Wert) oder ein anderer Wert, falls ein Fehler auftrat
+ *
+ *
+ *  Spezielle Return-Codes:
+ *  -----------------------
+ *  -1: der StopPrice verletzt den aktuellen Spread
+ *  -2: der StopPrice verletzt die StopDistance des Brokers
+ */
+int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
+   if (__STATUS_ERROR)                                                                               return(0);
+   if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_ZERO(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_ZERO(catch("SubmitStopOrder(2)   cannot submit stop order for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+
+   if (type == OP_BUYSTOP) {
+      if (level <= 0) return(_ZERO(catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   }
+   else if (type == OP_SELLSTOP) {
+      if (level >= 0) return(_ZERO(catch("SubmitStopOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   }
+   else               return(_ZERO(catch("SubmitStopOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   double   stopPrice   = gridbase[hSeq] + level*GridSize*Pips;
+   double   slippage    = NULL;
+   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
+   double   takeProfit  = NULL;
+   int      magicNumber = CreateMagicNumber(hSeq, level);
+   datetime expires     = NULL;
+   string   comment     = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(level, "+."));
+   color    markerColor = CLR_PENDING;
+
+   /*
+   #define ODM_NONE     0     // - keine Anzeige -
+   #define ODM_STOPS    1     // Pending,       ClosedBySL
+   #define ODM_PYRAMID  2     // Pending, Open,             Closed
+   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
+   */
+   if (orderDisplayMode == ODM_NONE)
+      markerColor = CLR_NONE;
+
+   int oeFlags = OE_CATCH_INVALID_STOP;                              // ERR_INVALID_STOP abfangen
+
+   int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
+   if (ticket > 0)
+      return(ticket);
+
+   int error = oe.Error(oe);
+
+   if (error == ERR_INVALID_STOP) {
+      // Der StopPrice liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
+      bool insideSpread;
+      if (type == OP_BUYSTOP) insideSpread = LE(oe.OpenPrice(oe), oe.Ask(oe));
+      else                    insideSpread = GE(oe.OpenPrice(oe), oe.Bid(oe));
+      if (insideSpread)
+         return(-1);
+      return(-2);
+   }
+
+   return(_ZERO(SetLastError(error)));
+}
+
+
+/**
+ * Generiert für den angegebenen Gridlevel eine MagicNumber.
+ *
+ * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
+ * @param  int level - Gridlevel
+ *
+ * @return int - MagicNumber oder -1, falls ein Fehler auftrat
+ */
+int CreateMagicNumber(int hSeq, int level) {
+   if (sequence.id[hSeq] < SID_MIN) return(_int(-1, catch("CreateMagicNumber(1)   illegal sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (!level)                      return(_int(-1, catch("CreateMagicNumber(2)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
+   int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32
+       level    = Abs(level);                                        // der Level in MagicNumber ist immer positiv                |
+       level    = level & 0xFF << 14;                                //  8 bit (Bits größer 8 löschen und auf 22 Bit erweitern)   | Position in MagicNumber: Bits 15-22
+   int sequence = sequence.id[hSeq] & 0x3FFF;                        // 14 bit (Bits größer 14 löschen                            | Position in MagicNumber: Bits  1-14
+
+   return(ea + level + sequence);
 }
 
 
@@ -1131,6 +1358,13 @@ int StoreStickyStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
+   label = StringConcatenate(__NAME__, ".sticky.orderDisplayMode");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
+
    label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -1185,11 +1419,22 @@ bool RestoreStickyStatus() {
          startStopDisplayMode = iValue;
       }
 
+      label = StringConcatenate(__NAME__, ".sticky.orderDisplayMode");
+      if (ObjectFind(label) == 0) {
+         strValue = StringTrim(ObjectDescription(label));
+         if (!StringIsInteger(strValue))
+            return(_false(catch("RestoreStickyStatus(5)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         iValue = StrToInteger(strValue);
+         if (!IntInArray(orderDisplayModes, iValue))
+            return(_false(catch("RestoreStickyStatus(6)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         orderDisplayMode = iValue;
+      }
+
       label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(5)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreStickyStatus(7)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -1197,13 +1442,13 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(6)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(_false(catch("RestoreStickyStatus(8)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(idFound && !(last_error|catch("RestoreStickyStatus(7)")));
+   return(idFound && !(last_error|catch("RestoreStickyStatus(9)")));
 }
 
 
@@ -1309,12 +1554,12 @@ void SS.LotSize() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.id
  *
- * @param  int direction - D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void SS.SequenceId(int direction) {
+void SS.SequenceId(int hSeq) {
    if (!IsChart)
       return;
-   str.sequence.id[direction] = ifString(sequence.isTest[direction], "T", "") + sequence.id[direction];
+   str.sequence.id[hSeq] = ifString(sequence.isTest[hSeq], "T", "") + sequence.id[hSeq];
 }
 
 
