@@ -2284,7 +2284,7 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
 /**
  * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
  *
- * @param  int      position - Gridposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
+ * @param  int      offset       - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
  *
  * @param  int      ticket
  * @param  int      level
@@ -2313,14 +2313,14 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.SetData(int position, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
-   if (position < -1)
-      return(_false(catch("Grid.SetData(1)   illegal parameter position = "+ position, ERR_INVALID_FUNCTION_PARAMVALUE)));
+bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   if (offset < -1)
+      return(_false(catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int i=position, size=ArraySize(orders.ticket);
+   int i=offset, size=ArraySize(orders.ticket);
 
-   if      (position ==     -1) i = ResizeArrays(    size+1) - 1;
-   else if (position  > size-1) i = ResizeArrays(position+1) - 1;
+   if      (offset ==    -1) i = ResizeArrays(  size+1)-1;
+   else if (offset > size-1) i = ResizeArrays(offset+1)-1;
 
    orders.ticket      [i] = ticket;
    orders.level       [i] = level;

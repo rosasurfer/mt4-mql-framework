@@ -957,7 +957,7 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  * Schreibt die angegebenen Daten an die angegebene Position der Gridarrays.
  *
  * @param  int      hSeq         - Sequenz: D_LONG | D_SHORT
- * @param  int      position     - Gridposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
+ * @param  int      offset       - Arrayposition: Ist dieser Wert -1 oder sind die Gridarrays zu klein, werden sie vergrößert.
  *
  * @param  int      ticket
  * @param  int      level
@@ -986,8 +986,128 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.SetData(int hSeq, int position, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
-   return(!catch("Grid.SetData()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   if (offset < -1)
+      return(_false(catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   int from = orders[hSeq][I_FROM];
+   int to   = orders[hSeq][I_TO  ];
+   int size = orders[hSeq][I_SIZE], sizeOfTickets=ArraySize(orders.ticket), i, n;
+
+
+   if (0 <= offset && offset < size) {
+      // replace at offset i
+      i = from + offset;
+   }
+   else {
+      // insert at offset i
+      if (offset < 0) {
+         if (size == 0) {
+            orders[hSeq][I_FROM] = sizeOfTickets;
+            orders[hSeq][I_TO  ] = sizeOfTickets + 1;
+            orders[hSeq][I_SIZE] = 1;
+            i = sizeOfTickets;
+         }
+         else {
+            for (n=0; n < 2; n++) {                                  // Indizes der folgenden Sequenzen um 1 anpassen
+               if (orders[n][I_FROM] > from) {
+                  orders[n][I_FROM]++;
+                  orders[n][I_TO  ]++;
+               }
+            }
+            orders[hSeq][I_TO  ]++;
+            orders[hSeq][I_SIZE]++;
+            i = to + 1;
+         }
+      }
+      else {
+         for (n=0; n < 2; n++) {                                     // Indizes der folgenden Sequenzen entsprechend anpassen
+            if (orders[n][I_FROM] > from) {
+               orders[n][I_FROM] += 1 + offset-size;
+               orders[n][I_TO  ] += 1 + offset-size;
+            }
+         }
+         orders[hSeq][I_TO  ] += 1 + offset-size;
+         orders[hSeq][I_SIZE] += 1 + offset-size;
+         // Arrays ggf. um mehrere Elemente vergrößern
+         for (n=offset-size; n > 0; n--) {
+            Grid.InsertEmptyElement(to+1);
+         }
+         i = from + offset;
+      }
+      Grid.InsertEmptyElement(i);
+   }
+
+   // Daten an Offset i (er-)setzen
+   orders.ticket      [i] = ticket;
+   orders.level       [i] = level;
+   orders.gridBase    [i] = NormalizeDouble(gridbase, Digits);
+
+   orders.pendingType [i] = pendingType;
+   orders.pendingTime [i] = pendingTime;
+   orders.pendingPrice[i] = NormalizeDouble(pendingPrice, Digits);
+
+   orders.type        [i] = type;
+   orders.openEvent   [i] = openEvent;
+   orders.openTime    [i] = openTime;
+   orders.openPrice   [i] = NormalizeDouble(openPrice, Digits);
+   orders.openRisk    [i] = NormalizeDouble(openRisk, 2);
+
+   orders.closeEvent  [i] = closeEvent;
+   orders.closeTime   [i] = closeTime;
+   orders.closePrice  [i] = NormalizeDouble(closePrice, Digits);
+   orders.stopLoss    [i] = NormalizeDouble(stopLoss, Digits);
+   orders.clientSL    [i] = clientSL;
+   orders.closedBySL  [i] = closedBySL;
+
+   orders.swap        [i] = NormalizeDouble(swap,       2);
+   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) sequence.commission[hSeq] = orders.commission[i];
+   orders.profit      [i] = NormalizeDouble(profit,     2);
+
+   debug("Grid.SetData()   orders.ticket[] = "+ IntsToStr(orders.ticket, NULL));
+
+   return(!catch("Grid.SetData(2)"));
+}
+
+
+/**
+ * Fügt am angegebenen Offset der Orderarrays ein leeres Element ein. Die Arrayindizes der Sequenzen bleiben unverändert.
+ *
+ * @param  int offset
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.InsertEmptyElement(int offset) {
+   int sizeOfTickets = ArraySize(orders.ticket);
+
+   if (offset < 0 || offset > sizeOfTickets) return(_false(catch("Grid.InsertEmptyElement(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   ArrayInsertInt   (orders.ticket,       offset, 0    );
+   ArrayInsertInt   (orders.level,        offset, 0    );
+   ArrayInsertDouble(orders.gridBase,     offset, 0    );
+
+   ArrayInsertInt   (orders.pendingType,  offset, 0    );
+   ArrayInsertInt   (orders.pendingTime,  offset, 0    );
+   ArrayInsertDouble(orders.pendingPrice, offset, 0    );
+
+   ArrayInsertInt   (orders.type,         offset, 0    );
+   ArrayInsertInt   (orders.openEvent,    offset, 0    );
+   ArrayInsertInt   (orders.openTime,     offset, 0    );
+   ArrayInsertDouble(orders.openPrice,    offset, 0    );
+   ArrayInsertDouble(orders.openRisk,     offset, 0    );
+
+   ArrayInsertInt   (orders.closeEvent,   offset, 0    );
+   ArrayInsertInt   (orders.closeTime,    offset, 0    );
+   ArrayInsertDouble(orders.closePrice,   offset, 0    );
+   ArrayInsertDouble(orders.stopLoss,     offset, 0    );
+   ArrayInsertBool  (orders.clientSL,     offset, false);
+   ArrayInsertBool  (orders.closedBySL,   offset, false);
+
+   ArrayInsertDouble(orders.swap,         offset, 0    );
+   ArrayInsertDouble(orders.commission,   offset, 0    );
+   ArrayInsertDouble(orders.profit,       offset, 0    );
+
+   return(!catch("Grid.InsertEmptyElement(2)"));
 }
 
 
