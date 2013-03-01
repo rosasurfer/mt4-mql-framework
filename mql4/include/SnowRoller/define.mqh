@@ -9,7 +9,7 @@
 #define D_LONG                OP_LONG                                //  0
 #define D_SHORT              OP_SHORT                                //  1
 int     directionFlags[] = {MODE_UPTREND, MODE_DOWNTREND};           // {1, 2}
-string  directionDescr[] = {"Long"      , "Short"       };
+string  directionDescr[] = {"Long",       "Short"       };
 
 
 // Sequenzstatus-Werte

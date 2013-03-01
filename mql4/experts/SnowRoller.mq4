@@ -4090,7 +4090,7 @@ bool SaveStatus() {
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
-   // das Logging ist aktiviert oder die Sequenz wurde gestoppt.
+   // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
    if (IsTesting()) /*&&*/ if (!__LOG) {
       static bool firstCall = true;
       if (!firstCall) /*&&*/ if (status!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=FUNC_DEINIT)
@@ -4174,7 +4174,7 @@ bool SaveStatus() {
    // (1) Dateiinhalt zusammenstellen
    string lines[]; ArrayResize(lines, 0);
 
-   // (1.1) Input-Parameter
+   // (1.1) Konfiguration
    ArrayPushString(lines, /*string*/   "Account="+         ShortAccountCompany() +":"+ GetAccountNumber());
    ArrayPushString(lines, /*string*/   "Symbol="                 +             Symbol()                  );
    ArrayPushString(lines, /*string*/   "Sequence.ID="            +             Sequence.ID               );

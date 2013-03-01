@@ -813,7 +813,7 @@ bool UpdatePendingOrders(int hSeq) {
    }
 
    if (ordersChanged)                                                            // Status speichern
-      if (!SaveStatus())
+      if (!SaveStatus(hSeq))
          return(false);
    return(!last_error|catch("UpdatePendingOrders(3)"));
 }
@@ -1031,11 +1031,11 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
          orders[hSeq][I_SIZE] += 1 + offset-size;
          // Arrays ggf. um mehrere Elemente vergrößern
          for (n=offset-size; n > 0; n--) {
-            Grid.InsertEmptyElement(to+1);
+            Grid.InsertElement(to+1);
          }
          i = from + offset;
       }
-      Grid.InsertEmptyElement(i);
+      Grid.InsertElement(i);
    }
 
    // Daten an Offset i (er-)setzen
@@ -1071,16 +1071,16 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
 
 
 /**
- * Fügt am angegebenen Offset der Orderarrays ein leeres Element ein. Die Arrayindizes der Sequenzen bleiben unverändert.
+ * Fügt am angegebenen Offset der Orderarrays ein weiteres (leeres) Element ein. Die Arrayindizes der Sequenzen bleiben unverändert.
  *
  * @param  int offset
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.InsertEmptyElement(int offset) {
+bool Grid.InsertElement(int offset) {
    int sizeOfTickets = ArraySize(orders.ticket);
 
-   if (offset < 0 || offset > sizeOfTickets) return(_false(catch("Grid.InsertEmptyElement(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0 || offset > sizeOfTickets) return(_false(catch("Grid.InsertElement(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    ArrayInsertInt   (orders.ticket,       offset, 0    );
    ArrayInsertInt   (orders.level,        offset, 0    );
@@ -1107,7 +1107,7 @@ bool Grid.InsertEmptyElement(int offset) {
    ArrayInsertDouble(orders.commission,   offset, 0    );
    ArrayInsertDouble(orders.profit,       offset, 0    );
 
-   return(!catch("Grid.InsertEmptyElement(2)"));
+   return(!catch("Grid.InsertElement(2)"));
 }
 
 
@@ -1206,10 +1206,205 @@ int CreateMagicNumber(int hSeq, int level) {
  * Speichert den Status der angegeben Sequenz, um später die nahtlose Re-Initialisierung im selben oder einem anderen Terminal
  * zu ermöglichen.
  *
+ * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
+ *
  * @return bool - Erfolgsstatus
  */
-bool SaveStatus() {
-   return(!catch("SaveStatus()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool SaveStatus(int hSeq) {
+   if (__STATUS_ERROR)                    return( false);
+   if (!sequence.id[hSeq])                return(_false(catch("SaveStatus(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
+
+   // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
+   // das Logging ist aktiviert oder die Sequenz wurde bereits gestoppt.
+   if (IsTesting()) /*&&*/ if (!__LOG) {
+      static bool firstCall = true;
+      if (!firstCall) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (__WHEREAMI__!=FUNC_DEINIT)
+         return(true);                                               // Speichern überspringen
+      firstCall = false;
+   }
+
+   /*
+   Speichernotwendigkeit der einzelnen Variablen
+   ---------------------------------------------
+   int      status;                    // nein: kann aus Orderdaten und offenen Positionen restauriert werden
+   bool     isTest;                    // nein: wird aus Statusdatei ermittelt
+
+   datetime instanceStartTime;         // ja
+   double   instanceStartPrice;        // ja
+   double   sequenceStartEquity;       // ja
+
+   int      sequenceStart.event [];    // ja
+   datetime sequenceStart.time  [];    // ja
+   double   sequenceStart.price [];    // ja
+   double   sequenceStart.profit[];    // ja
+
+   int      sequenceStop.event [];     // ja
+   datetime sequenceStop.time  [];     // ja
+   double   sequenceStop.price [];     // ja
+   double   sequenceStop.profit[];     // ja
+
+   bool     start.*.condition;         // nein: wird aus StartConditions abgeleitet
+   bool     stop.*.condition;          // nein: wird aus StopConditions abgeleitet
+
+   bool     weekend.stop.active;       // ja
+
+   int      ignorePendingOrders  [];   // optional (wenn belegt)
+   int      ignoreOpenPositions  [];   // optional (wenn belegt)
+   int      ignoreClosedPositions[];   // optional (wenn belegt)
+
+   int      grid.base.event[];         // ja
+   datetime grid.base.time [];         // ja
+   double   grid.base.value[];         // ja
+   double   grid.base;                 // nein: wird aus Gridbase-History restauriert
+
+   int      grid.level;                // nein: kann aus Orderdaten restauriert werden
+   int      grid.maxLevel;             // nein: kann aus Orderdaten restauriert werden
+
+   int      grid.stops;                // nein: kann aus Orderdaten restauriert werden
+   double   grid.stopsPL;              // nein: kann aus Orderdaten restauriert werden
+   double   grid.closedPL;             // nein: kann aus Orderdaten restauriert werden
+   double   grid.floatingPL;           // nein: kann aus offenen Positionen restauriert werden
+   double   grid.totalPL;              // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
+   double   grid.openRisk;             // nein: kann aus Orderdaten restauriert werden
+   double   grid.valueAtRisk;          // nein: kann aus Orderdaten restauriert werden
+
+   double   grid.maxProfit;            // ja
+   double   grid.maxDrawdown;          // ja
+
+   double   grid.breakevenLong;        // nein: wird mit dem aktuellen TickValue als Näherung neu berechnet
+   double   grid.breakevenShort;       // nein: wird mit dem aktuellen TickValue als Näherung neu berechnet
+
+   int      orders.ticket      [];     // ja:  0
+   int      orders.level       [];     // ja:  1
+   double   orders.gridBase    [];     // ja:  2
+   int      orders.pendingType [];     // ja:  3
+   datetime orders.pendingTime [];     // ja:  4 (kein Event)
+   double   orders.pendingPrice[];     // ja:  5
+   int      orders.type        [];     // ja:  6
+   int      orders.openEvent   [];     // ja:  7
+   datetime orders.openTime    [];     // ja:  8 (EV_POSITION_OPEN)
+   double   orders.openPrice   [];     // ja:  9
+   double   orders.openRisk    [];     // ja: 10
+   int      orders.closeEvent  [];     // ja: 11
+   datetime orders.closeTime   [];     // ja: 12 (EV_POSITION_STOPOUT | EV_POSITION_CLOSE)
+   double   orders.closePrice  [];     // ja: 13
+   double   orders.stopLoss    [];     // ja: 14
+   bool     orders.clientSL    [];     // ja: 15
+   bool     orders.closedBySL  [];     // ja: 16
+   double   orders.swap        [];     // ja: 17
+   double   orders.commission  [];     // ja: 18
+   double   orders.profit      [];     // ja: 19
+   */
+
+   // (1) Dateiinhalt zusammenstellen
+   string lines[]; ArrayResize(lines, 0);
+
+   // (1.1) Konfiguration
+   ArrayPushString(lines, /*string*/   "Account="+                   ShortAccountCompany() +":"+ GetAccountNumber());
+   ArrayPushString(lines, /*string*/   "Symbol="                 +                Symbol()                         );
+   ArrayPushString(lines, /*string*/   "Sequence.ID="            +                str.sequence.id     [hSeq]       );
+      if (StringLen(sequence.statusFile[hSeq][I_DIR]) > 0)
+   ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+                sequence.statusFile [hSeq][I_DIR]);
+   ArrayPushString(lines, /*string*/   "GridDirection="          + directionDescr[sequence.direction  [hSeq]]      );
+   ArrayPushString(lines, /*int   */   "GridSize="               +                sequence.gridSize   [hSeq]       );
+   ArrayPushString(lines, /*double*/   "LotSize="                +    NumberToStr(sequence.lotSize    [hSeq], ".+"));
+      if (start.trend.condition)
+   ArrayPushString(lines, /*string*/   "StartConditions="        +                StartConditions                  );
+      if (stop.profitAbs.condition)
+   ArrayPushString(lines, /*string*/   "StopConditions="         +                StopConditions                   );
+
+   // (1.2) Laufzeit-Variablen
+   ArrayPushString(lines, /*datetime*/ "rt.instanceStartTime="   +                0                                );
+   ArrayPushString(lines, /*double*/   "rt.instanceStartPrice="  +                0                                );
+   ArrayPushString(lines, /*double*/   "rt.sequenceStartEquity=" +    NumberToStr(sequence.startEquity[hSeq], ".+"));
+
+      string values[]; ArrayResize(values, 0);
+      int size = ArraySize(sequenceStart.event);
+      for (int i=0; i < size; i++)
+         ArrayPushString(values, StringConcatenate(sequenceStart.event[i], "|", sequenceStart.time[i], "|", NumberToStr(sequenceStart.price[i], ".+"), "|", NumberToStr(sequenceStart.profit[i], ".+")));
+      if (size == 0)
+         ArrayPushString(values, "0|0|0|0");
+   ArrayPushString(lines, /*string*/   "rt.sequenceStarts="       + JoinStrings(values, ","));
+
+      ArrayResize(values, 0);
+      size = ArraySize(sequenceStop.event);
+      for (i=0; i < size; i++)
+         ArrayPushString(values, StringConcatenate(sequenceStop.event[i], "|", sequenceStop.time[i], "|", NumberToStr(sequenceStop.price[i], ".+"), "|", NumberToStr(sequenceStop.profit[i], ".+")));
+      if (size == 0)
+         ArrayPushString(values, "0|0|0|0");
+   ArrayPushString(lines, /*string*/   "rt.sequenceStops="        + JoinStrings(values, ","));
+      if (status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
+   ArrayPushString(lines, /*int*/      "rt.weekendStop="          +             1);
+      if (ArraySize(ignorePendingOrders) > 0)
+   ArrayPushString(lines, /*string*/   "rt.ignorePendingOrders="  +    JoinInts(ignorePendingOrders, ",")  );
+      if (ArraySize(ignoreOpenPositions) > 0)
+   ArrayPushString(lines, /*string*/   "rt.ignoreOpenPositions="  +    JoinInts(ignoreOpenPositions, ",")  );
+      if (ArraySize(ignoreClosedPositions) > 0)
+   ArrayPushString(lines, /*string*/   "rt.ignoreClosedPositions="+    JoinInts(ignoreClosedPositions, ","));
+
+   ArrayPushString(lines, /*double*/   "rt.grid.maxProfit="       + NumberToStr(grid.maxProfit, ".+")      );
+   ArrayPushString(lines, /*double*/   "rt.grid.maxDrawdown="     + NumberToStr(grid.maxDrawdown, ".+")    );
+
+      ArrayResize(values, 0);
+      size = ArraySize(grid.base.event);
+      for (i=0; i < size; i++)
+         ArrayPushString(values, StringConcatenate(grid.base.event[i], "|", grid.base.time[i], "|", NumberToStr(grid.base.value[i], ".+")));
+      if (size == 0)
+         ArrayPushString(values, "0|0|0");
+   ArrayPushString(lines, /*string*/   "rt.grid.base="            + JoinStrings(values, ","));
+
+   size = ArraySize(orders.ticket);
+   for (i=0; i < size; i++) {
+      int      ticket       = orders.ticket      [i];    //  0
+      int      level        = orders.level       [i];    //  1
+      double   gridBase     = orders.gridBase    [i];    //  2
+      int      pendingType  = orders.pendingType [i];    //  3
+      datetime pendingTime  = orders.pendingTime [i];    //  4
+      double   pendingPrice = orders.pendingPrice[i];    //  5
+      int      type         = orders.type        [i];    //  6
+      int      openEvent    = orders.openEvent   [i];    //  7
+      datetime openTime     = orders.openTime    [i];    //  8
+      double   openPrice    = orders.openPrice   [i];    //  9
+      double   openRisk     = orders.openRisk    [i];    // 10
+      int      closeEvent   = orders.closeEvent  [i];    // 11
+      datetime closeTime    = orders.closeTime   [i];    // 12
+      double   closePrice   = orders.closePrice  [i];    // 13
+      double   stopLoss     = orders.stopLoss    [i];    // 14
+      bool     clientSL     = orders.clientSL    [i];    // 15
+      bool     closedBySL   = orders.closedBySL  [i];    // 16
+      double   swap         = orders.swap        [i];    // 17
+      double   commission   = orders.commission  [i];    // 18
+      double   profit       = orders.profit      [i];    // 19
+      ArrayPushString(lines, StringConcatenate("rt.order.", i, "=", ticket, ",", level, ",", NumberToStr(NormalizeDouble(gridBase, Digits), ".+"), ",", pendingType, ",", pendingTime, ",", NumberToStr(NormalizeDouble(pendingPrice, Digits), ".+"), ",", type, ",", openEvent, ",", openTime, ",", NumberToStr(NormalizeDouble(openPrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(openRisk, 2), ".+"), ",", closeEvent, ",", closeTime, ",", NumberToStr(NormalizeDouble(closePrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(stopLoss, Digits), ".+"), ",", clientSL, ",", closedBySL, ",", NumberToStr(swap, ".+"), ",", NumberToStr(commission, ".+"), ",", NumberToStr(profit, ".+")));
+      //rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{openRisk},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
+   }
+
+
+   // (2) Daten speichern
+   int hFile = FileOpen(GetMqlStatusFileName(), FILE_CSV|FILE_WRITE);
+   if (hFile < 0)
+      return(_false(catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName() +"\")")));
+
+   for (i=0; i < ArraySize(lines); i++) {
+      if (FileWrite(hFile, lines[i]) < 0) {
+         catch("SaveStatus(3)->FileWrite(line #"+ (i+1) +")");
+         FileClose(hFile);
+         return(false);
+      }
+   }
+   FileClose(hFile);
+
+   /*
+   // (3) Datei auf Server laden
+   int error = UploadStatus(ShortAccountCompany(), AccountNumber(), StdSymbol(), fileName);
+   if (IsError(error))
+      return(false);
+   */
+
+   ArrayResize(lines,  0);
+   ArrayResize(values, 0);
+   return(!last_error|catch("SaveStatus(4)"));
 }
 
 
