@@ -74,11 +74,8 @@ double   sequence.stopsPL      [2];                                  // kumulier
 double   sequence.closedPL     [2];                                  // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
 double   sequence.floatingPL   [2];                                  // kumulierter P/L aller aktuell offenen Positionen
 double   sequence.totalPL      [2];                                  // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
-double   sequence.openRisk     [2];                                  // vorraussichtlicher kumulierter P/L aller aktuell offenen Level bei deren Stopout: sum(orders.openRisk)
-double   sequence.valueAtRisk  [2];                                  // vorraussichtlicher Gesamt-P/L der Sequenz bei Stop in Level 0: grid.stopsPL + grid.openRisk
 double   sequence.maxProfit    [2];                                  // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
 double   sequence.maxDrawdown  [2];                                  // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
-double   sequence.breakeven    [2];
 double   sequence.commission   [2];                                  // aktueller Commission-Betrag je Level
 
 // -------------------------------------------------------
@@ -116,8 +113,6 @@ int      orders.type           [];
 int      orders.openEvent      [];
 datetime orders.openTime       [];
 double   orders.openPrice      [];
-double   orders.openRisk       [];                                   // vorraussichtlicher P/L des Levels seit letztem Stopout bei erneutem Stopout
-
 int      orders.closeEvent     [];
 datetime orders.closeTime      [];
 double   orders.closePrice     [];
@@ -608,11 +603,8 @@ bool ResetSequence(int hSeq) {
    sequence.closedPL     [hSeq]         = 0;
    sequence.floatingPL   [hSeq]         = 0;
    sequence.totalPL      [hSeq]         = 0;
-   sequence.openRisk     [hSeq]         = 0;
-   sequence.valueAtRisk  [hSeq]         = 0;
    sequence.maxProfit    [hSeq]         = 0;
    sequence.maxDrawdown  [hSeq]         = 0;
-   sequence.breakeven    [hSeq]         = 0;
    sequence.commission   [hSeq]         = 0;
 
    // ---------------------------------------------------------------
@@ -676,8 +668,6 @@ bool ResetSequence(int hSeq) {
       ArraySpliceInts   (orders.openEvent,    from, size);
       ArraySpliceInts   (orders.openTime,     from, size);
       ArraySpliceDoubles(orders.openPrice,    from, size);
-      ArraySpliceDoubles(orders.openRisk,     from, size);
-
       ArraySpliceInts   (orders.closeEvent,   from, size);
       ArraySpliceInts   (orders.closeTime,    from, size);
       ArraySpliceDoubles(orders.closePrice,   from, size);
@@ -933,8 +923,6 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
    int      openEvent    = NULL;
    datetime openTime     = NULL;
    double   openPrice    = NULL;
-   double   openRisk     = NULL;
-
    int      closeEvent   = NULL;
    datetime closeTime    = NULL;
    double   closePrice   = NULL;
@@ -948,7 +936,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
 
    ArrayResize(oe, 0);
 
-   if (!Grid.PushData(hSeq, ticket, level, gridbase[hSeq], pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, openRisk, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
+   if (!Grid.PushData(hSeq, ticket, level, gridbase[hSeq], pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
       return(false);
    return(!last_error|catch("Grid.AddOrder(5)"));
 }
@@ -971,8 +959,6 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
  * @param  int      openEvent
  * @param  datetime openTime
  * @param  double   openPrice
- * @param  double   openRisk
- *
  * @param  int      closeEvent
  * @param  datetime closeTime
  * @param  double   closePrice
@@ -986,8 +972,8 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
-   return(Grid.SetData(hSeq, -1, ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, openRisk, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit));
+bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   return(Grid.SetData(hSeq, -1, ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit));
 }
 
 
@@ -1009,8 +995,6 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  * @param  int      openEvent
  * @param  datetime openTime
  * @param  double   openPrice
- * @param  double   openRisk
- *
  * @param  int      closeEvent
  * @param  datetime closeTime
  * @param  double   closePrice
@@ -1024,7 +1008,7 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, double openRisk, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
    if (offset < -1)
       return(_false(catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -1088,8 +1072,6 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
    orders.openEvent   [i] = openEvent;
    orders.openTime    [i] = openTime;
    orders.openPrice   [i] = NormalizeDouble(openPrice, Digits);
-   orders.openRisk    [i] = NormalizeDouble(openRisk, 2);
-
    orders.closeEvent  [i] = closeEvent;
    orders.closeTime   [i] = closeTime;
    orders.closePrice  [i] = NormalizeDouble(closePrice, Digits);
@@ -1129,8 +1111,6 @@ bool Grid.InsertElement(int offset) {
    ArrayInsertInt   (orders.openEvent,    offset, 0    );
    ArrayInsertInt   (orders.openTime,     offset, 0    );
    ArrayInsertDouble(orders.openPrice,    offset, 0    );
-   ArrayInsertDouble(orders.openRisk,     offset, 0    );
-
    ArrayInsertInt   (orders.closeEvent,   offset, 0    );
    ArrayInsertInt   (orders.closeTime,    offset, 0    );
    ArrayInsertDouble(orders.closePrice,   offset, 0    );
@@ -1299,14 +1279,9 @@ bool SaveStatus(int hSeq) {
    double   grid.closedPL;             // nein: kann aus Orderdaten restauriert werden
    double   grid.floatingPL;           // nein: kann aus offenen Positionen restauriert werden
    double   grid.totalPL;              // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
-   double   grid.openRisk;             // nein: kann aus Orderdaten restauriert werden
-   double   grid.valueAtRisk;          // nein: kann aus Orderdaten restauriert werden
 
-   double   grid.maxProfit;            // ja
-   double   grid.maxDrawdown;          // ja
-
-   double   grid.breakevenLong;        // nein: wird mit dem aktuellen TickValue als Näherung neu berechnet
-   double   grid.breakevenShort;       // nein: wird mit dem aktuellen TickValue als Näherung neu berechnet
+   double   sequence.maxProfit;        // ja
+   double   sequence.maxDrawdown;      // ja
 
    int      orders.ticket      [];     // ja:  0
    int      orders.level       [];     // ja:  1
@@ -1318,16 +1293,15 @@ bool SaveStatus(int hSeq) {
    int      orders.openEvent   [];     // ja:  7
    datetime orders.openTime    [];     // ja:  8 (EV_POSITION_OPEN)
    double   orders.openPrice   [];     // ja:  9
-   double   orders.openRisk    [];     // ja: 10
-   int      orders.closeEvent  [];     // ja: 11
-   datetime orders.closeTime   [];     // ja: 12 (EV_POSITION_STOPOUT | EV_POSITION_CLOSE)
-   double   orders.closePrice  [];     // ja: 13
-   double   orders.stopLoss    [];     // ja: 14
-   bool     orders.clientSL    [];     // ja: 15
-   bool     orders.closedBySL  [];     // ja: 16
-   double   orders.swap        [];     // ja: 17
-   double   orders.commission  [];     // ja: 18
-   double   orders.profit      [];     // ja: 19
+   int      orders.closeEvent  [];     // ja: 10
+   datetime orders.closeTime   [];     // ja: 11 (EV_POSITION_STOPOUT | EV_POSITION_CLOSE)
+   double   orders.closePrice  [];     // ja: 12
+   double   orders.stopLoss    [];     // ja: 13
+   bool     orders.clientSL    [];     // ja: 14
+   bool     orders.closedBySL  [];     // ja: 15
+   double   orders.swap        [];     // ja: 16
+   double   orders.commission  [];     // ja: 17
+   double   orders.profit      [];     // ja: 18
    */
 
    // (1) Dateiinhalt zusammenstellen
@@ -1381,8 +1355,8 @@ bool SaveStatus(int hSeq) {
       ArrayCopy(iValues, ignore.closedPositions, 0, ignore.closed[hSeq][I_FROM], ignore.closed[hSeq][I_SIZE]);
       ArrayPushString(lines, /*string*/"rt.ignoreClosedPositions="+      JoinInts(iValues, ","));
    }
-   ArrayPushString(lines, /*double*/   "rt.grid.maxProfit="       +   NumberToStr(sequence.maxProfit  [hSeq], ".+"));
-   ArrayPushString(lines, /*double*/   "rt.grid.maxDrawdown="     +   NumberToStr(sequence.maxDrawdown[hSeq], ".+"));
+   ArrayPushString(lines, /*double*/   "rt.sequence.maxProfit="   +   NumberToStr(sequence.maxProfit  [hSeq], ".+"));
+   ArrayPushString(lines, /*double*/   "rt.sequence.maxDrawdown=" +   NumberToStr(sequence.maxDrawdown[hSeq], ".+"));
 
       ArrayResize(sValues, 0);
       if (gridbase.events[hSeq][I_SIZE] > 0)
@@ -1403,18 +1377,17 @@ bool SaveStatus(int hSeq) {
          int      openEvent    = orders.openEvent   [i];    //  7
          datetime openTime     = orders.openTime    [i];    //  8
          double   openPrice    = orders.openPrice   [i];    //  9
-         double   openRisk     = orders.openRisk    [i];    // 10
-         int      closeEvent   = orders.closeEvent  [i];    // 11
-         datetime closeTime    = orders.closeTime   [i];    // 12
-         double   closePrice   = orders.closePrice  [i];    // 13
-         double   stopLoss     = orders.stopLoss    [i];    // 14
-         bool     clientSL     = orders.clientSL    [i];    // 15
-         bool     closedBySL   = orders.closedBySL  [i];    // 16
-         double   swap         = orders.swap        [i];    // 17
-         double   commission   = orders.commission  [i];    // 18
-         double   profit       = orders.profit      [i];    // 19
-         ArrayPushString(lines, StringConcatenate("rt.order.", i-orders[hSeq][I_FROM], "=", ticket, ",", level, ",", NumberToStr(NormalizeDouble(gridBase, Digits), ".+"), ",", pendingType, ",", pendingTime, ",", NumberToStr(NormalizeDouble(pendingPrice, Digits), ".+"), ",", type, ",", openEvent, ",", openTime, ",", NumberToStr(NormalizeDouble(openPrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(openRisk, 2), ".+"), ",", closeEvent, ",", closeTime, ",", NumberToStr(NormalizeDouble(closePrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(stopLoss, Digits), ".+"), ",", clientSL, ",", closedBySL, ",", NumberToStr(swap, ".+"), ",", NumberToStr(commission, ".+"), ",", NumberToStr(profit, ".+")));
-         //rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{openRisk},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
+         int      closeEvent   = orders.closeEvent  [i];    // 10
+         datetime closeTime    = orders.closeTime   [i];    // 11
+         double   closePrice   = orders.closePrice  [i];    // 12
+         double   stopLoss     = orders.stopLoss    [i];    // 13
+         bool     clientSL     = orders.clientSL    [i];    // 14
+         bool     closedBySL   = orders.closedBySL  [i];    // 15
+         double   swap         = orders.swap        [i];    // 16
+         double   commission   = orders.commission  [i];    // 17
+         double   profit       = orders.profit      [i];    // 18
+         ArrayPushString(lines, StringConcatenate("rt.order.", i-orders[hSeq][I_FROM], "=", ticket, ",", level, ",", NumberToStr(NormalizeDouble(gridBase, Digits), ".+"), ",", pendingType, ",", pendingTime, ",", NumberToStr(NormalizeDouble(pendingPrice, Digits), ".+"), ",", type, ",", openEvent, ",", openTime, ",", NumberToStr(NormalizeDouble(openPrice, Digits), ".+"), ",", closeEvent, ",", closeTime, ",", NumberToStr(NormalizeDouble(closePrice, Digits), ".+"), ",", NumberToStr(NormalizeDouble(stopLoss, Digits), ".+"), ",", clientSL, ",", closedBySL, ",", NumberToStr(swap, ".+"), ",", NumberToStr(commission, ".+"), ",", NumberToStr(profit, ".+")));
+         //rt.order.{i}={ticket},{level},{gridBase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{clientSL},{closedBySL},{swap},{commission},{profit}
       }
    }
 

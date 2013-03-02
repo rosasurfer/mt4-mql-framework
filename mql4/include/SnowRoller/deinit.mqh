@@ -13,7 +13,6 @@ int onDeinitParameterChange() {
    last.LotSize                 = LotSize;
    last.StartConditions         = StringConcatenate(StartConditions,         "");
    last.StopConditions          = StringConcatenate(StopConditions,          "");
-   last.Breakeven.Color         = Breakeven.Color;
    return(-1);
 }
 

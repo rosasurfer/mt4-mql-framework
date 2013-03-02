@@ -29,12 +29,7 @@ int onInitParameterChange() {
    }
    else {
       // Parameteränderung einer existierenden Sequenz
-      if (SaveStatus()) {
-         if (Breakeven.Color != last.Breakeven.Color) {
-            RedrawStartStop();
-            RecolorBreakeven();
-         }
-      }
+      SaveStatus();
    }
    return(last_error);
 }
@@ -56,7 +51,6 @@ int onInitChartChange() {
    LotSize                 = last.LotSize;
    StartConditions         = last.StartConditions;
    StopConditions          = last.StopConditions;
-   Breakeven.Color         = last.Breakeven.Color;
 
    // TODO: Symbolwechsel behandeln
    return(NO_ERROR);
