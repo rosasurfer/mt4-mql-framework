@@ -181,9 +181,7 @@ datetime weekend.resume.time;
 bool     weekend.resume.triggered;                                   // ???
 
 // ---------------------------------
-datetime instanceStartTime;                                          // Start des EA's
-double   instanceStartPrice;
-double   sequenceStartEquity;                                        // Equity bei Start der Sequenz
+double   sequenceStartEquity;
 
 int      sequenceStart.event [];                                     // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
 datetime sequenceStart.time  [];
@@ -4104,8 +4102,6 @@ bool SaveStatus() {
    int      status;                    // nein: kann aus Orderdaten und offenen Positionen restauriert werden
    bool     isTest;                    // nein: wird aus Statusdatei ermittelt
 
-   datetime instanceStartTime;         // ja
-   double   instanceStartPrice;        // ja
    double   sequenceStartEquity;       // ja
 
    int      sequenceStart.event [];    // ja
@@ -4189,10 +4185,7 @@ bool SaveStatus() {
    ArrayPushString(lines, /*string*/   "StopConditions="         +             StopConditions            );
 
    // (1.2) Laufzeit-Variablen
-   ArrayPushString(lines, /*datetime*/ "rt.instanceStartTime="   +             instanceStartTime         );
-   ArrayPushString(lines, /*double*/   "rt.instanceStartPrice="  + NumberToStr(instanceStartPrice, ".+") );
    ArrayPushString(lines, /*double*/   "rt.sequenceStartEquity=" + NumberToStr(sequenceStartEquity, ".+"));
-
       string values[]; ArrayResize(values, 0);
       int size = ArraySize(sequenceStart.event);
       for (int i=0; i < size; i++)
@@ -4200,7 +4193,6 @@ bool SaveStatus() {
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
    ArrayPushString(lines, /*string*/   "rt.sequenceStarts="       + JoinStrings(values, ","));
-
       ArrayResize(values, 0);
       size = ArraySize(sequenceStop.event);
       for (i=0; i < size; i++)
@@ -4379,7 +4371,7 @@ bool RestoreStatus() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.instanceStartTime", "rt.instanceStartPrice", "rt.sequenceStartEquity", "rt.sequenceStarts", "rt.sequenceStops", "rt.grid.maxProfit", "rt.grid.maxDrawdown", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.sequenceStartEquity", "rt.sequenceStarts", "rt.sequenceStops", "rt.grid.maxProfit", "rt.grid.maxDrawdown", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander,
                      "Symbol"                  ,                        // wenn der Initializer nicht komplett in einer Zeile steht.
                      "Sequence.ID"             ,
@@ -4390,8 +4382,6 @@ bool RestoreStatus() {
                    //"StartConditions"         ,                        // optional
                    //"StopConditions"          ,                        // optional
                      ---------------------------
-                     "rt.instanceStartTime"    ,
-                     "rt.instanceStartPrice"   ,
                      "rt.sequenceStartEquity"  ,
                      "rt.sequenceStarts"       ,
                      "rt.sequenceStops"        ,
@@ -4524,8 +4514,6 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    if (__STATUS_ERROR)
       return(false);
    /*
-   datetime rt.instanceStartTime=1328701713
-   double   rt.instanceStartPrice=1.32677
    double   rt.sequenceStartEquity=7801.13
    string   rt.sequenceStarts=1|1328701713|1.32677|1000,2|1329999999|1.33215|1200
    string   rt.sequenceStops=3|1328701999|1.32734|1200,0|0|0|0
@@ -4563,21 +4551,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    string values[], data[];
 
 
-   if (key == "rt.instanceStartTime") {
-      Explode(value, "(", values, 2);
-      value = StringTrim(values[0]);
-      if (!StringIsDigit(value))                                            return(_false(catch("RestoreStatus.Runtime(1)   illegal instanceStartTime \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      instanceStartTime = StrToInteger(value);
-      if (!instanceStartTime)                                               return(_false(catch("RestoreStatus.Runtime(2)   illegal instanceStartTime "+ instanceStartTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      ArrayDropString(keys, key);
-   }
-   else if (key == "rt.instanceStartPrice") {
-      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(3)   illegal instanceStartPrice \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      instanceStartPrice = StrToDouble(value);
-      if (LE(instanceStartPrice, 0))                                        return(_false(catch("RestoreStatus.Runtime(4)   illegal instanceStartPrice "+ NumberToStr(instanceStartPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      ArrayDropString(keys, key);
-   }
-   else if (key == "rt.sequenceStartEquity") {
+   if (key == "rt.sequenceStartEquity") {
       if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(5)   illegal sequenceStartEquity \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       sequenceStartEquity = StrToDouble(value);
       if (LT(sequenceStartEquity, 0))                                       return(_false(catch("RestoreStatus.Runtime(6)   illegal sequenceStartEquity "+ DoubleToStr(sequenceStartEquity, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4605,7 +4579,6 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(12)   illegal sequenceStart.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime startTime = StrToInteger(value);
          if (!startTime)                                                    return(_false(catch("RestoreStatus.Runtime(13)   illegal sequenceStart.time["+ i +"] "+ startTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         else if (startTime < instanceStartTime)                            return(_false(catch("RestoreStatus.Runtime(14)   instanceStartTime/sequenceStart.time["+ i +"] mis-match '"+ TimeToStr(instanceStartTime, TIME_FULL) +"'/'"+ TimeToStr(startTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[2];                          // sequenceStart.price
          if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(15)   illegal sequenceStart.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -5588,20 +5561,10 @@ void RedrawStartStop() {
 
 
    // (1) Start-Marker
-   for (int i=0; i <= starts; i++) {
-      if (!starts) {
-         time   = instanceStartTime;
-         price  = instanceStartPrice;
-         profit = 0;
-      }
-      else if (i == starts) {
-         break;
-      }
-      else {
-         time   = sequenceStart.time  [i];
-         price  = sequenceStart.price [i];
-         profit = sequenceStart.profit[i];
-      }
+   for (int i=0; i < starts; i++) {
+      time   = sequenceStart.time  [i];
+      price  = sequenceStart.price [i];
+      profit = sequenceStart.profit[i];
 
       label = StringConcatenate("SR.", sequenceId, ".start.", i+1);
       if (ObjectFind(label) == 0)

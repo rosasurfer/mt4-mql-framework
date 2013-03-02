@@ -16,12 +16,10 @@ int onInitParameterChange() {
 
    if (status == STATUS_UNINITIALIZED) {
       // neue Sequenz anlegen
-      instanceStartTime  = TimeCurrent();                            // nur für RedrawStartStop() benötigt
-      instanceStartPrice = NormalizeDouble((Bid + Ask)/2, Digits);   // ...
-      isTest             = IsTesting();
-      sequenceId         = CreateSequenceId();
-      Sequence.ID        = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
-      status             = STATUS_WAITING;
+      isTest      = IsTesting();
+      sequenceId  = CreateSequenceId();
+      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
+      status      = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequenceId, status.directory + status.fileName);
 
@@ -118,12 +116,10 @@ int onInitChartClose() {
 
    // (3) ...zum Schluß neue Sequenz anlegen.
    if (ValidateConfiguration(true)) {
-      instanceStartTime  = TimeCurrent();                            // nur für RedrawStartStop() benötigt
-      instanceStartPrice = NormalizeDouble((Bid + Ask)/2, Digits);   // ...
-      isTest             = IsTesting();
-      sequenceId         = CreateSequenceId();
-      Sequence.ID        = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
-      status             = STATUS_WAITING;
+      isTest      = IsTesting();
+      sequenceId  = CreateSequenceId();
+      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
+      status      = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequenceId, status.directory + status.fileName);
 
