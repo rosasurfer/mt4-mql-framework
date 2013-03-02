@@ -748,16 +748,16 @@ bool ResumeSequence() {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  bool lpChange         - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich die Gridbasis oder der Gridlevel der Sequenz geändert haben
- * @param  int  triggeredStops[] - Array, das nach Rückkehr die Array-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
+ * @param  bool lpChange - Zeiger auf Variable, die nach Rückkehr anzeigt, ob sich die Gridbasis oder der Gridlevel der Sequenz geändert haben
+ * @param  int  stops[]  - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
+bool UpdateStatus(bool &lpChange, int stops[]) {
    if (__STATUS_ERROR)                    return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateStatus(1)", ERR_ILLEGAL_STATE)));
 
-   ArrayResize(triggeredStops, 0);
+   ArrayResize(stops, 0);
 
    if (status == STATUS_WAITING)
       return(true);
@@ -777,7 +777,7 @@ bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
          if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
             if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
                if (__LOG) log(UpdateStatus.StopTriggerMsg(i));
-               ArrayPushInt(triggeredStops, i);
+               ArrayPushInt(stops, i);
             }
             continue;
          }
@@ -850,7 +850,7 @@ bool UpdateStatus(bool &lpChange, int triggeredStops[]) {
 
                if (orders.clientSL[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
                   if (__LOG) log(UpdateStatus.StopTriggerMsg(i));
-                  ArrayPushInt(triggeredStops, i);
+                  ArrayPushInt(stops, i);
                }
             }
             grid.floatingPL = NormalizeDouble(grid.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);

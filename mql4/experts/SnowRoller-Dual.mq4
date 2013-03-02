@@ -58,7 +58,7 @@ datetime weekend.resume.time;
 // -------------------------------------------------------
 int      sequence.id           [2];
 bool     sequence.isTest       [2];
-int      sequence.direction    [2] = {D_LONG, D_SHORT};
+int      sequence.direction    [2];
 int      sequence.gridSize     [2];
 double   sequence.lotSize      [2];
 int      sequence.status       [2];
@@ -206,11 +206,11 @@ bool Strategy(int hSeq) {
 /**
  * Signalgeber für StartSequence().
  *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int direction - D_LONG | D_SHORT
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
-bool IsStartSignal(int hSeq) {
+bool IsStartSignal(int direction) {
    if (__STATUS_ERROR)
       return(false);
 
@@ -225,7 +225,7 @@ bool IsStartSignal(int hSeq) {
       int    lag         = start.trend.lag;
       int    signal      = 0;
 
-      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directionFlags[hSeq], signal)) {
+      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directionFlags[direction], signal)) {
          if (signal != 0) {
             if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
             return(true);
@@ -281,7 +281,7 @@ bool IsStopSignal(int hSeq) {
  */
 bool StartSequence(int hSeq) {
    if (__STATUS_ERROR)      return(false);
-   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[sequence.direction[hSeq]]) +" sequence now?"))
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[hSeq]) +" sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
    if (!InitSequence(hSeq)) return(false);
 
@@ -591,7 +591,7 @@ bool ResetSequence(int hSeq) {
 
    sequence.id           [hSeq]         = 0;
    sequence.isTest       [hSeq]         = false;
-   sequence.direction    [hSeq]         = hSeq;
+   sequence.direction    [hSeq]         = 0;
    sequence.gridSize     [hSeq]         = 0;
    sequence.lotSize      [hSeq]         = 0;
    sequence.status       [hSeq]         = STATUS_UNINITIALIZED;
