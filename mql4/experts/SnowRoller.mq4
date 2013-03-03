@@ -703,13 +703,9 @@ bool ResumeSequence() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatus(bool &lpChange, int stops[]) {
-   if (__STATUS_ERROR)                    return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateStatus(1)", ERR_ILLEGAL_STATE)));
-
    ArrayResize(stops, 0);
-
-   if (status == STATUS_WAITING)
-      return(true);
+   if (__STATUS_ERROR)           return(false);
+   if (status == STATUS_WAITING) return(true);
 
    sequence.floatingPL = 0;
 
@@ -892,7 +888,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 /**
  * Logmessage für ausgeführte PendingOrder
  *
- * @param  int i - Index der Order in den Grid-Arrays
+ * @param  int i - Orderindex
  *
  * @return string
  */
@@ -921,7 +917,7 @@ string UpdateStatus.OrderFillMsg(int i) {
 /**
  * Logmessage für getriggerten client-seitigen StopLoss.
  *
- * @param  int i - Index der Order in den Grid-Arrays
+ * @param  int i - Orderindex
  *
  * @return string
  */
@@ -942,7 +938,7 @@ string UpdateStatus.StopTriggerMsg(int i) {
 /**
  * Logmessage für ausgeführten StopLoss.
  *
- * @param  int i - Index der Order in den Grid-Arrays
+ * @param  int i - Orderindex
  *
  * @return string
  */
@@ -974,7 +970,7 @@ string UpdateStatus.SLExecuteMsg(int i) {
 /**
  * Logmessage für geschlossene Position.
  *
- * @param  int i - Index der Order in den Grid-Arrays
+ * @param  int i - Orderindex
  *
  * @return string
  */
@@ -1111,11 +1107,11 @@ bool IsOrderClosedBySL() {
          closedBySL = true;
       }
       else {
-         // StopLoss aus Griddaten verwenden (bei client-seitiger Verwaltung nur dort gespeichert)
+         // StopLoss aus Orderdaten verwenden (ist bei client-seitiger Verwaltung nur dort gespeichert)
          int i = SearchIntArray(orders.ticket, OrderTicket());
 
-         if (i == -1)                   return(_false(catch("IsOrderClosedBySL(1)   #"+ OrderTicket() +" not found in grid arrays", ERR_RUNTIME_ERROR)));
-         if (EQ(orders.stopLoss[i], 0)) return(_false(catch("IsOrderClosedBySL(2)   #"+ OrderTicket() +" no stop-loss found in grid arrays", ERR_RUNTIME_ERROR)));
+         if (i == -1)                   return(_false(catch("IsOrderClosedBySL(1)   #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (EQ(orders.stopLoss[i], 0)) return(_false(catch("IsOrderClosedBySL(2)   #"+ OrderTicket() +" no stop-loss found in order arrays", ERR_RUNTIME_ERROR)));
 
          if      (orders.closedBySL[i]  ) closedBySL = true;
          else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
@@ -1488,25 +1484,6 @@ void UpdateWeekendStop() {
    if (weekend.stop.time < now)
       weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
    weekend.stop.time = FXTToServerTime(weekend.stop.time);
-}
-
-
-/**
- * Ob der angegebene client-seitige Stop-Wert erreicht wurde.
- *
- * @param  int    type - Stop-Typ: OP_BUYSTOP|OP_SELLSTOP|OP_BUY|OP_SELL
- * @param  double stop - Stop-Wert
- *
- * @return bool
- */
-bool IsStopTriggered(int type, double stop) {
-   if (type == OP_BUYSTOP ) return(Ask >= stop);                         // pending Buy-Stop
-   if (type == OP_SELLSTOP) return(Bid <= stop);                         // pending Sell-Stop
-
-   if (type == OP_BUY     ) return(Bid <= stop);                         // Long-StopLoss
-   if (type == OP_SELL    ) return(Ask >= stop);                         // Short-StopLoss
-
-   return(_false(catch("IsStopTriggered()   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5214,15 +5191,15 @@ bool ChartMarker.OrderFilled(int i) {
 
 
 /**
- * Korrigiert die vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ * Korrigiert den vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
  *
- * @param  int i - Index des Ordertickets in den Datenarrays
+ * @param  int i - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!IsChart)                               return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.PositionClosed()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart)
+      return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5232,8 +5209,8 @@ bool ChartMarker.PositionClosed(int i) {
    color markerColor = CLR_NONE;
 
    if (orderDisplayMode != ODM_NONE) {
-      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode!=ODM_PYRAMID) markerColor = CLR_CLOSE;
-      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode>=ODM_PYRAMID) markerColor = CLR_CLOSE;
+      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
+      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
    }
 
    if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))

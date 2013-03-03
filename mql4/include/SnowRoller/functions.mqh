@@ -259,3 +259,22 @@ string StatusToStr(int status) {
    }
    return(_empty(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
+
+
+/**
+ * Ob der angegebene StopPrice erreicht wurde.
+ *
+ * @param  int    type  - Stop-Typ: OP_BUYSTOP|OP_SELLSTOP|OP_BUY|OP_SELL
+ * @param  double price - StopPrice
+ *
+ * @return bool
+ */
+bool IsStopTriggered(int type, double price) {
+   if (type == OP_BUYSTOP ) return(Ask >= price);                    // pending Buy-Stop
+   if (type == OP_SELLSTOP) return(Bid <= price);                    // pending Sell-Stop
+
+   if (type == OP_BUY     ) return(Bid <= price);                    // Long-StopLoss
+   if (type == OP_SELL    ) return(Ask >= price);                    // Short-StopLoss
+
+   return(_false(catch("IsStopTriggered()   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}

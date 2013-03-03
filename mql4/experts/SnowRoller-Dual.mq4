@@ -776,14 +776,360 @@ bool ResumeSequence(int hSeq) {
 /**
  * Prüft und synchronisiert die im EA gespeicherten mit den aktuellen Laufzeitdaten.
  *
- * @param  int  hSeq      - Sequenz: D_LONG | D_SHORT
- * @param  bool lpChanges - Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz geändert haben
- * @param  int  stops[]   - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
+ * @param  int  hSeq     - Sequenz: D_LONG | D_SHORT
+ * @param  bool lpChange - Variable, die nach Rückkehr anzeigt, ob sich Gridbasis oder Gridlevel der Sequenz geändert haben
+ * @param  int  stops[]  - Array, das nach Rückkehr die Order-Indizes getriggerter client-seitiger Stops enthält (Pending- und SL-Orders)
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateStatus(int hSeq, bool &lpChanges, int stops[]) {
-   return(!catch("UpdateStatus()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
+   ArrayResize(stops, 0);
+   if (__STATUS_ERROR)                          return(false);
+   if (sequence.status[hSeq] == STATUS_WAITING) return(true);
+
+   sequence.floatingPL[hSeq] = 0;
+
+   bool wasPending, isClosed, openPositions, updateStatusLocation;
+   int  closed[][2], close[2], ticketFrom=orders[hSeq][I_FROM], ticketTo=orders[hSeq][I_TO], ticketSize=orders[hSeq][I_SIZE]; ArrayResize(closed, 0);
+
+
+   // (1) Tickets aktualisieren
+   if (ticketSize > 0) {
+      for (int i=ticketFrom; i <= ticketTo; i++) {
+         if (orders.closeTime[i] == 0) {                                            // Ticket prüfen, wenn es beim letzten Aufruf offen war
+            wasPending = (orders.type[i] == OP_UNDEFINED);
+
+            // (1.1) client-seitige PendingOrders prüfen
+            if (wasPending) /*&&*/ if (orders.ticket[i] == -1) {
+               if (IsStopTriggered(orders.pendingType[i], orders.pendingPrice[i])) {
+                  if (__LOG) log(UpdateStatus.StopTriggerMsg(hSeq, i));
+                  ArrayPushInt(stops, i);
+               }
+               continue;
+            }
+
+            // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
+            if (orders.ticket[i] == -2) {
+               orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
+               orders.closeTime [i] = TimeCurrent();
+               orders.closePrice[i] = orders.openPrice[i];
+               orders.closedBySL[i] = true;
+               ChartMarker.PositionClosed(i);
+               if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
+
+               sequence.level[hSeq]  -= Sign(orders.level[i]);
+               sequence.stops[hSeq]++; SS.Grid.Stops();
+             //sequence.stopsPL[hSeq] = ...                                         // unverändert, da P/L des Pseudo-Tickets immer 0.00
+               lpChange               = true;
+               continue;
+            }
+
+            // (1.3) reguläre server-seitige Tickets
+            if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)"))
+               return(false);
+
+            if (wasPending) {
+               // beim letzten Aufruf Pending-Order
+               if (OrderType() != orders.pendingType[i]) {                          // Order wurde ausgeführt
+                  orders.type      [i] = OrderType();
+                  orders.openEvent [i] = CreateEventId();
+                  orders.openTime  [i] = OrderOpenTime();
+                  orders.openPrice [i] = OrderOpenPrice();
+                  orders.swap      [i] = OrderSwap();
+                  orders.commission[i] = OrderCommission(); sequence.commission[hSeq] = OrderCommission(); SS.LotSize();
+                  orders.profit    [i] = OrderProfit();
+                  ChartMarker.OrderFilled(i);
+                  if (__LOG) log(UpdateStatus.OrderFillMsg(hSeq, i));
+
+                  sequence.level[hSeq]   += Sign(orders.level[i]);
+                  sequence.maxLevel[hSeq] = Sign(orders.level[i]) * Max(Abs(sequence.level[hSeq]), Abs(sequence.maxLevel[hSeq]));
+                  lpChange                = true;
+                  updateStatusLocation    = updateStatusLocation || !sequence.maxLevel[hSeq];
+               }
+            }
+            else {
+               // beim letzten Aufruf offene Position
+               orders.swap      [i] = OrderSwap();
+               orders.commission[i] = OrderCommission();
+               orders.profit    [i] = OrderProfit();
+            }
+
+
+            isClosed = OrderCloseTime() != 0;                                       // Bei Spikes kann eine Pending-Order ausgeführt *und* bereits geschlossen sein.
+
+            if (!isClosed) {                                                        // weiterhin offenes Ticket
+               if (orders.type[i] != OP_UNDEFINED) {
+                  openPositions = true;
+
+                  if (orders.clientSL[i]) /*&&*/ if (IsStopTriggered(orders.type[i], orders.stopLoss[i])) {
+                     if (__LOG) log(UpdateStatus.StopTriggerMsg(hSeq, i));
+                     ArrayPushInt(stops, i);
+                  }
+               }
+               sequence.floatingPL[hSeq] = NormalizeDouble(sequence.floatingPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+            }
+            else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order im STATUS_MONITORING
+               //ChartMarker.OrderDeleted(i);                                       // TODO: implementieren
+               Grid.DropData(i);
+               ticketTo--; i--;
+            }
+            else {
+               orders.closeTime [i] = OrderCloseTime();                             // jetzt geschlossenes Ticket: geschlossene Position
+               orders.closePrice[i] = OrderClosePrice();
+               orders.closedBySL[i] = IsOrderClosedBySL();
+               ChartMarker.PositionClosed(i);
+
+               if (orders.closedBySL[i]) {                                          // ausgestoppt
+                  orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
+                  if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
+                  sequence.level[hSeq]  -= Sign(orders.level[i]);
+                  sequence.stops[hSeq]++;
+                  sequence.stopsPL[hSeq] = NormalizeDouble(sequence.stopsPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Grid.Stops();
+                  lpChange               = true;
+               }
+               else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
+                  close[0] = OrderCloseTime();
+                  close[1] = OrderTicket();                                         // Geschlossene Positionen werden zwischengespeichert, deren Event-IDs werden erst
+                  ArrayPushIntArray(closed, close);                                 // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
+
+                  if (sequence.status[hSeq] != STATUS_STOPPED)
+                     sequence.status[hSeq] = STATUS_STOPPING;
+                  if (__LOG) log(UpdateStatus.PositionCloseMsg(hSeq, i));
+                  sequence.closedPL[hSeq] = NormalizeDouble(sequence.closedPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+               }
+            }
+         }
+      }
+   }
+   /*
+
+
+   // (2) Event-IDs geschlossener Positionen setzen (erst nach evt. ausgestoppten Positionen)
+   int sizeOfClosed = ArrayRange(closed, 0);
+   if (sizeOfClosed > 0) {
+      ArraySort(closed);
+      for (i=0; i < sizeOfClosed; i++) {
+         int n = SearchIntArray(orders.ticket, closed[i][1]);
+         if (n == -1)
+            return(_false(catch("UpdateStatus(3)   closed ticket #"+ closed[i][1] +" not found in grid arrays", ERR_RUNTIME_ERROR)));
+         orders.closeEvent[n] = CreateEventId();
+      }
+      ArrayResize(closed, 0);
+   }
+
+
+   // (3) P/L-Kennziffern  aktualisieren
+   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.Grid.TotalPL();
+
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.Grid.MaxProfit();   }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.Grid.MaxDrawdown(); }
+
+
+   // (4) ggf. Status aktualisieren
+   if (status == STATUS_STOPPING) {
+      if (!openPositions) {                                                      // Sequenzstop im STATUS_MONITORING oder Auto-Close durch Tester bei Testende
+         n = ArraySize(sequence.stop.event) - 1;
+         sequence.stop.event [n] = CreateEventId();
+         sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
+         sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
+         sequence.stop.profit[n] = sequence.totalPL;
+
+         if (!StopSequence.LimitStopPrice())                                     //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
+            return(false);
+
+         status = STATUS_STOPPED;
+         if (__LOG) log("UpdateStatus()   STATUS_STOPPED");
+         RedrawStartStop();
+      }
+   }
+
+
+   else if (status == STATUS_PROGRESSING) {
+      // (5) ggf. Gridbasis trailen
+      if (sequence.level == 0) {
+         double last.grid.base = grid.base;
+
+         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+
+         if (NE(grid.base, last.grid.base)) {
+            GridBase.Change(TimeCurrent(), grid.base);
+            lpChange = true;
+         }
+      }
+   }
+
+
+   // (6) ggf. Ort der Statusdatei aktualisieren
+   if (updateStatusLocation)
+      UpdateStatusLocation();
+
+   return(!last_error|catch("UpdateStatus(4)"));
+   */
+}
+
+
+/**
+ * Logmessage für getriggerten client-seitigen StopLoss.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return string
+ */
+string UpdateStatus.StopTriggerMsg(int hSeq, int i) {
+   string comment = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+
+   if (orders.type[i] == OP_UNDEFINED) {
+      // client-side Stop Buy at 1.5457'2 ("SR.8692.+17") was triggered
+      return(StringConcatenate("UpdateStatus()   client-side ", OperationTypeDescription(orders.pendingType[i]), " at ", NumberToStr(orders.pendingPrice[i], PriceFormat), " (\"", comment, "\") was triggered"));
+   }
+   else {
+      // #1 client-side stop-loss at 1.5457'2 ("SR.8692.+17") was triggered
+      return(StringConcatenate("UpdateStatus()   #", orders.ticket[i], " client-side stop-loss at ", NumberToStr(orders.stopLoss[i], PriceFormat), " (\"", comment, "\") was triggered"));
+   }
+}
+
+
+/**
+ * Logmessage für ausgeführten StopLoss.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return string
+ */
+string UpdateStatus.SLExecuteMsg(int hSeq, int i) {
+   // [pseudo ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), [client-side ]stop-loss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+
+   string strPseudo    = ifString(orders.ticket[i]==-2, "pseudo ticket ", "");
+   string strType      = OperationTypeDescription(orders.type[i]);
+   string strOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
+   string strStopSide  = ifString(orders.clientSL[i], "client-side ", "");
+   string strStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
+   string comment      = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+
+   string message = StringConcatenate("UpdateStatus()   ", strPseudo, "#", orders.ticket[i], " ", strType, " ", NumberToStr(LotSize, ".+"), " ", Symbol(), " at ", strOpenPrice, " (\"", comment, "\"), ", strStopSide, "stop-loss ", strStopLoss, " was executed");
+
+   if (NE(orders.closePrice[i], orders.stopLoss[i])) {
+      double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
+         if (orders.type[i] == OP_SELL)
+            slippage = -slippage;
+      string strSlippage;
+      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits<<31>>31), " pip slippage");
+      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits<<31>>31), " pip positive slippage");
+      message = StringConcatenate(message, " at ", NumberToStr(orders.closePrice[i], PriceFormat), " (", strSlippage, ")");
+   }
+   return(message);
+}
+
+
+/**
+ * Logmessage für ausgeführte PendingOrder
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return string
+ */
+string UpdateStatus.OrderFillMsg(int hSeq, int i) {
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was filled[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+
+   string strType         = OperationTypeDescription(orders.pendingType[i]);
+   string strPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
+   string comment         = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+
+   string message = StringConcatenate("UpdateStatus()   #", orders.ticket[i], " ", strType, " ", NumberToStr(LotSize, ".+"), " ", Symbol(), " at ", strPendingPrice, " (\"", comment, "\") was filled");
+
+   if (NE(orders.pendingPrice[i], orders.openPrice[i])) {
+      double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
+         if (orders.type[i] == OP_SELL)
+            slippage = -slippage;
+      string strSlippage;
+      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits<<31>>31), " pip slippage");
+      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits<<31>>31), " pip positive slippage");
+      message = StringConcatenate(message, " at ", NumberToStr(orders.openPrice[i], PriceFormat), " (", strSlippage, ")");
+   }
+   return(message);
+}
+
+
+/**
+ * Logmessage für geschlossene Position.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return string
+ */
+string UpdateStatus.PositionCloseMsg(int hSeq, int i) {
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was closed at 1.5457'2
+
+   string strType       = OperationTypeDescription(orders.type[i]);
+   string strOpenPrice  = NumberToStr(orders.openPrice[i], PriceFormat);
+   string strClosePrice = NumberToStr(orders.closePrice[i], PriceFormat);
+   string comment       = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+
+   return(StringConcatenate("UpdateStatus()   #", orders.ticket[i], " ", strType, " ", NumberToStr(LotSize, ".+"), " ", Symbol(), " at ", strOpenPrice, " (\"", comment, "\") was closed at ", strClosePrice));
+}
+
+
+/**
+ * Ob die aktuell selektierte Order durch den StopLoss geschlossen wurde (client- oder server-seitig).
+ *
+ * @return bool
+ */
+bool IsOrderClosedBySL() {
+   bool position   = OrderType()==OP_BUY || OrderType()==OP_SELL;
+   bool closed     = OrderCloseTime() != 0;                          // geschlossene Position
+   bool closedBySL = false;
+
+   if (closed) /*&&*/ if (position) {
+      if (StringIEndsWith(OrderComment(), "[sl]")) {
+         closedBySL = true;
+      }
+      else {
+         // StopLoss aus Orderdaten verwenden (ist bei client-seitiger Verwaltung nur dort gespeichert)
+         int i = SearchIntArray(orders.ticket, OrderTicket());
+
+         if (i == -1)                   return(_false(catch("IsOrderClosedBySL(1)   #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR)));
+         if (EQ(orders.stopLoss[i], 0)) return(_false(catch("IsOrderClosedBySL(2)   #"+ OrderTicket() +" no stop-loss found in order arrays", ERR_RUNTIME_ERROR)));
+
+         if      (orders.closedBySL[i]  ) closedBySL = true;
+         else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
+         else if (OrderType() == OP_SELL) closedBySL = GE(OrderClosePrice(), orders.stopLoss[i]);
+      }
+   }
+   return(closedBySL);
+}
+
+
+/**
+ * Korrigiert den vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
+ *
+ * @param  int i - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartMarker.PositionClosed(int i) {
+   if (!IsChart)
+      return(true);
+   /*
+   #define ODM_NONE     0     // - keine Anzeige -
+   #define ODM_STOPS    1     // Pending,       ClosedBySL
+   #define ODM_PYRAMID  2     // Pending, Open,             Closed
+   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
+   */
+   color markerColor = CLR_NONE;
+
+   if (orderDisplayMode != ODM_NONE) {
+      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
+      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
+   }
+
+   if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))
+      return(_false(SetLastError(stdlib_GetLastError())));
+   return(true);
 }
 
 
@@ -1865,11 +2211,11 @@ int ShowStatus() {
                                   "Profit/Loss:   ",  str.instance.totalPL, str.instance.plStats,                   NL,
                                                                                                                     NL,
                                   "LONG:       ",     l.msg,                                                        NL,
-                                  "Stops:         ",  str.sequence.stops[D_LONG], str.sequence.stopsPL[D_LONG],     NL,
-                                  "Profit/Loss:   ",  str.sequence.totalPL[D_LONG], str.sequence.plStats[D_LONG],   NL,
+                                  "Stops:         ",  str.sequence.stops  [D_LONG],  str.sequence.stopsPL[D_LONG],  NL,
+                                  "Profit/Loss:   ",  str.sequence.totalPL[D_LONG],  str.sequence.plStats[D_LONG],  NL,
                                                                                                                     NL,
                                   "SHORT:     ",      s.msg,                                                        NL,
-                                  "Stops:         ",  str.sequence.stops[D_SHORT], str.sequence.stopsPL[D_SHORT],   NL,
+                                  "Stops:         ",  str.sequence.stops  [D_SHORT], str.sequence.stopsPL[D_SHORT], NL,
                                   "Profit/Loss:   ",  str.sequence.totalPL[D_SHORT], str.sequence.plStats[D_SHORT], NL);
 
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
