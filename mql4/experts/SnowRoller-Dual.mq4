@@ -139,11 +139,13 @@ string   str.instance.lotSize;                                       // Zwischen
 string   str.instance.totalPL;
 string   str.instance.plStats;
 
-string   str.sequence.id       [2];                                  // Zwischenspeicher für schnelleres ShowStatus(): je Sequenz
-string   str.sequence.stops    [2];
-string   str.sequence.stopsPL  [2];
-string   str.sequence.totalPL  [2];
-string   str.sequence.plStats  [2];
+string   str.sequence.id         [2];                                // Zwischenspeicher für schnelleres ShowStatus(): je Sequenz
+string   str.sequence.stops      [2];
+string   str.sequence.stopsPL    [2];
+string   str.sequence.totalPL    [2];
+string   str.sequence.maxProfit  [2];
+string   str.sequence.maxDrawdown[2];
+string   str.sequence.plStats    [2];
 // -------------------------------------------------------
 
 
@@ -174,7 +176,7 @@ bool Strategy(int hSeq) {
       return(false);
 
    bool changes;                                                     // Gridbasis- oder -leveländerung
-   int  status, stops[];                                             // getriggerte client-seitige Stops
+   int  stops[];                                                     // getriggerte client-seitige Stops
 
    // (1) Strategie wartet auf Startsignal ...
    if (sequence.status[hSeq] == STATUS_UNINITIALIZED) {
@@ -559,7 +561,7 @@ bool InitSequence(int hSeq) {
    if (!ResetSequence(hSeq))                          return( false);
 
    sequence.id       [hSeq] = CreateSequenceId();
-   sequence.isTest   [hSeq] = IsTest(); SS.SequenceId(hSeq);
+   sequence.isTest   [hSeq] = IsTest(); SS.Sequence.Id(hSeq);
    sequence.direction[hSeq] = hSeq;
    sequence.gridSize [hSeq] = GridSize;
    sequence.lotSize  [hSeq] = LotSize;
@@ -739,11 +741,13 @@ bool ResetSequence(int hSeq) {
    }
 
    // ---------------------------------------------------------------
-   str.sequence.id     [hSeq] = "";
-   str.sequence.stops  [hSeq] = "";
-   str.sequence.stopsPL[hSeq] = "";
-   str.sequence.totalPL[hSeq] = "";
-   str.sequence.plStats[hSeq] = "";
+   str.sequence.id         [hSeq] = "";
+   str.sequence.stops      [hSeq] = "";
+   str.sequence.stopsPL    [hSeq] = "";
+   str.sequence.totalPL    [hSeq] = "";
+   str.sequence.maxProfit  [hSeq] = "";
+   str.sequence.maxDrawdown[hSeq] = "";
+   str.sequence.plStats    [hSeq] = "";
 
    return(!catch("ResetSequence()"));
 }
@@ -758,6 +762,36 @@ bool ResetSequence(int hSeq) {
  */
 bool StopSequence(int hSeq) {
    return(!catch("StopSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Der StopPrice darf nicht schon den nächsten Level triggern, da sonst bei ResumeSequence() Fehler auftreten.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StopSequence.LimitStopPrice(int hSeq) {
+   if (__STATUS_ERROR)                                                                           return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(_false(catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+
+   double nextTrigger;
+   int i = sequence.ss.events[hSeq][I_TO];
+
+   if (sequence.direction[hSeq] == D_LONG) {
+      nextTrigger = gridbase[hSeq] + (sequence.level[hSeq]+1)*GridSize*Pip;
+      sequence.stop.price[i] = MathMin(nextTrigger-1*Pip, sequence.stop.price[i]);  // max. 1 Pip unterm Trigger des nächsten Levels
+   }
+
+   if (sequence.direction[hSeq] == D_SHORT) {
+      nextTrigger = gridbase[hSeq] + (sequence.level[hSeq]-1)*GridSize*Pip;
+      sequence.stop.price[i] = MathMax(nextTrigger+1*Pip, sequence.stop.price[i]);  // min. 1 Pip überm Trigger des nächsten Levels
+   }
+   sequence.stop.price[i] = NormalizeDouble(sequence.stop.price[i], Digits);
+
+   return(!last_error|catch("StopSequence.LimitStopPrice(3)"));
 }
 
 
@@ -818,14 +852,14 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
 
                sequence.level[hSeq]  -= Sign(orders.level[i]);
-               sequence.stops[hSeq]++; SS.Grid.Stops();
+               sequence.stops[hSeq]++; SS.Sequence.Stops(hSeq);
              //sequence.stopsPL[hSeq] = ...                                         // unverändert, da P/L des Pseudo-Tickets immer 0.00
                lpChange               = true;
                continue;
             }
 
             // (1.3) reguläre server-seitige Tickets
-            if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)"))
+            if (!SelectTicket(orders.ticket[i], "UpdateStatus(1)"))
                return(false);
 
             if (wasPending) {
@@ -838,13 +872,13 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                   orders.swap      [i] = OrderSwap();
                   orders.commission[i] = OrderCommission(); sequence.commission[hSeq] = OrderCommission(); SS.LotSize();
                   orders.profit    [i] = OrderProfit();
-                  ChartMarker.OrderFilled(i);
+                  ChartMarker.OrderFilled(hSeq, i);
                   if (__LOG) log(UpdateStatus.OrderFillMsg(hSeq, i));
 
-                  sequence.level[hSeq]   += Sign(orders.level[i]);
-                  sequence.maxLevel[hSeq] = Sign(orders.level[i]) * Max(Abs(sequence.level[hSeq]), Abs(sequence.maxLevel[hSeq]));
-                  lpChange                = true;
-                  updateStatusLocation    = updateStatusLocation || !sequence.maxLevel[hSeq];
+                  sequence.level   [hSeq] += Sign(orders.level[i]);
+                  sequence.maxLevel[hSeq]  = Sign(orders.level[i]) * Max(Abs(sequence.level[hSeq]), Abs(sequence.maxLevel[hSeq]));
+                  lpChange                 = true;
+                  updateStatusLocation     = updateStatusLocation || !sequence.maxLevel[hSeq];
                }
             }
             else {
@@ -871,7 +905,10 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order im STATUS_MONITORING
                //ChartMarker.OrderDeleted(i);                                       // TODO: implementieren
                Grid.DropData(i);
-               ticketTo--; i--;
+               ticketFrom = orders[hSeq][I_FROM];
+               ticketTo   = orders[hSeq][I_TO  ];
+               ticketSize = orders[hSeq][I_SIZE];
+               i--;
             }
             else {
                orders.closeTime [i] = OrderCloseTime();                             // jetzt geschlossenes Ticket: geschlossene Position
@@ -882,10 +919,10 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                if (orders.closedBySL[i]) {                                          // ausgestoppt
                   orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
                   if (__LOG) log(UpdateStatus.SLExecuteMsg(hSeq, i));
-                  sequence.level[hSeq]  -= Sign(orders.level[i]);
-                  sequence.stops[hSeq]++;
-                  sequence.stopsPL[hSeq] = NormalizeDouble(sequence.stopsPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Grid.Stops();
-                  lpChange               = true;
+                  sequence.level  [hSeq] -= Sign(orders.level[i]);
+                  sequence.stops  [hSeq]++;
+                  sequence.stopsPL[hSeq]  = NormalizeDouble(sequence.stopsPL[hSeq] + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Sequence.Stops(hSeq);
+                  lpChange                = true;
                }
                else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
                   close[0] = OrderCloseTime();
@@ -901,7 +938,6 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
          }
       }
    }
-   /*
 
 
    // (2) Event-IDs geschlossener Positionen setzen (erst nach evt. ausgestoppten Positionen)
@@ -911,7 +947,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("UpdateStatus(3)   closed ticket #"+ closed[i][1] +" not found in grid arrays", ERR_RUNTIME_ERROR)));
+            return(_false(catch("UpdateStatus(2)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -919,41 +955,41 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
 
 
    // (3) P/L-Kennziffern  aktualisieren
-   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.Grid.TotalPL();
+   sequence.totalPL[hSeq] = NormalizeDouble(sequence.stopsPL[hSeq] + sequence.closedPL[hSeq] + sequence.floatingPL[hSeq], 2); SS.Sequence.TotalPL(hSeq);
 
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.Grid.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.Grid.MaxDrawdown(); }
+   if      (sequence.totalPL[hSeq] > sequence.maxProfit  [hSeq]) { sequence.maxProfit  [hSeq] = sequence.totalPL[hSeq]; SS.Sequence.MaxProfit(hSeq);   }
+   else if (sequence.totalPL[hSeq] < sequence.maxDrawdown[hSeq]) { sequence.maxDrawdown[hSeq] = sequence.totalPL[hSeq]; SS.Sequence.MaxDrawdown(hSeq); }
 
 
    // (4) ggf. Status aktualisieren
-   if (status == STATUS_STOPPING) {
-      if (!openPositions) {                                                      // Sequenzstop im STATUS_MONITORING oder Auto-Close durch Tester bei Testende
-         n = ArraySize(sequence.stop.event) - 1;
+   if (sequence.status[hSeq] == STATUS_STOPPING) {
+      if (!openPositions) {                                                         // Sequenzstop im STATUS_MONITORING oder Auto-Close durch Tester bei Testende
+         n = sequence.ss.events[hSeq][I_TO];
          sequence.stop.event [n] = CreateEventId();
-         sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
-         sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
-         sequence.stop.profit[n] = sequence.totalPL;
+         sequence.stop.time  [n] = UpdateStatus.CalculateStopTime(hSeq);  if (!sequence.stop.time [n]) return(false);
+         sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(hSeq); if (!sequence.stop.price[n]) return(false);
+         sequence.stop.profit[n] = sequence.totalPL[hSeq];
 
-         if (!StopSequence.LimitStopPrice())                                     //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
+         if (!StopSequence.LimitStopPrice(hSeq))                                    //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
             return(false);
 
-         status = STATUS_STOPPED;
+         sequence.status[hSeq] = STATUS_STOPPED;
          if (__LOG) log("UpdateStatus()   STATUS_STOPPED");
-         RedrawStartStop();
+         RedrawStartStop(hSeq);
       }
    }
 
 
-   else if (status == STATUS_PROGRESSING) {
+   else if (sequence.status[hSeq] == STATUS_PROGRESSING) {
       // (5) ggf. Gridbasis trailen
-      if (sequence.level == 0) {
-         double last.grid.base = grid.base;
+      if (sequence.level[hSeq] == 0) {
+         double tmp.gridbase = gridbase[hSeq];
 
-         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         if (sequence.direction[hSeq] == D_LONG) gridbase[hSeq] = MathMin(gridbase[hSeq], NormalizeDouble((Bid + Ask)/2, Digits));
+         else                                    gridbase[hSeq] = MathMax(gridbase[hSeq], NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(grid.base, last.grid.base)) {
-            GridBase.Change(TimeCurrent(), grid.base);
+         if (NE(gridbase[hSeq], tmp.gridbase)) {
+            GridBase.Change(hSeq, TimeCurrent(), gridbase[hSeq]);
             lpChange = true;
          }
       }
@@ -962,10 +998,83 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
 
    // (6) ggf. Ort der Statusdatei aktualisieren
    if (updateStatusLocation)
-      UpdateStatusLocation();
+      UpdateStatusLocation(hSeq);
 
    return(!last_error|catch("UpdateStatus(4)"));
-   */
+}
+
+
+/**
+ * Ermittelt die StopTime der aktuell gestoppten Sequenz. Aufruf nur nach externem Sequencestop.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ *
+ * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ */
+datetime UpdateStatus.CalculateStopTime(int hSeq) {
+   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopTime(1)   cannot calculate stop time for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.level [hSeq] == 0              ) return(_NULL(catch("UpdateStatus.CalculateStopTime(2)   cannot calculate stop time for sequence at level "+ sequence.level[hSeq], ERR_RUNTIME_ERROR)));
+
+   datetime stopTime;
+   int n = sequence.level[hSeq];
+
+   if (orders[hSeq][I_SIZE] > 0) {
+      for (int i=orders[hSeq][I_TO]; n != 0; i--) {
+         if (orders.closeTime[i] == 0) {
+            if (IsTesting() && __WHEREAMI__==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
+               continue;                                             // offene Pending-Orders ignorieren
+            return(_NULL(catch("UpdateStatus.CalculateStopTime(3)   #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
+         }
+         if (orders.type[i] == OP_UNDEFINED)                         // gestrichene Pending-Orders ignorieren
+            continue;
+         if (orders.closedBySL[i])                                   // ausgestoppte Positionen ignorieren
+            continue;
+
+         if (orders.level[i] != n)
+            return(_NULL(catch("UpdateStatus.CalculateStopTime(4)   #"+ orders.ticket[i] +" (level "+ orders.level[i] +") doesn't match the expected level "+ n, ERR_RUNTIME_ERROR)));
+
+         stopTime = Max(stopTime, orders.closeTime[i]);
+         n -= Sign(n);
+      }
+   }
+   return(stopTime);
+}
+
+
+/**
+ * Ermittelt den durchschnittlichen StopPrice der aktuell gestoppten Sequenz. Aufruf nur nach externem Sequencestop.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ *
+ * @return double - Preis oder NULL, falls ein Fehler auftrat
+ */
+double UpdateStatus.CalculateStopPrice(int hSeq) {
+   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopPrice(1)   cannot calculate stop price for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.level [hSeq] == 0              ) return(_NULL(catch("UpdateStatus.CalculateStopPrice(2)   cannot calculate stop price for sequence at level "+ sequence.level[hSeq], ERR_RUNTIME_ERROR)));
+
+   double stopPrice;
+   int n = sequence.level[hSeq];
+
+   if (orders[hSeq][I_SIZE] > 0) {
+      for (int i=orders[hSeq][I_TO]; n != 0; i--) {
+         if (orders.closeTime[i] == 0) {
+            if (IsTesting() && __WHEREAMI__==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
+               continue;                                             // offene Pending-Orders ignorieren
+            return(_NULL(catch("UpdateStatus.CalculateStopPrice(3)   #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
+         }
+         if (orders.type[i] == OP_UNDEFINED)                         // gestrichene Pending-Orders ignorieren
+            continue;
+         if (orders.closedBySL[i])                                   // ausgestoppte Positionen ignorieren
+            continue;
+
+         if (orders.level[i] != n)
+            return(_NULL(catch("UpdateStatus.CalculateStopPrice(4)   #"+ orders.ticket[i] +" (level "+ orders.level[i] +") doesn't match the expected level "+ n, ERR_RUNTIME_ERROR)));
+
+         stopPrice += orders.closePrice[i];
+         n -= Sign(n);
+      }
+   }
+   return(NormalizeDouble(stopPrice/Abs(sequence.level[hSeq]), Digits));
 }
 
 
@@ -1075,6 +1184,35 @@ string UpdateStatus.PositionCloseMsg(int hSeq, int i) {
 
 
 /**
+ * Aktualisiert die Dateinamensvariablen der Statusdatei.  SaveStatus() erkennt die Änderung und verschiebt die Datei automatisch.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateStatusLocation(int hSeq) {
+   if (__STATUS_ERROR)     return( false);
+   if (!sequence.id[hSeq]) return(_false(catch("UpdateStatusLocation(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+
+   // TODO: Prüfen, ob status.file existiert und ggf. aktualisieren
+
+   string startDate = "";
+
+   if      (IsTesting()) sequence.statusFile[hSeq][I_DIR] = "presets\\";
+   else if (IsTest())    sequence.statusFile[hSeq][I_DIR] = "presets\\tester\\";
+   else {
+      sequence.statusFile[hSeq][I_DIR] = "presets\\"+ ShortAccountCompany() +"\\";
+
+      if (sequence.maxLevel[hSeq] != 0) {
+         startDate                        = TimeToStr(orders.openTime[orders[hSeq][I_FROM]], TIME_DATE);
+         sequence.statusFile[hSeq][I_DIR] = sequence.statusFile[hSeq][I_DIR] + startDate +"\\";
+      }
+   }
+   return(true);
+}
+
+
+/**
  * Ob die aktuell selektierte Order durch den StopLoss geschlossen wurde (client- oder server-seitig).
  *
  * @return bool
@@ -1105,6 +1243,69 @@ bool IsOrderClosedBySL() {
 
 
 /**
+ * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartMarker.OrderSent(int hSeq, int i) {
+   if (!IsChart) return(true);
+   /*
+   #define ODM_NONE     0     // - keine Anzeige -
+   #define ODM_STOPS    1     // Pending,       ClosedBySL
+   #define ODM_PYRAMID  2     // Pending, Open,             Closed
+   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
+   */
+   bool pending = orders.pendingType[i] != OP_UNDEFINED;
+
+   int      type        =    ifInt(pending, orders.pendingType [i], orders.type     [i]);
+   datetime openTime    =    ifInt(pending, orders.pendingTime [i], orders.openTime [i]);
+   double   openPrice   = ifDouble(pending, orders.pendingPrice[i], orders.openPrice[i]);
+   string   comment     = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+   color    markerColor = CLR_NONE;
+
+   if (orderDisplayMode != ODM_NONE) {
+      if      (pending)                         markerColor = CLR_PENDING;
+      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongTradeOperation(type), CLR_LONG, CLR_SHORT);
+   }
+
+   if (!ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment))
+      return(_false(SetLastError(stdlib_GetLastError())));
+   return(true);
+}
+
+
+/**
+ * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartMarker.OrderFilled(int hSeq, int i) {
+   if (!IsChart) return(true);
+   /*
+   #define ODM_NONE     0     // - keine Anzeige -
+   #define ODM_STOPS    1     // Pending,       ClosedBySL
+   #define ODM_PYRAMID  2     // Pending, Open,             Closed
+   #define ODM_ALL      3     // Pending, Open, ClosedBySL, Closed
+   */
+   string comment     = StringConcatenate("SR.", sequence.id[hSeq], ".", NumberToStr(orders.level[i], "+."));
+   color  markerColor = CLR_NONE;
+
+   if (orderDisplayMode >= ODM_PYRAMID)
+      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
+
+   if (!ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment))
+      return(_false(SetLastError(stdlib_GetLastError())));
+   return(true);
+}
+
+
+/**
  * Korrigiert den vom Terminal beim Schließen einer Position gesetzten oder nicht gesetzten Chart-Marker.
  *
  * @param  int i - Orderindex
@@ -1112,8 +1313,7 @@ bool IsOrderClosedBySL() {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!IsChart)
-      return(true);
+   if (!IsChart) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -1469,6 +1669,53 @@ bool Grid.InsertElement(int offset) {
    ArrayInsertDouble(orders.profit,       offset, 0    );
 
    return(!catch("Grid.InsertElement(2)"));
+}
+
+
+/**
+ * Entfernt den Datensatz der angegebenen Order aus den Datenarrays.
+ *
+ * @param  int i - Orderindex
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Grid.DropData(int i) {
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("Grid.DropData(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einträge entfernen
+   ArraySpliceInts   (orders.ticket,       i, 1);
+   ArraySpliceInts   (orders.level,        i, 1);
+   ArraySpliceDoubles(orders.gridBase,     i, 1);
+
+   ArraySpliceInts   (orders.pendingType,  i, 1);
+   ArraySpliceInts   (orders.pendingTime,  i, 1);
+   ArraySpliceDoubles(orders.pendingPrice, i, 1);
+
+   ArraySpliceInts   (orders.type,         i, 1);
+   ArraySpliceInts   (orders.openEvent,    i, 1);
+   ArraySpliceInts   (orders.openTime,     i, 1);
+   ArraySpliceDoubles(orders.openPrice,    i, 1);
+   ArraySpliceInts   (orders.closeEvent,   i, 1);
+   ArraySpliceInts   (orders.closeTime,    i, 1);
+   ArraySpliceDoubles(orders.closePrice,   i, 1);
+   ArraySpliceDoubles(orders.stopLoss,     i, 1);
+   ArraySpliceBools  (orders.clientSL,     i, 1);
+   ArraySpliceBools  (orders.closedBySL,   i, 1);
+
+   ArraySpliceDoubles(orders.swap,         i, 1);
+   ArraySpliceDoubles(orders.commission,   i, 1);
+   ArraySpliceDoubles(orders.profit,       i, 1);
+
+   // Indizes aktualisieren
+   for (int n=0; n < 2; n++) {
+      if (orders[n][I_SIZE] > 0) {
+         if (orders[n][I_FROM]<=i && i<=orders[n][I_TO]) {
+            orders[n][I_TO  ]--;
+            orders[n][I_SIZE]--;
+         }
+      }
+   }
+   return(!last_error|catch("Grid.DropData(2)"));
 }
 
 
@@ -2101,7 +2348,7 @@ bool RestoreStickyStatus() {
       int iValue = StrToInteger(strValue);
       if (iValue <= 0)
          return(_false(catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-      instance.id = iValue; SS.InstanceId();
+      instance.id = iValue; SS.Instance.Id();
       idFound     = true;
       SetCustomLog(instance.id, NULL);
 
@@ -2230,10 +2477,10 @@ int ShowStatus() {
 /**
  * ShowStatus(): Aktualisiert die Anzeige der Instanz-ID in der Titelzeile des Strategy Testers.
  */
-void SS.InstanceId() {
+void SS.Instance.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), "Tester - SR-Dual."+ instance.id))
-         catch("SS.InstanceId()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+         catch("SS.Instance.Id()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    }
 }
 
@@ -2242,8 +2489,8 @@ void SS.InstanceId() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
+
    str.instance.lotSize = NumberToStr(LotSize, ".+") +" lot = "+ DoubleToStr(GridSize * PipValue(LotSize), 2) +"/stop";
 }
 
@@ -2253,10 +2500,79 @@ void SS.LotSize() {
  *
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void SS.SequenceId(int hSeq) {
-   if (!IsChart)
-      return;
+void SS.Sequence.Id(int hSeq) {
+   if (!IsChart) return;
+
    str.sequence.id[hSeq] = ifString(sequence.isTest[hSeq], "T", "") + sequence.id[hSeq];
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void SS.Sequence.Stops(int hSeq) {
+   if (!IsChart) return;
+
+   str.sequence.stops[hSeq] = StringConcatenate(sequence.stops[hSeq], " stop", ifString(sequence.stops[hSeq]==1, "", "s"));
+
+   // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
+   if (sequence.stops[hSeq] > 0)
+      str.sequence.stopsPL[hSeq] = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL[hSeq], 2));
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void SS.Sequence.TotalPL(int hSeq) {
+   if (!IsChart) return;
+
+   if (sequence.maxLevel[hSeq] == 0) str.sequence.totalPL[hSeq] = "-";        // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   else                              str.sequence.totalPL[hSeq] = NumberToStr(sequence.totalPL[hSeq], "+.2");
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxProfit.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void SS.Sequence.MaxProfit(int hSeq) {
+   if (!IsChart) return;
+
+   str.sequence.maxProfit[hSeq] = NumberToStr(sequence.maxProfit[hSeq], "+.2");
+   SS.Sequence.PLStats(hSeq);
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxDrawdown.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void SS.Sequence.MaxDrawdown(int hSeq) {
+   if (!IsChart) return;
+
+   str.sequence.maxDrawdown[hSeq] = NumberToStr(sequence.maxDrawdown[hSeq], "+.2");
+   SS.Sequence.PLStats(hSeq);
+}
+
+
+/**
+ * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void SS.Sequence.PLStats(int hSeq) {
+   if (!IsChart) return;
+
+   // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   if (sequence.maxLevel[hSeq] != 0)
+      str.sequence.plStats[hSeq] = StringConcatenate("  (", str.sequence.maxProfit[hSeq], "/", str.sequence.maxDrawdown[hSeq], ")");
 }
 
 
@@ -2275,6 +2591,7 @@ bool IsTest() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
+   ChartMarker.OrderSent(NULL, NULL);
    CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
    ConfirmTick1Trade(NULL, NULL);
    CreateEventId();

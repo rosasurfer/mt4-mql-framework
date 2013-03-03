@@ -18,7 +18,7 @@ int onInitParameterChange() {
       // neue Sequenz anlegen
       isTest      = IsTesting();
       sequenceId  = CreateSequenceId();
-      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
+      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
       status      = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequenceId, status.directory + status.file);
@@ -91,7 +91,7 @@ int onInitChartClose() {
          if (button == IDYES) {
             isTest      = false;
             sequenceId  = ids[i];
-            Sequence.ID = sequenceId; SS.SequenceId();
+            Sequence.ID = sequenceId; SS.Sequence.Id();
             status      = STATUS_WAITING;
             SetCustomLog(sequenceId, NULL);
             if (RestoreStatus())                                     // TODO: Erkennen, ob einer der anderen Parameter von Hand geändert wurde und
@@ -112,7 +112,7 @@ int onInitChartClose() {
    if (ValidateConfiguration(true)) {
       isTest      = IsTesting();
       sequenceId  = CreateSequenceId();
-      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
+      Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.Sequence.Id();
       status      = STATUS_WAITING;
       InitStatusLocation();
       SetCustomLog(sequenceId, status.directory + status.file);

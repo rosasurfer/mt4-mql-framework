@@ -737,7 +737,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
 
             sequence.level  -= Sign(orders.level[i]);
-            sequence.stops++; SS.Grid.Stops();
+            sequence.stops++; SS.Stops();
           //sequence.stopsPL = ...                                               // unverändert, da P/L des Pseudo-Tickets immer 0.00
             lpChange         = true;
             continue;
@@ -803,7 +803,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
                sequence.level  -= Sign(orders.level[i]);
                sequence.stops++;
-               sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Grid.Stops();
+               sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Stops();
                lpChange         = true;
             }
             else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
@@ -828,7 +828,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("UpdateStatus(3)   closed ticket #"+ closed[i][1] +" not found in grid arrays", ERR_RUNTIME_ERROR)));
+            return(_false(catch("UpdateStatus(3)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -836,10 +836,10 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
 
    // (3) P/L-Kennziffern  aktualisieren
-   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.Grid.TotalPL();
+   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.TotalPL();
 
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.Grid.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.Grid.MaxDrawdown(); }
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
 
 
    // (4) ggf. Status aktualisieren
@@ -864,12 +864,12 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
    else if (status == STATUS_PROGRESSING) {
       // (5) ggf. Gridbasis trailen
       if (sequence.level == 0) {
-         double last.grid.base = grid.base;
+         double tmp.grid.base = grid.base;
 
          if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
-         if (NE(grid.base, last.grid.base)) {
+         if (NE(grid.base, tmp.grid.base)) {
             GridBase.Change(TimeCurrent(), grid.base);
             lpChange = true;
          }
@@ -1754,7 +1754,7 @@ double GridBase.Change(datetime time, double value) {
       }
    }
 
-   grid.base = value; SS.Grid.Base();
+   grid.base = value; SS.GridBase();
    return(value);
 }
 
@@ -2230,7 +2230,7 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
 /**
  * Entfernt den Datensatz der angegebenen Order aus den Datenarrays.
  *
- * @param  int i - Index der Order in den Datenarrays
+ * @param  int i - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
@@ -2370,28 +2370,27 @@ int ShowStatus() {
  * ShowStatus(): Aktualisiert alle in ShowStatus() verwendeten String-Repräsentationen.
  */
 void SS.All() {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
 
-   SS.SequenceId();
-   SS.Grid.Base();
-   SS.Grid.Direction();
+   SS.Sequence.Id();
+   SS.GridBase();
+   SS.GridDirection();
    SS.LotSize();
    SS.StartStopConditions();
-   SS.Grid.Stops();
-   SS.Grid.TotalPL();
-   SS.Grid.MaxProfit();
-   SS.Grid.MaxDrawdown();
+   SS.Stops();
+   SS.TotalPL();
+   SS.MaxProfit();
+   SS.MaxDrawdown();
 }
 
 
 /**
  * ShowStatus(): Aktualisiert die Anzeige der Sequenz-ID in der Titelzeile des Strategy Testers.
  */
-void SS.SequenceId() {
+void SS.Sequence.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
-         catch("SS.SequenceId()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+         catch("SS.Sequence.Id()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
    }
 }
 
@@ -2399,9 +2398,8 @@ void SS.SequenceId() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von grid.base.
  */
-void SS.Grid.Base() {
-   if (!IsChart)
-      return;
+void SS.GridBase() {
+   if (!IsChart) return;
 
    if (ArraySize(grid.base.event) > 0)
       str.grid.base = StringConcatenate(" @ ", NumberToStr(grid.base, PriceFormat));
@@ -2411,9 +2409,9 @@ void SS.Grid.Base() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.direction.
  */
-void SS.Grid.Direction() {
-   if (!IsChart)
-      return;
+void SS.GridDirection() {
+   if (!IsChart) return;
+
    str.sequence.direction = StringConcatenate("  (", StringToLower(directionDescr[sequence.direction]), ")");
 }
 
@@ -2422,8 +2420,7 @@ void SS.Grid.Direction() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von LotSize.
  */
 void SS.LotSize() {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
 
    str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
@@ -2433,8 +2430,7 @@ void SS.LotSize() {
  * ShowStatus(): Aktualisiert die String-Repräsentation von start/stopConditions.
  */
 void SS.StartStopConditions() {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
 
    str.startConditions = "";
    str.stopConditions  = "";
@@ -2447,9 +2443,8 @@ void SS.StartStopConditions() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
  */
-void SS.Grid.Stops() {
-   if (!IsChart)
-      return;
+void SS.Stops() {
+   if (!IsChart) return;
 
    str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
@@ -2462,9 +2457,8 @@ void SS.Grid.Stops() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
  */
-void SS.Grid.TotalPL() {
-   if (!IsChart)
-      return;
+void SS.TotalPL() {
+   if (!IsChart) return;
 
    if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
    else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
@@ -2474,9 +2468,8 @@ void SS.Grid.TotalPL() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxProfit.
  */
-void SS.Grid.MaxProfit() {
-   if (!IsChart)
-      return;
+void SS.MaxProfit() {
+   if (!IsChart) return;
 
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
    SS.PLStats();
@@ -2486,9 +2479,8 @@ void SS.Grid.MaxProfit() {
 /**
  * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.maxDrawdown.
  */
-void SS.Grid.MaxDrawdown() {
-   if (!IsChart)
-      return;
+void SS.MaxDrawdown() {
+   if (!IsChart) return;
 
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
    SS.PLStats();
@@ -2499,8 +2491,7 @@ void SS.Grid.MaxDrawdown() {
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
 void SS.PLStats() {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
    if (sequence.maxLevel != 0)
@@ -2598,7 +2589,7 @@ bool RestoreStickyStatus() {
          return(_false(catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
       }
       else {
-         sequenceId  = iValue; SS.SequenceId();
+         sequenceId  = iValue; SS.Sequence.Id();
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          status      = STATUS_WAITING;
          idFound     = true;
@@ -2758,7 +2749,7 @@ bool ValidateConfiguration.ID(bool interactive) {
    if (iValue < SID_MIN || iValue > SID_MAX)
       return(_false(ValidateConfig.HandleError("ValidateConfiguration.ID(2)", "Illegal input parameter Sequence.ID = \""+ Sequence.ID +"\"", interactive)));
 
-   sequenceId  = iValue; SS.SequenceId();
+   sequenceId  = iValue; SS.Sequence.Id();
    Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
    SetCustomLog(sequenceId, NULL);
 
@@ -2819,7 +2810,7 @@ bool ValidateConfiguration(bool interactive) {
       case 's': sequence.direction = D_SHORT; break;
       default:                                   return(_false(ValidateConfig.HandleError("ValidateConfiguration(7)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    }
-   GridDirection = directionDescr[sequence.direction]; SS.Grid.Direction();
+   GridDirection = directionDescr[sequence.direction]; SS.GridDirection();
 
 
    // (3) GridSize
@@ -3422,8 +3413,7 @@ bool InitStatusLocation() {
 
 
 /**
- * Aktualisiert die Dateinamensvariablen der Statusdatei.  Nur die Variablen werden modifiziert, nicht die Datei.
- * SaveStatus() erkennt die Änderung selbst und verschiebt die Datei automatisch.
+ * Aktualisiert die Dateinamensvariablen der Statusdatei.  SaveStatus() erkennt die Änderung und verschiebt die Datei automatisch.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4204,12 +4194,12 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    }
    else if (key == "rt.sequence.maxProfit") {
       if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(37)   illegal sequence.maxProfit \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sequence.maxProfit = StrToDouble(value); SS.Grid.MaxProfit();
+      sequence.maxProfit = StrToDouble(value); SS.MaxProfit();
       ArrayDropString(keys, key);
    }
    else if (key == "rt.sequence.maxDrawdown") {
       if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(38)   illegal sequence.maxDrawdown \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sequence.maxDrawdown = StrToDouble(value); SS.Grid.MaxDrawdown();
+      sequence.maxDrawdown = StrToDouble(value); SS.MaxDrawdown();
       ArrayDropString(keys, key);
    }
    else if (key == "rt.grid.base") {
@@ -5130,13 +5120,12 @@ int CountClosedPositions() {
 /**
  * Korrigiert die vom Terminal beim Abschicken einer Pending- oder Market-Order gesetzten oder nicht gesetzten Chart-Marker.
  *
- * @param  int i - Index des Ordertickets in den Datenarrays
+ * @param  int i - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderSent(int i) {
-   if (!IsChart)                               return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.OrderSent()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5165,13 +5154,12 @@ bool ChartMarker.OrderSent(int i) {
 /**
  * Korrigiert die vom Terminal beim Ausführen einer Pending-Order gesetzten oder nicht gesetzten Chart-Marker.
  *
- * @param  int i - Index des Ordertickets in den Datenarrays
+ * @param  int i - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.OrderFilled(int i) {
-   if (!IsChart)                               return(true);
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("ChartMarker.OrderFilled()   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsChart) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
@@ -5198,8 +5186,7 @@ bool ChartMarker.OrderFilled(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed(int i) {
-   if (!IsChart)
-      return(true);
+   if (!IsChart) return(true);
    /*
    #define ODM_NONE     0     // - keine Anzeige -
    #define ODM_STOPS    1     // Pending,       ClosedBySL
