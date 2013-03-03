@@ -260,12 +260,31 @@ bool IsWeekendResumeSignal() {
 /**
  * Signalgeber für StopSequence().
  *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int  hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStopSignal(int hSeq) {
-   return(!catch("IsStopSignal()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   if (__STATUS_ERROR || sequence.status[hSeq]!=STATUS_PROGRESSING)
+      return(false);
+
+   // (1) User-definierte StopConditions prüfen
+   if (stop.conditions.triggered) {
+      warn("IsStopSignal(1)   repeated triggered state call");    // Einmal getriggert, immer getriggert. Falls der Stop beim aktuellen Tick nicht ausgeführt
+      return(true);                                               // werden konnte, könnten die Bedingungen beim nächsten Tick schon nicht mehr erfüllt sein.
+   }
+
+   // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
+   if (stop.profitAbs.condition) {
+      if (GE(sequence.totalPL[hSeq], stop.profitAbs.value)) {
+         if (__LOG) log(StringConcatenate("IsStopSignal()   sequence "+ sequence.id[hSeq] +" stop condition \"", stop.profitAbs.condition.txt, "\" met"));
+         stop.conditions.triggered = true;
+         return(true);
+      }
+   }
+
+   // (2) zusätzlich interne WeekendStop-Bedingung prüfen
+   return(IsWeekendStopSignal());
 }
 
 

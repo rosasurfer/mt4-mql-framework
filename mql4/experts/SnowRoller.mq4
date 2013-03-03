@@ -1324,11 +1324,9 @@ void UpdateWeekendResume() {
 /**
  * Signalgeber für StopSequence(). Die einzelnen Bedingungen sind OR-verknüpft.
  *
- * @param  bool checkWeekendStop - ob auch auf das Wochenend-Stopsignal geprüft werden soll (default: ja)
- *
  * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
  */
-bool IsStopSignal(bool checkWeekendStop=true) {
+bool IsStopSignal() {
    if (__STATUS_ERROR || status!=STATUS_PROGRESSING)
       return(false);
 
@@ -1430,11 +1428,8 @@ bool IsStopSignal(bool checkWeekendStop=true) {
    stop.conditions.triggered = false;
 
 
-   // (2) je nach Aufruf zusätzlich interne WeekendStop-Bedingung prüfen
-   if (checkWeekendStop)
-      return(IsWeekendStopSignal());
-
-   return(false);
+   // (2) zusätzlich interne WeekendStop-Bedingung prüfen
+   return(IsWeekendStopSignal());
 }
 
 
