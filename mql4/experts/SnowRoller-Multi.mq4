@@ -59,22 +59,22 @@ bool     sequence.weStop.active[];                                   // Weekend-
 // ----------------------------------
 int      sequence.ss.events  [][3];                                  // [0]=>from_index, [1]=>to_index, [2]=>size (Start-/Stopdaten sind synchron)
 
-int      sequenceStart.event [];                                     // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime sequenceStart.time  [];
-double   sequenceStart.price [];
-double   sequenceStart.profit[];
+int      sequence.start.event [];                                    // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime sequence.start.time  [];
+double   sequence.start.price [];
+double   sequence.start.profit[];
 
-int      sequenceStop.event  [];                                     // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime sequenceStop.time   [];
-double   sequenceStop.price  [];
-double   sequenceStop.profit [];
+int      sequence.stop.event  [];                                    // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequence.stop.time   [];
+double   sequence.stop.price  [];
+double   sequence.stop.profit [];
 
 // ----------------------------------
-int      grid.direction [];
-int      grid.size      [];
-int      grid.level     [];                                          // aktueller Grid-Level
-int      grid.maxLevel  [];                                          // maximal erreichter Grid-Level
-double   grid.commission[];                                          // Commission-Betrag je Level
+int      sequence.direction [];
+int      grid.size          [];
+int      sequence.level     [];                                      // aktueller Grid-Level
+int      sequence.maxLevel  [];                                      // maximal erreichter Grid-Level
+double   sequence.commission[];                                      // Commission-Betrag je Level
 
 // ----------------------------------
 int      grid.base.events[][3];                                      // [0]=>from_index, [1]=>to_index, [2]=>size
@@ -170,37 +170,37 @@ bool StartSequence(int hSeq) {
 
    // (1) Startvariablen setzen
    datetime startTime  = TimeCurrent();
-   double   startPrice = ifDouble(grid.direction[hSeq]==D_SHORT, Bid, Ask);
+   double   startPrice = ifDouble(sequence.direction[hSeq]==D_SHORT, Bid, Ask);
 
-   ArrayPushInt   (sequenceStart.event,  CreateEventId());
-   ArrayPushInt   (sequenceStart.time,   startTime      );
-   ArrayPushDouble(sequenceStart.price,  startPrice     );
-   ArrayPushDouble(sequenceStart.profit, 0              );
+   ArrayPushInt   (sequence.start.event,  CreateEventId());
+   ArrayPushInt   (sequence.start.time,   startTime      );
+   ArrayPushDouble(sequence.start.price,  startPrice     );
+   ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequenceStop.event,  0);                          // Größe von sequenceStarts/Stops synchron halten
-   ArrayPushInt   (sequenceStop.time,   0);
-   ArrayPushDouble(sequenceStop.price,  0);
-   ArrayPushDouble(sequenceStop.profit, 0);
+   ArrayPushInt   (sequence.stop.event,   0);                        // Größe von sequence.starts/stops synchron halten
+   ArrayPushInt   (sequence.stop.time,    0);
+   ArrayPushDouble(sequence.stop.price,   0);
+   ArrayPushDouble(sequence.stop.profit,  0);
 
    sequence.startEquity[hSeq] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
 
-   // (2) Gridbasis setzen (zeitlich nach sequenceStart.time)
+   // (2) Gridbasis setzen (zeitlich nach sequence.start.time)
    double gridBase = startPrice;
    if (start.level.condition) {
-      grid.level   [hSeq] = ifInt(grid.direction[hSeq]==D_LONG, start.level.value, -start.level.value);
-      grid.maxLevel[hSeq] = grid.level[hSeq];
-      gridBase            = NormalizeDouble(startPrice - grid.level[hSeq]*grid.size[hSeq]*Pips, Digits);
+      sequence.level   [hSeq] = ifInt(sequence.direction[hSeq]==D_LONG, start.level.value, -start.level.value);
+      sequence.maxLevel[hSeq] = sequence.level[hSeq];
+      gridBase            = NormalizeDouble(startPrice - sequence.level[hSeq]*grid.size[hSeq]*Pips, Digits);
    }
    GridBase.Reset(hSeq, startTime, gridBase);
 
 
    // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
-   if (grid.level[hSeq] != 0) {
+   if (sequence.level[hSeq] != 0) {
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
       return(_false(catch("StartSequence(3.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
-      sequenceStart.price[ArraySize(sequenceStart.price)-1] = startPrice;
+      sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
 
@@ -218,7 +218,7 @@ bool StartSequence(int hSeq) {
 
 
    RedrawStartStop(hSeq);
-   if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(grid.level[hSeq], " and level "+ grid.level[hSeq], "")));
+   if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
    return(!last_error|catch("StartSequence(3)"));
 }
 
@@ -288,12 +288,12 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
    int size=ArraySize(sequence.id), hSeq=size;
    Strategy.ResizeArrays(size+1);
 
-   sequence.id     [hSeq] = sid;
-   sequence.test   [hSeq] = test;
-   sequence.status [hSeq] = status;
-   sequence.lotSize[hSeq] = lotSize;
-   grid.direction  [hSeq] = direction;
-   grid.size       [hSeq] = gridSize;
+   sequence.id       [hSeq] = sid;
+   sequence.test     [hSeq] = test;
+   sequence.status   [hSeq] = status;
+   sequence.lotSize  [hSeq] = lotSize;
+   sequence.direction[hSeq] = direction;
+   grid.size         [hSeq] = gridSize;
 
    InitStatusLocation(hSeq);
 
@@ -398,11 +398,11 @@ int Strategy.ResizeArrays(int size) {
       ArrayResize(sequence.ss.events,     size);
       ArrayResize(sequence.weStop.active, size);
 
-      ArrayResize(grid.direction,         size);
+      ArrayResize(sequence.direction,     size);
       ArrayResize(grid.size,              size);
-      ArrayResize(grid.level,             size);
-      ArrayResize(grid.maxLevel,          size);
-      ArrayResize(grid.commission,        size);
+      ArrayResize(sequence.level,         size);
+      ArrayResize(sequence.maxLevel,      size);
+      ArrayResize(sequence.commission,    size);
       ArrayResize(grid.base.events,       size);
    }
    return(size);
@@ -624,7 +624,7 @@ bool ValidateConfiguration(bool interactive) {
             if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(42)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             iValue = StrToInteger(value);
             if (iValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(43)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            if (ArraySize(sequenceStart.event) != 0)   return(_false(ValidateConfig.HandleError("ValidateConfiguration(44)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
+            if (ArraySize(sequence.start.event) != 0)  return(_false(ValidateConfig.HandleError("ValidateConfiguration(44)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
             start.level.condition     = true;
             start.level.value         = iValue;
             start.level.condition.txt = key +"("+ iValue +")";

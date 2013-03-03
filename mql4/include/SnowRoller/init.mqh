@@ -21,7 +21,7 @@ int onInitParameterChange() {
       Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
       status      = STATUS_WAITING;
       InitStatusLocation();
-      SetCustomLog(sequenceId, status.directory + status.fileName);
+      SetCustomLog(sequenceId, status.directory + status.file);
 
       if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
          SaveStatus();
@@ -115,7 +115,7 @@ int onInitChartClose() {
       Sequence.ID = ifString(IsTest(), "T", "") + sequenceId; SS.SequenceId();
       status      = STATUS_WAITING;
       InitStatusLocation();
-      SetCustomLog(sequenceId, status.directory + status.fileName);
+      SetCustomLog(sequenceId, status.directory + status.file);
 
       if (start.conditions)                                          // Ohne StartConditions speichert der sofortige Sequenzstart automatisch.
          SaveStatus();

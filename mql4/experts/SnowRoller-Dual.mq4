@@ -73,7 +73,7 @@ int      sequence.stops        [2];                                  // Anzahl d
 double   sequence.stopsPL      [2];                                  // kumulierter P/L aller bisher ausgestoppten Positionen
 double   sequence.closedPL     [2];                                  // kumulierter P/L aller bisher bei Sequencestop geschlossenen Positionen
 double   sequence.floatingPL   [2];                                  // kumulierter P/L aller aktuell offenen Positionen
-double   sequence.totalPL      [2];                                  // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
+double   sequence.totalPL      [2];                                  // aktueller Gesamt-P/L der Sequenz: stopsPL + closedPL + floatingPL
 double   sequence.maxProfit    [2];                                  // maximaler bisheriger Gesamt-Profit der Sequenz   (>= 0)
 double   sequence.maxDrawdown  [2];                                  // maximaler bisheriger Gesamt-Drawdown der Sequenz (<= 0)
 double   sequence.commission   [2];                                  // aktueller Commission-Betrag je Level
@@ -81,15 +81,15 @@ double   sequence.commission   [2];                                  // aktuelle
 // -------------------------------------------------------
 int      sequence.ss.events    [2][3];                               // {I_FROM, I_TO, I_SIZE}: Start- und Stopdaten sind synchron
 
-int      sequenceStart.event   [];                                   // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime sequenceStart.time    [];
-double   sequenceStart.price   [];
-double   sequenceStart.profit  [];
+int      sequence.start.event   [];                                  // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime sequence.start.time    [];
+double   sequence.start.price   [];
+double   sequence.start.profit  [];
 
-int      sequenceStop.event    [];                                   // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime sequenceStop.time     [];
-double   sequenceStop.price    [];
-double   sequenceStop.profit   [];
+int      sequence.stop.event    [];                                  // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequence.stop.time     [];
+double   sequence.stop.price    [];
+double   sequence.stop.profit   [];
 
 // -------------------------------------------------------
 int      gridbase.events       [2][3];                               // {I_FROM, I_TO, I_SIZE}
@@ -336,9 +336,9 @@ void RedrawStartStop(int hSeq) {
    if (size > 0) {
       // (1) Start-Marker
       for (int i=from; i <= to; i++) {
-         time   = sequenceStart.time  [i];
-         price  = sequenceStart.price [i];
-         profit = sequenceStart.profit[i];
+         time   = sequence.start.time  [i];
+         price  = sequence.start.price [i];
+         profit = sequence.start.profit[i];
 
          label = StringConcatenate("SR.", sequence.id[hSeq], ".start.", i-from+1);
          if (ObjectFind(label) == 0)
@@ -355,9 +355,9 @@ void RedrawStartStop(int hSeq) {
 
       // (2) Stop-Marker
       for (i=from; i <= to; i++) {
-         time   = sequenceStop.time  [i];
-         price  = sequenceStop.price [i];
-         profit = sequenceStop.profit[i];
+         time   = sequence.stop.time  [i];
+         price  = sequence.stop.price [i];
+         profit = sequence.stop.profit[i];
          if (time > 0) {
             label = StringConcatenate("SR.", sequence.id[hSeq], ".stop.", i-from+1);
             if (ObjectFind(label) == 0)
@@ -509,7 +509,7 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
    int offset, event=CreateEventId();
 
    if (sequence.ss.events[hSeq][I_SIZE] == 0) {
-      offset = ArraySize(sequenceStart.event);
+      offset = ArraySize(sequence.start.event);
 
       sequence.ss.events[hSeq][I_FROM] = offset;
       sequence.ss.events[hSeq][I_TO  ] = offset;
@@ -530,15 +530,15 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
    }
 
    // Eventdaten an Offset einfügen
-   ArrayInsertInt   (sequenceStart.event,  offset, event );
-   ArrayInsertInt   (sequenceStart.time,   offset, time  );
-   ArrayInsertDouble(sequenceStart.price,  offset, price );
-   ArrayInsertDouble(sequenceStart.profit, offset, profit);
+   ArrayInsertInt   (sequence.start.event,  offset, event );
+   ArrayInsertInt   (sequence.start.time,   offset, time  );
+   ArrayInsertDouble(sequence.start.price,  offset, price );
+   ArrayInsertDouble(sequence.start.profit, offset, profit);
 
-   ArrayInsertInt   (sequenceStop.event,   offset, 0     );          // Größe von sequenceStarts/Stops synchron halten
-   ArrayInsertInt   (sequenceStop.time,    offset, 0     );
-   ArrayInsertDouble(sequenceStop.price,   offset, 0     );
-   ArrayInsertDouble(sequenceStop.profit,  offset, 0     );
+   ArrayInsertInt   (sequence.stop.event,   offset, 0     );         // Größe von sequence.starts/stops synchron halten
+   ArrayInsertInt   (sequence.stop.time,    offset, 0     );
+   ArrayInsertDouble(sequence.stop.price,   offset, 0     );
+   ArrayInsertDouble(sequence.stop.profit,  offset, 0     );
 
    if (!catch("AddStartEvent()"))
       return(event);
@@ -611,15 +611,15 @@ bool ResetSequence(int hSeq) {
    from = sequence.ss.events[hSeq][I_FROM];
    size = sequence.ss.events[hSeq][I_SIZE];
    if (size > 0) {
-      ArraySpliceInts   (sequenceStart.event,  from, size);
-      ArraySpliceInts   (sequenceStart.time,   from, size);
-      ArraySpliceDoubles(sequenceStart.price,  from, size);
-      ArraySpliceDoubles(sequenceStart.profit, from, size);
+      ArraySpliceInts   (sequence.start.event,  from, size);
+      ArraySpliceInts   (sequence.start.time,   from, size);
+      ArraySpliceDoubles(sequence.start.price,  from, size);
+      ArraySpliceDoubles(sequence.start.profit, from, size);
 
-      ArraySpliceInts   (sequenceStop.event,  from, size);
-      ArraySpliceInts   (sequenceStop.time,   from, size);
-      ArraySpliceDoubles(sequenceStop.price,  from, size);
-      ArraySpliceDoubles(sequenceStop.profit, from, size);
+      ArraySpliceInts   (sequence.stop.event,  from, size);
+      ArraySpliceInts   (sequence.stop.time,   from, size);
+      ArraySpliceDoubles(sequence.stop.price,  from, size);
+      ArraySpliceDoubles(sequence.stop.profit, from, size);
 
       for (int i=0; i < 2; i++) {
          if (sequence.ss.events[i][I_FROM] > from) {
@@ -872,7 +872,7 @@ bool Grid.DeleteOrder(int i) {
 
 
 /**
- * Legt die angegebene Stop-Order in den Markt und fügt den Orderarrays deren Daten hinzu.
+ * Legt eine Stop-Order in den Markt und fügt sie den Orderarrays hinzu.
  *
  * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
  * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
@@ -1245,17 +1245,17 @@ bool SaveStatus(int hSeq) {
    int      status;                    // nein: kann aus Orderdaten und offenen Positionen restauriert werden
    bool     isTest;                    // nein: wird aus Statusdatei ermittelt
 
-   double   sequenceStartEquity;       // ja
+   double   sequence.startEquity;      // ja
 
-   int      sequenceStart.event [];    // ja
-   datetime sequenceStart.time  [];    // ja
-   double   sequenceStart.price [];    // ja
-   double   sequenceStart.profit[];    // ja
+   int      sequence.start.event [];   // ja
+   datetime sequence.start.time  [];   // ja
+   double   sequence.start.price [];   // ja
+   double   sequence.start.profit[];   // ja
 
-   int      sequenceStop.event [];     // ja
-   datetime sequenceStop.time  [];     // ja
-   double   sequenceStop.price [];     // ja
-   double   sequenceStop.profit[];     // ja
+   int      sequence.stop.event [];    // ja
+   datetime sequence.stop.time  [];    // ja
+   double   sequence.stop.price [];    // ja
+   double   sequence.stop.profit[];    // ja
 
    bool     start.*.condition;         // nein: wird aus StartConditions abgeleitet
    bool     stop.*.condition;          // nein: wird aus StopConditions abgeleitet
@@ -1271,14 +1271,14 @@ bool SaveStatus(int hSeq) {
    double   grid.base.value[];         // ja
    double   grid.base;                 // nein: wird aus Gridbase-History restauriert
 
-   int      grid.level;                // nein: kann aus Orderdaten restauriert werden
-   int      grid.maxLevel;             // nein: kann aus Orderdaten restauriert werden
+   int      sequence.level;            // nein: kann aus Orderdaten restauriert werden
+   int      sequence.maxLevel;         // nein: kann aus Orderdaten restauriert werden
 
-   int      grid.stops;                // nein: kann aus Orderdaten restauriert werden
-   double   grid.stopsPL;              // nein: kann aus Orderdaten restauriert werden
-   double   grid.closedPL;             // nein: kann aus Orderdaten restauriert werden
-   double   grid.floatingPL;           // nein: kann aus offenen Positionen restauriert werden
-   double   grid.totalPL;              // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
+   int      sequence.stops;            // nein: kann aus Orderdaten restauriert werden
+   double   sequence.stopsPL;          // nein: kann aus Orderdaten restauriert werden
+   double   sequence.closedPL;         // nein: kann aus Orderdaten restauriert werden
+   double   sequence.floatingPL;       // nein: kann aus offenen Positionen restauriert werden
+   double   sequence.totalPL;          // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
 
    double   sequence.maxProfit;        // ja
    double   sequence.maxDrawdown;      // ja
@@ -1322,20 +1322,20 @@ bool SaveStatus(int hSeq) {
    ArrayPushString(lines, /*string*/   "StopConditions="         +                StopConditions                   );
 
    // (1.2) Laufzeit-Variablen
-   ArrayPushString(lines, /*double*/   "rt.sequenceStartEquity=" +    NumberToStr(sequence.startEquity[hSeq], ".+"));
+   ArrayPushString(lines, /*double*/   "rt.sequence.startEquity="+    NumberToStr(sequence.startEquity[hSeq], ".+"));
       string sValues[]; ArrayResize(sValues, 0);
       if (sequence.ss.events[hSeq][I_SIZE] > 0)
          for (int i=sequence.ss.events[hSeq][I_FROM]; i <= sequence.ss.events[hSeq][I_TO]; i++)
-            ArrayPushString(sValues, StringConcatenate(sequenceStart.event[i], "|", sequenceStart.time[i], "|", NumberToStr(sequenceStart.price[i], ".+"), "|", NumberToStr(sequenceStart.profit[i], ".+")));
+            ArrayPushString(sValues, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       else  ArrayPushString(sValues, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequenceStarts="       +   JoinStrings(sValues, ","));
+   ArrayPushString(lines, /*string*/   "rt.sequence.starts="      +   JoinStrings(sValues, ","));
 
       ArrayResize(sValues, 0);
       if (sequence.ss.events[hSeq][I_SIZE] > 0)
          for (i=sequence.ss.events[hSeq][I_FROM]; i <= sequence.ss.events[hSeq][I_TO]; i++)
-            ArrayPushString(sValues, StringConcatenate(sequenceStop.event[i], "|", sequenceStop.time[i], "|", NumberToStr(sequenceStop.price[i], ".+"), "|", NumberToStr(sequenceStop.profit[i], ".+")));
+            ArrayPushString(sValues, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       else  ArrayPushString(sValues, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequenceStops="        +   JoinStrings(sValues, ","));
+   ArrayPushString(lines, /*string*/   "rt.sequence.stops="       +   JoinStrings(sValues, ","));
 
       if (sequence.weStop.active[hSeq])
    ArrayPushString(lines, /*int*/      "rt.weekendStop="          +               1);

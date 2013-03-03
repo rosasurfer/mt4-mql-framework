@@ -39,7 +39,7 @@
  *  |                   |                      |                     |            |               |                    |
  *  | EA.start()        | STATUS_WAITING       |                     |            |               |                    |
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
- *  | StartSequence()   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     0      |       -       |                    | sequenceStartTime = Wechsel zu STATUS_PROGRESSING
+ *  | StartSequence()   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     0      |       -       |                    | sequence.start.time = Wechsel zu STATUS_PROGRESSING
  *  |                   |                      |                     |            |               |                    |
  *  | Gridbase-Änderung | STATUS_PROGRESSING   | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
  *  |                   |                      |                     |            |               |                    |
@@ -51,12 +51,12 @@
  *  |                   |                      |                     |            |               |                    |
  *  | StopSequence()    | STATUS_STOPPING      |                     |     n      | nein (Redraw) | STATUS_STOPPING    |
  *  | PositionClose     | STATUS_STOPPING      | EV_POSITION_CLOSE   |    n..0    |       Redraw  | PositionClose      |
- *  |                   | STATUS_STOPPED       | EV_SEQUENCE_STOP    |     0      |  Ende Redraw  | STATUS_STOPPED     | sequenceStopTime = Wechsel zu STATUS_STOPPED
+ *  |                   | STATUS_STOPPED       | EV_SEQUENCE_STOP    |     0      |  Ende Redraw  | STATUS_STOPPED     | sequence.stop.time = Wechsel zu STATUS_STOPPED
  *  +-------------------+----------------------+---------------------+------------+---------------+--------------------+
  *  | ResumeSequence()  | STATUS_STARTING      |                     |     0      |       -       |                    | Gridbasis ungültig
  *  | Gridbase-Änderung | STATUS_STARTING      | EV_GRIDBASE_CHANGE  |     0      |       -       |                    |
  *  | PositionOpen      | STATUS_STARTING      | EV_POSITION_OPEN    |    0..n    |               |                    |
- *  |                   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     n      |  ja (Beginn)  | STATUS_PROGRESSING | sequenceStartTime = Wechsel zu STATUS_PROGRESSING
+ *  |                   | STATUS_PROGRESSING   | EV_SEQUENCE_START   |     n      |  ja (Beginn)  | STATUS_PROGRESSING | sequence.start.time = Wechsel zu STATUS_PROGRESSING
  *  |                   |                      |                     |            |               |                    |
  *  | OrderFilled       | STATUS_PROGRESSING   | EV_POSITION_OPEN    |    1..n    |      ja       |                    |
  *  |                   |                      |                     |            |               |                    |
@@ -106,14 +106,14 @@ string   last.StartConditions         = "";
 string   last.StopConditions          = "";
 color    last.StartStop.Color;
 
-// ---------------------------------
+// ------------------------------------
 int      sequenceId;
 bool     isTest;                                                     // ob die Sequenz eine Testsequenz ist (im Tester oder im Online-Chart)
 int      status;
-string   status.directory;                                           // Verzeichnis der Statusdatei (relativ zu ".\files\")
-string   status.fileName;                                            // einfacher Dateiname der Statusdatei
+string   status.directory;                                           // Verzeichnisname der Statusdatei relativ zu ".\files\"
+string   status.file;                                                // Dateiname der Statusdatei
 
-// ---------------------------------
+// ------------------------------------
 bool     start.conditions;                                           // ob die StartConditions aktiv sind und getriggert wurden
 bool     start.conditions.triggered;
 
@@ -137,7 +137,7 @@ bool     start.level.condition;
 string   start.level.condition.txt;
 int      start.level.value;
 
-// ---------------------------------
+// ------------------------------------
 bool     stop.conditions;                                            // ob die StopConditions aktiv sind und getriggert wurden
 bool     stop.conditions.triggered;
 
@@ -169,7 +169,7 @@ bool     stop.profitPct.condition;
 string   stop.profitPct.condition.txt;
 double   stop.profitPct.value;
 
-// ---------------------------------
+// ------------------------------------
 datetime weekend.stop.condition   = D'1970.01.01 23:05';             // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
 datetime weekend.stop.time;
 bool     weekend.stop.active;                                        // Sequenz-Eigenschaft (unterscheidet zwischen vorübergehend und dauerhaft gestoppter Sequenz)
@@ -178,40 +178,38 @@ datetime weekend.resume.condition = D'1970.01.01 01:10';             // späteste
 datetime weekend.resume.time;
 bool     weekend.resume.triggered;                                   // ???
 
-// ---------------------------------
-double   sequenceStartEquity;
+// ------------------------------------
+int      sequence.direction;
+int      sequence.level;                                             // aktueller Grid-Level
+int      sequence.maxLevel;                                          // maximal erreichter Grid-Level
+double   sequence.startEquity;
+int      sequence.stops;                                             // Anzahl der bisher getriggerten Stops
+double   sequence.stopsPL;                                           // kumulierter P/L aller bisher ausgestoppten Positionen
+double   sequence.closedPL;                                          // kumulierter P/L aller bisher bei Sequenzstop geschlossenen Positionen
+double   sequence.floatingPL;                                        // kumulierter P/L aller aktuell offenen Positionen
+double   sequence.totalPL;                                           // aktueller Gesamt-P/L der Sequenz: stopsPL + closedPL + floatingPL
+double   sequence.maxProfit;                                         // maximaler bisheriger Gesamt-Profit   (>= 0)
+double   sequence.maxDrawdown;                                       // maximaler bisheriger Gesamt-Drawdown (<= 0)
+double   sequence.commission;                                        // Commission-Betrag je Level
 
-int      sequenceStart.event [];                                     // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime sequenceStart.time  [];
-double   sequenceStart.price [];
-double   sequenceStart.profit[];
+// ------------------------------------
+int      sequence.start.event [];                                    // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime sequence.start.time  [];
+double   sequence.start.price [];
+double   sequence.start.profit[];
 
-int      sequenceStop.event [];                                      // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime sequenceStop.time  [];
-double   sequenceStop.price [];
-double   sequenceStop.profit[];
+int      sequence.stop.event [];                                     // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequence.stop.time  [];
+double   sequence.stop.price [];
+double   sequence.stop.profit[];
 
-// ---------------------------------
-int      grid.direction;
-int      grid.level;                                                 // aktueller Grid-Level
-int      grid.maxLevel;                                              // maximal erreichter Grid-Level
-double   grid.commission;                                            // Commission-Betrag je Level
-
+// ------------------------------------
 int      grid.base.event[];                                          // Gridbasis-Daten
 datetime grid.base.time [];
 double   grid.base.value[];
 double   grid.base;                                                  // aktuelle Gridbasis
 
-int      grid.stops;                                                 // Anzahl der bisher getriggerten Stops
-double   grid.stopsPL;                                               // kumulierter P/L aller bisher ausgestoppten Positionen
-double   grid.closedPL;                                              // kumulierter P/L aller bisher bei Sequenzstop geschlossenen Positionen
-double   grid.floatingPL;                                            // kumulierter P/L aller aktuell offenen Positionen
-double   grid.totalPL;                                               // aktueller Gesamt-P/L der Sequenz: grid.stopsPL + grid.closedPL + grid.floatingPL
-
-double   sequence.maxProfit;                                         // maximaler bisheriger Gesamt-Profit   (>= 0)
-double   sequence.maxDrawdown;                                       // maximaler bisheriger Gesamt-Drawdown (<= 0)
-
-// ---------------------------------
+// ------------------------------------
 int      orders.ticket        [];
 int      orders.level         [];                                    // Gridlevel der Order
 double   orders.gridBase      [];                                    // Gridbasis der Order
@@ -235,23 +233,23 @@ double   orders.swap          [];
 double   orders.commission    [];
 double   orders.profit        [];
 
-// ---------------------------------
+// ------------------------------------
 int      ignorePendingOrders  [];                                    // orphaned tickets to ignore
 int      ignoreOpenPositions  [];
 int      ignoreClosedPositions[];
 
-// ---------------------------------
+// ------------------------------------
 string   str.LotSize              = "";                              // Zwischenspeicher zur schnelleren Abarbeitung von ShowStatus()
 string   str.startConditions      = "";
 string   str.stopConditions       = "";
-string   str.grid.direction       = "";
+string   str.sequence.direction   = "";
 string   str.grid.base            = "";
-string   str.grid.stops           = "";
-string   str.grid.stopsPL         = "";
-string   str.grid.totalPL         = "";
+string   str.sequence.stops       = "";
+string   str.sequence.stopsPL     = "";
+string   str.sequence.totalPL     = "";
 string   str.sequence.maxProfit   = "";
 string   str.sequence.maxDrawdown = "";
-string   str.grid.plStatistics    = "";
+string   str.sequence.plStats     = "";
 
 
 #include <SnowRoller/init.mqh>
@@ -296,7 +294,7 @@ int onTick() {
    }
 
    // (5) Equity-Kurve aufzeichnen (erst nach allen Orderfunktionen, ab dem ersten ausgeführten Trade)
-   if (status==STATUS_PROGRESSING) /*&&*/ if (grid.maxLevel != 0) {
+   if (status==STATUS_PROGRESSING) /*&&*/ if (sequence.maxLevel != 0) {
       RecordEquity(HST_CACHE_TICKS);
    }
 
@@ -362,36 +360,36 @@ bool StartSequence() {
 
    // (1) Startvariablen setzen
    datetime startTime  = TimeCurrent();
-   double   startPrice = ifDouble(grid.direction==D_SHORT, Bid, Ask);
+   double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
 
-   ArrayPushInt   (sequenceStart.event,  CreateEventId());
-   ArrayPushInt   (sequenceStart.time,   startTime      );
-   ArrayPushDouble(sequenceStart.price,  startPrice     );
-   ArrayPushDouble(sequenceStart.profit, 0              );
+   ArrayPushInt   (sequence.start.event,  CreateEventId());
+   ArrayPushInt   (sequence.start.time,   startTime      );
+   ArrayPushDouble(sequence.start.price,  startPrice     );
+   ArrayPushDouble(sequence.start.profit, 0              );
 
-   ArrayPushInt   (sequenceStop.event,   0              );           // Größe von sequenceStarts/Stops synchron halten
-   ArrayPushInt   (sequenceStop.time,    0              );
-   ArrayPushDouble(sequenceStop.price,   0              );
-   ArrayPushDouble(sequenceStop.profit,  0              );
+   ArrayPushInt   (sequence.stop.event,   0              );          // Größe von sequence.starts/stops synchron halten
+   ArrayPushInt   (sequence.stop.time,    0              );
+   ArrayPushDouble(sequence.stop.price,   0              );
+   ArrayPushDouble(sequence.stop.profit,  0              );
 
-   sequenceStartEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
 
 
-   // (2) Gridbasis setzen (zeitlich nach sequenceStart.time)
+   // (2) Gridbasis setzen (zeitlich nach sequence.start.time)
    double gridBase = startPrice;
    if (start.conditions) /*&&*/ if (start.level.condition) {
-      grid.level    = start.level.value;
-      grid.maxLevel = start.level.value;
-      gridBase      = NormalizeDouble(startPrice - grid.level*GridSize*Pips, Digits);
+      sequence.level    = start.level.value;
+      sequence.maxLevel = start.level.value;
+      gridBase          = NormalizeDouble(startPrice - sequence.level*GridSize*Pips, Digits);
    }
    GridBase.Reset(startTime, gridBase);
 
 
    // (3) ggf. Startpositionen in den Markt legen und SequenceStart-Price aktualisieren
-   if (grid.level != 0) {
+   if (sequence.level != 0) {
       if (!UpdateOpenPositions(iNull, startPrice))
          return(false);
-      sequenceStart.price[ArraySize(sequenceStart.price)-1] = startPrice;
+      sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
    status = STATUS_PROGRESSING;
@@ -408,7 +406,7 @@ bool StartSequence() {
    RedrawStartStop();
 
 
-   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(grid.level, " and level "+ grid.level, ""));
+   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
    return(!last_error|catch("StartSequence(2)"));
 }
 
@@ -440,7 +438,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPING;
-      if (__LOG) log(StringConcatenate("StopSequence()   stopping sequence at level ", grid.level));
+      if (__LOG) log(StringConcatenate("StopSequence()   stopping sequence at level ", sequence.level));
    }
 
 
@@ -477,7 +475,7 @@ bool StopSequence() {
 
 
    // (4) dann offene Positionen schließen                           // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
-   int      sizeOfPositions=ArraySize(positions), n=ArraySize(sequenceStop.event)-1;
+   int      sizeOfPositions=ArraySize(positions), n=ArraySize(sequence.stop.event)-1;
    datetime closeTime;
    double   closePrice;
 
@@ -499,28 +497,28 @@ bool StopSequence() {
          orders.commission[pos] = oes.Commission(oes, i);
          orders.profit    [pos] = oes.Profit    (oes, i);
 
-         grid.closedPL = NormalizeDouble(grid.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
+         sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
 
          closeTime   = Max(closeTime, orders.closeTime[pos]);        // u.U. können die Close-Werte unterschiedlich sein und müssen gemittelt werden
          closePrice += orders.closePrice[pos];                       // (i.d.R. sind sie überall gleich)
       }
-      closePrice /= Abs(grid.level);                                 // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
+      closePrice /= Abs(sequence.level);                             // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
       /*
-      grid.floatingPL      = ...                                     // Solange unten UpdateStatus() aufgerufen wird, werden diese Werte dort automatisch aktualisiert.
-      grid.totalPL         = ...
+      sequence.floatingPL  = ...                                     // Solange unten UpdateStatus() aufgerufen wird, werden diese Werte dort automatisch aktualisiert.
+      sequence.totalPL     = ...
       sequence.maxProfit   = ...
       sequence.maxDrawdown = ...
       */
-      sequenceStop.event[n] = CreateEventId();
-      sequenceStop.time [n] = closeTime;
-      sequenceStop.price[n] = NormalizeDouble(closePrice, Digits);
+      sequence.stop.event[n] = CreateEventId();
+      sequence.stop.time [n] = closeTime;
+      sequence.stop.price[n] = NormalizeDouble(closePrice, Digits);
    }
 
    // (4.1) keine offenen Positionen
    else if (status != STATUS_STOPPED) {
-      sequenceStop.event[n] = CreateEventId();
-      sequenceStop.time [n] = TimeCurrent();
-      sequenceStop.price[n] = ifDouble(grid.direction==D_LONG, Bid, Ask);
+      sequence.stop.event[n] = CreateEventId();
+      sequence.stop.time [n] = TimeCurrent();
+      sequence.stop.price[n] = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    }
 
 
@@ -531,7 +529,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPED;
-      if (__LOG) log(StringConcatenate("StopSequence()   sequence stopped at ", NumberToStr(sequenceStop.price[n], PriceFormat), ", level ", grid.level));
+      if (__LOG) log(StringConcatenate("StopSequence()   sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
    }
 
 
@@ -546,7 +544,7 @@ bool StopSequence() {
 
    // (7) Daten aktualisieren und speichern
    if (!UpdateStatus(bNull, iNulls)) return(false);
-   sequenceStop.profit[n] = grid.totalPL;
+   sequence.stop.profit[n] = sequence.totalPL;
    if (  !SaveStatus())              return(false);
    if (!RecordEquity(NULL))          return(false);
    RedrawStartStop();
@@ -557,15 +555,6 @@ bool StopSequence() {
       if      (        IsVisualMode()) Tester.Pause();
       else if (!IsWeekendStopSignal()) Tester.Stop();
    }
-
-   /*
-   debug("StopSequence()      level="      + grid.level
-                          +"  stops="      + grid.stops
-                          +"  stopsPL="    + DoubleToStr(grid.stopsPL,     2)
-                          +"  closedPL="   + DoubleToStr(grid.closedPL,    2)
-                          +"  floatingPL=" + DoubleToStr(grid.floatingPL,  2)
-                          +"  totalPL="    + DoubleToStr(grid.totalPL,     2));
-   */
    return(!last_error|catch("StopSequence(5)"));
 }
 
@@ -581,18 +570,18 @@ bool StopSequence.LimitStopPrice() {
    if (status!=STATUS_STOPPING) /*&&*/ if (status!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    double nextTrigger;
-   int i = ArraySize(sequenceStop.price) - 1;
+   int i = ArraySize(sequence.stop.price) - 1;
 
-   if (grid.direction == D_LONG) {
-      nextTrigger = grid.base + (grid.level+1)*GridSize*Pip;
-      sequenceStop.price[i] = MathMin(nextTrigger-1*Pip, sequenceStop.price[i]);    // max. 1 Pip unterm Trigger des nächsten Levels
+   if (sequence.direction == D_LONG) {
+      nextTrigger = grid.base + (sequence.level+1)*GridSize*Pip;
+      sequence.stop.price[i] = MathMin(nextTrigger-1*Pip, sequence.stop.price[i]);  // max. 1 Pip unterm Trigger des nächsten Levels
    }
 
-   if (grid.direction == D_SHORT) {
-      nextTrigger = grid.base + (grid.level-1)*GridSize*Pip;
-      sequenceStop.price[i] = MathMax(nextTrigger+1*Pip, sequenceStop.price[i]);    // min. 1 Pip überm Trigger des nächsten Levels
+   if (sequence.direction == D_SHORT) {
+      nextTrigger = grid.base + (sequence.level-1)*GridSize*Pip;
+      sequence.stop.price[i] = MathMax(nextTrigger+1*Pip, sequence.stop.price[i]);  // min. 1 Pip überm Trigger des nächsten Levels
    }
-   sequenceStop.price[i] = NormalizeDouble(sequenceStop.price[i], Digits);
+   sequence.stop.price[i] = NormalizeDouble(sequence.stop.price[i], Digits);
 
    return(!last_error|catch("StopSequence.LimitStopPrice(3)"));
 }
@@ -613,15 +602,15 @@ bool ResumeSequence() {
 
 
    status = STATUS_STARTING;
-   if (__LOG) log(StringConcatenate("ResumeSequence()   resuming sequence at level ", grid.level));
+   if (__LOG) log(StringConcatenate("ResumeSequence()   resuming sequence at level ", sequence.level));
 
    datetime startTime;
    double   startPrice, lastStopPrice, gridBase;
 
 
    // (1) Wird ResumeSequence() nach einem Fehler erneut aufgerufen, kann es sein, daß einige Level bereits offen sind und andere noch fehlen.
-   if (grid.level > 0) {
-      for (int level=1; level <= grid.level; level++) {
+   if (sequence.level > 0) {
+      for (int level=1; level <= sequence.level; level++) {
          int i = Grid.FindOpenPosition(level);
          if (i != -1) {
             gridBase = orders.gridBase[i];
@@ -629,8 +618,8 @@ bool ResumeSequence() {
          }
       }
    }
-   else if (grid.level < 0) {
-      for (level=-1; level >= grid.level; level--) {
+   else if (sequence.level < 0) {
+      for (level=-1; level >= sequence.level; level--) {
          i = Grid.FindOpenPosition(level);
          if (i != -1) {
             gridBase = orders.gridBase[i];
@@ -643,8 +632,8 @@ bool ResumeSequence() {
    // (2) Gridbasis neu setzen, wenn in (1) keine offenen Positionen gefunden wurden.
    if (EQ(gridBase, 0)) {
       startTime     = TimeCurrent();
-      startPrice    = ifDouble(grid.direction==D_SHORT, Bid, Ask);
-      lastStopPrice = sequenceStop.price[ArraySize(sequenceStop.price)-1];
+      startPrice    = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
+      lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
       GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
    }
    else {
@@ -658,18 +647,18 @@ bool ResumeSequence() {
 
 
    // (4) neuen Sequenzstart speichern
-   ArrayPushInt   (sequenceStart.event,  CreateEventId());
-   ArrayPushInt   (sequenceStart.time,   startTime      );
-   ArrayPushDouble(sequenceStart.price,  startPrice     );
-   ArrayPushDouble(sequenceStart.profit, grid.totalPL   );           // entspricht dem letzten Stop-Wert
-      int sizeOfStops = ArraySize(sequenceStop.profit);
-      if (EQ(sequenceStop.profit[sizeOfStops-1], 0))                 // Sequenz-Stops ohne PL aktualisieren (alte SnowRoller-Version)
-         sequenceStop.profit[sizeOfStops-1] = grid.totalPL;
+   ArrayPushInt   (sequence.start.event,  CreateEventId() );
+   ArrayPushInt   (sequence.start.time,   startTime       );
+   ArrayPushDouble(sequence.start.price,  startPrice      );
+   ArrayPushDouble(sequence.start.profit, sequence.totalPL);         // entspricht dem letzten Stop-Wert
+      int sizeOfStops = ArraySize(sequence.stop.profit);
+      if (EQ(sequence.stop.profit[sizeOfStops-1], 0))                // Sequenz-Stops ohne PL aktualisieren (alte SnowRoller-Version)
+         sequence.stop.profit[sizeOfStops-1] = sequence.totalPL;
 
-   ArrayPushInt   (sequenceStop.event,  0);                          // sequenceStart/Stop-Größe synchron halten
-   ArrayPushInt   (sequenceStop.time,   0);
-   ArrayPushDouble(sequenceStop.price,  0);
-   ArrayPushDouble(sequenceStop.profit, 0);
+   ArrayPushInt   (sequence.stop.event,  0);                         // sequence.starts/stops synchron halten
+   ArrayPushInt   (sequence.stop.time,   0);
+   ArrayPushDouble(sequence.stop.price,  0);
+   ArrayPushDouble(sequence.stop.profit, 0);
 
 
    status = STATUS_PROGRESSING;
@@ -700,15 +689,7 @@ bool ResumeSequence() {
    // (8) Anzeige aktualisieren
    RedrawStartStop();
 
-   /*
-   debug("ResumeSequence()    level="      + grid.level
-                          +"  stops="      + grid.stops
-                          +"  stopsPL="    + DoubleToStr(grid.stopsPL,     2)
-                          +"  closedPL="   + DoubleToStr(grid.closedPL,    2)
-                          +"  floatingPL=" + DoubleToStr(grid.floatingPL,  2)
-                          +"  totalPL="    + DoubleToStr(grid.totalPL,     2));
-   */
-   if (__LOG) log(StringConcatenate("ResumeSequence()   sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", grid.level));
+   if (__LOG) log(StringConcatenate("ResumeSequence()   sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
    return(!last_error|catch("ResumeSequence(3)"));
 }
 
@@ -730,7 +711,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
    if (status == STATUS_WAITING)
       return(true);
 
-   grid.floatingPL = 0;
+   sequence.floatingPL = 0;
 
    bool wasPending, isClosed, openPositions, updateStatusLocation;
    int  closed[][2], close[2], sizeOfTickets=ArraySize(orders.ticket); ArrayResize(closed, 0);
@@ -759,10 +740,10 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             ChartMarker.PositionClosed(i);
             if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
 
-            grid.level  -= Sign(orders.level[i]);
-            grid.stops++; SS.Grid.Stops();
-          //grid.stopsPL = ...                                                   // unverändert, da P/L des Pseudo-Tickets immer 0.00
-            lpChange     = true;
+            sequence.level  -= Sign(orders.level[i]);
+            sequence.stops++; SS.Grid.Stops();
+          //sequence.stopsPL = ...                                               // unverändert, da P/L des Pseudo-Tickets immer 0.00
+            lpChange         = true;
             continue;
          }
 
@@ -778,15 +759,15 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                orders.openTime  [i] = OrderOpenTime();
                orders.openPrice [i] = OrderOpenPrice();
                orders.swap      [i] = OrderSwap();
-               orders.commission[i] = OrderCommission(); grid.commission = OrderCommission(); SS.LotSize();
+               orders.commission[i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
                orders.profit    [i] = OrderProfit();
                ChartMarker.OrderFilled(i);
                if (__LOG) log(UpdateStatus.OrderFillMsg(i));
 
-               grid.level   += Sign(orders.level[i]);
-               grid.maxLevel = Sign(orders.level[i]) * Max(Abs(grid.level), Abs(grid.maxLevel));
-               lpChange      = true;
-               updateStatusLocation = updateStatusLocation || !grid.maxLevel;
+               sequence.level   += Sign(orders.level[i]);
+               sequence.maxLevel = Sign(orders.level[i]) * Max(Abs(sequence.level), Abs(sequence.maxLevel));
+               lpChange          = true;
+               updateStatusLocation = updateStatusLocation || !sequence.maxLevel;
             }
          }
          else {
@@ -808,7 +789,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                   ArrayPushInt(stops, i);
                }
             }
-            grid.floatingPL = NormalizeDouble(grid.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+            sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
          else if (orders.type[i] == OP_UNDEFINED) {                              // jetzt geschlossenes Ticket: gestrichene Pending-Order im STATUS_MONITORING
             //ChartMarker.OrderDeleted(i);                                       // TODO: implementieren
@@ -824,10 +805,10 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             if (orders.closedBySL[i]) {                                          // ausgestoppt
                orders.closeEvent[i] = CreateEventId();                           // Event-ID kann sofort vergeben werden.
                if (__LOG) log(UpdateStatus.SLExecuteMsg(i));
-               grid.level  -= Sign(orders.level[i]);
-               grid.stops++;
-               grid.stopsPL = NormalizeDouble(grid.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Grid.Stops();
-               lpChange     = true;
+               sequence.level  -= Sign(orders.level[i]);
+               sequence.stops++;
+               sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2); SS.Grid.Stops();
+               lpChange         = true;
             }
             else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
                close[0] = OrderCloseTime();
@@ -837,7 +818,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
                if (status != STATUS_STOPPED)
                   status = STATUS_STOPPING;
                if (__LOG) log(UpdateStatus.PositionCloseMsg(i));
-               grid.closedPL = NormalizeDouble(grid.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+               sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
             }
          }
       }
@@ -859,20 +840,20 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
 
    // (3) P/L-Kennziffern  aktualisieren
-   grid.totalPL = NormalizeDouble(grid.stopsPL + grid.closedPL + grid.floatingPL, 2); SS.Grid.TotalPL();
+   sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2); SS.Grid.TotalPL();
 
-   if      (grid.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = grid.totalPL; SS.Grid.MaxProfit();   }
-   else if (grid.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = grid.totalPL; SS.Grid.MaxDrawdown(); }
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.Grid.MaxProfit();   }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.Grid.MaxDrawdown(); }
 
 
    // (4) ggf. Status aktualisieren
    if (status == STATUS_STOPPING) {
       if (!openPositions) {                                                      // Sequenzstop im STATUS_MONITORING oder Auto-Close durch Tester bei Testende
-         n = ArraySize(sequenceStop.event) - 1;
-         sequenceStop.event [n] = CreateEventId();
-         sequenceStop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequenceStop.time [n]) return(false);
-         sequenceStop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequenceStop.price[n]) return(false);
-         sequenceStop.profit[n] = grid.totalPL;
+         n = ArraySize(sequence.stop.event) - 1;
+         sequence.stop.event [n] = CreateEventId();
+         sequence.stop.time  [n] = UpdateStatus.CalculateStopTime();  if (!sequence.stop.time [n]) return(false);
+         sequence.stop.price [n] = UpdateStatus.CalculateStopPrice(); if (!sequence.stop.price[n]) return(false);
+         sequence.stop.profit[n] = sequence.totalPL;
 
          if (!StopSequence.LimitStopPrice())                                     //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
             return(false);
@@ -886,11 +867,11 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
 
    else if (status == STATUS_PROGRESSING) {
       // (5) ggf. Gridbasis trailen
-      if (grid.level == 0) {
+      if (sequence.level == 0) {
          double last.grid.base = grid.base;
 
-         if (grid.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
-         else                          grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         if (sequence.direction == D_LONG) grid.base = MathMin(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
+         else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(grid.base, last.grid.base)) {
             GridBase.Change(TimeCurrent(), grid.base);
@@ -1016,10 +997,10 @@ string UpdateStatus.PositionCloseMsg(int i) {
  */
 datetime UpdateStatus.CalculateStopTime() {
    if (status != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopTime(1)   cannot calculate stop time for "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (grid.level == 0          ) return(_NULL(catch("UpdateStatus.CalculateStopTime(2)   cannot calculate stop time for sequence at level "+ grid.level, ERR_RUNTIME_ERROR)));
+   if (sequence.level == 0      ) return(_NULL(catch("UpdateStatus.CalculateStopTime(2)   cannot calculate stop time for sequence at level "+ sequence.level, ERR_RUNTIME_ERROR)));
 
    datetime stopTime;
-   int n=grid.level, sizeofTickets=ArraySize(orders.ticket);
+   int n=sequence.level, sizeofTickets=ArraySize(orders.ticket);
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
@@ -1049,10 +1030,10 @@ datetime UpdateStatus.CalculateStopTime() {
  */
 double UpdateStatus.CalculateStopPrice() {
    if (status != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopPrice(1)   cannot calculate stop price for "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (grid.level == 0          ) return(_NULL(catch("UpdateStatus.CalculateStopPrice(2)   cannot calculate stop price for sequence at level "+ grid.level, ERR_RUNTIME_ERROR)));
+   if (sequence.level == 0      ) return(_NULL(catch("UpdateStatus.CalculateStopPrice(2)   cannot calculate stop price for sequence at level "+ sequence.level, ERR_RUNTIME_ERROR)));
 
    double stopPrice;
-   int n=grid.level, sizeofTickets=ArraySize(orders.ticket);
+   int n=sequence.level, sizeofTickets=ArraySize(orders.ticket);
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
@@ -1072,7 +1053,7 @@ double UpdateStatus.CalculateStopPrice() {
       n -= Sign(n);
    }
 
-   return(NormalizeDouble(stopPrice/Abs(grid.level), Digits));
+   return(NormalizeDouble(stopPrice/Abs(sequence.level), Digits));
 }
 
 
@@ -1169,7 +1150,7 @@ bool IsStartSignal() {
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
             int    lag         = start.trend.lag;
-            int    direction   = ifInt(grid.direction==D_LONG, MODE_UPTREND, MODE_DOWNTREND);
+            int    direction   = ifInt(sequence.direction==D_LONG, MODE_UPTREND, MODE_DOWNTREND);
             int    signal;
 
             if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal)) {
@@ -1280,12 +1261,12 @@ bool IsWeekendResumeSignal() {
 
 
    // (3) Bedingung ist erfüllt, wenn der Stop-Preis erreicht oder gekreuzt wird
-   double price, stopPrice=sequenceStop.price[ArraySize(sequenceStop.price)-1];
+   double price, stopPrice=sequence.stop.price[ArraySize(sequence.stop.price)-1];
    bool   result;
 
-   if      (grid.level > 0) price = Ask;
-   else if (grid.level < 0) price = Bid;
-   else                     price = NormalizeDouble((Bid + Ask)/2, Digits);
+   if      (sequence.level > 0) price = Ask;
+   else if (sequence.level < 0) price = Bid;
+   else                         price = NormalizeDouble((Bid + Ask)/2, Digits);
 
    if (lastPrice_init) {
       lastPrice_init = false;
@@ -1328,7 +1309,7 @@ void UpdateWeekendResume() {
 
    weekend.resume.triggered = false;
 
-   datetime monday, stop=ServerToFXT(sequenceStop.time[ArraySize(sequenceStop.time)-1]);
+   datetime monday, stop=ServerToFXT(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
 
    switch (TimeDayOfWeek(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
@@ -1371,7 +1352,7 @@ bool IsStopSignal(bool checkWeekendStop=true) {
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
             int    lag         = stop.trend.lag;
-            int    direction   = ifInt(grid.direction==D_LONG, MODE_DOWNTREND, MODE_UPTREND);
+            int    direction   = ifInt(sequence.direction==D_LONG, MODE_DOWNTREND, MODE_UPTREND);
             int    signal;
 
             if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal))
@@ -1414,7 +1395,7 @@ bool IsStopSignal(bool checkWeekendStop=true) {
 
       // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist -------------------------------------------------
       if (stop.level.condition) {
-         if (stop.level.value == grid.level) {
+         if (stop.level.value == sequence.level) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.level.condition.txt, "\" met"));
             stop.conditions.triggered = true;
             return(true);
@@ -1432,7 +1413,7 @@ bool IsStopSignal(bool checkWeekendStop=true) {
 
       // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
-         if (GE(grid.totalPL, stop.profitAbs.value)) {
+         if (GE(sequence.totalPL, stop.profitAbs.value)) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
             stop.conditions.triggered = true;
             return(true);
@@ -1441,7 +1422,7 @@ bool IsStopSignal(bool checkWeekendStop=true) {
 
       // -- stop.profitPct: ---------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
-         if (GE(grid.totalPL, stop.profitPct.value/100 * sequenceStartEquity)) {
+         if (GE(sequence.totalPL, stop.profitPct.value/100 * sequence.startEquity)) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitPct.condition.txt, "\" met"));
             stop.conditions.triggered = true;
             return(true);
@@ -1573,7 +1554,7 @@ bool ProcessClientStops(int stops[]) {
          orders.clientSL[i] = ticket <= 0;
 
          if (ticket <= 0) {
-            if (level != grid.level)              return( false);
+            if (level != sequence.level)          return( false);
             if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
             if (ticket==0 || ticket < -2)         return(_false(catch("ProcessClientStops(5)", oe.Error(oe))));
 
@@ -1639,7 +1620,7 @@ bool UpdatePendingOrders() {
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_PROGRESSING)      return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
-   int  nextLevel = grid.level + ifInt(grid.direction==D_LONG, 1, -1);
+   int  nextLevel = sequence.level + ifInt(sequence.direction==D_LONG, 1, -1);
    bool nextOrderExists, ordersChanged;
 
    for (int i=ArraySize(orders.ticket)-1; i >= 0; i--) {
@@ -1660,7 +1641,7 @@ bool UpdatePendingOrders() {
    }
 
    if (!nextOrderExists) {                                                       // nötige Pending-Order in den Markt legen
-      if (!Grid.AddOrder(ifInt(grid.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
+      if (!Grid.AddOrder(ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP), nextLevel))
          return(false);
       ordersChanged = true;
    }
@@ -1694,8 +1675,8 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
 
 
    // (1) Long
-   if (grid.level > 0) {
-      for (level=1; level <= grid.level; level++) {
+   if (sequence.level > 0) {
+      for (level=1; level <= sequence.level; level++) {
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
             if (!Grid.AddPosition(OP_BUY, level))
@@ -1707,13 +1688,13 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
          openTime   = Max(openTime, orders.openTime[i]);
          openPrice += orders.openPrice[i];
       }
-      openPrice /= Abs(grid.level);                                              // avg(OpenPrice)
+      openPrice /= Abs(sequence.level);                                          // avg(OpenPrice)
    }
 
 
    // (2) Short
-   else if (grid.level < 0) {
-      for (level=-1; level >= grid.level; level--) {
+   else if (sequence.level < 0) {
+      for (level=-1; level >= sequence.level; level--) {
          i = Grid.FindOpenPosition(level);
          if (i == -1) {
             if (!Grid.AddPosition(OP_SELL, level))
@@ -1725,12 +1706,12 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
          openTime   = Max(openTime, orders.openTime[i]);
          openPrice += orders.openPrice[i];
       }
-      openPrice /= Abs(grid.level);                                              // avg(OpenPrice)
+      openPrice /= Abs(sequence.level);                                          // avg(OpenPrice)
    }
 
 
    // (3) Ergebnis setzen
-   if (openTime != 0) {                                                          // grid.level != 0
+   if (openTime != 0) {                                                          // sequence.level != 0
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
@@ -1770,7 +1751,7 @@ double GridBase.Reset(datetime time, double value) {
 double GridBase.Change(datetime time, double value) {
    value = NormalizeDouble(value, Digits);
 
-   if (grid.maxLevel == 0) {                                         // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
+   if (sequence.maxLevel == 0) {                                     // vor dem ersten ausgeführten Trade werden vorhandene Werte überschrieben
       ArrayResize(grid.base.event, 0);
       ArrayResize(grid.base.time,  0);
       ArrayResize(grid.base.value, 0);
@@ -1802,7 +1783,7 @@ double GridBase.Change(datetime time, double value) {
 
 
 /**
- * Legt die angegebene Stop-Order in den Markt und fügt den Orderarrays deren Daten hinzu.
+ * Legt eine Stop-Order in den Markt und fügt sie den Orderarrays hinzu.
  *
  * @param  int type  - Ordertyp: OP_BUYSTOP | OP_SELLSTOP
  * @param  int level - Gridlevel der Order
@@ -1965,7 +1946,7 @@ bool Grid.AddPosition(int type, int level) {
 
    if (ticket <= 0) {
       // ab dem letzten Level ggf. client-seitige Stop-Verwaltung
-      if (level != grid.level)              return( false);
+      if (level != sequence.level)          return( false);
       if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
       if (ticket==0 || ticket < -2)         return(_false(catch("Grid.AddPosition(4)", oe.Error(oe))));
 
@@ -2066,7 +2047,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
    if (orderDisplayMode == ODM_NONE)
       markerColor = CLR_NONE;
 
-   if (!clientSL) /*&&*/ if (Abs(level) >= Abs(grid.level))
+   if (!clientSL) /*&&*/ if (Abs(level) >= Abs(sequence.level))
       oeFlags |= OE_CATCH_INVALID_STOP;                                    // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2262,7 +2243,7 @@ bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendin
    orders.closedBySL  [i] = closedBySL;
 
    orders.swap        [i] = NormalizeDouble(swap,       2);
-   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { grid.commission = orders.commission[i]; SS.LotSize(); }
+   orders.commission  [i] = NormalizeDouble(commission, 2); if (type != OP_UNDEFINED) { sequence.commission = orders.commission[i]; SS.LotSize(); }
    orders.profit      [i] = NormalizeDouble(profit,     2);
 
    return(!catch("Grid.SetData(2)"));
@@ -2369,24 +2350,24 @@ int ShowStatus() {
    else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error       ), "]");
 
    switch (status) {
-      case STATUS_UNINITIALIZED: msg =                                      " not initialized";                                               break;
-      case STATUS_WAITING:       msg = StringConcatenate("  ", Sequence.ID, " waiting"                                                     ); break;
-      case STATUS_STARTING:      msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    grid.level, "  (", grid.maxLevel, ")"); break;
-      case STATUS_PROGRESSING:   msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", grid.level, "  (", grid.maxLevel, ")"); break;
-      case STATUS_STOPPING:      msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    grid.level, "  (", grid.maxLevel, ")"); break;
-      case STATUS_STOPPED:       msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     grid.level, "  (", grid.maxLevel, ")"); break;
+      case STATUS_UNINITIALIZED: msg =                                      " not initialized";                                                       break;
+      case STATUS_WAITING:       msg = StringConcatenate("  ", Sequence.ID, " waiting"                                                             ); break;
+      case STATUS_STARTING:      msg = StringConcatenate("  ", Sequence.ID, " starting at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_PROGRESSING:   msg = StringConcatenate("  ", Sequence.ID, " progressing at level ", sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_STOPPING:      msg = StringConcatenate("  ", Sequence.ID, " stopping at level ",    sequence.level, "  (", sequence.maxLevel, ")"); break;
+      case STATUS_STOPPED:       msg = StringConcatenate("  ", Sequence.ID, " stopped at level ",     sequence.level, "  (", sequence.maxLevel, ")"); break;
       default:
          return(catch("ShowStatus(1)   illegal sequence status = "+ status, ERR_RUNTIME_ERROR));
    }
 
-   msg = StringConcatenate(__NAME__, msg, str.error,                                                  NL,
-                                                                                                      NL,
-                           "Grid:             ", GridSize, " pip", str.grid.base, str.grid.direction, NL,
-                           "LotSize:         ",  str.LotSize,                                         NL,
-                           "Stops:           ",  str.grid.stops, str.grid.stopsPL,                    NL,
-                           "Profit/Loss:    ",   str.grid.totalPL, str.grid.plStatistics,             NL,
-                           str.startConditions,                                    // enthält bereits NL, wenn gesetzt
-                           str.stopConditions);                                    // enthält bereits NL, wenn gesetzt
+   msg = StringConcatenate(__NAME__, msg, str.error,                                                      NL,
+                                                                                                          NL,
+                           "Grid:             ", GridSize, " pip", str.grid.base, str.sequence.direction, NL,
+                           "LotSize:         ",  str.LotSize,                                             NL,
+                           "Stops:           ",  str.sequence.stops, str.sequence.stopsPL,                NL,
+                           "Profit/Loss:    ",   str.sequence.totalPL, str.sequence.plStats,              NL,
+                           str.startConditions,                                        // enthält bereits NL, wenn gesetzt
+                           str.stopConditions);                                        // enthält bereits NL, wenn gesetzt
 
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
    Comment(StringConcatenate(NL, NL, NL, msg));
@@ -2451,12 +2432,12 @@ void SS.Grid.Base() {
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentation von grid.direction.
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.direction.
  */
 void SS.Grid.Direction() {
    if (!IsChart)
       return;
-   str.grid.direction = StringConcatenate("  (", StringToLower(directionDescr[grid.direction]), ")");
+   str.sequence.direction = StringConcatenate("  (", StringToLower(directionDescr[sequence.direction]), ")");
 }
 
 
@@ -2467,7 +2448,7 @@ void SS.LotSize() {
    if (!IsChart)
       return;
 
-   str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - grid.commission, 2), "/stop");
+   str.LotSize = StringConcatenate(NumberToStr(LotSize, ".+"), " lot = ", DoubleToStr(GridSize * PipValue(LotSize) - sequence.commission, 2), "/stop");
 }
 
 
@@ -2487,29 +2468,29 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentationen von grid.stops und grid.stopsPL.
+ * ShowStatus(): Aktualisiert die String-Repräsentationen von sequence.stops und sequence.stopsPL.
  */
 void SS.Grid.Stops() {
    if (!IsChart)
       return;
 
-   str.grid.stops = StringConcatenate(grid.stops, " stop", ifString(grid.stops==1, "", "s"));
+   str.sequence.stops = StringConcatenate(sequence.stops, " stop", ifString(sequence.stops==1, "", "s"));
 
    // Anzeige wird nicht vor der ersten ausgestoppten Position gesetzt
-   if (grid.stops > 0)
-      str.grid.stopsPL = StringConcatenate(" = ", DoubleToStr(grid.stopsPL, 2));
+   if (sequence.stops > 0)
+      str.sequence.stopsPL = StringConcatenate(" = ", DoubleToStr(sequence.stopsPL, 2));
 }
 
 
 /**
- * ShowStatus(): Aktualisiert die String-Repräsentation von grid.totalPL.
+ * ShowStatus(): Aktualisiert die String-Repräsentation von sequence.totalPL.
  */
 void SS.Grid.TotalPL() {
    if (!IsChart)
       return;
 
-   if (grid.maxLevel == 0) str.grid.totalPL = "-";                   // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   else                    str.grid.totalPL = NumberToStr(grid.totalPL, "+.2");
+   if (sequence.maxLevel == 0) str.sequence.totalPL = "-";           // Anzeige wird nicht vor der ersten offenen Position gesetzt
+   else                        str.sequence.totalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
 
@@ -2521,7 +2502,7 @@ void SS.Grid.MaxProfit() {
       return;
 
    str.sequence.maxProfit = NumberToStr(sequence.maxProfit, "+.2");
-   SS.Grid.ProfitLossStatistics();
+   SS.PLStats();
 }
 
 
@@ -2533,20 +2514,20 @@ void SS.Grid.MaxDrawdown() {
       return;
 
    str.sequence.maxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
-   SS.Grid.ProfitLossStatistics();
+   SS.PLStats();
 }
 
 
 /**
  * ShowStatus(): Aktualisiert die kombinierte String-Repräsentation der P/L-Statistik.
  */
-void SS.Grid.ProfitLossStatistics() {
+void SS.PLStats() {
    if (!IsChart)
       return;
 
    // Anzeige wird nicht vor der ersten offenen Position gesetzt
-   if (grid.maxLevel != 0)
-      str.grid.plStatistics = StringConcatenate("  (", str.sequence.maxProfit, "/", str.sequence.maxDrawdown, ")");
+   if (sequence.maxLevel != 0)
+      str.sequence.plStats = StringConcatenate("  (", str.sequence.maxProfit, "/", str.sequence.maxDrawdown, ")");
 }
 
 
@@ -2857,11 +2838,11 @@ bool ValidateConfiguration(bool interactive) {
    string strValue = StringToLower(StringTrim(GridDirection));
    if (strValue == "long | short | alternative") return(_false(ValidateConfig.HandleError("ValidateConfiguration(6)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    switch (StringGetChar(strValue, 0)) {
-      case 'l': grid.direction = D_LONG;  break;
-      case 's': grid.direction = D_SHORT; break;
+      case 'l': sequence.direction = D_LONG;  break;
+      case 's': sequence.direction = D_SHORT; break;
       default:                                   return(_false(ValidateConfig.HandleError("ValidateConfiguration(7)", "Invalid GridDirection = \""+ GridDirection +"\"", interactive)));
    }
-   GridDirection = directionDescr[grid.direction]; SS.Grid.Direction();
+   GridDirection = directionDescr[sequence.direction]; SS.Grid.Direction();
 
 
    // (3) GridSize
@@ -3006,12 +2987,12 @@ bool ValidateConfiguration(bool interactive) {
             if (start.level.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(41)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple level conditions)", interactive)));
             if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(42)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             iValue = StrToInteger(value);
-            if (grid.direction == D_LONG) {
+            if (sequence.direction == D_LONG) {
                if (iValue < 0)                         return(_false(ValidateConfig.HandleError("ValidateConfiguration(43)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             }
             else if (iValue > 0)
                iValue = -iValue;
-            if (ArraySize(sequenceStart.event) != 0)   return(_false(ValidateConfig.HandleError("ValidateConfiguration(44)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
+            if (ArraySize(sequence.start.event) != 0)  return(_false(ValidateConfig.HandleError("ValidateConfiguration(44)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
             start.level.condition     = true;
             start.level.value         = iValue;
             start.level.condition.txt = key +"("+ iValue +")";
@@ -3126,7 +3107,7 @@ bool ValidateConfiguration(bool interactive) {
             if (stop.level.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfiguration(65)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple level conditions)", interactive)));
             if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(66)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             iValue = StrToInteger(value);
-            if (grid.direction == D_LONG) {
+            if (sequence.direction == D_LONG) {
                if (iValue < 0)                         return(_false(ValidateConfig.HandleError("ValidateConfiguration(67)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             }
             else if (iValue > 0)
@@ -3236,7 +3217,7 @@ void StoreConfiguration(bool save=true) {
    static color    _StartStop.Color;
    static string   _Sequence.StatusLocation;
 
-   static int      _grid.direction;
+   static int      _sequence.direction;
 
    static bool     _start.conditions;
    static bool     _start.conditions.triggered;
@@ -3304,7 +3285,7 @@ void StoreConfiguration(bool save=true) {
       _StartStop.Color              = StartStop.Color;
       _Sequence.StatusLocation      = StringConcatenate(Sequence.StatusLocation, "");
 
-      _grid.direction               = grid.direction;
+      _sequence.direction           = sequence.direction;
 
       _start.conditions             = start.conditions;
       _start.conditions.triggered   = start.conditions.triggered;
@@ -3372,7 +3353,7 @@ void StoreConfiguration(bool save=true) {
       StartStop.Color               = _StartStop.Color;
       Sequence.StatusLocation       = _Sequence.StatusLocation;
 
-      grid.direction                = _grid.direction;
+      sequence.direction            = _sequence.direction;
 
       start.conditions              = _start.conditions;
       start.conditions.triggered    = _start.conditions.triggered;
@@ -3456,7 +3437,7 @@ bool InitStatusLocation() {
    else if (IsTest())    status.directory = "presets\\tester\\";
    else                  status.directory = "presets\\"+ ShortAccountCompany() +"\\";
 
-   status.fileName = StringConcatenate(StringToLower(StdSymbol()), ".SR.", sequenceId, ".set");
+   status.file = StringConcatenate(StringToLower(StdSymbol()), ".SR.", sequenceId, ".set");
 
    Sequence.StatusLocation = "";
    return(true);
@@ -3473,7 +3454,7 @@ bool UpdateStatusLocation() {
    if (__STATUS_ERROR) return( false);
    if (!sequenceId)    return(_false(catch("UpdateStatusLocation(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
-   // TODO: Prüfen, ob status.fileName existiert und ggf. aktualisieren
+   // TODO: Prüfen, ob status.file existiert und ggf. aktualisieren
 
    string startDate = "";
 
@@ -3482,7 +3463,7 @@ bool UpdateStatusLocation() {
    else {
       status.directory = "presets\\"+ ShortAccountCompany() +"\\";
 
-      if (grid.maxLevel != 0) {
+      if (sequence.maxLevel != 0) {
          startDate        = TimeToStr(orders.openTime[0], TIME_DATE);
          status.directory = status.directory + startDate +"\\";
       }
@@ -3552,9 +3533,9 @@ bool ResolveStatusLocation() {
    //debug("ResolveStatusLocation()   directory=\""+ directory +"\"  location=\""+ location +"\"  file=\""+ file +"\"");
 
    status.directory        = StringRight(directory, -StringLen(filesDirectory));
-   status.fileName         = file;
+   status.file             = file;
    Sequence.StatusLocation = location;
-   //debug("ResolveStatusLocation()   status.directory=\""+ status.directory +"\"  Sequence.StatusLocation=\""+ Sequence.StatusLocation +"\"  status.fileName=\""+ status.fileName +"\"");
+   //debug("ResolveStatusLocation()   status.directory=\""+ status.directory +"\"  Sequence.StatusLocation=\""+ Sequence.StatusLocation +"\"  status.file=\""+ status.file +"\"");
    return(true);
 }
 
@@ -3611,7 +3592,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
  * @return string
  */
 string GetMqlStatusFileName() {
-   return(StringConcatenate(status.directory, status.fileName));
+   return(StringConcatenate(status.directory, status.file));
 }
 
 
@@ -3673,17 +3654,17 @@ bool SaveStatus() {
    int      status;                    // nein: kann aus Orderdaten und offenen Positionen restauriert werden
    bool     isTest;                    // nein: wird aus Statusdatei ermittelt
 
-   double   sequenceStartEquity;       // ja
+   double   sequence.startEquity;      // ja
 
-   int      sequenceStart.event [];    // ja
-   datetime sequenceStart.time  [];    // ja
-   double   sequenceStart.price [];    // ja
-   double   sequenceStart.profit[];    // ja
+   int      sequence.start.event [];   // ja
+   datetime sequence.start.time  [];   // ja
+   double   sequence.start.price [];   // ja
+   double   sequence.start.profit[];   // ja
 
-   int      sequenceStop.event [];     // ja
-   datetime sequenceStop.time  [];     // ja
-   double   sequenceStop.price [];     // ja
-   double   sequenceStop.profit[];     // ja
+   int      sequence.stop.event [];    // ja
+   datetime sequence.stop.time  [];    // ja
+   double   sequence.stop.price [];    // ja
+   double   sequence.stop.profit[];    // ja
 
    bool     start.*.condition;         // nein: wird aus StartConditions abgeleitet
    bool     stop.*.condition;          // nein: wird aus StopConditions abgeleitet
@@ -3699,14 +3680,14 @@ bool SaveStatus() {
    double   grid.base.value[];         // ja
    double   grid.base;                 // nein: wird aus Gridbase-History restauriert
 
-   int      grid.level;                // nein: kann aus Orderdaten restauriert werden
-   int      grid.maxLevel;             // nein: kann aus Orderdaten restauriert werden
+   int      sequence.level;            // nein: kann aus Orderdaten restauriert werden
+   int      sequence.maxLevel;         // nein: kann aus Orderdaten restauriert werden
 
-   int      grid.stops;                // nein: kann aus Orderdaten restauriert werden
-   double   grid.stopsPL;              // nein: kann aus Orderdaten restauriert werden
-   double   grid.closedPL;             // nein: kann aus Orderdaten restauriert werden
-   double   grid.floatingPL;           // nein: kann aus offenen Positionen restauriert werden
-   double   grid.totalPL;              // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
+   int      sequence.stops;            // nein: kann aus Orderdaten restauriert werden
+   double   sequence.stopsPL;          // nein: kann aus Orderdaten restauriert werden
+   double   sequence.closedPL;         // nein: kann aus Orderdaten restauriert werden
+   double   sequence.floatingPL;       // nein: kann aus offenen Positionen restauriert werden
+   double   sequence.totalPL;          // nein: kann aus stopsPL, closedPL und floatingPL restauriert werden
 
    double   sequence.maxProfit;        // ja
    double   sequence.maxDrawdown;      // ja
@@ -3736,35 +3717,35 @@ bool SaveStatus() {
    string lines[]; ArrayResize(lines, 0);
 
    // (1.1) Konfiguration
-   ArrayPushString(lines, /*string*/   "Account="+         ShortAccountCompany() +":"+ GetAccountNumber());
-   ArrayPushString(lines, /*string*/   "Symbol="                 +             Symbol()                  );
-   ArrayPushString(lines, /*string*/   "Sequence.ID="            +             Sequence.ID               );
+   ArrayPushString(lines, /*string*/   "Account="+          ShortAccountCompany() +":"+ GetAccountNumber());
+   ArrayPushString(lines, /*string*/   "Symbol="                 +             Symbol()                   );
+   ArrayPushString(lines, /*string*/   "Sequence.ID="            +             Sequence.ID                );
       if (StringLen(Sequence.StatusLocation) > 0)
-   ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+             Sequence.StatusLocation   );
-   ArrayPushString(lines, /*string*/   "GridDirection="          +             GridDirection             );
-   ArrayPushString(lines, /*int   */   "GridSize="               +             GridSize                  );
-   ArrayPushString(lines, /*double*/   "LotSize="                + NumberToStr(LotSize, ".+")            );
+   ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+             Sequence.StatusLocation    );
+   ArrayPushString(lines, /*string*/   "GridDirection="          +             GridDirection              );
+   ArrayPushString(lines, /*int   */   "GridSize="               +             GridSize                   );
+   ArrayPushString(lines, /*double*/   "LotSize="                + NumberToStr(LotSize, ".+")             );
       if (start.conditions)
-   ArrayPushString(lines, /*string*/   "StartConditions="        +             StartConditions           );
+   ArrayPushString(lines, /*string*/   "StartConditions="        +             StartConditions            );
       if (stop.conditions)
-   ArrayPushString(lines, /*string*/   "StopConditions="         +             StopConditions            );
+   ArrayPushString(lines, /*string*/   "StopConditions="         +             StopConditions             );
 
    // (1.2) Laufzeit-Variablen
-   ArrayPushString(lines, /*double*/   "rt.sequenceStartEquity=" + NumberToStr(sequenceStartEquity, ".+"));
+   ArrayPushString(lines, /*double*/   "rt.sequence.startEquity="+ NumberToStr(sequence.startEquity, ".+"));
       string values[]; ArrayResize(values, 0);
-      int size = ArraySize(sequenceStart.event);
+      int size = ArraySize(sequence.start.event);
       for (int i=0; i < size; i++)
-         ArrayPushString(values, StringConcatenate(sequenceStart.event[i], "|", sequenceStart.time[i], "|", NumberToStr(sequenceStart.price[i], ".+"), "|", NumberToStr(sequenceStart.profit[i], ".+")));
+         ArrayPushString(values, StringConcatenate(sequence.start.event[i], "|", sequence.start.time[i], "|", NumberToStr(sequence.start.price[i], ".+"), "|", NumberToStr(sequence.start.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequenceStarts="       + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/   "rt.sequence.starts="      + JoinStrings(values, ","));
       ArrayResize(values, 0);
-      size = ArraySize(sequenceStop.event);
+      size = ArraySize(sequence.stop.event);
       for (i=0; i < size; i++)
-         ArrayPushString(values, StringConcatenate(sequenceStop.event[i], "|", sequenceStop.time[i], "|", NumberToStr(sequenceStop.price[i], ".+"), "|", NumberToStr(sequenceStop.profit[i], ".+")));
+         ArrayPushString(values, StringConcatenate(sequence.stop.event[i], "|", sequence.stop.time[i], "|", NumberToStr(sequence.stop.price[i], ".+"), "|", NumberToStr(sequence.stop.profit[i], ".+")));
       if (size == 0)
          ArrayPushString(values, "0|0|0|0");
-   ArrayPushString(lines, /*string*/   "rt.sequenceStops="        + JoinStrings(values, ","));
+   ArrayPushString(lines, /*string*/   "rt.sequence.stops="       + JoinStrings(values, ","));
       if (status==STATUS_STOPPED) /*&&*/ if (IsWeekendStopSignal())
    ArrayPushString(lines, /*int*/      "rt.weekendStop="          +             1);
       if (ArraySize(ignorePendingOrders) > 0)
@@ -3935,7 +3916,7 @@ bool RestoreStatus() {
    }
 
    // notwendige Schlüssel definieren
-   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.sequenceStartEquity", "rt.sequenceStarts", "rt.sequenceStops", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.grid.base" };
+   string keys[] = { "Account", "Symbol", "Sequence.ID", "GridDirection", "GridSize", "LotSize", "rt.sequence.startEquity", "rt.sequence.starts", "rt.sequence.stops", "rt.sequence.maxProfit", "rt.sequence.maxDrawdown", "rt.grid.base" };
    /*                "Account"                 ,                        // Der Compiler kommt mit den Zeilennummern durcheinander,
                      "Symbol"                  ,                        // wenn der Initializer nicht komplett in einer Zeile steht.
                      "Sequence.ID"             ,
@@ -3946,9 +3927,9 @@ bool RestoreStatus() {
                    //"StartConditions"         ,                        // optional
                    //"StopConditions"          ,                        // optional
                      ---------------------------
-                     "rt.sequenceStartEquity"  ,
-                     "rt.sequenceStarts"       ,
-                     "rt.sequenceStops"        ,
+                     "rt.sequence.startEquity" ,
+                     "rt.sequence.starts"      ,
+                     "rt.sequence.stops"       ,
                    //"rt.weekendStop"          ,                        // optional
                    //"rt.ignorePendingOrders"  ,                        // optional
                    //"rt.ignoreOpenPositions"  ,                        // optional
@@ -3964,20 +3945,20 @@ bool RestoreStatus() {
    int    accountLine;
 
    for (int i=0; i < size; i++) {
-      if (StringStartsWith(StringTrim(lines[i]), "#"))                  // Kommentare überspringen
+      if (StringStartsWith(StringTrim(lines[i]), "#"))                    // Kommentare überspringen
          continue;
 
-      if (Explode(lines[i], "=", parts, 2) < 2)                         return(_false(catch("RestoreStatus(5)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(5)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StringTrim(parts[0]);
       value = StringTrim(parts[1]);
 
       if (key == "Account") {
          accountValue = value;
          accountLine  = i;
-         ArrayDropString(keys, key);                                    // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
+         ArrayDropString(keys, key);                                      // Abhängigkeit Account <=> Sequence.ID (siehe 4.2)
       }
       else if (key == "Symbol") {
-         if (value != Symbol())                                         return(_false(catch("RestoreStatus(6)   symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != Symbol())                                           return(_false(catch("RestoreStatus(6)   symbol mis-match \""+ value +"\"/\""+ Symbol() +"\" in status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          ArrayDropString(keys, key);
       }
       else if (key == "Sequence.ID") {
@@ -3986,7 +3967,7 @@ bool RestoreStatus() {
             isTest = true;
             value  = StringRight(value, -1);
          }
-         if (value != StringConcatenate("", sequenceId))                return(_false(catch("RestoreStatus(7)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value != StringConcatenate("", sequenceId))                  return(_false(catch("RestoreStatus(7)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          Sequence.ID = ifString(IsTest(), "T", "") + sequenceId;
          ArrayDropString(keys, key);
       }
@@ -3994,17 +3975,17 @@ bool RestoreStatus() {
          Sequence.StatusLocation = value;
       }
       else if (key == "GridDirection") {
-         if (value == "")                                               return(_false(catch("RestoreStatus(8)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (value == "")                                                 return(_false(catch("RestoreStatus(8)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridDirection = value;
          ArrayDropString(keys, key);
       }
       else if (key == "GridSize") {
-         if (!StringIsDigit(value))                                     return(_false(catch("RestoreStatus(9)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StringIsDigit(value))                                       return(_false(catch("RestoreStatus(9)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          GridSize = StrToInteger(value);
          ArrayDropString(keys, key);
       }
       else if (key == "LotSize") {
-         if (!StringIsNumeric(value))                                   return(_false(catch("RestoreStatus(10)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+         if (!StringIsNumeric(value))                                     return(_false(catch("RestoreStatus(10)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
          LotSize = StrToDouble(value);
          ArrayDropString(keys, key);
       }
@@ -4020,18 +4001,18 @@ bool RestoreStatus() {
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
       if (IsTesting() || !IsTest() || !StringIStartsWith(accountValue, ShortAccountCompany()+":"))
-                                                                        return(_false(catch("RestoreStatus(11)   account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
+                                                                          return(_false(catch("RestoreStatus(11)   account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 
    // (5.1) Runtime-Settings auslesen, validieren und übernehmen
-   ArrayResize(sequenceStart.event,   0);
-   ArrayResize(sequenceStart.time,    0);
-   ArrayResize(sequenceStart.price,   0);
-   ArrayResize(sequenceStart.profit,  0);
-   ArrayResize(sequenceStop.event,    0);
-   ArrayResize(sequenceStop.time,     0);
-   ArrayResize(sequenceStop.price,    0);
-   ArrayResize(sequenceStop.profit,   0);
+   ArrayResize(sequence.start.event,  0);
+   ArrayResize(sequence.start.time,   0);
+   ArrayResize(sequence.start.price,  0);
+   ArrayResize(sequence.start.profit, 0);
+   ArrayResize(sequence.stop.event,   0);
+   ArrayResize(sequence.stop.time,    0);
+   ArrayResize(sequence.stop.price,   0);
+   ArrayResize(sequence.stop.profit,  0);
    ArrayResize(ignorePendingOrders,   0);
    ArrayResize(ignoreOpenPositions,   0);
    ArrayResize(ignoreClosedPositions, 0);
@@ -4041,7 +4022,7 @@ bool RestoreStatus() {
    lastEventId = 0;
 
    for (i=0; i < size; i++) {
-      if (Explode(lines[i], "=", parts, 2) < 2)                         return(_false(catch("RestoreStatus(12)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
+      if (Explode(lines[i], "=", parts, 2) < 2)                           return(_false(catch("RestoreStatus(12)   invalid status file \""+ fileName +"\" (line \""+ lines[i] +"\")", ERR_RUNTIME_ERROR)));
       key   = StringTrim(parts[0]);
       value = StringTrim(parts[1]);
 
@@ -4049,11 +4030,11 @@ bool RestoreStatus() {
          if (!RestoreStatus.Runtime(fileName, lines[i], key, value, keys))
             return(false);
    }
-   if (ArraySize(keys) > 0)                                             return(_false(catch("RestoreStatus(13)   "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(keys) > 0)                                               return(_false(catch("RestoreStatus(13)   "+ ifString(ArraySize(keys)==1, "entry", "entries") +" \""+ JoinStrings(keys, "\", \"") +"\" missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
    // (5.2) Abhängigkeiten validieren
-   if (ArraySize(sequenceStart.event) != ArraySize(sequenceStop.event)) return(_false(catch("RestoreStatus(14)   sequenceStarts("+ ArraySize(sequenceStart.event) +") / sequenceStops("+ ArraySize(sequenceStop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
-   if (IntInArray(orders.ticket, 0))                                    return(_false(catch("RestoreStatus(15)   one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event)) return(_false(catch("RestoreStatus(14)   sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ ArraySize(sequence.stop.event) +") mis-match in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
+   if (IntInArray(orders.ticket, 0))                                      return(_false(catch("RestoreStatus(15)   one or more order entries missing in file \""+ fileName +"\"", ERR_RUNTIME_ERROR)));
 
 
    ArrayResize(lines, 0);
@@ -4078,9 +4059,9 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    if (__STATUS_ERROR)
       return(false);
    /*
-   double   rt.sequenceStartEquity=7801.13
-   string   rt.sequenceStarts=1|1328701713|1.32677|1000,2|1329999999|1.33215|1200
-   string   rt.sequenceStops=3|1328701999|1.32734|1200,0|0|0|0
+   double   rt.sequence.startEquity=7801.13
+   string   rt.sequence.starts=1|1328701713|1.32677|1000,2|1329999999|1.33215|1200
+   string   rt.sequence.stops=3|1328701999|1.32734|1200,0|0|0|0
    int      rt.weekendStop=1
    string   rt.ignorePendingOrders=66064890,66064891,66064892
    string   rt.ignoreOpenPositions=66064890,66064891,66064892
@@ -4114,89 +4095,89 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
    string values[], data[];
 
 
-   if (key == "rt.sequenceStartEquity") {
-      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(5)   illegal sequenceStartEquity \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-      sequenceStartEquity = StrToDouble(value);
-      if (LT(sequenceStartEquity, 0))                                       return(_false(catch("RestoreStatus.Runtime(6)   illegal sequenceStartEquity "+ DoubleToStr(sequenceStartEquity, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+   if (key == "rt.sequence.startEquity") {
+      if (!StringIsNumeric(value))                                          return(_false(catch("RestoreStatus.Runtime(5)   illegal sequence.startEquity \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+      sequence.startEquity = StrToDouble(value);
+      if (LT(sequence.startEquity, 0))                                      return(_false(catch("RestoreStatus.Runtime(6)   illegal sequence.startEquity "+ DoubleToStr(sequence.startEquity, 2) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
       ArrayDropString(keys, key);
    }
-   else if (key == "rt.sequenceStarts") {
-      // rt.sequenceStarts=1|1331710960|1.56743|1000,2|1331711010|1.56714|1200
+   else if (key == "rt.sequence.starts") {
+      // rt.sequence.starts=1|1331710960|1.56743|1000,2|1331711010|1.56714|1200
       int sizeOfValues = Explode(value, ",", values, NULL);
       for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(7)   illegal number of sequenceStarts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(7)   illegal number of sequence.starts["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[0];                          // sequenceStart.event
-         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(8)   illegal sequenceStart.event["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[0];                          // sequence.start.event
+         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(8)   illegal sequence.start.event["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int startEvent = StrToInteger(value);
          if (startEvent == 0) {
             if (sizeOfValues==1 && values[i]=="0|0|0|0") {
-               if (NE(sequenceStartEquity, 0))                              return(_false(catch("RestoreStatus.Runtime(9)   sequenceStartEquity/sequenceStart["+ i +"] mis-match "+ NumberToStr(sequenceStartEquity, ".2") +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+               if (NE(sequence.startEquity, 0))                             return(_false(catch("RestoreStatus.Runtime(9)   sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
                break;
             }
-            return(_false(catch("RestoreStatus.Runtime(10)   illegal sequenceStart.event["+ i +"] "+ startEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            return(_false(catch("RestoreStatus.Runtime(10)   illegal sequence.start.event["+ i +"] "+ startEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          }
-         if (EQ(sequenceStartEquity, 0))                                    return(_false(catch("RestoreStatus.Runtime(11)   sequenceStartEquity/sequenceStart["+ i +"] mis-match "+ NumberToStr(sequenceStartEquity, ".2") +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(sequence.startEquity, 0))                                   return(_false(catch("RestoreStatus.Runtime(11)   sequence.startEquity/sequence.start["+ i +"] mis-match "+ NumberToStr(sequence.startEquity, ".2") +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[1];                          // sequenceStart.time
-         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(12)   illegal sequenceStart.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[1];                          // sequence.start.time
+         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(12)   illegal sequence.start.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime startTime = StrToInteger(value);
-         if (!startTime)                                                    return(_false(catch("RestoreStatus.Runtime(13)   illegal sequenceStart.time["+ i +"] "+ startTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!startTime)                                                    return(_false(catch("RestoreStatus.Runtime(13)   illegal sequence.start.time["+ i +"] "+ startTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[2];                          // sequenceStart.price
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(15)   illegal sequenceStart.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[2];                          // sequence.start.price
+         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(15)   illegal sequence.start.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startPrice = StrToDouble(value);
-         if (LE(startPrice, 0))                                             return(_false(catch("RestoreStatus.Runtime(16)   illegal sequenceStart.price["+ i +"] "+ NumberToStr(startPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (LE(startPrice, 0))                                             return(_false(catch("RestoreStatus.Runtime(16)   illegal sequence.start.price["+ i +"] "+ NumberToStr(startPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[3];                          // sequenceStart.profit
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(17)   illegal sequenceStart.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[3];                          // sequence.start.profit
+         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(17)   illegal sequence.start.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double startProfit = StrToDouble(value);
 
-         ArrayPushInt   (sequenceStart.event,  startEvent );
-         ArrayPushInt   (sequenceStart.time,   startTime  );
-         ArrayPushDouble(sequenceStart.price,  startPrice );
-         ArrayPushDouble(sequenceStart.profit, startProfit);
+         ArrayPushInt   (sequence.start.event,  startEvent );
+         ArrayPushInt   (sequence.start.time,   startTime  );
+         ArrayPushDouble(sequence.start.price,  startPrice );
+         ArrayPushDouble(sequence.start.profit, startProfit);
          lastEventId = Max(lastEventId, startEvent);
       }
       ArrayDropString(keys, key);
    }
-   else if (key == "rt.sequenceStops") {
-      // rt.sequenceStops=1|1331710960|1.56743|1200,0|0|0|0
+   else if (key == "rt.sequence.stops") {
+      // rt.sequence.stops=1|1331710960|1.56743|1200,0|0|0|0
       sizeOfValues = Explode(value, ",", values, NULL);
       for (i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(18)   illegal number of sequenceStops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (Explode(values[i], "|", data, NULL) != 4)                      return(_false(catch("RestoreStatus.Runtime(18)   illegal number of sequence.stops["+ i +"] details (\""+ values[i] +"\" = "+ ArraySize(data) +") in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[0];                          // sequenceStop.event
-         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(19)   illegal sequenceStop.event["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[0];                          // sequence.stop.event
+         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(19)   illegal sequence.stop.event["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int stopEvent = StrToInteger(value);
          if (stopEvent == 0) {
-            if (i < sizeOfValues-1)                                         return(_false(catch("RestoreStatus.Runtime(20)   illegal sequenceStop["+ i +"] \""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            if (values[i] != "0|0|0|0")                                     return(_false(catch("RestoreStatus.Runtime(21)   illegal sequenceStop["+ i +"] \""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-            if (i==0 && ArraySize(sequenceStart.event)==0)
+            if (i < sizeOfValues-1)                                         return(_false(catch("RestoreStatus.Runtime(20)   illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (values[i] != "0|0|0|0")                                     return(_false(catch("RestoreStatus.Runtime(21)   illegal sequence.stop["+ i +"] \""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+            if (i==0 && ArraySize(sequence.start.event)==0)
                break;
          }
 
-         value = data[1];                          // sequenceStop.time
-         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(22)   illegal sequenceStop.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[1];                          // sequence.stop.time
+         if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(22)   illegal sequence.stop.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          datetime stopTime = StrToInteger(value);
-         if (!stopTime && stopEvent!=0)                                     return(_false(catch("RestoreStatus.Runtime(23)   illegal sequenceStop.time["+ i +"] "+ stopTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (i >= ArraySize(sequenceStart.event))                           return(_false(catch("RestoreStatus.Runtime(24)   sequenceStarts("+ ArraySize(sequenceStart.event) +") / sequenceStops("+ sizeOfValues +") mis-match in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (stopTime!=0 && stopTime < sequenceStart.time[i])               return(_false(catch("RestoreStatus.Runtime(25)   sequenceStart.time["+ i +"]/sequenceStop.time["+ i +"] mis-match '"+ TimeToStr(sequenceStart.time[i], TIME_FULL) +"'/'"+ TimeToStr(stopTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (!stopTime && stopEvent!=0)                                     return(_false(catch("RestoreStatus.Runtime(23)   illegal sequence.stop.time["+ i +"] "+ stopTime +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (i >= ArraySize(sequence.start.event))                          return(_false(catch("RestoreStatus.Runtime(24)   sequence.starts("+ ArraySize(sequence.start.event) +") / sequence.stops("+ sizeOfValues +") mis-match in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (stopTime!=0 && stopTime < sequence.start.time[i])              return(_false(catch("RestoreStatus.Runtime(25)   sequence.start.time["+ i +"]/sequence.stop.time["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[i], TIME_FULL) +"'/'"+ TimeToStr(stopTime, TIME_FULL) +"' in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[2];                          // sequenceStop.price
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(26)   illegal sequenceStop.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[2];                          // sequence.stop.price
+         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(26)   illegal sequence.stop.price["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopPrice = StrToDouble(value);
-         if (LT(stopPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(27)   illegal sequenceStop.price["+ i +"] "+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
-         if (EQ(stopPrice, 0) && stopEvent!=0)                              return(_false(catch("RestoreStatus.Runtime(28)   sequenceStop.time["+ i +"]/sequenceStop.price["+ i +"] mis-match '"+ TimeToStr(stopTime, TIME_FULL) +"'/"+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (LT(stopPrice, 0))                                              return(_false(catch("RestoreStatus.Runtime(27)   illegal sequence.stop.price["+ i +"] "+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         if (EQ(stopPrice, 0) && stopEvent!=0)                              return(_false(catch("RestoreStatus.Runtime(28)   sequence.stop.time["+ i +"]/sequence.stop.price["+ i +"] mis-match '"+ TimeToStr(stopTime, TIME_FULL) +"'/"+ NumberToStr(stopPrice, PriceFormat) +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
-         value = data[3];                          // sequenceStop.profit
-         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(29)   illegal sequenceStop.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         value = data[3];                          // sequence.stop.profit
+         if (!StringIsNumeric(value))                                       return(_false(catch("RestoreStatus.Runtime(29)   illegal sequence.stop.profit["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          double stopProfit = StrToDouble(value);
 
-         ArrayPushInt   (sequenceStop.event,  stopEvent );
-         ArrayPushInt   (sequenceStop.time,   stopTime  );
-         ArrayPushDouble(sequenceStop.price,  stopPrice );
-         ArrayPushDouble(sequenceStop.profit, stopProfit);
+         ArrayPushInt   (sequence.stop.event,  stopEvent );
+         ArrayPushInt   (sequence.stop.time,   stopTime  );
+         ArrayPushDouble(sequence.stop.price,  stopPrice );
+         ArrayPushDouble(sequence.stop.profit, stopProfit);
          lastEventId = Max(lastEventId, stopEvent);
       }
       ArrayDropString(keys, key);
@@ -4263,14 +4244,14 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
          value = data[0];                          // GridBase-Event
          if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(41)   illegal grid.base.event["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          int gridBaseEvent = StrToInteger(value);
-         int starts = ArraySize(sequenceStart.event);
+         int starts = ArraySize(sequence.start.event);
          if (gridBaseEvent == 0) {
             if (sizeOfValues==1 && values[0]=="0|0|0") {
-               if (starts > 0)                                              return(_false(catch("RestoreStatus.Runtime(42)   sequenceStart/grid.base["+ i +"] mis-match '"+ TimeToStr(sequenceStart.time[0], TIME_FULL) +"'/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+               if (starts > 0)                                              return(_false(catch("RestoreStatus.Runtime(42)   sequence.start/grid.base["+ i +"] mis-match '"+ TimeToStr(sequence.start.time[0], TIME_FULL) +"'/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
                break;
             }                                                               return(_false(catch("RestoreStatus.Runtime(43)   illegal grid.base.event["+ i +"] "+ gridBaseEvent +" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
          }
-         else if (!starts)                                                  return(_false(catch("RestoreStatus.Runtime(44)   sequenceStart/grid.base["+ i +"] mis-match "+ starts +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
+         else if (!starts)                                                  return(_false(catch("RestoreStatus.Runtime(44)   sequence.start/grid.base["+ i +"] mis-match "+ starts +"/\""+ values[i] +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
 
          value = data[1];                          // GridBase-Zeitpunkt
          if (!StringIsDigit(value))                                         return(_false(catch("RestoreStatus.Runtime(45)   illegal grid.base.time["+ i +"] \""+ value +"\" in status file \""+ file +"\" (line \""+ line +"\")", ERR_RUNTIME_ERROR)));
@@ -4583,20 +4564,20 @@ bool SynchronizeStatus() {
       ArrayResize(orphanedClosedPositions, 0);
    }
 
-   if (ArraySize(sequenceStart.event) > 0) /*&&*/ if (ArraySize(grid.base.event)==0)
+   if (ArraySize(sequence.start.event) > 0) /*&&*/ if (ArraySize(grid.base.event)==0)
       return(_false(catch("SynchronizeStatus(8)   illegal number of grid.base events = "+ 0, ERR_RUNTIME_ERROR)));
 
 
    // (2) Status und Variablen synchronisieren
-   /*int   */ status          = STATUS_WAITING;
-   /*int   */ lastEventId     = 0;
-   /*int   */ grid.level      = 0;
-   /*int   */ grid.maxLevel   = 0;
-   /*int   */ grid.stops      = 0;
-   /*double*/ grid.stopsPL    = 0;
-   /*double*/ grid.closedPL   = 0;
-   /*double*/ grid.floatingPL = 0;
-   /*double*/ grid.totalPL    = 0;
+   /*int   */ status              = STATUS_WAITING;
+   /*int   */ lastEventId         = 0;
+   /*int   */ sequence.level      = 0;
+   /*int   */ sequence.maxLevel   = 0;
+   /*int   */ sequence.stops      = 0;
+   /*double*/ sequence.stopsPL    = 0;
+   /*double*/ sequence.closedPL   = 0;
+   /*double*/ sequence.floatingPL = 0;
+   /*double*/ sequence.totalPL    = 0;
 
    datetime   stopTime;
    double     stopPrice;
@@ -4607,14 +4588,14 @@ bool SynchronizeStatus() {
 
    // (2.2) Wurde die Sequenz außerhalb gestoppt, EV_SEQUENCE_STOP erzeugen
    if (status == STATUS_STOPPING) {
-      i = ArraySize(sequenceStop.event) - 1;
-      if (sequenceStop.time[i] != 0)
-         return(_false(catch("SynchronizeStatus(9)   unexpected sequenceStop.time = "+ IntsToStr(sequenceStop.time, NULL), ERR_RUNTIME_ERROR)));
+      i = ArraySize(sequence.stop.event) - 1;
+      if (sequence.stop.time[i] != 0)
+         return(_false(catch("SynchronizeStatus(9)   unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR)));
 
-      sequenceStop.event [i] = CreateEventId();
-      sequenceStop.time  [i] = stopTime;
-      sequenceStop.price [i] = NormalizeDouble(stopPrice, Digits);
-      sequenceStop.profit[i] = grid.totalPL;
+      sequence.stop.event [i] = CreateEventId();
+      sequence.stop.time  [i] = stopTime;
+      sequence.stop.price [i] = NormalizeDouble(stopPrice, Digits);
+      sequence.stop.profit[i] = sequence.totalPL;
 
       if (!StopSequence.LimitStopPrice())                            //  StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
          return(false);
@@ -4644,15 +4625,6 @@ bool SynchronizeStatus() {
    RedrawStartStop();
    RedrawOrders();
 
-   /*
-   debug("SynchronizeStatus() level="      + grid.level
-                          +"  maxLevel="   + grid.maxLevel
-                          +"  stops="      + grid.stops
-                          +"  stopsPL="    + DoubleToStr(grid.stopsPL,     2)
-                          +"  closedPL="   + DoubleToStr(grid.closedPL,    2)
-                          +"  floatingPL=" + DoubleToStr(grid.floatingPL,  2)
-                          +"  totalPL="    + DoubleToStr(grid.totalPL,     2));
-   */
    return(!last_error|catch("SynchronizeStatus(11)"));
 }
 
@@ -4720,7 +4692,7 @@ bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
 
    if (!isPending) {
       orders.swap        [i] = OrderSwap();
-      orders.commission  [i] = OrderCommission(); grid.commission = OrderCommission(); SS.LotSize();
+      orders.commission  [i] = OrderCommission(); sequence.commission = OrderCommission(); SS.LotSize();
       orders.profit      [i] = OrderProfit();
    }
 
@@ -4761,8 +4733,8 @@ void Sync.PushEvent(double &events[][], int id, datetime time, int type, double 
 /**
  * Aktualisiert die Daten des lokal als offen markierten Tickets mit dem Online-Status. Wird nur in SynchronizeStatus() verwendet.
  *
- * @param  datetime &sequenceStopTime  - Variable, die sequenceStopTime aufnimmt (falls die Stop-Daten fehlen)
- * @param  double   &sequenceStopPrice - Variable, die sequenceStopPrice aufnimmt (falls die Stop-Daten fehlen)
+ * @param  datetime &sequenceStopTime  - Variable, die die Sequenz-StopTime aufnimmt (falls die Stopdaten fehlen)
+ * @param  double   &sequenceStopPrice - Variable, die den Sequenz-StopPrice aufnimmt (falls die Stopdaten fehlen)
  *
  * @return bool - Erfolgsstatus
  */
@@ -4775,11 +4747,11 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
    // (1) Breakeven-relevante Events zusammenstellen
    // (1.1) Sequenzstarts und -stops
-   int sizeOfStarts = ArraySize(sequenceStart.event);
+   int sizeOfStarts = ArraySize(sequence.start.event);
    for (int i=0; i < sizeOfStarts; i++) {
     //Sync.PushEvent(events, id, time, type, gridBase, index);
-      Sync.PushEvent(events, sequenceStart.event[i], sequenceStart.time[i], EV_SEQUENCE_START, NULL, i);
-      Sync.PushEvent(events, sequenceStop.event [i], sequenceStop.time [i], EV_SEQUENCE_STOP,  NULL, i);
+      Sync.PushEvent(events, sequence.start.event[i], sequence.start.time[i], EV_SEQUENCE_START, NULL, i);
+      Sync.PushEvent(events, sequence.stop.event [i], sequence.stop.time [i], EV_SEQUENCE_STOP,  NULL, i);
    }
 
    // (1.2) GridBase-Änderungen
@@ -4805,7 +4777,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
          if (openPosition) {
             if (IntInArray(openLevels, orders.level[i])) return(_false(catch("Sync.ProcessEvents(2)   duplicate order level "+ orders.level[i] +" of open position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
             ArrayPushInt(openLevels, orders.level[i]);
-            grid.floatingPL = NormalizeDouble(grid.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
+            sequence.floatingPL = NormalizeDouble(sequence.floatingPL + orders.swap[i] + orders.commission[i] + orders.profit[i], 2);
          }
          else if (closedBySL) {
             Sync.PushEvent(events, orders.closeEvent[i], orders.closeTime[i], EV_POSITION_STOPOUT, NULL, i);
@@ -4854,18 +4826,18 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       // (2.2) Events auswerten
       // -- EV_SEQUENCE_START --------------
       if (type == EV_SEQUENCE_START) {
-         if (i!=0 && status!=STATUS_STOPPED && status!=STATUS_STARTING)     return(_false(catch("Sync.ProcessEvents(5)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
-         if (status==STATUS_STARTING && reopenedPositions!=Abs(grid.level)) return(_false(catch("Sync.ProcessEvents(6)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
+         if (i!=0 && status!=STATUS_STOPPED && status!=STATUS_STARTING)         return(_false(catch("Sync.ProcessEvents(5)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status==STATUS_STARTING && reopenedPositions!=Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(6)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          reopenedPositions = 0;
          status            = STATUS_PROGRESSING;
-         sequenceStart.event[index] = id;
+         sequence.start.event[index] = id;
       }
       // -- EV_GRIDBASE_CHANGE -------------
       else if (type == EV_GRIDBASE_CHANGE) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPED)          return(_false(catch("Sync.ProcessEvents(7)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPED)              return(_false(catch("Sync.ProcessEvents(7)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          grid.base = gridBase;
          if (status == STATUS_PROGRESSING) {
-            if (grid.level != 0)                                            return(_false(catch("Sync.ProcessEvents(8)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
+            if (sequence.level != 0)                                            return(_false(catch("Sync.ProcessEvents(8)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          }
          else { // STATUS_STOPPED
             reopenedPositions = 0;
@@ -4875,10 +4847,10 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_OPEN ---------------
       else if (type == EV_POSITION_OPEN) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STARTING)         return(_false(catch("Sync.ProcessEvents(9)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
-         if (status == STATUS_PROGRESSING) {                                // nicht bei PositionReopen
-            grid.level   += Sign(orders.level[index]);
-            grid.maxLevel = ifInt(grid.direction==D_LONG, Max(grid.level, grid.maxLevel), Min(grid.level, grid.maxLevel));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STARTING)             return(_false(catch("Sync.ProcessEvents(9)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (status == STATUS_PROGRESSING) {                                    // nicht bei PositionReopen
+            sequence.level   += Sign(orders.level[index]);
+            sequence.maxLevel = ifInt(sequence.direction==D_LONG, Max(sequence.level, sequence.maxLevel), Min(sequence.level, sequence.maxLevel));
          }
          else {
             reopenedPositions++;
@@ -4887,16 +4859,16 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_POSITION_STOPOUT ------------
       else if (type == EV_POSITION_STOPOUT) {
-         if (status != STATUS_PROGRESSING)                                  return(_false(catch("Sync.ProcessEvents(10)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
-         grid.level  -= Sign(orders.level[index]);
-         grid.stops++;
-         grid.stopsPL = NormalizeDouble(grid.stopsPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
+         if (status != STATUS_PROGRESSING)                                      return(_false(catch("Sync.ProcessEvents(10)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         sequence.level  -= Sign(orders.level[index]);
+         sequence.stops++;
+         sequence.stopsPL = NormalizeDouble(sequence.stopsPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
          orders.closeEvent[index] = id;
       }
       // -- EV_POSITION_CLOSE --------------
       else if (type == EV_POSITION_CLOSE) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)         return(_false(catch("Sync.ProcessEvents(11)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
-         grid.closedPL = NormalizeDouble(grid.closedPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(11)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         sequence.closedPL = NormalizeDouble(sequence.closedPL + orders.swap[index] + orders.commission[index] + orders.profit[index], 2);
          if (status == STATUS_PROGRESSING)
             closedPositions = 0;
          closedPositions++;
@@ -4905,15 +4877,15 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -- EV_SEQUENCE_STOP ---------------
       else if (type == EV_SEQUENCE_STOP) {
-         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)         return(_false(catch("Sync.ProcessEvents(12)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
-         if (closedPositions != Abs(grid.level))                            return(_false(catch("Sync.ProcessEvents(13)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ grid.level, ERR_RUNTIME_ERROR)));
+         if (status!=STATUS_PROGRESSING && status!=STATUS_STOPPING)             return(_false(catch("Sync.ProcessEvents(12)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
+         if (closedPositions != Abs(sequence.level))                            return(_false(catch("Sync.ProcessEvents(13)   illegal break-even event "+ BreakevenEventToStr(type) +" ("+ id +", "+ ifString(ticket, "#"+ ticket +", ", "") +"time="+ time +", "+ TimeToStr(time, TIME_FULL) +") after "+ BreakevenEventToStr(lastType) +" ("+ lastId +", "+ ifString(lastTicket, "#"+ lastTicket +", ", "") +"time="+ lastTime +", "+ TimeToStr(lastTime, TIME_FULL) +") and before "+ BreakevenEventToStr(nextType) +" ("+ nextId +", "+ ifString(nextTicket, "#"+ nextTicket +", ", "") +"time="+ nextTime +", "+ TimeToStr(nextTime, TIME_FULL) +") in "+ StatusToStr(status) +" at level "+ sequence.level, ERR_RUNTIME_ERROR)));
          closedPositions = 0;
          status = STATUS_STOPPED;
-         sequenceStop.event[index] = id;
+         sequence.stop.event[index] = id;
       }
       // -----------------------------------
-      grid.totalPL = NormalizeDouble(grid.stopsPL + grid.closedPL + grid.floatingPL, 2);
-      //debug("Sync.ProcessEvents()   "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StringRightPad(StatusToStr(status), 20, " ") + StringRightPad(BreakevenEventToStr(type), 19, " ") +"  grid.level="+ ifInt(direction==D_LONG, grid.level.L, grid.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
+      sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2);
+      //debug("Sync.ProcessEvents()   "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StringRightPad(StatusToStr(status), 20, " ") + StringRightPad(BreakevenEventToStr(type), 19, " ") +"  sequence.level="+ ifInt(direction==D_LONG, sequence.level.L, sequence.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
 
       lastId     = id;
       lastTime   = time;
@@ -4925,10 +4897,10 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
 
    // (4) Wurde die Sequenz außerhalb gestoppt, fehlende Stop-Daten ermitteln
    if (status == STATUS_STOPPING) {
-      if (closedPositions != Abs(grid.level)) return(_false(catch("Sync.ProcessEvents(14)   unexpected number of closed positions in "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+      if (closedPositions != Abs(sequence.level)) return(_false(catch("Sync.ProcessEvents(14)   unexpected number of closed positions in "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
       // (4.1) Stopdaten ermitteln
-      int    level = Abs(grid.level);
+      int    level = Abs(sequence.level);
       double stopPrice;
       for (i=sizeOfEvents-level; i < sizeOfEvents; i++) {
          time  = Round(events[i][1]);
@@ -4967,14 +4939,14 @@ void RedrawStartStop() {
    double   profit;
    string   label;
 
-   int starts = ArraySize(sequenceStart.event);
+   int starts = ArraySize(sequence.start.event);
 
 
    // (1) Start-Marker
    for (int i=0; i < starts; i++) {
-      time   = sequenceStart.time  [i];
-      price  = sequenceStart.price [i];
-      profit = sequenceStart.profit[i];
+      time   = sequence.start.time  [i];
+      price  = sequence.start.price [i];
+      profit = sequence.start.profit[i];
 
       label = StringConcatenate("SR.", sequenceId, ".start.", i+1);
       if (ObjectFind(label) == 0)
@@ -4992,10 +4964,10 @@ void RedrawStartStop() {
 
    // (2) Stop-Marker
    for (i=0; i < starts; i++) {
-      if (sequenceStop.time[i] > 0) {
-         time   = sequenceStop.time [i];
-         price  = sequenceStop.price[i];
-         profit = sequenceStop.profit[i];
+      if (sequence.stop.time[i] > 0) {
+         time   = sequence.stop.time [i];
+         price  = sequence.stop.price[i];
+         profit = sequence.stop.profit[i];
 
          label = StringConcatenate("SR.", sequenceId, ".stop.", i+1);
          if (ObjectFind(label) == 0)
@@ -5447,7 +5419,7 @@ bool RecordEquity(int flags=NULL) {
             return(!SetLastError(hstlib_GetLastError()));
       }
    }
-   double value = sequenceStartEquity + grid.totalPL;
+   double value = sequence.startEquity + sequence.totalPL;
 
    if (History.AddTick(hHst, Tick.Time, value, flags))
       return(true);
