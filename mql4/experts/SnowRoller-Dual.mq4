@@ -260,7 +260,7 @@ bool IsWeekendResumeSignal() {
 /**
  * Signalgeber für StopSequence().
  *
- * @param  int  hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
@@ -269,22 +269,38 @@ bool IsStopSignal(int hSeq) {
       return(false);
 
    // (1) User-definierte StopConditions prüfen
-   if (stop.conditions.triggered) {
-      warn("IsStopSignal(1)   repeated triggered state call");    // Einmal getriggert, immer getriggert. Falls der Stop beim aktuellen Tick nicht ausgeführt
-      return(true);                                               // werden konnte, könnten die Bedingungen beim nächsten Tick schon nicht mehr erfüllt sein.
-   }
 
    // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (GE(sequence.totalPL[hSeq], stop.profitAbs.value)) {
-         if (__LOG) log(StringConcatenate("IsStopSignal()   sequence "+ sequence.id[hSeq] +" stop condition \"", stop.profitAbs.condition.txt, "\" met"));
-         stop.conditions.triggered = true;
+         if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
          return(true);
       }
    }
 
-   // (2) zusätzlich interne WeekendStop-Bedingung prüfen
+   // (2) interne WeekendStop-Bedingung prüfen
    return(IsWeekendStopSignal());
+}
+
+
+/**
+ * Signalgeber für StopSequence(). Prüft, ob die WeekendStop-Bedingung erfüllt ist.
+ *
+ * @return bool
+ */
+bool IsWeekendStopSignal() {
+   if (__STATUS_ERROR)         return(false);
+   if (weekend.stop.time == 0) return(false);
+
+   datetime now = TimeCurrent();
+
+   if (weekend.stop.time <= now) {
+      if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal()   stop condition '", GetDayOfWeek(weekend.stop.time, false), ", ", TimeToStr(weekend.stop.time, TIME_FULL), "' met"));
+         return(true);
+      }
+   }
+   return(false);
 }
 
 
@@ -838,7 +854,7 @@ bool ResumeSequence(int hSeq) {
 bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
    ArrayResize(stops, 0);
    if (__STATUS_ERROR)                          return(false);
-   if (sequence.status[hSeq] == STATUS_WAITING) return(true);
+   if (sequence.status[hSeq] == STATUS_WAITING) return( true);
 
    sequence.floatingPL[hSeq] = 0;
 
@@ -1387,13 +1403,13 @@ bool UpdatePendingOrders(int hSeq) {
          if (orders.level[i] == nextLevel) {
             nextOrderExists = true;
             if (Abs(nextLevel)==1) /*&&*/ if (NE(orders.pendingPrice[i], gridbase[hSeq] + nextLevel*GridSize*Pips)) {
-               if (!Grid.TrailPendingOrder(i))                                   // Order im ersten Level ggf. trailen
+               if (!Grid.TrailPendingOrder(hSeq, i))                             // Order im ersten Level ggf. trailen
                   return(false);
                ordersChanged = true;
             }
             continue;
          }
-         if (!Grid.DeleteOrder(i))                                               // unnötige Pending-Orders löschen
+         if (!Grid.DeleteOrder(hSeq, i))                                         // unnötige Pending-Orders löschen
             return(false);
          ordersChanged = true;
       }
@@ -1415,24 +1431,81 @@ bool UpdatePendingOrders(int hSeq) {
 /**
  * Justiert PendingOpenPrice() und StopLoss() der angegebenen Order und aktualisiert die Orderarrays.
  *
- * @param  int i - Orderindex
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.TrailPendingOrder(int i) {
-   return(!catch("Grid.TrailPendingOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool Grid.TrailPendingOrder(int hSeq, int i) {
+   if (__STATUS_ERROR)                              return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+   if (orders.closeTime[i] != 0)                    return(_false(catch("Grid.TrailPendingOrder(4)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+   double stopPrice   = NormalizeDouble(gridbase[hSeq] + orders.level[i] *GridSize*Pips, Digits);
+   double stopLoss    = NormalizeDouble(stopPrice - Sign(orders.level[i])*GridSize*Pips, Digits);
+   color  markerColor = CLR_PENDING;
+   int    oeFlags     = NULL;
+
+   if (EQ(orders.pendingPrice[i], stopPrice)) /*&&*/ if (EQ(orders.stopLoss[i], stopLoss))
+      return(_false(catch("Grid.TrailPendingOrder(5)   nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+
+   if (orders.ticket[i] < 0) {                                       // client-seitige Orders
+      // TODO: ChartMarker nachziehen
+   }
+   else {                                                            // server-seitige Orders
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
+         return(_false(SetLastError(oe.Error(oe))));
+      ArrayResize(oe, 0);
+   }
+
+   orders.gridBase    [i] = gridbase[hSeq];
+   orders.pendingTime [i] = TimeCurrent();
+   orders.pendingPrice[i] = stopPrice;
+   orders.stopLoss    [i] = stopLoss;
+
+   return(!last_error|catch("Grid.TrailPendingOrder(6)"));
 }
 
 
 /**
  * Streicht die angegebene Order und entfernt sie aus den Orderarrays.
  *
- * @param  int i - Orderindex
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int i    - Orderindex
  *
  * @return bool - Erfolgsstatus
  */
-bool Grid.DeleteOrder(int i) {
-   return(!catch("Grid.DeleteOrder()", ERR_FUNCTION_NOT_IMPLEMENTED));
+bool Grid.DeleteOrder(int hSeq, int i) {
+   if (__STATUS_ERROR)                              return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
+      if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
+         if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
+                                                    return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.DeleteOrder(3)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
+
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+   if (orders.ticket[i] > 0) {
+      int oeFlags = NULL;
+      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+
+      if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe))
+         return(_false(SetLastError(oe.Error(oe))));
+      ArrayResize(oe, 0);
+   }
+
+   if (!Grid.DropData(i))
+      return(false);
+
+   return(!last_error|catch("Grid.DeleteOrder(4)"));
 }
 
 
@@ -1731,6 +1804,10 @@ bool Grid.DropData(int i) {
          if (orders[n][I_FROM]<=i && i<=orders[n][I_TO]) {
             orders[n][I_TO  ]--;
             orders[n][I_SIZE]--;
+         }
+         else if (orders[n][I_FROM] > i) {
+            orders[n][I_FROM]--;
+            orders[n][I_TO  ]--;
          }
       }
    }

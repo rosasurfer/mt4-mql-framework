@@ -114,8 +114,7 @@ string   status.directory;                                           // Verzeich
 string   status.file;                                                // Dateiname der Statusdatei
 
 // ------------------------------------
-bool     start.conditions;                                           // ob die StartConditions aktiv sind und getriggert wurden
-bool     start.conditions.triggered;
+bool     start.conditions;                                           // ob die StartConditions aktiv sind
 
 bool     start.trend.condition;
 string   start.trend.condition.txt;
@@ -138,8 +137,7 @@ string   start.level.condition.txt;
 int      start.level.value;
 
 // ------------------------------------
-bool     stop.conditions;                                            // ob die StopConditions aktiv sind und getriggert wurden
-bool     stop.conditions.triggered;
+bool     stop.conditions;                                            // ob die StopConditions aktiv sind
 
 bool     stop.trend.condition;
 string   stop.trend.condition.txt;
@@ -1132,10 +1130,6 @@ bool IsStartSignal() {
    if (status!=STATUS_WAITING) /*&&*/ if (status!=STATUS_STOPPED) return(false);
 
    if (start.conditions) {
-      if (start.conditions.triggered) {
-         warn("IsStartSignal(1)   repeated triggered state call");   // Einmal getriggert, immer getriggert. Falls der Start beim aktuellen Tick nicht ausgeführt
-         return(true);                                               // werden konnte, könnten die Bedingungen beim nächsten Tick schon nicht mehr erfüllt sein.
-      }
 
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
@@ -1151,7 +1145,6 @@ bool IsStartSignal() {
 
             if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal)) {
                if (signal != 0) {
-                  start.conditions.triggered = true;
                   if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
                   return(true);
                }
@@ -1200,7 +1193,6 @@ bool IsStartSignal() {
       if (__LOG) log("IsStartSignal()   no start conditions defined");
    }
 
-   start.conditions.triggered = true;
    return(true);
 }
 
@@ -1332,10 +1324,6 @@ bool IsStopSignal() {
 
    // (1) User-definierte StopConditions prüfen
    if (stop.conditions) {
-      if (stop.conditions.triggered) {
-         warn("IsStopSignal(1)   repeated triggered state call");    // Einmal getriggert, immer getriggert. Falls der Stop beim aktuellen Tick nicht ausgeführt
-         return(true);                                               // werden konnte, könnten die Bedingungen beim nächsten Tick schon nicht mehr erfüllt sein.
-      }
 
       // -- stop.trend: bei Trendwechsel in die angegebene Richtung erfüllt -----------------------------------------------
       if (stop.trend.condition) {
@@ -1352,7 +1340,6 @@ bool IsStopSignal() {
             if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal))
                return(false);
             if (signal != 0) {
-               stop.conditions.triggered = true;
                if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
             }
@@ -1382,7 +1369,6 @@ bool IsStopSignal() {
          lastPrice = price;
          if (result) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.price.condition.txt, "\" met"));
-            stop.conditions.triggered = true;
             return(true);
          }
       }
@@ -1391,7 +1377,6 @@ bool IsStopSignal() {
       if (stop.level.condition) {
          if (stop.level.value == sequence.level) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.level.condition.txt, "\" met"));
-            stop.conditions.triggered = true;
             return(true);
          }
       }
@@ -1400,7 +1385,6 @@ bool IsStopSignal() {
       if (stop.time.condition) {
          if (stop.time.value <= TimeCurrent()) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.time.condition.txt, "\" met"));
-            stop.conditions.triggered = true;
             return(true);
          }
       }
@@ -1409,7 +1393,6 @@ bool IsStopSignal() {
       if (stop.profitAbs.condition) {
          if (GE(sequence.totalPL, stop.profitAbs.value)) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
-            stop.conditions.triggered = true;
             return(true);
          }
       }
@@ -1418,17 +1401,15 @@ bool IsStopSignal() {
       if (stop.profitPct.condition) {
          if (GE(sequence.totalPL, stop.profitPct.value/100 * sequence.startEquity)) {
             if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitPct.condition.txt, "\" met"));
-            stop.conditions.triggered = true;
             return(true);
          }
       }
 
       // -- keine der Bedingungen ist erfüllt (OR-Verknüpfung) ----------------------------------------------------------
    }
-   stop.conditions.triggered = false;
 
 
-   // (2) zusätzlich interne WeekendStop-Bedingung prüfen
+   // (2) interne WeekendStop-Bedingung prüfen
    return(IsWeekendStopSignal());
 }
 
@@ -2052,12 +2033,11 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
  * @return bool - Erfolgsstatus
  */
 bool Grid.TrailPendingOrder(int i) {
-   if (__STATUS_ERROR)                         return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())      return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
-   if (status != STATUS_PROGRESSING)           return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("Grid.TrailPendingOrder(3)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (orders.type[i] != OP_UNDEFINED)         return(_false(catch("Grid.TrailPendingOrder(4)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-   if (orders.closeTime[i] != 0)               return(_false(catch("Grid.TrailPendingOrder(5)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                    return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
+   if (status != STATUS_PROGRESSING)      return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (orders.type[i] != OP_UNDEFINED)    return(_false(catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+   if (orders.closeTime[i] != 0)          return(_false(catch("Grid.TrailPendingOrder(4)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -2068,7 +2048,7 @@ bool Grid.TrailPendingOrder(int i) {
    int    oeFlags     = NULL;
 
    if (EQ(orders.pendingPrice[i], stopPrice)) /*&&*/ if (EQ(orders.stopLoss[i], stopLoss))
-      return(_false(catch("Grid.TrailPendingOrder(6)   nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+      return(_false(catch("Grid.TrailPendingOrder(5)   nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
 
    if (orders.ticket[i] < 0) {                                       // client-seitige Orders
       // TODO: ChartMarker nachziehen
@@ -2085,7 +2065,7 @@ bool Grid.TrailPendingOrder(int i) {
    orders.pendingPrice[i] = stopPrice;
    orders.stopLoss    [i] = stopLoss;
 
-   return(!last_error|catch("Grid.TrailPendingOrder(7)"));
+   return(!last_error|catch("Grid.TrailPendingOrder(6)"));
 }
 
 
@@ -2101,8 +2081,7 @@ bool Grid.DeleteOrder(int i) {
    if (IsTest()) /*&&*/ if (!IsTesting())                                      return(_false(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || status!=STATUS_STOPPED) return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (i < 0 || i >= ArraySize(orders.ticket))                                 return(_false(catch("Grid.DeleteOrder(3)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (orders.type[i] != OP_UNDEFINED)                                         return(_false(catch("Grid.DeleteOrder(4)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
+   if (orders.type[i] != OP_UNDEFINED)                                         return(_false(catch("Grid.DeleteOrder(3)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -2119,7 +2098,7 @@ bool Grid.DeleteOrder(int i) {
    if (!Grid.DropData(i))
       return(false);
 
-   return(!last_error|catch("Grid.DeleteOrder(5)"));
+   return(!last_error|catch("Grid.DeleteOrder(4)"));
 }
 
 
@@ -2430,8 +2409,8 @@ void SS.StartStopConditions() {
    str.startConditions = "";
    str.stopConditions  = "";
 
-   if (StartConditions != "") str.startConditions = StringConcatenate("Start:           ", StartConditions, ifString(start.conditions, "", " (triggered)"), NL);
-   if (StopConditions  != "") str.stopConditions  = StringConcatenate("Stop:           ", StopConditions,  ifString(stop.conditions,  "", " (triggered)"), NL);
+   if (StartConditions != "") str.startConditions = StringConcatenate("Start:           ", StartConditions, NL);
+   if (StopConditions  != "") str.stopConditions  = StringConcatenate("Stop:           ",  StopConditions,  NL);
 }
 
 
@@ -2839,12 +2818,11 @@ bool ValidateConfiguration(bool interactive) {
    // ----------------------------------------------------------------------------------------------------------------------
    if (!reasonParameters || StartConditions!=last.StartConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StartConditions nur bei Änderung (re-)aktiviert werden.
-      start.conditions           = false;
-      start.conditions.triggered = false;
-      start.trend.condition      = false;
-      start.price.condition      = false;
-      start.time.condition       = false;
-      start.level.condition      = false;
+      start.conditions      = false;
+      start.trend.condition = false;
+      start.price.condition = false;
+      start.time.condition  = false;
+      start.level.condition = false;
 
       // (5.1) StartConditions in einzelne Ausdrücke zerlegen
       string exprs[], expr, elems[], key, value;
@@ -2973,14 +2951,13 @@ bool ValidateConfiguration(bool interactive) {
    // --------------------------------------------------------------------------------------------------------------------------------
    if (!reasonParameters || StopConditions!=last.StopConditions) {
       // Bei Parameteränderung Werte nur übernehmen, wenn sie sich tatsächlich geändert haben, sodaß StopConditions nur bei Änderung (re-)aktiviert werden.
-      stop.conditions           = false;
-      stop.conditions.triggered = false;
-      stop.trend.condition      = false;
-      stop.price.condition      = false;
-      stop.level.condition      = false;
-      stop.time.condition       = false;
-      stop.profitAbs.condition  = false;
-      stop.profitPct.condition  = false;
+      stop.conditions          = false;
+      stop.trend.condition     = false;
+      stop.price.condition     = false;
+      stop.level.condition     = false;
+      stop.time.condition      = false;
+      stop.profitAbs.condition = false;
+      stop.profitPct.condition = false;
 
       // (6.1) StopConditions in einzelne Ausdrücke zerlegen
       sizeOfExprs = Explode(StopConditions, "||", exprs, NULL);
@@ -3183,7 +3160,6 @@ void StoreConfiguration(bool save=true) {
    static int      _sequence.direction;
 
    static bool     _start.conditions;
-   static bool     _start.conditions.triggered;
 
    static bool     _start.trend.condition;
    static string   _start.trend.condition.txt;
@@ -3207,7 +3183,6 @@ void StoreConfiguration(bool save=true) {
    static int      _start.level.value;
 
    static bool     _stop.conditions;
-   static bool     _stop.conditions.triggered;
 
    static bool     _stop.trend.condition;
    static string   _stop.trend.condition.txt;
@@ -3251,7 +3226,6 @@ void StoreConfiguration(bool save=true) {
       _sequence.direction           = sequence.direction;
 
       _start.conditions             = start.conditions;
-      _start.conditions.triggered   = start.conditions.triggered;
 
       _start.trend.condition        = start.trend.condition;
       _start.trend.condition.txt    = start.trend.condition.txt;
@@ -3275,7 +3249,6 @@ void StoreConfiguration(bool save=true) {
       _start.level.value            = start.level.value;
 
       _stop.conditions              = stop.conditions;
-      _stop.conditions.triggered    = stop.conditions.triggered;
 
       _stop.trend.condition         = stop.trend.condition;
       _stop.trend.condition.txt     = stop.trend.condition.txt;
@@ -3319,7 +3292,6 @@ void StoreConfiguration(bool save=true) {
       sequence.direction            = _sequence.direction;
 
       start.conditions              = _start.conditions;
-      start.conditions.triggered    = _start.conditions.triggered;
 
       start.trend.condition         = _start.trend.condition;
       start.trend.condition.txt     = _start.trend.condition.txt;
@@ -3343,7 +3315,6 @@ void StoreConfiguration(bool save=true) {
       start.level.value             = _start.level.value;
 
       stop.conditions               = _stop.conditions;
-      stop.conditions.triggered     = _stop.conditions.triggered;
 
       stop.trend.condition          = _stop.trend.condition;
       stop.trend.condition.txt      = _stop.trend.condition.txt;
