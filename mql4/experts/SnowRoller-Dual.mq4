@@ -796,7 +796,138 @@ bool ResetSequence(int hSeq) {
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
 bool StopSequence(int hSeq) {
-   return(!catch("StopSequence()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   if (__STATUS_ERROR)                    return( false);
+   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("StopSequence(1)", ERR_ILLEGAL_STATE)));
+
+   if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
+      if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)         // ggf. wird nach Testende nur aufgeräumt
+         return(_false(catch("StopSequence(2)   cannot stop "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+
+   if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StopSequence()", "Do you really want to stop the sequence now?"))
+      return(!SetLastError(ERR_CANCELLED_BY_USER));
+
+   if (sequence.status[hSeq] != STATUS_STOPPED) {
+      sequence.status[hSeq] = STATUS_STOPPING;
+      if (__LOG) log(StringConcatenate("StopSequence()   stopping sequence at level ", sequence.level[hSeq]));
+   }
+
+
+   // (1) PendingOrders und OpenPositions einlesen
+   int pendings[], positions[], ticketsFrom=orders[hSeq][I_FROM], ticketsTo=orders[hSeq][I_TO], ticketsSize=orders[hSeq][I_SIZE];
+   ArrayResize(pendings,  0);
+   ArrayResize(positions, 0);
+
+   if (ticketsSize > 0) {
+      for (int i=ticketsTo; i >= ticketsFrom; i--) {
+         if (orders.closeTime[i] == 0) {                                                              // Ticket prüfen, wenn es beim letzten Aufruf noch offen war
+            if (orders.ticket[i] < 0) {
+               if (!Grid.DropData(i))                                                                 // client-seitige Pending-Orders können intern gelöscht werden
+                  return(false);
+               ticketsTo--;
+               ticketsSize--;
+               continue;
+            }
+            if (!SelectTicket(orders.ticket[i], "StopSequence(4)"))
+               return(false);
+            if (!OrderCloseTime()) {                                                                  // offene Tickets je nach Typ zwischenspeichern
+               if (IsPendingTradeOperation(OrderType())) ArrayPushInt(pendings,                i);    // Grid.DeleteOrder() erwartet den Array-Index
+               else                                      ArrayPushInt(positions, orders.ticket[i]);   // OrderMultiClose() erwartet das Orderticket
+            }
+         }
+      }
+   }
+
+
+   // (2) zuerst Pending-Orders streichen (ansonsten könnten sie während OrderClose() noch getriggert werden)
+   int sizeOfPendings = ArraySize(pendings);
+
+   for (i=0; i < sizeOfPendings; i++) {
+      if (!Grid.DeleteOrder(hSeq, pendings[i]))
+         return(false);
+   }
+
+
+   // (3) dann offene Positionen schließen                           // TODO: Wurde eine PendingOrder inzwischen getriggert, muß sie hier mit verarbeitet werden.
+   int      sizeOfPositions=ArraySize(positions), n=sequence.ss.events[hSeq][I_TO];
+   datetime closeTime;
+   double   closePrice;
+
+   if (sizeOfPositions > 0) {
+      int oeFlags = NULL;
+      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeBuffer(oes, ORDER_EXECUTION.size);
+
+      if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
+         return(_false(SetLastError(stdlib_GetLastError())));
+
+      for (i=0; i < sizeOfPositions; i++) {
+         int pos = SearchIntArray(orders.ticket, positions[i]);
+
+         orders.closeEvent[pos] = CreateEventId();
+         orders.closeTime [pos] = oes.CloseTime (oes, i);
+         orders.closePrice[pos] = oes.ClosePrice(oes, i);
+         orders.closedBySL[pos] = false;
+         orders.swap      [pos] = oes.Swap      (oes, i);
+         orders.commission[pos] = oes.Commission(oes, i);
+         orders.profit    [pos] = oes.Profit    (oes, i);
+
+         sequence.closedPL[hSeq] = NormalizeDouble(sequence.closedPL[hSeq] + orders.swap[pos] + orders.commission[pos] + orders.profit[pos], 2);
+
+         closeTime   = Max(closeTime, orders.closeTime[pos]);        // u.U. können die Close-Werte unterschiedlich sein und müssen gemittelt werden
+         closePrice += orders.closePrice[pos];                       // (i.d.R. sind sie überall gleich)
+      }
+      closePrice /= Abs(sequence.level[hSeq]);                       // avg(ClosePrice) TODO: falsch, wenn bereits ein Teil der Positionen geschlossen war
+      /*
+      sequence.floatingPL [hSeq]  = ...                              // Solange unten UpdateStatus() aufgerufen wird, werden diese Werte dort automatisch aktualisiert.
+      sequence.totalPL    [hSeq] = ...
+      sequence.maxProfit  [hSeq] = ...
+      sequence.maxDrawdown[hSeq] = ...
+      */
+      sequence.stop.event[n] = CreateEventId();
+      sequence.stop.time [n] = closeTime;
+      sequence.stop.price[n] = NormalizeDouble(closePrice, Digits);
+   }
+
+   // (3.1) keine offenen Positionen
+   else if (sequence.status[hSeq] != STATUS_STOPPED) {
+      sequence.stop.event[n] = CreateEventId();
+      sequence.stop.time [n] = TimeCurrent();
+      sequence.stop.price[n] = ifDouble(sequence.direction[hSeq]==D_LONG, Bid, Ask);
+   }
+
+
+   // (4) StopPrice begrenzen (darf nicht schon den nächsten Level triggern)
+   if (!StopSequence.LimitStopPrice(hSeq))
+      return(false);
+
+
+   if (sequence.status[hSeq] != STATUS_STOPPED) {
+      sequence.status[hSeq] = STATUS_STOPPED;
+      if (__LOG) log(StringConcatenate("StopSequence()   sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level[hSeq]));
+   }
+
+
+   // (5) ResumeConditions aktualisieren
+   if (IsWeekendStopSignal()) {
+      UpdateWeekendResume();
+      sequence.weStop.active[hSeq] = true;
+   }
+
+
+   // (6) Daten aktualisieren und speichern
+   if (!UpdateStatus(hSeq, bNull, iNulls))
+      return(false);
+   sequence.stop.profit[n] = sequence.totalPL[hSeq];
+   if (!SaveStatus(hSeq))
+      return(false);
+   RedrawStartStop(hSeq);
+
+
+   // (7) ggf. Tester stoppen
+   if (IsTesting()) {
+      if      (        IsVisualMode()) Tester.Pause();
+      else if (!IsWeekendStopSignal()) Tester.Stop();
+   }
+   return(!last_error|catch("StopSequence(5)"));
 }
 
 
