@@ -50,11 +50,10 @@ double   stop.profitAbs.value;
 
 // -------------------------------------------------------
 datetime weekend.stop.condition   = D'1970.01.01 23:05';             // StopSequence()-Zeitpunkt vor Wochenend-Pause (Freitags abend)
-datetime weekend.stop.time;
+datetime weekend.stop.time;                                          // für alle Sequenzen gleich
 
 datetime weekend.resume.condition = D'1970.01.01 01:10';             // spätester ResumeSequence()-Zeitpunkt nach Wochenend-Pause (Montags morgen)
-datetime weekend.resume.time;
-
+                                                                     // evt. je Sequenz unterschiedlich
 // -------------------------------------------------------
 int      sequence.id           [2];
 bool     sequence.isTest       [2];
@@ -68,6 +67,7 @@ int      sequence.level        [2];                                  // aktuelle
 int      sequence.maxLevel     [2];                                  // maximal erreichter Gridlevel
 double   sequence.startEquity  [2];                                  // Equity bei Sequenzstart
 bool     sequence.weStop.active[2];                                  // Weekend-Stop aktiv? (unterscheidet vorübergehend von dauerhaft gestoppter Sequenz)
+datetime sequence.weStop.resume[2];                                  // WeekendStop-ResumeTime
 
 int      sequence.stops        [2];                                  // Anzahl der bisher getriggerten Stops
 double   sequence.stopsPL      [2];                                  // kumulierter P/L aller bisher ausgestoppten Positionen
@@ -81,15 +81,15 @@ double   sequence.commission   [2];                                  // aktuelle
 // -------------------------------------------------------
 int      sequence.ss.events    [2][3];                               // {I_FROM, I_TO, I_SIZE}: Start- und Stopdaten sind synchron
 
-int      sequence.start.event   [];                                  // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
-datetime sequence.start.time    [];
-double   sequence.start.price   [];
-double   sequence.start.profit  [];
+int      sequence.start.event  [];                                   // Start-Daten (Moment von Statuswechsel zu STATUS_PROGRESSING)
+datetime sequence.start.time   [];
+double   sequence.start.price  [];
+double   sequence.start.profit [];
 
-int      sequence.stop.event    [];                                  // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
-datetime sequence.stop.time     [];
-double   sequence.stop.price    [];
-double   sequence.stop.profit   [];
+int      sequence.stop.event   [];                                   // Stop-Daten (Moment von Statuswechsel zu STATUS_STOPPED)
+datetime sequence.stop.time    [];
+double   sequence.stop.price   [];
+double   sequence.stop.profit  [];
 
 // -------------------------------------------------------
 int      gridbase.events       [2][3];                               // {I_FROM, I_TO, I_SIZE}
@@ -175,25 +175,25 @@ bool Strategy(int hSeq) {
    if (__STATUS_ERROR)
       return(false);
 
-   bool changes;                                                     // Gridbasis- oder -leveländerung
-   int  stops[];                                                     // getriggerte client-seitige Stops
+   bool changes, takeProfit, weekend;
+   int  stops[];
 
    // (1) Strategie wartet auf Startsignal ...
    if (sequence.status[hSeq] == STATUS_UNINITIALIZED) {
-      if (IsStartSignal(hSeq))     StartSequence(hSeq);
+      if (IsStartSignal(hSeq))                     StartSequence(hSeq);
    }
 
    // (2) ... oder auf ResumeSignal ...
    else if (sequence.status[hSeq] == STATUS_STOPPED) {
-      if (IsResumeSignal(hSeq))    ResumeSequence(hSeq);
+      if (IsResumeSignal(hSeq))                    ResumeSequence(hSeq);
    }
 
    // (3) ... oder läuft.
    else if (UpdateStatus(hSeq, changes, stops)) {
-      if (IsStopSignal(hSeq))      StopSequence(hSeq);
+      if (IsStopSignal(hSeq, takeProfit, weekend)) StopSequence(hSeq, takeProfit, weekend);
       else {
-         if (ArraySize(stops) > 0) ProcessClientStops(stops);
-         if (changes)              UpdatePendingOrders(hSeq);
+         if (ArraySize(stops) > 0)                 ProcessClientStops(stops);
+         if (changes)                              UpdatePendingOrders(hSeq);
       }
    }
    return(!__STATUS_ERROR);
@@ -260,26 +260,33 @@ bool IsWeekendResumeSignal() {
 /**
  * Signalgeber für StopSequence().
  *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int  hSeq             - Sequenz: D_LONG | D_SHORT
+ * @param  bool lpTakeProfitStop - Zeiger auf Variable, die anzeigt, ob die TakeProfit-Bedingung der Sequenz erfüllt ist
+ * @param  bool lpWeekendStop    - Zeiger auf Variable, die anzeigt, ob ein Wochenend-Stop getriggert wurde
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
-bool IsStopSignal(int hSeq) {
+bool IsStopSignal(int hSeq, bool &lpTakeProfitStop, bool &lpWeekendStop) {
    if (__STATUS_ERROR || sequence.status[hSeq]!=STATUS_PROGRESSING)
       return(false);
+
+   lpTakeProfitStop = false;
+   lpWeekendStop    = false;
 
    // (1) User-definierte StopConditions prüfen
 
    // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (GE(sequence.totalPL[hSeq], stop.profitAbs.value)) {
+         lpTakeProfitStop = true;
          if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
          return(true);
       }
    }
 
    // (2) interne WeekendStop-Bedingung prüfen
-   return(IsWeekendStopSignal());
+   lpWeekendStop = IsWeekendStopSignal();
+   return(lpWeekendStop);
 }
 
 
@@ -341,7 +348,9 @@ bool StartSequence(int hSeq) {
 
 
    // (4) Weekend-Stop aktualisieren
-   UpdateWeekendStop(hSeq);
+   UpdateWeekendStop();
+   sequence.weStop.active[hSeq] = false;
+
    RedrawStartStop(hSeq);
 
    if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
@@ -355,20 +364,17 @@ bool StartSequence(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void RedrawStartStop(int hSeq) {
-   if (!IsChart)
-      return;
+   if (!IsChart) return;
 
-   static color markerColor = DodgerBlue;
+   static color markerColor = Blue;
 
    int from = sequence.ss.events[hSeq][I_FROM];
    int to   = sequence.ss.events[hSeq][I_TO  ];
    int size = sequence.ss.events[hSeq][I_SIZE];
 
    datetime time;
-   double   price;
-   double   profit;
+   double   price, profit;
    string   label;
-
 
    if (size > 0) {
       // (1) Start-Marker
@@ -416,12 +422,8 @@ void RedrawStartStop(int hSeq) {
 
 /**
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
- *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
-void UpdateWeekendStop(int hSeq) {
-   sequence.weStop.active[hSeq] = false;
-
+void UpdateWeekendStop() {
    datetime friday, now=ServerToFXT(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
@@ -433,10 +435,7 @@ void UpdateWeekendStop(int hSeq) {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAY;
-   if (weekend.stop.time < now)
-      weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
-   weekend.stop.time = FXTToServerTime(weekend.stop.time);
+   weekend.stop.time = FXTToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
 }
 
 
@@ -634,6 +633,7 @@ bool ResetSequence(int hSeq) {
    sequence.maxLevel     [hSeq]         = 0;
    sequence.startEquity  [hSeq]         = 0;
    sequence.weStop.active[hSeq]         = false;
+   sequence.weStop.resume[hSeq]         = 0;
 
    sequence.stops        [hSeq]         = 0;
    sequence.stopsPL      [hSeq]         = 0;
@@ -780,8 +780,8 @@ bool ResetSequence(int hSeq) {
    str.sequence.stops      [hSeq] = "";
    str.sequence.stopsPL    [hSeq] = "";
    str.sequence.totalPL    [hSeq] = "";
-   str.sequence.maxProfit  [hSeq] = "";
-   str.sequence.maxDrawdown[hSeq] = "";
+   str.sequence.maxProfit  [hSeq] = "0.00";
+   str.sequence.maxDrawdown[hSeq] = "0.00";
    str.sequence.plStats    [hSeq] = "";
 
    return(!catch("ResetSequence()"));
@@ -791,11 +791,13 @@ bool ResetSequence(int hSeq) {
 /**
  * Schließt alle PendingOrders und offenen Positionen der Sequenz.
  *
- * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ * @param  int hSeq            - Sequenz: D_LONG | D_SHORT
+ * @param  bool takeProfitStop - ob die TakeProfit-Bedingung der Sequenz erfüllt war
+ * @param  bool weekendStop    - ob ein WochenendStop getriggert wurde
  *
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
-bool StopSequence(int hSeq) {
+bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    if (__STATUS_ERROR)                    return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("StopSequence(1)", ERR_ILLEGAL_STATE)));
 
@@ -906,28 +908,54 @@ bool StopSequence(int hSeq) {
    }
 
 
-   // (5) ResumeConditions aktualisieren
-   if (IsWeekendStopSignal()) {
-      UpdateWeekendResume();
-      sequence.weStop.active[hSeq] = true;
-   }
-
-
-   // (6) Daten aktualisieren und speichern
+   // (5) Daten aktualisieren
    if (!UpdateStatus(hSeq, bNull, iNulls))
       return(false);
    sequence.stop.profit[n] = sequence.totalPL[hSeq];
+
+
+   // (6) ResumeConditions aktualisieren
+   if (weekendStop) {
+      sequence.weStop.active[hSeq] = true;
+      UpdateWeekendResumeTime(hSeq);
+   }
+
+
    if (!SaveStatus(hSeq))
       return(false);
    RedrawStartStop(hSeq);
 
 
-   // (7) ggf. Tester stoppen
-   if (IsTesting()) {
-      if      (        IsVisualMode()) Tester.Pause();
-      else if (!IsWeekendStopSignal()) Tester.Stop();
-   }
+   // (7) abgeschlossene Sequenz zurücksetzen
+   if (takeProfitStop)
+      ResetSequence(hSeq);
+
    return(!last_error|catch("StopSequence(5)"));
+}
+
+
+/**
+ * Aktualisiert die ResumeTime der Sequenz für ResumeSequence() nach der Wochenend-Pause.
+ *
+ * @param  int hSeq - Sequenz: D_LONG | D_SHORT
+ */
+void UpdateWeekendResumeTime(int hSeq) {
+   if (__STATUS_ERROR)                          return;
+   if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (!sequence.weStop.active[hSeq])           return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
+
+   datetime monday, stop=ServerToFXT(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
+
+   switch (TimeDayOfWeek(stop)) {
+      case SUNDAY   : monday = stop + 1*DAYS; break;
+      case MONDAY   : monday = stop + 0*DAYS; break;
+      case TUESDAY  : monday = stop + 6*DAYS; break;
+      case WEDNESDAY: monday = stop + 5*DAYS; break;
+      case THURSDAY : monday = stop + 4*DAY ; break;
+      case FRIDAY   : monday = stop + 3*DAYS; break;
+      case SATURDAY : monday = stop + 2*DAYS; break;
+   }
+   sequence.weStop.resume[hSeq] = FXTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
 }
 
 

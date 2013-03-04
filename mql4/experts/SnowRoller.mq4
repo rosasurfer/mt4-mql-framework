@@ -533,7 +533,7 @@ bool StopSequence() {
 
    // (6) ResumeConditions/StopConditions aktualisieren bzw. deaktivieren
    if (IsWeekendStopSignal()) {
-      UpdateWeekendResume();
+      UpdateWeekendResumeTime();
    }
    else {
       stop.conditions = false; SS.StartStopConditions();
@@ -1290,10 +1290,10 @@ bool IsWeekendResumeSignal() {
 /**
  * Aktualisiert die Bedingungen für ResumeSequence() nach der Wochenend-Pause.
  */
-void UpdateWeekendResume() {
+void UpdateWeekendResumeTime() {
    if (__STATUS_ERROR)           return;
-   if (status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResume(1)   cannot update weekend resume conditions of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!IsWeekendStopSignal())   return(_NULL(catch("UpdateWeekendResume(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
+   if (status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume conditions of "+ statusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (!IsWeekendStopSignal())   return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
    weekend.resume.triggered = false;
 
@@ -1309,7 +1309,6 @@ void UpdateWeekendResume() {
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
    weekend.resume.time = FXTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
-   //debug("UpdateWeekendResume()   '"+ TimeToStr(TimeCurrent(), TIME_FULL) +"': resume condition updated to '"+ GetDayOfWeek(weekend.resume.time, false) +", "+ TimeToStr(weekend.resume.time, TIME_FULL) +"'");
 }
 
 
@@ -4544,7 +4543,7 @@ bool SynchronizeStatus() {
 
    if      (status == STATUS_PROGRESSING) UpdateWeekendStop();
    else if (status == STATUS_STOPPED)
-      if (weekend.stop.active)            UpdateWeekendResume();
+      if (weekend.stop.active)            UpdateWeekendResumeTime();
 
 
    // (4) permanente Statusänderungen speichern
