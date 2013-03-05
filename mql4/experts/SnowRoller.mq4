@@ -1225,48 +1225,21 @@ bool IsWeekendResumeSignal() {
    if (weekend.resume.triggered) return( true);
    if (weekend.resume.time == 0) return(false);
 
-   static datetime sessionStartTime, last.weekend.resume.time;
-   static double   lastPrice;
-   static bool     lastPrice_init = true;
+
+   int now=TimeCurrent(), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
 
 
-   // (1) für jeden neuen Resume-Wert sessionstartTime re-initialisieren
-   if (weekend.resume.time != last.weekend.resume.time) {
-      sessionStartTime = GetServerSessionStartTime(weekend.resume.time);         // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-      if (sessionStartTime == -1) {
-         if (SetLastError(stdlib_GetLastError()) == ERR_MARKET_CLOSED)
-            catch("IsWeekendResumeSignal(1)   cannot resolve session start time for illegal weekend.resume.time '"+ TimeToStr(weekend.resume.time, TIME_FULL) +"'", ERR_RUNTIME_ERROR);
-         return(false);
-      }
-      last.weekend.resume.time = weekend.resume.time;
-      lastPrice_init           = true;
-   }
-
-
-   // (2) Resume-Bedingung wird erst ab Beginn der Resume-Session geprüft (i.d.R. Montag 00:00)
-   if (TimeCurrent() < sessionStartTime)
+   // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
+   if (dayNow < dayResume-1)
       return(false);
 
 
-   // (3) Bedingung ist erfüllt, wenn der Stop-Preis erreicht oder gekreuzt wird
-   double price, stopPrice=sequence.stop.price[ArraySize(sequence.stop.price)-1];
+   // (2) Bedingung ist erfüllt, wenn der Marktpreis gleich dem oder günstiger als der Stop-Preis ist
+   double stopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
    bool   result;
 
-   if      (sequence.level > 0) price = Ask;
-   else if (sequence.level < 0) price = Bid;
-   else                         price = NormalizeDouble((Bid + Ask)/2, Digits);
-
-   if (lastPrice_init) {
-      lastPrice_init = false;
-   }
-   else if (lastPrice < stopPrice) {
-      result = (price >= stopPrice);                                             // Preis hat Stop-Preis von unten nach oben gekreuzt
-   }
-   else {
-      result = (price <= stopPrice);                                             // Preis hat Stop-Preis von oben nach unten gekreuzt
-   }
-   lastPrice = price;
-
+   if (sequence.direction == D_LONG) result = (Ask <= stopPrice);
+   else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
       if (__LOG) log(StringConcatenate("IsWeekendResumeSignal()   weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
@@ -1274,14 +1247,10 @@ bool IsWeekendResumeSignal() {
    }
 
 
-   // (4) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
-   datetime now = TimeCurrent();
+   // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (weekend.resume.time/DAYS == now/DAYS) {                                // stellt sicher, daß Signal nicht von altem Datum getriggert wird
-         weekend.resume.triggered = true;
-         if (__LOG) log(StringConcatenate("IsWeekendResumeSignal()   resume condition '", GetDayOfWeek(weekend.resume.time, false), ", ", TimeToStr(weekend.resume.time, TIME_FULL), "' met"));
-         return(true);
-      }
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal()   resume condition '", GetDayOfWeek(weekend.resume.time, false), ", ", TimeToStr(weekend.resume.time, TIME_FULL), "' met"));
+      return(true);
    }
    return(false);
 }
@@ -1486,7 +1455,7 @@ bool ProcessClientStops(int stops[]) {
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
-      if (i > ArraySize(orders.ticket))      return(_false(catch("ProcessClientStops(3)   illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (i >= ArraySize(orders.ticket))     return(_false(catch("ProcessClientStops(3)   illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
 
       // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
@@ -1503,7 +1472,7 @@ bool ProcessClientStops(int stops[]) {
          ticket = SubmitMarketOrder(type, level, clientSL, oe);
 
          // (2.1) ab dem letzten Level ggf. client-seitige Stop-Verwaltung
-         orders.clientSL[i] = ticket <= 0;
+         orders.clientSL[i] = (ticket <= 0);
 
          if (ticket <= 0) {
             if (level != sequence.level)          return( false);
@@ -1667,7 +1636,6 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
       lpOpenTime  = openTime;
       lpOpenPrice = NormalizeDouble(openPrice, Digits);
    }
-
    return(!last_error|catch("UpdateOpenPositions(3)"));
 }
 
@@ -2239,8 +2207,7 @@ bool Grid.DropData(int i) {
 
 
 /**
- * Sucht eine offene Position des angegebenen Levels und gibt deren Index in den Datenarrays des Grids zurück.
- * Je Level kann es maximal eine offene Position geben.
+ * Sucht eine offene Position des angegebenen Levels und gibt Orderindex zurück. Je Level kann es maximal eine offene Position geben.
  *
  * @param  int level - Level der zu suchenden Position
  *
