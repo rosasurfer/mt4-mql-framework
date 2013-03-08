@@ -16,13 +16,13 @@ int __DEINIT_FLAGS__[];
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
 
-extern            int    GridSize             = 20;
-extern            double LotSize              = 0.1;
-extern            string StartConditions      = "@trend(ALMA:3.5xD1)";
-extern            string StopConditions       = "@profit(500)";
+extern     int    GridSize             = 20;
+extern     double LotSize              = 0.1;
+extern     string StartConditions      = "@trend(ALMA:3.5xD1)";
+extern     string StopConditions       = "@profit(500)";
 
-       /*sticky*/ int    startStopDisplayMode = SDM_PRICE;           // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
-       /*sticky*/ int    orderDisplayMode     = ODM_NONE;            // Terminal-Restart, Profilwechsel und Recompilation.
+/*sticky*/ int    startStopDisplayMode = SDM_PRICE;                  // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
+/*sticky*/ int    orderDisplayMode     = ODM_NONE;                   // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
