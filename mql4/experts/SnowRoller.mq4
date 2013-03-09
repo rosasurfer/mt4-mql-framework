@@ -3110,8 +3110,6 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
 /**
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
- *
- * @return void
  */
 void StoreConfiguration(bool save=true) {
    static string   _Sequence.ID;
@@ -3316,8 +3314,6 @@ void StoreConfiguration(bool save=true) {
 
 /**
  * Restauriert eine zuvor gespeicherte Konfiguration.
- *
- * @return void
  */
 void RestoreConfiguration() {
    StoreConfiguration(false);

@@ -2751,9 +2751,7 @@ string GetFullStatusFileName(int hSeq) {
 
 
 /**
- * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
- *
- * @return void
+ * Speichert die aktuelle Konfiguration zwischen, um sie nach Fehleingaben bei Parameteränderungen daraus restaurieren zu können.
  */
 void StoreConfiguration(bool save=true) {
    static int    _GridSize;
@@ -2814,8 +2812,6 @@ void StoreConfiguration(bool save=true) {
 
 /**
  * Restauriert eine zuvor gespeicherte Konfiguration.
- *
- * @return void
  */
 void RestoreConfiguration() {
    StoreConfiguration(false);

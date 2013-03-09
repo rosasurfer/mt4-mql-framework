@@ -448,8 +448,6 @@ bool IsStartSignal(int &lpSignal) {
 
 /**
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
- *
- * @return void
  */
 void StoreConfiguration(bool save=true) {
    static int    _GridSize;
@@ -507,8 +505,6 @@ void StoreConfiguration(bool save=true) {
 
 /**
  * Restauriert eine zuvor gespeicherte Konfiguration.
- *
- * @return void
  */
 void RestoreConfiguration() {
    StoreConfiguration(false);
