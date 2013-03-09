@@ -763,4 +763,6 @@ int ClearStickyStatus() {
 void DummyCalls() {
    FindChartSequences(sNulls, iNulls);
    IsSequenceStatus(NULL);
+   IsStopTriggered(NULL, NULL);
+   StatusToStr(NULL);
 }
