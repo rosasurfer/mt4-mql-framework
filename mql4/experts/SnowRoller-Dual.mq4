@@ -2617,8 +2617,8 @@ bool SaveStatus(int hSeq) {
    ArrayPushString(lines, /*string*/   "Account="+                   ShortAccountCompany() +":"+ GetAccountNumber());
    ArrayPushString(lines, /*string*/   "Symbol="                 +                Symbol()                         );
    ArrayPushString(lines, /*string*/   "Sequence.ID="            +                str.sequence.id     [hSeq]       );
-      if (StringLen(sequence.statusFile[hSeq][I_DIR]) > 0)
-   ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+                sequence.statusFile [hSeq][I_DIR]);
+ //   if (StringLen(sequence.statusFile[hSeq][I_DIR]) > 0)
+ //ArrayPushString(lines, /*string*/   "Sequence.StatusLocation="+                sequence.statusFile [hSeq][I_DIR]);
    ArrayPushString(lines, /*string*/   "GridDirection="          + directionDescr[sequence.direction  [hSeq]]      );
    ArrayPushString(lines, /*int   */   "GridSize="               +                sequence.gridSize   [hSeq]       );
    ArrayPushString(lines, /*double*/   "LotSize="                +    NumberToStr(sequence.lotSize    [hSeq], ".+"));
