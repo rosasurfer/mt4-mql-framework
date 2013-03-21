@@ -26,17 +26,17 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;                         // Anzahl der zu verwendenden Perioden
-extern string MA.Timeframe      = "";                          // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string MA.Methods        = "SMA";                       // ein oder zwei MA-Methoden
+extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
+extern string MA.Timeframe      = "";                                // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+extern string MA.Methods        = "SMA";                             // ein oder zwei MA-Methoden
 extern string MA.Methods.Help   = "SMA | EMA | SMMA | LWMA | ALMA";
-extern string AppliedPrice      = "Close";                     // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern string Deviations        = "2.0";                       // ein oder zwei Multiplikatoren für die Std.-Abweichung
-extern int    Max.Values        = 5000;                        // Anzahl der maximal anzuzeigenden Werte: -1 = alle
-extern color  Color.Bands       = RoyalBlue;                   // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
+extern string Deviations        = "2.0";                             // ein oder zwei Multiplikatoren für die Std.-Abweichung
+extern int    Max.Values        = 4000;                              // Anzahl der maximal anzuzeigenden Werte: -1 = alle
+extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 extern string _____________________________;
-extern string Per.Symbol.Configuration;                        // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
+extern string Per.Symbol.Configuration;                              // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,16 +46,16 @@ extern string Per.Symbol.Configuration;                        // Label für symb
 
 #property indicator_buffers 7
 
-double iUpperBand1  [], iLowerBand1  [];                    // sichtbare Indikatorbuffer: erstes Band
-double iUpperBand2  [], iLowerBand2  [];                    //                            zweites Band als Histogramm
-double iUpperBand2_1[], iLowerBand2_1[];                    //                            zweites Band als Linie
+double iUpperBand1  [], iLowerBand1  [];                             // sichtbare Indikatorbuffer: erstes Band
+double iUpperBand2  [], iLowerBand2  [];                             //                            zweites Band als Histogramm
+double iUpperBand2_1[], iLowerBand2_1[];                             //                            zweites Band als Linie
 double iMovAvg[];
 
 int    maMethod1=-1, maMethod2=-1;
 int    appliedPrice;
 double deviation1, deviation2;
 bool   ALMA = false;
-double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;   // ALMA-Parameter: Gewichtungen der einzelnen Bars etc.
+double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;            // ALMA-Parameter: Gewichtungen der einzelnen Bars etc.
 
 
 /**
@@ -375,7 +375,7 @@ void SetIndicatorStyles() {
       static color histogramColor;
       if (!histogramColor) {
          double hsv[3]; RGBToHSVColor(Color.Bands, hsv);
-         hsv[2] *= 4;                                    // Helligkeit des Histogramms erhöhen
+         hsv[2] *= 4;                                                // Helligkeit des Histogramms erhöhen
          if (hsv[2] > 1) {
             hsv[1] /= hsv[2];
             hsv[2] = 1;
