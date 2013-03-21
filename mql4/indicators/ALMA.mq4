@@ -26,15 +26,15 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string MA.Periods        = "200";              // averaging period
-extern string MA.Timeframe      = "";                 // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
-extern string AppliedPrice      = "Close";            // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string MA.Periods        = "200";                             // averaging period
+extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern double GaussianOffset    = 0.85;               // Gaussian distribution offset (0..1)
-extern double Sigma             = 6.0;                // Sigma parameter
-extern int    Max.Values        = 2000;               // maximum number of indicator values to display: -1 = all
+extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
+extern double Sigma             = 6.0;                               // Sigma parameter
+extern int    Max.Values        = 4000;                              // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;         // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend   = Orange;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,18 +52,18 @@ extern color  Color.DownTrend   = Orange;
 #property indicator_width5  2
 
 
-double bufferMA       [];                             // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                             // Trend:  +/-                                 (im Chart unsichtbar)
-double bufferUpTrend  [];                             // UpTrend-Linie 1                             (sichtbar)
-double bufferDownTrend[];                             // DownTrend-Linie                             (sichtbar, überlagert UpTrend)
-double bufferUpTrend2 [];                             // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend)
+double bufferMA       [];                                            // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
+double bufferTrend    [];                                            // Trend:  +/-                                 (im Chart unsichtbar)
+double bufferUpTrend  [];                                            // UpTrend-Linie 1                             (sichtbar)
+double bufferDownTrend[];                                            // DownTrend-Linie                             (sichtbar, überlagert UpTrend)
+double bufferUpTrend2 [];                                            // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend)
 
 int    ma.periods;
 int    ma.method;
 int    appliedPrice;
 string legendLabel, indicatorName;
 
-double wALMA[];                                       // Gewichtungen der einzelnen Bars des MA's
+double wALMA[];                                                      // Gewichtungen der einzelnen Bars des MA's
 
 
 /**
