@@ -1,7 +1,5 @@
 /**
  * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung bzw. Rückzug von Margin Credits werden nicht gespeichert.
- *
- * 269,94 zu wenig
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
