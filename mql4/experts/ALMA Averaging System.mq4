@@ -1,5 +1,5 @@
 /**
- * Averaging Trademanager
+ * Averaging Trademanager Strategy
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -8,8 +8,8 @@ int __DEINIT_FLAGS__[];
 #include <history.mqh>
 
 #include <core/expert.mqh>
-#include <AvgTrademanager/define.mqh>
-#include <AvgTrademanager/functions.mqh>
+#include <Scaling/define.mqh>
+#include <Scaling/functions.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
