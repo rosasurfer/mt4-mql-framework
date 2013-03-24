@@ -166,6 +166,7 @@ int onTick() {
 
 
 /**
+ * Managed die angegebenen Sequenz.
  *
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  *

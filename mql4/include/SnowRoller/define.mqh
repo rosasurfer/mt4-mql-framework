@@ -1,6 +1,5 @@
 
-// eindeutige ID der Strategie (Bereich 101-1023)
-#define STRATEGY_ID               103
+#define STRATEGY_ID               103                                // eindeutige ID der Strategie (Bereich 101-1023)
 #define SID_MIN                  1000                                // Mindestwert für Sequenz-IDs: mindestens 4-stellig
 #define SID_MAX                 16383                                // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
 
