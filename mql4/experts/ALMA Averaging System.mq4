@@ -21,14 +21,14 @@ extern string StartConditions = "@trend(ALMA:3.5xD1)";               // || @cros
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int    trade.id            [];
-bool   trade.isTest        [];
-int    trade.type          [];
-int    trade.direction     [];
-double trade.lotSize       [];
-int    trade.profitTarget  [];
-string trade.startCondition[];
-int    trade.status        [];
+int    sequence.id            [];
+bool   sequence.isTest        [];
+int    sequence.type          [];
+int    sequence.direction     [];
+double sequence.lotSize       [];
+int    sequence.profitTarget  [];
+string sequence.startCondition[];
+int    sequence.status        [];
 
 
 /**
@@ -38,10 +38,10 @@ int    trade.status        [];
  */
 int onTick() {
    if (IsStartSignal())
-      Strategy.StartTrade();
+      Strategy.StartSequence();
 
-   int trades = ArraySize(trade.id);
-   for (int i=0; i < trades; i++) {
+   int sequences = ArraySize(sequence.id);
+   for (int i=0; i < sequences; i++) {
       Strategy(i);
    }
 
@@ -51,25 +51,26 @@ int onTick() {
 
 
 /**
- * Managed den angegebenen Trade.
+ * Managed die angegebene Sequenz.
  *
- * @param  int hTrade - Trade-Handle
+ * @param  int hSeq - Sequenz-Handle
  *
  * @return bool - Erfolgsstatus
  */
-bool Strategy(int hTrade) {
+bool Strategy(int hSeq) {
    if (__STATUS_ERROR)
       return(false);
 
-   //UpdateStatus(hTrade);
+   //UpdateStatus(hSeq);
    //...
-   //RecordEquity(hTrade);                                           // Equity des einzelnen Trades
+   //RecordEquity(hSeq);                                             // Equity der einzelnen Sequenz
+
    return(!__STATUS_ERROR);
 }
 
 
 /**
- * Signalgeber für Strategy.StartTrade()
+ * Signalgeber für Strategy.StartSequence()
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
@@ -81,11 +82,11 @@ bool IsStartSignal() {
 
 
 /**
- * Startet einen neuen Trade.
+ * Startet eine neue Sequenz.
  *
  * @return bool - Erfolgsstatus
  */
-bool Strategy.StartTrade() {
+bool Strategy.StartSequence() {
    if (__STATUS_ERROR)
       return(false);
    return(!__STATUS_ERROR);
