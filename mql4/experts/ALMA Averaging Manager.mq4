@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 
 extern double LotSize         = 0.1;                                 // LotSize der ersten Position
 extern int    ProfitTarget    = 40;                                  // ProfitTarget der ersten Position in Pip
-extern string StartConditions = "@trend(ALMA:3.5xD1)";               // || @ctrend(BB:75xH1)
+extern string StartConditions = "@trend(ALMA:3.5xD1)";               // || @cross(BB(EMA:75xH1))
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
