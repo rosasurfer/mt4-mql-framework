@@ -155,7 +155,7 @@ int Strategy.CreateSequence(int direction) {
 bool StartSequence(int hSeq) {
    if (__STATUS_ERROR)                             return( false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_false(catch("StartSequence(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_WAITING)    return(_false(catch("StartSequence(2)   cannot start "+ statusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_WAITING)    return(_false(catch("StartSequence(2)   cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -333,7 +333,7 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
    if (__STATUS_ERROR)                               return( false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(_false(catch("UpdateOpenPositions(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_STARTING)     return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STARTING)     return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE)));
 
    return(_false(catch("UpdateOpenPositions(4)", ERR_FUNCTION_NOT_IMPLEMENTED)));
@@ -350,7 +350,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
 bool UpdatePendingOrders(int hSeq) {
    if (__STATUS_ERROR)                               return( false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(_false(catch("UpdatePendingOrders(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE)));
 
    return(_false(catch("UpdatePendingOrders(4)", ERR_FUNCTION_NOT_IMPLEMENTED)));

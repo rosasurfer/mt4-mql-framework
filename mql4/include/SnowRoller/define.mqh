@@ -5,9 +5,9 @@
 
 
 // Griddirection-Types und Flags
-#define D_LONG                OP_LONG                                //  0
-#define D_SHORT              OP_SHORT                                //  1
-int     directionFlags[] = {MODE_UPTREND, MODE_DOWNTREND};           // {1, 2}
+#define D_LONG                OP_LONG                                // Types: {0, 1}
+#define D_SHORT              OP_SHORT                                //
+int     directionFlags[] = {MODE_UPTREND, MODE_DOWNTREND};           // Flags: {1, 2}
 string  directionDescr[] = {"Long",       "Short"       };
 
 
@@ -18,7 +18,7 @@ string  directionDescr[] = {"Long",       "Short"       };
 #define STATUS_PROGRESSING          3
 #define STATUS_STOPPING             4
 #define STATUS_STOPPED              5
-string  statusDescr[] = {"not initialized", "waiting", "starting", "progressing", "stopping", "stopped"};
+string  sequenceStatusDescr[] = {"uninitialized", "waiting", "starting", "progressing", "stopping", "stopped"};
 
 
 // Event-Types für SynchronizeStatus()
@@ -35,8 +35,7 @@ string  statusDescr[] = {"not initialized", "waiting", "starting", "progressing"
 #define I_TO                        1
 #define I_SIZE                      2
 
-#define I_DIRECTORY                 0
-#define I_DIR             I_DIRECTORY
+#define I_DIR                       0
 #define I_FILE                      1
 
 

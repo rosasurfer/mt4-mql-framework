@@ -297,7 +297,7 @@ bool IsWeekendResumeSignal(int hSeq) {
  */
 void UpdateWeekendResumeTime(int hSeq) {
    if (__STATUS_ERROR)                          return;
-   if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!sequence.weStop.active[hSeq])           return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
    datetime monday, stop=ServerToFXT(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
@@ -649,7 +649,7 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
  */
 bool InitSequence(int hSeq) {
    if (__STATUS_ERROR)                                return( false);
-   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!ResetSequence(hSeq))                          return( false);
 
    sequence.id       [hSeq] = CreateSequenceId();
@@ -861,7 +861,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)         // ggf. wird nach Testende nur aufgeräumt
-         return(_false(catch("StopSequence(2)   cannot stop "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+         return(_false(catch("StopSequence(2)   cannot stop "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StopSequence()", "Do you really want to stop the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -998,7 +998,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 bool StopSequence.LimitStopPrice(int hSeq) {
    if (__STATUS_ERROR)                                                                           return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(_false(catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    double nextTrigger;
    int i = sequence.ss.events[hSeq][I_TO];
@@ -1028,7 +1028,7 @@ bool StopSequence.LimitStopPrice(int hSeq) {
 bool ResumeSequence(int hSeq) {
    if (__STATUS_ERROR)                                                                           return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)   cannot resume "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)   cannot resume "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ResumeSequence()", "Do you really want to resume the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1130,7 +1130,7 @@ bool ResumeSequence(int hSeq) {
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
    if (__STATUS_ERROR)                           return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())        return(_false(catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    int i, level;
    datetime openTime;
@@ -1194,7 +1194,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
 bool Grid.AddPosition(int hSeq, int type, int level) {
    if (__STATUS_ERROR)                           return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())        return(_false(catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("Grid.AddPosition(2)   cannot add market position to "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("Grid.AddPosition(2)   cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!level)                                   return(_false(catch("Grid.AddPosition(3)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
@@ -1284,7 +1284,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
 int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
    if (__STATUS_ERROR)                                                                               return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_ZERO(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_ZERO(catch("SubmitMarketOrder(2)   cannot submit market order for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_ZERO(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUY) {
       if (level <= 0) return(_ZERO(catch("SubmitMarketOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -1572,7 +1572,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  */
 datetime UpdateStatus.CalculateStopTime(int hSeq) {
-   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopTime(1)   cannot calculate stop time for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopTime(1)   cannot calculate stop time for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.level [hSeq] == 0              ) return(_NULL(catch("UpdateStatus.CalculateStopTime(2)   cannot calculate stop time for sequence at level "+ sequence.level[hSeq], ERR_RUNTIME_ERROR)));
 
    datetime stopTime;
@@ -1609,7 +1609,7 @@ datetime UpdateStatus.CalculateStopTime(int hSeq) {
  * @return double - Preis oder NULL, falls ein Fehler auftrat
  */
 double UpdateStatus.CalculateStopPrice(int hSeq) {
-   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopPrice(1)   cannot calculate stop price for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_STOPPING) return(_NULL(catch("UpdateStatus.CalculateStopPrice(1)   cannot calculate stop price for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.level [hSeq] == 0              ) return(_NULL(catch("UpdateStatus.CalculateStopPrice(2)   cannot calculate stop price for sequence at level "+ sequence.level[hSeq], ERR_RUNTIME_ERROR)));
 
    double stopPrice;
@@ -1905,7 +1905,7 @@ bool ChartMarker.PositionClosed(int i) {
 bool ProcessClientStops(int hSeq, int stops[]) {
    if (__STATUS_ERROR)                              return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("ProcessClientStops(2)   cannot process client-side stops of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("ProcessClientStops(2)   cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    int sizeOfStops = ArraySize(stops);
    if (sizeOfStops == 0)
@@ -2008,7 +2008,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
 bool UpdatePendingOrders(int hSeq) {
    if (__STATUS_ERROR)                              return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    int from = orders[hSeq][I_FROM];
    int size = orders[hSeq][I_SIZE];
@@ -2057,7 +2057,7 @@ bool UpdatePendingOrders(int hSeq) {
 bool Grid.TrailPendingOrder(int hSeq, int i) {
    if (__STATUS_ERROR)                              return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
    if (orders.closeTime[i] != 0)                    return(_false(catch("Grid.TrailPendingOrder(4)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
 
@@ -2105,7 +2105,7 @@ bool Grid.DeleteOrder(int hSeq, int i) {
    if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
       if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
          if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
-                                                    return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+                                                    return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.DeleteOrder(3)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
@@ -2139,7 +2139,7 @@ bool Grid.DeleteOrder(int hSeq, int i) {
 bool Grid.AddOrder(int hSeq, int type, int level) {
    if (__STATUS_ERROR)                              return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddOrder(2)   cannot add order to "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddOrder(2)   cannot add order to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddOrder()", "Do you really want to submit a new "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -2452,7 +2452,7 @@ bool Grid.DropData(int i) {
 int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
    if (__STATUS_ERROR)                                                                               return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_ZERO(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_ZERO(catch("SubmitStopOrder(2)   cannot submit stop order for "+ statusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_ZERO(catch("SubmitStopOrder(2)   cannot submit stop order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUYSTOP) {
       if (level <= 0) return(_ZERO(catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
