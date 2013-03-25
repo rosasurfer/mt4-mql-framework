@@ -51,7 +51,7 @@ int onTick() {
    }
 
    // (3) Equity-Kurve aufzeichnen
-   if (sequence.status[0] > STATUS_UNINITIALIZED) {
+   if (sequence.status[0] != STATUS_UNINITIALIZED) {
       RecordEquity();
    }
 

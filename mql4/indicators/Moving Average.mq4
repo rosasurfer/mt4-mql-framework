@@ -14,7 +14,7 @@ extern string MA.Method         = "SMA";                             // averagin
 extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice      = "Close";                           // price used for MA calculation
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern int    Max.Values        = 4000;                              // maximum number of indicator values to display: -1 = all
+extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
 
 extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend   = Orange;
