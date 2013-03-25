@@ -32,7 +32,7 @@ extern string AppliedPrice      = "Close";                           // price us
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
 extern double Sigma             = 6.0;                               // Sigma parameter
-extern int    Max.Values        = 4000;                              // maximum number of indicator values to display: -1 = all
+extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
 
 extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend   = Orange;
