@@ -21,14 +21,14 @@ extern string StartConditions = "@trend(ALMA:3.5xD1)";
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int    sequence.id            [1];
-bool   sequence.isTest        [1];
-int    sequence.type          [1];
-int    sequence.direction     [1];
-double sequence.lotSize       [1];
-int    sequence.profitTarget  [1];
-string sequence.startCondition[1];
-int    sequence.status        [1];
+int    trade.id            [1];
+bool   trade.isTest        [1];
+int    trade.type          [1];
+int    trade.direction     [1];
+double trade.lotSize       [1];
+int    trade.profitTarget  [1];
+string trade.startCondition[1];
+int    trade.status        [1];
 
 
 /**
@@ -37,21 +37,21 @@ int    sequence.status        [1];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (sequence.status[0] == STATUS_STOPPED)
+   if (trade.status[0] == STATUS_STOPPED)
       return(NO_ERROR);
 
-   // (1) Sequenz wartet entweder auf Startsignal...
-   if (sequence.status[0] == STATUS_UNINITIALIZED) {
-      if (IsStartSignal()) StartSequence();
+   // (1) Trade wartet entweder auf Startsignal...
+   if (trade.status[0] == STATUS_UNINITIALIZED) {
+      if (IsStartSignal()) StartTrade();
    }
 
    // (2) ...oder läuft
    else if (UpdateStatus()) {
-      if (IsStopSignal())  StopSequence();
+      if (IsStopSignal())  StopTrade();
    }
 
    // (3) Equity-Kurve aufzeichnen
-   if (sequence.status[0] != STATUS_UNINITIALIZED) {
+   if (trade.status[0] != STATUS_UNINITIALIZED) {
       RecordEquity();
    }
 
