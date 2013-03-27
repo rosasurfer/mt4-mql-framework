@@ -311,7 +311,7 @@
    bool     GE(double a, double b, int digits);
 
    double   MathModFix(double a, double b);
-   double   MathRoundFix(double value, int decimals);
+   double   MathRoundEx(double value, int decimals);
    int      CountDecimals(double value);
 
    int      Abs(int value);

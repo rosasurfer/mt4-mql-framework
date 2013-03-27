@@ -8,16 +8,14 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string MA.Periods        = "200";                             // averaging period
-extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
-extern string MA.Method         = "SMA";                             // averaging method
-extern string MA.Method.Help    = "SMA* | EMA | SMMA | LWMA | ALMA";
-extern string AppliedPrice      = "Close";                           // price used for MA calculation
-extern string AppliedPrice.Help = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
+extern string MA.Periods      = "200";                               // averaging period
+extern string MA.Timeframe    = "";                                  // averaging timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
+extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";   // averaging method
+extern string AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern int    Max.Values      = 2000;                                // maximum number of indicator values to display: -1 = all
 
-extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend   = Orange;
+extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend = Orange;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +52,7 @@ string legendLabel, indicatorName;
  */
 int onInit() {
    // (1) Validierung
-   // MA.Timeframe (zuerst, da Gültigkeit von MA.Periods davon abhängt)
+   // MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int ma.timeframe = Period();
    else                        ma.timeframe = PeriodToId(MA.Timeframe);
@@ -94,16 +92,28 @@ int onInit() {
    MA.Periods = strValue;
 
    // MA.Method
-   MA.Method = StringToUpper(StringTrim(MA.Method));
-   if      (MA.Method == "SMA" ) ma.method = MODE_SMA;
-   else if (MA.Method == "EMA" ) ma.method = MODE_EMA;
-   else if (MA.Method == "SMMA") ma.method = MODE_SMMA;
-   else if (MA.Method == "LWMA") ma.method = MODE_LWMA;
-   else if (MA.Method == "ALMA") ma.method = MODE_ALMA;
+   string elems[];
+   if (Explode(MA.Method, "*", elems, 2) > 1) {
+      int size = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = MA.Method;
+   strValue = StringToUpper(StringTrim(strValue));
+   if      (strValue == "SMA" ) ma.method = MODE_SMA;
+   else if (strValue == "EMA" ) ma.method = MODE_EMA;
+   else if (strValue == "SMMA") ma.method = MODE_SMMA;
+   else if (strValue == "LWMA") ma.method = MODE_LWMA;
+   else if (strValue == "ALMA") ma.method = MODE_ALMA;
    else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
+   MA.Method = strValue;
 
    // AppliedPrice
-   string char = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
+   if (Explode(AppliedPrice, "*", elems, 2) > 1) {
+      size     = Explode(elems[0], "|", elems, NULL);
+      strValue = elems[size-1];
+   }
+   else strValue = AppliedPrice;
+   string char = StringToUpper(StringLeft(StringTrim(strValue), 1));
    if      (char == "O") appliedPrice = PRICE_OPEN;
    else if (char == "H") appliedPrice = PRICE_HIGH;
    else if (char == "L") appliedPrice = PRICE_LOW;
@@ -112,6 +122,7 @@ int onInit() {
    else if (char == "T") appliedPrice = PRICE_TYPICAL;
    else if (char == "W") appliedPrice = PRICE_WEIGHTED;
    else                                return(catch("onInit(8)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
+   AppliedPrice = strValue;
 
 
    // (2.1) Bufferverwaltung

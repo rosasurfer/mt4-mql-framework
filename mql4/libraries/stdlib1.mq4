@@ -9631,8 +9631,8 @@ string DoubleToStrEx(double value, int digits) {
       value = -value;
    }
 
-   double integer    = MathFloor(value);
-   string strInteger = Round(integer);
+   double integer      = MathFloor(value);
+   string strInteger   = Round(integer);
 
    double remainder    = MathRound((value-integer) * decimals[digits]);
    string strRemainder = "";
@@ -9705,7 +9705,7 @@ string StringRepeat(string input, int times) {
  *
  * @return double - rounded value
  */
-double MathRoundFix(double number, int decimals) {
+double MathRoundEx(double number, int decimals) {
    // TODO: Verarbeitung negativer decimals prüfen
 
    double operand = MathPow(10, decimals);
@@ -9822,7 +9822,7 @@ string NumberToStr(double number, string mask) {
    // --- Beginn Wertverarbeitung ---------------------
    // runden
    if (round)
-      number = MathRoundFix(number, nRight);
+      number = MathRoundEx(number, nRight);
    string outStr = number;
 
    // negatives Vorzeichen entfernen (ist in leadSign gespeichert)
