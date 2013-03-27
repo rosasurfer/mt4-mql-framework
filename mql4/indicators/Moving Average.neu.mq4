@@ -8,11 +8,12 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string MA.Periods      = "200";                               // averaging period
-extern string MA.Timeframe    = "";                                  // averaging timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
-extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";   // averaging method
+extern string MA.Periods      = "200";
+extern string MA.Timeframe    = "";                                  // MA-Timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
+extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern int    Max.Values      = 2000;                                // maximum number of indicator values to display: -1 = all
+extern int    Trend.Lag       = 0;                                   // Trendwechsel-Verzögerung: größer/gleich 0
+extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
@@ -124,6 +125,12 @@ int onInit() {
    else                                return(catch("onInit(8)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
    AppliedPrice = strValue;
 
+   // Trend.Lag
+   if (Trend.Lag < 0)                  return(catch("onInit(9)   Invalid input parameter Trend.Lag = "+ Trend.Lag, ERR_INVALID_INPUT));
+
+   // Max.Values
+   if (Max.Values < -1)                return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT));
+
 
    // (2.1) Bufferverwaltung
    SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
@@ -178,7 +185,7 @@ int onInit() {
       ReverseDoubleArray(wALMA);                                     // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
    }
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(11)"));
 }
 
 

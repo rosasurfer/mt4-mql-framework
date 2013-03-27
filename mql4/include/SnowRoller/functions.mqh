@@ -129,6 +129,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                          maTimeframe,                          // MA.Timeframe
                          maMethod,                             // MA.Method
                          "Close",                              // AppliedPrice
+                         0,                                    // Trend.Lag
                          values,                               // Max.Values
                          ForestGreen,                          // Color.UpTrend
                          Red,                                  // Color.DownTrend
