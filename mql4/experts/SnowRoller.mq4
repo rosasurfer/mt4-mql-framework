@@ -4702,21 +4702,21 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
    // (2.1) Events sortieren
    if (sizeOfEvents > 0) {
       ArraySort(events);
-      int firstType = Round(events[0][2]);
-      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)   illegal first break-even event "+ BreakevenEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(Round(events[0][1]), TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
+      int firstType = MathRound(events[0][2]);
+      if (firstType != EV_SEQUENCE_START) return(_false(catch("Sync.ProcessEvents(4)   illegal first break-even event "+ BreakevenEventToStr(firstType) +" (id="+ Round(events[0][0]) +"   time='"+ TimeToStr(events[0][1], TIME_FULL) +"')", ERR_RUNTIME_ERROR)));
    }
 
    for (i=0; i < sizeOfEvents; i++) {
-      id       = Round(events[i][0]);
-      time     = Round(events[i][1]);
-      type     = Round(events[i][2]);
-      gridBase =       events[i][3];
-      index    = Round(events[i][4]);
+      id       = events[i][0];
+      time     = events[i][1];
+      type     = events[i][2];
+      gridBase = events[i][3];
+      index    = events[i][4];
 
       ticket     = 0; if (IntInArray(orderEvents, type)) { ticket = orders.ticket[index]; iPositionMax = Max(iPositionMax, index); }
       nextTicket = 0;
-      if (i < sizeOfEvents-1) { nextId = Round(events[i+1][0]); nextTime = Round(events[i+1][1]); nextType = Round(events[i+1][2]); nextIndex = Round(events[i+1][4]); if (IntInArray(orderEvents, nextType)) nextTicket = orders.ticket[nextIndex]; }
-      else                    { nextId = 0;                     nextTime = 0;                     nextType = 0;                                                                                               nextTicket = 0;                        }
+      if (i < sizeOfEvents-1) { nextId = events[i+1][0]; nextTime = events[i+1][1]; nextType = events[i+1][2]; nextIndex = events[i+1][4]; if (IntInArray(orderEvents, nextType)) nextTicket = orders.ticket[nextIndex]; }
+      else                    { nextId = 0;              nextTime = 0;              nextType = 0;                                                                                               nextTicket = 0;                        }
 
       // (2.2) Events auswerten
       // -- EV_SEQUENCE_START --------------
@@ -4798,9 +4798,9 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       int    level = Abs(sequence.level);
       double stopPrice;
       for (i=sizeOfEvents-level; i < sizeOfEvents; i++) {
-         time  = Round(events[i][1]);
-         type  = Round(events[i][2]);
-         index = Round(events[i][4]);
+         time  = events[i][1];
+         type  = events[i][2];
+         index = events[i][4];
          if (type != EV_POSITION_CLOSE)
             return(_false(catch("Sync.ProcessEvents(15)   unexpected "+ BreakevenEventToStr(type) +" at index "+ i, ERR_RUNTIME_ERROR)));
          stopPrice += orders.closePrice[index];
