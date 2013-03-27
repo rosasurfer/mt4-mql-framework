@@ -1,6 +1,33 @@
 /**
  * Funktionen zum Verwalten und Bearbeiten von Historydateien (Kursreihen im "history"-Verzeichnis).
+ *
+ *
+ * MQL structure HISTORY_HEADER
+ * ----------------------------
+ * typedef struct _HISTORY_HEADER {
+ *   int  version;               //   4      => hh[ 0]      // HST-Formatversion (MT4: immer 400)
+ *   char description[64];       //  64      => hh[ 1]      // Symbolbeschreibung/Copyright
+ *   char symbol[12];            //  12      => hh[17]      // Symbol
+ *   int  period;                //   4      => hh[20]      // Timeframe der Zeitreihe
+ *   int  digits;                //   4      => hh[21]      // Digits des Symbols
+ *   int  dbVersion;             //   4      => hh[22]      // Server-Datenbankversion (timestamp)
+ *   int  prevDbVersion;         //   4      => hh[23]      // MQ: last synchronization time (timestamp)    // Wird vom Terminal nicht geschrieben, statt dessen
+ *   int  reserved[13];          //  52      => hh[24]      // unbenutzt                                    // speichern wir dort den vorherigen Wert von hh.dbVersion.
+ * } HISTORY_HEADER, hh;         // 148 byte = int[37]
+ *
+ *
+ * MQL structure RateInfo
+ * ----------------------
+ * struct RateInfo {
+ *   int    time;                //  4
+ *   double open;                //  8
+ *   double low;                 //  8
+ *   double high;                //  8
+ *   double close;               //  8
+ *   double volume;              //  8
+ * };                            // 44 byte
  */
+
 #import "history.ex4"
 
    int      CreateHistory(string symbol, string description, int digits);

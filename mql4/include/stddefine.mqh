@@ -1734,17 +1734,14 @@ int Sign(double number) {
 
 
 /**
- * Integer-Version von MathRound(), entspricht dem sauberen Casten eines Doubles in einen Integer.
+ * Integer-Version von MathRound()
  *
  * @param  double value - Zahl
  *
  * @return int
  */
 int Round(double value) {
-   value = MathRound(value);
-   if (value < 0) value -= 0.1;
-   else           value += 0.1;
-   return(value);
+   return(MathRound(value));
 }
 
 
@@ -1756,7 +1753,7 @@ int Round(double value) {
  * @return int
  */
 int Floor(double value) {
-   return(Round(MathFloor(value)));
+   return(MathFloor(value));
 }
 
 
@@ -1768,7 +1765,7 @@ int Floor(double value) {
  * @return int
  */
 int Ceil(double value) {
-   return(Round(MathCeil(value)));
+   return(MathCeil(value));
 }
 
 

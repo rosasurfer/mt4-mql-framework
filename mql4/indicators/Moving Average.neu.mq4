@@ -11,9 +11,9 @@ int __DEINIT_FLAGS__[];
 extern string MA.Periods        = "200";                             // averaging period
 extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
 extern string MA.Method         = "SMA";                             // averaging method
-extern string MA.Method.Help    = "SMA | EMA | SMMA | LWMA | ALMA";
+extern string MA.Method.Help    = "SMA* | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice      = "Close";                           // price used for MA calculation
-extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
+extern string AppliedPrice.Help = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern int    Max.Values        = 2000;                              // maximum number of indicator values to display: -1 = all
 
 extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
@@ -86,11 +86,11 @@ int onInit() {
       case PERIOD_D1:    { dValue *=  24; ma.timeframe = PERIOD_H1;  break; }
       case PERIOD_W1:    { dValue *= 120; ma.timeframe = PERIOD_H1;  break; }
    }
-   ma.periods = Round(dValue);
+   ma.periods = MathRound(dValue);
    if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
       double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
-      ma.periods = Round(minutes/Period());
+      ma.periods = MathRound(minutes/Period());
    }
    MA.Periods = strValue;
 
@@ -157,7 +157,7 @@ int onInit() {
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {            // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
       double wSum, gaussianOffset=0.85, sigma=6.0, s=ma.periods/sigma;
-      int m = Round(gaussianOffset * (ma.periods-1));
+      int m = MathRound(gaussianOffset * (ma.periods-1));
       for (int i=0; i < ma.periods; i++) {
          wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
          wSum += wALMA[i];
@@ -238,7 +238,7 @@ int onTick() {
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
       if (curValue > prevValue) {
-         bufferTrend    [bar] = 1.1;                                 // nicht 1, um Genauigkeitsfehler beim Casten zu (int) zu vermeiden.
+         bufferTrend    [bar] = 1;
          bufferUpTrend  [bar] = bufferMA[bar];
          bufferDownTrend[bar] = EMPTY_VALUE;
 
@@ -246,7 +246,7 @@ int onTick() {
          else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
       }
       else if (curValue < prevValue) {
-         bufferTrend    [bar] = -1.1;                                // nicht -1, um Genauigkeitsfehler beim Casten zu (int) zu vermeiden.
+         bufferTrend    [bar] = -1;
          bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
 
