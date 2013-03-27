@@ -13,10 +13,13 @@ extern string MA.Timeframe    = "";                                  // MA-Timef
 extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
 extern int    Trend.Lag       = 0;                                   // Trendwechsel-Verzögerung: größer/gleich 0
-extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
+
+extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Shift.H         = 0;                                   // horizontale Shift in Bars
+extern int    Shift.V         = 0;                                   // vertikale Shift in Pips
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,6 +45,7 @@ double bufferUpTrend2 [];                                            // UpTrend-
 int    ma.periods;
 int    ma.method;
 int    appliedPrice;
+double shift.v;
 double wALMA[];                                                      // Gewichtungen der einzelnen Bars des ALMA's
 string legendLabel, indicatorName;
 
@@ -161,6 +165,15 @@ int onInit() {
    SetIndexDrawBegin(3, startDraw);
    SetIndexDrawBegin(4, startDraw);
 
+   SetIndexShift(0, Shift.H);
+   SetIndexShift(1, Shift.H);
+   SetIndexShift(2, Shift.H);
+   SetIndexShift(3, Shift.H);
+   SetIndexShift(4, Shift.H);
+
+   shift.v = Shift.V * Pip;
+
+
    // (2.4) Styles
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
 
@@ -233,8 +246,8 @@ int onTick() {
    double curValue, prevValue;
 
 
-   // (2) geänderte Bars (neu-)berechnen
-   for (int bar=startBar; bar >= 0; bar--) {
+   // (2) geänderte Bars berechnen
+   for (int i, bar=startBar; bar >= 0; bar--) {
       // der eigentliche Moving Average
       if (ma.method != MODE_ALMA) {
          bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
@@ -242,13 +255,14 @@ int onTick() {
       else {
          bufferMA[bar] = 0;                                             // ALMA
          switch (appliedPrice) {                                        // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
-            case PRICE_CLOSE: for (int i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
-            case PRICE_OPEN:  for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
-            case PRICE_HIGH:  for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         High [bar+i]; break;
-            case PRICE_LOW:   for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
-            default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
+            case PRICE_CLOSE: for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
+            case PRICE_OPEN:  for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
+            case PRICE_HIGH:  for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         High [bar+i]; break;
+            case PRICE_LOW:   for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
+            default:          for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
          }
       }
+      bufferMA[bar] += shift.v;
 
       // Trend coloring (minimalste Reversal-Glättung um 0.1 pip durch Normalisierung)
       curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
