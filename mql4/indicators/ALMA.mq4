@@ -53,17 +53,16 @@ extern color  Color.DownTrend   = Orange;
 
 
 double bufferMA       [];                                            // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                                            // Trend:  +/-                                 (im Chart unsichtbar)
+double bufferTrend    [];                                            // Trend:  +/-1                                (im Chart unsichtbar)
 double bufferUpTrend  [];                                            // UpTrend-Linie 1                             (sichtbar)
-double bufferDownTrend[];                                            // DownTrend-Linie                             (sichtbar, überlagert UpTrend)
-double bufferUpTrend2 [];                                            // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend)
+double bufferDownTrend[];                                            // DownTrend-Linie                             (sichtbar, überlagert UpTrend-Linie 1)
+double bufferUpTrend2 [];                                            // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend-Linie)
 
 int    ma.periods;
 int    ma.method;
 int    appliedPrice;
-string legendLabel, indicatorName;
-
 double wALMA[];                                                      // Gewichtungen der einzelnen Bars des MA's
+string legendLabel, indicatorName;
 
 
 /**
