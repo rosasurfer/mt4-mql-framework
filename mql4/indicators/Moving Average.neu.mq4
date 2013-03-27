@@ -9,17 +9,17 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string MA.Periods      = "200";
-extern string MA.Timeframe    = "";                                  // MA-Timeframe [M1 | M5 | M15 | ...] "" = aktueller Timeframe
+extern string MA.Timeframe    = "";                                  // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
 extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
 extern string AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern int    Trend.Lag       = 0;                                   // Trendwechsel-Verzögerung: größer/gleich 0
 
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
 
-extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Trend.Lag       = 0;                                   // Trendwechsel-Signalverzögerung in Bars: größer/gleich 0
 extern int    Shift.H         = 0;                                   // horizontale Shift in Bars
 extern int    Shift.V         = 0;                                   // vertikale Shift in Pips
+extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

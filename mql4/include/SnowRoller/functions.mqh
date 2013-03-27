@@ -124,17 +124,17 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
 
    for (int bar=bars-1; bar>0; bar--) {                        // Bar 0 ist immer unvollständig und wird nicht benötigt
       // (1) Trend der einzelnen Bars ermitteln
-      barTrend = iCustom(NULL, timeframe, "Moving Average",    // (int) double ohne Präzisionsfehler (siehe MA-Implementierung)
+      barTrend = iCustom(NULL, timeframe, "Moving Average",    // => +/-1
                          maPeriods,                            // MA.Periods
                          maTimeframe,                          // MA.Timeframe
                          maMethod,                             // MA.Method
                          "Close",                              // AppliedPrice
-                         0,                                    // Trend.Lag
                          ForestGreen,                          // Color.UpTrend
                          Red,                                  // Color.DownTrend
-                         values,                               // Max.Values
+                         0,                                    // Trend.Lag
                          0,                                    // Shift.H
                          0,                                    // Shift.V
+                         values,                               // Max.Values
                          "",                                   // _________________
                          ic[IC_PTR],                           // __iCustom__
                          BUFFER_2, bar); //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
