@@ -137,7 +137,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                          values,                                     // Max.Values
                          "",                                         // _________________
                          ic[IC_PTR],                                 // __iCustom__
-                         BUFFER_2, bar); //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+                         MovingAverage.B_TREND, bar); //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE)

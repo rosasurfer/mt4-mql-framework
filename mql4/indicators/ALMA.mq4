@@ -3,7 +3,7 @@
  *
  *
  * In an attempt to create a new kind of moving average with some friends/colleagues (because I was tired of the classical set
- * of MA's everybody used for the last 10 years) we've created this new one (ALMA).
+ * of MA's everybody used for the last 10 years) we've created this new one.
  *
  * It removes small price fluctuations and enhances the trend by applying a moving average twice, one from left to right and
  * one from right to left. At the end of this process the phase shift (price lag) commonly associated with moving averages is
