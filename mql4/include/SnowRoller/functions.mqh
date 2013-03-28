@@ -120,23 +120,23 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
    int    barTrend, trend, counterTrend;                                         // |  1  |  12  | Erkennung onBarOpen der nächsten Bar (neuer Trend 2 Perioden lang)
    string strTrend, changePattern;                                               // |  2  |  20  | Erkennung onBarOpen der übernächsten Bar (neuer Trend 3 Perioden lang)
    int    bars   = 4 + 8*lag;                                                    // +-----+------+
-   int    values = Max(bars+1, 20);                            // +1 wegen fehlendem Trend der ältesten Bar; 20 (größtes lag) zur Reduktion ansonsten ident. Indikator-Instanzen
+   int    values = Max(bars+1, 20);                                  // +1 wegen fehlendem Trend der ältesten Bar; 20 (größtes lag) zur Reduktion ansonsten ident. Indikator-Instanzen
 
-   for (int bar=bars-1; bar>0; bar--) {                        // Bar 0 ist immer unvollständig und wird nicht benötigt
+   for (int bar=bars-1; bar > 0; bar--) {                            // Bar 0 ist immer unvollständig und wird nicht benötigt
       // (1) Trend der einzelnen Bars ermitteln
-      barTrend = iCustom(NULL, timeframe, "Moving Average",    // => +/-1
-                         maPeriods,                            // MA.Periods
-                         maTimeframe,                          // MA.Timeframe
-                         maMethod,                             // MA.Method
-                         "Close",                              // AppliedPrice
-                         ForestGreen,                          // Color.UpTrend
-                         Red,                                  // Color.DownTrend
-                         0,                                    // Trend.Lag
-                         0,                                    // Shift.H
-                         0,                                    // Shift.V
-                         values,                               // Max.Values
-                         "",                                   // _________________
-                         ic[IC_PTR],                           // __iCustom__
+      barTrend = iCustom(NULL, timeframe, "Moving Average",          // +/-
+                         maPeriods,                                  // MA.Periods
+                         maTimeframe,                                // MA.Timeframe
+                         maMethod,                                   // MA.Method
+                         "Close",                                    // AppliedPrice
+                         ForestGreen,                                // Color.UpTrend
+                         Red,                                        // Color.DownTrend
+                         0,                                          // Trend.Lag
+                         0,                                          // Shift.H
+                         0,                                          // Shift.V
+                         values,                                     // Max.Values
+                         "",                                         // _________________
+                         ic[IC_PTR],                                 // __iCustom__
                          BUFFER_2, bar); //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
       error = GetLastError();
@@ -150,12 +150,12 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
 
       // (2) Trendwechsel detektieren
       if (bar == bars-1) {
-         trend = barTrend;                                     // Initialisierung
+         trend = Sign(barTrend);                                     // 'trend'-Initialisierung bei erstem Durchlauf
       }
-      else if (barTrend == trend) {
+      else if (Sign(barTrend) == trend) {
          counterTrend = 0;
       }
-      else {
+      else /*(Sign(barTrend) != trend)*/ {
          counterTrend++;
          if (counterTrend > lag) {
             if (bar > 1) {
@@ -163,15 +163,16 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                counterTrend = 0;
                continue;
             }
-            // Trendwechsel in Bar 1 (nach Berücksichtigung von lag)
-            if (trend < 0) {
-               if (directions & MODE_UPTREND != 0) {
+
+            // Bar 1: Trendwechsel
+            if (barTrend > 0) {
+               if (_bool(directions & MODE_UPTREND)) {
                   lpSignal = 1;
                   //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change up");
                }
             }
-            else {
-               if (directions & MODE_DOWNTREND != 0) {
+            else /*(barTrend < 0)*/ {
+               if (_bool(directions & MODE_DOWNTREND)) {
                   lpSignal = -1;
                   //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change down");
                }
