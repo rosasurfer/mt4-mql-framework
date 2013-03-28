@@ -36,17 +36,17 @@ extern int    Max.Values      = 2000;                                // Höchstan
 #property indicator_width5  2
 
 
-double bufferMA       [];                                            // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-double bufferTrend    [];                                            // Trend:  +/-1                                (im Chart unsichtbar)
-double bufferUpTrend  [];                                            // UpTrend-Linie 1                             (sichtbar)
-double bufferDownTrend[];                                            // DownTrend-Linie                             (sichtbar, überlagert UpTrend-Linie 1)
-double bufferUpTrend2 [];                                            // UpTrend-Linie 2                             (sichtbar, überlagert DownTrend-Linie)
+double bufferMA       [];                                            // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
+double bufferTrend    [];                                            // Trend: +/-, unsichtbar
+double bufferUpTrend  [];                                            // UpTrend-Linie 1: sichtbar
+double bufferDownTrend[];                                            // DownTrend-Linie: sichtbar (überlagert UpTrend 1)
+double bufferUpTrend_2[];                                            // UpTrend-Linie 2: sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
 
 int    ma.periods;
 int    ma.method;
 int    appliedPrice;
+double wALMA[];                                                      // Gewichtungen der einzelnen Bars bei ALMA
 double shift.v;
-double wALMA[];                                                      // Gewichtungen der einzelnen Bars des ALMA's
 string legendLabel, indicatorName;
 
 
@@ -137,11 +137,11 @@ int onInit() {
 
 
    // (2.1) Bufferverwaltung
-   SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (im Chart unsichtbar)
-   SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +/-                    (im Chart unsichtbar)
+   SetIndexBuffer(0, bufferMA       );                               // vollst. Indikator: Anzeige im "Data Window" (unsichtbar)
+   SetIndexBuffer(1, bufferTrend    );                               // Trendsignalisierung: +/-                    (unsichtbar)
    SetIndexBuffer(2, bufferUpTrend  );                               // UpTrend-Linie 1                             (sichtbar)
-   SetIndexBuffer(3, bufferDownTrend);                               // DownTrendTrend-Linie                        (sichtbar)
-   SetIndexBuffer(4, bufferUpTrend2 );                               // UpTrend-Linie 2                             (sichtbar)
+   SetIndexBuffer(3, bufferDownTrend);                               // DownTrend-Linie                             (sichtbar)
+   SetIndexBuffer(4, bufferUpTrend_2);                               // UpTrend-Linie 2                             (sichtbar)
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -230,7 +230,7 @@ int onTick() {
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
+      ArrayInitialize(bufferUpTrend_2, EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -242,6 +242,12 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
+   if (startBar < 0) {                                                  // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
+      if (Indicator.IsICustom())
+         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
+      SetLastError(ERR_HISTORY_INSUFFICIENT);
+   }
+
 
    double curValue, prevValue;
 
@@ -284,8 +290,8 @@ int onTick() {
          if (bufferTrend[bar+1] > 0) {                               // wenn vorher Up-Trend...
             bufferDownTrend[bar+1] = bufferMA[bar+1];
             if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {   // ...und Up-Trend nur eine Bar lang war
-               bufferUpTrend2[bar+2] = bufferMA[bar+2];
-               bufferUpTrend2[bar+1] = bufferMA[bar+1];
+               bufferUpTrend_2[bar+2] = bufferMA[bar+2];
+               bufferUpTrend_2[bar+1] = bufferMA[bar+1];
             }
          }
          else {
@@ -307,11 +313,7 @@ int onTick() {
          }
       }
    }
-   if (startBar < 0) {                                                  // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
-      if (Indicator.IsICustom())
-         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
-      SetLastError(ERR_HISTORY_INSUFFICIENT);
-   }
+
 
    static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
 
@@ -326,7 +328,7 @@ int onTick() {
    lastTrend = bufferTrend[0];
 
 
-   // (3.2) Wert in Legende aktualisieren
+   // (3.2) Legende aktualisieren: Wert bei Änderung
    if (NE(curValue, lastValue)) {
       ObjectSetText(legendLabel,
                     StringConcatenate(indicatorName, "    ", NumberToStr(curValue, SubPipPriceFormat)),
