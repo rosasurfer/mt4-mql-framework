@@ -261,18 +261,18 @@ string  sNull, sNulls[];
 #define MODE_ALMA                   4           // Arnaud Legoux moving average
 
 
-// Indicator line identifiers used in iMACD(), iRVI() and iStochastic()
+// Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
 #define MODE_MAIN                   0           // base indicator line
 #define MODE_SIGNAL                 1           // signal line
 
 
-// Indicator line identifiers used in iADX()
+// Indicator line identifiers, siehe iADX()
 #define MODE_MAIN                   0           // base indicator line
 #define MODE_PLUSDI                 1           // +DI indicator line
 #define MODE_MINUSDI                2           // -DI indicator line
 
 
-// Indicator line identifiers used in iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals() and iGator()
+// Indicator line identifiers, siehe iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
 #define MODE_UPPER                  1           // upper line
 #define MODE_LOWER                  2           // lower line
 
@@ -280,8 +280,8 @@ string  sNull, sNulls[];
 #define B_UPPER                     1           // custom
 
 
-// Indicator buffer identifiers used in iCustom()
-#define BUFFER_INDEX_0              0
+// Indicator buffer identifiers, siehe iCustom()
+#define BUFFER_INDEX_0              0           // allgemein
 #define BUFFER_INDEX_1              1
 #define BUFFER_INDEX_2              2
 #define BUFFER_INDEX_3              3
@@ -297,6 +297,9 @@ string  sNull, sNulls[];
 #define BUFFER_6       BUFFER_INDEX_5
 #define BUFFER_7       BUFFER_INDEX_6
 #define BUFFER_8       BUFFER_INDEX_7
+
+#define MovingAverage.B_MA          0           // Moving Average.mq4
+#define MovingAverage.B_TREND       1
 
 
 // Indicator shared memory identifiers, siehe iCustom()
