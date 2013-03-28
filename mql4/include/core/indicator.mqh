@@ -34,7 +34,6 @@ int init() { //throws ERS_TERMINAL_NOT_READY
  //IsOfflineChart = IsChart && ???                                            //       in Indicator::init() IsChart=On signalisiert.
 
 
-
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    //
    // Bug: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
@@ -254,6 +253,7 @@ int start() {
 int deinit() {
    __WHEREAMI__  = FUNC_DEINIT;
    __DeinitFlags = SumInts(__DEINIT_FLAGS__);
+
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                       // Preprocessing-Hook
