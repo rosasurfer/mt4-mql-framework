@@ -232,6 +232,65 @@ int stdlib_GetLastError() {
 
 
 /**
+ * Prüft auf MA-Trendwechsel
+ *
+ * @param  int    iTimeframe     - Timeframe, in dem der Indikator geladen wird
+ * @param  string maPeriods      - Indikator-Parameter
+ * @param  string maTimeframe    - Indikator-Parameter (kann vom Indikator-Timeframe iTimeframe abweichen)
+ * @param  string maMethod       - Indikator-Parameter
+ * @param  int    trendSmoothing - Trend-Smoothing in Bars, größer/gleich 0
+ * @param  int    directions     - Kombination von Trend-Flags: MODE_UPTREND   - Prüfung auf Trendwechsel aufwärts
+ *                                                              MODE_DOWNTREND - Prüfung auf Trendwechsel abwärts
+ * @param  int    signal[]       - Array zur Signalaufnahme:    Wert > 0       - Trendwechsel aufwärts erkannt
+ *                                                              Wert < 0       - Trendwechsel abwärts erkannt
+ *
+ * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)
+ */
+bool CheckTrendChange(int iTimeframe, string maPeriods, string maTimeframe, string maMethod, int trendSmoothing, int directions, int &signal[]) {
+   if (ArraySize(signal) != 1)
+      ArrayResize(signal, 1);
+   signal[0] = 0;
+
+   int maxValues = Max(5 + 8*trendSmoothing, 50);                    // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
+   int /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);
+   ic[IC_LAST_ERROR] = NO_ERROR;
+
+
+   // Trend in Bar 1 ermitteln
+   int trend = iCustom(NULL, iTimeframe, "Moving Average",           // +/-
+                       maPeriods,                                    // MA.Periods
+                       maTimeframe,                                  // MA.Timeframe
+                       maMethod,                                     // MA.Method
+                       "Close",                                      // AppliedPrice
+                       ForestGreen,                                  // Color.UpTrend
+                       Red,                                          // Color.DownTrend
+                       trendSmoothing,                               // Trend.Smoothing
+                       0,                                            // Shift.H
+                       0,                                            // Shift.V
+                       maxValues,                                    // Max.Values
+                       "",                                           // _________________
+                       ic[IC_PTR],                                   // __iCustom__
+                       MovingAverage.MODE_TREND_SMOOTH, 1);          // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(1)", error)));
+   if (IsError(ic[IC_LAST_ERROR]))                           return(_false(SetLastError(ic[IC_LAST_ERROR])));
+   if (!trend)                                               return(_false(catch("CheckTrendChange(2)->iCustom(Moving Average)   invalid trend = "+ trend, ERR_CUSTOM_INDICATOR_ERROR)));
+
+
+   // Trendwechsel detektieren
+   if (trend == +1) /*&&*/ if (_bool(directions & MODE_UPTREND  )) signal[0] = +1;
+   if (trend == -1) /*&&*/ if (_bool(directions & MODE_DOWNTREND)) signal[0] = -1;
+
+
+   if (error == ERS_HISTORY_UPDATE)                                  // TODO: bei ERS_HISTORY_UPDATE geladene Bars prüfen
+      warn("CheckTrendChange(3)   ERS_HISTORY_UPDATE (tick="+ Tick +")");
+
+   return(true);
+}
+
+
+/**
  * Gibt alle verfügbaren MarketInfo()-Daten des aktuellen Instruments aus.
  *
  * @param  string location - Aufruf-Bezeichner
