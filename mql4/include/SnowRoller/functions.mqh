@@ -129,7 +129,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                        maxValues,                                    // Max.Values
                        "",                                           // _________________
                        ic[IC_PTR],                                   // __iCustom__
-                       MovingAverage.MODE_TREND_SMOOTH, 1);          //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+                       MovingAverage.MODE_TREND_SMOOTH, 1); // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(1)", error)));
