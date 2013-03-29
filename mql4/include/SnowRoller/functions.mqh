@@ -108,9 +108,6 @@ bool IsValidSequenceStatus(int value) {
  *  TODO: auslagern
  */
 bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, string maMethod, int smoothing, int directions, int &lpSignal) {
-   if (smoothing < 0)
-      return(_false(catch("CheckTrendChange(1)   illegal parameter smoothing = "+ smoothing, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
    lpSignal = 0;
    int maxValues = Max(5 + 8*smoothing, 50);                         // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu reduzieren
 
@@ -135,9 +132,9 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                        MovingAverage.MODE_TREND_SMOOTH, 1);          //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(2)", error)));
+   if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(1)", error)));
    if (IsError(ic[IC_LAST_ERROR]))                           return(_false(SetLastError(ic[IC_LAST_ERROR])));
-   if (!trend)                                               return(_false(catch("CheckTrendChange(3)->iCustom(Moving Average)   invalid trend = "+ trend, ERR_CUSTOM_INDICATOR_ERROR)));
+   if (!trend)                                               return(_false(catch("CheckTrendChange(2)->iCustom(Moving Average)   invalid trend = "+ trend, ERR_CUSTOM_INDICATOR_ERROR)));
 
 
    // Trendwechsel detektieren
@@ -148,7 +145,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
    if (error == ERS_HISTORY_UPDATE)
       debug("CheckTrendChange()   ERS_HISTORY_UPDATE");              // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
 
-   return(!catch("CheckTrendChange(4)"));
+   return(!catch("CheckTrendChange(3)"));
 }
 
 
