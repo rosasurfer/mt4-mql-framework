@@ -298,9 +298,9 @@ string  sNull, sNulls[];
 #define BUFFER_7          BUFFER_INDEX_6
 #define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.B_MA             0        // Moving Average.mq4
-#define MovingAverage.B_TREND          1        // Trend ohne Berücksichtigung von Trend.Lag (Trend.Lag = 0)
-#define MovingAverage.B_TREND_LAGGED   2        // Trend nach Berücksichtigung von Trend.Lag
+#define MovingAverage.MODE_MA             0     // Moving Average.mq4
+#define MovingAverage.MODE_TREND          1     // Trend ohne Smoothing
+#define MovingAverage.MODE_TREND_SMOOTH   2     // Trend nach Smoothing
 
 
 // Indicator shared memory identifiers, siehe iCustom()
