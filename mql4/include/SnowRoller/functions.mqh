@@ -109,7 +109,7 @@ bool IsValidSequenceStatus(int value) {
  */
 bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, string maMethod, int smoothing, int directions, int &lpSignal) {
    lpSignal = 0;
-   int maxValues = Max(5 + 8*smoothing, 50);                         // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu reduzieren
+   int maxValues = Max(5 + 8*smoothing, 50);                         // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
 
    int /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);
    ic[IC_LAST_ERROR] = NO_ERROR;
@@ -129,7 +129,7 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
                        maxValues,                                    // Max.Values
                        "",                                           // _________________
                        ic[IC_PTR],                                   // __iCustom__
-                       MovingAverage.MODE_TREND_SMOOTH, 1); // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+                       MovingAverage.MODE_TREND_SMOOTH, 1);          // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(1)", error)));
@@ -143,9 +143,8 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
 
 
    if (error == ERS_HISTORY_UPDATE)
-      debug("CheckTrendChange()   ERS_HISTORY_UPDATE");              // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
-
-   return(!catch("CheckTrendChange(3)"));
+      warn("CheckTrendChange()   ERS_HISTORY_UPDATE");               // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
+   return(!__STATUS_ERROR);
 }
 
 
