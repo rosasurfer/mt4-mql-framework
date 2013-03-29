@@ -245,258 +245,259 @@ string  sNull, sNulls[];
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest(), iHighest()
-#define MODE_OPEN                   0           // open price
-#define MODE_LOW                    1           // low price
-#define MODE_HIGH                   2           // high price
-#define MODE_CLOSE                  3           // close price
-#define MODE_VOLUME                 4           // volume
-#define MODE_TIME                   5           // bar open time
+#define MODE_OPEN                      0        // open price
+#define MODE_LOW                       1        // low price
+#define MODE_HIGH                      2        // high price
+#define MODE_CLOSE                     3        // close price
+#define MODE_VOLUME                    4        // volume
+#define MODE_TIME                      5        // bar open time
 
 
 // MA method identifiers, siehe iMA()
-#define MODE_SMA                    0           // simple moving average
-#define MODE_EMA                    1           // exponential moving average
-#define MODE_SMMA                   2           // smoothed moving average
-#define MODE_LWMA                   3           // linear weighted moving average
-#define MODE_ALMA                   4           // Arnaud Legoux moving average
+#define MODE_SMA                       0        // simple moving average
+#define MODE_EMA                       1        // exponential moving average
+#define MODE_SMMA                      2        // smoothed moving average
+#define MODE_LWMA                      3        // linear weighted moving average
+#define MODE_ALMA                      4        // Arnaud Legoux moving average
 
 
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
-#define MODE_MAIN                   0           // base indicator line
-#define MODE_SIGNAL                 1           // signal line
+#define MODE_MAIN                      0        // base indicator line
+#define MODE_SIGNAL                    1        // signal line
 
 
 // Indicator line identifiers, siehe iADX()
-#define MODE_MAIN                   0           // base indicator line
-#define MODE_PLUSDI                 1           // +DI indicator line
-#define MODE_MINUSDI                2           // -DI indicator line
+#define MODE_MAIN                      0        // base indicator line
+#define MODE_PLUSDI                    1        // +DI indicator line
+#define MODE_MINUSDI                   2        // -DI indicator line
 
 
 // Indicator line identifiers, siehe iBands(), iEnvelopes(), iEnvelopesOnArray(), iFractals(), iGator()
-#define MODE_UPPER                  1           // upper line
-#define MODE_LOWER                  2           // lower line
+#define MODE_UPPER                     1        // upper line
+#define MODE_LOWER                     2        // lower line
 
-#define B_LOWER                     0           // custom
-#define B_UPPER                     1           // custom
+#define B_LOWER                        0        // custom
+#define B_UPPER                        1        // custom
 
 
 // Indicator buffer identifiers, siehe iCustom()
-#define BUFFER_INDEX_0              0           // allgemein
-#define BUFFER_INDEX_1              1
-#define BUFFER_INDEX_2              2
-#define BUFFER_INDEX_3              3
-#define BUFFER_INDEX_4              4
-#define BUFFER_INDEX_5              5
-#define BUFFER_INDEX_6              6
-#define BUFFER_INDEX_7              7
-#define BUFFER_1       BUFFER_INDEX_0
-#define BUFFER_2       BUFFER_INDEX_1
-#define BUFFER_3       BUFFER_INDEX_2
-#define BUFFER_4       BUFFER_INDEX_3
-#define BUFFER_5       BUFFER_INDEX_4
-#define BUFFER_6       BUFFER_INDEX_5
-#define BUFFER_7       BUFFER_INDEX_6
-#define BUFFER_8       BUFFER_INDEX_7
+#define BUFFER_INDEX_0                 0        // allgemein
+#define BUFFER_INDEX_1                 1
+#define BUFFER_INDEX_2                 2
+#define BUFFER_INDEX_3                 3
+#define BUFFER_INDEX_4                 4
+#define BUFFER_INDEX_5                 5
+#define BUFFER_INDEX_6                 6
+#define BUFFER_INDEX_7                 7
+#define BUFFER_1          BUFFER_INDEX_0
+#define BUFFER_2          BUFFER_INDEX_1
+#define BUFFER_3          BUFFER_INDEX_2
+#define BUFFER_4          BUFFER_INDEX_3
+#define BUFFER_5          BUFFER_INDEX_4
+#define BUFFER_6          BUFFER_INDEX_5
+#define BUFFER_7          BUFFER_INDEX_6
+#define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.B_MA          0           // Moving Average.mq4
-#define MovingAverage.B_TREND       1
+#define MovingAverage.B_MA             0        // Moving Average.mq4
+#define MovingAverage.B_TREND          1        // Trend ohne Berücksichtigung von Trend.Lag (Trend.Lag = 0)
+#define MovingAverage.B_TREND_LAGGED   2        // Trend nach Berücksichtigung von Trend.Lag
 
 
 // Indicator shared memory identifiers, siehe iCustom()
-#define IC_PTR                      0
-#define IC_LAST_ERROR               1
+#define IC_PTR                         0
+#define IC_LAST_ERROR                  1
 
 
 // Sorting modes, siehe ArraySort()
-#define MODE_ASCEND                 1           // aufsteigend
-#define MODE_DESCEND                2           // absteigend
+#define MODE_ASCEND                    1        // aufsteigend
+#define MODE_DESCEND                   2        // absteigend
 
 
 // Trend direction flags, siehe CheckTrendChange()
-#define MODE_UPTREND                1
-#define MODE_DOWNTREND              2
+#define MODE_UPTREND                   1
+#define MODE_DOWNTREND                 2
 
 
 // Market info identifiers, siehe MarketInfo()
-#define MODE_LOW                    1           // low price of the current day (since midnight server time)
-#define MODE_HIGH                   2           // high price of the current day (since midnight server time)
-//                                  3           // ???
-//                                  4           // ???
-#define MODE_TIME                   5           // last tick time
-//                                  6           // ???
-//                                  7           // ???
-//                                  8           // ???
-#define MODE_BID                    9           // last bid price                       (entspricht Bid bzw. Close[0])
-#define MODE_ASK                   10           // last ask price                       (entspricht Ask)
-#define MODE_POINT                 11           // point size in the quote currency     (entspricht Point)                                               0.0000'1
-#define MODE_DIGITS                12           // number of digits after decimal point (entspricht Digits)
-#define MODE_SPREAD                13           // spread value in points
-#define MODE_STOPLEVEL             14           // stop level in points
-#define MODE_LOTSIZE               15           // unit size of 1 lot                                                                                    100.000
-#define MODE_TICKVALUE             16           // tick value in the deposit currency
-#define MODE_TICKSIZE              17           // tick size in the quote currency                                                                       0.0000'5
-#define MODE_SWAPLONG              18           // swap of long positions
-#define MODE_SWAPSHORT             19           // swap of short positions
-#define MODE_STARTING              20           // contract starting date (usually for futures)
-#define MODE_EXPIRATION            21           // contract expiration date (usually for futures)
-#define MODE_TRADEALLOWED          22           // if trading is allowed for the symbol
-#define MODE_MINLOT                23           // minimum lot size
-#define MODE_LOTSTEP               24           // minimum lot increment size
-#define MODE_MAXLOT                25           // maximum lot size
-#define MODE_SWAPTYPE              26           // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
-#define MODE_PROFITCALCMODE        27           // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
-#define MODE_MARGINCALCMODE        28           // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
-#define MODE_MARGININIT            29           // initial margin requirement for a position of 1 lot
-#define MODE_MARGINMAINTENANCE     30           // margin to maintain an open positions of 1 lot
-#define MODE_MARGINHEDGED          31           // units per side with margin maintenance requirement for a hedged position of 1 lot                     50.000
-#define MODE_MARGINREQUIRED        32           // free margin requirement for a position of 1 lot
-#define MODE_FREEZELEVEL           33           // order freeze level in points
+#define MODE_LOW                       1        // low price of the current day (since midnight server time)
+#define MODE_HIGH                      2        // high price of the current day (since midnight server time)
+//                                     3        // ???
+//                                     4        // ???
+#define MODE_TIME                      5        // last tick time
+//                                     6        // ???
+//                                     7        // ???
+//                                     8        // ???
+#define MODE_BID                       9        // last bid price                       (entspricht Bid bzw. Close[0])
+#define MODE_ASK                      10        // last ask price                       (entspricht Ask)
+#define MODE_POINT                    11        // point size in the quote currency     (entspricht Point)                                               0.0000'1
+#define MODE_DIGITS                   12        // number of digits after decimal point (entspricht Digits)
+#define MODE_SPREAD                   13        // spread value in points
+#define MODE_STOPLEVEL                14        // stop level in points
+#define MODE_LOTSIZE                  15        // unit size of 1 lot                                                                                    100.000
+#define MODE_TICKVALUE                16        // tick value in the deposit currency
+#define MODE_TICKSIZE                 17        // tick size in the quote currency                                                                       0.0000'5
+#define MODE_SWAPLONG                 18        // swap of long positions
+#define MODE_SWAPSHORT                19        // swap of short positions
+#define MODE_STARTING                 20        // contract starting date (usually for futures)
+#define MODE_EXPIRATION               21        // contract expiration date (usually for futures)
+#define MODE_TRADEALLOWED             22        // if trading is allowed for the symbol
+#define MODE_MINLOT                   23        // minimum lot size
+#define MODE_LOTSTEP                  24        // minimum lot increment size
+#define MODE_MAXLOT                   25        // maximum lot size
+#define MODE_SWAPTYPE                 26        // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
+#define MODE_PROFITCALCMODE           27        // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
+#define MODE_MARGINCALCMODE           28        // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
+#define MODE_MARGININIT               29        // initial margin requirement for a position of 1 lot
+#define MODE_MARGINMAINTENANCE        30        // margin to maintain an open positions of 1 lot
+#define MODE_MARGINHEDGED             31        // units per side with margin maintenance requirement for a hedged position of 1 lot                     50.000
+#define MODE_MARGINREQUIRED           32        // free margin requirement for a position of 1 lot
+#define MODE_FREEZELEVEL              33        // order freeze level in points
 
 
 // Price identifiers, siehe iMA() etc.
-#define PRICE_CLOSE                 0           // close price
-#define PRICE_OPEN                  1           // open price
-#define PRICE_HIGH                  2           // high price
-#define PRICE_LOW                   3           // low price
-#define PRICE_MEDIAN                4           // median price: (high+low)/2
-#define PRICE_TYPICAL               5           // typical price: (high+low+close)/3
-#define PRICE_WEIGHTED              6           // weighted close price: (high+low+close+close)/4
-#define PRICE_BID                   7           // custom: Bid-Preis
-#define PRICE_ASK                   8           // custom: Ask-Preis
+#define PRICE_CLOSE                    0        // close price
+#define PRICE_OPEN                     1        // open price
+#define PRICE_HIGH                     2        // high price
+#define PRICE_LOW                      3        // low price
+#define PRICE_MEDIAN                   4        // median price: (high+low)/2
+#define PRICE_TYPICAL                  5        // typical price: (high+low+close)/3
+#define PRICE_WEIGHTED                 6        // weighted close price: (high+low+close+close)/4
+#define PRICE_BID                      7        // custom: Bid-Preis
+#define PRICE_ASK                      8        // custom: Ask-Preis
 
 
 // Rates array identifier, siehe ArrayCopyRates()
-#define RATE_TIME                   0           // bar open time
-#define RATE_OPEN                   1           // open price
-#define RATE_LOW                    2           // low price
-#define RATE_HIGH                   3           // high price
-#define RATE_CLOSE                  4           // close price
-#define RATE_VOLUME                 5           // volume
+#define RATE_TIME                      0        // bar open time
+#define RATE_OPEN                      1        // open price
+#define RATE_LOW                       2        // low price
+#define RATE_HIGH                      3        // high price
+#define RATE_CLOSE                     4        // close price
+#define RATE_VOLUME                    5        // volume
 
 
 // Event-Identifier siehe event()
-#define EVENT_BAR_OPEN              0x0001
-#define EVENT_ORDER_PLACE           0x0002
-#define EVENT_ORDER_CHANGE          0x0004
-#define EVENT_ORDER_CANCEL          0x0008
-#define EVENT_POSITION_OPEN         0x0010
-#define EVENT_POSITION_CLOSE        0x0020
-#define EVENT_ACCOUNT_CHANGE        0x0040
-#define EVENT_ACCOUNT_PAYMENT       0x0080      // Ein- oder Auszahlung
-#define EVENT_CHART_CMD             0x0100      // Chart-Command             (aktueller Chart)
-#define EVENT_INTERNAL_CMD          0x0200      // terminal-internes Command (globale Variablen)
-#define EVENT_EXTERNAL_CMD          0x0400      // externes Command          (QuickChannel)
+#define EVENT_BAR_OPEN            0x0001
+#define EVENT_ORDER_PLACE         0x0002
+#define EVENT_ORDER_CHANGE        0x0004
+#define EVENT_ORDER_CANCEL        0x0008
+#define EVENT_POSITION_OPEN       0x0010
+#define EVENT_POSITION_CLOSE      0x0020
+#define EVENT_ACCOUNT_CHANGE      0x0040
+#define EVENT_ACCOUNT_PAYMENT     0x0080        // Ein- oder Auszahlung
+#define EVENT_CHART_CMD           0x0100        // Chart-Command             (aktueller Chart)
+#define EVENT_INTERNAL_CMD        0x0200        // terminal-internes Command (globale Variablen)
+#define EVENT_EXTERNAL_CMD        0x0400        // externes Command          (QuickChannel)
 
 
 // Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
-#define PIVOT_R3                    0
-#define PIVOT_R2                    1
-#define PIVOT_R1                    2
-#define PIVOT_PP                    3
-#define PIVOT_S1                    4
-#define PIVOT_S2                    5
-#define PIVOT_S3                    6
+#define PIVOT_R3                       0
+#define PIVOT_R2                       1
+#define PIVOT_R1                       2
+#define PIVOT_PP                       3
+#define PIVOT_S1                       4
+#define PIVOT_S2                       5
+#define PIVOT_S3                       6
 
 
 // Konstanten zum Zugriff auf die Spalten der Account-History
-#define HISTORY_COLUMNS            22
-#define AH_TICKET                   0
-#define AH_OPENTIME                 1
-#define AH_OPENTIMESTAMP            2
-#define AH_TYPEDESCRIPTION          3
-#define AH_TYPE                     4
-#define AH_SIZE                     5
-#define AH_SYMBOL                   6
-#define AH_OPENPRICE                7
-#define AH_STOPLOSS                 8
-#define AH_TAKEPROFIT               9
-#define AH_CLOSETIME               10
-#define AH_CLOSETIMESTAMP          11
-#define AH_CLOSEPRICE              12
-#define AH_EXPIRATIONTIME          13
-#define AH_EXPIRATIONTIMESTAMP     14
-#define AH_MAGICNUMBER             15
-#define AH_COMMISSION              16
-#define AH_SWAP                    17
-#define AH_NETPROFIT               18
-#define AH_GROSSPROFIT             19
-#define AH_BALANCE                 20
-#define AH_COMMENT                 21
+#define HISTORY_COLUMNS               22
+#define AH_TICKET                      0
+#define AH_OPENTIME                    1
+#define AH_OPENTIMESTAMP               2
+#define AH_TYPEDESCRIPTION             3
+#define AH_TYPE                        4
+#define AH_SIZE                        5
+#define AH_SYMBOL                      6
+#define AH_OPENPRICE                   7
+#define AH_STOPLOSS                    8
+#define AH_TAKEPROFIT                  9
+#define AH_CLOSETIME                  10
+#define AH_CLOSETIMESTAMP             11
+#define AH_CLOSEPRICE                 12
+#define AH_EXPIRATIONTIME             13
+#define AH_EXPIRATIONTIMESTAMP        14
+#define AH_MAGICNUMBER                15
+#define AH_COMMISSION                 16
+#define AH_SWAP                       17
+#define AH_NETPROFIT                  18
+#define AH_GROSSPROFIT                19
+#define AH_BALANCE                    20
+#define AH_COMMENT                    21
 
 
 // Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
-#define MCM_FOREX                   0
-#define MCM_CFD                     1
-#define MCM_CFDFUTURES              2
-#define MCM_CFDINDEX                3
-#define MCM_CFDLEVERAGE             4           // erst seit MQLv5 dokumentiert
+#define MCM_FOREX                      0
+#define MCM_CFD                        1
+#define MCM_CFDFUTURES                 2
+#define MCM_CFDINDEX                   3
+#define MCM_CFDLEVERAGE                4        // erst seit MQLv5 dokumentiert
 
 
 // Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE)
-#define SCM_POINTS                  0
-#define SCM_BASE_CURRENCY           1
-#define SCM_INTEREST                2
-#define SCM_MARGIN_CURRENCY         3           // Deposit-Currency
+#define SCM_POINTS                     0
+#define SCM_BASE_CURRENCY              1
+#define SCM_INTEREST                   2
+#define SCM_MARGIN_CURRENCY            3        // Deposit-Currency
 
 
 // Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
-#define PCM_FOREX                   0
-#define PCM_CFD                     1
-#define PCM_FUTURES                 2
+#define PCM_FOREX                      0
+#define PCM_CFD                        1
+#define PCM_FUTURES                    2
 
 
 // Account stopout modes, siehe AccountStopoutMode()
-#define ASM_PERCENT                 0
-#define ASM_ABSOLUTE                1
+#define ASM_PERCENT                    0
+#define ASM_ABSOLUTE                   1
 
 
 // ID's zur Objektpositionierung, siehe ObjectSet(label, OBJPROP_CORNER,  int)
-#define CORNER_TOP_LEFT             0           // default
-#define CORNER_TOP_RIGHT            1
-#define CORNER_BOTTOM_LEFT          2
-#define CORNER_BOTTOM_RIGHT         3
+#define CORNER_TOP_LEFT                0        // default
+#define CORNER_TOP_RIGHT               1
+#define CORNER_BOTTOM_LEFT             2
+#define CORNER_BOTTOM_RIGHT            3
 
 
 // UninitializeReason-Codes
-#define REASON_UNDEFINED            0           // no uninitialize reason
-#define REASON_REMOVE               1           // program removed from chart
-#define REASON_RECOMPILE            2           // program recompiled
-#define REASON_CHARTCHANGE          3           // chart symbol or timeframe changed
-#define REASON_CHARTCLOSE           4           // chart closed or template changed
-#define REASON_PARAMETERS           5           // input parameters changed
-#define REASON_ACCOUNT              6           // account changed
+#define REASON_UNDEFINED               0        // no uninitialize reason
+#define REASON_REMOVE                  1        // program removed from chart
+#define REASON_RECOMPILE               2        // program recompiled
+#define REASON_CHARTCHANGE             3        // chart symbol or timeframe changed
+#define REASON_CHARTCLOSE              4        // chart closed or template changed
+#define REASON_PARAMETERS              5        // input parameters changed
+#define REASON_ACCOUNT                 6        // account changed
 
 
 // Currency-ID's
-#define CID_AUD                     1
-#define CID_CAD                     2
-#define CID_CHF                     3
-#define CID_EUR                     4
-#define CID_GBP                     5
-#define CID_JPY                     6
-#define CID_USD                     7           // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
+#define CID_AUD                        1
+#define CID_CAD                        2
+#define CID_CHF                        3
+#define CID_EUR                        4
+#define CID_GBP                        5
+#define CID_JPY                        6
+#define CID_USD                        7        // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
 
-#define CID_CNY                     8
-#define CID_CZK                     9
-#define CID_DKK                    10
-#define CID_HKD                    11
-#define CID_HRK                    12
-#define CID_HUF                    13
-#define CID_INR                    14
-#define CID_LTL                    15
-#define CID_LVL                    16
-#define CID_MXN                    17
-#define CID_NOK                    18
-#define CID_NZD                    19
-#define CID_PLN                    20
-#define CID_RUB                    21
-#define CID_SAR                    22
-#define CID_SEK                    23
-#define CID_SGD                    24
-#define CID_THB                    25
-#define CID_TRY                    26
-#define CID_TWD                    27
-#define CID_ZAR                    28
+#define CID_CNY                        8
+#define CID_CZK                        9
+#define CID_DKK                       10
+#define CID_HKD                       11
+#define CID_HRK                       12
+#define CID_HUF                       13
+#define CID_INR                       14
+#define CID_LTL                       15
+#define CID_LVL                       16
+#define CID_MXN                       17
+#define CID_NOK                       18
+#define CID_NZD                       19
+#define CID_PLN                       20
+#define CID_RUB                       21
+#define CID_SAR                       22
+#define CID_SEK                       23
+#define CID_SGD                       24
+#define CID_THB                       25
+#define CID_TRY                       26
+#define CID_TWD                       27
+#define CID_ZAR                       28
 
 
 // Currency-Kürzel
