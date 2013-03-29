@@ -226,6 +226,9 @@ bool IsStartSignal(int direction) {
       if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal)) {
          if (signal != 0) {
             if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
+
+            debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
+
             return(true);
          }
       }

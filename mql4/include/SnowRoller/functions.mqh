@@ -142,8 +142,9 @@ bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, strin
    if (trend == -1) /*&&*/ if (_bool(directions & MODE_DOWNTREND)) lpSignal = -1;
 
 
-   if (error == ERS_HISTORY_UPDATE)
-      warn("CheckTrendChange()   ERS_HISTORY_UPDATE");               // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
+   if (error == ERS_HISTORY_UPDATE)                                  // TODO: geladene Bars prüfen
+      warn("CheckTrendChange()   ERS_HISTORY_UPDATE (tick="+ Tick +")");
+
    return(!__STATUS_ERROR);
 }
 
