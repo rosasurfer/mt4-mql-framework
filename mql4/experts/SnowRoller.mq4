@@ -1139,11 +1139,11 @@ bool IsStartSignal() {
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
-            int    lag         = start.trend.lag;
+            int    smoothing   = start.trend.lag;
             int    direction   = ifInt(sequence.direction==D_LONG, MODE_UPTREND, MODE_DOWNTREND);
             int    signal;
 
-            if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal)) {
+            if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal)) {
                if (signal != 0) {
                   if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
                   return(true);
@@ -1301,11 +1301,11 @@ bool IsStopSignal() {
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
-            int    lag         = stop.trend.lag;
+            int    smoothing   = stop.trend.lag;
             int    direction   = ifInt(sequence.direction==D_LONG, MODE_DOWNTREND, MODE_UPTREND);
             int    signal;
 
-            if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, direction, signal))
+            if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal))
                return(false);
             if (signal != 0) {
                if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.trend.condition.txt, "\" met"));

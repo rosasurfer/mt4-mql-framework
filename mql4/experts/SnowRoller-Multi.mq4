@@ -431,10 +431,10 @@ bool IsStartSignal(int &lpSignal) {
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
          string maTimeframe = PeriodDescription(start.trend.timeframe);
          string maMethod    = start.trend.method;
-         int    lag         = start.trend.lag;
+         int    smoothing   = start.trend.lag;
          int    directions  = MODE_UPTREND | MODE_DOWNTREND;
 
-         if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, lag, directions, lpSignal)) {
+         if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, lpSignal)) {
             if (!lpSignal)
                return(false);
             if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(lpSignal>0, "up", "down")));

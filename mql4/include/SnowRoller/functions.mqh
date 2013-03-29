@@ -96,7 +96,7 @@ bool IsValidSequenceStatus(int value) {
  * @param  string maPeriods   - Indikator-Parameter
  * @param  string maTimeframe - Indikator-Parameter
  * @param  string maMethod    - Indikator-Parameter
- * @param  int    lag         - Trigger-Verzögerung, größer/gleich 0
+ * @param  int    smoothing   - Trend-Smoothing in Bars, größer/gleich 0
  * @param  int    directions  - Kombination von Trend-Flags:
  *                              MODE_UPTREND   - Wechsel zum Up-Trend wird signalisiert
  *                              MODE_DOWNTREND - Wechsel zum Down-Trend wird signalisiert
@@ -105,84 +105,48 @@ bool IsValidSequenceStatus(int value) {
  * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)
  *
  *
- *  TODO: 1) refaktorieren und auslagern
- *        2) Die Funktion könnte den Indikator selbst berechnen und nur bei abweichender Periode auf iCustom() zurückgreifen.
+ *  TODO: auslagern
  */
-bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, string maMethod, int lag, int directions, int &lpSignal) {
-   if (lag < 0)
-      return(_false(catch("CheckTrendChange(1)   illegal parameter lag = "+ lag, ERR_INVALID_FUNCTION_PARAMVALUE)));
+bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, string maMethod, int smoothing, int directions, int &lpSignal) {
+   if (smoothing < 0)
+      return(_false(catch("CheckTrendChange(1)   illegal parameter smoothing = "+ smoothing, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    lpSignal = 0;
-                                                                                 // +-----+------+
-   int error, /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);  // | lag | bars |
-   ic[IC_LAST_ERROR] = NO_ERROR;                                                 // +-----+------+
-                                                                                 // |  0  |   4  | Erkennung onBarOpen der neuen Bar (neuer Trend 1 Periode lang, frühester Zeitpunkt)
-   int    barTrend, trend, counterTrend;                                         // |  1  |  12  | Erkennung onBarOpen der nächsten Bar (neuer Trend 2 Perioden lang)
-   string strTrend, changePattern;                                               // |  2  |  20  | Erkennung onBarOpen der übernächsten Bar (neuer Trend 3 Perioden lang)
-   int    bars   = 4 + 8*lag;                                                    // +-----+------+
-   int    values = Max(bars+1, 20);                                  // +1 wegen fehlendem Trend der ältesten Bar; 20 (größtes lag) zur Reduktion ansonsten ident. Indikator-Instanzen
+   int maxValues = Max(5 + 8*smoothing, 50);                         // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu reduzieren
 
-   for (int bar=bars-1; bar > 0; bar--) {                            // Bar 0 ist immer unvollständig und wird nicht benötigt
-      // (1) Trend der einzelnen Bars ermitteln
-      barTrend = iCustom(NULL, timeframe, "Moving Average",          // +/-
-                         maPeriods,                                  // MA.Periods
-                         maTimeframe,                                // MA.Timeframe
-                         maMethod,                                   // MA.Method
-                         "Close",                                    // AppliedPrice
-                         ForestGreen,                                // Color.UpTrend
-                         Red,                                        // Color.DownTrend
-                         0,                                          // Trend.Lag
-                         0,                                          // Shift.H
-                         0,                                          // Shift.V
-                         values,                                     // Max.Values
-                         "",                                         // _________________
-                         ic[IC_PTR],                                 // __iCustom__
-                         MovingAverage.B_TREND, bar); //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
-
-      error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
-         return(_false(catch("CheckTrendChange(2)", error)));
-      if (IsError(ic[IC_LAST_ERROR]))
-         return(_false(SetLastError(ic[IC_LAST_ERROR])));
-      if (!barTrend)
-         return(_false(catch("CheckTrendChange(3)->iCustom(Moving Average)   invalid trend for bar="+ bar +": "+ barTrend, ERR_CUSTOM_INDICATOR_ERROR)));
+   int /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);
+   ic[IC_LAST_ERROR] = NO_ERROR;
 
 
-      // (2) Trendwechsel detektieren
-      if (bar == bars-1) {
-         trend = Sign(barTrend);                                     // 'trend'-Initialisierung bei erstem Durchlauf
-      }
-      else if (Sign(barTrend) == trend) {
-         counterTrend = 0;
-      }
-      else /*(Sign(barTrend) != trend)*/ {
-         counterTrend++;
-         if (counterTrend > lag) {
-            if (bar > 1) {
-               trend        = -Sign(trend);
-               counterTrend = 0;
-               continue;
-            }
+   // Trend in Bar 1 ermitteln
+   int trend = iCustom(NULL, timeframe, "Moving Average",            // +/-
+                       maPeriods,                                    // MA.Periods
+                       maTimeframe,                                  // MA.Timeframe
+                       maMethod,                                     // MA.Method
+                       "Close",                                      // AppliedPrice
+                       ForestGreen,                                  // Color.UpTrend
+                       Red,                                          // Color.DownTrend
+                       smoothing,                                    // Trend.Smoothing
+                       0,                                            // Shift.H
+                       0,                                            // Shift.V
+                       maxValues,                                    // Max.Values
+                       "",                                           // _________________
+                       ic[IC_PTR],                                   // __iCustom__
+                       MovingAverage.MODE_TREND_SMOOTH, 1);          //throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
-            // Bar 1: Trendwechsel
-            if (barTrend > 0) {
-               if (_bool(directions & MODE_UPTREND)) {
-                  lpSignal = 1;
-                  //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change up");
-               }
-            }
-            else /*(barTrend < 0)*/ {
-               if (_bool(directions & MODE_DOWNTREND)) {
-                  lpSignal = -1;
-                  //debug("CheckTrendChange()   "+ TimeToStr(TimeCurrent()) +"   trend change down");
-               }
-            }
-         }
-      }
-   }
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(2)", error)));
+   if (IsError(ic[IC_LAST_ERROR]))                           return(_false(SetLastError(ic[IC_LAST_ERROR])));
+   if (!trend)                                               return(_false(catch("CheckTrendChange(3)->iCustom(Moving Average)   invalid trend = "+ trend, ERR_CUSTOM_INDICATOR_ERROR)));
+
+
+   // Trendwechsel detektieren
+   if (trend == +1) /*&&*/ if (_bool(directions & MODE_UPTREND  )) lpSignal = +1;
+   if (trend == -1) /*&&*/ if (_bool(directions & MODE_DOWNTREND)) lpSignal = -1;
+
 
    if (error == ERS_HISTORY_UPDATE)
-      debug("CheckTrendChange()   ERS_HISTORY_UPDATE");        // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
+      debug("CheckTrendChange()   ERS_HISTORY_UPDATE");              // TODO: bei ERS_HISTORY_UPDATE die zur Berechnung verwendeten Bars prüfen
 
    return(!catch("CheckTrendChange(4)"));
 }
