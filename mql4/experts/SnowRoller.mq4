@@ -1141,13 +1141,14 @@ bool IsStartSignal() {
             string maMethod    = start.trend.method;
             int    smoothing   = start.trend.lag;
             int    direction   = ifInt(sequence.direction==D_LONG, MODE_UPTREND, MODE_DOWNTREND);
-            int    signal;
+            int    signal[]    = {0};
 
-            if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal)) {
-               if (signal != 0) {
-                  if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
-                  return(true);
-               }
+            if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal))
+               return(_false(SetLastError(stdlib_GetLastError())));
+
+            if (signal[0] != 0) {
+               if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
+               return(true);
             }
          }
          return(false);
@@ -1303,11 +1304,12 @@ bool IsStopSignal() {
             string maMethod    = stop.trend.method;
             int    smoothing   = stop.trend.lag;
             int    direction   = ifInt(sequence.direction==D_LONG, MODE_DOWNTREND, MODE_UPTREND);
-            int    signal;
+            int    signal[]    = {0};
 
             if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal))
-               return(false);
-            if (signal != 0) {
+               return(_false(SetLastError(stdlib_GetLastError())));
+
+            if (signal[0] != 0) {
                if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
             }
@@ -5324,7 +5326,6 @@ bool RecordEquity(int flags=NULL) {
  */
 void DummyCalls() {
    BreakevenEventToStr(NULL);
-   CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
    FindChartSequences(sNulls, iNulls);
    GetFullStatusDirectory();
    GetFullStatusFileName();

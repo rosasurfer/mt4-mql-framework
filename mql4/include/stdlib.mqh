@@ -228,7 +228,7 @@
    int      stdlib_GetLastError();
 
 
-   // Event-Listener: *KÖNNEN* im Programm durch alternative Versionen überschrieben werden
+   // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -242,7 +242,7 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // "abstrakte" Event-Handler: *MÜSSEN* bei Verwendung im Programm implementiert werden
+   // "abstrakte" Event-Handler: *müssen* bei Verwendung im Programm implementiert werden
    /*abstract*/ int onBarOpen        (int    data[]);
    /*abstract*/ int onAccountChange  (int    data[]);
    /*abstract*/ int onAccountPayment (int    data[]);
@@ -283,6 +283,10 @@
    int      GetPrivateProfileKeys(string fileName, string section, string keys[]);
    string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
    int      DeletePrivateProfileKey(string fileName, string section, string key);
+
+
+   // Indikatoren
+   bool     CheckTrendChange(int iTimeframe, string maPeriods, string maTimeframe, string maMethod, int trendSmoothing, int directions, int signal[]);
 
 
    // Locks

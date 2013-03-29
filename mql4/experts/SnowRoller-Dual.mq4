@@ -221,16 +221,15 @@ bool IsStartSignal(int direction) {
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
       int    smoothing   = start.trend.lag;
-      int    signal      = 0;
+      int    signal[]    = {0};
 
-      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal)) {
-         if (signal != 0) {
-            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
+      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal))
+         return(_false(SetLastError(stdlib_GetLastError())));
 
-            debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal>0, "up", "down")));
-
-            return(true);
-         }
+      if (signal[0] != 0) {
+         if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
+                  debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
+         return(true);
       }
    }
    return(false);
@@ -3305,7 +3304,6 @@ bool IsTest() {
  */
 void DummyCalls() {
    ChartMarker.OrderSent(NULL, NULL);
-   CheckTrendChange(NULL, NULL, NULL, NULL, NULL, NULL, iNull);
    ConfirmTick1Trade(NULL, NULL);
    CreateEventId();
    CreateSequenceId();

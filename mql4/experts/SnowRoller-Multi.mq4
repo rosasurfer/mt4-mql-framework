@@ -433,11 +433,14 @@ bool IsStartSignal(int &lpSignal) {
          string maMethod    = start.trend.method;
          int    smoothing   = start.trend.lag;
          int    directions  = MODE_UPTREND | MODE_DOWNTREND;
+         int    signal[]    = {0};
 
-         if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, lpSignal)) {
-            if (!lpSignal)
-               return(false);
-            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(lpSignal>0, "up", "down")));
+         if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, signal))
+            return(_false(SetLastError(stdlib_GetLastError())));
+
+         if (signal[0] != 0) {
+            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
+            lpSignal = signal[0];
             return(true);
          }
       }

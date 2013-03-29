@@ -90,66 +90,6 @@ bool IsValidSequenceStatus(int value) {
 
 
 /**
- * Prüft auf MA-Trendwechsel
- *
- * @param  int    timeframe   - zu verwendender Timeframe
- * @param  string maPeriods   - Indikator-Parameter
- * @param  string maTimeframe - Indikator-Parameter
- * @param  string maMethod    - Indikator-Parameter
- * @param  int    smoothing   - Trend-Smoothing in Bars, größer/gleich 0
- * @param  int    directions  - Kombination von Trend-Flags:
- *                              MODE_UPTREND   - Wechsel zum Up-Trend wird signalisiert
- *                              MODE_DOWNTREND - Wechsel zum Down-Trend wird signalisiert
- * @param  int    lpSignal    - Zeiger auf Variable zur Signalaufnahme (+: Wechsel zum Up-Trend, -: Wechsel zum Down-Trend)
- *
- * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)
- *
- *
- *  TODO: auslagern
- */
-bool CheckTrendChange(int timeframe, string maPeriods, string maTimeframe, string maMethod, int smoothing, int directions, int &lpSignal) {
-   lpSignal = 0;
-   int maxValues = Max(5 + 8*smoothing, 50);                         // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
-
-   int /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);
-   ic[IC_LAST_ERROR] = NO_ERROR;
-
-
-   // Trend in Bar 1 ermitteln
-   int trend = iCustom(NULL, timeframe, "Moving Average",            // +/-
-                       maPeriods,                                    // MA.Periods
-                       maTimeframe,                                  // MA.Timeframe
-                       maMethod,                                     // MA.Method
-                       "Close",                                      // AppliedPrice
-                       ForestGreen,                                  // Color.UpTrend
-                       Red,                                          // Color.DownTrend
-                       smoothing,                                    // Trend.Smoothing
-                       0,                                            // Shift.H
-                       0,                                            // Shift.V
-                       maxValues,                                    // Max.Values
-                       "",                                           // _________________
-                       ic[IC_PTR],                                   // __iCustom__
-                       MovingAverage.MODE_TREND_SMOOTH, 1);          // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
-
-   int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERS_HISTORY_UPDATE) return(_false(catch("CheckTrendChange(1)", error)));
-   if (IsError(ic[IC_LAST_ERROR]))                           return(_false(SetLastError(ic[IC_LAST_ERROR])));
-   if (!trend)                                               return(_false(catch("CheckTrendChange(2)->iCustom(Moving Average)   invalid trend = "+ trend, ERR_CUSTOM_INDICATOR_ERROR)));
-
-
-   // Trendwechsel detektieren
-   if (trend == +1) /*&&*/ if (_bool(directions & MODE_UPTREND  )) lpSignal = +1;
-   if (trend == -1) /*&&*/ if (_bool(directions & MODE_DOWNTREND)) lpSignal = -1;
-
-
-   if (error == ERS_HISTORY_UPDATE)                                  // TODO: geladene Bars prüfen
-      warn("CheckTrendChange()   ERS_HISTORY_UPDATE (tick="+ Tick +")");
-
-   return(!__STATUS_ERROR);
-}
-
-
-/**
  * Generiert eine neue Sequenz-ID.
  *
  * @return int - Sequenz-ID im Bereich 1000-16383 (mindestens 4-stellig, maximal 14 bit)
