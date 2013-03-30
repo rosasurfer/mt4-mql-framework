@@ -23,9 +23,6 @@ int    BollingerBands.MA.Timeframe  = 0;                 // M1, M5, M15 etc. (0 
 int    BollingerBands.MA.Method     = MODE_SMA;          // SMA | EMA | SMMA | LWMA | ALMA
 double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung
 
-bool   Track.PivotLevels            = false;
-bool   PivotLevels.PreviousDayRange = false;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -62,13 +59,6 @@ int onInit() {
 
    // Track.Positions
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
-
-   /*
-   // Track.PivotLevels
-   Track.PivotLevels = GetConfigBool(symbolSection, "PivotLevels", Track.PivotLevels);
-   if (Track.PivotLevels)
-      PivotLevels.PreviousDayRange = GetConfigBool(symbolSection, "PivotLevels.PreviousDayRange", PivotLevels.PreviousDayRange);
-   */
 
    // Track.BollingerBands
    Track.BollingerBands = GetConfigBool("EventTracker."+ StdSymbol(), "BollingerBands", Track.BollingerBands);
@@ -122,7 +112,7 @@ int onInit() {
       }
    }
    // -- Ende - Parametervalidierung
-   //debug("onInit()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.PivotLevels="+ Track.PivotLevels +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
+   //debug("onInit()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
 
 
    // Anzeigeoptionen
@@ -290,59 +280,6 @@ int CheckBollingerBands() {
 
    return(catch("CheckBollingerBands()"));
 }
-
-
-/**
- * @return int - Fehlerstatus (ggf. ERS_HISTORY_UPDATE)
- *
-int CheckPivotLevels() {
-   if (!Track.PivotLevels)
-      return(0);
-
-   static bool done;
-   if (done) return(0);
-
-   // heutige und vorherige Tradingranges und deren InsideBar-Status ermitteln
-   // ------------------------------------------------------------------------
-   double ranges[0][5];
-   int bar, MODE_INSIDEBAR = 4, period = PERIOD_H1;
-
-   while (true) {
-      // Tagesrange
-      double range[4];
-      int error = iOHLCBar(range, Symbol(), period, bar, true);
-      if (error == ERR_NO_RESULT) catch("CheckPivotLevels(1)    iOHLCBar(bar="+ bar +") => ", error);
-      if (error != NO_ERROR     ) return(error);
-
-      // Abbruch, wenn die vorherige Bar keine Inside-Bar ist
-      if (bar > 1 ) if (range[MODE_HIGH] < ranges[bar-1][MODE_HIGH] || range[MODE_LOW] > ranges[bar-1][MODE_LOW])
-         break;
-
-      ArrayResize(ranges, bar+1);
-      ranges[bar][MODE_OPEN ] = range[MODE_OPEN ];
-      ranges[bar][MODE_HIGH ] = range[MODE_HIGH ];
-      ranges[bar][MODE_LOW  ] = range[MODE_LOW  ];
-      ranges[bar][MODE_CLOSE] = range[MODE_CLOSE];
-      debug("CheckPivotLevels()    "+ PeriodDescription(period) +":range"+ bar +"   Open="+ NumberToStr(range[MODE_OPEN], ".4'") +"    High="+ NumberToStr(range[MODE_HIGH], ".4'") +"    Low="+ NumberToStr(range[MODE_LOW], ".4'") +"    Close="+ NumberToStr(range[MODE_CLOSE], ".4'"));
-
-      // InsideBar-Status bestimmen und speichern
-      if (bar > 0) {
-         if (ranges[bar][MODE_HIGH] >= ranges[bar-1][MODE_HIGH] && ranges[bar][MODE_LOW] <= ranges[bar-1][MODE_LOW])
-            ranges[bar-1][MODE_INSIDEBAR] = 1;
-         else break;
-      }
-      bar++;
-      continue;
-   }
-
-
-   // Pivot-Level überprüfen
-   // ----------------------
-
-   done = true;
-   return(catch("CheckPivotLevels(2)"));
-}
- */
 
 
 /**
