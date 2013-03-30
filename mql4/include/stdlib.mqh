@@ -286,7 +286,7 @@
 
 
    // Indikatoren
-   bool     CheckTrendChange(int iTimeframe, string maPeriods, string maTimeframe, string maMethod, int trendSmoothing, int directions, int signal[]);
+   double   icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar);
 
 
    // Locks
