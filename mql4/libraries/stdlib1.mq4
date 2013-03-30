@@ -933,7 +933,7 @@ int LoadCursorByName(int hInstance, string cursorName) {
  */
 int GetGMTToFXTOffset(datetime gmtTime) {
    if (gmtTime < 0) {
-      catch("GetGMTToFXTOffset()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetGMTToFXTOffset()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -957,7 +957,7 @@ int GetGMTToFXTOffset(datetime gmtTime) {
  */
 int GetServerToFXTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
-      catch("GetServerToFXTOffset()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetServerToFXTOffset()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -995,7 +995,7 @@ int GetServerToFXTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CO
  */
 int GetServerToGMTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
-      catch("GetServerToGMTOffset(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetServerToGMTOffset(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -3487,8 +3487,8 @@ string BufferToHexStr(int buffer[]) {
 int BufferGetChar(int buffer[], int pos) {
    int chars = ArraySize(buffer) << 2;
 
-   if (pos < 0)      return(_int(-1, catch("BufferGetChar(1)   invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (pos >= chars) return(_int(-1, catch("BufferGetChar(2)   invalid parameter pos: "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (pos < 0)      return(_int(-1, catch("BufferGetChar(1)   invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (pos >= chars) return(_int(-1, catch("BufferGetChar(2)   invalid parameter pos = "+ pos, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int i = pos >> 2;                      // Index des relevanten Integers des Arrays     // +---+------------+
    int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
@@ -3510,8 +3510,8 @@ int BufferGetChar(int buffer[], int pos) {
  * @return string - ANSI-String
  */
 string BufferCharsToStr(int buffer[], int from, int length) {
-   if (from < 0)                return(_empty(catch("BufferCharsToStr(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)              return(_empty(catch("BufferCharsToStr(2)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (from < 0)                return(_empty(catch("BufferCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)              return(_empty(catch("BufferCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
       return("");
 
@@ -3521,8 +3521,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   if (fromChar >= bufferChars) return(_empty(catch("BufferCharsToStr(3)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (toChar >= bufferChars)   return(_empty(catch("BufferCharsToStr(4)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (fromChar >= bufferChars) return(_empty(catch("BufferCharsToStr(3)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (toChar >= bufferChars)   return(_empty(catch("BufferCharsToStr(4)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
 
    string result = "";
@@ -3560,8 +3560,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 /*private*/string BuffersCharsToStr(int buffer[][], int from, int length) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions > 2) return(_empty(catch("BuffersCharsToStr(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
-   if (from < 0)       return(_empty(catch("BuffersCharsToStr(2)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)     return(_empty(catch("BuffersCharsToStr(3)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (from < 0)       return(_empty(catch("BuffersCharsToStr(2)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)     return(_empty(catch("BuffersCharsToStr(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
       return("");
 
@@ -3591,10 +3591,10 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
    if (from < 0)
-      return(catch("BufferWCharsToStr(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+length, size=ArraySize(buffer);
    if (to > size)
-      return(catch("BufferWCharsToStr(2)   invalid parameter length: "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("BufferWCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
@@ -3773,7 +3773,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
-      return(_empty(catch("GetWin32ShortcutTarget(1)   invalid parameter lnkFilename: \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetWin32ShortcutTarget(1)   invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
@@ -4350,7 +4350,7 @@ string StdSymbol() {
  */
 string GetStandardSymbol(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetStandardSymbol()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetStandardSymbolOrAlt(symbol, symbol));
 }
 
@@ -4370,7 +4370,7 @@ string GetStandardSymbol(string symbol) {
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetStandardSymbolOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetStandardSymbolOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetStandardSymbolStrict(symbol);
 
@@ -4394,7 +4394,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  */
 string GetStandardSymbolStrict(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetStandardSymbolStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetStandardSymbolStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = StringToUpper(symbol);
 
@@ -4601,7 +4601,7 @@ string GetStandardSymbolStrict(string symbol) {
  */
 string GetSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -4619,7 +4619,7 @@ string GetSymbolName(string symbol) {
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetSymbolNameStrict(symbol);
 
@@ -4640,7 +4640,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
    if (StringLen(symbol) == 0)
@@ -4771,7 +4771,7 @@ string GetSymbolNameStrict(string symbol) {
  */
 string GetLongSymbolName(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetLongSymbolName()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetLongSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetLongSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -4787,7 +4787,7 @@ string GetLongSymbolName(string symbol) {
  */
 string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetLongSymbolNameOrAlt()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetLongSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetLongSymbolNameStrict(symbol);
 
@@ -4808,7 +4808,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetLongSymbolNameStrict(string symbol) {
    if (StringLen(symbol) == 0)
-      return(_empty(catch("GetLongSymbolNameStrict()   invalid parameter symbol: \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetLongSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
 
@@ -5237,7 +5237,7 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  */
 datetime GetServerPrevSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -5260,7 +5260,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) { //throws ERR_INVAL
  */
 datetime GetServerPrevSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerPrevSessionEndTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerPrevSessionEndTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerPrevSessionStartTime(serverTime);
    if (startTime == -1)
@@ -5279,7 +5279,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) { //throws ERR_INVALID
  */
 datetime GetServerSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetServerToFXTOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
@@ -5312,7 +5312,7 @@ datetime GetServerSessionStartTime(datetime serverTime) { //throws ERR_INVALID_T
  */
 datetime GetServerSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionEndTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerSessionStartTime(serverTime);
    if (startTime == -1)
@@ -5331,7 +5331,7 @@ datetime GetServerSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIM
  */
 datetime GetServerNextSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = ServerToFXT(serverTime);
    if (fxtTime == -1)
@@ -5354,7 +5354,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) { //throws ERR_INVAL
  */
 datetime GetServerNextSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerNextSessionEndTime()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerNextSessionEndTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetServerNextSessionStartTime(datetime serverTime);
    if (startTime == -1)
@@ -5373,7 +5373,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) { //throws ERR_INVALID
  */
 datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5396,7 +5396,7 @@ datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTPrevSessionStartTime(gmtTime);
    if (startTime == -1)
@@ -5415,7 +5415,7 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  */
 datetime GetGMTSessionStartTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5438,7 +5438,7 @@ datetime GetGMTSessionStartTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
  */
 datetime GetGMTSessionEndTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5457,7 +5457,7 @@ datetime GetGMTSessionEndTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
  */
 datetime GetGMTNextSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionStartTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5480,7 +5480,7 @@ datetime GetGMTNextSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTNextSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionEndTime()   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTNextSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5499,7 +5499,7 @@ datetime GetGMTNextSessionEndTime(datetime gmtTime) {
  */
 datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
@@ -5526,7 +5526,7 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
  */
 datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTPrevSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5545,7 +5545,7 @@ datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
  */
 datetime GetFXTSessionStartTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
@@ -5569,7 +5569,7 @@ datetime GetFXTSessionStartTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
  */
 datetime GetFXTSessionEndTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5588,7 +5588,7 @@ datetime GetFXTSessionEndTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
  */
 datetime GetFXTNextSessionStartTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTNextSessionStartTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTNextSessionStartTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
@@ -5610,7 +5610,7 @@ datetime GetFXTNextSessionStartTime(datetime fxtTime) {
  */
 datetime GetFXTNextSessionEndTime(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("GetFXTNextSessionEndTime()   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetFXTNextSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
@@ -5789,7 +5789,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_D1 );
       case PERIOD_MN1: return(PERIOD_W1 );
    }
-   return(_ZERO(catch("DecreasePeriod()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("DecreasePeriod()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -5821,7 +5821,7 @@ string DoubleToStrTrim(double value) {
  */
 datetime FXTToGMT(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_int(-1, catch("FXTToGMT(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("FXTToGMT(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToGMTOffset(fxtTime);
    if (offset == EMPTY_VALUE)
@@ -5844,7 +5844,7 @@ datetime FXTToGMT(datetime fxtTime) {
  */
 datetime FXTToServerTime(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0)
-      return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetFXTToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
@@ -6060,63 +6060,65 @@ bool EventListener.OrderCancel(int results[], int flags=NULL) {
  * @return bool - Ergebnis
  */
 bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
-   // ohne Verbindung zum Tradeserver sofortige Rückkehr
+   // ohne vollständige Account-Initialisierung Abbruch
    int account = AccountNumber();
    if (!account)
       return(false);
 
-   // Ergebnisarray sicherheitshalber zurücksetzen
    if (ArraySize(tickets) > 0)
       ArrayResize(tickets, 0);
 
    static int      accountNumber  [1];
-   static datetime accountInitTime[1];                                                    // GMT-Zeit
-   static int      knownPendings  [][2];                                                  // die bekannten pending Orders und ihr Typ
-   static int      knownPositions [];                                                     // die bekannten Positionen
+   static datetime accountInitTime[1];                               // GMT-Zeit
+   static int      knownPendings  [][2];                             // bekannte Pending-Orders und ihr Typ
+   static int      knownPositions [];                                // bekannte Positionen
 
-   if (!accountNumber[0]) {                                                               // 1. Aufruf
-      accountNumber[0]   = account;
+
+   // (1) Account initialisieren bzw. Accountwechsel erkennen
+   if (!accountNumber[0]) {                                          // erster Aufruf
+      accountNumber  [0] = account;
       accountInitTime[0] = TimeGMT();
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
+      //debug("EventListener.PositionOpen()   Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
-   else if (accountNumber[0] != account) {                                                // Aufruf nach Accountwechsel zur Laufzeit: bekannte Positionen löschen
-      accountNumber[0]   = account;
+   else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit
+      accountNumber  [0] = account;
       accountInitTime[0] = TimeGMT();
-      ArrayResize(knownPendings, 0);
+      ArrayResize(knownPendings,  0);                                // gespeicherte Orderdaten löschen
       ArrayResize(knownPositions, 0);
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
 
+
+   // (2) Pending-Orders und Positionen abgleichen
    OrderPush("EventListener.PositionOpen(1)");
    int orders = OrdersTotal();
 
-   // pending Orders und offene Positionen überprüfen
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                                    // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
       int n, pendings, positions, type=OrderType(), ticket=OrderTicket();
 
-      // pending Orders überprüfen und ggf. aktualisieren
+      // (2.1) Pending-Orders
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP) {
          pendings = ArrayRange(knownPendings, 0);
          for (n=0; n < pendings; n++)
-            if (knownPendings[n][0] == ticket)                                            // bekannte pending Order
+            if (knownPendings[n][0] == ticket)                       // bekannte Pending-Order
                break;
          if (n < pendings)
             continue;
 
-         ArrayResize(knownPendings, pendings+1);                                          // neue (unbekannte) pending Order
+         ArrayResize(knownPendings, pendings+1);                     // neue, unbekannte Pending-Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
          //debug("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
       }
 
-      // offene Positionen überprüfen und ggf. aktualisieren
+      // (2.2) Positionen
       else if (type==OP_BUY || type==OP_SELL) {
          positions = ArraySize(knownPositions);
          for (n=0; n < positions; n++)
-            if (knownPositions[n] == ticket)                                              // bekannte Position
+            if (knownPositions[n] == ticket)                         // bekannte Position
                break;
          if (n < positions)
             continue;
@@ -6135,12 +6137,12 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
             if (_bool(flags & OFLAG_SELL         )) event &= _int(         type == OP_SELL );
             if (_bool(flags & OFLAG_MARKETORDER  )) {
                for (int z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)                                      // Order war pending
+                  if (knownPendings[z][0] == ticket)                 // Order war pending
                      break;                         event &= _int(z == pendings);
             }
             if (_bool(flags & OFLAG_PENDINGORDER )) {
                for (z=0; z < pendings; z++)
-                  if (knownPendings[z][0] == ticket)                                      // Order war pending
+                  if (knownPendings[z][0] == ticket)                 // Order war pending
                      break;                         event &= _int(z < pendings);
             }
 
@@ -6879,7 +6881,7 @@ int GetFXTToGMTOffset(datetime fxtTime) {
  */
 int GetFXTToServerTimeOffset(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0) {
-      catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime: "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -6996,7 +6998,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  */
 int GetGMTToServerTimeOffset(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0) {
-      catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
+      catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
    }
 
@@ -7603,7 +7605,7 @@ int MovingAverageMethodToId(string method) {
    if (value == "LWMA") return(MODE_LWMA);
    if (value == "ALMA") return(MODE_ALMA);
 
-   if (__LOG) log("MovingAverageMethodToId()   invalid parameter method: \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("MovingAverageMethodToId()   invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -7772,7 +7774,7 @@ string AppliedPriceToStr(int appliedPrice) {
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
    }
-   return(_empty(catch("AppliedPriceToStr()   invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("AppliedPriceToStr()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7793,7 +7795,7 @@ string AppliedPriceDescription(int appliedPrice) {
       case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
    }
-   return(_empty(catch("AppliedPriceDescription()   invalid parameter appliedPrice: "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("AppliedPriceDescription()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7820,7 +7822,7 @@ int PeriodToId(string timeframe) {
    if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
    if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
 
-   if (__LOG) log("PeriodToId()   invalid parameter timeframe: \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("PeriodToId()   invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -7847,7 +7849,7 @@ string PeriodToStr(int period=NULL) {
       case PERIOD_W1 : return("PERIOD_W1" );     // 10080  weekly
       case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
    }
-   return(_empty(catch("PeriodToStr()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PeriodToStr()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7873,7 +7875,7 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_W1 : return("W1" );     // 10080  weekly
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
-   return(_empty(catch("PeriodDescription()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PeriodDescription()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8172,7 +8174,7 @@ string UninitializeReasonDescription(int reason) {
       case REASON_CHARTCHANGE: return("chart symbol or timeframe changed");
       case REASON_ACCOUNT    : return("account changed"                  );
    }
-   return(_empty(catch("UninitializeReasonDescription()   invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("UninitializeReasonDescription()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8193,7 +8195,7 @@ string UninitializeReasonToStr(int reason) {
       case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
       case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
    }
-   return(_empty(catch("UninitializeReasonToStr()   invalid parameter reason: "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("UninitializeReasonToStr()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8262,7 +8264,7 @@ string GetClassName(int hWnd) {
  */
 datetime GMTToFXT(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GMTToFXT(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GMTToFXT(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset = GetGMTToFXTOffset(gmtTime);
    if (offset == EMPTY_VALUE)
@@ -8285,7 +8287,7 @@ datetime GMTToFXT(datetime gmtTime) {
  */
 datetime GMTToServerTime(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0)
-      return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime: "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -8398,7 +8400,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
       symbol = Symbol();
 
    if (time < 0)
-      return(_int(EMPTY_VALUE, catch("iBarShiftPrevious(1)   invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("iBarShiftPrevious(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Datenreihe holen
    datetime times[];
@@ -8441,7 +8443,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //t
       symbol = Symbol();
 
    if (time < 0)
-      return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)   invalid parameter time: "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("iBarShiftNext(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
@@ -8497,7 +8499,7 @@ int IncreasePeriod(int period = 0) {
       case PERIOD_W1 : return(PERIOD_MN1);
       case PERIOD_MN1: return(PERIOD_MN1);
    }
-   return(_ZERO(catch("IncreasePeriod()   invalid parameter period: "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_ZERO(catch("IncreasePeriod()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8903,7 +8905,7 @@ bool ObjectDeleteSilent(string label, string location) {
  */
 int SendSMS(string receiver, string message) {
    if (!StringIsDigit(receiver))
-      return(catch("SendSMS(1)   invalid parameter receiver: \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // TODO: Gateway-Zugangsdaten auslagern
 
@@ -8943,7 +8945,7 @@ int SendSMS(string receiver, string message) {
  */
 datetime ServerToFXT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -8970,7 +8972,7 @@ datetime ServerToFXT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
  */
 datetime ServerToGMT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
@@ -9391,11 +9393,11 @@ color RGB(int red, int green, int blue) {
          if (0 <= blue && blue <= 255) {
             return(red + green<<8 + blue<<16);
          }
-         else catch("RGB(1)   invalid parameter blue: "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("RGB(1)   invalid parameter blue = "+ blue, ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("RGB(2)   invalid parameter green: "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("RGB(2)   invalid parameter green = "+ green, ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("RGB(3)   invalid parameter red: "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("RGB(3)   invalid parameter red = "+ red, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -9513,9 +9515,9 @@ int RGBToHSVColor(color rgb, double &hsv[]) {
  */
 color HSVToRGBColor(double hsv[3]) {
    if (ArrayDimension(hsv) != 1)
-      return(catch("HSVToRGBColor(1)   illegal parameter hsv: "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(1)   illegal parameter hsv = "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(hsv) != 3)
-      return(catch("HSVToRGBColor(2)   illegal parameter hsv: "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGBColor(2)   illegal parameter hsv = "+ DoublesToStr(hsv), ERR_INCOMPATIBLE_ARRAYS));
 
    return(HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]));
 }
@@ -9531,9 +9533,9 @@ color HSVToRGBColor(double hsv[3]) {
  * @return color - Farbe oder -1, falls ein Fehler auftrat
  */
 color HSVValuesToRGBColor(double hue, double saturation, double value) {
-   if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)   invalid parameter hue: "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (saturation < 0.0 || saturation > 1.0) return(_int(-1, catch("HSVValuesToRGBColor(2)   invalid parameter saturation: "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (value < 0.0 || value > 1.0)           return(_int(-1, catch("HSVValuesToRGBColor(3)   invalid parameter value: "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hue < 0.0 || hue > 360.0)             return(_int(-1, catch("HSVValuesToRGBColor(1)   invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (saturation < 0.0 || saturation > 1.0) return(_int(-1, catch("HSVValuesToRGBColor(2)   invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (value < 0.0 || value > 1.0)           return(_int(-1, catch("HSVValuesToRGBColor(3)   invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double red, green, blue;
 
@@ -9629,13 +9631,13 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 
                return(result);
             }
-            else catch("Color.ModifyHSV(2)   invalid parameter mod_value: "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+            else catch("Color.ModifyHSV(2)   invalid parameter mod_value = "+ NumberToStr(mod_value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
          }
-         else catch("Color.ModifyHSV(3)   invalid parameter mod_saturation: "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+         else catch("Color.ModifyHSV(3)   invalid parameter mod_saturation = "+ NumberToStr(mod_saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
       }
-      else catch("Color.ModifyHSV(4)   invalid parameter mod_hue: "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
+      else catch("Color.ModifyHSV(4)   invalid parameter mod_hue = "+ NumberToStr(mod_hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE);
    }
-   else catch("Color.ModifyHSV(5)   invalid parameter rgb: "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
+   else catch("Color.ModifyHSV(5)   invalid parameter rgb = "+ rgb, ERR_INVALID_FUNCTION_PARAMVALUE);
 
    return(-1);
 }
@@ -9651,7 +9653,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  */
 string DoubleToStrEx(double value, int digits) {
    if (digits < 0 || digits > 16)
-      return(_empty(catch("DoubleToStrEx()   illegal parameter digits: "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("DoubleToStrEx()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    /*
    double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
@@ -9724,7 +9726,7 @@ string DoubleToStrMorePrecision(double value, int precision) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0)
-      return(_empty(catch("StringRepeat()   invalid parameter times: "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("StringRepeat()   invalid parameter times = "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (times ==  0)           return("");
    if (StringLen(input) == 0) return("");
@@ -11790,9 +11792,9 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       if (OrderType() > OP_SELL)                               return(_false(oes.setError(oes, -1, catch("OrderMultiClose(4)   #"+ tickets[i] +" is not an open position", ERR_INVALID_TICKET, O_POP))));
    }
    // slippage
-   if (LT(slippage, 0))                                        return(_false(oes.setError(oes, -1, catch("OrderMultiClose(5)   illegal parameter slippage: "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (LT(slippage, 0))                                        return(_false(oes.setError(oes, -1, catch("OrderMultiClose(5)   illegal parameter slippage = "+ NumberToStr(slippage, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oes.setError(oes, -1, catch("OrderMultiClose(6)   illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(oes.setError(oes, -1, catch("OrderMultiClose(6)   illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    // -- Ende Parametervalidierung --
 
    // oes initialisieren
