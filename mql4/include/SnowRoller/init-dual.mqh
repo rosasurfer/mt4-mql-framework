@@ -42,8 +42,7 @@ int onInitChartChange() {
  * @return int - Fehlerstatus
  */
 int onInitChartClose() {
-   bool interactive = true;
-   ValidateConfiguration(interactive);
+   ValidateConfiguration(true);                                      // interactive = true
    return(last_error);
 }
 
@@ -58,14 +57,14 @@ int onInitChartClose() {
  * @return int - Fehlerstatus
  */
 int onInitUndefined() {
-   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem/neuem EA)
+   // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem und neuem EA)
    if (RestoreStickyStatus())
-      return(onInitRecompile());    // ja:   vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
+      return(onInitRecompile());    // ja: vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
 
    if (__STATUS_ERROR)
       return(last_error);
 
-   return(onInitChartClose());      // nein: neuer EA      -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
+   return(onInitChartClose());      // nein: neuer EA    -> Input-Dialog:      Funktionalität entspricht onInitChartClose()
 }
 
 
@@ -89,11 +88,9 @@ int onInitRemove() {
  * @return int - Fehlerstatus
  */
 int onInitRecompile() {
-   bool interactive = false;
-
    // im Chart gespeicherte Daten restaurieren
    if (RestoreStickyStatus())
-      ValidateConfiguration(interactive);
+      ValidateConfiguration(false);                                  // interactive = false
 
    ClearStickyStatus();
    return(last_error);

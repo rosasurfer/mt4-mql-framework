@@ -1139,14 +1139,16 @@ bool IsStartSignal() {
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
-            int    smoothing   = start.trend.lag;
-            int    direction   = ifInt(sequence.direction==D_LONG, MODE_UPTREND, MODE_DOWNTREND);
-            int    signal[]    = {0};
+            int    maTrendLag  = start.trend.lag;
 
-            if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal))
-               return(_false(SetLastError(stdlib_GetLastError())));
-
-            if (signal[0] != 0) {
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+            if (!trend) {
+               int error = stdlib_GetLastError();
+               if (IsError(error))
+                  SetLastError(error);
+               return(false);
+            }
+            if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
                if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
                return(true);
             }
@@ -1302,14 +1304,16 @@ bool IsStopSignal() {
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
-            int    smoothing   = stop.trend.lag;
-            int    direction   = ifInt(sequence.direction==D_LONG, MODE_DOWNTREND, MODE_UPTREND);
-            int    signal[]    = {0};
+            int    maTrendLag  = stop.trend.lag;
 
-            if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, direction, signal))
-               return(_false(SetLastError(stdlib_GetLastError())));
-
-            if (signal[0] != 0) {
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+            if (!trend) {
+               int error = stdlib_GetLastError();
+               if (IsError(error))
+                  SetLastError(error);
+               return(false);
+            }
+            if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
                if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
             }

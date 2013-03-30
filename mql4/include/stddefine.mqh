@@ -299,8 +299,8 @@ string  sNull, sNulls[];
 #define BUFFER_8          BUFFER_INDEX_7
 
 #define MovingAverage.MODE_MA             0     // Moving Average.mq4
-#define MovingAverage.MODE_TREND          1     // Trend ohne Smoothing
-#define MovingAverage.MODE_TREND_SMOOTH   2     // Trend nach Smoothing
+#define MovingAverage.MODE_TREND          1     // Trend ohne Verzögerung
+#define MovingAverage.MODE_TREND_LAGGED   2     // Trend mit Verzögerung
 
 
 // Indicator shared memory identifiers, siehe iCustom()
@@ -313,7 +313,7 @@ string  sNull, sNulls[];
 #define MODE_DESCEND                   2        // absteigend
 
 
-// Trend direction flags, siehe CheckTrendChange()
+// Trend direction flags
 #define MODE_UPTREND                   1
 #define MODE_DOWNTREND                 2
 

@@ -219,15 +219,19 @@ bool IsStartSignal(int direction) {
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
-      int    smoothing   = start.trend.lag;
-      int    signal[]    = {0};
+      int    maTrendLag  = start.trend.lag;
 
-      if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal))
-         return(_false(SetLastError(stdlib_GetLastError())));
+      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+      if (!trend) {
+         int error = stdlib_GetLastError();
+         if (IsError(error))
+            SetLastError(error);
+         return(false);
+      }
 
-      if (signal[0] != 0) {
-         if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
-                  debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
+      if ((direction==D_LONG && trend==1) || (direction==D_SHORT && trend==-1)) {
+         if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                  debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
          return(true);
       }
    }

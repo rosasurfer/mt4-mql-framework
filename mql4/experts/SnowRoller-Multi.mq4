@@ -426,21 +426,24 @@ bool IsStartSignal(int &lpSignal) {
    if (start.trend.condition) {
       int iNull[];
       if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
-
          int    timeframe   = start.trend.timeframe;
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
          string maTimeframe = PeriodDescription(start.trend.timeframe);
          string maMethod    = start.trend.method;
-         int    smoothing   = start.trend.lag;
-         int    directions  = MODE_UPTREND | MODE_DOWNTREND;
-         int    signal[]    = {0};
+         int    maTrendLag  = start.trend.lag;
 
-         if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, signal))
-            return(_false(SetLastError(stdlib_GetLastError())));
+         int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+         if (!trend) {
+            int error = stdlib_GetLastError();
+            if (IsError(error))
+               SetLastError(error);
+            return(false);
+         }
 
-         if (signal[0] != 0) {
-            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(signal[0] > 0, "up", "down")));
-            lpSignal = signal[0];
+         if (trend==1 || trend==-1) {
+            lpSignal = trend;
+            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                     debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
             return(true);
          }
       }
