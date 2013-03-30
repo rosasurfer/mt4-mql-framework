@@ -1,5 +1,5 @@
 /**
- * Überwacht ein Instrument auf verschiedene Signale und benachrichtigt akustisch und/oder per SMS.
+ * Überwacht ein Instrument auf verschiedene Ereignisse und benachrichtigt akustisch und/oder per SMS.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -8,20 +8,19 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) //////////////////////////////////////////////////
 
-bool   Sound.Alerts                 = true;
-string Sound.PositionOpen           = "OrderFilled.wav";
-string Sound.PositionClose          = "PositionClosed.wav";
+bool   Sound.Alerts                = true;
+bool   SMS.Alerts                  = false;
+string SMS.Receiver                = "";
 
-bool   SMS.Alerts                   = false;
-string SMS.Receiver                 = "";
+bool   Track.Positions             = true;
+string Sound.PositionOpen          = "OrderFilled.wav";
+string Sound.PositionClose         = "PositionClosed.wav";
 
-bool   Track.Positions              = true;
-
-bool   Track.BollingerBands         = false;
-int    BollingerBands.MA.Periods    = 0;
-int    BollingerBands.MA.Timeframe  = 0;                 // M1, M5, M15 etc. (0 => aktueller Timeframe)
-int    BollingerBands.MA.Method     = MODE_SMA;          // SMA | EMA | SMMA | LWMA | ALMA
-double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung
+bool   Track.BollingerBands        = false;
+int    BollingerBands.MA.Periods   = 0;
+int    BollingerBands.MA.Timeframe = 0;                              // M1, M5, M15 etc. (0 => aktueller Timeframe)
+int    BollingerBands.MA.Method    = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
+double BollingerBands.Deviation    = 2.0;                            // Std.-Abweichung
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,8 +28,7 @@ double BollingerBands.Deviation     = 2.0;               // Std.-Abweichung
 
 #property indicator_chart_window
 
-string symbolName;
-int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
+int BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
 
 
 /**
@@ -39,10 +37,6 @@ int    BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // globale Variablen
-   symbolName = GetSymbolName(StdSymbol());
-
-
    // -- Beginn - Parametervalidierung
    // Sound.Alerts
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
@@ -50,6 +44,7 @@ int onInit() {
    // SMS.Alerts
    SMS.Alerts = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
    if (SMS.Alerts) {
+      // SMS.Receiver
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver)) {
          catch("onInit(1)   Invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
@@ -128,9 +123,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERS_HISTORY_UPDATE)
-      ValidBars = 0;
-
+   /*
    // unvollständige Accountinitialisierung abfangen (bei Start und Accountwechseln mit schnellen Prozessoren)
    if (!AccountNumber())
       return(SetLastError(ERR_NO_CONNECTION));
@@ -142,6 +135,7 @@ int onTick() {
       //debug("onTick()   old tick=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\"   login=\""+ TimeToStr(loginData[2], TIME_FULL) +"\"");
       return(catch("onTick()"));
    }
+   */
 
    // Positionen
    if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
@@ -151,7 +145,7 @@ int onTick() {
 
    // Bollinger-Bänder
    if (Track.BollingerBands) {
-      if (CheckBollingerBands() != NO_ERROR)
+      if (!CheckBollingerBands())
          return(last_error);
    }
 
@@ -160,9 +154,9 @@ int onTick() {
 
 
 /**
- * Handler für PositionOpen-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
+ * Handler für PositionOpen-Events.
  *
- * @param  int tickets[] - Tickets der neuen Positionen
+ * @param  int tickets[] - Tickets der geöffneten Positionen
  *
  * @return int - Fehlerstatus
  */
@@ -176,11 +170,10 @@ int onPositionOpen(int tickets[]) {
       if (!SelectTicket(tickets[i], "onPositionOpen(1)"))
          return(last_error);
 
-      // alle Positionen werden im aktuellen Instrument gehalten
       string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
       string price   = NumberToStr(OrderOpenPrice(), PriceFormat);
-      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", symbolName, " at ", price);
+      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", GetSymbolName(GetStandardSymbol(OrderSymbol())), " at ", price);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -202,7 +195,7 @@ int onPositionOpen(int tickets[]) {
 
 
 /**
- * Handler für PositionClose-Events. Die Unterscheidung von Limit- und Market-Orders erfolgt im EventListener.
+ * Handler für PositionClose-Events.
  *
  * @param  int tickets[] - Tickets der geschlossenen Positionen
  *
@@ -218,12 +211,11 @@ int onPositionClose(int tickets[]) {
       if (!SelectTicket(tickets[i], "onPositionClose(1)"))
          continue;
 
-      // alle Positionen wurden im aktuellen Instrument gehalten
       string type       = OperationTypeDescription(OrderType());
       string lots       = NumberToStr(OrderLots(), ".+");
       string openPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string closePrice = NumberToStr(OrderClosePrice(), PriceFormat);
-      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", symbolName, " at ", openPrice, " -> ", closePrice);
+      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", GetSymbolName(GetStandardSymbol(OrderSymbol())), " at ", openPrice, " -> ", closePrice);
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -250,9 +242,9 @@ int onPositionClose(int tickets[]) {
 /**
  * Prüft, ob das aktuelle BollingerBand verletzt wurde und benachrichtigt entsprechend.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus (nicht, ob ein Signal aufgetreten ist)
  */
-int CheckBollingerBands() {
+bool CheckBollingerBands() {
    double event[3];
 
    // EventListener aufrufen und bei Erfolg Event signalisieren
@@ -263,10 +255,10 @@ int CheckBollingerBands() {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         string message = StringConcatenate(symbolName, ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
+         string message = StringConcatenate(GetSymbolName(StdSymbol()), ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (error != NO_ERROR)
-            return(SetLastError(error));
+         if (IsError(error))
+            return(!SetLastError(error));
          if (__LOG) log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
@@ -278,7 +270,7 @@ int CheckBollingerBands() {
          PlaySound("Close order.wav");
    }
 
-   return(catch("CheckBollingerBands()"));
+   return(!catch("CheckBollingerBands()"));
 }
 
 
@@ -545,13 +537,13 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    if (symbol == "0")                     // NULL ist Integer (0)
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLC(1)   invalid parameter bar: "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLC(1)   invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 
    // TODO: um ERS_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
-   // Scheint für Bars größer als ChartBars Nonsense zurückzugeben
+   // Scheint für Bars größer als ChartBars Nonsens zurückzugeben
 
    results[MODE_OPEN ] = iOpen (symbol, period, bar);
    results[MODE_HIGH ] = iHigh (symbol, period, bar);
