@@ -232,7 +232,7 @@ int stdlib_GetLastError() {
 
 
 /**
- * Prüft auf MA-Trendwechsel
+ * Prüft auf MA-Trendwechsel in der letzten vollständigen Bar (Bar 1).
  *
  * @param  int    iTimeframe     - Timeframe, in dem der Indikator geladen wird
  * @param  string maPeriods      - Indikator-Parameter

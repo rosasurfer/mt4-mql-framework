@@ -435,7 +435,7 @@ bool IsStartSignal(int &lpSignal) {
          int    directions  = MODE_UPTREND | MODE_DOWNTREND;
          int    signal[]    = {0};
 
-         if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, signal))
+         if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directions, signal))
             return(_false(SetLastError(stdlib_GetLastError())));
 
          if (signal[0] != 0) {

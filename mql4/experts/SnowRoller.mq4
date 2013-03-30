@@ -1134,7 +1134,7 @@ bool IsStartSignal() {
       // -- start.trend: bei Trendwechsel in die angegebene Richtung erfüllt --------------------------------------------
       if (start.trend.condition) {
          int iNull[];
-         if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
+         if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) { // Prüfung nur bei onBarOpen, nicht bei jedem Tick
             int    timeframe   = start.trend.timeframe;
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);

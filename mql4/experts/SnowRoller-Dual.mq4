@@ -214,8 +214,7 @@ bool IsStartSignal(int direction) {
 
    int iNull[];
 
-   if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {
-      // Startbedingung wird nur bei onBarOpen geprüft, nicht bei jedem Tick
+   if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {    // Prüfung nur bei onBarOpen, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
@@ -223,7 +222,7 @@ bool IsStartSignal(int direction) {
       int    smoothing   = start.trend.lag;
       int    signal[]    = {0};
 
-      if (CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal))
+      if (!CheckTrendChange(timeframe, maPeriods, maTimeframe, maMethod, smoothing, directionFlags[direction], signal))
          return(_false(SetLastError(stdlib_GetLastError())));
 
       if (signal[0] != 0) {

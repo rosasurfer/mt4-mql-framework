@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
 
 extern double LotSize         = 0.1;                                 // LotSize der ersten Position
 extern int    ProfitTarget    = 40;                                  // ProfitTarget der ersten Position in Pip
-extern string StartConditions = "@trend(ALMA:3.5xD1)";               // || @bollinger(EMA:75xH1)
+extern string StartConditions = "@trend(ALMA:3xD1)";                 // || @bollinger(EMA:75xH1)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,7 +45,7 @@ int onTick() {
       Strategy(i);
    }
 
-   //RecordEquity();                                                 // Equity der gesamten Strategie
+   //RecordEquity();                                                 // Gesamt-Equity
    return(last_error);
 }
 
@@ -63,14 +63,14 @@ bool Strategy(int hTrade) {
 
    //UpdateStatus(hTrade);
    //...
-   //RecordEquity(hTrade);                                           // Equity des einzelnen Trades
+   //RecordEquity(hTrade);                                           // Trade-Equity
 
    return(!__STATUS_ERROR);
 }
 
 
 /**
- * Signalgeber für Strategy.StartSequence()
+ * Signalgeber für Strategy.StartTrade()
  *
  * @return bool - ob ein Signal aufgetreten ist
  */
@@ -82,7 +82,7 @@ bool IsStartSignal() {
 
 
 /**
- * Startet einen neuen Trade.
+ * Fügt der Strategie einen neuen Trade hinzu und startet ihn.
  *
  * @return bool - Erfolgsstatus
  */
