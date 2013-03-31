@@ -91,17 +91,17 @@ int onInit() {
          case PERIOD_M5 :
          case PERIOD_M15:
          case PERIOD_MN1:              return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
-         case PERIOD_M30: { dValue *=  2; ma.timeframe = PERIOD_M15; break; }
-         case PERIOD_H1 : { dValue *=  2; ma.timeframe = PERIOD_M30; break; }
-         case PERIOD_H4 : { dValue *=  4; ma.timeframe = PERIOD_H1;  break; }
-         case PERIOD_D1 : { dValue *=  6; ma.timeframe = PERIOD_H4;  break; }
-         case PERIOD_W1 : { dValue *= 30; ma.timeframe = PERIOD_H4;  break; }
+         case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
+         case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
+         case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
+         case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
+         case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
       }
    }
    switch (ma.timeframe) {                                           // Timeframes > H1 auf H1 umrechnen
-      case PERIOD_H4:    { dValue *=   4; ma.timeframe = PERIOD_H1;  break; }
-      case PERIOD_D1:    { dValue *=  24; ma.timeframe = PERIOD_H1;  break; }
-      case PERIOD_W1:    { dValue *= 120; ma.timeframe = PERIOD_H1;  break; }
+      case PERIOD_H4: dValue *=   4; ma.timeframe = PERIOD_H1; break;
+      case PERIOD_D1: dValue *=  24; ma.timeframe = PERIOD_H1; break;
+      case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
    }
    ma.periods = MathRound(dValue);
    if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
@@ -243,9 +243,9 @@ int onTick() {
       bufferMA[bar] = 0;
       switch (appliedPrice) {                                           // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
          case PRICE_CLOSE: for (int i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
-         case PRICE_OPEN:  for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
-         case PRICE_HIGH:  for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         High [bar+i]; break;
-         case PRICE_LOW:   for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
+         case PRICE_OPEN : for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
+         case PRICE_HIGH : for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         High [bar+i]; break;
+         case PRICE_LOW  : for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
          default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
       }
 

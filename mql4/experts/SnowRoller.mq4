@@ -2852,11 +2852,11 @@ bool ValidateConfiguration(bool interactive) {
             if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(31)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             if (NE(MathModFix(dValue, 0.5), 0))        return(_false(ValidateConfig.HandleError("ValidateConfiguration(32)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[0] = NumberToStr(dValue, ".+");
-            switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll unabhängig vom MA mit maximal PERIOD_H1 laufen
+            switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll maximal unter PERIOD_H1 laufen
                case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(33)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-               case PERIOD_H4 : { dValue *=   4; start.trend.timeframe = PERIOD_H1; break; }
-               case PERIOD_D1 : { dValue *=  24; start.trend.timeframe = PERIOD_H1; break; }
-               case PERIOD_W1 : { dValue *= 120; start.trend.timeframe = PERIOD_H1; break; }
+               case PERIOD_H4 : dValue *=   4; start.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_D1 : dValue *=  24; start.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_W1 : dValue *= 120; start.trend.timeframe = PERIOD_H1; break;
             }
             start.trend.periods       = NormalizeDouble(dValue, 1);
             start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
@@ -2986,9 +2986,9 @@ bool ValidateConfiguration(bool interactive) {
             elems[0] = NumberToStr(dValue, ".+");
             switch (stop.trend.timeframe) {            // Timeframes > H1 auf H1 umrechnen, iCustom() soll unabhängig vom MA mit maximal PERIOD_H1 laufen
                case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(61)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-               case PERIOD_H4 : { dValue *=   4; stop.trend.timeframe = PERIOD_H1; break; }
-               case PERIOD_D1 : { dValue *=  24; stop.trend.timeframe = PERIOD_H1; break; }
-               case PERIOD_W1 : { dValue *= 120; stop.trend.timeframe = PERIOD_H1; break; }
+               case PERIOD_H4 : dValue *=   4; stop.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_D1 : dValue *=  24; stop.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_W1 : dValue *= 120; stop.trend.timeframe = PERIOD_H1; break;
             }
             stop.trend.periods       = NormalizeDouble(dValue, 1);
             stop.trend.timeframeFlag = PeriodFlag(stop.trend.timeframe);

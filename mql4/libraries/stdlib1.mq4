@@ -256,9 +256,9 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           maTimeframe,                               // MA.Timeframe
                           maMethod,                                  // MA.Method
                           maAppliedPrice,                            // AppliedPrice
+                          maTrendLag,                                // Trend.Lag
                           ForestGreen,                               // Color.UpTrend
                           Red,                                       // Color.DownTrend
-                          maTrendLag,                                // Trend.Lag
                           0,                                         // Shift.H
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
@@ -7644,12 +7644,12 @@ string MessageBoxCmdToStr(int cmd) {
  */
 bool IsTradeOperation(int value) {
    switch (value) {
-      case OP_BUY:
-      case OP_SELL:
-      case OP_BUYLIMIT:
+      case OP_BUY      :
+      case OP_SELL     :
+      case OP_BUYLIMIT :
       case OP_SELLLIMIT:
-      case OP_BUYSTOP:
-      case OP_SELLSTOP:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
          return(true);
    }
    return(false);
@@ -7665,9 +7665,9 @@ bool IsTradeOperation(int value) {
  */
 bool IsLongTradeOperation(int value) {
    switch (value) {
-      case OP_BUY:
+      case OP_BUY     :
       case OP_BUYLIMIT:
-      case OP_BUYSTOP:
+      case OP_BUYSTOP :
          return(true);
    }
    return(false);
@@ -7683,9 +7683,9 @@ bool IsLongTradeOperation(int value) {
  */
 bool IsShortTradeOperation(int value) {
    switch (value) {
-      case OP_SELL:
+      case OP_SELL     :
       case OP_SELLLIMIT:
-      case OP_SELLSTOP:
+      case OP_SELLSTOP :
          return(true);
    }
    return(false);
@@ -7701,10 +7701,10 @@ bool IsShortTradeOperation(int value) {
  */
 bool IsPendingTradeOperation(int value) {
    switch (value) {
-      case OP_BUYLIMIT:
+      case OP_BUYLIMIT :
       case OP_SELLLIMIT:
-      case OP_BUYSTOP:
-      case OP_SELLSTOP:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
          return(true);
    }
    return(false);
@@ -10399,9 +10399,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       switch (error) {
          case ERR_INVALID_PRICE:
          case ERR_PRICE_CHANGED:
-         case ERR_REQUOTE:
-         case ERR_OFF_QUOTES:
-         case ERR_INVALID_STOP:
+         case ERR_REQUOTE      :
+         case ERR_OFF_QUOTES   :
+         case ERR_INVALID_STOP :
             string symbol = oe.Symbol(oe);
             oe.setBid(oe, MarketInfo(symbol, MODE_BID));
             oe.setAsk(oe, MarketInfo(symbol, MODE_ASK));

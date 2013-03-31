@@ -16,9 +16,15 @@ bool   Track.Positions             = true;
 string Sound.PositionOpen          = "OrderFilled.wav";
 string Sound.PositionClose         = "PositionClosed.wav";
 
+bool   Track.MovingAverage         = false;
+int    MovingAverage.Periods       = 0;
+int    MovingAverage.Timeframe     = 0;                              // M1 | M5 | M15 etc.
+int    MovingAverage.Method        = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
+int    MovingAverage.TrendLag      = 0;                              // Trendwechsel-Verzögerung in Bars: größer/gleich 0
+
 bool   Track.BollingerBands        = false;
 int    BollingerBands.MA.Periods   = 0;
-int    BollingerBands.MA.Timeframe = 0;                              // M1, M5, M15 etc. (0 => aktueller Timeframe)
+int    BollingerBands.MA.Timeframe = 0;                              // M1 | M5 | M15 etc.
 int    BollingerBands.MA.Method    = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
 double BollingerBands.Deviation    = 2.0;                            // Std.-Abweichung
 
@@ -28,7 +34,8 @@ double BollingerBands.Deviation    = 2.0;                            // Std.-Abw
 
 #property indicator_chart_window
 
-int BBands.MA.Periods.orig, BBands.MA.Timeframe.orig;
+string strMovingAverage;
+string strBollingerBands;
 
 
 /**
@@ -46,74 +53,102 @@ int onInit() {
    if (SMS.Alerts) {
       // SMS.Receiver
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
-      if (!StringIsDigit(SMS.Receiver)) {
-         catch("onInit(1)   Invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         SMS.Alerts = false;
-      }
+      if (!StringIsDigit(SMS.Receiver))
+         SMS.Alerts = _false(catch("onInit(1)   Invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
    // Track.Positions
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
 
+   // Track.MovingAverage
+   Track.MovingAverage = GetConfigBool("EventTracker."+ StdSymbol(), "MovingAverage", Track.MovingAverage);
+   if (Track.MovingAverage) {
+      // MovingAverage.Periods
+      MovingAverage.Periods = GetConfigInt("EventTracker."+ StdSymbol(), "MovingAverage.Periods", MovingAverage.Periods);
+      if (MovingAverage.Periods < 2)                 Track.MovingAverage = _false(catch("onInit(2)   Invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+
+      //BollingerBands.Deviation = GetConfigDouble("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", BollingerBands.Deviation);
+      //if (LE(BollingerBands.Deviation, 0))           Track.BollingerBands = _false(catch("onInit(11)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+   }
+   if (Track.MovingAverage) {
+      // MovingAverage.Timeframe
+      string strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Timeframe", MovingAverage.Timeframe);
+      MovingAverage.Timeframe = PeriodToId(strValue);
+      if (MovingAverage.Timeframe == -1)             Track.MovingAverage = _false(catch("onInit(3)   Invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MovingAverage.Timeframe == PERIOD_MN1)     Track.MovingAverage = _false(catch("onInit(4)   Unsupported config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   if (Track.MovingAverage) {
+      // MovingAverage.Method
+      strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Method", MovingAverageMethodDescription(MovingAverage.Method));
+      MovingAverage.Method = MovingAverageMethodToId(strValue);
+      if (MovingAverage.Method == -1)                Track.BollingerBands = _false(catch("onInit(5)   Invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   if (Track.MovingAverage) {
+      // MovingAverage.TrendLag
+      MovingAverage.TrendLag = GetConfigInt("EventTracker."+ StdSymbol(), "MovingAverage.TrendLag", MovingAverage.TrendLag);
+      if (MovingAverage.TrendLag < 0)                Track.MovingAverage = _false(catch("onInit(6)   Invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.TrendLag = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.TrendLag", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   if (Track.MovingAverage) {
+      // max. Indikator-Timeframe soll H1 sein
+      strMovingAverage = MovingAverageMethodDescription(MovingAverage.Method) +"("+ MovingAverage.Periods +"x"+ PeriodDescription(MovingAverage.Timeframe) + ifString(MovingAverage.TrendLag, "+"+ MovingAverage.TrendLag, "") +")";
+      if (MovingAverage.Timeframe > PERIOD_H1) {
+         switch (MovingAverage.Timeframe) {
+            case PERIOD_H4: MovingAverage.Periods *=   4; break;
+            case PERIOD_D1: MovingAverage.Periods *=  24; break;
+            case PERIOD_W1: MovingAverage.Periods *= 120; break;
+         }
+         MovingAverage.Timeframe = PERIOD_H1;
+      }
+   }
+
+   /*
    // Track.BollingerBands
    Track.BollingerBands = GetConfigBool("EventTracker."+ StdSymbol(), "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
       // BollingerBands.MA.Periods
       BollingerBands.MA.Periods = GetConfigInt("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
-      if (BollingerBands.MA.Periods < 2) {
-         catch("onInit(2)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
+      if (BollingerBands.MA.Periods < 2)             Track.BollingerBands = _false(catch("onInit(7)   Invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
-      string strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
+      strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
       BollingerBands.MA.Timeframe = PeriodToId(strValue);
-      if (BollingerBands.MA.Timeframe == -1) {
-         if (IsConfigKey("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe")) {
-            catch("onInit(3)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-            Track.BollingerBands = false;
-         }
-         else {
-            BollingerBands.MA.Timeframe = Period();
-         }
-      }
+      if (BollingerBands.MA.Timeframe == -1)         Track.BollingerBands = _false(catch("onInit(8)   Invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Timeframe == PERIOD_MN1) Track.BollingerBands = _false(catch("onInit(9)   Unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
       BollingerBands.MA.Method = MovingAverageMethodToId(strValue);
-      if (BollingerBands.MA.Method == -1) {
-         catch("onInit(4)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
+      if (BollingerBands.MA.Method == -1)            Track.BollingerBands = _false(catch("onInit(10)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.Deviation
       BollingerBands.Deviation = GetConfigDouble("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", BollingerBands.Deviation);
-      if (LE(BollingerBands.Deviation, 0)) {
-         catch("onInit(5)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE);
-         Track.BollingerBands = false;
-      }
+      if (LE(BollingerBands.Deviation, 0))           Track.BollingerBands = _false(catch("onInit(11)   Invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
-      // für konstante Werte bei Timeframe-Wechseln Timeframe möglichst nach M5 umrechnen
-      BBands.MA.Periods.orig   = BollingerBands.MA.Periods;
-      BBands.MA.Timeframe.orig = BollingerBands.MA.Timeframe;
-
-      if (BollingerBands.MA.Timeframe > PERIOD_M5) {
-         BollingerBands.MA.Periods   = BollingerBands.MA.Timeframe * BollingerBands.MA.Periods / PERIOD_M5;
-         BollingerBands.MA.Timeframe = PERIOD_M5;
+      // max. Indikator-Timeframe soll H1 sein
+      strBollingerBands = StringConcatenate("BollingerBands(", BollingerBands.MA.Periods, "x", PeriodDescription(BollingerBands.MA.Timeframe), ")");
+      if (BollingerBands.MA.Timeframe > PERIOD_H1) {
+         switch (BollingerBands.MA.Timeframe) {
+            case PERIOD_H4: BollingerBands.MA.Periods *=   4; break;
+            case PERIOD_D1: BollingerBands.MA.Periods *=  24; break;
+            case PERIOD_W1: BollingerBands.MA.Periods *= 120; break;
+         }
+         BollingerBands.MA.Timeframe = PERIOD_H1;
       }
    }
+   */
    // -- Ende - Parametervalidierung
-   //debug("onInit()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.BollingerBands="+ Track.BollingerBands + ifString(Track.BollingerBands, " ("+ BollingerBands.MA.Periods +"x"+ PeriodDescription(BollingerBands.MA.Timeframe) +"/"+ MovingAverageMethodDescription(BollingerBands.MA.Method) +"/"+ NumberToStr(BollingerBands.Deviation, ".1+") +")", ""));
-
+   debug("onInit()    Sound.Alerts="+ Sound.Alerts +"   SMS.Alerts="+ SMS.Alerts +"   Track.Positions="+ Track.Positions +"   Track.MovingAverage="+ ifString(Track.MovingAverage, StringConcatenate("", strMovingAverage), Track.MovingAverage));
 
    // Anzeigeoptionen
    SetIndexLabel(0, NULL);
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -255,7 +290,7 @@ bool CheckBollingerBands() {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         string message = StringConcatenate(GetSymbolName(StdSymbol()), ifString(crossing==CROSSING_LOW, " lower", " upper"), " BollingerBand(", BBands.MA.Periods.orig, "x", PeriodDescription(BBands.MA.Timeframe.orig), ") @ ", NumberToStr(value, PriceFormat), " crossed");
+         string message = StringConcatenate(GetSymbolName(StdSymbol()), ifString(crossing==CROSSING_LOW, " lower", " upper"), " ", strBollingerBands, " @ ", NumberToStr(value, PriceFormat), " crossed");
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(!SetLastError(error));

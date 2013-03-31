@@ -11,12 +11,12 @@ int __DEINIT_FLAGS__[];
 extern string MA.Periods      = "200";
 extern string MA.Timeframe    = "";                                  // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
 extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
-extern string AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
+extern int    Trend.Lag       = 0;                                   // zusätzliche Trendwechsel-Verzögerung in Bars: größer/gleich 0
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
 
-extern int    Trend.Lag       = 0;                                   // Trendwechsel-Verzögerung in Bars: größer/gleich 0
 extern int    Shift.H         = 0;                                   // horizontale Shift in Bars
 extern int    Shift.V         = 0;                                   // vertikale Shift in Pips
 extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
@@ -52,7 +52,7 @@ double bufferUpTrend_2  [];                                          // UpTrend-
 
 int    ma.periods;
 int    ma.method;
-int    appliedPrice;
+int    ma.appliedPrice;
 double wALMA[];                                                      // Gewichtungen der einzelnen Bars bei ALMA
 double shift.v;
 string legendLabel, indicatorName;
@@ -84,17 +84,17 @@ int onInit() {
          case PERIOD_M5 :
          case PERIOD_M15:
          case PERIOD_MN1:              return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
-         case PERIOD_M30: { dValue *=  2; ma.timeframe = PERIOD_M15; break; }
-         case PERIOD_H1 : { dValue *=  2; ma.timeframe = PERIOD_M30; break; }
-         case PERIOD_H4 : { dValue *=  4; ma.timeframe = PERIOD_H1;  break; }
-         case PERIOD_D1 : { dValue *=  6; ma.timeframe = PERIOD_H4;  break; }
-         case PERIOD_W1 : { dValue *= 30; ma.timeframe = PERIOD_H4;  break; }
+         case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
+         case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
+         case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
+         case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
+         case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
       }
    }
    switch (ma.timeframe) {                                           // Timeframes > H1 auf H1 umrechnen
-      case PERIOD_H4:    { dValue *=   4; ma.timeframe = PERIOD_H1;  break; }
-      case PERIOD_D1:    { dValue *=  24; ma.timeframe = PERIOD_H1;  break; }
-      case PERIOD_W1:    { dValue *= 120; ma.timeframe = PERIOD_H1;  break; }
+      case PERIOD_H4: dValue *=   4; ma.timeframe = PERIOD_H1; break;
+      case PERIOD_D1: dValue *=  24; ma.timeframe = PERIOD_H1; break;
+      case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
    }
    ma.periods = MathRound(dValue);
    if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
@@ -120,22 +120,26 @@ int onInit() {
    else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
    MA.Method = strValue;
 
-   // AppliedPrice
-   if (Explode(AppliedPrice, "*", elems, 2) > 1) {
+   // MA.AppliedPrice
+   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
       size     = Explode(elems[0], "|", elems, NULL);
-      strValue = elems[size-1];
+      strValue = StringTrim(elems[size-1]);
    }
-   else strValue = AppliedPrice;
-   string char = StringToUpper(StringLeft(StringTrim(strValue), 1));
-   if      (char == "O") appliedPrice = PRICE_OPEN;
-   else if (char == "H") appliedPrice = PRICE_HIGH;
-   else if (char == "L") appliedPrice = PRICE_LOW;
-   else if (char == "C") appliedPrice = PRICE_CLOSE;
-   else if (char == "M") appliedPrice = PRICE_MEDIAN;
-   else if (char == "T") appliedPrice = PRICE_TYPICAL;
-   else if (char == "W") appliedPrice = PRICE_WEIGHTED;
-   else                                return(catch("onInit(8)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_INPUT));
-   AppliedPrice = strValue;
+   else strValue = StringTrim(MA.AppliedPrice);
+
+   if (StringLen(strValue) >= 0) {
+      string char = StringToUpper(StringLeft(strValue, 1));
+      if      (char == "O") ma.appliedPrice = PRICE_OPEN;
+      else if (char == "H") ma.appliedPrice = PRICE_HIGH;
+      else if (char == "L") ma.appliedPrice = PRICE_LOW;
+      else if (char == "C") ma.appliedPrice = PRICE_CLOSE;
+      else if (char == "M") ma.appliedPrice = PRICE_MEDIAN;
+      else if (char == "T") ma.appliedPrice = PRICE_TYPICAL;
+      else if (char == "W") ma.appliedPrice = PRICE_WEIGHTED;
+      else return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT));
+   }
+   else ma.appliedPrice = PRICE_CLOSE;                               // Default bei fehlendem Parameter
+   MA.AppliedPrice = AppliedPriceDescription(ma.appliedPrice);
 
    // Trend.Lag
    if (Trend.Lag < 0)                  return(catch("onInit(9)   Invalid input parameter Trend.Lag = "+ Trend.Lag, ERR_INVALID_INPUT));
@@ -154,8 +158,8 @@ int onInit() {
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
-   if (MA.Timeframe != "")          strTimeframe    = StringConcatenate("x", MA.Timeframe);
-   if (appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(appliedPrice));
+   if (MA.Timeframe != "")             strTimeframe    = StringConcatenate("x", MA.Timeframe);
+   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(ma.appliedPrice));
    indicatorName = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
 
    IndicatorShortName(indicatorName);
@@ -270,16 +274,16 @@ int onTick() {
    for (int i, bar=startBar; bar >= 0; bar--) {
       // (2.1) der eigentliche Moving Average
       if (ma.method != MODE_ALMA) {
-         bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, appliedPrice, bar);
+         bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
       else {
          bufferMA[bar] = 0;                                             // ALMA
-         switch (appliedPrice) {                                        // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
-            case PRICE_CLOSE: for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Close[bar+i]; break;
-            case PRICE_OPEN:  for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Open [bar+i]; break;
-            case PRICE_HIGH:  for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         High [bar+i]; break;
-            case PRICE_LOW:   for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                         Low  [bar+i]; break;
-            default:          for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar+i);
+         switch (ma.appliedPrice) {                                     // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
+            case PRICE_CLOSE: for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Close[bar+i]; break;
+            case PRICE_OPEN : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Open [bar+i]; break;
+            case PRICE_HIGH : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            High [bar+i]; break;
+            case PRICE_LOW  : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Low  [bar+i]; break;
+            default:          for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
       }
       bufferMA[bar] += shift.v;
