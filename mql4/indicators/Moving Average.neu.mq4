@@ -75,7 +75,7 @@ int onInit() {
    string strValue = StringTrim(MA.Periods);
    if (!StringIsNumeric(strValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    double dValue = StrToDouble(strValue);
-   if (LE(dValue, 0))                  return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (dValue <= 0)                    return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    if (NE(MathModFix(dValue, 0.5), 0)) return(catch("onInit(4)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
    strValue = NumberToStr(dValue, ".+");
    if (StringEndsWith(strValue, ".5")) {                             // gebrochene Perioden in ganze Bars umrechnen
@@ -83,7 +83,7 @@ int onInit() {
          case PERIOD_M1 :
          case PERIOD_M5 :
          case PERIOD_M15:
-         case PERIOD_MN1:              return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+         case PERIOD_MN1:              return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
          case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
          case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
          case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
