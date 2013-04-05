@@ -35,8 +35,6 @@ extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical 
 extern string Deviations        = "2.0";                             // ein oder zwei Multiplikatoren für die Std.-Abweichung
 extern int    Max.Values        = 4000;                              // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
-extern string _____________________________;
-extern string Per.Symbol.Configuration;                              // Label für symbolspezifische .ini-Konfiguration, ie. "Slow.{symbol}"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,68 +62,42 @@ double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;            // ALMA-Par
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Konfiguration einlesen
-   bool   externalConfig = false;
-   string configSection, configLabel;
+   // MA.Periods
+   if (MA.Periods < 2)                return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // externe symbolspezifische Konfiguration?
-   configLabel = StringToLower(StringTrim(Per.Symbol.Configuration));
-   if (configLabel != "") {
-      if (!StringContains(configLabel, "{symbol}"))
-         return(catch("onInit(1)   Invalid input parameter Per.Symbol.Configuration = \""+ Per.Symbol.Configuration +"\"", ERR_INVALID_INPUT));
-      configSection  = WindowExpertName();
-      configLabel    = StringReplace(configLabel, "{symbol}", StdSymbol());
-      externalConfig = true;
-   }
-
-   // Periodenanzahl
-   if (externalConfig)
-      MA.Periods = GetGlobalConfigInt(configSection, configLabel +".MA.Periods", MA.Periods);
-   if (MA.Periods < 2)
-      return(catch("onInit(2)   Invalid config/input parameter {"+ configLabel +"}.MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // Timeframe
+   // MA.Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (externalConfig)
-      MA.Timeframe = GetGlobalConfigString(configSection, configLabel +".MA.Timeframe", MA.Timeframe);
    if (MA.Timeframe == "") int maTimeframe = Period();
    else                        maTimeframe = PeriodToId(MA.Timeframe);
-   if (maTimeframe == -1)
-      return(catch("onInit(3)   Invalid config/input parameter {"+ configLabel +"}.MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (maTimeframe == -1)             return(catch("onInit(2)   Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // MA-Methoden
-   if (externalConfig)
-      MA.Methods = GetGlobalConfigString(configSection, configLabel +".MA.Methods", MA.Methods);
+   // MA.Methods
    string values[];
    int size = Explode(StringToUpper(MA.Methods), ",", values, NULL);
 
-   // MA-Methode 1
+   // MA.Method 1
    string value = StringTrim(values[0]);
-   if      (value == "SMA" )   maMethod1 = MODE_SMA;
-   else if (value == "EMA" )   maMethod1 = MODE_EMA;
-   else if (value == "SMMA")   maMethod1 = MODE_SMMA;
-   else if (value == "LWMA")   maMethod1 = MODE_LWMA;
-   else if (value == "ALMA") { maMethod1 = MODE_ALMA; ALMA = true; }
-   else
-      return(catch("onInit(4)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if      (value == "SMA" ) maMethod1 = MODE_SMA;
+   else if (value == "EMA" ) maMethod1 = MODE_EMA;
+   else if (value == "SMMA") maMethod1 = MODE_SMMA;
+   else if (value == "LWMA") maMethod1 = MODE_LWMA;
+   else if (value == "ALMA") maMethod1 = MODE_ALMA;
+   else                               return(catch("onInit(3)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // MA-Methode 2
+   // MA.Method 2
    if (size == 2) {
       value = StringTrim(values[1]);
-      if      (value == "SMA" )   maMethod2 = MODE_SMA;
-      else if (value == "EMA" )   maMethod2 = MODE_EMA;
-      else if (value == "SMMA")   maMethod2 = MODE_SMMA;
-      else if (value == "LWMA")   maMethod2 = MODE_LWMA;
-      else if (value == "ALMA") { maMethod2 = MODE_ALMA; ALMA = true; }
-      else
-         return(catch("onInit(5)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if      (value == "SMA" ) maMethod2 = MODE_SMA;
+      else if (value == "EMA" ) maMethod2 = MODE_EMA;
+      else if (value == "SMMA") maMethod2 = MODE_SMMA;
+      else if (value == "LWMA") maMethod2 = MODE_LWMA;
+      else if (value == "ALMA") maMethod2 = MODE_ALMA;
+      else                            return(catch("onInit(4)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (size > 2)
-      return(catch("onInit(6)   Invalid config/input parameter {"+ configLabel +"}.MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else if (size > 2)                 return(catch("onInit(5)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   ALMA = (maMethod1==MODE_ALMA || maMethod2==MODE_ALMA);
 
    // AppliedPrice
-   if (externalConfig)
-      AppliedPrice = GetGlobalConfigString(configSection, configLabel +".AppliedPrice", AppliedPrice);
    string chr = StringToUpper(StringLeft(StringTrim(AppliedPrice), 1));
    if      (chr == "O") appliedPrice = PRICE_OPEN;
    else if (chr == "H") appliedPrice = PRICE_HIGH;
@@ -134,33 +106,25 @@ int onInit() {
    else if (chr == "M") appliedPrice = PRICE_MEDIAN;
    else if (chr == "T") appliedPrice = PRICE_TYPICAL;
    else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
-   else
-      return(catch("onInit(7)   Invalid config/input parameter {"+ configLabel +"}.AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                               return(catch("onInit(6)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviations
-   if (externalConfig)
-      Deviations = GetGlobalConfigString(configSection, configLabel +".Deviations", Deviations);
    size = Explode(Deviations, ",", values, NULL);
-   if (size > 2)
-      return(catch("onInit(8)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (size > 2)                      return(catch("onInit(7)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
-   if (!StringIsNumeric(value))
-      return(catch("onInit(9)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))       return(catch("onInit(8)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
-   if (deviation1 <= 0)
-      return(catch("onInit(10)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (deviation1 <= 0)               return(catch("onInit(9)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
-         if (!StringIsNumeric(value))
-            return(catch("onInit(11)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(value)) return(catch("onInit(10)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
-         if (deviation2 <= 0)
-            return(catch("onInit(12)   Invalid config/input parameter {"+ configLabel +"}.Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (deviation2 <= 0)         return(catch("onInit(11)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
@@ -222,7 +186,7 @@ int onInit() {
    ObjectSetText(legendLabel, indicatorLongName, 9, "Arial Fett", Color.Bands);
    int error = GetLastError();
    if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST) // bei offenem Properties-Dialog oder Object::onDrag()
-      return(catch("onInit(13)", error));
+      return(catch("onInit(12)", error));
 
    // MA-Parameter nach Setzen der Label auf aktuellen Zeitrahmen umrechnen
    if (maTimeframe != Period()) {
@@ -259,7 +223,7 @@ int onInit() {
       }
    }
 
-   return(catch("onInit(14)"));
+   return(catch("onInit(13)"));
 }
 
 
