@@ -154,7 +154,7 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
       // vorher: Tick.prevTime = time[2]|0;        danach: Tick.prevTime = time[1];
       //         Tick.Time     = time[1];                  Tick.Time     = time[0];
       Tick.prevTime = Tick.Time;
-      Tick.Time     = tickTime;                                      // TODO: sicherstellen, daß Tick/Tick.Time/Tick.prevTime in allen Szenarien statisch sind
+      Tick.Time     = tickTime;                                      // TODO: sicherstellen, daß Tick.Time/Tick.prevTime in allen Szenarien statisch sind
    }
    else {
       // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
@@ -506,7 +506,7 @@ void CopyMemory(int destination, int source, int bytes) {
  */
 bool Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Indicator.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Indicator.IsTesting(1)   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
    if (resolved)
@@ -516,12 +516,20 @@ bool Indicator.IsTesting() {
       if (IsTesting()) {                                             // Indikator läuft in EA::iCustom() im Tester
          result = true;
       }
-      else if (GetCurrentThreadId() != GetUIThreadId()) {            // Indikator läuft im Testchart
+      else if (GetCurrentThreadId() != GetUIThreadId()) {            // Indikator läuft im Testchart in Indicator::start()
          result = true;
       }
+      else if (__WHEREAMI__ != FUNC_START) {                         // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
+         int hChart   = WindowHandle(Symbol(), NULL);
+         int hWnd     = GetParent(hChart);
+         string title = GetWindowText(hWnd);
+         if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
+            return(_false(catch("Indicator.IsTesting(2)   undefined result in current context: called in Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
+         result = StringEndsWith(title, "(visual)");                 // Indikator läuft im Haupt- oder Testchart (der String "(visual)" ist nicht internationalisiert)
+      }
       else {
-         result = false;                                             // Indikator läuft im Hauptchart
-      }                                                              // TODO: !!! Falsch für init()/deinit() im Testchart
+         result = false;                                             // Indikator läuft in Indicator::start() im Hauptchart
+      }
    }
 
    resolved = true;
@@ -543,10 +551,9 @@ bool Script.IsTesting() {
       return(result);
 
    if (IsScript()) {
-      int hChart  = WindowHandle(Symbol(), NULL);
-      int hWnd    = GetParent(hChart);
-      string text = GetWindowText(hWnd);
-      result = StringEndsWith(text, "(visual)");                     // "(visual)" wird nicht internationalisiert und bleibt konstant
+      int hChart = WindowHandle(Symbol(), NULL);
+      int hWnd   = GetParent(hChart);
+      result = StringEndsWith(GetWindowText(hWnd), "(visual)");      // "(visual)" ist nicht internationalisiert und bleibt konstant
    }
 
    resolved = true;
@@ -3947,20 +3954,20 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
 int WM_MT4() {
-   static int static.mid;                                            // ohne Initializer (@see MQL.doc)
+   static int static.messageId;                                      // ohne Initializer (@see MQL.doc)
 
-   if (!static.mid) {
-      static.mid = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+   if (!static.messageId) {
+      static.messageId = RegisterWindowMessageA("MetaTrader4_Internal_Message");
 
-      if (!static.mid) {
-         static.mid = -1;                                            // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
+      if (!static.messageId) {
+         static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
          catch("WM_MT4()->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
       }
    }
 
-   if (static.mid == -1)
+   if (static.messageId == -1)
       return(0);
-   return(static.mid);
+   return(static.messageId);
 }
 
 

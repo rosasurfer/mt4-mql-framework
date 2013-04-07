@@ -35,6 +35,7 @@ double BollingerBands.Deviation    = 2.0;                            // Std.-Abw
 #property indicator_chart_window
 
 int    MovingAverage.TimeframeFlag;
+
 string strMovingAverage;
 string strBollingerBands;
 
@@ -199,8 +200,13 @@ int onTick() {
 
    // (2) Moving Average                                       // Prüfung nur bei onBarOpen, nicht bei jedem Tick
    if (Track.MovingAverage) {
+      debug("onTick(Tick="+ Tick +")   Timeframe="+ PeriodFlagToStr(MovingAverage.TimeframeFlag));
+
+                                                                                 // TODO: Bug in Indicator::EventListener.BarOpen()
       int iNull[];
-      if (EventListener.BarOpen(iNull, MovingAverage.TimeframeFlag)) {     // TODO: EventListener.BarOpen prüfen
+      if (EventListener.BarOpen(iNull, MovingAverage.TimeframeFlag)) {
+         debug("onTick()   BarOpen=true");
+
          int    timeframe   = MovingAverage.Timeframe;
          string maPeriods   = NumberToStr(MovingAverage.Periods, ".+");
          string maTimeframe = PeriodDescription(MovingAverage.Timeframe);
