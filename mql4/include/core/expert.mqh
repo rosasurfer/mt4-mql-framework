@@ -421,14 +421,15 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    +--------------------------+--------------------------+
    | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
    +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; | time[] stellt hier nur Pseudovariable dar (existiert nicht)
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |           // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
    | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
    +--------------------------+--------------------------+
    */
    static datetime bar.openTimes[], bar.closeTimes[];                // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
 
-   static int sizeOfPeriods, periods    []={  PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
-                             periodFlags[]={F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
+                                           // PERIOD_H1: die am häufigsten verwendete Periode zuerst (beschleunigt Ausführung)
+   static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
+                             periodFlags[]={F_PERIOD_H1, F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
    if (sizeOfPeriods == 0) {
       sizeOfPeriods = ArraySize(periods);
       ArrayResize(bar.openTimes,  sizeOfPeriods);
@@ -456,7 +457,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
             }
          }
 
-         // Abbruch, wenn nur dieses einzelne Flag geprüft werden sollte
+         // Abbruch, wenn nur dieses einzelne Flag geprüft werden soll (daher PERIOD_H1 zuerst)
          if (flags == periodFlags[i])
             break;
       }
