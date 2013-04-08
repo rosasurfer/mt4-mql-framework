@@ -21,15 +21,14 @@ int __DEINIT_FLAGS__[];
 int onTick() {
 
    bool st = true;               // static ...
+   bool si = false;              // sized array declaration
    bool in = true;               // initializer
 
-   GlobalPrimitives(st, in);
-   //LocalPrimitives(st, in);
+   //GlobalPrimitives(st, in);
+   //LocalPrimitives(in);
 
-
-   bool si = false;              // sized array declaration
-   //GlobalArrays(si, in);
-   //LocalArrays(st, si, in);
+   //GlobalArrays(st, si, in);
+   LocalArrays(st, si, in);
 
    return(last_error);
 }
