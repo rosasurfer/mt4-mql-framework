@@ -9,11 +9,15 @@ int __DEINIT_FLAGS__[];
 #include <core/expert.mqh>
 
 
-///////////////////////////////////////////////////////////////////// Configuration /////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
 
 extern string Parameter = "dummy";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#include <test/testlibrary.mqh>
+//#include <test/teststatic.mqh>
 
 
 /**
@@ -22,5 +26,27 @@ extern string Parameter = "dummy";
  * @return int - Fehlerstatus
  */
 int onTick() {
+   bool st = true;
+   bool si = false;
+   bool in = true;
+
+   //GlobalPrimitives(in);
+   //LocalPrimitives(in);
+
+   //GlobalArrays(si, in);
+   //LocalArrays(st, si, in);
+
    return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+void DummyCalls() {
+   GlobalPrimitives(NULL);
+   LocalPrimitives(NULL);
+   GlobalArrays(NULL, NULL);
+   LocalArrays(NULL, NULL, NULL);
 }

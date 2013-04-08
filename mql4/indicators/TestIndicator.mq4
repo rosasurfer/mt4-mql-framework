@@ -10,18 +10,7 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-
-bool done;
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   return(catch("onInit()"));
-}
+#include <test/testlibrary.mqh>
 
 
 /**
@@ -30,10 +19,17 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   bool done;
-   if (!done) {
-      DebugMarketInfo("onTick()");
-      done = true;
-   }
+
+   bool st = true;               // static ...
+   bool in = true;               // initializer
+
+   GlobalPrimitives(st, in);
+   //LocalPrimitives(st, in);
+
+
+   bool si = false;              // sized array declaration
+   //GlobalArrays(si, in);
+   //LocalArrays(st, si, in);
+
    return(last_error);
 }
