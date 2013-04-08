@@ -329,6 +329,7 @@
 
    // Strings
    string   CreateString(int length);
+   string   StringToStr(string value);
 
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);

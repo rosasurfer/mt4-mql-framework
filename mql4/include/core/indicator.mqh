@@ -83,6 +83,13 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    }
 
 
+   error = testlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+   if (IsError(error))
+      return(SetLastError(error));
+
+
+
+
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                        //
       return(last_error);                                                     // Preprocessing-Hook

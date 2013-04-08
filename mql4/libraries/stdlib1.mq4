@@ -571,14 +571,14 @@ bool This.IsTesting() {
       return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
-   if (resolved)
-      return(result);
 
-   if      (   IsExpert()) result =           IsTesting();
-   else if (IsIndicator()) result = Indicator.IsTesting();
-   else                    result =    Script.IsTesting();
+   if (!resolved) {
+      if      (   IsExpert()) result =           IsTesting();
+      else if (IsIndicator()) result = Indicator.IsTesting();        // throws ERR_RUNTIME_ERROR
+      else                    result =    Script.IsTesting();
+      resolved = (result || !IsLastError());
+   }
 
-   resolved = true;
    return(result);
 }
 
@@ -3274,6 +3274,27 @@ string JoinStrings(string values[], string separator) {
       result = StringLeft(result, -StringLen(separator));
 
    return(result);
+}
+
+
+/**
+ * Gibt die lesbare Repräsentation eines Strings zurück (in Anführungszeichen). Für einen nicht initialisierten String (NULL-Pointer)
+ * wird der String NULL (ohne Anführungszeichen) zurückgegeben.
+ *
+ * @param  string value
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string StringToStr(string value) {
+   string tmp = value;                                               // bei NULL-Pointer NPE provozieren
+
+   int error = GetLastError();
+   if (IsError(error)) {
+      if (error == ERR_NOT_INITIALIZED_STRING)
+         return("NULL");
+      return(_empty(catch("StringToStr()", error)));
+   }
+   return(StringConcatenate("\"", value, "\""));
 }
 
 
