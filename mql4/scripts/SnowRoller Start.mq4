@@ -97,5 +97,6 @@ void DummyCalls() {
    CreateEventId();
    CreateSequenceId();
    IsSequenceStatus(NULL);
+   IsStopTriggered(NULL, NULL);
    StatusToStr(NULL);
 }
