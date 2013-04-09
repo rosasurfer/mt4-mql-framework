@@ -138,7 +138,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
    ValidBars     = IndicatorCounted();
 
    if (!Tick.Time) {

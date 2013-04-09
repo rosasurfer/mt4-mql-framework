@@ -28,7 +28,7 @@ extern string Parameter = "dummy";
 int onTick() {
    bool st = true;
    bool si = false;
-   bool in = true;
+   bool in = false;
 
    //GlobalPrimitives(st, in);
    //LocalPrimitives(in);

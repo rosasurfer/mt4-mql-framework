@@ -200,9 +200,6 @@ int onTick() {
 
    // (2) Moving Average                                       // Prüfung nur bei onBarOpen, nicht bei jedem Tick
    if (Track.MovingAverage) {
-      debug("onTick(Tick="+ Tick +")   Timeframe="+ PeriodFlagToStr(MovingAverage.TimeframeFlag));
-
-                                                                                 // TODO: Bug in Indicator::EventListener.BarOpen()
       int iNull[];
       if (EventListener.BarOpen(iNull, MovingAverage.TimeframeFlag)) {
          debug("onTick()   BarOpen=true");
@@ -213,6 +210,7 @@ int onTick() {
          string maMethod    = MovingAverage.Method;
          int    maTrendLag  = MovingAverage.TrendLag;
 
+         /*
          int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
          if (!trend) {
             int error = stdlib_GetLastError();
@@ -223,6 +221,7 @@ int onTick() {
             //onMovingAverageTrendChange();
             debug("onTick()   onMovingAverageTrendChange()");
          }
+         */
       }
 
    }

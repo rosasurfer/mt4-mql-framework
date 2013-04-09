@@ -133,7 +133,6 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    // (5) Tickdaten zurückliefern
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
-
    tickData[0] = Tick;
    tickData[1] = Tick.Time;
    tickData[2] = Tick.prevTime;
@@ -519,16 +518,16 @@ bool Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("Indicator.IsTesting(1)   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
-   if (resolved)
-      return(result);
+   static bool static.resolved, static.result;                       // static: EA ok, Indikator ok
+   if (static.resolved)
+      return(static.result);
 
    if (IsIndicator()) {
       if (IsTesting()) {                                             // Indikator läuft in EA::iCustom() im Tester
-         result = true;
+         static.result = true;
       }
       else if (GetCurrentThreadId() != GetUIThreadId()) {            // Indikator läuft im Testchart in Indicator::start()
-         result = true;
+         static.result = true;
       }
       else if (__WHEREAMI__ != FUNC_START) {                         // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
          int hChart   = WindowHandle(Symbol(), NULL);
@@ -536,15 +535,15 @@ bool Indicator.IsTesting() {
          string title = GetWindowText(hWnd);
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
             return(_false(catch("Indicator.IsTesting(2)   undefined result in current context: called in Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
-         result = StringEndsWith(title, "(visual)");                 // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert und bleibt konstant)
+         static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert und bleibt konstant)
       }
       else {
-         result = false;                                             // Indikator läuft in Indicator::start() im Hauptchart
+         static.result = false;                                      // Indikator läuft in Indicator::start() im Hauptchart
       }
    }
 
-   resolved = true;
-   return(result);
+   static.resolved = true;
+   return(static.result);
 }
 
 
@@ -5897,7 +5896,75 @@ datetime FXTToServerTime(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFI
 }
 
 
-#include <EventListener.BarOpen.mqh>
+/**
+ * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
+ * desselben Ticks wird das Event korrekt erkannt.
+ *
+ * @param  int results[] - Array, das nach Rückkehr die IDs der Timeframes enthält, in denen das Event aufgetreten ist (mehrere sind möglich)
+ * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
+ *
+ * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
+ *
+ *
+ * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
+ */
+bool EventListener.BarOpen(int results[], int flags=NULL) {
+   if (Indicator.IsTesting()) /*&&*/ if (!Indicator.IsICustom())     // TODO: !!! Test auf iCustom() ist unzureichend, der Root-Caller muß ein EA sein
+      return(_false(catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE)));
+
+   if (ArraySize(results) != 0)
+      ArrayResize(results, 0);
+
+   if (flags == NULL)
+      flags = PeriodFlag(Period());
+
+   /*                                                                // TODO: Listener für PERIOD_MN1 implementieren
+   +--------------------------+--------------------------+
+   | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
+   +--------------------------+--------------------------+
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |           // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
+   | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
+   +--------------------------+--------------------------+
+   */
+   static datetime bar.openTimes[], bar.closeTimes[];                // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
+
+                                                                     // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
+   static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M30,   PERIOD_M15,   PERIOD_M5,   PERIOD_M1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
+                             periodFlags[]={F_PERIOD_H1, F_PERIOD_M30, F_PERIOD_M15, F_PERIOD_M5, F_PERIOD_M1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
+   if (sizeOfPeriods == 0) {
+      sizeOfPeriods = ArraySize(periods);
+      ArrayResize(bar.openTimes,  sizeOfPeriods);
+      ArrayResize(bar.closeTimes, sizeOfPeriods);
+   }
+
+   bool isEvent;
+
+   for (int i=0; i < sizeOfPeriods; i++) {
+      if (flags & periodFlags[i] != 0) {
+         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
+         if (Tick.Time >= bar.closeTimes[i]) {                       // true sowohl bei Initialisierung als auch bei BarOpen
+            bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
+            bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
+         }
+
+         // Event anhand des vorherigen Ticks bestimmen
+         if (Tick.prevTime < bar.openTimes[i]) {
+            if (!Tick.prevTime) {
+               if (Expert.IsTesting())                               // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
+                  isEvent = ArrayPushInt(results, periods[i]);       // (bool) int
+            }
+            else {
+               isEvent = ArrayPushInt(results, periods[i]);          // (bool) int
+            }
+         }
+
+         // Abbruch, wenn nur dieses einzelne Flag geprüft werden soll (die am häufigsten verwendeten Perioden sind zuerst angeordnet)
+         if (flags == periodFlags[i])
+            break;
+      }
+   }
+   return(isEvent);
+}
 
 
 /**
