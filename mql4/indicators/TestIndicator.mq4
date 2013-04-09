@@ -20,6 +20,10 @@ int __DEINIT_FLAGS__[];
  */
 int onTick() {
 
+   debug("onTick()   Tick.prevTime="+ TimeToStr(Tick.prevTime, TIME_FULL) +"   Tick.Time="+ TimeToStr(Tick.Time, TIME_FULL));
+
+
+   /*
    bool st = true;               // static ...
    bool si = false;              // sized array declaration
    bool in = true;               // initializer
@@ -28,7 +32,8 @@ int onTick() {
    //LocalPrimitives(in);
 
    //GlobalArrays(st, si, in);
-   LocalArrays(st, si, in);
+   //LocalArrays(st, si, in);
+   */
 
    return(last_error);
 }

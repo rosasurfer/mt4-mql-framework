@@ -29,7 +29,8 @@ int init() {
 
 
    // (2) stdlib initialisieren
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+   int iNull[];
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -178,6 +179,16 @@ int deinit() {
  * @return bool
  */
 bool IsExpert() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
    return(false);
 }
 

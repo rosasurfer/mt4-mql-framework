@@ -30,10 +30,10 @@ int onTick() {
    bool si = false;
    bool in = true;
 
-   //GlobalPrimitives(in);
+   //GlobalPrimitives(st, in);
    //LocalPrimitives(in);
 
-   //GlobalArrays(si, in);
+   //GlobalArrays(st, si, in);
    //LocalArrays(st, si, in);
 
    return(last_error);
@@ -45,8 +45,8 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 void DummyCalls() {
-   GlobalPrimitives(NULL);
+   GlobalPrimitives(NULL, NULL);
    LocalPrimitives(NULL);
-   GlobalArrays(NULL, NULL);
+   GlobalArrays(NULL, NULL, NULL);
    LocalArrays(NULL, NULL, NULL);
 }

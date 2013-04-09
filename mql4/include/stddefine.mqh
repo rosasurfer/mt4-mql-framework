@@ -1801,6 +1801,7 @@ void __DummyCalls() {
    debug(NULL);
    DummyCalls();                    // Library-Stub, kann lokal implementiert werden
    EQ(NULL, NULL);
+   Expert.IsTesting();
    Floor(NULL);
    GE(NULL, NULL);
    GT(NULL, NULL);

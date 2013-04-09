@@ -7,12 +7,16 @@
 
    // MQL-Status- und Laufzeitumgebungs-Informationen
    bool     IsExpert();
+   bool     Expert.IsTesting();
+
    bool     IsIndicator();
-   bool     IsScript();
-   bool     Indicator.IsICustom();
    bool     Indicator.IsTesting();
+   bool     Indicator.IsICustom();
+
+   bool     IsScript();
    bool     Script.IsTesting();
-   bool     This.IsTesting();                                        // kurz für: IsTesting() || Indicator.IsTesting() || Script.IsTesting()
+
+   bool     This.IsTesting();                                        // kurz für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -584,7 +588,7 @@
 
 
    // erweiterte Root-Funktionen
-   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
+   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason, int tickData[]);
    int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 

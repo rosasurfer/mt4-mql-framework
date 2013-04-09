@@ -47,10 +47,14 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+   int tickData[3];
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason(), tickData);
    if (IsError(error))
-      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
-                                                                              // #define INIT_PIPVALUE
+      return(SetLastError(error));
+
+   Tick          = tickData[0]; Ticks = Tick;
+   Tick.Time     = tickData[1];                                               // #define INIT_TIMEZONE               in stdlib_init()
+   Tick.prevTime = tickData[2];                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
@@ -81,13 +85,6 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       if (IsError(error))
          return(SetLastError(error));
    }
-
-
-   error = testlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
-   if (IsError(error))
-      return(SetLastError(error));
-
-
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -141,7 +138,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: sicherstellen, daß Tick.Time/Tick.prevTime in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = IndicatorCounted();
 
    if (!Tick.Time) {
@@ -301,6 +298,16 @@ int deinit() {
  * @return bool
  */
 bool IsExpert() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
    return(false);
 }
 
