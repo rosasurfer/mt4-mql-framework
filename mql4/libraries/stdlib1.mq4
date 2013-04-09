@@ -38,18 +38,19 @@ int __DEINIT_FLAGS__[];
 /**
  * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
  *
- * @param  int    type               - Programmtyp
- * @param  string name               - Programmname
- * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  bool   isChart            - Callermodule-Variable IsChart
- * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
- * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
- * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int      type               - Programmtyp
+ * @param  string   name               - Programmname
+ * @param  int      whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  bool     isChart            - Callermodule-Variable IsChart
+ * @param  bool     isOfflineChart     - Callermodule-Variable IsOfflineChart
+ * @param  int      _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  int      initFlags          - durchzuführende Initialisierungstasks (default: keine)
+ * @param  int      uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int      tickData[]         - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason) { //throws ERS_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason, int &tickData[]) { //throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -127,6 +128,16 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
          }
       }
    }
+
+
+   // (5) Tickdaten zurückliefern
+   if (ArraySize(tickData) < 3)
+      ArrayResize(tickData, 3);
+
+   tickData[0] = Tick;
+   tickData[1] = Tick.Time;
+   tickData[2] = Tick.prevTime;
+
    return(catch("stdlib_init(4)"));
 }
 
@@ -154,7 +165,7 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
       // vorher: Tick.prevTime = time[2]|0;        danach: Tick.prevTime = time[1];
       //         Tick.Time     = time[1];                  Tick.Time     = time[0];
       Tick.prevTime = Tick.Time;
-      Tick.Time     = tickTime;                                      // TODO: sicherstellen, daß Tick.Time/Tick.prevTime in allen Szenarien statisch sind
+      Tick.Time     = tickTime;
    }
    else {
       // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
@@ -525,7 +536,7 @@ bool Indicator.IsTesting() {
          string title = GetWindowText(hWnd);
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
             return(_false(catch("Indicator.IsTesting(2)   undefined result in current context: called in Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
-         result = StringEndsWith(title, "(visual)");                 // Indikator läuft im Haupt- oder Testchart (der String "(visual)" ist nicht internationalisiert)
+         result = StringEndsWith(title, "(visual)");                 // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert und bleibt konstant)
       }
       else {
          result = false;                                             // Indikator läuft in Indicator::start() im Hauptchart
@@ -5886,92 +5897,7 @@ datetime FXTToServerTime(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFI
 }
 
 
-/**
- * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt.
- *
- * @param  int results[] - Array, das die IDs der Timeframes aufnimmt, in denen das Event aufgetreten ist (es sind mehrere möglich)
- * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: aktuelle Chartperiode)
- *
- * @return bool - ob mindestens ein BarOpen-Event erkannt wurde
- */
-bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (ArraySize(results) != 0)
-      ArrayResize(results, 0);
-
-   int currentPeriodFlag = PeriodFlag(Period());
-   if (flags == NULL)
-      flags = currentPeriodFlag;
-
-   static int lastTick;
-
-   // Die aktuelle Periode kann einfach und schnell geprüft werden.
-   if (flags & currentPeriodFlag != 0) {
-      static int  lastOpenTime;
-      static bool lastResult;
-
-      if (lastOpenTime != 0) {
-         if (Tick == lastTick) {
-            if (lastResult)                                          // wiederholter Aufruf während desselben Ticks
-               ArrayPushInt(results, Period());
-         }
-         else if (Time[0] != lastOpenTime) {                         // neuer Tick
-            ArrayPushInt(results, Period());
-            lastResult = true;
-         }
-         else {
-            lastResult = false;
-         }
-      }
-      else {
-         lastResult = IsTesting();                                   // nur für EA's: Testbeginn ist BarOpen
-      }
-      lastOpenTime = Time[0];
-      lastTick     = Tick;
-   }
-
-   // Prüfungen für andere als die aktuelle Chartperiode
-   else {
-      static int lastMinute = 0;
-
-      datetime tick = MarketInfo(Symbol(), MODE_TIME);               // nur Sekundenauflösung
-      int minute;
-
-      // PERIODFLAG_M1
-      if (flags & F_PERIOD_M1 != 0) {
-         if (!lastTick) {
-            lastTick   = tick;
-            lastMinute = TimeMinute(tick);
-            //debug("EventListener.BarOpen(M1)   initialisiert   lastTick: '", TimeToStr(lastTick, TIME_FULL), "' (", lastMinute, ")");
-         }
-         else if (lastTick != tick) {
-            minute = TimeMinute(tick);
-            if (lastMinute < minute)
-               ArrayPushInt(results, F_PERIOD_M1);
-            //debug("EventListener.BarOpen(M1)   prüfe   alt: '", TimeToStr(lastTick, TIME_FULL), "' (", lastMinute, ")   neu: '", TimeToStr(tick, TIME_FULL), "' (", minute, ")");
-            lastTick   = tick;
-            lastMinute = minute;
-         }
-         //else debug("EventListener.BarOpen(M1)   zwei Ticks in derselben Sekunde");
-      }
-   }
-
-   // TODO: verbleibende Timeframe-Flags verarbeiten
-   /*
-   if (flags & F_PERIOD_M5  != 0) ArrayPushInt(results, PERIOD_M5 );
-   if (flags & F_PERIOD_M15 != 0) ArrayPushInt(results, PERIOD_M15);
-   if (flags & F_PERIOD_M30 != 0) ArrayPushInt(results, PERIOD_M30);
-   if (flags & F_PERIOD_H1  != 0) ArrayPushInt(results, PERIOD_H1 );
-   if (flags & F_PERIOD_H4  != 0) ArrayPushInt(results, PERIOD_H4 );
-   if (flags & F_PERIOD_D1  != 0) ArrayPushInt(results, PERIOD_D1 );
-   if (flags & F_PERIOD_W1  != 0) ArrayPushInt(results, PERIOD_W1 );
-   if (flags & F_PERIOD_MN1 != 0) ArrayPushInt(results, PERIOD_MN1);
-   */
-
-   int error = GetLastError();
-   if (IsError(error))
-      return(_false(catch("EventListener.BarOpen()", error)));
-   return(ArraySize(results));                                       // (bool) int
-}
+#include <EventListener.BarOpen.mqh>
 
 
 /**

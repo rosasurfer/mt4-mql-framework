@@ -3,6 +3,7 @@
 #define __iCustom__ NULL
 
 #include <ChartInfos/functions.mqh>
+#include <EventListener.BarOpen.mqh>
 
 
 // Teststatistiken
@@ -46,7 +47,8 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+   int iNull[];
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -181,7 +183,7 @@ int start() {
 
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                  // TODO: sicherstellen, daß Tick.Time/Tick.prevTime in allen Szenarien statisch sind
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
    ChangedBars   = -1;
 
@@ -336,6 +338,16 @@ bool IsExpert() {
 
 
 /**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   return(IsTesting());
+}
+
+
+/**
  * Ob das aktuell ausgeführte Programm ein Indikator ist.
  *
  * @return bool
@@ -398,71 +410,6 @@ int SetLastError(int error, int param=NULL) {
          __STATUS_ERROR = true;
    }
    return(error);
-}
-
-
-/**
- * Prüft, ob der aktuelle Tick in den angegebenen Timeframes ein BarOpen-Event darstellt. Auch bei wiederholten Aufrufen während
- * desselben Ticks wird das Event korrekt erkannt.
- *
- * @param  int results[] - Array, das nach Rückkehr die IDs der Timeframes enthält, in denen das Event aufgetreten ist (mehrere sind möglich)
- * @param  int flags     - Flags ein oder mehrerer zu prüfender Timeframes (default: der aktuelle Timeframe)
- *
- * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
- */
-bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (ArraySize(results) != 0)
-      ArrayResize(results, 0);
-
-   if (flags == NULL)
-      flags = PeriodFlag(Period());
-
-   /*                                                                // TODO: Listener für PERIOD_MN1 implementieren
-   +--------------------------+--------------------------+
-   | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
-   +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |           // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
-   | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
-   +--------------------------+--------------------------+
-   */
-   static datetime bar.openTimes[], bar.closeTimes[];                // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
-
-                                           // PERIOD_H1: die am häufigsten verwendete Periode zuerst (beschleunigt Ausführung)
-   static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M1,   PERIOD_M5,   PERIOD_M15,   PERIOD_M30,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
-                             periodFlags[]={F_PERIOD_H1, F_PERIOD_M1, F_PERIOD_M5, F_PERIOD_M15, F_PERIOD_M30, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
-   if (sizeOfPeriods == 0) {
-      sizeOfPeriods = ArraySize(periods);
-      ArrayResize(bar.openTimes,  sizeOfPeriods);
-      ArrayResize(bar.closeTimes, sizeOfPeriods);
-   }
-
-   bool isEvent;
-
-   for (int i=0; i < sizeOfPeriods; i++) {
-      if (flags & periodFlags[i] != 0) {
-         // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[i]) {                       // true sowohl bei Initialisierung als auch bei BarOpen
-            bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
-            bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
-         }
-
-         // Event anhand des vorherigen Ticks bestimmen
-         if (Tick.prevTime < bar.openTimes[i]) {
-            if (!Tick.prevTime) {
-               if (IsTesting())                                      // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
-                  isEvent = ArrayPushInt(results, periods[i]);       // (bool) int
-            }
-            else {
-               isEvent = ArrayPushInt(results, periods[i]);          // (bool) int
-            }
-         }
-
-         // Abbruch, wenn nur dieses einzelne Flag geprüft werden soll (daher PERIOD_H1 zuerst)
-         if (flags == periodFlags[i])
-            break;
-      }
-   }
-   return(isEvent);
 }
 
 

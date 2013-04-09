@@ -48,7 +48,7 @@ int deinit() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
+ * Ob das aktuell ausgeführte Programm ein Expert ist.
  *
  * @return bool
  */
@@ -56,6 +56,22 @@ bool IsExpert() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("IsExpert()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_EXPERT);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("Expert.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
+   if (IsTesting()) /*&&*/ if (IsExpert())
+      return(true);
+
+   return(false);
 }
 
 
