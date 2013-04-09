@@ -16,7 +16,7 @@
    bool     IsScript();
    bool     Script.IsTesting();
 
-   bool     This.IsTesting();                                        // kurz für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
+   bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
