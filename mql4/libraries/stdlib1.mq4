@@ -216,7 +216,12 @@ int afterInit()               {                                                 
 
 int onStart()                 {                                                                             return(NO_ERROR); }
 int onTick()                  {                                                                             return(NO_ERROR); }
-int ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
+int LogParameters()           {
+   debug("LogParameters()   __LOG="+ __LOG);
+   if (IsIndicator() && __LOG) log("LogParameters() not implemented");
+   return(NO_ERROR);
+}
+int ShowStatus()              { if (IsExpert())    Comment("\n\n\n\nShowStatus() not implemented");         return(NO_ERROR); }
 
 int onDeinit()                {                                                                             return(NO_ERROR); }
 int onDeinitParameterChange() {                                                                             return(NO_ERROR); }
@@ -5028,8 +5033,8 @@ int CountDecimals(double number) {
  */
 double MathModFix(double a, double b) {
    double remainder = MathMod(a, b);
-   if (EQ(remainder, b))
-      remainder = 0;
+   if      (EQ(remainder, 0)) remainder = 0;                         // 0 normalisieren
+   else if (EQ(remainder, b)) remainder = 0;
    return(remainder);
 }
 
@@ -10239,7 +10244,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    // lots
    if (LT(lots, minLot))                                       return(_int(-1, oe.setError(oe, catch("OrderSendEx(3)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME))));
    if (GT(lots, maxLot))                                       return(_int(-1, oe.setError(oe, catch("OrderSendEx(4)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME))));
-   if (NE(MathModFix(lots, lotStep), 0))                       return(_int(-1, oe.setError(oe, catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME))));
+   if (MathModFix(lots, lotStep) != 0)                         return(_int(-1, oe.setError(oe, catch("OrderSendEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_TRADE_VOLUME))));
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price
    if (LT(price, 0))                                           return(_int(-1, oe.setError(oe, catch("OrderSendEx(6)   illegal parameter price = "+ NumberToStr(price, priceFormat), ERR_INVALID_FUNCTION_PARAMVALUE))));
@@ -11259,7 +11264,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
    else if (NE(lots, openLots)) {
       if (LT(lots, minLot))                                    return(_false(oe.setError(oe, catch("OrderCloseEx(5)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
       if (GT(lots, openLots))                                  return(_false(oe.setError(oe, catch("OrderCloseEx(6)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (open lots="+ NumberToStr(openLots, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
-      if (NE(MathModFix(lots, lotStep), 0))                    return(_false(oe.setError(oe, catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+      if (MathModFix(lots, lotStep) != 0)                      return(_false(oe.setError(oe, catch("OrderCloseEx(7)   illegal parameter lots = "+ NumberToStr(lots, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    }
    lots = NormalizeDouble(lots, CountDecimals(lotStep));
    // price

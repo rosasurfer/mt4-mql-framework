@@ -88,7 +88,7 @@ int onInit() {
    // Units
    if (LT(Units, 0.1) || GT(Units, 1.5))
       return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT));
-   if (NE(MathModFix(Units, 0.1), 0))
+   if (MathModFix(Units, 0.1) != 0)
       return(catch("onInit(5)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT));
    Units = NormalizeDouble(Units, 1);
    // -- Ende - Parametervalidierung

@@ -574,6 +574,7 @@
 
    int      onStart();
    int      onTick();
+   int      LogParameters();                                         // für Indikatoren bei Aufruf durch iCustom()
    int      ShowStatus();                                            // für EA's
 
    int      onDeinit();

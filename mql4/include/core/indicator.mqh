@@ -105,6 +105,12 @@ int init() { //throws ERS_TERMINAL_NOT_READY
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
                                                                               //
+
+   // (5) bei Aufruf durch iCustom() Parameter loggen
+   if (Indicator.IsICustom())
+      LogParameters();
+
+
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -112,7 +118,6 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    // (5) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (UninitializeReason() == REASON_PARAMETERS)
       Chart.SendTick(false);                                                  // TODO: Existenz des "Indicators List"-Windows ermitteln
-
 
    catch("init(3)");
    return(last_error);
@@ -328,7 +333,7 @@ bool IsIndicator() {
  * @return bool
  */
 bool Indicator.IsICustom() {
-   return(__iCustom__);          // (bool)int
+   return(__iCustom__);          // (bool) int
 }
 
 
