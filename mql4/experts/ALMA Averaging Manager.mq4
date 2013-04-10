@@ -85,7 +85,6 @@ bool IsStartSignal() {
       return(false);
 
    int iNull[];
-
    if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {    // Prüfung nur bei onBarOpen, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
@@ -102,9 +101,9 @@ bool IsStartSignal() {
       }
 
       bool signal;
-      if      (trade.direction[0] == D_LONG ) signal = (trend == 1);
-      else if (trade.direction[0] == D_SHORT) signal = (trend ==-1);
-      else                                    signal = (trend == 1 || trend==-1);
+      if      (trade.direction[0] == D_LONG ) signal = (trend== 1);
+      else if (trade.direction[0] == D_SHORT) signal = (trend==-1);
+      else                                    signal = (trend== 1 || trend==-1);
 
       if (signal) {
          if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
