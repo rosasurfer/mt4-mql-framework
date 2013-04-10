@@ -111,13 +111,9 @@ int init() { //throws ERS_TERMINAL_NOT_READY
       LogParameters();
 
 
-   if (__STATUS_ERROR)
-      return(last_error);
-
-
-   // (5) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (UninitializeReason() == REASON_PARAMETERS)
-      Chart.SendTick(false);                                                  // TODO: Existenz des "Indicators List"-Windows ermitteln
+   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   if (!__STATUS_ERROR && UninitializeReason()==REASON_PARAMETERS)
+      Chart.SendTick(false);                                                  // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
 
    catch("init(3)");
    return(last_error);
