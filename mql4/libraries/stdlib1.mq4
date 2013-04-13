@@ -73,16 +73,13 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   // (2) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln und damit cachen.
-   if (!GetApplicationWindow())                                      // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
-      return(last_error);                                            // (z.B. im Tester bei Shutdown).
-   if (!GetUIThreadId())                                             // GetUIThreadId() ist auf gültiges Hauptfenster-Handle angewiesen
+   // (2) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
+   if (!GetApplicationWindow())                                      // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
+      return(last_error);                                            // bei Shutdown). Die Funktion GetUIThreadId() ist jedoch auf ein gültiges Hauptfenster-Handle angewiesen,
+   if (!GetUIThreadId())                                             // das Handle muß deshalb vorher (also hier) ermittelt werden.
       return(last_error);
-                                                                     // #define INIT_TIMEZONE
-                                                                     // #define INIT_PIPVALUE
-                                                                     // #define INIT_BARS_ON_HIST_UPDATE
-                                                                     // #define INIT_CUSTOMLOG
-                                                                     // #define INIT_HSTLIB
+
+
    // (3) user-spezifische Init-Tasks ausführen
    if (_bool(__InitFlags & INIT_TIMEZONE)) {                         // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
@@ -123,14 +120,14 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
             return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERS_TERMINAL_NOT_READY)                // den UI-Thread blockieren würde.
+            if (last_error == ERS_TERMINAL_NOT_READY)                // u.U. den UI-Thread blockieren kann.
                return(debug("stdlib_init()   GetAccountNumber() = 0", last_error));
          }
       }
    }
 
 
-   // (5) Tickdaten zurückliefern
+   // (5) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
@@ -170,7 +167,7 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
       // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
    }
 
-   Tick        = tick; Ticks = Tick;                                 // der konkrete Wert hat keine Bedeutung
+   Tick        = tick; Ticks = Tick;                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    ValidBars   = validBars;
    ChangedBars = changedBars;
 
@@ -1289,7 +1286,7 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Initialisiert einen Shared-Buffer zur Verwendung mit iCustom().
+ * Initialisiert einen Buffer zur Verwendung mit iCustom().
  *
  * @param  int ic[] - das für den Buffer zu verwendende Integer-Array
  * @param  int ptr  - Zeiger auf Initialisierungsdaten (default: keine)
@@ -1303,7 +1300,7 @@ int InitializeICustom(int &ic[], int ptr=NULL) {
    if (ArraySize(ic) != ICUSTOM.intSize)
       ArrayResize(ic, ICUSTOM.intSize);
 
-   if (ptr == NULL) {
+   if (!ptr) {
       ArrayInitialize(ic, 0);
       ic[IC_PTR] = GetBufferAddress(ic);
    }
@@ -1314,7 +1311,6 @@ int InitializeICustom(int &ic[], int ptr=NULL) {
       if (ic[IC_PTR] != ptr)
          return(catch("InitializeICustom(3)   invalid ICUSTOM data found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
    }
-
    return(catch("InitializeICustom(4)"));
 }
 

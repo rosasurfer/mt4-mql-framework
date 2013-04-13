@@ -303,7 +303,7 @@ string  sNull, sNulls[];
 #define MovingAverage.MODE_TREND_LAGGED   2     // Trend mit Verzögerung
 
 
-// Indicator shared memory identifiers, siehe iCustom()
+// iCustom() shared memory identifier
 #define IC_PTR                         0
 #define IC_LAST_ERROR                  1
 

@@ -130,9 +130,9 @@
 
    // Buffer-Funktionen
    int      InitializeBuffer      (int    buffer[], int length);
-   int      InitializeDoubleBuffer(double buffer[], int size  );
+   int      InitializeDoubleBuffer(double buffer[], int size);
    int      InitializeStringBuffer(string buffer[], int length);
-   int      InitializeICustom     (int    buffer[], int ptr   );
+   int      InitializeICustom     (int    buffer[], int pointer);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
