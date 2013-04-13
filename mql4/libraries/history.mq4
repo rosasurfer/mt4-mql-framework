@@ -23,13 +23,14 @@ int __DEINIT_FLAGS__[];
  * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  bool   isChart            - Hauptprogramm-Variable IsChart
  * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
- * @param  int    _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
+ * @param  int    lpICUSTOM          - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason) {
+int history_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -37,12 +38,11 @@ int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    __NAME__       = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__   = whereami;
    __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                       // (bool) int
-   __iCustom__    = _iCustom;                                           // (int) lpICUSTOM
-      if (IsTesting())
-   __LOG          = Tester.IsLogging();                                 // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
    IsChart        = isChart;
    IsOfflineChart = isOfflineChart;
+   __LOG          = loggingEnabled;
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                    // (bool) int
+   __iCustom__    = lpICUSTOM;
 
 
    // globale Variablen re-initialisieren
@@ -52,7 +52,7 @@ int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   return(catch("hstlib_init()"));
+   return(catch("history_init()"));
 }
 
 
@@ -68,7 +68,7 @@ int hstlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. Diese deinit()-Funktion wird deswegen u.U. nicht mehr ausgeführt.
  */
-int hstlib_deinit(int deinitFlags, int uninitializeReason) {
+int history_deinit(int deinitFlags, int uninitializeReason) {
    __WHEREAMI__  = FUNC_DEINIT;
    __DeinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
    return(NO_ERROR);
@@ -80,7 +80,7 @@ int hstlib_deinit(int deinitFlags, int uninitializeReason) {
  *
  * @return int - Fehlerstatus
  */
-int hstlib_GetLastError() {
+int history_GetLastError() {
    return(last_error);
 }
 

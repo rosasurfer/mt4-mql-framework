@@ -66,8 +66,8 @@
 
 
    // Library-Management
-   int      hstlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
-   int      hstlib_deinit(int deinitFlags, int uninitializeReason);
-   int      hstlib_GetLastError();
+   int      history_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason);
+   int      history_deinit(int deinitFlags, int uninitializeReason);
+   int      history_GetLastError();
 
 #import

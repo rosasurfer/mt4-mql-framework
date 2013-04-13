@@ -70,7 +70,6 @@ bool Expert.IsTesting() {
 
    if (IsTesting()) /*&&*/ if (IsExpert())
       return(true);
-
    return(false);
 }
 
@@ -88,13 +87,14 @@ bool IsIndicator() {
 
 
 /**
- * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
  *
  * @return bool
  */
 bool Indicator.IsICustom() {
    if (__TYPE__ == T_LIBRARY)
       return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
    if (IsIndicator())
       return(__iCustom__);                // (bool) int
    return(false);
@@ -120,6 +120,23 @@ bool IsScript() {
  */
 bool IsLibrary() {
    return(true);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+
+   if (   IsExpert()) return(   Expert.IsTesting());
+   if (   IsScript()) return(   Script.IsTesting());
+   if (IsIndicator()) return(Indicator.IsTesting());
+
+   return(false);
 }
 
 
