@@ -38,19 +38,20 @@ int __DEINIT_FLAGS__[];
 /**
  * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
  *
- * @param  int      type               - Programmtyp
- * @param  string   name               - Programmname
- * @param  int      whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  bool     isChart            - Callermodule-Variable IsChart
- * @param  bool     isOfflineChart     - Callermodule-Variable IsOfflineChart
- * @param  int      _iCustom           - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
- * @param  int      initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int      uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
- * @param  int      tickData[]         - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
+ * @param  int    type               - Programmtyp
+ * @param  string name               - Programmname
+ * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+ * @param  bool   isChart            - Callermodule-Variable IsChart
+ * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
+ * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
+ * @param  int    lpICUSTOM          - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
+ * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int    tickData[]         - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason, int &tickData[]) { //throws ERS_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -58,12 +59,11 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    __NAME__       = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__   = whereami;
    __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                             // (bool) int
-   __iCustom__    = _iCustom;                                                 // (int) lpICUSTOM
-      if (IsTesting())
-   __LOG          = Tester.IsLogging();                                       // TODO: !!! bei iCustom(indicator) Status aus aufrufendem Modul übernehmen
    IsChart        = isChart;
    IsOfflineChart = isOfflineChart;
+   __LOG          = loggingEnabled;
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                    // (bool) int
+   __iCustom__    = lpICUSTOM;
 
 
    // (1) globale Variablen re-initialisieren
@@ -74,27 +74,27 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
    // (2) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln und damit cachen.
-   if (!GetApplicationWindow())                                               // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
-      return(last_error);                                                     // (z.B. im Tester bei Shutdown).
-   if (!GetUIThreadId())                                                      // GetUIThreadId() ist auf gültiges Hauptfenster-Handle angewiesen
+   if (!GetApplicationWindow())                                      // Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert
+      return(last_error);                                            // (z.B. im Tester bei Shutdown).
+   if (!GetUIThreadId())                                             // GetUIThreadId() ist auf gültiges Hauptfenster-Handle angewiesen
       return(last_error);
-                                                                              // #define INIT_TIMEZONE
-                                                                              // #define INIT_PIPVALUE
-                                                                              // #define INIT_BARS_ON_HIST_UPDATE
-                                                                              // #define INIT_CUSTOMLOG
-                                                                              // #define INIT_HSTLIB
+                                                                     // #define INIT_TIMEZONE
+                                                                     // #define INIT_PIPVALUE
+                                                                     // #define INIT_BARS_ON_HIST_UPDATE
+                                                                     // #define INIT_CUSTOMLOG
+                                                                     // #define INIT_HSTLIB
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(__InitFlags & INIT_TIMEZONE)) {                                  // Zeitzonen-Konfiguration überprüfen
+   if (_bool(__InitFlags & INIT_TIMEZONE)) {                         // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {                                  // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+   if (_bool(__InitFlags & INIT_PIPVALUE)) {                         // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
       /*
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
-      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(1)", error));
       }
@@ -103,7 +103,7 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
+         if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
             return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("stdlib_init(2)", error));
       }
@@ -113,17 +113,17 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
 
 
    // (4) nur für EA's durchzuführende globale Initialisierungen
-   if (IsExpert()) {                                                          // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
+   if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
       if (IntInArray(reasons, uninitializeReason))
          OrderSelect(0, SELECT_BY_TICKET);
 
-      if (IsTesting()) {                                                      // nur im Tester
-         if (!SetWindowTextA(GetTesterWindow(), "Tester"))                    // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
+      if (IsTesting()) {                                             // nur im Tester
+         if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
             return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
-         if (!GetAccountNumber()) {                                           // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERS_TERMINAL_NOT_READY)                         // den UI-Thread blockieren würde.
+         if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
+            if (last_error == ERS_TERMINAL_NOT_READY)                // den UI-Thread blockieren würde.
                return(debug("stdlib_init()   GetAccountNumber() = 0", last_error));
          }
       }
@@ -216,12 +216,8 @@ int afterInit()               {                                                 
 
 int onStart()                 {                                                                             return(NO_ERROR); }
 int onTick()                  {                                                                             return(NO_ERROR); }
-int LogParameters()           {
-   debug("LogParameters()   __LOG="+ __LOG);
-   if (IsIndicator() && __LOG) log("LogParameters() not implemented");
-   return(NO_ERROR);
-}
-int ShowStatus()              { if (IsExpert())    Comment("\n\n\n\nShowStatus() not implemented");         return(NO_ERROR); }
+int LogParameters()           { if (__LOG)          log("LogParameters()   function not implemented");      return(NO_ERROR); }
+int ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
 
 int onDeinit()                {                                                                             return(NO_ERROR); }
 int onDeinitParameterChange() {                                                                             return(NO_ERROR); }
@@ -515,7 +511,7 @@ void CopyMemory(int destination, int source, int bytes) {
 
 
 /**
- * Ob der Indikator im Tester ausgeführt wird.
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
  * @return bool
  */
@@ -535,12 +531,13 @@ bool Indicator.IsTesting() {
          static.result = true;
       }
       else if (__WHEREAMI__ != FUNC_START) {                         // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
-         int hChart   = WindowHandle(Symbol(), NULL);
-         int hWnd     = GetParent(hChart);
-         string title = GetWindowText(hWnd);
+         int hChart = WindowHandle(Symbol(), NULL);
+         if (!hChart)
+            return(_false(catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
+         string title = GetWindowText(GetParent(hChart));
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
-            return(_false(catch("Indicator.IsTesting(2)   undefined result in current context: called in Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
-         static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert und bleibt konstant)
+            return(_false(catch("Indicator.IsTesting(3)   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
+         static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
       }
       else {
          static.result = false;                                      // Indikator läuft in Indicator::start() im Hauptchart
@@ -553,48 +550,34 @@ bool Indicator.IsTesting() {
 
 
 /**
- * Ob das Script im Tester ausgeführt wird.
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
  *
  * @return bool
  */
 bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Script.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Script.IsTesting(1)   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
-   static bool resolved=false, result=false;
-   if (resolved)
-      return(result);
+   static bool static.resolved, static.result;                       // static: EA ok, Indikator ok
+   if (static.resolved)
+      return(static.result);
 
    if (IsScript()) {
       int hChart = WindowHandle(Symbol(), NULL);
-      int hWnd   = GetParent(hChart);
-      result = StringEndsWith(GetWindowText(hWnd), "(visual)");      // "(visual)" ist nicht internationalisiert und bleibt konstant
+      if (!hChart) {
+         string function;
+         switch (__WHEREAMI__) {
+            case FUNC_INIT  : function = "init()";   break;
+            case FUNC_START : function = "start()";  break;
+            case FUNC_DEINIT: function = "deinit()"; break;
+         }
+         return(_false(catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR)));
+      }                                                              // "(visual)" ist nicht internationalisiert
+      static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");
    }
 
-   resolved = true;
-   return(result);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
-
-   static bool resolved, result;                                     // ohne Initializer (@see MQL.doc)
-
-   if (!resolved) {
-      if      (   IsExpert()) result =           IsTesting();
-      else if (IsIndicator()) result = Indicator.IsTesting();        // throws ERR_RUNTIME_ERROR
-      else                    result =    Script.IsTesting();
-      resolved = (result || !IsLastError());
-   }
-
-   return(result);
+   static.resolved = true;
+   return(static.result);
 }
 
 
@@ -977,7 +960,7 @@ int GetGMTToFXTOffset(datetime gmtTime) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetServerToFXTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+int GetServerToFXTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
       catch("GetServerToFXTOffset()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -1015,7 +998,7 @@ int GetServerToFXTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CO
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetServerToGMTOffset(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0) {
       catch("GetServerToGMTOffset(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -5278,7 +5261,7 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetServerPrevSessionStartTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5301,7 +5284,7 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) { //throws ERR_INVAL
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerPrevSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetServerPrevSessionEndTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerPrevSessionEndTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5320,7 +5303,7 @@ datetime GetServerPrevSessionEndTime(datetime serverTime) { //throws ERR_INVALID
  *
  * @return datetime - Startzeit oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+datetime GetServerSessionStartTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5353,7 +5336,7 @@ datetime GetServerSessionStartTime(datetime serverTime) { //throws ERR_INVALID_T
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+datetime GetServerSessionEndTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionEndTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5372,7 +5355,7 @@ datetime GetServerSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIM
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionStartTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetServerNextSessionStartTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5395,7 +5378,7 @@ datetime GetServerNextSessionStartTime(datetime serverTime) { //throws ERR_INVAL
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetServerNextSessionEndTime(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetServerNextSessionEndTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("GetServerNextSessionEndTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5456,7 +5439,7 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGMTSessionStartTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
+datetime GetGMTSessionStartTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5479,7 +5462,7 @@ datetime GetGMTSessionStartTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetGMTSessionEndTime(datetime gmtTime) { //throws ERR_MARKET_CLOSED
+datetime GetGMTSessionEndTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5586,7 +5569,7 @@ datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetFXTSessionStartTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
+datetime GetFXTSessionStartTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
       return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5610,7 +5593,7 @@ datetime GetFXTSessionStartTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GetFXTSessionEndTime(datetime fxtTime) { //throws ERR_MARKET_CLOSED
+datetime GetFXTSessionEndTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
       return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -5885,7 +5868,7 @@ datetime FXTToGMT(datetime fxtTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime FXTToServerTime(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0)
       return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -6542,7 +6525,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { //throws ERS_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
+int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6905,7 +6888,7 @@ int GetFXTToGMTOffset(datetime fxtTime) {
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetFXTToServerTimeOffset(datetime fxtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+int GetFXTToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (fxtTime < 0) {
       catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -7022,7 +7005,7 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
  *
  * NOTE: Das Ergebnis ist der entgegengesetzte Wert des Offsets von Tradeserver-Zeit zu GMT.
  */
-int GetGMTToServerTimeOffset(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0) {
       catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE);
       return(EMPTY_VALUE);
@@ -7985,7 +7968,7 @@ string FileAccessModeToStr(int mode) {
  *
  * @see http://en.wikipedia.org/wiki/Tz_database
  */
-string GetServerTimezone() { //throws ERR_INVALID_TIMEZONE_CONFIG
+string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    /*
    Die Timezone-ID wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen die
    Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart mit den alten Bars.
@@ -8311,7 +8294,7 @@ datetime GMTToFXT(datetime gmtTime) {
  *
  * @return datetime - Tradeserver-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime GMTToServerTime(datetime gmtTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GMTToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (gmtTime < 0)
       return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -8421,7 +8404,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERS_HISTORY_UPDATE
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8464,7 +8447,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { //throws ERS_HISTORY_UPDATE
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
    if (symbol == "0")                                       // NULL ist Integer (0)
       symbol = Symbol();
 
@@ -8969,7 +8952,7 @@ int SendSMS(string receiver, string message) {
  *
  * @return datetime - FXT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToFXT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToFXT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -8996,7 +8979,7 @@ datetime ServerToFXT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
  *
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
-datetime ServerToGMT(datetime serverTime) { //throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
       return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 

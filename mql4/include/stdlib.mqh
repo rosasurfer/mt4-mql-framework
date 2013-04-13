@@ -16,8 +16,10 @@
    bool     IsScript();
    bool     Script.IsTesting();
 
+   bool     IsLibrary();
    bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
+   bool     IsLoggingEnabled();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
@@ -31,7 +33,6 @@
    string   GetServerTimezone();                                     // throws ERR_INVALID_TIMEZONE_CONFIG
    int      GetAccountNumber();
    string   ShortAccountCompany();
-   bool     Tester.IsLogging();
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
 
@@ -589,7 +590,7 @@
 
 
    // erweiterte Root-Funktionen
-   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason, int tickData[]);
+   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason, int tickData[]);
    int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 

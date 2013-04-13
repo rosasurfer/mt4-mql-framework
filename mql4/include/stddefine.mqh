@@ -7,7 +7,7 @@
 // globale Variablen, stehen überall zur Verfügung
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool     __LOG = true;                                      // ob das Logging aktiviert ist (default: ja; im Tester ggf. nein)
+bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
@@ -124,7 +124,7 @@ string  sNull, sNulls[];
 #define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE    4           //
 #define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
-#define INIT_HSTLIB                16           // initialisiert die History-Library (hstLib)
+#define INIT_HSTLIB                16           // initialisiert die History-Library
 
 
 // Object property ids, siehe ObjectSet()
@@ -748,26 +748,17 @@ int start.RelaunchInputDialog() {
  * @return int - derselbe Fehlercode
  *
  *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
+ * NOTE: In der Headerdatei implementiert, um den vollständigen Namen des laufenden Programms anzeigen zu können.
  */
 int debug(string message, int error=NO_ERROR) {
-   static int debugToLog = -1;
-   if (debugToLog == -1)
-      debugToLog = GetLocalConfigBool("Logging", "DebugToLog", false);
-
-   if (debugToLog == 1) {
-      bool old.__LOG = __LOG; __LOG = true;
-      log(message, error);    __LOG = old.__LOG;
-      return(error);
-   }
-
-   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
-      __NAME__ = WindowExpertName();
+   string name;
+   if (StringLen(__NAME__) > 0) name = __NAME__;
+   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", __NAME__, "::", message));
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
    return(error);
 }
 
@@ -790,32 +781,33 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                GetLastError();                               // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
    if (error != NO_ERROR) {
-      if (StringLen(__NAME__) == 0)                                  // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
-         __NAME__ = WindowExpertName();
+      string name, name_wId;
+      if (StringLen(__NAME__) > 0) name = __NAME__;
+      else                         name = WindowExpertName();        // falls __NAME__ noch nicht definiert ist
 
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
 
       // (1) Programmnamen um Instanz-ID erweitern
-      string name  = __NAME__;
-      int    logId = GetCustomLogID();
+      int logId = GetCustomLogID();
       if (logId != 0) {
          int pos = StringFind(name, "::");
-         if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
-         else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
+         if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
+         else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
       }
+      else name_wId = name;
 
 
       // (2) Fehler loggen
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = logged || log.custom(StringConcatenate("ERROR: ", __NAME__, "::", message));  // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message); // global Log: ggf. mit Instanz-ID
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
-      message = StringConcatenate(name, "::", message);
+      message = StringConcatenate(name_wId, "::", message);
 
 
       // (3) Fehler anzeigen
@@ -863,30 +855,31 @@ int warn(string message, int error=NO_ERROR) {
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
-   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
-      __NAME__ = WindowExpertName();
+   string name, name_wId;
+   if (StringLen(__NAME__) > 0) name = __NAME__;
+   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
 
    // (1) Programmnamen um Instanz-ID erweitern
-   string name  = __NAME__;
-   int    logId = GetCustomLogID();
+   int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
+      else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
+   else name_wId = name;
 
 
    // (2) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = logged || log.custom(StringConcatenate("WARN: ", __NAME__, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      logged = logged || log.custom(StringConcatenate("WARN: ", name, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
    if (!logged) {
-      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name, "::", message);  // global Log: ggf. mit Instanz-ID
+      Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);    // global Log: ggf. mit Instanz-ID
       logged  = true;
       alerted = alerted || !IsExpert() || !IsTesting();
    }
-   message = StringConcatenate(name, "::", message);
+   message = StringConcatenate(name_wId, "::", message);
 
 
    // (3) Warnung anzeigen
@@ -926,22 +919,35 @@ int log(string message, int error=NO_ERROR) {
    if (!__LOG)
       return(error);
 
-   if (StringLen(__NAME__) == 0)                                     // __NAME__ ist nicht definiert, falls ein Modul uninitialisiert benutzt wird
-      __NAME__ = WindowExpertName();
+
+   // (1) ggf. Debug benutzen oder ...
+   static int static.logToDebug = -1;
+   if (static.logToDebug == -1)
+      static.logToDebug = GetLocalConfigBool("Logging", "LogToDebug", false);
+   if (static.logToDebug == 1)
+      return(debug(message, error));
+
+
+   string name;
+   if (StringLen(__NAME__) > 0) name = __NAME__;
+   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
    if (IsError(error))
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
+
+   // (2) ggf. Custom-Log benutzen oder ...
    if (__LOG_CUSTOM)
-      if (log.custom(StringConcatenate(__NAME__, "::", message)))    // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (log.custom(StringConcatenate(name, "::", message)))        // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
          return(error);
 
-   string name  = __NAME__;
-   int    logId = GetCustomLogID();
+
+   // (3) ggf. Global-Log benutzen
+   int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
-      if (pos == -1) name = StringConcatenate(           __NAME__,       "(", logId, ")");
-      else           name = StringConcatenate(StringLeft(__NAME__, pos), "(", logId, ")", StringRight(__NAME__, -pos));
+      if (pos == -1) name = StringConcatenate(           name,       "(", logId, ")");
+      else           name = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
    Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
 
@@ -1319,25 +1325,23 @@ double PipValue(double lots = 1.0) {
 
 
 /**
- * Ob im Tester das Logging für den aktuellen EA aktiviert ist. Standardmäßig ist im Tester das Logging zur Performancesteigerung NICHT aktiv.
+ * Ob das Logging im aktuellen Programm aktiviert ist. Standardmäßig ist das Logging außerhalb des Testers ON und innerhalb des Testers OFF.
  *
  * @return bool
  *
  *
  * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib_init() zu ermöglichen.
  */
-bool Tester.IsLogging() {
-   if (!IsExpert())
-      return(false);
-
+bool IsLoggingEnabled() {
    string name = __NAME__;
-
    if (IsLibrary()) {
       if (StringLen(__NAME__) == 0)
-         return(_false(catch("Tester.IsLogging()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+         return(_false(catch("IsLoggingEnabled()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
-   return(GetConfigBool(name, "Logger.Tester", false));
+
+   if (This.IsTesting()) return(GetConfigBool("Logging", "Tester."+ name, false));     // default: OFF
+   else                  return(GetConfigBool("Logging",            name, true ));     // default: ON
 }
 
 
@@ -1775,8 +1779,8 @@ int Ceil(double value) {
 
 // Ist das Flag INIT_HSTLIB gesetzt, werden die Root-Funktionen der History benötigt.
 #import "history.ex4"
-   int hstlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, int _iCustom, int initFlags, int uninitializeReason);
-   int hstlib_deinit(int deinitFlags, int uninitializeReason);
+   int history_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason);
+   int history_deinit(int deinitFlags, int uninitializeReason);
 #import
 
 
@@ -1812,10 +1816,12 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsICustom();
+   Indicator.IsTesting();
    IsError(NULL);
    IsExpert();
    IsIndicator();
    IsLastError();
+   IsLoggingEnabled();
    IsScript();
    IsTicket(NULL);
    LE(NULL, NULL);
@@ -1830,11 +1836,11 @@ void __DummyCalls() {
    PipValue();
    ResetLastError();
    Round(NULL);
+   Script.IsTesting();
    SelectTicket(NULL, NULL);
    SetLastError(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
-   Tester.IsLogging();
    WaitForTicket(NULL);
    warn(NULL);
 }

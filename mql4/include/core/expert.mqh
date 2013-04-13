@@ -18,7 +18,7 @@ int      Test.startMillis, Test.stopMillis;                          // in Milli
  *
  * @return int - Fehlerstatus
  */
-int init() { //throws ERS_TERMINAL_NOT_READY
+int init() { // throws ERS_TERMINAL_NOT_READY
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -29,12 +29,11 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    }
 
    __NAME__       = WindowExpertName();
-   __InitFlags    = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die hstLib immer initialisiert
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
-   if (IsTesting())
-      __LOG = Tester.IsLogging();
+   __InitFlags    = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
    IsChart        = !IsTesting() || IsVisualMode();
  //IsOfflineChart = IsChart && ???
+   __LOG          = IsLoggingEnabled();
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -47,7 +46,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int iNull[];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason(), iNull);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -77,7 +76,7 @@ int init() { //throws ERS_TERMINAL_NOT_READY
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = hstlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -357,7 +356,17 @@ bool IsIndicator() {
 
 
 /**
- * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
  *
  * @return bool
  */
@@ -377,12 +386,32 @@ bool IsScript() {
 
 
 /**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   return(false);
+}
+
+
+/**
  * Ob das aktuell ausgeführte Modul eine Library ist.
  *
  * @return bool
  */
 bool IsLibrary() {
    return(false);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   return(IsTesting());
 }
 
 

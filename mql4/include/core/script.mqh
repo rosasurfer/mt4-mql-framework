@@ -15,9 +15,10 @@ int init() {
    __WHEREAMI__   = FUNC_INIT;
    __NAME__       = WindowExpertName();
    __InitFlags    = SumInts(__INIT_FLAGS__);
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
    IsChart        = true;
  //IsOfflineChart = IsChart && ???
+   __LOG          = IsLoggingEnabled();
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
 
 
    // (1) globale Variablen initialisieren
@@ -30,7 +31,7 @@ int init() {
 
    // (2) stdlib initialisieren
    int iNull[];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason(), iNull);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -50,7 +51,7 @@ int init() {
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = hstlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __iCustom__, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -204,7 +205,17 @@ bool IsIndicator() {
 
 
 /**
- * Ob der aktuelle Indikator via iCustom() ausgeführt wird.
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
  *
  * @return bool
  */
@@ -223,6 +234,39 @@ bool IsScript() {
 }
 
 
+#import "user32.dll"
+   int  GetParent(int hWnd);
+#import
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   static bool static.resolved, static.result;
+   if (static.resolved)
+      return(static.result);
+
+   int hChart = WindowHandle(Symbol(), NULL);
+   if (!hChart) {
+      string function;
+      switch (__WHEREAMI__) {
+         case FUNC_INIT  : function = "init()";   break;
+         case FUNC_START : function = "start()";  break;
+         case FUNC_DEINIT: function = "deinit()"; break;
+      }
+      return(_false(catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR)));
+   }
+
+   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert
+
+   static.resolved = true;
+   return(static.result);
+}
+
+
 /**
  * Ob das aktuell ausgeführte Modul eine Library ist.
  *
@@ -230,6 +274,16 @@ bool IsScript() {
  */
 bool IsLibrary() {
    return(false);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   return(Script.IsTesting());
 }
 
 
