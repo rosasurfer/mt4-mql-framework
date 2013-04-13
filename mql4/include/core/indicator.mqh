@@ -21,7 +21,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (__STATUS_ERROR)
       return(last_error);
 
-   if (__WHEREAMI__ == NULL) {                                                // Aufruf durch Terminal
+   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       last_error   = NO_ERROR;
@@ -29,11 +29,11 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    __NAME__       = WindowExpertName();
    __InitFlags    = SumInts(__INIT_FLAGS__);
-   IsChart        = !IsTesting() || IsVisualMode();                           // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
- //IsOfflineChart = IsChart && ???                                            //       in Indicator::init() IsChart=On signalisiert.
+   IsChart        = !IsTesting() || IsVisualMode();                        // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
+ //IsOfflineChart = IsChart && ???                                         //       in Indicator::init() IsChart=On signalisiert.
 
-   __LOG          = (Indicator.IsICustom() != 0);                             // TODO: !!! Status aus aufrufendem Programm übernehmen
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                             // TODO: !!! Status aus aufrufendem Programm übernehmen
+   __LOG          = (Indicator.IsICustom() != 0);                          // TODO: !!! Status aus aufrufendem Programm übernehmen
+   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                          // TODO: !!! Status aus aufrufendem Programm übernehmen
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -48,27 +48,6 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // EXEC_CONTEXT: Ausführungskontext
-   /*
-   int    __TYPE__                fix          // was bin ich
-   int    __iCustom__             fix          // was bin ich, falls Indikator
-
-   string __NAME__ (root_module)  fix          // wie heiße ich
-   string __NAME__ (caller)       fix          // wer ruft mich
-
-   bool   IsChart                 fix          // wie sehe ich aus
-   bool   IsOfflineChart          fix          // wie sehe ich aus
-
-   int    UninitializeReason()    variabel     // woher komme ich
-   int    __WHEREAMI__            variabel     // wo bin ich
-
-   int    __InitFlags             variabel     // wie werde ich initialisiert
-
-   bool   __LOG                   variabel     // wie verhalte ich mich
-   string LogFile                 variabel     // wie verhalte ich mich
-   */
-
-
    // (2) stdlib initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int tickData[3];
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), tickData);
@@ -76,16 +55,16 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       return(SetLastError(error));
 
    Tick          = tickData[0]; Ticks = Tick;
-   Tick.Time     = tickData[1];                                               // #define INIT_TIMEZONE               in stdlib_init()
-   Tick.prevTime = tickData[2];                                               // #define INIT_PIPVALUE
-                                                                              // #define INIT_BARS_ON_HIST_UPDATE
-                                                                              // #define INIT_CUSTOMLOG
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
+   Tick.Time     = tickData[1];
+   Tick.prevTime = tickData[2];
+
+
+   // (3) user-spezifische Init-Tasks ausführen
    if (_bool(__InitFlags & INIT_PIPVALUE)) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
-      if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
+      if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
+         if (error == ERR_UNKNOWN_SYMBOL)                                  // - synthetisches Symbol im Offline-Chart
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(1)", error));
       }
@@ -94,14 +73,14 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
+         if (error == ERR_UNKNOWN_SYMBOL)                                  // siehe oben bei MODE_TICKSIZE
             return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
          return(catch("init(2)", error));
       }
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
+   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                   // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
       error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason());
@@ -110,24 +89,24 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onInit() == -1)                                                        //
-      return(last_error);                                                     // Preprocessing-Hook
-                                                                              //
-   switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück, bricht init() *nicht* ab
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        // (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
-      case REASON_REMOVE     : error = onInitRemove();          break;        //
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
-   }                                                                          //
-   if (error == -1)                                                           // Gibt eine der Funktionen -1 zurück, bricht init() sofort ab.
-      return(last_error);                                                     //
-                                                                              //
-   afterInit();                                                               // Postprocessing-Hook
-                                                                              //
+   // (4) user-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
+   if (onInit() == -1)                                                     //
+      return(last_error);                                                  // Preprocessing-Hook
+                                                                           //
+   switch (UninitializeReason()) {                                         //
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;     // Gibt eine der Funktionen einen Fehler zurück, bricht init() *nicht* ab
+      case REASON_CHARTCHANGE: error = onInitChartChange();     break;     // (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
+      case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
+      case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
+      case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
+      case REASON_REMOVE     : error = onInitRemove();          break;     //
+      case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
+   }                                                                       //
+   if (error == -1)                                                        // Gibt eine der Funktionen -1 zurück, bricht init() sofort ab.
+      return(last_error);                                                  //
+                                                                           //
+   afterInit();                                                            // Postprocessing-Hook
+                                                                           //
 
    // (5) bei Aufruf durch iCustom() Parameter loggen
    if (Indicator.IsICustom())
@@ -136,7 +115,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (!__STATUS_ERROR && UninitializeReason()==REASON_PARAMETERS)
-      Chart.SendTick(false);                                                  // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
+      Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
 
    catch("init(3)");
    return(last_error);
