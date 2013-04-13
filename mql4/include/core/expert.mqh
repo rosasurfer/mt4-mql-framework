@@ -178,7 +178,7 @@ int start() {
 
 
    int error;
-
+                                                                     // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick++; Ticks = Tick;
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);

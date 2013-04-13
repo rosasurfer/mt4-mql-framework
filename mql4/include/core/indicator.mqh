@@ -48,7 +48,28 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+   // EXEC_CONTEXT: Ausführungskontext
+   /*
+   int    __TYPE__                fix          // was bin ich
+   int    __iCustom__             fix          // was bin ich, falls Indikator
+
+   string __NAME__ (root_module)  fix          // wie heiße ich
+   string __NAME__ (caller)       fix          // wer ruft mich
+
+   bool   IsChart                 fix          // wie sehe ich aus
+   bool   IsOfflineChart          fix          // wie sehe ich aus
+
+   int    UninitializeReason()    variabel     // woher komme ich
+   int    __WHEREAMI__            variabel     // wo bin ich
+
+   int    __InitFlags             variabel     // wie werde ich initialisiert
+
+   bool   __LOG                   variabel     // wie verhalte ich mich
+   string LogFile                 variabel     // wie verhalte ich mich
+   */
+
+
+   // (2) stdlib initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int tickData[3];
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), tickData);
    if (IsError(error))
@@ -139,7 +160,7 @@ int start() {
 
    int error;
 
-   Tick++; Ticks = Tick;
+   Tick++; Ticks = Tick;                                                   // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
    ValidBars     = IndicatorCounted();
