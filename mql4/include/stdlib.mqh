@@ -576,7 +576,7 @@
 
    int      onStart();
    int      onTick();
-   int      ParametersToStr();
+   string   ParametersToStr();
    int      ShowStatus();                                            // für EA's
 
    int      onDeinit();
