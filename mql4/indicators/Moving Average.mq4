@@ -23,6 +23,33 @@ extern int    Max.Values      = 2000;                                // Höchstan
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+/**
+ * Parameter-Logging (wird nur bei Aufruf per iCustom() verwendet).
+ *
+ * @return int - Fehlerstatus
+ */
+int LogParameters() {
+   if (__LOG) {
+      log(StringConcatenate("parameters: ",
+                            "MA.Periods=\""     , MA.Periods                  ,"\"; ",
+                            "MA.Timeframe=\""   , MA.Timeframe                ,"\"; ",
+                            "MA.Method=\""      , MA.Method                   ,"\"; ",
+                            "MA.AppliedPrice=\"", MA.AppliedPrice             ,"\"; ",
+
+                            "Trend.Lag="        , Trend.Lag                   ,"; ",
+                            "Color.UpTrend="    , ColorToStr(Color.UpTrend)   ,"; ",
+                            "Color.DownTrend="  , ColorToStr(Color.DownTrend) ,"; ",
+
+                            "Shift.H="          , Shift.H                     ,"; ",
+                            "Shift.V="          , Shift.V                     ,"; ",
+                            "Max.Values="       , Max.Values                  ,"; ")
+      );
+   }
+   return(NO_ERROR);
+}
+
+
 #include <core/indicator.mqh>
 
 #define MovingAverage.MODE_MA             0                          // Buffer-Identifier

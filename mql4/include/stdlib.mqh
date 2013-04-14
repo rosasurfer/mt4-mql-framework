@@ -272,6 +272,7 @@
 
    color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
 
+   string   ColorToStr(color rgb);
    string   ColorToRGBStr(color rgb);
    string   ColorToHtmlStr(color rgb);
 
