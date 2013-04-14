@@ -1,6 +1,6 @@
 
-#define __TYPE__    T_SCRIPT
-#define __iCustom__ NULL
+#define __TYPE__             T_SCRIPT
+#define __lpExecutionContext NULL
 
 
 /**
@@ -31,7 +31,7 @@ int init() {
 
    // (2) stdlib initialisieren
    int iNull[];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), iNull);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -51,7 +51,7 @@ int init() {
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }

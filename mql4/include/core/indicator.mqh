@@ -6,7 +6,7 @@
 
 
 extern string ____________________________;
-extern int    __iCustom__;
+extern int    __lpExecutionContext;
 
 
 /**
@@ -49,7 +49,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int tickData[3];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason(), tickData);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason(), tickData);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -82,7 +82,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                   // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __iCustom__, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -108,8 +108,8 @@ int init() { // throws ERS_TERMINAL_NOT_READY
                                                                            //
 
    // (5) bei Aufruf durch iCustom() Parameter loggen
-   if (Indicator.IsICustom())
-      LogParameters();
+   if (Indicator.IsICustom() && __LOG)
+      log(ParametersToStr());
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
@@ -344,7 +344,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool Indicator.IsICustom() {
-   return(__iCustom__ != 0);
+   return(__lpExecutionContext != 0);
 }
 
 
@@ -413,15 +413,15 @@ int SetLastError(int error, int param=NULL) {
 
    // bei iCustom() Fehler an Aufrufer weiterreichen
    if (Indicator.IsICustom()) {
-      /*ICUSTOM*/int ic[]; error = InitializeICustom(ic, __iCustom__);
+      /*EXECUTION_CONTEXT*/int ec[]; error = InitializeICustom(ec, __lpExecutionContext);
 
       if (IsError(error)) {
-         __iCustom__ = NULL;
+         __lpExecutionContext = NULL;
          SetLastError(error);
       }
       else {
-         ic[IC_LAST_ERROR] = last_error;
-         CopyMemory(ic[IC_PTR], GetBufferAddress(ic), ICUSTOM.size);
+         ec[EC_LAST_ERROR] = last_error;
+         CopyMemory(ec[EC_SIGNATURE], GetBufferAddress(ec), EXECUTION_CONTEXT.size);
       }
    }
    return(last_error);

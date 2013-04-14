@@ -611,6 +611,7 @@
    int      GetBufferAddress(int buffer[]);
 #import "sample2.ex4"
    int      GetStringAddress(string value);
+#import "sample.dll"
    string   GetStringValue(int address);
 #import
 

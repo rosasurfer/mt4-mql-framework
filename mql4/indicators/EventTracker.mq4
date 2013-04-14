@@ -34,7 +34,6 @@ double BollingerBands.Deviation    = 2.0;                            // Std.-Abw
 
 #property indicator_chart_window
 
-
 int    movingAverage.TimeframeFlag;                                  // Timeframe-Flag für EventListener.BarOpen (max. F_PERIOD_H1)
 
 string strMovingAverage;
@@ -634,3 +633,36 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    return(error);
 }
  */
+
+
+/**
+ * String-Repräsentation der Input-Parameter fürs Logging.
+ *
+ * @return string
+ */
+string ParametersToStr() {
+   return(StringConcatenate("parameters:   ",
+
+                            "Sound.Alerts=",                BoolToStr(Sound.Alerts)                     , "; ",
+                            "SMS.Alerts=",                  BoolToStr(SMS.Alerts)                       , "; ",
+                            "SMS.Receiver=\"",              SMS.Receiver                                , "\"; ",
+
+                            "Track.Positions=",             BoolToStr(Track.Positions)                  , "; ",
+                            "Sound.PositionOpen=\"",        Sound.PositionOpen                          , "\"; ",
+                            "Sound.PositionClose=\"",       Sound.PositionClose                         , "\"; ",
+
+                            "Track.MovingAverage=",         BoolToStr(Track.MovingAverage)              , "; ",
+                    ifString(Track.MovingAverage,
+          StringConcatenate("MovingAverage.Periods=",       NumberToStr(MovingAverage.Periods, ".1+")   , "; ",
+                            "MovingAverage.Timeframe=",     MovingAverage.Timeframe                     , "; ",
+                            "MovingAverage.Method=",        MovingAverage.Method                        , "; ",
+                            "MovingAverage.TrendLag=",      MovingAverage.TrendLag                      , "; "), ""),
+
+                            "Track.BollingerBands=",        BoolToStr(Track.BollingerBands)             , "; ",
+                    ifString(Track.BollingerBands,
+          StringConcatenate("BollingerBands.MA.Periods=",   BollingerBands.MA.Periods                   , "; ",
+                            "BollingerBands.MA.Timeframe=", BollingerBands.MA.Timeframe                 , "; ",
+                            "BollingerBands.MA.Method=",    BollingerBands.MA.Method                    , "; ",
+                            "BollingerBands.Deviation=",    NumberToStr(BollingerBands.Deviation, ".1+"), "; "), ""))
+   );
+}

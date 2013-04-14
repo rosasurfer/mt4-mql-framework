@@ -55,15 +55,15 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__      |= type;
-   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__   = whereami;
-   __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
-   IsChart        = isChart;
-   IsOfflineChart = isOfflineChart;
-   __LOG          = loggingEnabled;
-   __LOG_CUSTOM   = _bool(__InitFlags & INIT_CUSTOMLOG);
-   __iCustom__    = lpICUSTOM;
+   __TYPE__            |= type;
+   __NAME__             = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__         = whereami;
+   __InitFlags          = SumInts(__INIT_FLAGS__) | initFlags;
+   IsChart              = isChart;
+   IsOfflineChart       = isOfflineChart;
+   __LOG                = loggingEnabled;
+   __LOG_CUSTOM         = _bool(__InitFlags & INIT_CUSTOMLOG);
+   __lpExecutionContext = lpICUSTOM;
 
 
    // (1) globale Variablen re-initialisieren
@@ -200,33 +200,34 @@ int stdlib_deinit(int deinitFlags, int uninitializeReason) {
 
 
 // Laufzeitfunktionen
-int onInit()                  {                                                                             return(NO_ERROR); }
-int onInitParameterChange()   {                                                                             return(NO_ERROR); }
-int onInitChartChange()       {                                                                             return(NO_ERROR); }
-int onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()",   ERR_RUNTIME_ERROR));   // mal sehen, wann hier jemand reintappt
-                                if (IsIndicator())                        warn("onInitAccountChange()");    return(NO_ERROR); }  // ...
-int onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()");       return(NO_ERROR); }  // ...
-int onInitUndefined()         {                                                                             return(NO_ERROR); }
-int onInitRecompile()         {                                                                             return(NO_ERROR); }
-int onInitRemove()            {                                                                             return(NO_ERROR); }
-int afterInit()               {                                                                             return(NO_ERROR); }
+int    onInit()                  {                                                                             return(NO_ERROR); }
+int    onInitParameterChange()   {                                                                             return(NO_ERROR); }
+int    onInitChartChange()       {                                                                             return(NO_ERROR); }
+int    onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()",   ERR_RUNTIME_ERROR));   // mal sehen, wann hier jemand reintappt
+                                   if (IsIndicator())                        warn("onInitAccountChange()");    return(NO_ERROR); }  // ...
+int    onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()");       return(NO_ERROR); }  // ...
+int    onInitUndefined()         {                                                                             return(NO_ERROR); }
+int    onInitRecompile()         {                                                                             return(NO_ERROR); }
+int    onInitRemove()            {                                                                             return(NO_ERROR); }
+int    afterInit()               {                                                                             return(NO_ERROR); }
 
-int onStart()                 {                                                                             return(NO_ERROR); }
-int onTick()                  {                                                                             return(NO_ERROR); }
-int LogParameters()           { if (__LOG)          log("LogParameters()   function not implemented");      return(NO_ERROR); }
-int ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
+int    onStart()                 {                                                                             return(NO_ERROR); }
+int    onTick()                  {                                                                             return(NO_ERROR); }
 
-int onDeinit()                {                                                                             return(NO_ERROR); }
-int onDeinitParameterChange() {                                                                             return(NO_ERROR); }
-int onDeinitChartChange()     {                                                                             return(NO_ERROR); }
-int onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
-                                if (IsIndicator())                        warn("onDeinitAccountChange()");  return(NO_ERROR); }  // ...
-int onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()");     return(NO_ERROR); }  // ...
-int onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()",     ERR_RUNTIME_ERROR));
-                                if (IsIndicator())                        warn("onDeinitUndefined()");      return(NO_ERROR); }
-int onDeinitRemove()          {                                                                             return(NO_ERROR); }
-int onDeinitRecompile()       {                                                                             return(NO_ERROR); }
-int afterDeinit()             {                                                                             return(NO_ERROR); }
+int    onDeinit()                {                                                                             return(NO_ERROR); }
+int    onDeinitParameterChange() {                                                                             return(NO_ERROR); }
+int    onDeinitChartChange()     {                                                                             return(NO_ERROR); }
+int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
+                                   if (IsIndicator())                        warn("onDeinitAccountChange()");  return(NO_ERROR); }  // ...
+int    onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()");     return(NO_ERROR); }  // ...
+int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()",     ERR_RUNTIME_ERROR));
+                                   if (IsIndicator())                        warn("onDeinitUndefined()");      return(NO_ERROR); }
+int    onDeinitRemove()          {                                                                             return(NO_ERROR); }
+int    onDeinitRecompile()       {                                                                             return(NO_ERROR); }
+int    afterDeinit()             {                                                                             return(NO_ERROR); }
+
+string ParametersToStr()         {                                             return("parameters:   function not implemented"); }
+int    ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
 
 
 /**
@@ -254,10 +255,10 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
+   int /*EXECUTION_CONTEXT*/ec[]; if (!ArraySize(ec)) InitializeICustom(ec, NULL);
+   ec[EC_LAST_ERROR] = NO_ERROR;
 
-   int /*ICUSTOM*/ic[]; if (!ArraySize(ic)) InitializeICustom(ic, NULL);
-   ic[IC_LAST_ERROR] = NO_ERROR;
+   int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                                 // MA.Periods
@@ -270,8 +271,8 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.H
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
-                          "",                                        // _________________
-                          ic[IC_PTR],                                // __iCustom__
+                          "",                                        // ____________________
+                          ec[EC_SIGNATURE],                          // __ExecutionContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -281,8 +282,8 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
          return(_NULL(catch("icMovingAverage(1)", error)));
       warn("icMovingAverage(2)   ERS_HISTORY_UPDATE (tick="+ Tick +")");   // TODO: geladene Bars prüfen
    }
-   if (IsError(ic[IC_LAST_ERROR]))
-      return(_NULL(SetLastError(ic[IC_LAST_ERROR])));
+   if (IsError(ec[EC_LAST_ERROR]))
+      return(_NULL(SetLastError(ec[EC_LAST_ERROR])));
 
    return(value);
 }
@@ -1286,30 +1287,30 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Initialisiert einen Buffer zur Verwendung mit iCustom().
+ * Initialisiert einen EXECUTION_CONTEXT-Buffer.
  *
- * @param  int ic[] - das für den Buffer zu verwendende Integer-Array
- * @param  int ptr  - Zeiger auf Initialisierungsdaten (default: keine)
+ * @param  int ec[] - das für den Buffer zu verwendende Integer-Array
+ * @param  int ptr  - Zeiger auf zu kopierenden Context (default: NULL)
  *
  * @return int - Fehlerstatus
  */
-int InitializeICustom(int &ic[], int ptr=NULL) {
-   if (ArrayDimension(ic) != 1)                return(catch("InitializeICustom(1)   too many dimensions of parameter ic = "+ ArrayDimension(ic), ERR_INCOMPATIBLE_ARRAYS));
+int InitializeICustom(int &ec[], int ptr=NULL) {
+   if (ArrayDimension(ec) != 1)                return(catch("InitializeICustom(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
    if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeICustom(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (ArraySize(ic) != ICUSTOM.intSize)
-      ArrayResize(ic, ICUSTOM.intSize);
+   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize)
+      ArrayResize(ec, EXECUTION_CONTEXT.intSize);
 
    if (!ptr) {
-      ArrayInitialize(ic, 0);
-      ic[IC_PTR] = GetBufferAddress(ic);
+      ArrayInitialize(ec, 0);
+      ec[EC_SIGNATURE] = GetBufferAddress(ec);
    }
    else {
-      CopyMemory(GetBufferAddress(ic), ptr, ICUSTOM.size);
+      CopyMemory(GetBufferAddress(ec), ptr, EXECUTION_CONTEXT.size);
 
-      // primitive Speichervalidierung, es gilt: PTR==*PTR (Der Wert des Zeigers ist an der Adresse selbst gespeichert.)
-      if (ic[IC_PTR] != ptr)
-         return(catch("InitializeICustom(3)   invalid ICUSTOM data found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
+      // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
+      if (ec[EC_SIGNATURE] != ptr)
+         return(catch("InitializeICustom(3)   invalid EXECUTION_CONTEXT found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
    }
    return(catch("InitializeICustom(4)"));
 }
@@ -12696,6 +12697,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    int    GetBufferAddress(int buffer[]);
 #import "sample2.ex4"
    int    GetStringAddress(string value);
+#import "sample.dll"
    string GetStringValue(int address);
 #import "structs.ex4"
    // MQL-Structs Getter und Setter

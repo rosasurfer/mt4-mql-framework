@@ -34,15 +34,15 @@ int history_init(int type, string name, int whereami, bool isChart, bool isOffli
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__      |= type;
-   __NAME__       = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__   = whereami;
-   __InitFlags    = SumInts(__INIT_FLAGS__) | initFlags;
-   IsChart        = isChart;
-   IsOfflineChart = isOfflineChart;
-   __LOG          = loggingEnabled;
-   __LOG_CUSTOM   = _bool(__InitFlags & INIT_CUSTOMLOG);
-   __iCustom__    = lpICUSTOM;
+   __TYPE__            |= type;
+   __NAME__             = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__         = whereami;
+   __InitFlags          = SumInts(__INIT_FLAGS__) | initFlags;
+   IsChart              = isChart;
+   IsOfflineChart       = isOfflineChart;
+   __LOG                = loggingEnabled;
+   __LOG_CUSTOM         = _bool(__InitFlags & INIT_CUSTOMLOG);
+   __lpExecutionContext = lpICUSTOM;
 
 
    // globale Variablen re-initialisieren
