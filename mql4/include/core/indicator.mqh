@@ -345,7 +345,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool Indicator.IsICustom() {
-   return(__iCustom__);          // (bool) int
+   return(__iCustom__ != 0);
 }
 
 
