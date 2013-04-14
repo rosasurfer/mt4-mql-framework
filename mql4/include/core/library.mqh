@@ -1,6 +1,6 @@
 
-int __TYPE__    = T_LIBRARY;
-int __iCustom__ = NULL;
+int __TYPE__             = T_LIBRARY;
+int __lpExecutionContext = NULL;
 
 
 /**
@@ -96,7 +96,7 @@ bool Indicator.IsICustom() {
       return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    if (IsIndicator())
-      return(__iCustom__ != 0);
+      return(__lpExecutionContext != 0);
    return(false);
 }
 

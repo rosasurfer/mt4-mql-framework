@@ -280,8 +280,8 @@ string  sNull, sNulls[];
 #define B_UPPER                        1        // custom
 
 
-// Indicator buffer identifiers, siehe iCustom()
-#define BUFFER_INDEX_0                 0        // allgemein
+// Indicator buffer identifiers zur Verwendung mit iCustom()
+#define BUFFER_INDEX_0                 0        // allgemein gültige ID's
 #define BUFFER_INDEX_1                 1
 #define BUFFER_INDEX_2                 2
 #define BUFFER_INDEX_3                 3
@@ -303,9 +303,18 @@ string  sNull, sNulls[];
 #define MovingAverage.MODE_TREND_LAGGED   2     // Trend mit Verzögerung
 
 
-// iCustom() shared memory identifier
-#define IC_PTR                         0
-#define IC_LAST_ERROR                  1
+// EXECUTION_CONTEXT element identifiers
+#define EC_SIGNATURE                   0
+#define EC_LPNAME                      1
+#define EC_TYPE                        2
+#define EC_CHART_PROPERTIES            3
+#define EC_LPSUPER_CONTEXT             4
+#define EC_INIT_FLAGS                  5
+#define EC_UNINITIALIZE_REASON         6
+#define EC_WHERE_AM_I                  7
+#define EC_LOGGING_ENABLED             8
+#define EC_LPLOGFILE                   9
+#define EC_LAST_ERROR                 10
 
 
 // Sorting modes, siehe ArraySort()
@@ -693,8 +702,8 @@ string  sNull, sNulls[];
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
 
-#define ICUSTOM.size                            8
-#define ICUSTOM.intSize                         2     // ceil(ICUSTOM.size/4)
+#define EXECUTION_CONTEXT.size                 44
+#define EXECUTION_CONTEXT.intSize              11     // ceil(EXECUTION_CONTEXT.size/4)
 
 #define ORDER_EXECUTION.size                  136
 #define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
