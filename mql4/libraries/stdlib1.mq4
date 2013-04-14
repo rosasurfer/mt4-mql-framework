@@ -9384,7 +9384,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
 /**
  * Konvertiert drei R-G-B-Farbwerte in eine Farbe.
  *
- * @param  int red   - Rotanteil (0-255)
+ * @param  int red   - Rotanteil  (0-255)
  * @param  int green - Grünanteil (0-255)
  * @param  int blue  - Blauanteil (0-255)
  *
@@ -9438,9 +9438,9 @@ string ColorToHtmlStr(color rgb) {
  * Beispiel: ColorToRGBStr(White) => "255,255,255"
  */
 string ColorToRGBStr(color rgb) {
-   int red   = rgb       & 0xFF;
-   int green = rgb >>  8 & 0xFF;
-   int blue  = rgb >> 16 & 0xFF;
+   int red   = rgb     & 0xFF;
+   int green = rgb>> 8 & 0xFF;
+   int blue  = rgb>>16 & 0xFF;
 
    return(StringConcatenate(red, ",", green, ",", blue));
 }
@@ -9920,6 +9920,158 @@ string NumberToStr(double number, string mask) {
    if (IsError(catch("NumberToStr()")))
       return("");
    return(outStr);
+}
+
+
+
+/**
+ * Konvertiert einen MQL-Farbcode in seine String-Repräsentation, z.B. "DimGray", "Red" oder "0,255,255".
+ *
+ * @param  color value
+ *
+ * @return string - String-Token oder Leerstring, falls der übergebene Wert kein gültiger Farbcode ist.
+ */
+string ColorToStr(color value)   {
+   if (value == 0xFF000000)                                          // kann als Farb-Property vom Terminal falsch gesetzt worden sein
+      value = CLR_NONE;
+   if (value < CLR_NONE || value > C'255,255,255')
+      return(_empty(catch("ColorToStr()   invalid parameter value = "+ value +" (not a color)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (value == CLR_NONE) return("None"             );
+   if (value == 0xFFF8F0) return("AliceBlue"        );
+   if (value == 0xD7EBFA) return("AntiqueWhite"     );
+   if (value == 0xFFFF00) return("Aqua"             );
+   if (value == 0xD4FF7F) return("Aquamarine"       );
+   if (value == 0xDCF5F5) return("Beige"            );
+   if (value == 0xC4E4FF) return("Bisque"           );
+   if (value == 0x000000) return("Black"            );
+   if (value == 0xCDEBFF) return("BlanchedAlmond"   );
+   if (value == 0xFF0000) return("Blue"             );
+   if (value == 0xE22B8A) return("BlueViolet"       );
+   if (value == 0x2A2AA5) return("Brown"            );
+   if (value == 0x87B8DE) return("BurlyWood"        );
+   if (value == 0xA09E5F) return("CadetBlue"        );
+   if (value == 0x00FF7F) return("Chartreuse"       );
+   if (value == 0x1E69D2) return("Chocolate"        );
+   if (value == 0x507FFF) return("Coral"            );
+   if (value == 0xED9564) return("CornflowerBlue"   );
+   if (value == 0xDCF8FF) return("Cornsilk"         );
+   if (value == 0x3C14DC) return("Crimson"          );
+   if (value == 0x8B0000) return("DarkBlue"         );
+   if (value == 0x0B86B8) return("DarkGoldenrod"    );
+   if (value == 0xA9A9A9) return("DarkGray"         );
+   if (value == 0x006400) return("DarkGreen"        );
+   if (value == 0x6BB7BD) return("DarkKhaki"        );
+   if (value == 0x2F6B55) return("DarkOliveGreen"   );
+   if (value == 0x008CFF) return("DarkOrange"       );
+   if (value == 0xCC3299) return("DarkOrchid"       );
+   if (value == 0x7A96E9) return("DarkSalmon"       );
+   if (value == 0x8BBC8F) return("DarkSeaGreen"     );
+   if (value == 0x8B3D48) return("DarkSlateBlue"    );
+   if (value == 0x4F4F2F) return("DarkSlateGray"    );
+   if (value == 0xD1CE00) return("DarkTurquoise"    );
+   if (value == 0xD30094) return("DarkViolet"       );
+   if (value == 0x9314FF) return("DeepPink"         );
+   if (value == 0xFFBF00) return("DeepSkyBlue"      );
+   if (value == 0x696969) return("DimGray"          );
+   if (value == 0xFF901E) return("DodgerBlue"       );
+   if (value == 0x2222B2) return("FireBrick"        );
+   if (value == 0x228B22) return("ForestGreen"      );
+   if (value == 0xDCDCDC) return("Gainsboro"        );
+   if (value == 0x00D7FF) return("Gold"             );
+   if (value == 0x20A5DA) return("Goldenrod"        );
+   if (value == 0x808080) return("Gray"             );
+   if (value == 0x008000) return("Green"            );
+   if (value == 0x2FFFAD) return("GreenYellow"      );
+   if (value == 0xF0FFF0) return("Honeydew"         );
+   if (value == 0xB469FF) return("HotPink"          );
+   if (value == 0x5C5CCD) return("IndianRed"        );
+   if (value == 0x82004B) return("Indigo"           );
+   if (value == 0xF0FFFF) return("Ivory"            );
+   if (value == 0x8CE6F0) return("Khaki"            );
+   if (value == 0xFAE6E6) return("Lavender"         );
+   if (value == 0xF5F0FF) return("LavenderBlush"    );
+   if (value == 0x00FC7C) return("LawnGreen"        );
+   if (value == 0xCDFAFF) return("LemonChiffon"     );
+   if (value == 0xE6D8AD) return("LightBlue"        );
+   if (value == 0x8080F0) return("LightCoral"       );
+   if (value == 0xFFFFE0) return("LightCyan"        );
+   if (value == 0xD2FAFA) return("LightGoldenrod"   );
+   if (value == 0xD3D3D3) return("LightGray"        );
+   if (value == 0x90EE90) return("LightGreen"       );
+   if (value == 0xC1B6FF) return("LightPink"        );
+   if (value == 0x7AA0FF) return("LightSalmon"      );
+   if (value == 0xAAB220) return("LightSeaGreen"    );
+   if (value == 0xFACE87) return("LightSkyBlue"     );
+   if (value == 0x998877) return("LightSlateGray"   );
+   if (value == 0xDEC4B0) return("LightSteelBlue"   );
+   if (value == 0xE0FFFF) return("LightYellow"      );
+   if (value == 0x00FF00) return("Lime"             );
+   if (value == 0x32CD32) return("LimeGreen"        );
+   if (value == 0xE6F0FA) return("Linen"            );
+   if (value == 0xFF00FF) return("Magenta"          );
+   if (value == 0x000080) return("Maroon"           );
+   if (value == 0xAACD66) return("MediumAquamarine" );
+   if (value == 0xCD0000) return("MediumBlue"       );
+   if (value == 0xD355BA) return("MediumOrchid"     );
+   if (value == 0xDB7093) return("MediumPurple"     );
+   if (value == 0x71B33C) return("MediumSeaGreen"   );
+   if (value == 0xEE687B) return("MediumSlateBlue"  );
+   if (value == 0x9AFA00) return("MediumSpringGreen");
+   if (value == 0xCCD148) return("MediumTurquoise"  );
+   if (value == 0x8515C7) return("MediumVioletRed"  );
+   if (value == 0x701919) return("MidnightBlue"     );
+   if (value == 0xFAFFF5) return("MintCream"        );
+   if (value == 0xE1E4FF) return("MistyRose"        );
+   if (value == 0xB5E4FF) return("Moccasin"         );
+   if (value == 0xADDEFF) return("NavajoWhite"      );
+   if (value == 0x800000) return("Navy"             );
+   if (value == 0xE6F5FD) return("OldLace"          );
+   if (value == 0x008080) return("Olive"            );
+   if (value == 0x238E6B) return("OliveDrab"        );
+   if (value == 0x00A5FF) return("Orange"           );
+   if (value == 0x0045FF) return("OrangeRed"        );
+   if (value == 0xD670DA) return("Orchid"           );
+   if (value == 0xAAE8EE) return("PaleGoldenrod"    );
+   if (value == 0x98FB98) return("PaleGreen"        );
+   if (value == 0xEEEEAF) return("PaleTurquoise"    );
+   if (value == 0x9370DB) return("PaleVioletRed"    );
+   if (value == 0xD5EFFF) return("PapayaWhip"       );
+   if (value == 0xB9DAFF) return("PeachPuff"        );
+   if (value == 0x3F85CD) return("Peru"             );
+   if (value == 0xCBC0FF) return("Pink"             );
+   if (value == 0xDDA0DD) return("Plum"             );
+   if (value == 0xE6E0B0) return("PowderBlue"       );
+   if (value == 0x800080) return("Purple"           );
+   if (value == 0x0000FF) return("Red"              );
+   if (value == 0x8F8FBC) return("RosyBrown"        );
+   if (value == 0xE16941) return("RoyalBlue"        );
+   if (value == 0x13458B) return("SaddleBrown"      );
+   if (value == 0x7280FA) return("Salmon"           );
+   if (value == 0x60A4F4) return("SandyBrown"       );
+   if (value == 0x578B2E) return("SeaGreen"         );
+   if (value == 0xEEF5FF) return("Seashell"         );
+   if (value == 0x2D52A0) return("Sienna"           );
+   if (value == 0xC0C0C0) return("Silver"           );
+   if (value == 0xEBCE87) return("SkyBlue"          );
+   if (value == 0xCD5A6A) return("SlateBlue"        );
+   if (value == 0x908070) return("SlateGray"        );
+   if (value == 0xFAFAFF) return("Snow"             );
+   if (value == 0x7FFF00) return("SpringGreen"      );
+   if (value == 0xB48246) return("SteelBlue"        );
+   if (value == 0x8CB4D2) return("Tan"              );
+   if (value == 0x808000) return("Teal"             );
+   if (value == 0xD8BFD8) return("Thistle"          );
+   if (value == 0x4763FF) return("Tomato"           );
+   if (value == 0xD0E040) return("Turquoise"        );
+   if (value == 0xEE82EE) return("Violet"           );
+   if (value == 0xB3DEF5) return("Wheat"            );
+   if (value == 0xFFFFFF) return("White"            );
+   if (value == 0xF5F5F5) return("WhiteSmoke"       );
+   if (value == 0x00FFFF) return("Yellow"           );
+   if (value == 0x32CD9A) return("YellowGreen"      );
+
+   return(ColorToRGBStr(value));
 }
 
 
