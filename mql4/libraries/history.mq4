@@ -41,7 +41,7 @@ int history_init(int type, string name, int whereami, bool isChart, bool isOffli
    IsChart        = isChart;
    IsOfflineChart = isOfflineChart;
    __LOG          = loggingEnabled;
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                    // (bool) int
+   __LOG_CUSTOM   = _bool(__InitFlags & INIT_CUSTOMLOG);
    __iCustom__    = lpICUSTOM;
 
 

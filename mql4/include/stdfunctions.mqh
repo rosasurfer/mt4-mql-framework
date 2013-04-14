@@ -1117,7 +1117,7 @@ bool HandleEvents(int events) {
    if (events & EVENT_INTERNAL_CMD    != 0) status |= HandleEvent(EVENT_INTERNAL_CMD   );
    if (events & EVENT_EXTERNAL_CMD    != 0) status |= HandleEvent(EVENT_EXTERNAL_CMD   );
 
-   return(status);                                                   // (bool) int
+   return(status != 0);
 }
 
 

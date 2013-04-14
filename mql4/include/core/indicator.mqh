@@ -28,11 +28,10 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
    __NAME__       = WindowExpertName();
-   __InitFlags    = SumInts(__INIT_FLAGS__);
-   IsChart        = !IsTesting() || IsVisualMode();                        // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
- //IsOfflineChart = IsChart && ???                                         //       in Indicator::init() IsChart=On signalisiert.
-
-   __LOG          = (Indicator.IsICustom() != 0);                          // TODO: !!! Status aus aufrufendem Programm übernehmen
+   __InitFlags    = SumInts(__INIT_FLAGS__);                               // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
+   IsChart        = !IsTesting() || IsVisualMode();                        //       in Indicator::init() IsChart=On signalisiert.
+   IsOfflineChart = IsChart && false;                                      // ???
+   __LOG          = Indicator.IsICustom();                                 // TODO: !!! Status aus aufrufendem Programm übernehmen
    __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                          // TODO: !!! Status aus aufrufendem Programm übernehmen
 
 

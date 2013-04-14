@@ -96,7 +96,7 @@ bool Indicator.IsICustom() {
       return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
 
    if (IsIndicator())
-      return(__iCustom__);                // (bool) int
+      return(__iCustom__ != 0);
    return(false);
 }
 

@@ -453,7 +453,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
       ArrayResize(bar.closeTimes, sizeOfPeriods);
    }
 
-   bool isEvent;
+   int isEvent;
 
    for (int i=0; i < sizeOfPeriods; i++) {
       if (flags & periodFlags[i] != 0) {
@@ -467,10 +467,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
                if (Expert.IsTesting())                               // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
-                  isEvent = ArrayPushInt(results, periods[i]);       // (bool) int
+                  isEvent = ArrayPushInt(results, periods[i]);
             }
             else {
-               isEvent = ArrayPushInt(results, periods[i]);          // (bool) int
+               isEvent = ArrayPushInt(results, periods[i]);
             }
          }
 
@@ -479,7 +479,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
             break;
       }
    }
-   return(isEvent);
+   return(isEvent != 0);
 }
 
 
