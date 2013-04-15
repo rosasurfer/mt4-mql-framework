@@ -149,7 +149,7 @@ int onStart() {
          return(catch("onStart(6)"));
       }
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(7)"));
    }
 
@@ -168,7 +168,7 @@ int onStart() {
       if (NE(lastBalance, AccountBalance()))
          return(catch("onStart(8)   data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySound("ding.wav");
-      MessageBox("History is up to date.", __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
    }
    //if (__LOG) log("onStart(10)   firstTicketToSave = "+ tickets[iFirstTicketToSave]);

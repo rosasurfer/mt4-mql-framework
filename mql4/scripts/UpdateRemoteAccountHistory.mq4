@@ -180,7 +180,7 @@ int onStart() {
    // (4) Antwort auswerten und Rückmeldung an den User geben
    if (result==200 || result==201) {
       PlaySound("ding.wav");
-      MessageBox(ifString(result==200, "History is up to date.", "History successfully updated."), __NAME__, MB_ICONINFORMATION|MB_OK);
+      MessageBox(ifString(result==200, "History is up-to-date.", "History successfully updated."), __NAME__, MB_ICONINFORMATION|MB_OK);
    }
    else {
       PlaySound("notify.wav");
