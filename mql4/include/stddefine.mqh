@@ -364,15 +364,15 @@ string  sNull, sNulls[];
 
 
 // Price identifiers, siehe iMA() etc.
-#define PRICE_CLOSE                    0        // close price
-#define PRICE_OPEN                     1        // open price
-#define PRICE_HIGH                     2        // high price
-#define PRICE_LOW                      3        // low price
-#define PRICE_MEDIAN                   4        // median price: (high+low)/2
-#define PRICE_TYPICAL                  5        // typical price: (high+low+close)/3
-#define PRICE_WEIGHTED                 6        // weighted close price: (high+low+close+close)/4
-#define PRICE_BID                      7        // custom: Bid-Preis
-#define PRICE_ASK                      8        // custom: Ask-Preis
+#define PRICE_CLOSE                    0        // close price:          C
+#define PRICE_OPEN                     1        // open price:           O
+#define PRICE_HIGH                     2        // high price:           H
+#define PRICE_LOW                      3        // low price:            L
+#define PRICE_MEDIAN                   4        // median price:         (H+L)/2
+#define PRICE_TYPICAL                  5        // typical price:        (H+L+C)/3
+#define PRICE_WEIGHTED                 6        // weighted close price: (H+L+C+C)/4
+#define PRICE_BID                      7        // bid price:            Bid
+#define PRICE_ASK                      8        // ask price:            Ask
 
 
 // Rates array identifier, siehe ArrayCopyRates()
