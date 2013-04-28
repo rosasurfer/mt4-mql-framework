@@ -87,17 +87,14 @@ bool IsIndicator() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
+ * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
  */
-bool Indicator.IsICustom() {
+bool IsSuperContext() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Indicator.IsICustom()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
-
-   if (IsIndicator())
-      return(__lpSuperContext != 0);
-   return(false);
+      return(_false(catch("IsSuperContext()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+   return(__lpSuperContext != 0);
 }
 
 

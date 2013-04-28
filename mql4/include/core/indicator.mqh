@@ -24,11 +24,11 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
    __NAME__       = WindowExpertName();
-   __InitFlags    = SumInts(__INIT_FLAGS__);                               // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
+   int initFlags  = SumInts(__INIT_FLAGS__);                               // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
    IsChart        = !IsTesting() || IsVisualMode();                        //       in Indicator::init() IsChart=On signalisiert.
    IsOfflineChart = IsChart && false;                                      // ???
-   __LOG          = Indicator.IsICustom();                                 // TODO: !!! Status aus aufrufendem Programm übernehmen
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;                          // TODO: !!! Status aus aufrufendem Programm übernehmen
+   __LOG          = IsSuperContext();                                      // TODO: !!! Status aus aufrufendem Programm übernehmen
+   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;                            // TODO: !!! Status aus aufrufendem Programm übernehmen
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -45,7 +45,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int tickData[3];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason(), tickData);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), tickData);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -55,7 +55,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {
+   if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -75,10 +75,10 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                   // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // noch nicht implementiert
 
-   if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason());
+   if (_bool(initFlags & INIT_HSTLIB)) {
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -103,8 +103,8 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    afterInit();                                                            // Postprocessing-Hook
                                                                            //
 
-   // (5) bei Aufruf durch iCustom() Parameter loggen
-   if (Indicator.IsICustom() && __LOG)
+   // (5) bei Aufruf durch anderes Programm Parameter loggen
+   if (IsSuperContext() && __LOG)
       log(ParametersToStr());
 
 
@@ -253,8 +253,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__  = FUNC_DEINIT;
-   __DeinitFlags = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__    = FUNC_DEINIT;
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -282,7 +282,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(__DeinitFlags, UninitializeReason());
+   error = stdlib_deinit(deinitFlags, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 
@@ -335,11 +335,11 @@ bool Indicator.IsTesting() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
+ * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
  */
-bool Indicator.IsICustom() {
+bool IsSuperContext() {
    return(__lpSuperContext != 0);
 }
 
@@ -408,8 +408,8 @@ int SetLastError(int error, int param=NULL) {
    }
 
    // bei iCustom() Fehler an Aufrufer weiterreichen
-   if (Indicator.IsICustom()) {
-      /*EXECUTION_CONTEXT*/int sec[]; error = InitializeICustom(sec, __lpSuperContext);
+   if (IsSuperContext()) {
+      /*EXECUTION_CONTEXT*/int sec[]; error = InitializeExecutionContext(sec, __lpSuperContext);
 
       if (IsError(error)) {
          __lpSuperContext = NULL;
