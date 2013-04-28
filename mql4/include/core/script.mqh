@@ -220,7 +220,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool IsSuperContext() {
-   return(__lpSuperContext != 0);
+   return(false);
 }
 
 

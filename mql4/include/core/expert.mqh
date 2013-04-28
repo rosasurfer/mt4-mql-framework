@@ -28,6 +28,13 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       last_error   = NO_ERROR;
    }
 
+
+
+   // (1) EXECUTION_CONTEXT und globale Context-Variablen initialisieren
+   if (!__lpExecutionContext) {
+      InitializeExecutionContext(__ExecutionContext, __lpExecutionContext);
+   }
+
    __NAME__       = WindowExpertName();
    int initFlags  = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
    IsChart        = !IsTesting() || IsVisualMode();
@@ -36,7 +43,12 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
 
 
-   // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+
+
+
+
+
+   // (2) globale Formatvariablen re-initialisieren
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
@@ -44,7 +56,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+   // (3) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int iNull[];
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
    if (IsError(error))
@@ -52,7 +64,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
+   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -82,7 +94,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (4)  EA's ggf. aktivieren
+   // (5)  EA's ggf. aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
@@ -91,13 +103,13 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (5) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
+   // (6) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (6) im Tester ChartInfo-Anzeige konfigurieren
+   // (7) im Tester ChartInfo-Anzeige konfigurieren
    if (IsVisualMode()) {
       chartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
       chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
@@ -108,7 +120,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
                                                                               // User-Routinen *können*, müssen aber nicht implementiert werden.
-   // (7) user-spezifische init()-Routinen aufrufen                           //
+   // (8) user-spezifische init()-Routinen aufrufen                           //
    onInit();                                                                  // Preprocessing-Hook
                                                                               //
    if (!__STATUS_ERROR) {                                                     //
@@ -130,19 +142,17 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       return(last_error);
 
 
-   // (8) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
-   if (!IsTesting()) {
-      if (UninitializeReason() != REASON_CHARTCHANGE) {                       // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
-         error = Chart.SendTick(false);                                       // vor Verlassen von init() verarbeitet wird.
-         if (IsError(error))
-            SetLastError(error);
-      }
-   }
-   else {
+   // (9) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
+   if (IsTesting()) {
       Test.fromDate    = TimeCurrent();
       Test.startMillis = GetTickCount();
    }
-   return(catch("init(4)")|last_error);
+   else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
+      error = Chart.SendTick(false);                                          // vor Verlassen von init() verarbeitet wird.
+      if (IsError(error))
+         SetLastError(error);
+   }
+   return(last_error|catch("init(4)"));
 }
 
 
@@ -371,7 +381,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool IsSuperContext() {
-   return(__lpSuperContext != 0);
+   return(false);
 }
 
 

@@ -37,7 +37,7 @@ int testlib_init(int type, string name, int whereami, bool isChart, bool isOffli
    __TYPE__        |= type;
    __NAME__         = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__     = whereami;
-   int initFlags    = SumInts(__INIT_FLAGS__) | initFlags;
+   initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
    __LOG            = loggingEnabled;

@@ -7,20 +7,21 @@
 // globale Variablen, stehen überall zur Verfügung
 int      __lpExecutionContext;                              // Zeiger auf Original des ExecutionContext
 int      __ExecutionContext[];                              // ExecutionContext des aktuellen Programms (je nach Modultyp Original oder Kopie)
-int      __SuperContext    [];                              // SuperContext des aktuellen Programms     (falls gesetzt immer Kopie)
+int      __SuperContext    [];                              // evt. SuperContext des aktuellen Programms (falls gesetzt immer Kopie)
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
+bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
+bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
+
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
-bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
-bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -307,11 +308,12 @@ int      last_error;                                        // der letzte Fehler
 #define EC_CHART_PROPERTIES            3
 #define EC_LPSUPER_CONTEXT             4
 #define EC_INIT_FLAGS                  5
-#define EC_UNINITIALIZE_REASON         6
-#define EC_WHERE_AM_I                  7
-#define EC_LOGGING_ENABLED             8
-#define EC_LPLOGFILE                   9
-#define EC_LAST_ERROR                 10
+#define EC_DEINIT_FLAGS                6
+#define EC_UNINITIALIZE_REASON         7
+#define EC_WHERE_AM_I                  8
+#define EC_LOGGING_ENABLED             9
+#define EC_LPLOGFILE                  10
+#define EC_LAST_ERROR                 11
 
 
 // Sorting modes, siehe ArraySort()
@@ -699,8 +701,8 @@ int      last_error;                                        // der letzte Fehler
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
 
-#define EXECUTION_CONTEXT.size                 44
-#define EXECUTION_CONTEXT.intSize              11     // ceil(EXECUTION_CONTEXT.size/4)
+#define EXECUTION_CONTEXT.size                 48
+#define EXECUTION_CONTEXT.intSize              12     // ceil(EXECUTION_CONTEXT.size/4)
 
 #define ORDER_EXECUTION.size                  136
 #define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
@@ -1102,14 +1104,14 @@ int ResetLastError() {
  * Initialisiert einen EXECUTION_CONTEXT-Buffer.
  *
  * @param  int ec[] - das für den Buffer zu verwendende Integer-Array
- * @param  int ptr  - Zeiger auf zu kopierenden Context (default: NULL)
+ * @param  int &ptr - Zeiger auf zu kopierenden Context (nach Rückkehr immer != NULL)
  *
  * @return int - Fehlerstatus
  *
  *
  * NOTE: In der Headerdatei implementiert, um Verwendung vor Library-Initialisierung zu ermöglichen.
  */
-int InitializeExecutionContext(int &ec[], int ptr=NULL) {
+int InitializeExecutionContext(int &ec[], int &ptr) {
    if (ArrayDimension(ec) != 1)                return(catch("InitializeExecutionContext(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
    if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeExecutionContext(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -1119,6 +1121,7 @@ int InitializeExecutionContext(int &ec[], int ptr=NULL) {
    if (!ptr) {
       ArrayInitialize(ec, 0);
       ec[EC_SIGNATURE] = GetBufferAddress(ec);
+      ptr = ec[EC_SIGNATURE];
    }
    else {
       CopyMemory(GetBufferAddress(ec), ptr, EXECUTION_CONTEXT.size);
@@ -1826,7 +1829,7 @@ int Ceil(double value) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
-   int iNulls[];
+   int iNull, iNulls[];
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -1855,7 +1858,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
-   InitializeExecutionContext(iNulls);
+   InitializeExecutionContext(iNulls, iNull);
    IsError(NULL);
    IsExpert();
    IsIndicator();

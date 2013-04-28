@@ -58,7 +58,7 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    __TYPE__        |= type;
    __NAME__         = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__     = whereami;
-   int initFlags    = SumInts(__INIT_FLAGS__) | initFlags;
+   initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
    __LOG            = loggingEnabled;
@@ -188,8 +188,8 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__    = FUNC_DEINIT;
-   int deinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
+   __WHEREAMI__  = FUNC_DEINIT;
+   deinitFlags  |= SumInts(__DEINIT_FLAGS__);
 
    int error = NO_ERROR;
 
@@ -255,7 +255,8 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, NULL);
+   int lpContext;
+   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, lpContext);
    sec[EC_LAST_ERROR] = NO_ERROR;
 
    int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
@@ -272,7 +273,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
                           "",                                        // ________________
-                          sec[EC_SIGNATURE],                         // __SuperContext__
+                          lpContext,                                 // __SuperContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -7693,6 +7694,48 @@ bool IsPendingTradeOperation(int value) {
 
 
 /**
+ * Gibt die lesbare Konstante eines Module-Types zurück.
+ *
+ * @param  int type - Module-Type
+ *
+ * @return string
+ */
+string ModuleTypeToStr(int type) {
+   string result = "";
+
+   if (_bool(type & T_EXPERT   )) StringConcatenate(result, "|T_EXPERT"   );
+   if (_bool(type & T_SCRIPT   )) StringConcatenate(result, "|T_SCRIPT"   );
+   if (_bool(type & T_INDICATOR)) StringConcatenate(result, "|T_INDICATOR");
+   if (_bool(type & T_LIBRARY  )) StringConcatenate(result, "|T_LIBRARY"  );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die Beschreibung eines Module-Types zurück.
+ *
+ * @param  int type - Module-Type
+ *
+ * @return string
+ */
+string ModuleTypeDescription(int type) {
+   string result = "";
+
+   if (_bool(type & T_EXPERT   )) StringConcatenate(result, ".Expert"   );
+   if (_bool(type & T_SCRIPT   )) StringConcatenate(result, ".Script"   );
+   if (_bool(type & T_INDICATOR)) StringConcatenate(result, ".Indicator");
+   if (_bool(type & T_LIBRARY  )) StringConcatenate(result, ".Library"  );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
  * Gibt die lesbare Konstante eines Operation-Types zurück.
  *
  * @param  int type - Operation-Type
@@ -12676,7 +12719,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    int    GetStringAddress(string value);
 #import "sample.dll"
    string GetStringValue(int address);
-#import "structs.ex4"
+#import "structs2.ex4"
    // MQL-Structs Getter und Setter
    //int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
    //string   hh.Description     (/*HISTORY_HEADER*/int hh[]);                        string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
