@@ -16,8 +16,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string files[2];
-
+   string sNull, files[2];
    files[0] = GetGlobalConfigPath();
    files[1] = GetLocalConfigPath();
 

@@ -972,7 +972,9 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
 
    // (5) Daten aktualisieren
-   if (!UpdateStatus(hSeq, bNull, iNulls))
+   bool bNull;
+   int  iNull[];
+   if (!UpdateStatus(hSeq, bNull, iNull))
       return(false);
    sequence.stop.profit[n]      = sequence.totalPL[hSeq];
    sequence.weStop.active[hSeq] = weekendStop;
@@ -1104,7 +1106,8 @@ bool ResumeSequence(int hSeq) {
 
    // (7) Status aktualisieren und speichern
    bool changes;
-   if (!UpdateStatus(hSeq, changes, iNulls))                         // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
+   int  iNull[];
+   if (!UpdateStatus(hSeq, changes, iNull))                          // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                 // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
    if (changes)                                                      // nochmal aktualisiert werden.
       UpdatePendingOrders(hSeq);
@@ -1996,8 +1999,10 @@ bool ProcessClientStops(int hSeq, int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   if (!UpdateStatus(hSeq, bNull, iNulls)) return(false);
-   if (  !SaveStatus(hSeq))                return(false);
+   bool bNull;
+   int  iNull[];
+   if (!UpdateStatus(hSeq, bNull, iNull)) return(false);
+   if (  !SaveStatus(hSeq))               return(false);
 
    return(!last_error|catch("ProcessClientStops(10)"));
 }
@@ -3306,6 +3311,8 @@ bool IsTest() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
+   int    iNulls[];
+   string sNulls[];
    ChartMarker.OrderSent(NULL, NULL);
    ConfirmTick1Trade(NULL, NULL);
    CreateEventId();

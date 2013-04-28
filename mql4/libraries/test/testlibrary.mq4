@@ -24,25 +24,25 @@ int __DEINIT_FLAGS__[];
  * @param  bool   isChart            - Hauptprogramm-Variable IsChart
  * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
  * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
- * @param  int    lpICUSTOM          - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int testlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason) {
+int testlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpSuperContext, int initFlags, int uninitializeReason) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__            |= type;
-   __NAME__             = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__         = whereami;
-   __InitFlags          = SumInts(__INIT_FLAGS__) | initFlags;
-   IsChart              = isChart;
-   IsOfflineChart       = isOfflineChart;
-   __LOG                = loggingEnabled;
-   __LOG_CUSTOM         = _bool(__InitFlags & INIT_CUSTOMLOG);
-   __lpExecutionContext = lpICUSTOM;
+   __TYPE__        |= type;
+   __NAME__         = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__     = whereami;
+   __InitFlags      = SumInts(__INIT_FLAGS__) | initFlags;
+   IsChart          = isChart;
+   IsOfflineChart   = isOfflineChart;
+   __LOG            = loggingEnabled;
+   __LOG_CUSTOM     = _bool(__InitFlags & INIT_CUSTOMLOG);
+   __lpSuperContext = lpSuperContext;
 
 
    // globale Variablen re-initialisieren

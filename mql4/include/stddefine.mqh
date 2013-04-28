@@ -48,11 +48,6 @@ int      last_error;                                        // der letzte Fehler
 #define NL                          "\n"                    // new line, MQL schreibt 0x0D0A
 #define TAB                         "\t"                    // tab
 
-bool    bNull, bNulls[];
-int     iNull, iNulls[];
-double  dNull, dNulls[];
-string  sNull, sNulls[];
-
 
 // Special chars
 #define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()

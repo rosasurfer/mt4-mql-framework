@@ -325,7 +325,9 @@ int onChartCommand(string commands[]) {
       switch (status) {
          case STATUS_WAITING    :
          case STATUS_PROGRESSING:
-            if (UpdateStatus(bNull, iNulls))
+            bool bNull;
+            int  iNull[];
+            if (UpdateStatus(bNull, iNull))
                StopSequence();
       }
       return(last_error);
@@ -385,6 +387,7 @@ bool StartSequence() {
 
    // (3) ggf. Startpositionen in den Markt legen und SequenceStart-Price aktualisieren
    if (sequence.level != 0) {
+      int iNull;
       if (!UpdateOpenPositions(iNull, startPrice))
          return(false);
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
@@ -541,10 +544,12 @@ bool StopSequence() {
 
 
    // (7) Daten aktualisieren und speichern
-   if (!UpdateStatus(bNull, iNulls)) return(false);
+   bool bNull;
+   int  iNull[];
+   if (!UpdateStatus(bNull, iNull)) return(false);
    sequence.stop.profit[n] = sequence.totalPL;
-   if (  !SaveStatus())              return(false);
-   if (!RecordEquity(NULL))          return(false);
+   if (  !SaveStatus())             return(false);
+   if (!RecordEquity(NULL))         return(false);
    RedrawStartStop();
 
 
@@ -676,7 +681,8 @@ bool ResumeSequence() {
 
    // (7) Status aktualisieren und speichern
    bool blChanged;
-   if (!UpdateStatus(blChanged, iNulls))                             // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
+   int  iNull[];
+   if (!UpdateStatus(blChanged, iNull))                              // Wurde in UpdateOpenPositions() ein Pseudo-Ticket erstellt, wird es hier
       return(false);                                                 // in UpdateStatus() geschlossen. In diesem Fall müssen die Pending-Orders
    if (blChanged)                                                    // nochmal aktualisiert werden.
       UpdatePendingOrders();
@@ -1530,8 +1536,10 @@ bool ProcessClientStops(int stops[]) {
 
 
    // (4) Status aktualisieren und speichern
-   if (!UpdateStatus(bNull, iNulls)) return(false);
-   if (  !SaveStatus())              return(false);
+   bool bNull;
+   int  iNull[];
+   if (!UpdateStatus(bNull, iNull)) return(false);
+   if (  !SaveStatus())             return(false);
 
    return(!last_error|catch("ProcessClientStops(10)"));
 }
@@ -5329,6 +5337,9 @@ bool RecordEquity(int flags=NULL) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
+   int    iNull, iNulls[];
+   double dNull, dNulls[];
+   string sNull, sNulls[];
    BreakevenEventToStr(NULL);
    FindChartSequences(sNulls, iNulls);
    GetFullStatusDirectory();

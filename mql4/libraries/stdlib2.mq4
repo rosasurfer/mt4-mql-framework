@@ -29,6 +29,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
  */
 int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
+   string sNull;
    int bufferSize = 200;
    int buffer[]; InitializeBuffer(buffer, bufferSize);
 

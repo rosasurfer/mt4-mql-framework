@@ -1,6 +1,6 @@
 
-#define __TYPE__             T_EXPERT
-#define __lpExecutionContext NULL
+#define __TYPE__         T_EXPERT
+#define __lpSuperContext NULL
 
 #include <ChartInfos/functions.mqh>
 
@@ -46,7 +46,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int iNull[];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason(), iNull);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
@@ -76,7 +76,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }

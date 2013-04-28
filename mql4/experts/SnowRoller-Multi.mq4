@@ -197,6 +197,7 @@ bool StartSequence(int hSeq) {
 
    // (3) ggf. Startpositionen in den Markt legen und Sequenzstart-Price aktualisieren
    if (sequence.level[hSeq] != 0) {
+      int iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
       return(_false(catch("StartSequence(3.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
@@ -763,6 +764,8 @@ int ClearStickyStatus() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
+   int    iNulls[];
+   string sNulls[];
    FindChartSequences(sNulls, iNulls);
    IsSequenceStatus(NULL);
    IsStopTriggered(NULL, NULL);
