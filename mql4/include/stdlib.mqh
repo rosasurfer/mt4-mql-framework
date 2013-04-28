@@ -11,7 +11,6 @@
 
    bool     IsIndicator();
    bool     Indicator.IsTesting();
-   bool     Indicator.IsICustom();
 
    bool     IsScript();
    bool     Script.IsTesting();
@@ -19,6 +18,7 @@
    bool     IsLibrary();
    bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
+   bool     IsSuperContext();
    bool     IsLoggingEnabled();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -129,10 +129,10 @@
 
 
    // Buffer-Funktionen
-   int      InitializeBuffer      (int    buffer[], int length);
-   int      InitializeDoubleBuffer(double buffer[], int size);
-   int      InitializeStringBuffer(string buffer[], int length);
-   int      InitializeICustom     (int    buffer[], int pointer);
+   int      InitializeBuffer          (int    buffer[], int length );
+   int      InitializeDoubleBuffer    (double buffer[], int size   );
+   int      InitializeStringBuffer    (string buffer[], int length );
+   int      InitializeExecutionContext(int    buffer[], int pointer);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -551,7 +551,7 @@
    double   oe.setRemainingLots  (/*ORDER_EXECUTION*/int oe[], double   lots      );  double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
 
 
-   // Win32-Funktionen
+   // Win32-Funktionen (an MQL angepaßt)
    void     CopyMemory(int destination, int source, int bytes);
    string   GetClassName(int hWnd);
    string   GetComputerName();
@@ -560,7 +560,7 @@
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      WM_MT4();                                                // MetaTrader4_Internal_Message (Pseudo-Konstante)
+   int      WM_MT4();                                                // MetaTrader4_Internal_Message (wird wie Pseudo-Konstante benutzt)
 
 
    // Default-Implementierungen der MQL-Basis- und Userfunktionen

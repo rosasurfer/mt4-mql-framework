@@ -29,11 +29,11 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
    __NAME__       = WindowExpertName();
-   __InitFlags    = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
+   int initFlags  = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
    IsChart        = !IsTesting() || IsVisualMode();
  //IsOfflineChart = IsChart && ???
    __LOG          = IsLoggingEnabled();
-   __LOG_CUSTOM   = __InitFlags & INIT_CUSTOMLOG;
+   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
 
 
    // (1) globale Variablen re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
@@ -46,14 +46,14 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int iNull[];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason(), iNull);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {
+   if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -73,10 +73,10 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       if (!tickValue) return(debug("init()   MarketInfo(TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
    }
 
-   if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                      // noch nicht implementiert
+   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
 
-   if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason());
+   if (_bool(initFlags & INIT_HSTLIB)) {
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -282,8 +282,8 @@ int start() {
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
-   __WHEREAMI__  = FUNC_DEINIT;
-   __DeinitFlags = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__    = FUNC_DEINIT;
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
 
    if (IsTesting()) {
       Test.toDate     = TimeCurrent();
@@ -317,7 +317,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(__DeinitFlags, UninitializeReason());
+   error = stdlib_deinit(deinitFlags, UninitializeReason());
    if (IsError(error))
       SetLastError(error);
 
@@ -366,12 +366,12 @@ bool Indicator.IsTesting() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein via iCustom() ausgeführter Indikator ist.
+ * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
  */
-bool Indicator.IsICustom() {
-   return(false);
+bool IsSuperContext() {
+   return(__lpSuperContext != 0);
 }
 
 

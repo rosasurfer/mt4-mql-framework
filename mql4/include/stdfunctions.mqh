@@ -5,6 +5,10 @@
 
 
 // globale Variablen, stehen überall zur Verfügung
+int      __lpExecutionContext;                              // Zeiger auf Original des ExecutionContext
+int      __ExecutionContext[];                              // ExecutionContext des aktuellen Programms (je nach Modultyp Original oder Kopie)
+int      __SuperContext    [];                              // SuperContext des aktuellen Programms     (falls gesetzt immer Kopie)
+
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     __LOG;                                             // ob das Logging aktiviert ist
@@ -15,8 +19,6 @@ bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder 
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
-int      __InitFlags;
-int      __DeinitFlags;
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
 bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
 
@@ -1097,6 +1099,38 @@ int ResetLastError() {
 
 
 /**
+ * Initialisiert einen EXECUTION_CONTEXT-Buffer.
+ *
+ * @param  int ec[] - das für den Buffer zu verwendende Integer-Array
+ * @param  int ptr  - Zeiger auf zu kopierenden Context (default: NULL)
+ *
+ * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: In der Headerdatei implementiert, um Verwendung vor Library-Initialisierung zu ermöglichen.
+ */
+int InitializeExecutionContext(int &ec[], int ptr=NULL) {
+   if (ArrayDimension(ec) != 1)                return(catch("InitializeExecutionContext(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
+   if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeExecutionContext(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize)
+      ArrayResize(ec, EXECUTION_CONTEXT.intSize);
+
+   if (!ptr) {
+      ArrayInitialize(ec, 0);
+      ec[EC_SIGNATURE] = GetBufferAddress(ec);
+   }
+   else {
+      CopyMemory(GetBufferAddress(ec), ptr, EXECUTION_CONTEXT.size);
+
+      // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
+      if (ptr != ec[EC_SIGNATURE])             return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
+   }
+   return(catch("InitializeExecutionContext(4)"));
+}
+
+
+/**
  * Prüft, ob Events der angegebenen Typen aufgetreten sind und ruft bei Zutreffen deren Eventhandler auf.
  *
  * @param  int events - Event-Flags
@@ -1792,6 +1826,7 @@ int Ceil(double value) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
+   int iNulls[];
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -1819,14 +1854,15 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   Indicator.IsICustom();
    Indicator.IsTesting();
+   InitializeExecutionContext(iNulls);
    IsError(NULL);
    IsExpert();
    IsIndicator();
    IsLastError();
    IsLoggingEnabled();
    IsScript();
+   IsSuperContext();
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);

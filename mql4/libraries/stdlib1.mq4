@@ -58,11 +58,11 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    __TYPE__        |= type;
    __NAME__         = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__     = whereami;
-   __InitFlags      = SumInts(__INIT_FLAGS__) | initFlags;
+   int initFlags    = SumInts(__INIT_FLAGS__) | initFlags;
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
    __LOG            = loggingEnabled;
-   __LOG_CUSTOM     = _bool(__InitFlags & INIT_CUSTOMLOG);
+   __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
    __lpSuperContext = lpSuperContext;
 
 
@@ -81,12 +81,12 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
 
 
    // (3) user-spezifische Init-Tasks ausführen
-   if (_bool(__InitFlags & INIT_TIMEZONE)) {                         // Zeitzonen-Konfiguration überprüfen
+   if (_bool(initFlags & INIT_TIMEZONE)) {                           // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
-   if (_bool(__InitFlags & INIT_PIPVALUE)) {                         // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+   if (_bool(initFlags & INIT_PIPVALUE)) {                           // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
       /*
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -188,8 +188,8 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__  = FUNC_DEINIT;
-   __DeinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
+   __WHEREAMI__    = FUNC_DEINIT;
+   int deinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
 
    int error = NO_ERROR;
 
@@ -255,7 +255,7 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeICustom(sec, NULL);
+   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, NULL);
    sec[EC_LAST_ERROR] = NO_ERROR;
 
    int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
@@ -1285,36 +1285,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
    buffer[0] = CreateString(length);
 
    return(catch("InitializeStringBuffer(3)"));
-}
-
-
-/**
- * Initialisiert einen EXECUTION_CONTEXT-Buffer.
- *
- * @param  int ec[] - das für den Buffer zu verwendende Integer-Array
- * @param  int ptr  - Zeiger auf zu kopierenden Context (default: NULL)
- *
- * @return int - Fehlerstatus
- */
-int InitializeICustom(int &ec[], int ptr=NULL) {
-   if (ArrayDimension(ec) != 1)                return(catch("InitializeICustom(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
-   if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeICustom(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize)
-      ArrayResize(ec, EXECUTION_CONTEXT.intSize);
-
-   if (!ptr) {
-      ArrayInitialize(ec, 0);
-      ec[EC_SIGNATURE] = GetBufferAddress(ec);
-   }
-   else {
-      CopyMemory(GetBufferAddress(ec), ptr, EXECUTION_CONTEXT.size);
-
-      // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (ec[EC_SIGNATURE] != ptr)
-         return(catch("InitializeICustom(3)   invalid EXECUTION_CONTEXT found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
-   }
-   return(catch("InitializeICustom(4)"));
 }
 
 
@@ -5899,7 +5869,7 @@ datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!Indicator.IsICustom())     // TODO: !!! Test auf iCustom() ist unzureichend, der Root-Caller muß ein EA sein
+   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())          // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(_false(catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE)));
 
    if (ArraySize(results) != 0)
