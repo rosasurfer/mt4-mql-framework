@@ -1,12 +1,8 @@
-/**
- * NOTE: Für Wertzuweisungen an last_error muß in Indikatoren immer SetLastError() verwendet werden, wenn der Fehler
- *       bei Indikatoraufruf via iCustom() an den Aufrufer weitergereicht werden soll.
- */
+
 #define __TYPE__ T_INDICATOR
 
-
-extern string ____________________________;
-extern int    __lpExecutionContext;
+extern string ___________________________;
+extern int    __lpSuperContext;
 
 
 /**
@@ -49,7 +45,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
    int tickData[3];
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason(), tickData);
+   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason(), tickData);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -82,7 +78,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (_bool(__InitFlags & INIT_BARS_ON_HIST_UPDATE)) {}                   // noch nicht implementiert
 
    if (_bool(__InitFlags & INIT_HSTLIB)) {
-      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpExecutionContext, __InitFlags, UninitializeReason());
+      error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, __InitFlags, UninitializeReason());
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -344,7 +340,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool Indicator.IsICustom() {
-   return(__lpExecutionContext != 0);
+   return(__lpSuperContext != 0);
 }
 
 
@@ -402,9 +398,9 @@ int SetLastError(int error, int param=NULL) {
    last_error = error;
 
    switch (error) {
-      case NO_ERROR              : break;
-      case ERS_HISTORY_UPDATE    : break;
-      case ERS_TERMINAL_NOT_READY: break;
+      case NO_ERROR:
+      case ERS_HISTORY_UPDATE:
+      case ERS_TERMINAL_NOT_READY:
       case ERS_EXECUTION_STOPPING: break;
 
       default:
@@ -413,15 +409,15 @@ int SetLastError(int error, int param=NULL) {
 
    // bei iCustom() Fehler an Aufrufer weiterreichen
    if (Indicator.IsICustom()) {
-      /*EXECUTION_CONTEXT*/int ec[]; error = InitializeICustom(ec, __lpExecutionContext);
+      /*EXECUTION_CONTEXT*/int sec[]; error = InitializeICustom(sec, __lpSuperContext);
 
       if (IsError(error)) {
-         __lpExecutionContext = NULL;
+         __lpSuperContext = NULL;
          SetLastError(error);
       }
       else {
-         ec[EC_LAST_ERROR] = last_error;
-         CopyMemory(ec[EC_SIGNATURE], GetBufferAddress(ec), EXECUTION_CONTEXT.size);
+         sec[EC_LAST_ERROR] = last_error;
+         CopyMemory(sec[EC_SIGNATURE], GetBufferAddress(sec), EXECUTION_CONTEXT.size);
       }
    }
    return(last_error);

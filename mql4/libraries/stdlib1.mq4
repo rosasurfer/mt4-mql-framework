@@ -44,26 +44,26 @@ int __DEINIT_FLAGS__[];
  * @param  bool   isChart            - Callermodule-Variable IsChart
  * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
  * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
- * @param  int    lpICUSTOM          - Speicheradresse der ICUSTOM-Struktur, falls das laufende Programm ein per iCustom() ausgeführter Indikator ist
+ * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
  * @param  int    tickData[]         - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpSuperContext, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__            |= type;
-   __NAME__             = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__         = whereami;
-   __InitFlags          = SumInts(__INIT_FLAGS__) | initFlags;
-   IsChart              = isChart;
-   IsOfflineChart       = isOfflineChart;
-   __LOG                = loggingEnabled;
-   __LOG_CUSTOM         = _bool(__InitFlags & INIT_CUSTOMLOG);
-   __lpExecutionContext = lpICUSTOM;
+   __TYPE__        |= type;
+   __NAME__         = StringConcatenate(name, "::", WindowExpertName());
+   __WHEREAMI__     = whereami;
+   __InitFlags      = SumInts(__INIT_FLAGS__) | initFlags;
+   IsChart          = isChart;
+   IsOfflineChart   = isOfflineChart;
+   __LOG            = loggingEnabled;
+   __LOG_CUSTOM     = _bool(__InitFlags & INIT_CUSTOMLOG);
+   __lpSuperContext = lpSuperContext;
 
 
    // (1) globale Variablen re-initialisieren
@@ -255,8 +255,8 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int /*EXECUTION_CONTEXT*/ec[]; if (!ArraySize(ec)) InitializeICustom(ec, NULL);
-   ec[EC_LAST_ERROR] = NO_ERROR;
+   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeICustom(sec, NULL);
+   sec[EC_LAST_ERROR] = NO_ERROR;
 
    int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
 
@@ -271,8 +271,8 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.H
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
-                          "",                                        // ____________________
-                          ec[EC_SIGNATURE],                          // __ExecutionContext__
+                          "",                                        // ________________
+                          sec[EC_SIGNATURE],                         // __SuperContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -282,8 +282,9 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
          return(_NULL(catch("icMovingAverage(1)", error)));
       warn("icMovingAverage(2)   ERS_HISTORY_UPDATE (tick="+ Tick +")");   // TODO: geladene Bars prüfen
    }
-   if (IsError(ec[EC_LAST_ERROR]))
-      return(_NULL(SetLastError(ec[EC_LAST_ERROR])));
+
+   if (IsError(sec[EC_LAST_ERROR]))
+      return(_NULL(SetLastError(sec[EC_LAST_ERROR])));
 
    return(value);
 }
@@ -1110,6 +1111,7 @@ int GetPrivateProfileKeys(string fileName, string section, string keys[]) {
  * @return int - Fehlerstatus
  */
 int DeletePrivateProfileKey(string fileName, string section, string key) {
+   string sNull;
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
       return(catch("DeletePrivateProfileKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    return(NO_ERROR);
@@ -4176,7 +4178,8 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
 
-   int iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
+   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
+   string sNull;
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
       return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
@@ -4189,7 +4192,7 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    }
 
    CloseHandle(pi.hProcess(pi));
-   CloseHandle(pi.hThread(pi));
+   CloseHandle(pi.hThread (pi));
 
    return(catch("WinExecAndWait(3)"));
 }
