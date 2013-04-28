@@ -16,9 +16,9 @@
  * } HISTORY_HEADER, hh;         // 148 byte = int[37]
  *
  *
- * MQL structure RateInfo
+ * MQL structure BarInfo
  * ----------------------
- * struct RateInfo {
+ * struct BarInfo {
  *   int    time;                //  4
  *   double open;                //  8
  *   double low;                 //  8

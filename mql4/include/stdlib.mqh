@@ -1,8 +1,6 @@
 /**
  * NOTE: Diese Headerdatei und die Library sind kompatibel zu den Original-MetaQuotes-Versionen.
  */
-#include <structs.mqh>
-
 #import "stdlib.ex4"
 
    // MQL-Status- und Laufzeitumgebungs-Informationen
@@ -129,10 +127,10 @@
 
 
    // Buffer-Funktionen
-   int      InitializeBuffer          (int    buffer[], int length );
-   int      InitializeDoubleBuffer    (double buffer[], int size   );
-   int      InitializeStringBuffer    (string buffer[], int length );
-   int      InitializeExecutionContext(int    buffer[], int pointer);
+   int      InitializeBuffer          (int    buffer[], int length  );
+   int      InitializeDoubleBuffer    (double buffer[], int size    );
+   int      InitializeStringBuffer    (string buffer[], int length  );
+   int      InitializeExecutionContext(int    buffer[], int &pointer);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -435,6 +433,8 @@
    string   AppliedPriceDescription(int appliedPrice);
    string   ErrorDescription(int error);
    string   FileAccessModeToStr(int mode);
+   string   ModuleTypeDescription(int type);
+   string   ModuleTypeToStr(int type);
    string   MovingAverageMethodDescription(int method);
    string   OperationTypeDescription(int type);
    string   PeriodDescription(int period);

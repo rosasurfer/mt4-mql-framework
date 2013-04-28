@@ -417,7 +417,7 @@ int SetLastError(int error, int param=NULL) {
       }
       else {
          sec[EC_LAST_ERROR] = last_error;
-         CopyMemory(sec[EC_SIGNATURE], GetBufferAddress(sec), EXECUTION_CONTEXT.size);
+         CopyMemory(__lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
       }
    }
    return(last_error);

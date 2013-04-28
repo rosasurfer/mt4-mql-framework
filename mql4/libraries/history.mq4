@@ -37,7 +37,7 @@ int history_init(int type, string name, int whereami, bool isChart, bool isOffli
    __TYPE__        |= type;
    __NAME__         = StringConcatenate(name, "::", WindowExpertName());
    __WHEREAMI__     = whereami;
-   int initFlags    = SumInts(__INIT_FLAGS__) | initFlags;
+   initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
    __LOG            = loggingEnabled;
@@ -69,8 +69,8 @@ int history_init(int type, string name, int whereami, bool isChart, bool isOffli
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. Diese deinit()-Funktion wird deswegen u.U. nicht mehr ausgeführt.
  */
 int history_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__    = FUNC_DEINIT;
-   int deinitFlags = SumInts(__DEINIT_FLAGS__) | deinitFlags;
+   __WHEREAMI__  = FUNC_DEINIT;
+   deinitFlags  |= SumInts(__DEINIT_FLAGS__);
    return(NO_ERROR);
 }
 
@@ -108,14 +108,14 @@ int      hf.currentBar.offset       [];            // relativ zum Header: Offset
 datetime hf.currentBar.openTime     [];            //
 datetime hf.currentBar.closeTime    [];            //
 datetime hf.currentBar.nextCloseTime[];            //
-double   hf.currentBar.data         [][5];         // RateInfos (OHLCV)
+double   hf.currentBar.data         [][5];         // Bar-Infos (OHLCV)
 
 // Ticks einer ungespeicherten Bar (bei HST_CACHE_TICKS=On)
 int      hf.tickBar.offset          [];            // relativ zum Header: Offset 0 ist älteste Bar
 datetime hf.tickBar.openTime        [];            //
 datetime hf.tickBar.closeTime       [];            //
 datetime hf.tickBar.nextCloseTime   [];            //
-double   hf.tickBar.data            [][5];         // RateInfos (OHLCV)
+double   hf.tickBar.data            [][5];         // Bar-Infos (OHLCV)
 
 
 // Daten einzelner History-Sets ----------------------------------------------------------------------------------------------------------------------------
@@ -440,8 +440,8 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  *
  * @param  int      hFile   - Dateihandle der Historydatei
  * @param  int      offset  - Offset der Bar (relativ zum History-Header; Offset 0 ist älteste Bar)
- * @param  datetime time[1] - Array zur Aufnahme von RateInfo.Time
- * @param  double   data[5] - Array zur Aufnahme der übrigen RateInfo-Daten (OHLCV)
+ * @param  datetime time[1] - Array zur Aufnahme von BarInfo.Time
+ * @param  double   data[5] - Array zur Aufnahme der übrigen BarInfo-Daten (OHLCV)
  *
  * @return bool - Erfolgsstatus
  */
@@ -455,7 +455,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, datetime &time[], double &data[]
    }
    if (offset < 0 || offset >= hf.bars[hFile]) return(_false(catch("HistoryFile.ReadBar(5)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (ArraySize(time) < 1) ArrayResize(time, 1);
-   if (ArraySize(data) < 5) ArrayResize(data, 5);                    // struct RateInfo {
+   if (ArraySize(data) < 5) ArrayResize(data, 5);                    // struct BarInfo {
                                                                      //    int    time;      //  4
    // Bar lesen                                                      //    double open;      //  8
    int position = HISTORY_HEADER.size + offset*BAR.size;             //    double low;       //  8
@@ -565,8 +565,8 @@ bool HistoryFile.InsertBar(int hFile, int offset, datetime time, double data[], 
  *
  * @param  int      hFile   - Dateihandle der Historydatei
  * @param  int      offset  - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
- * @param  datetime time    - RateInfo.Time
- * @param  double   data[5] - RateInfo-Daten (OHLCV)
+ * @param  datetime time    - BarInfo.Time
+ * @param  double   data[5] - BarInfo-Daten (OHLCV)
  * @param  int      flags   - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                            HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
@@ -589,7 +589,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], i
 
 
    // (1) Bar schreiben
-   int position = HISTORY_HEADER.size + offset*BAR.size;             // struct RateInfo {
+   int position = HISTORY_HEADER.size + offset*BAR.size;             // struct BarInfo {
    if (!FileSeek(hFile, position, SEEK_SET))                         //    int    time;      //  4
       return(_false(catch("HistoryFile.WriteBar(8)")));              //    double open;      //  8
                                                                      //    double low;       //  8
@@ -639,7 +639,7 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
    int      offset = hf.currentBar.offset  [hFile];
    if (offset < 0)                      return(_false(catch("HistoryFile.WriteCurrentBar(5)   invalid hf.currentBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR)));
 
-   // (1) Bar schreiben                                              // struct RateInfo {
+   // (1) Bar schreiben                                              // struct BarInfo {
    int position = HISTORY_HEADER.size + offset*BAR.size;             //    int    time;      //  4
    if (!FileSeek(hFile, position, SEEK_SET))                         //    double open;      //  8
       return(_false(catch("HistoryFile.WriteCurrentBar(6)")));       //    double low;       //  8
@@ -685,7 +685,7 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
    if (offset < 0)                      return(_false(catch("HistoryFile.WriteTickBar(5)   invalid hf.tickBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR)));
 
 
-   // (1) Bar schreiben                                              // struct RateInfo {
+   // (1) Bar schreiben                                              // struct BarInfo {
    int position = HISTORY_HEADER.size + offset*BAR.size;             //    int    time;      //  4
    if (!FileSeek(hFile, position, SEEK_SET))                         //    double open;      //  8
       return(_false(catch("HistoryFile.WriteTickBar(6)")));          //    double low;       //  8
