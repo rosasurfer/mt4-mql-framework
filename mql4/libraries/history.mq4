@@ -2,8 +2,6 @@
  * Funktionen zum Verwalten und Bearbeiten von Historydateien (Kursreihen im "history"-Verzeichnis).
  *
  * TODO: Alle Offsets analog zur Chart-Indizierung implementieren (Offset 0 = jüngste Bar)
- *
- * NOTE: Libraries use predefined variables of the module that called the library.
  */
 #property library
 #property stacksize 32768
@@ -13,6 +11,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <structs.mqh>
+
 #include <core/library.mqh>
 
 
