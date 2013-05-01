@@ -12,6 +12,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+#include <structs.mqh>
 #include <core/library.mqh>
 
 
