@@ -1,5 +1,5 @@
 /**
- * NOTE: Diese Headerdatei und die Library sind kompatibel zu den Original-MetaQuotes-Versionen.
+ * NOTE: Headerdatei und Library sind kompatibel zu den Original-MetaQuotes-Versionen.
  */
 #import "stdlib.ex4"
 
@@ -430,16 +430,6 @@
    int      PeriodFlag(int period);
    int      PeriodToId(string description);
 
-   string   AppliedPriceDescription(int appliedPrice);
-   string   ErrorDescription(int error);
-   string   FileAccessModeToStr(int mode);
-   string   ModuleTypeDescription(int type);
-   string   ModuleTypeToStr(int type);
-   string   MovingAverageMethodDescription(int method);
-   string   OperationTypeDescription(int type);
-   string   PeriodDescription(int period);
-   string   UninitializeReasonDescription(int reason);
-
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
@@ -478,20 +468,32 @@
    string   RatesToStr      (double array[], string separator);
    string   StringsToStr    (string array[], string separator);
 
-   string   __whereamiToStr(int id);
-   string   AppliedPriceToStr(int appliedPrice);
-   string   ErrorToStr(int error);
+   string   AppliedPriceDescription(int appliedPrice);
+   string   AppliedPriceToStr      (int appliedPrice);
+   string   ChartPropertiesToStr(int flags);
+   string   InitFlagsToStr  (int flags);
+   string   DeinitFlagsToStr(int flags);
+   string   ErrorDescription(int error);
+   string   ErrorToStr      (int error);
    string   EventToStr(int event);
+   string   FileAccessModeToStr(int mode);
    string   MessageBoxCmdToStr(int cmd);
-   string   MovingAverageMethodToStr(int method);
+   string   ModuleTypeDescription(int type);
+   string   ModuleTypeToStr      (int type);
+   string   MovingAverageMethodDescription(int method);
+   string   MovingAverageMethodToStr      (int method);
    string   NumberToStr(double number, string format);
-   string   OperationTypeToStr(int type);
+   string   OperationTypeDescription(int type);
+   string   OperationTypeToStr      (int type);
    string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false);
    string   PeriodFlagToStr(int flag);
-   string   PeriodToStr(int period);
+   string   PeriodDescription(int period);
+   string   PeriodToStr      (int period);
    string   ShellExecuteErrorToStr(int error);
-   string   UninitializeReasonToStr(int reason);
+   string   UninitializeReasonDescription(int reason);
+   string   UninitializeReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
+   string   __whereamiToStr(int id);
 
 
    // MQL-Structs Getter und Setter

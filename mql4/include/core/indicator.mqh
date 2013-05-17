@@ -104,7 +104,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
                                                                            //
 
    // (5) bei Aufruf durch anderes Programm Parameter loggen
-   if (IsSuperContext() && __LOG)
+   if (__LOG && IsSuperContext())
       log(ParametersToStr());
 
 

@@ -125,6 +125,12 @@ int      last_error;                                        // der letzte Fehler
 #define INIT_HSTLIB                16           // initialisiert die History-Library
 
 
+// Chart-Property-Flags
+#define CP_CHART                    1           // impliziert VisualMode=On
+#define CP_OFFLINE                  2           // nur in Verbindung mit CP_CHART gesetzt
+#define CP_OFFLINE_CHART            3           // Shortkey für: CP_OFFLINE|CP_CHART
+
+
 // Object property ids, siehe ObjectSet()
 #define OBJPROP_TIME1               0
 #define OBJPROP_PRICE1              1
