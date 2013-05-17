@@ -794,6 +794,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (!error) error = GetLastError();
    else                GetLastError();                               // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
 
+
+   // rekursive Aufrufe abfangen
+   static bool recursive;
+   if (recursive)
+      return(error);
+   recursive = true;
+
+
    if (error != NO_ERROR) {
       string name, name_wId;
       if (StringLen(__NAME__) > 0) name = __NAME__;
@@ -849,6 +857,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    if (orderPop)
       OrderPop(location);
 
+   recursive = false;
    return(error);
    __DummyCalls();
 }

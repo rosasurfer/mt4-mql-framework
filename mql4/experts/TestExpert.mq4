@@ -49,7 +49,7 @@ int onTick() {
    if (!done) {
       int lpContext;
       int /*EXECUTION_CONTEXT*/ec[]; if (!ArraySize(ec)) InitializeExecutionContext(ec, lpContext);
-      //EXECUTION_CONTEXT.toStr(ec, true);
+      EXECUTION_CONTEXT.toStr(ec, true);
 
       done = true;
    }
